@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ailss.local/events/ai.quiz.generate.v1.schema.json",
+  "title": "ai.quiz.generate.v1",
+  "type": "object",
+  "required": [
+    "specVersion",
+    "eventId",
+    "eventType",
+    "occurredAt",
+    "producer",
+    "correlationId",
+    "aggregate",
+    "data"
+  ],
+  "properties": {
+    "specVersion": {
+      "const": "1.0"
+    },
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "const": "ai.quiz.generate.v1"
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "correlationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "causationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "actor": {
+      "type": "object"
+    },
+    "aggregate": {
+      "type": "object",
+      "required": ["type", "id", "version"],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "trace": {
+      "type": "object"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "jobId",
+        "operationId",
+        "documentId",
+        "targetType",
+        "targetId",
+        "targetVersion",
+        "requestHash",
+        "questionCount",
+        "questionTypes",
+        "difficulty"
+      ],
+      "properties": {
+        "jobId": { "type": "string", "format": "uuid" },
+        "operationId": { "type": "string", "format": "uuid" },
+        "documentId": { "type": "string", "format": "uuid" },
+        "targetType": { "type": "string", "enum": ["COURSE", "CLASS"] },
+        "targetId": { "type": "string", "format": "uuid" },
+        "targetVersion": { "type": "integer", "minimum": 1 },
+        "requestHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "questionCount": { "type": "integer", "minimum": 1, "maximum": 50 },
+        "questionTypes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"]
+          }
+        },
+        "difficulty": { "type": "string", "enum": ["EASY", "MEDIUM", "HARD"] }
+      }
+    }
+  },
+  "additionalProperties": false
+}

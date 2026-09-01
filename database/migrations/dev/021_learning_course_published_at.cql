@@ -1,0 +1,9 @@
+-- P7.12A additive canonical lifecycle timestamp. Migrator role only.
+ALTER TABLE learning_keyspace.course_by_id ADD IF NOT EXISTS published_at timestamp;
+ALTER TABLE learning_keyspace.reconcile_operation_by_id ADD IF NOT EXISTS lease_owner text;
+ALTER TABLE learning_keyspace.reconcile_operation_by_id ADD IF NOT EXISTS lease_until timestamp;
+ALTER TABLE learning_keyspace.reconcile_operation_by_id ADD IF NOT EXISTS lease_fence bigint;
+ALTER TABLE learning_keyspace.reconcile_by_due_bucket ADD IF NOT EXISTS retry_count int;
+ALTER TABLE learning_keyspace.reconcile_by_due_bucket ADD IF NOT EXISTS lease_owner text;
+ALTER TABLE learning_keyspace.reconcile_by_due_bucket ADD IF NOT EXISTS lease_until timestamp;
+ALTER TABLE learning_keyspace.reconcile_by_due_bucket ADD IF NOT EXISTS lease_fence bigint;

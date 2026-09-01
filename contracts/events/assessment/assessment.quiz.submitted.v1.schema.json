@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ailss.local/events/assessment.quiz.submitted.v1.schema.json",
+  "title": "assessment.quiz.submitted.v1",
+  "type": "object",
+  "required": [
+    "specVersion",
+    "eventId",
+    "eventType",
+    "occurredAt",
+    "producer",
+    "correlationId",
+    "aggregate",
+    "data"
+  ],
+  "properties": {
+    "specVersion": {
+      "const": "1.0"
+    },
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "const": "assessment.quiz.submitted.v1"
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "correlationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "causationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "actor": {
+      "type": "object"
+    },
+    "aggregate": {
+      "type": "object",
+      "required": ["type", "id", "version"],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "trace": {
+      "type": "object"
+    },
+    "data": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

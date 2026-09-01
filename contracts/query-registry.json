@@ -1,0 +1,754 @@
+{
+  "version": "7.12C",
+  "count": 71,
+  "queries": [
+    {
+      "queryId": "Q-AI-001",
+      "owner": "AI",
+      "keyspace": "ai_keyspace",
+      "tables": ["ai_job_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["AI-01", "AI-02", "AI-05", "AI-06", "AI-08"]
+    },
+    {
+      "queryId": "Q-AI-002",
+      "owner": "AI",
+      "keyspace": "ai_keyspace",
+      "tables": ["ai_jobs_by_lecturer_bucket"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["AI-01", "AI-03", "AI-06"]
+    },
+    {
+      "queryId": "Q-AI-003",
+      "owner": "AI",
+      "keyspace": "ai_keyspace",
+      "tables": ["ai_draft_by_job"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["AI-04", "AI-05"]
+    },
+    {
+      "queryId": "Q-AI-004",
+      "owner": "AI",
+      "keyspace": "ai_keyspace",
+      "tables": ["document_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["AI-07", "AI-08", "AI-09"]
+    },
+    {
+      "queryId": "Q-AI-005",
+      "owner": "AI",
+      "keyspace": "ai_keyspace",
+      "tables": ["ai_quota_by_user_day", "ai_usage_operation_by_id", "ai_usage_by_user_day"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["AI-01", "AI-10"]
+    },
+    {
+      "queryId": "Q-AI-006",
+      "owner": "AI",
+      "keyspace": "ai_keyspace",
+      "tables": [
+        "pending_event_by_id",
+        "pending_events_by_due_bucket",
+        "reconcile_operation_by_id",
+        "reconcile_by_due_bucket",
+        "idempotency_by_scope_key"
+      ],
+      "operation": "R/W worker",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["AI-01", "AI-05", "AI-06", "AI-08"]
+    },
+    {
+      "queryId": "Q-AI-007",
+      "owner": "AI",
+      "keyspace": "ai_keyspace",
+      "tables": ["provider_operation_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["AI-01", "AI-05"]
+    },
+    {
+      "queryId": "Q-ASMT-001",
+      "owner": "Assessment",
+      "keyspace": "assessment_keyspace",
+      "tables": ["quiz_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["ASM-01", "ASM-02", "ASM-03", "ASM-04", "ASM-05", "ASM-06", "ASM-10"]
+    },
+    {
+      "queryId": "Q-ASMT-002",
+      "owner": "Assessment",
+      "keyspace": "assessment_keyspace",
+      "tables": ["questions_by_quiz_version"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["ASM-01", "ASM-02", "ASM-03", "ASM-04", "ASM-06"]
+    },
+    {
+      "queryId": "Q-ASMT-003",
+      "owner": "Assessment",
+      "keyspace": "assessment_keyspace",
+      "tables": ["attempt_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["ASM-06", "ASM-07", "ASM-08", "ASM-09"]
+    },
+    {
+      "queryId": "Q-ASMT-004",
+      "owner": "Assessment",
+      "keyspace": "assessment_keyspace",
+      "tables": ["attempts_by_student_quiz", "attempt_guard_by_student_quiz"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["ASM-06", "ASM-08"]
+    },
+    {
+      "queryId": "Q-ASMT-005",
+      "owner": "Assessment",
+      "keyspace": "assessment_keyspace",
+      "tables": ["result_by_attempt", "result_items_by_attempt"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["ASM-08", "ASM-09"]
+    },
+    {
+      "queryId": "Q-ASMT-006",
+      "owner": "Assessment",
+      "keyspace": "assessment_keyspace",
+      "tables": ["results_by_quiz_bucket"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["ASM-08", "ASM-10"]
+    },
+    {
+      "queryId": "Q-ASMT-007",
+      "owner": "Assessment",
+      "keyspace": "assessment_keyspace",
+      "tables": ["quizzes_by_target_state", "quizzes_by_target_state_v2"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["ASM-01", "ASM-04", "ASM-05"]
+    },
+    {
+      "queryId": "Q-ASMT-008",
+      "owner": "Assessment",
+      "keyspace": "assessment_keyspace",
+      "tables": ["pending_event_by_id", "pending_events_by_due_bucket", "idempotency_by_scope_key"],
+      "operation": "R/W worker",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["ASM-01", "ASM-03", "ASM-04", "ASM-06", "ASM-08"]
+    },
+    {
+      "queryId": "Q-CLS-001",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["class_by_id"],
+      "operation": "R",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": [
+        "CLS-01",
+        "CLS-02",
+        "CLS-03",
+        "CLS-07",
+        "CLS-08",
+        "CLS-09",
+        "CLS-10",
+        "CLS-11",
+        "CLS-12",
+        "CLS-13",
+        "CLS-14",
+        "CLS-16",
+        "CLS-18",
+        "CLS-19",
+        "CLS-20",
+        "INT-CLS-04",
+        "INT-CLS-07",
+        "INT-CLS-08"
+      ]
+    },
+    {
+      "queryId": "Q-CLS-002",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["class_by_active_code"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["CLS-01", "CLS-04", "CLS-08"]
+    },
+    {
+      "queryId": "Q-CLS-003",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["membership_by_class_student"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["CLS-04", "CLS-09", "CLS-10", "CLS-13", "CLS-14", "CLS-18", "CLS-19", "INT-CLS-07"]
+    },
+    {
+      "queryId": "Q-CLS-004",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["classes_by_student"],
+      "operation": "R",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["CLS-04", "CLS-05", "INT-CLS-07"]
+    },
+    {
+      "queryId": "Q-CLS-005",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["classes_by_lecturer"],
+      "operation": "R",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["CLS-01", "CLS-03", "CLS-06"]
+    },
+    {
+      "queryId": "Q-CLS-006",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["students_by_class"],
+      "operation": "R",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["CLS-04", "CLS-07", "INT-CLS-07"]
+    },
+    {
+      "queryId": "Q-CLS-007",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["announcements_by_class_bucket"],
+      "operation": "R",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["CLS-09", "CLS-10"]
+    },
+    {
+      "queryId": "Q-CLS-008",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["pending_event_by_id", "pending_events_by_due_bucket", "idempotency_by_scope_key"],
+      "operation": "R/W worker",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": [
+        "CLS-01",
+        "CLS-03",
+        "CLS-04",
+        "CLS-08",
+        "CLS-09",
+        "CLS-11",
+        "CLS-12",
+        "CLS-19",
+        "CLS-20",
+        "INT-CLS-04",
+        "INT-CLS-05",
+        "INT-CLS-06",
+        "INT-CLS-07"
+      ]
+    },
+    {
+      "queryId": "Q-CLS-009",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["sessions_by_class_date"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["CLS-04", "CLS-11", "CLS-12", "CLS-13", "CLS-20", "INT-CLS-04", "INT-CLS-08"]
+    },
+    {
+      "queryId": "Q-CLS-010",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["session_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": [
+        "CLS-04",
+        "CLS-11",
+        "CLS-12",
+        "CLS-14",
+        "CLS-16",
+        "CLS-18",
+        "CLS-19",
+        "CLS-20",
+        "INT-CLS-04",
+        "INT-CLS-08"
+      ]
+    },
+    {
+      "queryId": "Q-CLS-011",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["student_schedule_by_day"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["CLS-04", "CLS-15", "INT-CLS-04", "INT-CLS-05", "INT-CLS-06"]
+    },
+    {
+      "queryId": "Q-CLS-012",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["schedule_reservation_by_id", "schedule_reservation_segments_by_id"],
+      "operation": "R/W LWT",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["CLS-04", "INT-CLS-04", "INT-CLS-05", "INT-CLS-06"]
+    },
+    {
+      "queryId": "Q-CLS-013",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["student_schedule_guard"],
+      "operation": "R/W LWT",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["CLS-04", "INT-CLS-04", "INT-CLS-05", "INT-CLS-06"]
+    },
+    {
+      "queryId": "Q-CLS-014",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["attendance_by_session"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["CLS-16", "CLS-18", "CLS-19", "realtime-presence"]
+    },
+    {
+      "queryId": "Q-CLS-015",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["attendance_by_student_bucket"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["CLS-17", "CLS-19", "realtime-presence"]
+    },
+    {
+      "queryId": "Q-CLS-016",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["presence_checkpoint_by_session_student"],
+      "operation": "R/W LWT",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["CLS-18", "realtime-presence"]
+    },
+    {
+      "queryId": "Q-CLS-017",
+      "owner": "Classroom",
+      "keyspace": "classroom_keyspace",
+      "tables": ["schedule_reservations_by_expiry_bucket"],
+      "operation": "R/W worker",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["CLS-04", "INT-CLS-04", "schedule-reservation-reaper"]
+    },
+    {
+      "queryId": "Q-IDN-001",
+      "owner": "Identity",
+      "keyspace": "identity_keyspace",
+      "tables": ["user_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": [
+        "IDN-01",
+        "IDN-02",
+        "IDN-03",
+        "IDN-05",
+        "IDN-06",
+        "IDN-07",
+        "IDN-10",
+        "IDN-11",
+        "IDN-12"
+      ]
+    },
+    {
+      "queryId": "Q-IDN-002",
+      "owner": "Identity",
+      "keyspace": "identity_keyspace",
+      "tables": ["credential_by_email"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["IDN-01", "IDN-02", "IDN-07", "IDN-11", "IDN-12"]
+    },
+    {
+      "queryId": "Q-IDN-003",
+      "owner": "Identity",
+      "keyspace": "identity_keyspace",
+      "tables": ["session_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["IDN-02", "IDN-03", "IDN-04", "IDN-07", "IDN-09", "IDN-10", "IDN-11"]
+    },
+    {
+      "queryId": "Q-IDN-004",
+      "owner": "Identity",
+      "keyspace": "identity_keyspace",
+      "tables": ["sessions_by_user_bucket"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["IDN-04", "IDN-07"]
+    },
+    {
+      "queryId": "Q-IDN-005",
+      "owner": "Identity",
+      "keyspace": "identity_keyspace",
+      "tables": ["users_by_role_status_bucket"],
+      "operation": "R",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["IDN-01", "IDN-06", "IDN-09", "IDN-11", "IDN-12"]
+    },
+    {
+      "queryId": "Q-IDN-006",
+      "owner": "Identity",
+      "keyspace": "identity_keyspace",
+      "tables": ["public_lecturer_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_ONE",
+      "apiConsumers": ["IDN-06", "IDN-08", "IDN-12"]
+    },
+    {
+      "queryId": "Q-IDN-007",
+      "owner": "Identity",
+      "keyspace": "identity_keyspace",
+      "tables": ["pending_event_by_id", "pending_events_by_due_bucket", "idempotency_by_scope_key"],
+      "operation": "R/W worker",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["IDN-01", "IDN-06", "IDN-07", "IDN-11", "IDN-12"]
+    },
+    {
+      "queryId": "Q-INT-001",
+      "owner": "Interaction",
+      "keyspace": "interaction_keyspace",
+      "tables": ["comments_by_target_bucket", "comment_timeline_bounds_by_target"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["INT-01", "INT-02", "INT-03", "INT-04"]
+    },
+    {
+      "queryId": "Q-INT-002",
+      "owner": "Interaction",
+      "keyspace": "interaction_keyspace",
+      "tables": ["comment_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["INT-02", "INT-03", "INT-04", "INT-09", "INT-11"]
+    },
+    {
+      "queryId": "Q-INT-003",
+      "owner": "Interaction",
+      "keyspace": "interaction_keyspace",
+      "tables": ["reviews_by_course_bucket", "review_timeline_bounds_by_course"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_ONE",
+      "apiConsumers": ["INT-05", "INT-06", "INT-07", "INT-08"]
+    },
+    {
+      "queryId": "Q-INT-004",
+      "owner": "Interaction",
+      "keyspace": "interaction_keyspace",
+      "tables": ["review_by_student_course", "review_locator_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["INT-06", "INT-07", "INT-08", "INT-09", "INT-11"]
+    },
+    {
+      "queryId": "Q-INT-005",
+      "owner": "Interaction",
+      "keyspace": "interaction_keyspace",
+      "tables": ["report_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["INT-09", "INT-11"]
+    },
+    {
+      "queryId": "Q-INT-006",
+      "owner": "Interaction",
+      "keyspace": "interaction_keyspace",
+      "tables": ["reports_by_status_bucket", "report_queue_bounds_by_state"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["INT-09", "INT-10", "INT-11"]
+    },
+    {
+      "queryId": "Q-INT-007",
+      "owner": "Interaction",
+      "keyspace": "interaction_keyspace",
+      "tables": [
+        "rating_summary_by_course",
+        "rating_contribution_by_course_review",
+        "rating_mutation_by_course"
+      ],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_ONE",
+      "apiConsumers": ["INT-05", "INT-06", "INT-07", "INT-08", "INT-11"]
+    },
+    {
+      "queryId": "Q-INT-008",
+      "owner": "Interaction",
+      "keyspace": "interaction_keyspace",
+      "tables": [
+        "pending_event_by_id",
+        "pending_events_by_due_bucket",
+        "reconcile_operation_by_id",
+        "reconcile_by_due_bucket",
+        "idempotency_by_scope_key"
+      ],
+      "operation": "R/W worker",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["INT-02", "INT-03", "INT-04", "INT-06", "INT-07", "INT-08", "INT-09", "INT-11"]
+    },
+    {
+      "queryId": "Q-LRN-001",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["course_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": [
+        "LRN-01",
+        "LRN-02",
+        "LRN-03",
+        "LRN-04",
+        "LRN-05",
+        "LRN-06",
+        "LRN-07",
+        "LRN-08",
+        "LRN-09",
+        "LRN-11",
+        "LRN-12",
+        "LRN-14",
+        "LRN-16",
+        "LRN-17",
+        "LRN-18",
+        "LRN-24",
+        "LRN-25",
+        "LRN-26"
+      ]
+    },
+    {
+      "queryId": "Q-LRN-002",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["course_by_slug"],
+      "operation": "R",
+      "candidateConsistency": "LOCAL_ONE",
+      "apiConsumers": ["LRN-04", "LRN-08"]
+    },
+    {
+      "queryId": "Q-LRN-003",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["published_courses_by_category_bucket"],
+      "operation": "R",
+      "candidateConsistency": "LOCAL_ONE",
+      "apiConsumers": ["LRN-01", "LRN-08"]
+    },
+    {
+      "queryId": "Q-LRN-004",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["published_courses_by_search_token_bucket"],
+      "operation": "R",
+      "candidateConsistency": "LOCAL_ONE",
+      "apiConsumers": ["LRN-02", "LRN-08"]
+    },
+    {
+      "queryId": "Q-LRN-005",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["courses_by_lecturer"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-05", "LRN-06"]
+    },
+    {
+      "queryId": "Q-LRN-006",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["lessons_by_course_version"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-07", "LRN-10", "LRN-11", "LRN-13", "LRN-18"]
+    },
+    {
+      "queryId": "Q-LRN-007",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["lesson_current_by_id", "lesson_by_id_version"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-12", "LRN-13", "LRN-18"]
+    },
+    {
+      "queryId": "Q-LRN-008",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["entitlement_by_student_course", "enrollment_by_student_course"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-12", "LRN-14", "LRN-17", "LRN-18", "LRN-21"]
+    },
+    {
+      "queryId": "Q-LRN-009",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["courses_by_student_bucket"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-14", "LRN-15", "LRN-18"]
+    },
+    {
+      "queryId": "Q-LRN-010",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["students_by_course_bucket"],
+      "operation": "R",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-14", "LRN-16"]
+    },
+    {
+      "queryId": "Q-LRN-011",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["progress_by_student_course"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-17", "LRN-18"]
+    },
+    {
+      "queryId": "Q-LRN-012",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["lesson_completion_by_student_course"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-18"]
+    },
+    {
+      "queryId": "Q-LRN-013",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["order_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-19", "LRN-20", "LRN-21"]
+    },
+    {
+      "queryId": "Q-LRN-014",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["order_by_student_request"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-19"]
+    },
+    {
+      "queryId": "Q-LRN-015",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": [
+        "pending_event_by_id",
+        "pending_events_by_due_bucket",
+        "idempotency_by_scope_key",
+        "content_mutation_by_course"
+      ],
+      "operation": "R/W worker",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": [
+        "LRN-05",
+        "LRN-06",
+        "LRN-07",
+        "LRN-08",
+        "LRN-09",
+        "LRN-11",
+        "LRN-13",
+        "LRN-14",
+        "LRN-18",
+        "LRN-19",
+        "LRN-21",
+        "LRN-24",
+        "LRN-25",
+        "LRN-26"
+      ]
+    },
+    {
+      "queryId": "Q-LRN-016",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["reconcile_operation_by_id", "reconcile_by_due_bucket"],
+      "operation": "R/W worker",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-09", "LRN-21"]
+    },
+    {
+      "queryId": "Q-LRN-017",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["offering_by_id"],
+      "operation": "R/W LWT",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["LRN-19", "LRN-22", "LRN-23", "LRN-24", "LRN-25", "LRN-26", "LRN-27", "LRN-28"]
+    },
+    {
+      "queryId": "Q-LRN-018",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["offerings_by_course"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-24", "LRN-25", "LRN-27"]
+    },
+    {
+      "queryId": "Q-LRN-019",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["offering_by_class"],
+      "operation": "R/W LWT",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["LRN-24", "LRN-26"]
+    },
+    {
+      "queryId": "Q-LRN-020",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["public_offerings_by_type_bucket"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_ONE writes LOCAL_QUORUM",
+      "apiConsumers": ["LRN-22", "LRN-26"]
+    },
+    {
+      "queryId": "Q-LRN-021",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["offerings_by_lecturer"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["LRN-24", "LRN-25", "LRN-26", "LRN-28"]
+    },
+    {
+      "queryId": "Q-LRN-022",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["enrollment_by_student_offering"],
+      "operation": "R/W LWT",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["LRN-14", "LRN-21"]
+    },
+    {
+      "queryId": "Q-NOT-001",
+      "owner": "Notification",
+      "keyspace": "notification_keyspace",
+      "tables": ["notifications_by_user_bucket"],
+      "operation": "R",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["NOT-01", "NOT-02"]
+    },
+    {
+      "queryId": "Q-NOT-002",
+      "owner": "Notification",
+      "keyspace": "notification_keyspace",
+      "tables": ["notification_dedup_by_event_user"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["background-worker"]
+    }
+  ]
+}

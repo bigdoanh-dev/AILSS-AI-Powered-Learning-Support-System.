@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ailss.local/events/envelope-v1.schema.json",
+  "title": "AILSS Event Envelope v1",
+  "type": "object",
+  "required": [
+    "specVersion",
+    "eventId",
+    "eventType",
+    "occurredAt",
+    "producer",
+    "correlationId",
+    "aggregate",
+    "data"
+  ],
+  "properties": {
+    "specVersion": {
+      "const": "1.0"
+    },
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "enum": [
+        "identity.user.registered.v1",
+        "identity.user.status_changed.v1",
+        "learning.course.created.v1",
+        "learning.course.published.v1",
+        "learning.course.enrolled.v1",
+        "learning.progress.updated.v1",
+        "learning.order.paid.v1",
+        "classroom.class.created.v1",
+        "classroom.student.joined.v1",
+        "classroom.student.removed.v1",
+        "assessment.quiz.submitted.v1",
+        "assessment.quiz.graded.v1",
+        "interaction.review.created.v1",
+        "interaction.report.created.v1",
+        "interaction.content.moderated.v1",
+        "ai.document.extract.v1",
+        "ai.quiz.generate.v1",
+        "ai.quiz.generated.v1",
+        "ai.job.failed.v1",
+        "system.notification.requested.v1",
+        "system.audit.requested.v1",
+        "system.projection.reconcile.v1"
+      ]
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "correlationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "causationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "actor": {
+      "type": "object"
+    },
+    "aggregate": {
+      "type": "object"
+    },
+    "trace": {
+      "type": "object"
+    },
+    "data": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,117 @@
+{
+  "version": "7.12C",
+  "count": 22,
+  "events": [
+    {
+      "index": 1,
+      "eventType": "identity.user.registered.v1",
+      "schema": "identity/identity.user.registered.v1.schema.json"
+    },
+    {
+      "index": 2,
+      "eventType": "identity.user.status_changed.v1",
+      "schema": "identity/identity.user.status_changed.v1.schema.json"
+    },
+    {
+      "index": 3,
+      "eventType": "learning.course.created.v1",
+      "schema": "learning/learning.course.created.v1.schema.json"
+    },
+    {
+      "index": 4,
+      "eventType": "learning.course.published.v1",
+      "schema": "learning/learning.course.published.v1.schema.json"
+    },
+    {
+      "index": 5,
+      "eventType": "learning.course.enrolled.v1",
+      "schema": "learning/learning.course.enrolled.v1.schema.json"
+    },
+    {
+      "index": 6,
+      "eventType": "learning.progress.updated.v1",
+      "schema": "learning/learning.progress.updated.v1.schema.json"
+    },
+    {
+      "index": 7,
+      "eventType": "learning.order.paid.v1",
+      "schema": "learning/learning.order.paid.v1.schema.json"
+    },
+    {
+      "index": 8,
+      "eventType": "classroom.class.created.v1",
+      "schema": "classroom/classroom.class.created.v1.schema.json"
+    },
+    {
+      "index": 9,
+      "eventType": "classroom.student.joined.v1",
+      "schema": "classroom/classroom.student.joined.v1.schema.json"
+    },
+    {
+      "index": 10,
+      "eventType": "classroom.student.removed.v1",
+      "schema": "classroom/classroom.student.removed.v1.schema.json"
+    },
+    {
+      "index": 11,
+      "eventType": "assessment.quiz.submitted.v1",
+      "schema": "assessment/assessment.quiz.submitted.v1.schema.json"
+    },
+    {
+      "index": 12,
+      "eventType": "assessment.quiz.graded.v1",
+      "schema": "assessment/assessment.quiz.graded.v1.schema.json"
+    },
+    {
+      "index": 13,
+      "eventType": "interaction.review.created.v1",
+      "schema": "interaction/interaction.review.created.v1.schema.json"
+    },
+    {
+      "index": 14,
+      "eventType": "interaction.report.created.v1",
+      "schema": "interaction/interaction.report.created.v1.schema.json"
+    },
+    {
+      "index": 15,
+      "eventType": "interaction.content.moderated.v1",
+      "schema": "interaction/interaction.content.moderated.v1.schema.json"
+    },
+    {
+      "index": 16,
+      "eventType": "ai.document.extract.v1",
+      "schema": "ai/ai.document.extract.v1.schema.json"
+    },
+    {
+      "index": 17,
+      "eventType": "ai.quiz.generate.v1",
+      "schema": "ai/ai.quiz.generate.v1.schema.json"
+    },
+    {
+      "index": 18,
+      "eventType": "ai.quiz.generated.v1",
+      "schema": "ai/ai.quiz.generated.v1.schema.json",
+      "commitState": "AI_DRAFT"
+    },
+    {
+      "index": 19,
+      "eventType": "ai.job.failed.v1",
+      "schema": "ai/ai.job.failed.v1.schema.json"
+    },
+    {
+      "index": 20,
+      "eventType": "system.notification.requested.v1",
+      "schema": "system/system.notification.requested.v1.schema.json"
+    },
+    {
+      "index": 21,
+      "eventType": "system.audit.requested.v1",
+      "schema": "system/system.audit.requested.v1.schema.json"
+    },
+    {
+      "index": 22,
+      "eventType": "system.projection.reconcile.v1",
+      "schema": "system/system.projection.reconcile.v1.schema.json"
+    }
+  ]
+}

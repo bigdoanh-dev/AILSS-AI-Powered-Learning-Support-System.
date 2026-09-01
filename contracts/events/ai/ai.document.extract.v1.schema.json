@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ailss.local/events/ai.document.extract.v1.schema.json",
+  "title": "ai.document.extract.v1",
+  "type": "object",
+  "required": [
+    "specVersion",
+    "eventId",
+    "eventType",
+    "occurredAt",
+    "producer",
+    "correlationId",
+    "aggregate",
+    "data"
+  ],
+  "properties": {
+    "specVersion": {
+      "const": "1.0"
+    },
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "const": "ai.document.extract.v1"
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "correlationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "causationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "actor": {
+      "type": "object"
+    },
+    "aggregate": {
+      "type": "object",
+      "required": ["type", "id", "version"],
+      "properties": {
+        "type": {
+          "const": "DOCUMENT"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 2
+        }
+      },
+      "additionalProperties": false
+    },
+    "trace": {
+      "type": "object"
+    },
+    "data": {
+      "type": "object",
+      "required": ["jobId", "documentId", "objectKey", "checksum"],
+      "properties": {
+        "jobId": { "type": "string", "format": "uuid" },
+        "documentId": { "type": "string", "format": "uuid" },
+        "objectKey": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "checksum": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

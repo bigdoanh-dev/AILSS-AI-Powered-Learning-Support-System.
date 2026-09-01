@@ -1,0 +1,659 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "AILSS Internal API", "version": "7.12C" },
+  "paths":
+    {
+      "/internal/v1/courses/{id}/quiz-eligibility":
+        {
+          "get":
+            {
+              "operationId": "INT-LRN-01",
+              "summary": "Assessment to Learning internal contract",
+              "description": "Assessment-only exact PUBLISHED Course quiz-eligibility lookup with canonical owner and record version.",
+              "responses":
+                {
+                  "200": { "description": "Minimal eligible Course facts" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "bearerAuth": [] }],
+            },
+        },
+      "/internal/v1/courses/{id}/class-link-eligibility":
+        {
+          "get":
+            {
+              "operationId": "INT-LRN-02",
+              "summary": "Classroom to Learning internal contract",
+              "description": "Classroom-only exact PUBLISHED Course link eligibility lookup.",
+              "responses":
+                {
+                  "200": { "description": "Contract success response" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "bearerAuth": [] }],
+            },
+        },
+      "/internal/v1/courses/{id}/interaction-eligibility":
+        {
+          "get":
+            {
+              "operationId": "INT-LRN-03",
+              "summary": "Interaction to Learning internal contract",
+              "description": "Interaction-only PUBLISHED Course comment eligibility; Actor Context optional only for COMMENT_READ_PUBLIC.",
+              "parameters":
+                [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                  {
+                    "name": "intent",
+                    "in": "query",
+                    "required": true,
+                    "schema": { "type": "string", "enum": ["COMMENT_READ_PUBLIC", "COMMENT_WRITE"] },
+                  },
+                ],
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "Minimal eligibility facts",
+                      "content":
+                        {
+                          "application/json":
+                            { "schema": { "$ref": "#/components/schemas/InteractionEligibilityResponse" } },
+                        },
+                    },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "bearerAuth": [] }],
+            },
+        },
+      "/internal/v1/courses/{id}/ai-context":
+        {
+          "get":
+            {
+              "operationId": "INT-LRN-04",
+              "summary": "AI to Learning internal contract",
+              "responses":
+                {
+                  "200": { "description": "Contract success response" },
+                  "501": { "description": "Foundation placeholder until Phase 7" },
+                },
+              "security": [{ "bearerAuth": [] }],
+            },
+        },
+      "/internal/v1/classes/{id}/quiz-eligibility":
+        {
+          "get":
+            {
+              "operationId": "INT-CLS-01",
+              "summary": "Assessment to Classroom internal contract",
+              "description": "Assessment-only exact ACTIVE Class eligibility lookup with canonical owner and version.",
+              "responses":
+                {
+                  "200": { "description": "Contract success response" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "bearerAuth": [] }],
+            },
+        },
+      "/internal/v1/classes/{id}/interaction-eligibility":
+        {
+          "get":
+            {
+              "operationId": "INT-CLS-02",
+              "summary": "Interaction to Classroom internal contract",
+              "description": "Interaction-only exact ACTIVE Class and ACTIVE-member/canonical-owner eligibility lookup.",
+              "parameters":
+                [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                  {
+                    "name": "intent",
+                    "in": "query",
+                    "required": true,
+                    "schema": { "type": "string", "enum": ["COMMENT_READ", "COMMENT_WRITE"] },
+                  },
+                ],
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "Minimal eligibility facts",
+                      "content":
+                        {
+                          "application/json":
+                            { "schema": { "$ref": "#/components/schemas/InteractionEligibilityResponse" } },
+                        },
+                    },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "bearerAuth": [] }],
+            },
+        },
+      "/internal/v1/classes/{id}/ai-context":
+        {
+          "get":
+            {
+              "operationId": "INT-CLS-03",
+              "summary": "AI to Classroom internal contract",
+              "description": "AI-only minimal ACTIVE Class context lookup; no membership or meeting secret is returned.",
+              "responses":
+                {
+                  "200": { "description": "Contract success response" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "bearerAuth": [] }],
+            },
+        },
+      "/internal/v1/ai-drafts/{id}/import":
+        {
+          "post":
+            {
+              "operationId": "INT-ASMT-01",
+              "summary": "AI to Assessment internal contract",
+              "responses":
+                {
+                  "200": { "description": "Contract success response" },
+                  "501": { "description": "Foundation placeholder until Phase 7" },
+                },
+              "security": [{ "bearerAuth": [] }],
+            },
+        },
+      "/internal/v1/users/{id}/public-profile":
+        {
+          "get":
+            {
+              "operationId": "INT-IDN-01",
+              "summary": "Learning to Identity internal contract",
+              "description": "Fail-closed public-safe identity lookup for the authorized Learning service. Caller deadline is 500 ms.",
+              "parameters":
+                [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                ],
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "Minimal public-safe identity profile",
+                      "content":
+                        {
+                          "application/json":
+                            { "schema": { "$ref": "#/components/schemas/InternalPublicProfileResponse" } },
+                        },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "serviceAuth": [] }],
+            },
+        },
+      "/internal/v1/schedule-reservations":
+        {
+          "post":
+            {
+              "operationId": "INT-CLS-04",
+              "summary": "Learning reserves a Student schedule for LIVE_COHORT purchase",
+              "description": "Classroom serializes the Student with a LOCAL_SERIAL guard, checks every materialized session/day and returns 409 SCHEDULE_CONFLICT on overlap. Initial purchase reservation requires Student Actor Context; post-payment recovery permits the exact Learning-only classroom.schedule.reserve.fulfillment service purpose. Replay uses the same operationId.",
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        { "schema": { "$ref": "#/components/schemas/ScheduleReservationRequest" } },
+                    },
+                },
+              "responses":
+                {
+                  "201":
+                    {
+                      "description": "HELD reservation",
+                      "content":
+                        {
+                          "application/json":
+                            { "schema": { "$ref": "#/components/schemas/ScheduleReservationResponse" } },
+                        },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                  "409": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "serviceAuth": [], "actorContextAuth": [] }, { "serviceAuth": [] }],
+            },
+        },
+      "/internal/v1/schedule-reservations/{reservationId}/confirm":
+        {
+          "post":
+            {
+              "operationId": "INT-CLS-05",
+              "summary": "Confirm a held Student schedule reservation",
+              "parameters":
+                [
+                  {
+                    "name": "reservationId",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                ],
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        { "schema": { "$ref": "#/components/schemas/ScheduleConfirmRequest" } },
+                    },
+                },
+              "responses":
+                {
+                  "200": { "description": "Reservation CONFIRMED or exact replay" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                  "409": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "serviceAuth": [] }],
+            },
+        },
+      "/internal/v1/schedule-reservations/{reservationId}/release":
+        {
+          "post":
+            {
+              "operationId": "INT-CLS-06",
+              "summary": "Release or expire a held schedule reservation",
+              "parameters":
+                [
+                  {
+                    "name": "reservationId",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                ],
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        { "schema": { "$ref": "#/components/schemas/ScheduleReleaseRequest" } },
+                    },
+                },
+              "responses":
+                {
+                  "200": { "description": "Reservation RELEASED/EXPIRED or exact replay" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                  "409": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "serviceAuth": [] }],
+            },
+        },
+      "/internal/v1/classes/{id}/memberships/activate":
+        {
+          "post":
+            {
+              "operationId": "INT-CLS-07",
+              "summary": "Activate LIVE_COHORT Class Membership after paid Order",
+              "description": "Two-action recoverable protocol: PREPARE creates the exact PENDING purchase membership; after INT-CLS-05 confirmation, ACTIVATE converges ACTIVE membership, projections and the existing joined event.",
+              "parameters":
+                [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                ],
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        { "schema": { "$ref": "#/components/schemas/MembershipActivationRequest" } },
+                    },
+                },
+              "responses":
+                {
+                  "200": { "description": "Membership PENDING/ACTIVE or exact replay according to action" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                  "409": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "serviceAuth": [] }],
+            },
+        },
+      "/internal/v1/classes/{id}/offering-context":
+        {
+          "get":
+            {
+              "operationId": "INT-CLS-08",
+              "summary": "Learning validates LIVE_COHORT Class and published schedule context",
+              "parameters":
+                [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                ],
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "Minimal classId, linkedCourseId, ownerLecturerId, scheduleState/version and sessionCount",
+                    },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "serviceAuth": [] }],
+            },
+        },
+      "/internal/v1/admin/step-up-authorizations":
+        {
+          "post":
+            {
+              "operationId": "INT-IDN-02",
+              "summary": "Gateway obtains an Identity-owned Admin step-up proof",
+              "description": "Canonical ACTIVE Admin/session/security-epoch validation plus current-password Argon2id reauthentication. This is PASSWORD_REAUTH, not MFA. Proof lifetime is at most 30 seconds and is bound to action, resource and owner-service audience.",
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        { "schema": { "$ref": "#/components/schemas/AdminStepUpAuthorizationRequest" } },
+                    },
+                },
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "Short-lived Identity-signed step-up proof",
+                      "content":
+                        {
+                          "application/json":
+                            { "schema": { "$ref": "#/components/schemas/AdminStepUpAuthorizationResponse" } },
+                        },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "422": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [{ "serviceAuth": [], "actorContextAuth": [] }],
+            },
+        },
+    },
+  "components":
+    {
+      "securitySchemes":
+        {
+          "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" },
+          "serviceAuth":
+            {
+              "type": "apiKey",
+              "in": "header",
+              "name": "Authorization",
+              "description": "Exactly one Authorization: Service <compact Ed25519 JWS>",
+            },
+          "actorContextAuth":
+            {
+              "type": "apiKey",
+              "in": "header",
+              "name": "X-Actor-Context",
+              "description": "Gateway-signed actor context with Identity audience and step-up purpose",
+            },
+        },
+      "responses":
+        {
+          "ErrorResponse":
+            {
+              "description": "Safe error envelope",
+              "content":
+                { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } },
+            },
+        },
+      "schemas":
+        {
+          "ScheduleReservationRequest":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["operationId", "studentId", "offeringId", "classId"],
+              "properties":
+                {
+                  "operationId": { "type": "string", "format": "uuid" },
+                  "studentId": { "type": "string", "format": "uuid" },
+                  "offeringId": { "type": "string", "format": "uuid" },
+                  "classId": { "type": "string", "format": "uuid" },
+                },
+            },
+          "ScheduleReservationResponse":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["data"],
+              "properties":
+                {
+                  "data":
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["reservationId", "state", "expiresAt", "scheduleVersion"],
+                      "properties":
+                        {
+                          "reservationId": { "type": "string", "format": "uuid" },
+                          "state": { "const": "HELD" },
+                          "expiresAt": { "type": "string", "format": "date-time" },
+                          "scheduleVersion": { "type": "integer", "minimum": 1 },
+                        },
+                    },
+                },
+            },
+          "ScheduleConfirmRequest":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["operationId", "orderId", "membershipId"],
+              "properties":
+                {
+                  "operationId": { "type": "string", "format": "uuid" },
+                  "orderId": { "type": "string", "format": "uuid" },
+                  "membershipId": { "type": "string", "format": "uuid" },
+                },
+            },
+          "ScheduleReleaseRequest":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["operationId", "reason"],
+              "properties":
+                {
+                  "operationId": { "type": "string", "format": "uuid" },
+                  "reason":
+                    { "type": "string", "enum": ["PAYMENT_FAILED", "CANCELLED", "COMPENSATION", "EXPIRED"] },
+                },
+            },
+          "MembershipActivationRequest":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required":
+                [
+                  "action",
+                  "operationId",
+                  "studentId",
+                  "offeringId",
+                  "enrollmentId",
+                  "reservationId",
+                  "orderId",
+                  "membershipId",
+                ],
+              "properties":
+                {
+                  "action": { "type": "string", "enum": ["PREPARE", "ACTIVATE"] },
+                  "operationId": { "type": "string", "format": "uuid" },
+                  "studentId": { "type": "string", "format": "uuid" },
+                  "offeringId": { "type": "string", "format": "uuid" },
+                  "enrollmentId": { "type": "string", "format": "uuid" },
+                  "reservationId": { "type": "string", "format": "uuid" },
+                  "orderId": { "type": "string", "format": "uuid" },
+                  "membershipId": { "type": "string", "format": "uuid" },
+                },
+            },
+          "InternalPublicProfileResponse":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["data", "meta"],
+              "properties":
+                {
+                  "data":
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["userId", "displayName", "avatarRef", "resourceVersion"],
+                      "properties":
+                        {
+                          "userId": { "type": "string", "format": "uuid" },
+                          "displayName": { "type": "string", "minLength": 2, "maxLength": 100 },
+                          "avatarRef": { "type": "null" },
+                          "resourceVersion": { "type": "integer", "minimum": 1 },
+                        },
+                    },
+                  "meta":
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["requestId", "timestamp"],
+                      "properties":
+                        {
+                          "requestId": { "type": "string", "format": "uuid" },
+                          "timestamp": { "type": "string", "format": "date-time" },
+                        },
+                    },
+                },
+            },
+          "AdminStepUpAuthorizationRequest":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["currentPassword", "action", "resourceType", "resourceId"],
+              "properties":
+                {
+                  "currentPassword":
+                    { "type": "string", "minLength": 1, "maxLength": 128, "writeOnly": true },
+                  "action":
+                    {
+                      "type": "string",
+                      "enum": ["COURSE_PUBLISH", "COURSE_ARCHIVE", "INTERACTION_REPORT_MODERATE"],
+                    },
+                  "resourceType": { "type": "string", "enum": ["COURSE", "REPORT"] },
+                  "resourceId": { "type": "string", "format": "uuid" },
+                },
+            },
+          "AdminStepUpAuthorizationResponse":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["data", "meta"],
+              "properties":
+                {
+                  "data":
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["proof", "expiresIn", "authMethod"],
+                      "properties":
+                        {
+                          "proof": { "type": "string", "minLength": 64 },
+                          "expiresIn": { "const": 30 },
+                          "authMethod": { "const": "PASSWORD_REAUTH" },
+                        },
+                    },
+                  "meta":
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["requestId", "timestamp"],
+                      "properties":
+                        {
+                          "requestId": { "type": "string", "format": "uuid" },
+                          "timestamp": { "type": "string", "format": "date-time" },
+                        },
+                    },
+                },
+            },
+          "ErrorEnvelope": { "type": "object", "required": ["error", "meta"] },
+          "InteractionEligibilityResponse":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["eligible", "reason", "version"],
+              "properties":
+                {
+                  "eligible": { "type": "boolean" },
+                  "reason":
+                    {
+                      "type": "string",
+                      "enum":
+                        [
+                          "ELIGIBLE",
+                          "RESOURCE_NOT_FOUND",
+                          "RESOURCE_NOT_ACTIVE",
+                          "ACTOR_REQUIRED",
+                          "ENTITLEMENT_REQUIRED",
+                          "MEMBERSHIP_REQUIRED",
+                          "OWNER_REQUIRED",
+                          "ROLE_NOT_ALLOWED",
+                        ],
+                    },
+                  "version": { "type": "integer", "minimum": 1 },
+                },
+            },
+        },
+    },
+}
