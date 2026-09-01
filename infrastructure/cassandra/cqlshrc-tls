@@ -1,0 +1,4 @@
+[ssl]
+certfile = /opt/ailss/tls/ca/ca-cert.pem
+validate = true
+version = TLSv1_2
