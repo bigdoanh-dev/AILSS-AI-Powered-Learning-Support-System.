@@ -1,0 +1,67 @@
+services:
+  identity-service:
+    environment: &identity-rabbit
+      ENABLE_RABBITMQ: "true"
+      RABBITMQ_URL: amqp://rabbitmq:5672/%2Failss
+      RABBITMQ_USERNAME: mq_identity
+      RABBITMQ_PASSWORD: ${RABBITMQ_MQ_IDENTITY_PASSWORD}
+  learning-service:
+    environment:
+      ENABLE_RABBITMQ: "true"
+      RABBITMQ_URL: amqp://rabbitmq:5672/%2Failss
+      RABBITMQ_USERNAME: mq_learning
+      RABBITMQ_PASSWORD: ${RABBITMQ_MQ_LEARNING_PASSWORD}
+  classroom-service:
+    environment:
+      ENABLE_RABBITMQ: "true"
+      RABBITMQ_URL: amqp://rabbitmq:5672/%2Failss
+      RABBITMQ_USERNAME: mq_classroom
+      RABBITMQ_PASSWORD: ${RABBITMQ_MQ_CLASSROOM_PASSWORD}
+  assessment-service:
+    environment:
+      ENABLE_RABBITMQ: "true"
+      RABBITMQ_URL: amqp://rabbitmq:5672/%2Failss
+      RABBITMQ_USERNAME: mq_assessment
+      RABBITMQ_PASSWORD: ${RABBITMQ_MQ_ASSESSMENT_PASSWORD}
+  interaction-service:
+    environment:
+      ENABLE_RABBITMQ: "true"
+      RABBITMQ_URL: amqp://rabbitmq:5672/%2Failss
+      RABBITMQ_USERNAME: mq_interaction
+      RABBITMQ_PASSWORD: ${RABBITMQ_MQ_INTERACTION_PASSWORD}
+  ai-service:
+    environment:
+      ENABLE_RABBITMQ: "true"
+      RABBITMQ_URL: amqp://rabbitmq:5672/%2Failss
+      RABBITMQ_USERNAME: mq_ai_service
+      RABBITMQ_PASSWORD: ${RABBITMQ_MQ_AI_SERVICE_PASSWORD}
+  ai-worker:
+    environment:
+      ENABLE_RABBITMQ: "true"
+      RABBITMQ_URL: amqp://rabbitmq:5672/%2Failss
+      RABBITMQ_USERNAME: mq_ai_worker
+      RABBITMQ_PASSWORD: ${RABBITMQ_MQ_AI_WORKER_PASSWORD}
+  document-worker:
+    environment:
+      ENABLE_RABBITMQ: "true"
+      RABBITMQ_URL: amqp://rabbitmq:5672/%2Failss
+      RABBITMQ_USERNAME: mq_document_worker
+      RABBITMQ_PASSWORD: ${RABBITMQ_MQ_DOCUMENT_WORKER_PASSWORD}
+  notification-worker:
+    environment:
+      ENABLE_RABBITMQ: "true"
+      RABBITMQ_URL: amqp://rabbitmq:5672/%2Failss
+      RABBITMQ_USERNAME: mq_notification_worker
+      RABBITMQ_PASSWORD: ${RABBITMQ_MQ_NOTIFICATION_WORKER_PASSWORD}
+  audit-worker:
+    environment:
+      ENABLE_RABBITMQ: "true"
+      RABBITMQ_URL: amqp://rabbitmq:5672/%2Failss
+      RABBITMQ_USERNAME: mq_audit_worker
+      RABBITMQ_PASSWORD: ${RABBITMQ_MQ_AUDIT_WORKER_PASSWORD}
+  reconciliation-worker:
+    environment:
+      ENABLE_RABBITMQ: "true"
+      RABBITMQ_URL: amqp://rabbitmq:5672/%2Failss
+      RABBITMQ_USERNAME: mq_reconcile_worker
+      RABBITMQ_PASSWORD: ${RABBITMQ_MQ_RECONCILE_WORKER_PASSWORD}

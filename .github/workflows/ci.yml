@@ -1,0 +1,41 @@
+name: phase6-ci
+on:
+  push:
+  pull_request:
+jobs:
+  static-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.19.0, run_install: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24.20.0, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm validate:contracts
+      - run: pnpm scan:secrets
+      - run: pnpm build
+      - run: pnpm format:check
+      - run: docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.async.yml --profile research config --quiet
+  dev-core-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.19.0, run_install: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24.20.0, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm keys:dev
+      - run: node scripts/dev/bootstrap-dev-env.mjs
+      - run: pnpm env:dev-core
+      - run: AILSS_PROFILE=dev-core pnpm smoke
+      - if: always()
+        run: docker compose --env-file .env --profile dev-core logs --no-color > phase6-dev-core.log || true
+      - if: always()
+        run: pnpm env:down || true

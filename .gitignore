@@ -1,0 +1,45 @@
+node_modules/
+dist/
+build/
+tmp/
+temp/
+.env
+.env.*
+!.env.example
+coverage/
+.DS_Store
+*.log
+*.tmp
+*.temp
+
+# Project reports, prompts, evidence, and manually generated output
+docs/
+evidence/
+logs/
+screenshots/
+output/
+AILSS_PHASE_*.md
+MASTER_PROMPT_*.md
+ERRATA_*.md
+*_REPORT.md
+*_FEASIBILITY_ASSESSMENT.md
+
+# Local credentials and real cryptographic material
+credentials/
+credentials.*
+*.credentials
+*.crt
+*.cer
+infrastructure/tls/generated/
+infrastructure/storage/data/
+infrastructure/cassandra/data/
+*.pem
+*.key
+*.p12
+*.jks
+
+# Local editor/OS state
+.idea/
+.vscode/
+*.swp
+*.swo

@@ -1,0 +1,7 @@
+services:
+  api-gateway:
+    environment:
+      HTTPS_CERT_PATH: /opt/ailss/tls/gateway/gateway-cert.pem
+      HTTPS_KEY_PATH: /opt/ailss/tls/gateway/gateway-key.pem
+    volumes:
+      - ./infrastructure/tls/generated/gateway:/opt/ailss/tls/gateway:ro

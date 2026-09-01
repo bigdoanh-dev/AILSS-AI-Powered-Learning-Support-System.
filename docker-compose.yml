@@ -1,0 +1,549 @@
+name: ailss
+
+x-cassandra-common: &cassandra-common
+  image: ${CASSANDRA_IMAGE}
+  restart: unless-stopped
+  # Compose implements local-file configs as bind mounts on Docker Desktop, so
+  # their executable bit is not portable even when `mode: 0555` is declared.
+  # Invoke the script through Bash to keep the bootstrap reproducible on macOS
+  # and Linux hosts.
+  entrypoint: ["bash", "/opt/ailss/configure-cassandra.sh"]
+  configs:
+    - source: cassandra_configurator
+      target: /opt/ailss/configure-cassandra.py
+      mode: 0555
+    - source: cassandra_entrypoint
+      target: /opt/ailss/configure-cassandra.sh
+      mode: 0555
+  environment: &cassandra-env
+    CASSANDRA_CLUSTER_NAME: AILSSResearch
+    CASSANDRA_DC: ailss_dc
+    CASSANDRA_RACK: rack1
+    CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+    AILSS_CASSANDRA_AUDIT: "false"
+    AILSS_CASSANDRA_TLS: "false"
+    MAX_HEAP_SIZE: 1024M
+    HEAP_NEWSIZE: 256M
+  healthcheck:
+    test:
+      [
+        "CMD-SHELL",
+        "cqlsh -u cassandra -p cassandra -e 'SELECT release_version FROM system.local' >/dev/null 2>&1",
+      ]
+    interval: 10s
+    timeout: 8s
+    retries: 30
+    start_period: 50s
+  networks: [data_net]
+
+x-app-common: &app-common
+  build: { context: ., dockerfile: Dockerfile }
+  restart: unless-stopped
+  environment: &app-env
+    NODE_ENV: ${NODE_ENV:-development}
+    LOG_LEVEL: ${LOG_LEVEL:-info}
+    ENABLE_CASSANDRA: "true"
+    ENABLE_RABBITMQ: "false"
+    CASSANDRA_CONTACT_POINTS: cassandra:9042
+    CASSANDRA_LOCAL_DC: ailss_dc
+    CASSANDRA_TLS_ENABLED: ${CASSANDRA_TLS_ENABLED:-false}
+    HTTP_BODY_LIMIT: ${HTTP_BODY_LIMIT:-1mb}
+    JWT_ISSUER: ${JWT_ISSUER}
+    JWT_AUDIENCE: ${JWT_AUDIENCE}
+    JWT_KID: ${JWT_KID}
+    ACTOR_CONTEXT_ISSUER: ${ACTOR_CONTEXT_ISSUER:-api-gateway}
+    ACTOR_CONTEXT_AUDIENCE: ${ACTOR_CONTEXT_AUDIENCE:-identity-service}
+    ACTOR_CONTEXT_PURPOSE: ${ACTOR_CONTEXT_PURPOSE:-identity.logout}
+    ACTOR_CONTEXT_KID: ${ACTOR_CONTEXT_KID:-dev-gateway-2026-01}
+    ACTOR_CONTEXT_TTL_SECONDS: ${ACTOR_CONTEXT_TTL_SECONDS:-30}
+  networks: [service_net, data_net]
+
+services:
+  cassandra-dev:
+    <<: *cassandra-common
+    profiles: [dev-core, dev-async, demo]
+    container_name: ailss-cassandra-dev
+    hostname: cassandra
+    ports: ["127.0.0.1:9042:9042"]
+    mem_limit: 2560m
+    cpus: 1.50
+    volumes: [cassandra_dev_data:/var/lib/cassandra]
+    networks:
+      data_net: { aliases: [cassandra] }
+
+  cassandra-node1:
+    <<: *cassandra-common
+    profiles: [research]
+    container_name: ailss-cassandra-node1
+    hostname: cassandra-node1
+    environment:
+      <<: *cassandra-env
+      CASSANDRA_SEEDS: cassandra-node1
+      CASSANDRA_LISTEN_ADDRESS: cassandra-node1
+      CASSANDRA_BROADCAST_ADDRESS: cassandra-node1
+      AILSS_CASSANDRA_AUDIT: "true"
+    ports: ["127.0.0.1:9042:9042"]
+    mem_limit: 1792m
+    cpus: 1.00
+    volumes: [cassandra_node1_data:/var/lib/cassandra, cassandra_audit1:/var/log/cassandra/audit]
+    networks:
+      data_net: { aliases: [cassandra, cassandra-node1] }
+      ops_net: {}
+
+  cassandra-node2:
+    <<: *cassandra-common
+    profiles: [research]
+    container_name: ailss-cassandra-node2
+    hostname: cassandra-node2
+    environment:
+      <<: *cassandra-env
+      CASSANDRA_SEEDS: cassandra-node1
+      CASSANDRA_LISTEN_ADDRESS: cassandra-node2
+      CASSANDRA_BROADCAST_ADDRESS: cassandra-node2
+      AILSS_CASSANDRA_AUDIT: "true"
+    mem_limit: 1792m
+    cpus: 1.00
+    volumes: [cassandra_node2_data:/var/lib/cassandra, cassandra_audit2:/var/log/cassandra/audit]
+
+  cassandra-node3:
+    <<: *cassandra-common
+    profiles: [research]
+    container_name: ailss-cassandra-node3
+    hostname: cassandra-node3
+    environment:
+      <<: *cassandra-env
+      CASSANDRA_SEEDS: cassandra-node1
+      CASSANDRA_LISTEN_ADDRESS: cassandra-node3
+      CASSANDRA_BROADCAST_ADDRESS: cassandra-node3
+      AILSS_CASSANDRA_AUDIT: "true"
+    mem_limit: 1792m
+    cpus: 1.00
+    volumes: [cassandra_node3_data:/var/lib/cassandra, cassandra_audit3:/var/log/cassandra/audit]
+
+  rabbitmq:
+    image: ${RABBITMQ_IMAGE}
+    profiles: [dev-async, research, demo]
+    container_name: ailss-rabbitmq
+    hostname: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_ADMIN_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_ADMIN_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: /ailss
+    ports: ["127.0.0.1:5672:5672", "127.0.0.1:15672:15672"]
+    mem_limit: 768m
+    cpus: 0.75
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    volumes: [rabbitmq_data:/var/lib/rabbitmq]
+    networks: [data_net, ops_net]
+
+  minio:
+    image: ${MINIO_IMAGE}
+    profiles: [dev-async, research, demo]
+    container_name: ailss-minio
+    command: server /data --console-address :9001
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${OBJECT_STORAGE_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${OBJECT_STORAGE_SECRET_KEY}
+    ports: ["127.0.0.1:9000:9000", "127.0.0.1:9001:9001"]
+    mem_limit: 512m
+    cpus: 0.50
+    volumes: [minio_data:/data]
+    networks: [data_net, ops_net]
+
+  api-gateway:
+    <<: *app-common
+    profiles: [dev-core, dev-async, research, demo]
+    container_name: ailss-api-gateway
+    command: ["dist/apps/api-gateway/src/server.js"]
+    environment:
+      <<: *app-env
+      ENABLE_CASSANDRA: "false"
+      PORT: 8080
+      RATE_LIMIT_READ_PER_MINUTE: ${RATE_LIMIT_READ_PER_MINUTE:-300}
+      RATE_LIMIT_WRITE_PER_MINUTE: ${RATE_LIMIT_WRITE_PER_MINUTE:-60}
+      PASSWORD_CHANGE_HTTP_TIMEOUT_MS: ${PASSWORD_CHANGE_HTTP_TIMEOUT_MS:-20000}
+      IDENTITY_SERVICE_URL: http://identity-service:8101
+      LEARNING_SERVICE_URL: http://learning-service:8102
+      CLASSROOM_SERVICE_URL: http://classroom-service:8103
+      ASSESSMENT_SERVICE_URL: http://assessment-service:8104
+      INTERACTION_SERVICE_URL: http://interaction-service:8105
+      AI_SERVICE_URL: http://ai-service:8106
+      JWT_PUBLIC_KEY_PATH: /run/ailss/identity/user-jwt-public.pem
+      ACTOR_CONTEXT_PRIVATE_KEY_PATH: /run/ailss/services/gateway-private.pem
+      CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH: /run/ailss/services/classroom-public.pem
+    ports: ["127.0.0.1:8080:8080"]
+    mem_limit: 384m
+    cpus: 0.50
+    volumes:
+      - ./infrastructure/tls/generated/identity/user-jwt-public.pem:/run/ailss/identity/user-jwt-public.pem:ro
+      - ./infrastructure/tls/generated/services/gateway-private.pem:/run/ailss/services/gateway-private.pem:ro
+      - ./infrastructure/tls/generated/services/classroom-public.pem:/run/ailss/services/classroom-public.pem:ro
+    networks: [edge_net, service_net]
+
+  identity-service:
+    <<: *app-common
+    profiles: [dev-core, dev-async, research, demo]
+    container_name: ailss-identity-service
+    command: ["dist/apps/identity-service/src/server.js"]
+    environment:
+      <<: *app-env
+      PORT: 8101
+      CASSANDRA_KEYSPACE: identity_keyspace
+      CASSANDRA_USERNAME: svc_identity
+      CASSANDRA_PASSWORD: ${CASSANDRA_SVC_IDENTITY_PASSWORD}
+      JWT_PRIVATE_KEY_PATH: /run/ailss/identity/user-jwt-private.pem
+      JWT_PUBLIC_KEY_PATH: /run/ailss/identity/user-jwt-public.pem
+      ACTOR_CONTEXT_PUBLIC_KEY_PATH: /run/ailss/services/gateway-public.pem
+      ACCESS_TOKEN_TTL_SECONDS: ${ACCESS_TOKEN_TTL_SECONDS:-900}
+      REFRESH_TOKEN_TTL_SECONDS: ${REFRESH_TOKEN_TTL_SECONDS:-2592000}
+      PASSWORD_IDEMPOTENCY_HMAC_KEY: ${PASSWORD_IDEMPOTENCY_HMAC_KEY}
+      ADMIN_CURSOR_HMAC_KEY: ${PASSWORD_IDEMPOTENCY_HMAC_KEY}
+      SERVICE_TOKEN_PUBLIC_KEY_PATH: /run/ailss/services/learning-public.pem
+      CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH: /run/ailss/services/classroom-public.pem
+      CLASSROOM_SERVICE_TOKEN_KID: dev-classroom-2026-01
+      ASSESSMENT_SERVICE_TOKEN_PUBLIC_KEY_PATH: /run/ailss/services/assessment-public.pem
+      ASSESSMENT_SERVICE_TOKEN_KID: dev-assessment-2026-01
+      AI_SERVICE_TOKEN_PUBLIC_KEY_PATH: /run/ailss/services/ai-public.pem
+      AI_SERVICE_TOKEN_KID: dev-ai-2026-01
+      SERVICE_TOKEN_ISSUER: ${SERVICE_TOKEN_ISSUER:-ailss-internal}
+      SERVICE_TOKEN_AUDIENCE: identity-service
+      SERVICE_TOKEN_PURPOSE: ${SERVICE_TOKEN_PURPOSE:-identity.public-profile.read}
+      SERVICE_TOKEN_KID: ${SERVICE_TOKEN_KID:-dev-learning-2026-01}
+    ports: ["127.0.0.1:8101:8101"]
+    mem_limit: 384m
+    cpus: 0.35
+    volumes:
+      - ./infrastructure/tls/generated/identity/user-jwt-private.pem:/run/ailss/identity/user-jwt-private.pem:ro
+      - ./infrastructure/tls/generated/identity/user-jwt-public.pem:/run/ailss/identity/user-jwt-public.pem:ro
+      - ./infrastructure/tls/generated/services/gateway-public.pem:/run/ailss/services/gateway-public.pem:ro
+      - ./infrastructure/tls/generated/services/learning-public.pem:/run/ailss/services/learning-public.pem:ro
+      - ./infrastructure/tls/generated/services/classroom-public.pem:/run/ailss/services/classroom-public.pem:ro
+      - ./infrastructure/tls/generated/services/assessment-public.pem:/run/ailss/services/assessment-public.pem:ro
+      - ./infrastructure/tls/generated/services/ai-public.pem:/run/ailss/services/ai-public.pem:ro
+
+  learning-service:
+    <<: *app-common
+    profiles: [dev-async, research, demo]
+    container_name: ailss-learning-service
+    command: ["dist/apps/learning-service/src/server.js"]
+    environment:
+      {
+        <<: *app-env,
+        PORT: 8102,
+        CASSANDRA_KEYSPACE: learning_keyspace,
+        CASSANDRA_USERNAME: svc_learning,
+        CASSANDRA_PASSWORD: "${CASSANDRA_SVC_LEARNING_PASSWORD}",
+        IDENTITY_SERVICE_URL: "http://identity-service:8101",
+        SERVICE_TOKEN_PRIVATE_KEY_PATH: "/run/ailss/services/learning-private.pem",
+        CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/classroom-public.pem",
+        CLASSROOM_SERVICE_TOKEN_KID: "dev-classroom-2026-01",
+        ASSESSMENT_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/assessment-public.pem",
+        ASSESSMENT_SERVICE_TOKEN_KID: "dev-assessment-2026-01",
+        INTERACTION_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/interaction-public.pem",
+        INTERACTION_SERVICE_TOKEN_KID: "dev-interaction-2026-01",
+        SERVICE_TOKEN_ISSUER: "${SERVICE_TOKEN_ISSUER:-ailss-internal}",
+        SERVICE_TOKEN_AUDIENCE: "identity-service",
+        SERVICE_TOKEN_PURPOSE: "${SERVICE_TOKEN_PURPOSE:-identity.public-profile.read}",
+        SERVICE_TOKEN_KID: "${SERVICE_TOKEN_KID:-dev-learning-2026-01}",
+        SERVICE_TOKEN_TTL_SECONDS: "${SERVICE_TOKEN_TTL_SECONDS:-60}",
+        IDENTITY_PUBLIC_PROFILE_DEADLINE_MS: 500,
+        CLASSROOM_OFFERING_CONTEXT_DEADLINE_MS: 800,
+        CLASSROOM_SERVICE_URL: "http://classroom-service:8103",
+        LEARNING_CURSOR_HMAC_KEY: "${PASSWORD_IDEMPOTENCY_HMAC_KEY}",
+        ACTOR_CONTEXT_PUBLIC_KEY_PATH: "/run/ailss/services/gateway-public.pem",
+        JWT_PUBLIC_KEY_PATH: "/run/ailss/identity/user-jwt-public.pem",
+        ENABLE_RABBITMQ: "true",
+        RABBITMQ_URL: "amqp://rabbitmq:5672/%2Failss",
+        RABBITMQ_USERNAME: "mq_learning",
+        RABBITMQ_PASSWORD: "${RABBITMQ_MQ_LEARNING_PASSWORD}",
+        OBJECT_STORAGE_ENDPOINT: "minio",
+        OBJECT_STORAGE_PORT: 9000,
+        OBJECT_STORAGE_USE_SSL: "false",
+        OBJECT_STORAGE_BUCKET: "${OBJECT_STORAGE_BUCKET:-ailss-documents}",
+        OBJECT_STORAGE_ACCESS_KEY: "${OBJECT_STORAGE_ACCESS_KEY}",
+        OBJECT_STORAGE_SECRET_KEY: "${OBJECT_STORAGE_SECRET_KEY}",
+      }
+    ports: ["127.0.0.1:8102:8102"]
+    mem_limit: 384m
+    cpus: 0.35
+    volumes:
+      - ./infrastructure/tls/generated/services/learning-private.pem:/run/ailss/services/learning-private.pem:ro
+      - ./infrastructure/tls/generated/services/classroom-public.pem:/run/ailss/services/classroom-public.pem:ro
+      - ./infrastructure/tls/generated/services/assessment-public.pem:/run/ailss/services/assessment-public.pem:ro
+      - ./infrastructure/tls/generated/services/interaction-public.pem:/run/ailss/services/interaction-public.pem:ro
+      - ./infrastructure/tls/generated/services/gateway-public.pem:/run/ailss/services/gateway-public.pem:ro
+      - ./infrastructure/tls/generated/identity/user-jwt-public.pem:/run/ailss/identity/user-jwt-public.pem:ro
+
+  classroom-service:
+    <<: *app-common
+    profiles: [dev-async, research, demo]
+    container_name: ailss-classroom-service
+    command: ["dist/apps/classroom-service/src/server.js"]
+    environment:
+      {
+        <<: *app-env,
+        PORT: 8103,
+        CASSANDRA_KEYSPACE: classroom_keyspace,
+        CASSANDRA_USERNAME: svc_classroom,
+        CASSANDRA_PASSWORD: "${CASSANDRA_SVC_CLASSROOM_PASSWORD}",
+        IDENTITY_SERVICE_URL: "http://identity-service:8101",
+        LEARNING_SERVICE_URL: "http://learning-service:8102",
+        SERVICE_TOKEN_PRIVATE_KEY_PATH: "/run/ailss/services/classroom-private.pem",
+        CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/classroom-public.pem",
+        SERVICE_TOKEN_ISSUER: "${SERVICE_TOKEN_ISSUER:-ailss-internal}",
+        SERVICE_TOKEN_AUDIENCE: "identity-service",
+        SERVICE_TOKEN_PURPOSE: "${SERVICE_TOKEN_PURPOSE:-identity.public-profile.read}",
+        SERVICE_TOKEN_KID: "dev-classroom-2026-01",
+        CLASSROOM_SERVICE_TOKEN_KID: "dev-classroom-2026-01",
+        LEARNING_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/learning-public.pem",
+        LEARNING_SERVICE_TOKEN_KID: "dev-learning-2026-01",
+        ACTOR_CONTEXT_PUBLIC_KEY_PATH: "/run/ailss/services/gateway-public.pem",
+        PASSWORD_IDEMPOTENCY_HMAC_KEY: "${PASSWORD_IDEMPOTENCY_HMAC_KEY}",
+        ENABLE_RABBITMQ: "true",
+        RABBITMQ_URL: "amqp://rabbitmq:5672/%2Failss",
+        RABBITMQ_USERNAME: "mq_classroom",
+        RABBITMQ_PASSWORD: "${RABBITMQ_MQ_CLASSROOM_PASSWORD}",
+        ASSESSMENT_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/assessment-public.pem",
+        INTERACTION_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/interaction-public.pem",
+        AI_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/ai-public.pem",
+      }
+    ports: ["127.0.0.1:8103:8103"]
+    mem_limit: 384m
+    cpus: 0.35
+    volumes:
+      - ./infrastructure/tls/generated/services/classroom-private.pem:/run/ailss/services/classroom-private.pem:ro
+      - ./infrastructure/tls/generated/services/classroom-public.pem:/run/ailss/services/classroom-public.pem:ro
+      - ./infrastructure/tls/generated/services/gateway-public.pem:/run/ailss/services/gateway-public.pem:ro
+      - ./infrastructure/tls/generated/services/learning-public.pem:/run/ailss/services/learning-public.pem:ro
+      - ./infrastructure/tls/generated/services/assessment-public.pem:/run/ailss/services/assessment-public.pem:ro
+      - ./infrastructure/tls/generated/services/interaction-public.pem:/run/ailss/services/interaction-public.pem:ro
+      - ./infrastructure/tls/generated/services/ai-public.pem:/run/ailss/services/ai-public.pem:ro
+
+  assessment-service:
+    <<: *app-common
+    profiles: [dev-async, research, demo]
+    container_name: ailss-assessment-service
+    command: ["dist/apps/assessment-service/src/server.js"]
+    environment:
+      {
+        <<: *app-env,
+        PORT: 8104,
+        CASSANDRA_KEYSPACE: assessment_keyspace,
+        CASSANDRA_USERNAME: svc_assessment,
+        CASSANDRA_PASSWORD: "${CASSANDRA_SVC_ASSESSMENT_PASSWORD}",
+        IDENTITY_SERVICE_URL: "http://identity-service:8101",
+        LEARNING_SERVICE_URL: "http://learning-service:8102",
+        CLASSROOM_SERVICE_URL: "http://classroom-service:8103",
+        SERVICE_TOKEN_PRIVATE_KEY_PATH: "/run/ailss/services/assessment-private.pem",
+        SERVICE_TOKEN_ISSUER: "${SERVICE_TOKEN_ISSUER:-ailss-internal}",
+        SERVICE_TOKEN_KID: "dev-assessment-2026-01",
+        ASSESSMENT_SERVICE_TOKEN_KID: "dev-assessment-2026-01",
+        ACTOR_CONTEXT_PUBLIC_KEY_PATH: "/run/ailss/services/gateway-public.pem",
+        PASSWORD_IDEMPOTENCY_HMAC_KEY: "${PASSWORD_IDEMPOTENCY_HMAC_KEY}",
+      }
+    ports: ["127.0.0.1:8104:8104"]
+    mem_limit: 384m
+    cpus: 0.35
+    volumes:
+      - ./infrastructure/tls/generated/services/assessment-private.pem:/run/ailss/services/assessment-private.pem:ro
+      - ./infrastructure/tls/generated/services/gateway-public.pem:/run/ailss/services/gateway-public.pem:ro
+
+  interaction-service:
+    <<: *app-common
+    profiles: [dev-async, research, demo]
+    container_name: ailss-interaction-service
+    command: ["dist/apps/interaction-service/src/server.js"]
+    environment:
+      {
+        <<: *app-env,
+        PORT: 8105,
+        CASSANDRA_KEYSPACE: interaction_keyspace,
+        CASSANDRA_USERNAME: svc_interaction,
+        CASSANDRA_PASSWORD: "${CASSANDRA_SVC_INTERACTION_PASSWORD}",
+        LEARNING_SERVICE_URL: "http://learning-service:8102",
+        CLASSROOM_SERVICE_URL: "http://classroom-service:8103",
+        SERVICE_TOKEN_PRIVATE_KEY_PATH: "/run/ailss/services/interaction-private.pem",
+        INTERACTION_SERVICE_TOKEN_KID: "dev-interaction-2026-01",
+        ACTOR_CONTEXT_PUBLIC_KEY_PATH: "/run/ailss/services/gateway-public.pem",
+        JWT_PUBLIC_KEY_PATH: "/run/ailss/identity/user-jwt-public.pem",
+        PASSWORD_IDEMPOTENCY_HMAC_KEY: "${PASSWORD_IDEMPOTENCY_HMAC_KEY}",
+      }
+    ports: ["127.0.0.1:8105:8105"]
+    mem_limit: 384m
+    cpus: 0.35
+    volumes:
+      - ./infrastructure/tls/generated/services/interaction-private.pem:/run/ailss/services/interaction-private.pem:ro
+      - ./infrastructure/tls/generated/services/gateway-public.pem:/run/ailss/services/gateway-public.pem:ro
+      - ./infrastructure/tls/generated/identity/user-jwt-public.pem:/run/ailss/identity/user-jwt-public.pem:ro
+
+  ai-service:
+    <<: *app-common
+    profiles: [dev-async, research, demo]
+    container_name: ailss-ai-service
+    command: ["dist/apps/ai-service/src/server.js"]
+    environment:
+      {
+        <<: *app-env,
+        PORT: 8106,
+        CASSANDRA_KEYSPACE: ai_keyspace,
+        CASSANDRA_USERNAME: svc_ai,
+        CASSANDRA_PASSWORD: "${CASSANDRA_SVC_AI_PASSWORD}",
+        IDENTITY_SERVICE_URL: "http://identity-service:8101",
+        ACTOR_CONTEXT_PUBLIC_KEY_PATH: "/run/ailss/services/gateway-public.pem",
+        SERVICE_TOKEN_PRIVATE_KEY_PATH: "/run/ailss/services/ai-private.pem",
+        AI_SERVICE_TOKEN_KID: "dev-ai-2026-01",
+        PASSWORD_IDEMPOTENCY_HMAC_KEY: "${PASSWORD_IDEMPOTENCY_HMAC_KEY}",
+        AI_CURSOR_HMAC_KEY: "${PASSWORD_IDEMPOTENCY_HMAC_KEY}",
+        ENABLE_RABBITMQ: "true",
+        RABBITMQ_URL: "amqp://rabbitmq:5672/%2Failss",
+        RABBITMQ_USERNAME: "mq_ai_service",
+        RABBITMQ_PASSWORD: "${RABBITMQ_MQ_AI_SERVICE_PASSWORD}",
+        OBJECT_STORAGE_ENDPOINT: "minio",
+        OBJECT_STORAGE_PORT: 9000,
+        OBJECT_STORAGE_USE_SSL: "false",
+        OBJECT_STORAGE_BUCKET: "${OBJECT_STORAGE_BUCKET:-ailss-documents}",
+        OBJECT_STORAGE_ACCESS_KEY: "${OBJECT_STORAGE_ACCESS_KEY}",
+        OBJECT_STORAGE_SECRET_KEY: "${OBJECT_STORAGE_SECRET_KEY}",
+      }
+    ports: ["127.0.0.1:8106:8106"]
+    mem_limit: 512m
+    cpus: 0.50
+    volumes:
+      - ./infrastructure/tls/generated/services/gateway-public.pem:/run/ailss/services/gateway-public.pem:ro
+      - ./infrastructure/tls/generated/services/ai-private.pem:/run/ailss/services/ai-private.pem:ro
+
+  ai-worker:
+    <<: *app-common
+    profiles: [dev-async, research, demo]
+    container_name: ailss-ai-worker
+    command: ["dist/apps/ai-worker/src/server.js"]
+    environment:
+      {
+        <<: *app-env,
+        PORT: 8201,
+        CASSANDRA_KEYSPACE: ai_keyspace,
+        CASSANDRA_USERNAME: svc_ai,
+        CASSANDRA_PASSWORD: "${CASSANDRA_SVC_AI_PASSWORD}",
+        AI_PROVIDER_MODE: "${AI_PROVIDER_MODE:-deterministic-test}",
+        AI_PROVIDER_ENDPOINT: "${AI_PROVIDER_ENDPOINT:-https://api.openai.com/v1/chat/completions}",
+        AI_PROVIDER_MODEL: "${AI_PROVIDER_MODEL:-gpt-5-mini}",
+        AI_PROVIDER_API_KEY: "${AI_PROVIDER_API_KEY:-<INJECTED>}",
+        LEARNING_SERVICE_URL: "http://learning-service:8102",
+        CLASSROOM_SERVICE_URL: "http://classroom-service:8103",
+        SERVICE_TOKEN_PRIVATE_KEY_PATH: "/run/ailss/services/ai-private.pem",
+        AI_SERVICE_TOKEN_KID: "dev-ai-2026-01",
+        OBJECT_STORAGE_ENDPOINT: "minio",
+        OBJECT_STORAGE_PORT: 9000,
+        OBJECT_STORAGE_USE_SSL: "false",
+        OBJECT_STORAGE_BUCKET: "${OBJECT_STORAGE_BUCKET:-ailss-documents}",
+        OBJECT_STORAGE_ACCESS_KEY: "${OBJECT_STORAGE_ACCESS_KEY}",
+        OBJECT_STORAGE_SECRET_KEY: "${OBJECT_STORAGE_SECRET_KEY}",
+      }
+    ports: ["127.0.0.1:8201:8201"]
+    mem_limit: 512m
+    cpus: 0.50
+    volumes:
+      - ./infrastructure/tls/generated/services/ai-private.pem:/run/ailss/services/ai-private.pem:ro
+
+  document-worker:
+    <<: *app-common
+    profiles: [dev-async, research, demo]
+    container_name: ailss-document-worker
+    command: ["dist/apps/document-worker/src/server.js"]
+    environment:
+      {
+        <<: *app-env,
+        PORT: 8202,
+        CASSANDRA_KEYSPACE: ai_keyspace,
+        CASSANDRA_USERNAME: svc_ai,
+        CASSANDRA_PASSWORD: "${CASSANDRA_SVC_AI_PASSWORD}",
+        ENABLE_RABBITMQ: "true",
+        RABBITMQ_URL: "amqp://rabbitmq:5672/%2Failss",
+        RABBITMQ_USERNAME: "mq_document_worker",
+        RABBITMQ_PASSWORD: "${RABBITMQ_MQ_DOCUMENT_WORKER_PASSWORD}",
+        OBJECT_STORAGE_ENDPOINT: "minio",
+        OBJECT_STORAGE_PORT: 9000,
+        OBJECT_STORAGE_USE_SSL: "false",
+        OBJECT_STORAGE_BUCKET: "${OBJECT_STORAGE_BUCKET:-ailss-documents}",
+        OBJECT_STORAGE_ACCESS_KEY: "${OBJECT_STORAGE_ACCESS_KEY}",
+        OBJECT_STORAGE_SECRET_KEY: "${OBJECT_STORAGE_SECRET_KEY}",
+      }
+    ports: ["127.0.0.1:8202:8202"]
+    mem_limit: 384m
+    cpus: 0.40
+
+  notification-worker:
+    <<: *app-common
+    profiles: [dev-async, research, demo]
+    container_name: ailss-notification-worker
+    command: ["dist/apps/notification-worker/src/server.js"]
+    environment:
+      {
+        <<: *app-env,
+        PORT: 8203,
+        CASSANDRA_KEYSPACE: notification_keyspace,
+        CASSANDRA_USERNAME: svc_notification,
+        CASSANDRA_PASSWORD: "${CASSANDRA_SVC_NOTIFICATION_PASSWORD}",
+      }
+    ports: ["127.0.0.1:8203:8203"]
+    mem_limit: 256m
+    cpus: 0.25
+
+  audit-worker:
+    <<: *app-common
+    profiles: [dev-async, research, demo]
+    container_name: ailss-audit-worker
+    command: ["dist/apps/audit-worker/src/server.js"]
+    environment:
+      {
+        <<: *app-env,
+        PORT: 8204,
+        CASSANDRA_KEYSPACE: audit_support_keyspace,
+        CASSANDRA_USERNAME: svc_audit,
+        CASSANDRA_PASSWORD: "${CASSANDRA_SVC_AUDIT_PASSWORD}",
+      }
+    ports: ["127.0.0.1:8204:8204"]
+    mem_limit: 256m
+    cpus: 0.25
+
+  reconciliation-worker:
+    <<: *app-common
+    profiles: [dev-async, research, demo]
+    container_name: ailss-reconciliation-worker
+    command: ["dist/apps/reconciliation-worker/src/server.js"]
+    environment: { <<: *app-env, PORT: 8205, ENABLE_CASSANDRA: "false" }
+    ports: ["127.0.0.1:8205:8205"]
+    mem_limit: 256m
+    cpus: 0.25
+
+networks:
+  edge_net: { name: ailss_edge_net }
+  # Loopback-published management/API ports need one non-internal network on
+  # Docker Desktop. Application traffic still uses the isolated data_net.
+  ops_net: { name: ailss_ops_net }
+  service_net: { name: ailss_service_net, internal: true }
+  data_net: { name: ailss_data_net, internal: true }
+
+volumes:
+  cassandra_dev_data: {}
+  cassandra_node1_data: {}
+  cassandra_node2_data: {}
+  cassandra_node3_data: {}
+  cassandra_audit1: {}
+  cassandra_audit2: {}
+  cassandra_audit3: {}
+  rabbitmq_data: {}
+  minio_data: {}
+
+configs:
+  cassandra_configurator:
+    file: ./infrastructure/cassandra/configure-cassandra.py
+  cassandra_entrypoint:
+    file: ./infrastructure/cassandra/configure-cassandra.sh
