@@ -352,6 +352,20 @@ app.post(
   aiDocuments.complete,
 );
 app.get("/api/v1/ai/documents/:documentId", aiDocuments.read);
+app.post(
+  "/api/v1/ai/quiz-jobs",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  aiDocuments.quizCreate,
+);
+app.get("/api/v1/ai/jobs", aiDocuments.jobList);
+app.get("/api/v1/ai/jobs/:jobId", aiDocuments.jobRead);
+app.get("/api/v1/ai/jobs/:jobId/drafts", aiDocuments.draftList);
+app.post(
+  "/api/v1/ai/jobs/:jobId/cancel",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  aiDocuments.cancel,
+);
+app.get("/api/v1/ai/usage", aiDocuments.usage);
 app.get("/api/v1/admin/reports", interaction.reportList);
 app.post(
   "/api/v1/admin/reports/:reportId/moderate",

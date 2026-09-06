@@ -59,6 +59,7 @@ const baseSchema = z.object({
   ADMIN_CURSOR_HMAC_KEY: optionalInjected,
   LEARNING_CURSOR_HMAC_KEY: optionalInjected,
   AI_CURSOR_HMAC_KEY: optionalInjected,
+  AI_CURSOR_TTL_SECONDS: z.coerce.number().int().min(1).max(3600).default(900),
   AI_DAILY_QUIZ_QUOTA: z.coerce.number().int().min(1).max(10_000).default(200),
   AI_PROVIDER_ENDPOINT: z.string().url().default("https://api.openai.com/v1/chat/completions"),
   AI_PROVIDER_MODEL: z.string().min(1).max(200).default("gpt-5-mini"),

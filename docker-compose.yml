@@ -248,6 +248,8 @@ services:
         ASSESSMENT_SERVICE_TOKEN_KID: "dev-assessment-2026-01",
         INTERACTION_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/interaction-public.pem",
         INTERACTION_SERVICE_TOKEN_KID: "dev-interaction-2026-01",
+        AI_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/ai-public.pem",
+        AI_SERVICE_TOKEN_KID: "dev-ai-2026-01",
         SERVICE_TOKEN_ISSUER: "${SERVICE_TOKEN_ISSUER:-ailss-internal}",
         SERVICE_TOKEN_AUDIENCE: "identity-service",
         SERVICE_TOKEN_PURPOSE: "${SERVICE_TOKEN_PURPOSE:-identity.public-profile.read}",
@@ -278,6 +280,7 @@ services:
       - ./infrastructure/tls/generated/services/classroom-public.pem:/run/ailss/services/classroom-public.pem:ro
       - ./infrastructure/tls/generated/services/assessment-public.pem:/run/ailss/services/assessment-public.pem:ro
       - ./infrastructure/tls/generated/services/interaction-public.pem:/run/ailss/services/interaction-public.pem:ro
+      - ./infrastructure/tls/generated/services/ai-public.pem:/run/ailss/services/ai-public.pem:ro
       - ./infrastructure/tls/generated/services/gateway-public.pem:/run/ailss/services/gateway-public.pem:ro
       - ./infrastructure/tls/generated/identity/user-jwt-public.pem:/run/ailss/identity/user-jwt-public.pem:ro
 
@@ -396,11 +399,14 @@ services:
         CASSANDRA_USERNAME: svc_ai,
         CASSANDRA_PASSWORD: "${CASSANDRA_SVC_AI_PASSWORD}",
         IDENTITY_SERVICE_URL: "http://identity-service:8101",
+        LEARNING_SERVICE_URL: "http://learning-service:8102",
+        CLASSROOM_SERVICE_URL: "http://classroom-service:8103",
         ACTOR_CONTEXT_PUBLIC_KEY_PATH: "/run/ailss/services/gateway-public.pem",
         SERVICE_TOKEN_PRIVATE_KEY_PATH: "/run/ailss/services/ai-private.pem",
         AI_SERVICE_TOKEN_KID: "dev-ai-2026-01",
         PASSWORD_IDEMPOTENCY_HMAC_KEY: "${PASSWORD_IDEMPOTENCY_HMAC_KEY}",
         AI_CURSOR_HMAC_KEY: "${PASSWORD_IDEMPOTENCY_HMAC_KEY}",
+        AI_CURSOR_TTL_SECONDS: "${AI_CURSOR_TTL_SECONDS:-900}",
         ENABLE_RABBITMQ: "true",
         RABBITMQ_URL: "amqp://rabbitmq:5672/%2Failss",
         RABBITMQ_USERNAME: "mq_ai_service",

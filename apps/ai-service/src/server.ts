@@ -89,6 +89,7 @@ await startService(manifest, {
       config.PASSWORD_IDEMPOTENCY_HMAC_KEY,
       config.AI_DAILY_QUIZ_QUOTA,
       config.AI_CURSOR_HMAC_KEY,
+      config.AI_CURSOR_TTL_SECONDS,
     );
     app.use(
       aiQuizRouter(quizService, (token) =>

@@ -9,9 +9,17 @@ import {
 } from "../../../packages/security/src/index.js";
 import { parseBearerAuthorization } from "./protected-identity-proxy.js";
 
-export async function aiDocumentProxyFactory(
-  c: AppConfig,
-): Promise<{ intent: RequestHandler; complete: RequestHandler; read: RequestHandler }> {
+export async function aiDocumentProxyFactory(c: AppConfig): Promise<{
+  intent: RequestHandler;
+  complete: RequestHandler;
+  read: RequestHandler;
+  quizCreate: RequestHandler;
+  jobRead: RequestHandler;
+  jobList: RequestHandler;
+  draftList: RequestHandler;
+  cancel: RequestHandler;
+  usage: RequestHandler;
+}> {
   if (!c.JWT_PUBLIC_KEY_PATH || !c.ACTOR_CONTEXT_PRIVATE_KEY_PATH)
     throw new Error("AI document proxy requires keys");
   const [jwt, key] = await Promise.all([
@@ -82,5 +90,16 @@ export async function aiDocumentProxyFactory(
       (r) => `/api/v1/ai/documents/${encodeURIComponent(String(r.params.documentId))}/complete`,
     ),
     read: handler("GET", (r) => `/api/v1/ai/documents/${encodeURIComponent(String(r.params.documentId))}`),
+    quizCreate: handler("POST", () => "/api/v1/ai/quiz-jobs"),
+    jobRead: handler("GET", (r) => `/api/v1/ai/jobs/${encodeURIComponent(String(r.params.jobId))}`),
+    jobList: handler("GET", (r) => `/api/v1/ai/jobs${query(r)}`),
+    draftList: handler("GET", (r) => `/api/v1/ai/jobs/${encodeURIComponent(String(r.params.jobId))}/drafts`),
+    cancel: handler("POST", (r) => `/api/v1/ai/jobs/${encodeURIComponent(String(r.params.jobId))}/cancel`),
+    usage: handler("GET", () => "/api/v1/ai/usage"),
   };
+}
+
+function query(request: Request): string {
+  const index = request.originalUrl.indexOf("?");
+  return index < 0 ? "" : request.originalUrl.slice(index);
 }

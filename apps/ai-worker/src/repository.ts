@@ -65,7 +65,40 @@ export class QuizWorkerRepository {
       "LOCAL_QUORUM",
       "LOCAL_SERIAL",
     );
+    if (r[0]?.["[applied]"] === true) await this.syncProjection(j.jobId);
     return r[0]?.["[applied]"] === true;
+  }
+  async syncProjection(jobId: string) {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const j = await this.job(jobId);
+      if (!j) return;
+      const month = types.LocalDate.fromString(j.createdAt.toISOString().slice(0, 7) + "-01");
+      await this.db.execute(
+        "INSERT INTO ai_jobs_by_lecturer_bucket (lecturer_id,state,year_month,created_at,job_id,target_type,target_id,job_version) VALUES (?,?,?,?,?,?,?,?)",
+        [
+          uuid(j.lecturerId),
+          j.state,
+          month,
+          j.createdAt,
+          uuid(j.jobId),
+          j.targetType,
+          uuid(j.targetId),
+          long(j.version),
+        ],
+        "LOCAL_QUORUM",
+      );
+      for (const state of ["QUEUED", "PROCESSING", "VALIDATING", "AI_DRAFT", "FAILED", "CANCELLED"]) {
+        if (state === j.state) continue;
+        await this.db.execute(
+          "DELETE FROM ai_jobs_by_lecturer_bucket WHERE lecturer_id=? AND state=? AND year_month=? AND created_at=? AND job_id=?",
+          [uuid(j.lecturerId), state, month, j.createdAt, uuid(j.jobId)],
+          "LOCAL_QUORUM",
+        );
+      }
+      const latest = await this.job(jobId);
+      if (latest?.version === j.version) return;
+    }
+    throw new Error("PROJECTION_CONTENTION");
   }
   async acquire(
     operationId: string,
@@ -177,6 +210,7 @@ export class QuizWorkerRepository {
       "LOCAL_QUORUM",
       "LOCAL_SERIAL",
     );
+    if (r[0]?.["[applied]"] === true) await this.syncProjection(j.jobId);
     return r[0]?.["[applied]"] === true;
   }
   async finalizeUsage(
@@ -288,7 +322,8 @@ export class QuizWorkerRepository {
       "LOCAL_QUORUM",
       "LOCAL_SERIAL",
     );
-    if (r[0]?.["[applied]"] === true)
+    if (r[0]?.["[applied]"] === true) {
+      await this.syncProjection(j.jobId);
       await this.prepare(
         {
           specVersion: "1.0",
@@ -302,5 +337,6 @@ export class QuizWorkerRepository {
         },
         now,
       );
+    }
   }
 }

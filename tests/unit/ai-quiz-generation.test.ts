@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { validateObjectiveQuiz } from "../../apps/ai-worker/src/objective-v1.js";
 import { HttpQuizProvider } from "../../apps/ai-worker/src/provider.js";
+import { decodeCursor, encodeCursor } from "../../apps/ai-service/src/quiz/model.js";
 const valid = {
   schemaVersion: "objective-v1",
   title: "Quiz",
@@ -75,5 +76,29 @@ describe("P10.2 objective-v1 boundary", () => {
       }),
     ).resolves.toMatchObject({ inputUnits: 3, outputUnits: 4 });
     expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({ "idempotency-key": "stable-op" });
+  });
+});
+
+describe("P10.2 opaque cursor", () => {
+  it("rejects noncanonical base64url aliases even when they decode to identical bytes", () => {
+    const cursor = encodeCursor("cursor-secret", { pageState: "xx" });
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    const last = alphabet.indexOf(cursor.slice(-1));
+    const alias = `${cursor.slice(0, -1)}${alphabet.charAt(last + 1)}`;
+    expect(Buffer.from(alias, "base64url")).toEqual(Buffer.from(cursor, "base64url"));
+    expect(() => decodeCursor("cursor-secret", alias)).toThrow("INVALID_CURSOR");
+  });
+  it("round-trips without exposing Cassandra paging state", () => {
+    const value = { owner: "lecturer", pageState: "raw-secret-cassandra-state", exp: 42 },
+      cursor = encodeCursor("cursor-secret", value);
+    expect(cursor).not.toContain("raw-secret-cassandra-state");
+    expect(Buffer.from(cursor, "base64url").toString("utf8")).not.toContain("raw-secret-cassandra-state");
+    expect(decodeCursor("cursor-secret", cursor)).toEqual(value);
+  });
+  it("rejects tampering and a wrong key", () => {
+    const cursor = encodeCursor("cursor-secret", { pageState: "state" }),
+      tampered = `${cursor.slice(0, -1)}${cursor.endsWith("A") ? "B" : "A"}`;
+    expect(() => decodeCursor("cursor-secret", tampered)).toThrow("INVALID_CURSOR");
+    expect(() => decodeCursor("other-secret", cursor)).toThrow("INVALID_CURSOR");
   });
 });

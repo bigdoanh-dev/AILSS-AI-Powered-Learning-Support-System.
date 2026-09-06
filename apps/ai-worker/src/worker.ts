@@ -43,7 +43,10 @@ export class QuizGenerationWorker {
     if (!job) return { kind: "dead-letter", reason: "JOB_NOT_FOUND" };
     if (job.operationId !== d.operationId || job.documentId !== d.documentId)
       return { kind: "dead-letter", reason: "OPERATION_BINDING_MISMATCH" };
-    if (["AI_DRAFT", "FAILED", "CANCELLED"].includes(job.state)) return { kind: "ack" };
+    if (["AI_DRAFT", "FAILED", "CANCELLED"].includes(job.state)) {
+      await this.repo.syncProjection(job.jobId);
+      return { kind: "ack" };
+    }
     const source = await this.repo.source(d.documentId);
     if (!source || source.ownerId !== job.lecturerId || source.status !== "EXTRACTED" || !source.key)
       return { kind: "dead-letter", reason: "SOURCE_NOT_EXTRACTED" };
@@ -121,16 +124,21 @@ export class QuizGenerationWorker {
       return { kind: "ack" };
     }
     job = (await this.repo.job(job.jobId))!;
-    if (job.state === "CANCELLED") return { kind: "ack" };
+    if (job.state === "CANCELLED") {
+      await this.repo.finalizeUsage(job, result, new Date());
+      return { kind: "ack" };
+    }
     if (job.state === "PROCESSING") {
       if (!(await this.repo.transition(job, "VALIDATING", new Date())))
         return { kind: "retry", reason: "VALIDATING_CONTENTION" };
       job = (await this.repo.job(job.jobId))!;
     }
+    if (result.provider === "deterministic-test") await new Promise((resolve) => setTimeout(resolve, 250));
     let quiz;
     try {
       quiz = validateObjectiveQuiz(result.quiz, { count: d.questionCount, types: d.questionTypes });
     } catch {
+      await this.repo.finalizeUsage(job, result, new Date());
       await this.repo.fail(
         job,
         "OBJECTIVE_V1_INVALID",

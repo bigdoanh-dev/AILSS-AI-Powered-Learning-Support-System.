@@ -64,6 +64,7 @@
     "acceptance:p9.2": "node scripts/acceptance/phase-9-2-reviews.mjs",
     "acceptance:p9.3": "node scripts/acceptance/phase-9-3-moderation.mjs",
     "acceptance:p10.1": "node scripts/acceptance/phase-10-1-documents.mjs",
+    "acceptance:p10.2": "node scripts/acceptance/phase-10-2-ai-quiz.mjs",
     "evidence": "node scripts/research/collect-evidence.mjs",
     "research:cassandra:stop-node": "node scripts/research/cassandra-node.mjs stop",
     "research:cassandra:start-node": "node scripts/research/cassandra-node.mjs start",

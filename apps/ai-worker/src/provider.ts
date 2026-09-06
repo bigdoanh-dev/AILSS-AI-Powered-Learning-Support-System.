@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/require-await, @typescript-eslint/restrict-template-expressions */
+/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/restrict-template-expressions */
 import { z } from "zod";
 export interface ProviderRequest {
   idempotencyKey: string;
@@ -98,6 +98,16 @@ export class HttpQuizProvider implements QuizProvider {
 }
 export class DeterministicQuizProvider implements QuizProvider {
   async generate(r: ProviderRequest): Promise<ProviderResult> {
+    const pause = /\[TEST_PAUSE_PROVIDER_MS=(\d{1,5})\]/u.exec(r.sourceText)?.[1];
+    if (pause) await new Promise((resolve) => setTimeout(resolve, Math.min(Number(pause), 10_000)));
+    if (r.sourceText.includes("[TEST_INVALID_PROVIDER]"))
+      return {
+        quiz: { schemaVersion: "objective-v1", title: "Invalid test fixture", questions: [] },
+        inputUnits: r.sourceText.length,
+        outputUnits: 0,
+        provider: "deterministic-test",
+        model: "objective-v1-invalid-fixture",
+      };
     const questions = Array.from({ length: r.questionCount }, (_, i) => {
       const type = r.questionTypes[i % r.questionTypes.length]!;
       const base = { id: `q${i + 1}`, order: i + 1, text: `Deterministic question ${i + 1}`, points: "1.00" };

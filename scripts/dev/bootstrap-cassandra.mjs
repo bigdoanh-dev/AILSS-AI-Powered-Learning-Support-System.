@@ -58,6 +58,7 @@ const files = [
   "053_interaction_moderation.cql",
   "060_ai_schema.cql",
   "061_ai_document_extraction.cql",
+  "062_ai_quiz_generation.cql",
   "070_notification_schema.cql",
   "075_audit_support_schema.cql",
 ];

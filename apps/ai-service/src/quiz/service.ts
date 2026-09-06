@@ -27,6 +27,7 @@ export class AiQuizService {
     private readonly secret: string,
     private readonly dailyQuota: number,
     private readonly cursorSecret: string,
+    private readonly cursorTtlSeconds: number,
   ) {}
   private async lecturer(actor: ActorContext, correlationId: string) {
     if (!actor.roles.includes("LECTURER"))
@@ -177,7 +178,7 @@ export class AiQuizService {
               state,
               month,
               pageState: page.pageState,
-              exp: Date.now() + 900000,
+              exp: Date.now() + this.cursorTtlSeconds * 1000,
             }),
           }
         : {}),

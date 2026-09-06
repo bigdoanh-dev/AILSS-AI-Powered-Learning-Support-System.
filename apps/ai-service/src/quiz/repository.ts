@@ -139,7 +139,7 @@ export class AiQuizRepository {
   }
   async drafts(jobId: string) {
     return this.db.execute(
-      "SELECT draft_id,draft_version,validation_status,draft_object_key,question_count,state,created_at FROM ai_draft_by_job WHERE job_id=? LIMIT 20",
+      "SELECT draft_id,draft_version,validation_status,draft_object_key,draft_checksum,question_count,state,created_at FROM ai_draft_by_job WHERE job_id=? LIMIT 20",
       [uuid(jobId)],
       "LOCAL_QUORUM",
     );

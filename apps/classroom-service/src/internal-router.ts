@@ -128,7 +128,7 @@ export function classroomInternalRouter(
     });
   route("/internal/v1/classes/:id/quiz-eligibility", verifiers.quiz, false, true);
   route("/internal/v1/classes/:id/interaction-eligibility", verifiers.interaction);
-  route("/internal/v1/classes/:id/ai-context", verifiers.ai, true);
+  route("/internal/v1/classes/:id/ai-context", verifiers.ai, true, true);
   router.get("/internal/v1/classes/:id/offering-context", async (request, response, next) => {
     try {
       const context = currentRequestContext();

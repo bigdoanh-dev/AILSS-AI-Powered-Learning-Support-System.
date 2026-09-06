@@ -62,7 +62,10 @@ export class AiDocumentRelay {
             try {
               this.publisher ??= await RabbitPublisher.connect(this.url);
               const event = eventEnvelopeSchema.parse(JSON.parse(String(r.payload_json)));
-              await this.publisher.publish("ailss.ai.jobs", event.eventType, event);
+              const exchange = ["ai.document.extract.v1", "ai.quiz.generate.v1"].includes(event.eventType)
+                ? "ailss.ai.jobs"
+                : "ailss.domain.events";
+              await this.publisher.publish(exchange, event.eventType, event);
               await this.db.execute(
                 "UPDATE pending_event_by_id SET state='PUBLISHED',published_at=? WHERE event_id=? IF state='PUBLISHING' AND lease_fence=?",
                 [new Date(), r.event_id, types.Long.fromNumber(fence)],

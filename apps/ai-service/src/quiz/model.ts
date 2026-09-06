@@ -1,4 +1,4 @@
-import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from "node:crypto";
 import { z } from "zod";
 
 const questionType = z.enum(["SINGLE_CHOICE", "MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"]);
@@ -63,16 +63,27 @@ export const jobDto = (j: QuizJob) => ({
   updatedAt: j.updatedAt.toISOString(),
 });
 export function encodeCursor(secret: string, value: object) {
-  const body = Buffer.from(JSON.stringify(value)).toString("base64url"),
-    sig = createHmac("sha256", secret).update(body).digest("base64url");
-  return `${body}.${sig}`;
+  const nonce = randomBytes(12),
+    cipher = createCipheriv("aes-256-gcm", createHash("sha256").update(secret).digest(), nonce),
+    ciphertext = Buffer.concat([cipher.update(JSON.stringify(value), "utf8"), cipher.final()]),
+    tag = cipher.getAuthTag();
+  return Buffer.concat([nonce, tag, ciphertext]).toString("base64url");
 }
 export function decodeCursor(secret: string, value: string) {
-  const [body, sig, ...rest] = value.split(".");
-  if (!body || !sig || rest.length) throw new Error("INVALID_CURSOR");
-  const expected = createHmac("sha256", secret).update(body).digest(),
-    actual = Buffer.from(sig, "base64url");
-  if (actual.length !== expected.length || !timingSafeEqual(actual, expected))
+  try {
+    if (!/^[A-Za-z0-9_-]+$/u.test(value)) throw new Error();
+    const packed = Buffer.from(value, "base64url");
+    if (packed.length < 29 || packed.toString("base64url") !== value) throw new Error();
+    const decipher = createDecipheriv(
+      "aes-256-gcm",
+      createHash("sha256").update(secret).digest(),
+      packed.subarray(0, 12),
+    );
+    decipher.setAuthTag(packed.subarray(12, 28));
+    return JSON.parse(
+      Buffer.concat([decipher.update(packed.subarray(28)), decipher.final()]).toString("utf8"),
+    ) as unknown;
+  } catch {
     throw new Error("INVALID_CURSOR");
-  return JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as unknown;
+  }
 }
