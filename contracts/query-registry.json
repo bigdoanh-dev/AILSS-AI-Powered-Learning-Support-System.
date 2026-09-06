@@ -9,6 +9,7 @@
       "tables": ["ai_job_by_id"],
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
+      "contractNotes": "AI-05 conditionally transitions AI_DRAFT to APPROVED only after durable Assessment DRAFT linkage.",
       "apiConsumers": ["AI-01", "AI-02", "AI-05", "AI-06", "AI-08"]
     },
     {
@@ -27,6 +28,7 @@
       "tables": ["ai_draft_by_job"],
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
+      "contractNotes": "AI-05 preserves immutable generated v1 and approved reviewed v2 metadata/checksum plus stable Assessment linkage; versions above 2 are not supported in P10.3.",
       "apiConsumers": ["AI-04", "AI-05"]
     },
     {
@@ -60,6 +62,7 @@
       ],
       "operation": "R/W worker",
       "candidateConsistency": "LOCAL_QUORUM",
+      "contractNotes": "AI-05 owns approval command fingerprint, stable UUIDv5 import identity, recovery state/version and original historical public response.",
       "apiConsumers": ["AI-01", "AI-05", "AI-06", "AI-08"]
     },
     {
@@ -69,7 +72,7 @@
       "tables": ["provider_operation_by_id"],
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["AI-01", "AI-05"]
+      "apiConsumers": ["AI-01"]
     },
     {
       "queryId": "Q-ASMT-001",
@@ -78,7 +81,8 @@
       "tables": ["quiz_by_id"],
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["ASM-01", "ASM-02", "ASM-03", "ASM-04", "ASM-05", "ASM-06", "ASM-10"]
+      "contractNotes": "INT-ASMT-01 creates or recovers the server-owned DRAFT Quiz at currentVersion=1.",
+      "apiConsumers": ["ASM-01", "ASM-02", "ASM-03", "ASM-04", "ASM-05", "ASM-06", "ASM-10", "INT-ASMT-01"]
     },
     {
       "queryId": "Q-ASMT-002",
@@ -87,7 +91,8 @@
       "tables": ["questions_by_quiz_version"],
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["ASM-01", "ASM-02", "ASM-03", "ASM-04", "ASM-06"]
+      "contractNotes": "INT-ASMT-01 materializes the immutable version-1 question snapshot using the stable importOperationId.",
+      "apiConsumers": ["ASM-01", "ASM-02", "ASM-03", "ASM-04", "ASM-06", "INT-ASMT-01"]
     },
     {
       "queryId": "Q-ASMT-003",
@@ -132,7 +137,8 @@
       "tables": ["quizzes_by_target_state", "quizzes_by_target_state_v2"],
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["ASM-01", "ASM-04", "ASM-05"]
+      "contractNotes": "INT-ASMT-01 writes only the DRAFT target/state projection.",
+      "apiConsumers": ["ASM-01", "ASM-04", "ASM-05", "INT-ASMT-01"]
     },
     {
       "queryId": "Q-ASMT-008",
@@ -141,7 +147,8 @@
       "tables": ["pending_event_by_id", "pending_events_by_due_bucket", "idempotency_by_scope_key"],
       "operation": "R/W worker",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["ASM-01", "ASM-03", "ASM-04", "ASM-06", "ASM-08"]
+      "contractNotes": "INT-ASMT-01 permanently maps (draftId, approvedDraftVersion) and deterministic importOperationId to the original Quiz DRAFT response for lost-response recovery.",
+      "apiConsumers": ["ASM-01", "ASM-03", "ASM-04", "ASM-06", "ASM-08", "INT-ASMT-01"]
     },
     {
       "queryId": "Q-CLS-001",

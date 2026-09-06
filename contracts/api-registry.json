@@ -995,7 +995,7 @@
       "summary": "Duyệt bản nháp",
       "auth": "Bearer",
       "roles": "owner lecturer",
-      "queryIds": ["Q-AI-001", "Q-AI-003", "Q-AI-006", "Q-AI-007"],
+      "queryIds": ["Q-AI-001", "Q-AI-003", "Q-AI-006"],
       "event": null
     },
     {
@@ -1206,7 +1206,11 @@
       "method": "POST",
       "path": "/internal/v1/ai-drafts/{id}/import",
       "deadline": "2 s",
-      "failure": "idempotent/fail-closed"
+      "failure": "idempotent/fail-closed",
+      "auth": "Ed25519 Service JWS + signed Actor Context",
+      "purpose": "assessment.ai-draft.import",
+      "queryIds": ["Q-ASMT-001", "Q-ASMT-002", "Q-ASMT-007", "Q-ASMT-008"],
+      "event": null
     },
     {
       "id": "INT-IDN-01",

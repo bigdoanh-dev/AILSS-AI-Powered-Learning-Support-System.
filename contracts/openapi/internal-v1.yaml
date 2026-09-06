@@ -170,13 +170,74 @@
           "post":
             {
               "operationId": "INT-ASMT-01",
-              "summary": "AI to Assessment internal contract",
+              "x-contract-status": "CONTRACT_DEFINED_RUNTIME_NOT_IMPLEMENTED",
+              "x-deadline-ms": 2000,
+              "x-service-auth":
+                {
+                  "algorithm": "EdDSA",
+                  "subject": "ai-service",
+                  "audience": "assessment-service",
+                  "purpose": "assessment.ai-draft.import",
+                  "kid": "registered-current-ai-service-key",
+                  "jtiRequired": true,
+                  "maximumTtl": "existing-service-token-maximum",
+                },
+              "x-import-identity":
+                {
+                  "businessKey": ["path.draftId", "body.approvedDraftVersion"],
+                  "algorithm": "UUIDv5",
+                  "namespace": "d2c62169-6dd9-5a04-b04d-39f739f7c51a",
+                  "name": "{draftId}:2",
+                  "headerEqualsBody": "Idempotency-Key == importOperationId",
+                  "same-request": "return-original-quiz-result",
+                  "different-request": "409 IDEMPOTENCY_CONFLICT",
+                },
+              "summary": "Import one approved AI draft version into an Assessment DRAFT",
+              "description": "Only ai-service may call with Ed25519 Service JWS (aud assessment-service, purpose assessment.ai-draft.import) and a Gateway-signed Actor Context for ownerLecturerId. Idempotency-Key must exactly equal body importOperationId. Assessment independently revalidates Lecturer, target/version and objective-v1. Emits no event.",
+              "parameters":
+                [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                  {
+                    "name": "Idempotency-Key",
+                    "in": "header",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                ],
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        { "schema": { "$ref": "#/components/schemas/AiDraftImportRequest" } },
+                    },
+                },
               "responses":
                 {
-                  "200": { "description": "Contract success response" },
-                  "501": { "description": "Foundation placeholder until Phase 7" },
+                  "200":
+                    {
+                      "description": "Stable imported Assessment DRAFT result",
+                      "content":
+                        {
+                          "application/json":
+                            { "schema": { "$ref": "#/components/schemas/AiDraftImportResponse" } },
+                        },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                  "409": { "$ref": "#/components/responses/ErrorResponse" },
+                  "422": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
                 },
-              "security": [{ "bearerAuth": [] }],
+              "security": [{ "serviceAuth": [], "actorContextAuth": [] }],
             },
         },
       "/internal/v1/users/{id}/public-profile":
@@ -458,6 +519,59 @@
         },
       "schemas":
         {
+          "ObjectiveQuizDraft": { "$ref": "../schemas/objective-v1.schema.json" },
+          "AiDraftImportRequest":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required":
+                [
+                  "importOperationId",
+                  "approvedDraftVersion",
+                  "approvedDraftChecksum",
+                  "jobId",
+                  "targetType",
+                  "targetId",
+                  "targetVersion",
+                  "ownerLecturerId",
+                  "quiz",
+                ],
+              "properties":
+                {
+                  "importOperationId": { "type": "string", "format": "uuid" },
+                  "approvedDraftVersion": { "const": 2 },
+                  "approvedDraftChecksum": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "jobId": { "type": "string", "format": "uuid" },
+                  "targetType": { "type": "string", "enum": ["COURSE", "CLASS"] },
+                  "targetId": { "type": "string", "format": "uuid" },
+                  "targetVersion": { "type": "integer", "minimum": 1 },
+                  "ownerLecturerId": { "type": "string", "format": "uuid" },
+                  "quiz": { "$ref": "#/components/schemas/ObjectiveQuizDraft" },
+                },
+            },
+          "AiDraftImportResponse":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["data"],
+              "properties":
+                {
+                  "data":
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["draftId", "approvedDraftVersion", "quizId", "quizVersion", "status"],
+                      "properties":
+                        {
+                          "draftId": { "type": "string", "format": "uuid" },
+                          "approvedDraftVersion": { "const": 2 },
+                          "quizId": { "type": "string", "format": "uuid" },
+                          "quizVersion": { "const": 1 },
+                          "status": { "const": "DRAFT" },
+                        },
+                    },
+                },
+            },
           "ScheduleReservationRequest":
             {
               "type": "object",

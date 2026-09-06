@@ -2505,11 +2505,89 @@
           "post":
             {
               "operationId": "AI-05",
-              "summary": "Duyệt bản nháp",
+              "x-contract-status": "CONTRACT_DEFINED_RUNTIME_NOT_IMPLEMENTED",
+              "x-idempotency":
+                {
+                  "scope": "AI-05:{actorId}:{draftId}",
+                  "fingerprint": ["actorId", "draftId", "generatedDraftVersion", "canonicalReviewedDraft"],
+                  "same-key-same-fingerprint": "return-original-response",
+                  "same-key-different-fingerprint": "409 IDEMPOTENCY_CONFLICT",
+                },
+              "x-approval-operation":
+                {
+                  "generatedDraftVersion": 1,
+                  "approvedDraftVersion": 2,
+                  "approvedSnapshotImmutable": true,
+                  "versionsAboveTwoAllowed": false,
+                  "importOperationId":
+                    {
+                      "algorithm": "UUIDv5",
+                      "namespace": "d2c62169-6dd9-5a04-b04d-39f739f7c51a",
+                      "name": "{draftId}:2",
+                    },
+                  "stateOrdering":
+                    [
+                      "reserve-approval-command",
+                      "verify-generated-v1-and-checksum",
+                      "validate-reviewed-objective-v1",
+                      "store-immutable-approved-v2",
+                      "revalidate-current-target",
+                      "import-or-recover-assessment-draft",
+                      "persist-ai-assessment-linkage",
+                      "lwt-ai-draft-to-approved",
+                      "persist-original-public-response",
+                    ],
+                },
+              "summary": "Submit a reviewed objective-v1 draft and approve it after Assessment DRAFT import",
+              "description": "Reviewed-edit and approval are one command. Generated version 1 remains immutable; every successful initial approval creates immutable reviewed version 2. APPROVED is committed only after the Assessment DRAFT import and AI linkage are durably known. Emits no event.",
+              "parameters":
+                [
+                  {
+                    "name": "draftId",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                  {
+                    "name": "Idempotency-Key",
+                    "in": "header",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                  {
+                    "name": "If-Match",
+                    "in": "header",
+                    "required": true,
+                    "schema": { "type": "string", "const": '"v1"' },
+                  },
+                ],
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        { "schema": { "$ref": "#/components/schemas/AiDraftApprovalRequest" } },
+                    },
+                },
               "responses":
                 {
-                  "200": { "description": "Contract success response" },
-                  "501": { "description": "Foundation placeholder until Phase 7" },
+                  "200":
+                    {
+                      "description": "Historical or newly completed approval/import result",
+                      "content":
+                        {
+                          "application/json":
+                            { "schema": { "$ref": "#/components/schemas/AiDraftApprovalResponse" } },
+                        },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                  "409": { "$ref": "#/components/responses/ErrorResponse" },
+                  "422": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
                 },
               "security": [{ "bearerAuth": [] }],
             },
@@ -3390,7 +3468,7 @@
           "AiJobState":
             {
               "type": "string",
-              "enum": ["QUEUED", "PROCESSING", "VALIDATING", "AI_DRAFT", "FAILED", "CANCELLED"],
+              "enum": ["QUEUED", "PROCESSING", "VALIDATING", "AI_DRAFT", "FAILED", "APPROVED", "CANCELLED"],
             },
           "AiQuizJobCreateRequest":
             {
@@ -3456,6 +3534,49 @@
               "required": ["data", "meta"],
               "properties":
                 { "data": { "$ref": "#/components/schemas/AiJob" }, "meta": { "type": "object" } },
+            },
+          "ObjectiveQuizDraft": { "$ref": "../schemas/objective-v1.schema.json" },
+          "AiDraftApprovalRequest":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["reviewedDraft"],
+              "properties": { "reviewedDraft": { "$ref": "#/components/schemas/ObjectiveQuizDraft" } },
+            },
+          "AiDraftApprovalResponse":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["data", "meta"],
+              "properties":
+                {
+                  "data":
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["jobId", "draftId", "state", "approvedDraftVersion", "assessment"],
+                      "properties":
+                        {
+                          "jobId": { "type": "string", "format": "uuid" },
+                          "draftId": { "type": "string", "format": "uuid" },
+                          "state": { "const": "APPROVED" },
+                          "approvedDraftVersion": { "const": 2 },
+                          "assessment":
+                            {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": ["quizId", "quizVersion", "status"],
+                              "properties":
+                                {
+                                  "quizId": { "type": "string", "format": "uuid" },
+                                  "quizVersion": { "const": 1 },
+                                  "status": { "const": "DRAFT" },
+                                },
+                            },
+                        },
+                    },
+                  "meta": { "$ref": "#/components/schemas/ResponseMeta" },
+                },
             },
           "AiDocumentIntentRequest":
             {

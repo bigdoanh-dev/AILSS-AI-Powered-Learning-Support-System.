@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ailss.local/contracts/objective-v1.schema.json",
+  "title": "ObjectiveQuizDraft",
+  "description": "Shared P10.2/P10.3 objective-v1 machine schema. Runtime additionally enforces the x-objective-invariants after trimming text.",
+  "x-objective-invariants": [
+    "question.id values are unique",
+    "question.order values are unique and contiguous from 1 through questions.length",
+    "choice option.id values are unique within a question",
+    "SINGLE_CHOICE optionId names an existing option",
+    "MULTIPLE_CHOICE optionIds are unique and each names an existing option",
+    "points parses to a finite decimal greater than zero"
+  ],
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "title", "questions"],
+  "properties": {
+    "schemaVersion": { "const": "objective-v1" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": { "$ref": "#/$defs/question" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 100, "pattern": "^[A-Za-z0-9_-]+$" },
+    "points": {
+      "type": "string",
+      "pattern": "^(?:0\\.(?:0[1-9]|[1-9][0-9]?)|[1-9][0-9]{0,2}(?:\\.[0-9]{1,2})?)$"
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 1000 }
+      }
+    },
+    "base": {
+      "type": "object",
+      "required": ["id", "order", "text", "points", "type", "correctAnswer"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "order": { "type": "integer", "minimum": 1, "maximum": 50 },
+        "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "points": { "$ref": "#/$defs/points" }
+      }
+    },
+    "question": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "order", "text", "points", "type", "options", "correctAnswer"],
+          "properties": {
+            "id": { "$ref": "#/$defs/id" },
+            "order": { "type": "integer", "minimum": 1, "maximum": 50 },
+            "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+            "points": { "$ref": "#/$defs/points" },
+            "type": { "const": "SINGLE_CHOICE" },
+            "options": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 10,
+              "items": { "$ref": "#/$defs/option" }
+            },
+            "correctAnswer": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["optionId"],
+              "properties": { "optionId": { "$ref": "#/$defs/id" } }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "order", "text", "points", "type", "options", "correctAnswer"],
+          "properties": {
+            "id": { "$ref": "#/$defs/id" },
+            "order": { "type": "integer", "minimum": 1, "maximum": 50 },
+            "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+            "points": { "$ref": "#/$defs/points" },
+            "type": { "const": "MULTIPLE_CHOICE" },
+            "options": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 10,
+              "items": { "$ref": "#/$defs/option" }
+            },
+            "correctAnswer": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["optionIds"],
+              "properties": {
+                "optionIds": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 10,
+                  "uniqueItems": true,
+                  "items": { "$ref": "#/$defs/id" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "order", "text", "points", "type", "correctAnswer"],
+          "properties": {
+            "id": { "$ref": "#/$defs/id" },
+            "order": { "type": "integer", "minimum": 1, "maximum": 50 },
+            "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+            "points": { "$ref": "#/$defs/points" },
+            "type": { "const": "TRUE_FALSE" },
+            "correctAnswer": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["value"],
+              "properties": { "value": { "type": "boolean" } }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "order", "text", "points", "type", "correctAnswer"],
+          "properties": {
+            "id": { "$ref": "#/$defs/id" },
+            "order": { "type": "integer", "minimum": 1, "maximum": 50 },
+            "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+            "points": { "$ref": "#/$defs/points" },
+            "type": { "const": "SHORT_ANSWER" },
+            "correctAnswer": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["acceptedAnswer"],
+              "properties": { "acceptedAnswer": { "type": "string", "minLength": 1, "maxLength": 1000 } }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
