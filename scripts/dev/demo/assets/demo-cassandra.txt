@@ -1,0 +1,24 @@
+Cơ sở dữ liệu phân tán với Cassandra
+
+Luyện cách thiết kế bảng từ câu truy vấn và phân biệt khóa phân vùng với khóa sắp xếp.
+
+Bắt đầu từ câu hỏi cần trả lời
+Ví dụ: lấy 20 thông báo mới nhất của một học viên trong tháng. Xác định trước user_id, year_month, thời gian sắp xếp và giới hạn kết quả.
+
+Chọn khóa phân vùng
+PRIMARY KEY ((user_id, year_month), created_at, notification_id) gom thông báo cùng người và tháng vào một phân vùng. Việc chia theo tháng hạn chế phân vùng tăng vô hạn.
+
+Thiết kế thứ tự đọc
+CLUSTERING ORDER BY (created_at DESC) hỗ trợ đọc thông báo mới nhất trước. Dùng LIMIT phù hợp với màn hình; không tải toàn bộ lịch sử rồi lọc trong trình duyệt.
+
+Đánh đổi của bảng theo truy vấn
+Một nội dung có thể được ghi vào nhiều bảng phục vụ nhiều cách đọc. Cần cơ chế cập nhật và đối soát các bản chiếu khi dữ liệu gốc thay đổi.
+
+BÀI TẬP
+Thiết kế bảng lưu lịch học theo học viên và ngày. Viết CREATE TABLE và SELECT lấy các buổi học trong một ngày. Giải thích lựa chọn khóa và cách tránh một phân vùng chứa toàn bộ lịch sử.
+
+CÂU HỎI
+Khóa phân vùng phù hợp cho thông báo của một học viên theo tháng là gì?
+(user_id, year_month)
+title
+created_at

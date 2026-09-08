@@ -1,6 +1,6 @@
 {
   "version": "P12.2B",
-  "count": 74,
+  "count": 75,
   "queries": [
     {
       "queryId": "Q-AI-001",
@@ -583,7 +583,9 @@
         "LRN-18",
         "LRN-24",
         "LRN-25",
-        "LRN-26"
+        "LRN-26",
+        "LRN-29",
+        "LRN-30"
       ]
     },
     {
@@ -620,7 +622,7 @@
       "tables": ["courses_by_lecturer"],
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["LRN-05", "LRN-06"]
+      "apiConsumers": ["LRN-05", "LRN-06", "LRN-29"]
     },
     {
       "queryId": "Q-LRN-006",
@@ -846,6 +848,16 @@
       "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
       "apiConsumers": ["IDN-13", "IDN-15", "IDN-17", "identity-application-repair"],
       "semantics": "One submission month/shard partition, at most 100 candidates; canonical hydrate, signed actor/filter bound expiring cursor"
+    },
+    {
+      "queryId": "Q-IDN-011",
+      "owner": "Identity",
+      "keyspace": "identity_keyspace",
+      "tables": ["avatar_by_user"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "apiConsumers": ["IDN-18", "IDN-19"],
+      "contractNotes": "Single user partition derived from validated session; image up to 256 KiB."
     }
   ]
 }

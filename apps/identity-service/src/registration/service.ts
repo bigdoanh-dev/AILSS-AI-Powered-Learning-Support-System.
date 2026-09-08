@@ -153,7 +153,7 @@ export class RegistrationService {
       const account: RegisteredAccount = {
         userId: record.resourceId,
         displayName: command.displayName,
-        role: "STUDENT",
+        role: command.role ?? "STUDENT",
         status: "ACTIVE",
         lecturerVerified: false,
         profileVersion: 1,

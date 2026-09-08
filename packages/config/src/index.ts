@@ -94,6 +94,7 @@ const baseSchema = z.object({
   IDENTITY_PUBLIC_PROFILE_DEADLINE_MS: z.coerce.number().int().min(100).max(500).default(500),
   HTTPS_CERT_PATH: z.string().optional(),
   HTTPS_KEY_PATH: z.string().optional(),
+  OBJECT_STORAGE_PUBLIC_URL: z.url().optional(),
   OBJECT_STORAGE_ENDPOINT: z.string().default("127.0.0.1"),
   OBJECT_STORAGE_PORT: z.coerce.number().int().min(1).max(65535).default(9000),
   OBJECT_STORAGE_USE_SSL: bool,

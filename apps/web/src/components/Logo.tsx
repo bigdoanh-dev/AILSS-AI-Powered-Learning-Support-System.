@@ -14,7 +14,7 @@ export function Logo() {
       </svg>
       <span>
         <strong>AILSS</strong>
-        <small>AI-Powered Learning Support System</small>
+        <small>Học hôm nay. Vững ngày mai.</small>
       </span>
     </Link>
   );

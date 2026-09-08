@@ -2,7 +2,7 @@ import * as THREE from "three";
 export function mountScene(host: HTMLElement): () => void {
   let renderer: THREE.WebGLRenderer;
   try {
-    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, powerPreference: "low-power" });
+    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "low-power" });
   } catch {
     return () => {};
   }
@@ -16,15 +16,32 @@ export function mountScene(host: HTMLElement): () => void {
     color: 0x65dfff,
     wireframe: true,
     transparent: true,
-    opacity: 0.035,
+    opacity: 0.45,
   });
   const sphere = new THREE.Mesh(geometry, material);
   scene.add(sphere);
   const ringGeometry = new THREE.TorusGeometry(1.75, 0.009, 4, 64);
-  const ringMaterial = new THREE.MeshBasicMaterial({ color: 0x39baff, transparent: true, opacity: 0.16 });
+  const ringMaterial = new THREE.MeshBasicMaterial({ color: 0x80eee1, transparent: true, opacity: 0.7 });
   const ring = new THREE.Mesh(ringGeometry, ringMaterial);
   ring.rotation.x = 1.25;
   scene.add(ring);
+  const coreGeometry = new THREE.IcosahedronGeometry(0.78, 2);
+  const coreMaterial = new THREE.MeshStandardMaterial({ color: 0x28bfb7, metalness: 0.45, roughness: 0.24 });
+  const core = new THREE.Mesh(coreGeometry, coreMaterial);
+  scene.add(core, new THREE.HemisphereLight(0xc4fff4, 0x064158, 2.8));
+  const light = new THREE.DirectionalLight(0xffffff, 4);
+  light.position.set(3, 4, 5);
+  scene.add(light);
+  const bookGeometry = new THREE.BoxGeometry(0.35, 0.46, 0.1);
+  const bookMaterials = [0xf39270, 0x8ee7d9, 0xf2cf74].map(
+    (color) => new THREE.MeshStandardMaterial({ color, metalness: 0.15, roughness: 0.35 }),
+  );
+  const books = bookMaterials.map((mat, index) => {
+    const book = new THREE.Mesh(bookGeometry, mat);
+    book.rotation.set(0.15, 0.4, index * 0.5);
+    scene.add(book);
+    return book;
+  });
   let visible = true;
   let frame = 0;
   let running = false;
@@ -45,11 +62,18 @@ export function mountScene(host: HTMLElement): () => void {
       Math.min(0.35, (innerHeight / 2 - bounds.top - bounds.height / 2) / innerHeight),
     );
     depth += (targetDepth - depth) * 0.045;
-    sphere.rotation.y = smoothX * 0.18 + depth * 0.3;
-    sphere.rotation.x = smoothY * 0.12;
+    sphere.rotation.y = t * 0.00018 + smoothX * 0.6 + depth * 0.3;
+    sphere.rotation.x = t * 0.00008 + smoothY * 0.3;
+    core.rotation.y = -t * 0.0003 + smoothX * 0.3;
+    core.rotation.x = 0.2 + smoothY * 0.2;
+    books.forEach((book, index) => {
+      const a = t * 0.00025 + (index * Math.PI * 2) / 3;
+      book.position.set(Math.cos(a) * 1.55, Math.sin(a) * 1.2, Math.sin(a + 0.5) * 0.7);
+      book.rotation.y = -a;
+    });
     camera.position.z = 5 + depth * 0.6;
-    ring.rotation.z = depth * 0.3 + smoothX * 0.08;
-    sphere.position.y = Math.sin(t * 0.0006) * 0.025;
+    ring.rotation.z = t * 0.00013 + depth * 0.3 + smoothX * 0.3;
+    sphere.position.y = Math.sin(t * 0.0006) * 0.07;
     renderer.render(scene, camera);
     frame = requestAnimationFrame(render);
   }
@@ -105,6 +129,10 @@ export function mountScene(host: HTMLElement): () => void {
     material.dispose();
     ringGeometry.dispose();
     ringMaterial.dispose();
+    coreGeometry.dispose();
+    coreMaterial.dispose();
+    bookGeometry.dispose();
+    bookMaterials.forEach((m) => m.dispose());
     renderer.dispose();
     renderer.domElement.remove();
   };

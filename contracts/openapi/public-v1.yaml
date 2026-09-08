@@ -3,6 +3,102 @@
   "info": { "title": "AILSS Public API", "version": "7.12C" },
   "paths":
     {
+      "/api/v1/me/avatar":
+        {
+          "get":
+            {
+              "operationId": "IDN-18",
+              "summary": "Đọc ảnh đại diện",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                {
+                  "200": { "description": "Success" },
+                  "401": { "description": "Invalid session" },
+                  "403": { "description": "Not permitted" },
+                  "503": { "description": "Service unavailable" },
+                },
+            },
+          "post":
+            {
+              "operationId": "IDN-19",
+              "summary": "Lưu hoặc xóa ảnh đại diện",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                {
+                  "200": { "description": "Success" },
+                  "401": { "description": "Invalid session" },
+                  "403": { "description": "Not permitted" },
+                  "503": { "description": "Service unavailable" },
+                },
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": ["dataUrl"],
+                              "properties":
+                                {
+                                  "dataUrl":
+                                    {
+                                      "type": ["string", "null"],
+                                      "maxLength": 350000,
+                                      "description": "PNG, JPEG or WebP base64 data URI up to 256 KiB; null removes image.",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+      "/api/v1/me/owned-courses":
+        {
+          "get":
+            {
+              "operationId": "LRN-29",
+              "summary": "Khóa học do giảng viên sở hữu",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                {
+                  "200": { "description": "Success" },
+                  "401": { "description": "Invalid session" },
+                  "403": { "description": "Not permitted" },
+                  "503": { "description": "Service unavailable" },
+                },
+              "description": "Bounded to the latest 100 projection rows; deduplicates and rechecks canonical ownership. Includes drafts.",
+            },
+        },
+      "/api/v1/me/owned-courses/{courseId}":
+        {
+          "get":
+            {
+              "operationId": "LRN-30",
+              "summary": "Chi tiết khóa học của giảng viên",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                {
+                  "200": { "description": "Success" },
+                  "401": { "description": "Invalid session" },
+                  "403": { "description": "Not permitted" },
+                  "503": { "description": "Service unavailable" },
+                },
+              "parameters":
+                [
+                  {
+                    "name": "courseId",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                ],
+            },
+        },
       "/api/v1/auth/register":
         {
           "post":
@@ -5256,6 +5352,7 @@
                   "email": { "type": "string", "format": "email", "maxLength": 254 },
                   "password": { "type": "string", "minLength": 12, "maxLength": 128, "writeOnly": true },
                   "displayName": { "type": "string", "minLength": 2, "maxLength": 100 },
+                  "role": { "type": "string", "enum": ["STUDENT", "LECTURER"], "default": "STUDENT" },
                 },
             },
           "RegistrationResponse":
@@ -5274,7 +5371,7 @@
                         {
                           "userId": { "type": "string", "format": "uuid" },
                           "displayName": { "type": "string" },
-                          "role": { "const": "STUDENT" },
+                          "role": { "type": "string", "enum": ["STUDENT", "LECTURER"] },
                           "status": { "const": "ACTIVE" },
                           "createdAt": { "type": "string", "format": "date-time" },
                         },
@@ -5767,6 +5864,8 @@
                           "application/pdf",
                           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                           "text/plain",
+                          "video/mp4",
+                          "video/webm",
                         ],
                     },
                   "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
@@ -5856,6 +5955,7 @@
                   "state": { "type": "string", "enum": ["DRAFT", "INCOMPLETE", "READY"] },
                   "preview": { "type": "boolean" },
                   "checksum": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "contentType": { "type": "string" },
                   "contentUrl": { "type": "string", "format": "uri" },
                   "updatedAt": { "type": "string", "format": "date-time" },
                 },

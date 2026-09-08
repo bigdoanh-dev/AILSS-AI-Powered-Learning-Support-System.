@@ -28,6 +28,7 @@ import { LogoutService } from "./logout/service.js";
 import { IdentityProfileRepository } from "./profile/repository.js";
 import { profileRouter } from "./profile/router.js";
 import { ProfileService } from "./profile/service.js";
+import { avatarRouter } from "./profile/avatar.js";
 import { ProtectedIdentityRequestValidator } from "./profile/validator.js";
 import { refreshRouter } from "./refresh/router.js";
 import { RefreshService } from "./refresh/service.js";
@@ -165,6 +166,12 @@ await startService(manifest, {
       context.metrics,
       context.logger,
     );
+    app.use(avatarRouter(context.cassandra, profile, (token) => verifyActorContext(token, actorContextPublicKey, {
+      issuer: config.ACTOR_CONTEXT_ISSUER,
+      audience: config.ACTOR_CONTEXT_AUDIENCE,
+      purpose: "identity.profile.avatar",
+      kid: config.ACTOR_CONTEXT_KID,
+    })));
     app.use(
       profileRouter(
         profile,

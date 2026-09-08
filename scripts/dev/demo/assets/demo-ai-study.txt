@@ -1,0 +1,24 @@
+Trí tuệ nhân tạo: học cùng AI có kiểm chứng
+
+Đặt câu hỏi rõ ràng, kiểm tra câu trả lời và sử dụng AI để luyện tập chủ động.
+
+Xác định mục tiêu học
+Nêu kiến thức cần học, trình độ hiện tại và kết quả mong muốn. Ví dụ: giải thích LEFT JOIN cho người đã biết SELECT, kèm dữ liệu nhỏ và kết quả.
+
+Cung cấp ngữ cảnh cần thiết
+Đưa phần tài liệu liên quan và yêu cầu chỉ rõ điều chưa chắc chắn. Không đưa mật khẩu, thông tin riêng tư hoặc dữ liệu người khác vào câu hỏi.
+
+Kiểm chứng bằng ví dụ
+Chạy đoạn mã hoặc truy vấn trên dữ liệu thử. Đối chiếu định nghĩa với tài liệu môn học. Câu trả lời rõ ràng vẫn có thể chứa sai sót.
+
+Biến câu trả lời thành luyện tập
+Yêu cầu AI ra câu hỏi nhưng chưa hiện đáp án. Tự trả lời, giải thích cách nghĩ rồi mới xem phản hồi. Giảng viên quyết định nội dung dùng để đánh giá.
+
+BÀI TẬP
+Chọn một khái niệm SQL chưa rõ. Viết câu hỏi có mục tiêu, ngữ cảnh và định dạng đáp án mong muốn. Tạo ví dụ để kiểm chứng; ghi lại ít nhất một điểm cần sửa hoặc làm rõ trong câu trả lời.
+
+CÂU HỎI
+Sau khi nhận câu trả lời từ AI, bước phù hợp nhất là gì?
+Kiểm chứng bằng tài liệu và ví dụ
+Sao chép ngay vào bài nộp
+Bỏ qua các điểm chưa chắc chắn

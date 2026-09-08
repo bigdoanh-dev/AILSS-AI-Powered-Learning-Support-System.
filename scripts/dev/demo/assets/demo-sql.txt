@@ -1,0 +1,24 @@
+Cơ sở dữ liệu: truy vấn SQL qua bài toán lớp học
+
+Thiết kế bảng học viên, lớp học và đăng ký; thực hành JOIN, GROUP BY và kiểm tra kết quả.
+
+Từ thực thể đến bảng
+Tạo students(id, name), classes(id, title) và enrollments(student_id, class_id). Bảng enrollments biểu diễn quan hệ nhiều-nhiều giữa học viên và lớp.
+
+Kết nối dữ liệu bằng JOIN
+SELECT s.name, c.title FROM enrollments e JOIN students s ON s.id=e.student_id JOIN classes c ON c.id=e.class_id; trả về học viên cùng tên lớp đã đăng ký.
+
+Đếm và nhóm có chủ đích
+GROUP BY class_id nhóm lượt đăng ký theo lớp. COUNT(*) đếm dòng trong nhóm. LEFT JOIN từ classes giúp giữ cả các lớp chưa có học viên.
+
+Kiểm tra trường hợp biên
+Thử với một lớp trống, hai học viên cùng tên và một học viên đăng ký hai lớp. Dùng khóa định danh thay cho tên để kết nối bảng.
+
+BÀI TẬP
+Tạo 3 bảng với ít nhất 5 học viên và 3 lớp, trong đó có một lớp trống. Viết truy vấn danh sách học viên theo lớp, số học viên từng lớp và các học viên chưa đăng ký lớp nào. Kèm kết quả mong đợi.
+
+CÂU HỎI
+Phép nối nào giữ cả lớp chưa có lượt đăng ký?
+LEFT JOIN từ bảng classes
+INNER JOIN từ bảng enrollments
+CROSS JOIN

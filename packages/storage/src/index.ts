@@ -6,6 +6,7 @@ export const ALLOWED_CONTENT_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "text/plain",
 ]);
+export const LESSON_CONTENT_TYPES = new Set([...ALLOWED_CONTENT_TYPES, "video/mp4", "video/webm"]);
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
 export interface UploadIntent {
@@ -38,11 +39,19 @@ export function validateObjectKey(value: string): string {
 
 export class MinioStorage implements ObjectStorage {
   readonly #client: Client;
+  readonly #readSigner: Client;
   public constructor(
     private readonly bucket: string,
     options: ConstructorParameters<typeof Client>[0],
+    publicOrigin?: string,
   ) {
     this.#client = new Client(options);
+    if (publicOrigin) {
+      const origin = new URL(publicOrigin);
+      if (!["http:", "https:"].includes(origin.protocol) || origin.username || origin.password || origin.pathname !== "/" || origin.search || origin.hash)
+        throw new Error("INVALID_PUBLIC_STORAGE_ORIGIN");
+      this.#readSigner = new Client({ ...options, endPoint: origin.hostname, port: Number(origin.port || (origin.protocol === "https:" ? 443 : 80)), useSSL: origin.protocol === "https:", region: options.region || "us-east-1" });
+    } else this.#readSigner = this.#client;
   }
 
   public async createUploadIntent(
@@ -65,14 +74,14 @@ export class MinioStorage implements ObjectStorage {
     const stat = await this.#client.statObject(this.bucket, metadata.objectKey);
     return (
       stat.size === metadata.size &&
-      ALLOWED_CONTENT_TYPES.has(metadata.contentType) &&
+      LESSON_CONTENT_TYPES.has(metadata.contentType) &&
       /^[a-f0-9]{64}$/i.test(metadata.sha256)
     );
   }
 
   public async createReadUrl(objectKey: string): Promise<string> {
     validateObjectKey(objectKey);
-    return this.#client.presignedGetObject(this.bucket, objectKey, 5 * 60);
+    return this.#readSigner.presignedGetObject(this.bucket, objectKey, 5 * 60);
   }
 
   public async stat(objectKey: string): Promise<{ readonly size: number; readonly contentType: string }> {

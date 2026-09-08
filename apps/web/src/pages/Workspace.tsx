@@ -1,177 +1,88 @@
-import { lazy, useEffect, useRef, useState, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useSession, roleLabel } from "../auth/session";
-import { Dialog } from "../components/ui";
-import { Logo } from "../components/Logo";
+import { SiteHeader } from "../components/SiteHeader";
+import { Avatar, useAvatar } from "../components/Preferences";
+import { sessionRequest } from "../auth/session";
+
 import { errorMessage } from "../lib/api";
 const StudentHome = lazy(() => import("../student/Learning").then((m) => ({ default: m.StudentHome })));
+const AdminHome = lazy(() => import("../admin/Admin").then((m) => ({ default: m.AdminHome })));
+const TeachingHome = lazy(() => import("../lecturer/Teaching").then((m) => ({ default: m.TeachingHome })));
 export function AppShell() {
   const auth = useSession();
   const location = useLocation();
-  const [drawer, setDrawer] = useState(false);
-  const [account, setAccount] = useState(false);
-  const [busy, setBusy] = useState(false);
   useEffect(() => {
-    setDrawer(false);
-    setAccount(false);
     window.scrollTo({ top: 0, behavior: "instant" });
-    document.getElementById("main")?.focus({ preventScroll: true });
   }, [location.pathname]);
-  async function logout() {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await auth.logout();
-    } catch {
-      /* authority presents the failure */
-    } finally {
-      setBusy(false);
-      setAccount(false);
-    }
-  }
   if (auth.state === "UNAUTHENTICATED")
     return <Navigate to={`/auth/login?returnTo=${encodeURIComponent(location.pathname)}`} replace />;
-  if (auth.state !== "AUTHENTICATED" || !auth.profile)
+  if (!auth.profile)
     return (
-      <main id="main" tabIndex={-1} className="session-state container">
-        <Logo />
-        <p className="eyebrow">AILSS · PHIÊN TÀI KHOẢN</p>
-        <h1>{auth.state === "UNAVAILABLE" ? "Chưa thể xác minh phiên." : "Đang xác minh phiên…"}</h1>
-        <p role="status">{auth.message || "Đang kết nối an toàn đến tài khoản của bạn."}</p>
-        {auth.state === "UNAVAILABLE" && (
-          <div className="inline-actions">
+      <>
+        <SiteHeader />
+        <main id="main" className="workspace-content">
+          <h1>Đang mở tài khoản</h1>
+          <p role="status">{auth.message || "Đang xác minh phiên đăng nhập…"}</p>
+          {auth.state === "UNAVAILABLE" && (
             <button className="button" onClick={() => void auth.bootstrap()}>
               Thử lại
             </button>
-            <button className="button secondary" disabled={busy} onClick={() => void logout()}>
-              Thử đăng xuất
-            </button>
-            <Link to="/auth/login">Đăng nhập lại</Link>
-          </div>
-        )}
-        <Link to="/">Về trang công khai</Link>
-      </main>
-    );
-  const navigation = (
-    <nav className="workspace-nav" aria-label="Không gian cá nhân">
-      <NavLink to="/app" end>
-        Tổng quan tài khoản
-      </NavLink>
-      {auth.profile?.role === "ADMIN" && (
-        <>
-          <NavLink to="/app/admin" end>
-            Trung tâm quản trị
-          </NavLink>
-          <NavLink to="/app/admin/users">Người dùng</NavLink>
-          <NavLink to="/app/admin/lecturer-applications">Yêu cầu Giảng viên</NavLink>
-          <NavLink to="/app/admin/courses">Khóa học</NavLink>
-          <NavLink to="/app/admin/moderation">Kiểm duyệt nội dung</NavLink>
-        </>
-      )}
-      {auth.profile.role === "STUDENT" && (
-        <>
-          <NavLink to="/app/learn">Học tập</NavLink>
-          <NavLink to="/app/classes">Lớp học</NavLink>
-          <NavLink to="/app/assessments">Bài kiểm tra</NavLink>
-          <NavLink to="/app/progress">Tiến độ</NavLink>
-          <NavLink to="/app/notifications">Thông báo</NavLink>
-        </>
-      )}
-      {auth.profile.role === "LECTURER" && (
-        <>
-          <NavLink to="/app/teaching">Giảng dạy</NavLink>
-          {auth.profile.lecturerVerified && (
-            <>
-              <NavLink to="/app/teaching/classes">Lớp phụ trách</NavLink>
-              <NavLink to="/app/teaching/offerings">Offering</NavLink>
-              <NavLink to="/app/teaching/assessments">Đánh giá</NavLink>
-              <NavLink to="/app/teaching/ai">AI Studio</NavLink>
-            </>
           )}
-        </>
-      )}
-      <NavLink to="/app/account">Hồ sơ & bảo mật</NavLink>
-      <Link to="/courses">Khám phá khóa học ↗</Link>
-      <Link to="/help">Trung tâm trợ giúp ↗</Link>
-    </nav>
-  );
-  return (
-    <div className="workspace">
-      <a className="skip-link" href="#main">
-        Bỏ qua đến nội dung
-      </a>
-      <aside className="workspace-sidebar">
-        <Logo /> <p className="eyebrow">KHÔNG GIAN CÁ NHÂN</p>
-        {navigation}
-        <div className="workspace-note">
-          <span className="status-dot" /> Phiên được bảo vệ<p>{roleLabel(auth.profile)}</p>
-          <Link to="/">← Trang công khai</Link>
-        </div>
-      </aside>
-      <div className="workspace-body">
-        <header className="workspace-header">
-          <button
-            className="plain-button drawer-toggle"
-            onClick={() => setDrawer(true)}
-            aria-label="Mở điều hướng"
-          >
-            ☰
-          </button>
-          <span>
-            Không gian cá nhân /{" "}
-            <strong>
-              {(
-                {
-                  account: "Hồ sơ & bảo mật",
-                  learn: "Học tập",
-                  classes: "Lớp học",
-                  assessments: "Bài kiểm tra",
-                  attempts: "Lần làm bài",
-                  progress: "Tiến độ",
-                  notifications: "Thông báo",
-                  teaching: "Giảng dạy",
-                  admin: "Quản trị",
-                } as Record<string, string>
-              )[location.pathname.split("/")[2]] || "Tổng quan"}
-            </strong>
-          </span>
-          <button
-            aria-label="Tài khoản"
-            className="account-trigger"
-            onClick={() => setAccount(true)}
-            aria-haspopup="dialog"
-          >
-            <span className="avatar" aria-hidden="true">
-              {auth.profile.displayName.slice(0, 1).toUpperCase()}
-            </span>
-            <span>Tài khoản</span>
-          </button>
-        </header>
-        <main id="main" tabIndex={-1} className="workspace-content" key={location.pathname}>
-          <Outlet />
         </main>
+      </>
+    );
+  const role = auth.profile.role;
+  const tabs =
+    role === "ADMIN"
+      ? [
+          ["/app", "Tổng quan"],
+          ["/app/admin/users", "Người dùng"],
+          ["/app/admin/lecturer-applications", "Giảng viên"],
+          ["/app/admin/courses", "Khóa học"],
+          ["/app/admin/moderation", "Kiểm duyệt"],
+        ]
+      : role === "LECTURER"
+        ? [
+            ["/app", "Tổng quan"],
+            ["/app/teaching", "Khóa học của tôi"],
+            ["/app/teaching/classes", "Lớp phụ trách"],
+            ["/app/teaching/offerings", "Đợt mở bán"],
+            ["/app/teaching/assessments", "Bài kiểm tra"],
+            ["/app/teaching/ai", "Trợ lý AI"],
+          ]
+        : [
+            ["/app", "Tổng quan"],
+            ["/app/learn", "Khóa học của tôi"],
+            ["/app/classes", "Lớp học"],
+            ["/app/assessments", "Bài kiểm tra"],
+            ["/app/progress", "Tiến độ"],
+            ["/app/notifications", "Thông báo"],
+          ];
+  return (
+    <div className="learning-site">
+      <SiteHeader />
+      <div className="workspace-tabs">
+        <nav aria-label="Không gian cá nhân">
+          {tabs.map(([to, label]) => (
+            <NavLink key={to} to={to} end={to === "/app" || to === "/app/teaching"}>
+              {label}
+            </NavLink>
+          ))}
+
+          <NavLink to="/app/account">Hồ sơ</NavLink>
+        </nav>
       </div>
-      <Dialog
-        className="workspace-drawer"
-        open={drawer}
-        onClose={() => setDrawer(false)}
-        title="Điều hướng tài khoản"
-      >
-        {navigation}
-      </Dialog>
-      <Dialog open={account} onClose={() => setAccount(false)} title="Tài khoản của bạn">
-        <h2>{auth.profile.displayName}</h2>
-        <p>{roleLabel(auth.profile)}</p>
-        <div className="workspace-nav">
-          <Link to="/app/account" onClick={() => setAccount(false)}>
-            Hồ sơ & bảo mật
-          </Link>
-          <Link to="/">Trang công khai</Link>
-          <button className="button" disabled={busy} onClick={() => void logout()}>
-            {busy ? "Đang đăng xuất…" : "Đăng xuất"}
-          </button>
-        </div>
-      </Dialog>
+      <main id="main" tabIndex={-1} className="workspace-content">
+        <Suspense fallback={<p role="status">Đang mở nội dung…</p>}>
+          <Outlet />
+        </Suspense>
+      </main>
+      <footer className="workspace-footer">
+        <span>© 2026 AILSS · Nguyễn Viết Doanh</span>
+        <Link to="/help">Cần hỗ trợ?</Link>
+        <Link to="/courses">Khám phá khóa học</Link>
+      </footer>
     </div>
   );
 }
@@ -179,60 +90,83 @@ export function AppHome() {
   const { profile } = useSession();
   if (!profile) return null;
   if (profile.role === "STUDENT") return <StudentHome />;
-  if (profile.role === "ADMIN") return <Navigate to="/app/admin" replace />;
+  if (profile.role === "ADMIN") return <AdminHome />;
+  if (profile.lecturerVerified) return <TeachingHome />;
   return (
-    <>
-      <p className="eyebrow">AILSS · HỌC CÓ ĐỊNH HƯỚNG</p>
-      <h1>Xin chào, {profile.displayName}.</h1>
-      <p className="lead">Một nơi để quản lý danh tính và bắt đầu hành trình học tập.</p>
-      <div className="workspace-welcome">
-        <div>
-          <span className="badge">{roleLabel(profile)}</span>
-          <h2>Tài khoản của bạn đã sẵn sàng.</h2>
-          <p>Thông tin dưới đây được xác minh từ hệ thống tài khoản.</p>
-          <Link className="button" to="/app/account">
-            Xem hồ sơ & bảo mật →
-          </Link>
-        </div>
-        <div className="account-orbit" aria-hidden="true">
-          <span>NVD</span>
-          <i />
-          <i />
-        </div>
+    <section className="verification-welcome">
+      <h1>Chào mừng, {profile.displayName}.</h1>
+      <p className="lead">Tài khoản giảng viên của bạn đã được tạo.</p>
+      <div className="notice">
+        <h2>Đang chờ xác minh</h2>
+        <p>
+          Quản trị viên sẽ xác minh tài khoản để bạn có thể tạo khóa học và mở lớp. Bạn có thể cập nhật hồ sơ
+          và ảnh đại diện ngay bây giờ.
+        </p>
       </div>
-      <div className="workspace-cards">
-        <article>
-          <p className="eyebrow">DANH TÍNH</p>
-          <h2>{roleLabel(profile)}</h2>
-          <p>Trạng thái: {profile.status === "ACTIVE" ? "Đang hoạt động" : profile.status}</p>
-          {profile.role === "LECTURER" && !profile.lecturerVerified && (
-            <p>Tài khoản chưa được xác minh giảng viên. Liên hệ đơn vị quản trị để được hướng dẫn.</p>
-          )}
-        </article>
-        <article>
-          <p className="eyebrow">KHÁM PHÁ</p>
-          <h2>Bắt đầu từ một khóa học.</h2>
-          <p>Tìm nội dung công khai phù hợp với điều bạn muốn học.</p>
-          <Link to="/courses">Mở danh mục khóa học →</Link>
-        </article>
-        <article>
-          <p className="eyebrow">BẢO MẬT</p>
-          <h2>Kiểm soát tài khoản.</h2>
-          <p>Xem hồ sơ, cập nhật tên và thay đổi mật khẩu của bạn.</p>
-          <Link to="/app/account">Quản lý tài khoản →</Link>
-        </article>
-      </div>
-    </>
+      <Link className="button" to="/app/account">
+        Hoàn thiện hồ sơ
+      </Link>
+      <Link className="text-link" to="/help">
+        Trợ giúp tài khoản
+      </Link>
+    </section>
   );
 }
 export function Account() {
   const auth = useSession();
+  const avatar = useAvatar();
   const p = auth.profile;
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [show, setShow] = useState(false);
   const nameAttempt = useRef({ value: "", key: "" });
   const passwordAttempt = useRef({ digest: "", key: "" });
+  async function uploadAvatar(file?: File) {
+    if (!file || busy) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 8 * 1024 * 1024)
+        throw new Error("Chọn ảnh PNG, JPEG hoặc WebP không quá 8 MB.");
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 384;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Trình duyệt không thể xử lý ảnh này.");
+      const side = Math.min(bitmap.width, bitmap.height);
+      ctx.drawImage(
+        bitmap,
+        (bitmap.width - side) / 2,
+        (bitmap.height - side) / 2,
+        side,
+        side,
+        0,
+        0,
+        384,
+        384,
+      );
+      bitmap.close();
+      await sessionRequest("avatar", "POST", { dataUrl: canvas.toDataURL("image/jpeg", 0.84) });
+      avatar.reload();
+      setMessage("Đã lưu ảnh đại diện. Ảnh sẽ xuất hiện trên tài khoản của bạn.");
+    } catch (e) {
+      setMessage(e instanceof Error && !("status" in e) ? e.message : errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function removeAvatar() {
+    setBusy(true);
+    try {
+      await sessionRequest("avatar", "POST", { dataUrl: null });
+      avatar.reload();
+      setMessage("Đã xóa ảnh đại diện.");
+    } catch (e) {
+      setMessage(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
   async function save(e: FormEvent<HTMLFormElement>, password = false) {
     e.preventDefault();
     if (busy) return;
@@ -274,6 +208,34 @@ export function Account() {
       <h1>Hồ sơ & bảo mật.</h1>
       <p className="lead">Thông tin chính thức, do bạn kiểm soát.</p>
       <p role="status">{message}</p>
+      <section className="profile-avatar-editor">
+        <Avatar large />
+        <div>
+          <h2>Ảnh đại diện của bạn</h2>
+          <p>Chọn ảnh rõ mặt. Ảnh sẽ được cắt vuông và lưu vào tài khoản.</p>
+          <div className="inline-actions">
+            <label className="button small avatar-upload">
+              {busy ? "Đang lưu…" : "Tải ảnh lên"}
+              <input
+                aria-label="Tải ảnh đại diện"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                disabled={busy}
+                onChange={(e) => {
+                  void uploadAvatar(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {avatar.url && (
+              <button className="plain-button" disabled={busy} onClick={() => void removeAvatar()}>
+                Xóa ảnh
+              </button>
+            )}
+          </div>
+          <small>PNG, JPEG hoặc WebP · Tối đa 8 MB</small>
+        </div>
+      </section>
       <div className="account-grid">
         <section className="form-panel">
           <h2>Thông tin cá nhân</h2>

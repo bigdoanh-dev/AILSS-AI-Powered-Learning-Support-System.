@@ -1,3 +1,5 @@
+import { CourseArtwork } from "../components/CourseArtwork";
+import { CourseSearch } from "../pages/Courses";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useSession } from "../auth/session";
@@ -20,59 +22,96 @@ export function StudentHome() {
   const courses = useStudent<LearningCourse[]>("/me/courses"),
     classes = useStudent<ClassItem[]>("/me/classes"),
     notices = useStudent<Notices>("/notifications?month=" + monthNow() + "&limit=3");
+  const first = courses.data?.[0];
   return (
     <>
-      <Heading title={`Xin chào, ${profile?.displayName}.`}>
-        Dành một chút thời gian cho điều bạn muốn hiểu sâu hơn.
-      </Heading>
-      <div className="study-welcome">
-        <p className="eyebrow">TIẾP TỤC HÀNH TRÌNH</p>
-        <h2>Học từng bài. Tiến từng bước.</h2>
-        <State query={courses}>
-          {courses.data?.length ? (
-            <>
-              <h3>{courses.data[0].title}</h3>
-              <Link className="button" to={"/app/learn/" + courses.data[0].courseId}>
-                Mở khóa học →
-              </Link>
-            </>
-          ) : (
-            <>
-              <p>Bạn chưa có khóa học nào trong danh sách học tập.</p>
-              <Link className="button" to="/app/learn">
-                Tìm khóa học phù hợp →
-              </Link>
-            </>
-          )}
-        </State>
+      <div className="dashboard-heading">
+        <div>
+          <h1>Chào {profile?.displayName}, hôm nay học gì?</h1>
+          <p>Tiếp tục hành trình học tập và khám phá những điều mới mỗi ngày.</p>
+        </div>
+        <Link className="button secondary small" to="/app/learn">
+          Khóa học của tôi
+        </Link>
       </div>
-      <div className="study-grid">
-        <section className="study-card">
-          <h2>Lớp học của tôi</h2>
-          <State query={classes}>
-            {classes.data?.length ? (
-              classes.data.slice(0, 3).map((c) => (
-                <p key={c.classId}>
-                  <Link to={"/app/classes/" + c.classId}>{c.name} →</Link>
+      <div className="student-dashboard">
+        <div className="dashboard-primary">
+          <State query={courses}>
+            <article className="continue-course">
+              <CourseArtwork title={first?.title || "Cơ sở dữ liệu"} eager />
+              <div className="continue-course-content">
+                <small>{first ? "Tiếp tục học" : "Bắt đầu hành trình"}</small>
+                <h2>{first?.title || "Học từng bài. Tiến từng bước."}</h2>
+                <p>
+                  {first
+                    ? "Bài giảng, học liệu và bài luyện tập của bạn."
+                    : "Tìm một khóa học phù hợp để bắt đầu."}
                 </p>
-              ))
-            ) : (
-              <p>Bạn chưa tham gia lớp nào.</p>
-            )}
+                <Link className="button" to={first ? "/app/learn/" + first.courseId : "/courses"}>
+                  {first ? "Tiếp tục học" : "Khám phá khóa học"}
+                  <span aria-hidden="true">↗</span>
+                </Link>
+              </div>
+            </article>
           </State>
-          <Link to="/app/classes">Xem lớp học</Link>
-        </section>
-        <section className="study-card">
-          <h2>Thông báo tháng này</h2>
-          <State query={notices}>
-            {notices.data?.items.length ? (
-              notices.data.items.map((n) => <p key={n.notificationId}>{n.title}</p>)
-            ) : (
-              <p>Chưa có thông báo trong tháng này.</p>
-            )}
-          </State>
-          <Link to="/app/notifications">Mở thông báo →</Link>
-        </section>
+          <section className="discovery-section">
+            <h2>Khám phá điều mới</h2>
+            <CourseSearch compact />
+          </section>
+        </div>
+        <aside className="dashboard-aside">
+          <section>
+            <div className="section-title">
+              <h2>Lớp học của tôi</h2>
+              <Link to="/app/classes">Xem tất cả</Link>
+            </div>
+            <State query={classes}>
+              {classes.data?.length ? (
+                classes.data.slice(0, 4).map((c) => (
+                  <Link className="upcoming-class" key={c.classId} to={"/app/classes/" + c.classId}>
+                    <span className="class-symbol" aria-hidden="true">
+                      ▤
+                    </span>
+                    <span>
+                      <strong>{c.name}</strong>
+                      <small>Xem lịch và bài học</small>
+                    </span>
+                    <span aria-hidden="true">›</span>
+                  </Link>
+                ))
+              ) : (
+                <p>Chưa có lớp học. Bạn có thể tham gia bằng mã từ giảng viên.</p>
+              )}
+            </State>
+          </section>
+          <section>
+            <div className="section-title">
+              <h2>Cập nhật mới</h2>
+              <Link to="/app/notifications">Thông báo</Link>
+            </div>
+            <State query={notices}>
+              {notices.data?.items.length ? (
+                notices.data.items.map((n) => (
+                  <div className="notification-preview" key={n.notificationId}>
+                    <span className="status-dot" />
+                    <strong>{n.title}</strong>
+                    <p>{n.body}</p>
+                  </div>
+                ))
+              ) : (
+                <p>Bạn đã xem hết thông báo. Những cập nhật mới sẽ xuất hiện tại đây.</p>
+              )}
+            </State>
+          </section>
+          <Link className="profile-prompt" to="/app/account">
+            <span aria-hidden="true">◉</span>
+            <div>
+              <strong>Hồ sơ của bạn</strong>
+              <p>Cập nhật thông tin và ảnh đại diện.</p>
+            </div>
+            <span aria-hidden="true">›</span>
+          </Link>
+        </aside>
       </div>
     </>
   );
@@ -151,9 +190,7 @@ function CourseCards({ items }: { items: LearningCourse[] }) {
     <div className="study-grid">
       {items.map((c) => (
         <article className="study-course" key={c.courseId}>
-          <div className="study-course-art" aria-hidden="true">
-            ↗
-          </div>
+          <CourseArtwork title={c.title} />
           <h3>{c.title}</h3>
           {c.priceType === "FREE" && <p>Miễn phí</p>}
           <Link to={(c.priceType === "PAID" ? "/app/purchase/" : "/app/learn/") + c.courseId}>
@@ -166,6 +203,7 @@ function CourseCards({ items }: { items: LearningCourse[] }) {
 }
 export function CourseLearning() {
   const { courseId = "", lessonId } = useParams();
+  const [lessonSearch, setLessonSearch] = useState("");
   const course = useStudent<LearningCourse>("/courses/" + courseId),
     lessons = useStudent<Lesson[]>("/courses/" + courseId + "/lessons"),
     progress = useStudent<Progress>("/courses/" + courseId + "/progress");
@@ -215,19 +253,56 @@ export function CourseLearning() {
                   <summary>Nội dung khóa học</summary>
                   <State query={lessons}>
                     {lessons.data?.length ? (
-                      <ol className="lesson-nav">
-                        {lessons.data.map((l) => (
-                          <li key={l.lessonId}>
-                            <Link
-                              aria-current={l.lessonId === lessonId ? "page" : undefined}
-                              to={`/app/learn/${courseId}/lessons/${l.lessonId}`}
-                            >
-                              {l.title}
-                            </Link>
-                            {l.preview && <small>Học thử</small>}
-                          </li>
-                        ))}
-                      </ol>
+                      <div className="lesson-chapters">
+                        <label>
+                          Tìm bài trong khóa học
+                          <input
+                            type="search"
+                            value={lessonSearch}
+                            onChange={(e) => setLessonSearch(e.target.value)}
+                            placeholder="Tên bài hoặc chương"
+                          />
+                        </label>
+                        <small>{lessons.data.length} bài giảng</small>
+                        {[...new Set(lessons.data.map((l) => l.sectionTitle || "Bài giảng"))].map(
+                          (section, index) => {
+                            const group = lessons.data!.filter(
+                              (l) =>
+                                (l.sectionTitle || "Bài giảng") === section &&
+                                (!lessonSearch ||
+                                  (l.title + " " + section)
+                                    .toLocaleLowerCase("vi")
+                                    .includes(lessonSearch.toLocaleLowerCase("vi"))),
+                            );
+                            if (!group.length) return null;
+                            return (
+                              <details
+                                key={section}
+                                open={
+                                  !!lessonSearch || index === 0 || group.some((l) => l.lessonId === lessonId)
+                                }
+                              >
+                                <summary>
+                                  {section} <small>({group.length})</small>
+                                </summary>
+                                <ol className="lesson-nav">
+                                  {group.map((l) => (
+                                    <li key={l.lessonId}>
+                                      <Link
+                                        aria-current={l.lessonId === lessonId ? "page" : undefined}
+                                        to={`/app/learn/${courseId}/lessons/${l.lessonId}`}
+                                      >
+                                        {l.title}
+                                      </Link>
+                                      {l.preview && <small>Học thử</small>}
+                                    </li>
+                                  ))}
+                                </ol>
+                              </details>
+                            );
+                          },
+                        )}
+                      </div>
                     ) : (
                       <Empty>Khóa học chưa có bài học.</Empty>
                     )}
@@ -245,7 +320,7 @@ export function CourseLearning() {
                 ) : (
                   <>
                     <h2>Chọn bài học để bắt đầu</h2>
-                    <p>Nội dung và quyền truy cập được kiểm tra mỗi khi bạn mở bài.</p>
+                    <p>Mỗi bài học gồm nội dung giảng dạy hoặc tài liệu để bạn thực hành.</p>
                     {lessons.data?.[0] && (
                       <Link
                         className="button"
@@ -282,7 +357,11 @@ function LessonView({
   const lesson = useStudent<Lesson>("/lessons/" + lessonId),
     command = useCommand();
   const [saved, setSaved] = useState<boolean | null>(null);
-  const url = safeContentUrl(lesson.data?.contentUrl);
+  const url = safeContentUrl(
+    lesson.data?.contentUrl?.startsWith("/web-session/library/")
+      ? new URL(lesson.data.contentUrl, window.location.origin).href
+      : lesson.data?.contentUrl,
+  );
   return (
     <State query={lesson}>
       {lesson.data && lesson.data.courseId !== courseId ? (
@@ -292,9 +371,45 @@ function LessonView({
           <>
             <p className="eyebrow">BÀI HỌC</p>
             <h2>{lesson.data.title}</h2>
-            {url ? (
+            {lesson.data.externalVideo &&
+            /^https:\/\/(drive\.google\.com\/file\/d\/[A-Za-z0-9_-]+\/preview|www\.youtube-nocookie\.com\/embed\/[A-Za-z0-9_-]+)$/.test(
+              lesson.data.externalVideo,
+            ) ? (
+              <div className="lesson-media">
+                <iframe
+                  className="lesson-document"
+                  src={lesson.data.externalVideo}
+                  title={lesson.data.title}
+                  allow="fullscreen"
+                  allowFullScreen
+                />
+                <p>
+                  Video do giảng viên cung cấp. Nếu Google Drive yêu cầu quyền truy cập, mở video và đăng nhập
+                  tài khoản được chia sẻ.
+                </p>
+                <a
+                  className="button secondary"
+                  href={lesson.data.externalVideo.replace("/preview", "/view")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Mở video gốc
+                </a>
+              </div>
+            ) : url ? (
               <>
-                <p>Mở tài liệu bài học để đọc và thực hành theo hướng dẫn.</p>
+                {lesson.data.contentType?.startsWith("video/") ? (
+                  <div className="lesson-media">
+                    <video controls playsInline preload="metadata" src={url} aria-label={lesson.data.title}>
+                      <p>Trình duyệt chưa hỗ trợ phát video. Hãy mở liên kết bài học bên dưới.</p>
+                    </video>
+                    <p>Dùng nút phát để bắt đầu. Bạn có thể tua và điều chỉnh tốc độ học.</p>
+                  </div>
+                ) : lesson.data.contentType === "application/pdf" ? (
+                  <iframe className="lesson-document" src={url} title={lesson.data.title} />
+                ) : (
+                  <p>Mở tài liệu bài học để đọc và thực hành theo hướng dẫn.</p>
+                )}
                 <a
                   className="button secondary"
                   href={url}
@@ -302,9 +417,9 @@ function LessonView({
                   rel="noopener noreferrer"
                   referrerPolicy="no-referrer"
                 >
-                  Mở tài liệu bài học ↗
+                  Mở bài giảng trong tab mới ↗
                 </a>
-                <p className="muted">Liên kết có thời hạn. Nếu không mở được, hãy tải lại bài học.</p>
+                <p className="muted">Nếu không mở được nội dung, hãy tải lại bài học.</p>
                 <button className="plain-button" onClick={lesson.retry}>
                   Tải lại liên kết
                 </button>

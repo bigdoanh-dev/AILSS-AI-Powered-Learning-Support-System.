@@ -252,7 +252,7 @@ export class IdentityRegistrationRepository {
     return {
       userId: text(row, "user_id"),
       displayName: text(row, "display_name"),
-      role: "STUDENT",
+      role: text(row, "role") as RegisteredAccount["role"],
       status: "ACTIVE",
       lecturerVerified: false,
       profileVersion: numberValue(row, "profile_version"),

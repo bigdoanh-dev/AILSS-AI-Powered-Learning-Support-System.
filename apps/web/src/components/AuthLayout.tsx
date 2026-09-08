@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { Logo } from "./Logo";
 import { Picture } from "./ui";
+import { ThemeToggle } from "./Preferences";
 export function AuthLayout() {
   const { pathname } = useLocation();
   const visual = useRef<HTMLDivElement>(null);
@@ -39,7 +40,7 @@ export function AuthLayout() {
     <div className="auth-environment">
       <header className="auth-brandbar">
         <Logo />
-        <Link to="/">← Về trang chủ</Link>
+        <div><ThemeToggle/><Link to="/">← Về trang chủ</Link></div>
       </header>
       <div className="auth-composition">
         <main id="main" tabIndex={-1} className="auth-main">
@@ -67,7 +68,7 @@ export function AuthLayout() {
             <p>Học theo nhịp của bạn. Dạy bằng thế mạnh của bạn. AI hỗ trợ những bước chuẩn bị.</p>
           </div>
           <div className="auth-art">
-            <Picture name="knowledge" alt="Quả cầu tri thức kết nối những ý tưởng học tập" />
+            <Picture name={register ? "study" : "coding"} alt={register ? "Cùng học tập và chia sẻ tri thức" : "Góc học tập để bắt đầu một ý tưởng mới"} />
             <span className="auth-orbit orbit-one" />
             <span className="auth-orbit orbit-two" />
             <span className="floating-note note-document">↗ Tài liệu của bạn</span>

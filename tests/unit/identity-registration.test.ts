@@ -50,6 +50,17 @@ describe("P7.1 IDN-01 request validation", () => {
 });
 
 describe("P7.1 IDN-01 idempotency and uniqueness", () => {
+  it("registers lecturers directly, unverified, without student conversion", async () => {
+    const store = new MemoryRegistrationStore();
+    const service = createService(store);
+    const command = { ...makeCommand("lecturer-direct"), role: "LECTURER" as const };
+    const first = await service.register(command);
+    const replay = await service.register(command);
+    expect(first.account).toMatchObject({ role: "LECTURER", lecturerVerified: false, status: "ACTIVE" });
+    expect(replay.account).toEqual(first.account);
+    expect(parseRegistrationRequest({ ...validBody, role: "LECTURER" }).role).toBe("LECTURER");
+    await expect(service.register({ ...command, role: "STUDENT" })).rejects.toMatchObject({ code: "IDEMPOTENCY_CONFLICT" });
+  });
   it("replays the original logical result and keeps stable event IDs", async () => {
     const store = new MemoryRegistrationStore();
     const service = createService(store);

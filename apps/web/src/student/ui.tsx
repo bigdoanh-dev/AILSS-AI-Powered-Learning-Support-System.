@@ -4,8 +4,8 @@ import { useSession } from "../auth/session";
 import { studentError, type Progress } from "./api";
 export function StudentGuard() {
   const auth = useSession();
-  if (auth.state !== "AUTHENTICATED") return <p role="status">Đang xác minh phiên…</p>;
-  return auth.state === "AUTHENTICATED" && auth.profile?.role === "STUDENT" ? (
+  if (auth.state !== "AUTHENTICATED" && auth.state !== "REFRESHING") return <p role="status">Đang xác minh phiên…</p>;
+  return (auth.state === "AUTHENTICATED" || auth.state === "REFRESHING") && auth.profile?.role === "STUDENT" ? (
     <Outlet />
   ) : (
     <Navigate to="/app" replace />

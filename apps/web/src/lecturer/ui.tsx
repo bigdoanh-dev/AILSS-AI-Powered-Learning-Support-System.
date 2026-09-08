@@ -1,5 +1,11 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useSession } from "../auth/session";
+import { lecturerError } from "./api";
+import { useLecturer } from "./api";
+export function OwnedCourseSelect({ name, label, required = false }: { name: string; label: string; required?: boolean }) {
+  const q = useLecturer<{courseId:string;title:string}[]>("/me/owned-courses");
+  return <label>{label}<select name={name} required={required} disabled={q.pending || !!q.error}><option value="">{q.pending ? "Đang tải khóa học…" : "Chọn khóa học"}</option>{q.data?.map(c => <option key={c.courseId} value={c.courseId}>{c.title}</option>)}</select>{!!q.error && <span role="alert">{lecturerError(q.error)} <button type="button" className="plain-button" onClick={q.retry}>Thử lại</button></span>}</label>;
+}
 export function LecturerGuard() {
   const { profile } = useSession();
   if (!profile) return null;
@@ -28,7 +34,7 @@ export function State<T>({
   if (q.error)
     return (
       <div className="form-panel" role="alert">
-        <p>Không thể tải dữ liệu.</p>
+        <p>{lecturerError(q.error)}</p>
         <button className="button secondary" onClick={q.retry}>
           Thử lại
         </button>

@@ -1,3 +1,4 @@
+import { localLibrary, courseMedia, enrichCourseLesson } from "./local-library.mjs";
 import { studentOperation, studentEnvelope } from "./student.mjs";
 import { lecturerOperation, lecturerEnvelope } from "./lecturer.mjs";
 import { adminOperation, adminEnvelope } from "./admin.mjs";
@@ -121,9 +122,11 @@ export function createSessionAdapter({
         req.url?.startsWith("/web-session/lecturer/") ||
         req.url?.startsWith("/web-session/admin/")
           ? 524288
-          : req.url?.startsWith("/web-session/lecturer-application")
-            ? 32768
-            : 8192)
+          : req.url?.startsWith("/web-session/avatar")
+            ? 350100
+            : req.url?.startsWith("/web-session/lecturer-application")
+              ? 32768
+              : 8192)
       )
         throw new SessionError(413, "BODY_TOO_LARGE");
     }
@@ -169,6 +172,7 @@ export function createSessionAdapter({
         "/web-session/register": "POST",
         "/web-session/logout": "POST",
         "/web-session/profile": "PATCH",
+        "/web-session/avatar": method === "GET" ? "GET" : "POST",
         "/web-session/password": "POST",
         "/web-session/lecturer-application": method === "GET" ? "GET" : "POST",
         "/web-session/admin/lecturer-applications": "GET",
@@ -179,6 +183,8 @@ export function createSessionAdapter({
       const verificationMatch = route.match(/^\/web-session\/admin\/lecturers\/([0-9a-f-]{36})\/verify$/i);
       if (applicationMatch) allowed[route] = applicationMatch[2] ? "POST" : "GET";
       if (verificationMatch) allowed[route] = "POST";
+      const isLibrary = /^\/web-session\/library(?:\/[a-f0-9]{24})?$/.test(route);
+      if (isLibrary && !production && ["GET", "HEAD"].includes(method)) allowed[route] = method;
       const isStudent = route.startsWith("/web-session/student/");
       const isLecturer = route.startsWith("/web-session/lecturer/");
       const isAdmin = route.startsWith("/web-session/admin/");
@@ -219,6 +225,23 @@ export function createSessionAdapter({
         res.setHeader("Set-Cookie", cookie("", 0));
         throw new SessionError(401, "SESSION_EXPIRED");
       }
+      if (isLibrary && !production) {
+        const profile = await protectedCall(s, "/me");
+        if (profile.status !== "ACTIVE") throw new SessionError(403, "ACCOUNT_DISABLED");
+        const fileId = route.split("/").pop();
+        const lesson = Object.entries(await courseMedia()).find(([, item]) => item.fileId === fileId);
+        if (!lesson) throw new SessionError(404, "LESSON_NOT_FOUND");
+        await protectedCall(s, "/lessons/" + lesson[0], "GET", undefined, undefined, {
+          kind: "student",
+          headers: {},
+        });
+        await localLibrary(req, res);
+        return true;
+      }
+      if (route === "/web-session/avatar") {
+        send(200, { data: await protectedCall(s, "/me/avatar", method, body) });
+        return true;
+      }
       if (isStudent) {
         let operation;
         try {
@@ -233,7 +256,12 @@ export function createSessionAdapter({
           kind: "student",
           headers: operation.headers,
         });
-        send(200, result);
+        send(
+          200,
+          !production && method === "GET" && /^\/lessons\/[a-f0-9-]+$/.test(operation.path)
+            ? await enrichCourseLesson(result)
+            : result,
+        );
         return true;
       }
       if (isLecturer) {
@@ -251,7 +279,12 @@ export function createSessionAdapter({
           kind: "lecturer",
           headers: operation.headers,
         });
-        send(200, result);
+        send(
+          200,
+          !production && method === "GET" && /^\/lessons\/[a-f0-9-]+$/.test(operation.path)
+            ? await enrichCourseLesson(result)
+            : result,
+        );
         return true;
       }
       if (

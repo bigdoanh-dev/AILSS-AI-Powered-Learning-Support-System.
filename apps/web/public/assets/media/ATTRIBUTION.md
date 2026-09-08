@@ -19,3 +19,11 @@ No third-party source URLs apply to these locally generated assets. System fonts
 - Design concepts: premium navy/blue AILSS hero and coordinated AI workflow/audience/architecture continuation. Concepts are evidence only, not shipped UI. Invented footer contact details, AI recommendations and fictional statistics in the generated concept were explicitly rejected.
 
 Source image generation used the built-in Image Gen tool. Optimized exports retain source aspect ratio and ship both 640 and 1280 widths. See scripts/assets.mjs for exact encoding parameters.
+
+## Web redesign assets (2026-09-08)
+
+The coding, database, ai and study images in 640/1280 AVIF/WebP were generated with OpenAI Image Gen for AILSS. They are illustrative images, not photographs of actual courses or customers. Source images: exec-cdfe7608-2868-4ad3-9f2b-148f27bcf62b.png (coding), exec-d865211d-5bbd-4f11-add4-a8e706050fa2.png (database), exec-6941d40b-0fd6-4cfa-9c5f-1cf9532c3a92.png (AI), exec-df42ca36-d81e-424b-a0d2-7dd2d2013be2.png (study). Use is subject to applicable OpenAI terms.
+
+Original Vietnamese demonstration curricula are in scripts/dev/demo/courses.json. PDF/text handouts are generated from that source; the video builder presents the same explanations as silent teaching slides. These are sample teaching materials, not accreditation claims.
+
+Các bìa `cover-*.svg` được vẽ riêng bằng vector cho từng chủ đề trong AILSS; mã tạo tại `scripts/dev/demo/build-covers.mjs`. Video Python tham khảo được nhúng từ freeCodeCamp, không tải lại hoặc phân phối lại video. Các khóa IELTS cục bộ giữ nguyên quyền của tác giả và không thuộc giấy phép mã nguồn.

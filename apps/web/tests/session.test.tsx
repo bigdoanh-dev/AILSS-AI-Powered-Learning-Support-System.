@@ -90,7 +90,7 @@ describe("session authority", () => {
     );
     await screen.findByText("UNAUTHENTICATED");
     fireEvent.click(screen.getByText("login"));
-    await screen.findByText(/Phiên đã hết hạn/);
+    await screen.findByText(/Email hoặc mật khẩu chưa đúng/);
     fireEvent.click(screen.getByText("login"));
     await screen.findByText("Test");
     fireEvent.click(screen.getByText("logout"));

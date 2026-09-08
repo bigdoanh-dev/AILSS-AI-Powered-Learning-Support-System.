@@ -163,6 +163,15 @@ app.post(
   logoutHandler,
 );
 app.get("/api/v1/me", profileReadHandler);
+app.get(["/api/v1/me/owned-courses", "/api/v1/me/owned-courses/:courseId"], learningAuthoring.owned);
+for (const method of ["GET", "POST"] as const) {
+  const handler = protectedProxy.handler({
+    method, path: "/api/v1/me/avatar", purpose: "identity.profile.avatar", forwardBody: method === "POST",
+    onInvalidBearer: () => {},
+  });
+  if (method === "GET") app.get("/api/v1/me/avatar", handler);
+  else app.post("/api/v1/me/avatar", authLimiter.middleware(30), handler);
+}
 for (const [method, path, action] of [
   ["POST", "/api/v1/lecturer-applications", "submit"],
   ["GET", "/api/v1/me/lecturer-application", "mine"],

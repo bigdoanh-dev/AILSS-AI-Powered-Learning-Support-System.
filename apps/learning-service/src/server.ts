@@ -12,6 +12,7 @@ import { createIdentityPublicProfileClient } from "./identity-client.js";
 import { LearningAuthoringRepository } from "./authoring/repository.js";
 import { LearningAuthoringService } from "./authoring/service.js";
 import { learningAuthoringRouter } from "./authoring/router.js";
+import { ownedCoursesRouter } from "./authoring/owned-router.js";
 import { LearningOutboxRelay } from "./authoring/relay.js";
 import type { AppConfig } from "../../../packages/config/src/index.js";
 import { LearningLifecycleRepository } from "./lifecycle/repository.js";
@@ -179,6 +180,7 @@ await startService(manifest, {
         kid: config.ACTOR_CONTEXT_KID,
         clockToleranceSeconds: config.JWT_CLOCK_SKEW_SECONDS,
       });
+    app.use(ownedCoursesRouter(context.cassandra, authoringRepository, identity, verifier("learning.course.owned")));
     app.use(
       learningAuthoringRouter(
         authoring,
@@ -218,7 +220,7 @@ await startService(manifest, {
             useSSL: config.OBJECT_STORAGE_USE_SSL,
             accessKey: config.OBJECT_STORAGE_ACCESS_KEY,
             secretKey: config.OBJECT_STORAGE_SECRET_KEY,
-          })
+          }, config.OBJECT_STORAGE_PUBLIC_URL)
         : undefined;
     const lessons = new LearningLessonService(
       new LearningLessonRepository(context.cassandra),

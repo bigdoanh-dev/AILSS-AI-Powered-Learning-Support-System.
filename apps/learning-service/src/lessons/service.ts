@@ -23,7 +23,7 @@ export class LearningLessonService {
   public constructor(
     private readonly repository: LearningLessonRepository,
     private readonly identity: Pick<IdentityPublicProfileClient, "get">,
-    private readonly storage: Pick<ObjectStorage, "verify" | "createReadUrl"> | undefined,
+    private readonly storage: (Pick<ObjectStorage, "verify" | "createReadUrl"> & Partial<Pick<ObjectStorage, "stat">>) | undefined,
     private readonly secret: string,
   ) {}
 
@@ -57,7 +57,10 @@ export class LearningLessonService {
     if (!owner && !entitled && !preview)
       throw new AppError("LESSON_ACCESS_REQUIRED", 403, "Active Course access is required");
     const contentUrl = lesson.objectKey ? await this.readUrl(lesson.objectKey) : undefined;
-    return lessonDetailDto(lesson, contentUrl);
+    const contentType = lesson.objectKey && this.storage?.stat
+      ? (await this.storage.stat(lesson.objectKey)).contentType
+      : undefined;
+    return { ...lessonDetailDto(lesson, contentUrl), ...(contentType ? { contentType } : {}) };
   }
 
   public async create(input: {

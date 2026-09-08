@@ -74,7 +74,7 @@ const validate = (questions: Question[]) =>
 
 export function Assessments() {
   const [params] = useSearchParams(),
-    courses = useLecturer<Course[] | { items: Course[] }>("/courses?limit=50"),
+    courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses"),
     classes = useLecturer<ClassItem[] | { classes: ClassItem[] }>("/me/owned-classes");
   const [target, setTarget] = useState(
       params.get("course")

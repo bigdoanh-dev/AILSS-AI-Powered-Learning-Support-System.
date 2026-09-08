@@ -86,7 +86,11 @@
     "build:web": "pnpm --filter @ailss/web build",
     "test:web": "pnpm --filter @ailss/web test",
     "lint:web": "pnpm --filter @ailss/web lint",
-    "typecheck:web": "pnpm --filter @ailss/web typecheck"
+    "typecheck:web": "pnpm --filter @ailss/web typecheck",
+    "seed:web-demo": "node scripts/dev/seed-web-demo.mjs",
+    "seed:community": "node scripts/dev/seed-course-community.mjs",
+    "import:owned-courses": "node scripts/dev/import-owned-courses.mjs",
+    "test:gemini": "tsx scripts/dev/check-gemini-quiz.ts --live"
   },
   "dependencies": {
     "@node-rs/argon2": "2.1.0",

@@ -10,6 +10,7 @@ const registrationRequestSchema = z
     email: canonicalEmailSchema,
     password: z.string().min(12).max(128),
     displayName: displayNameSchema,
+    role: z.enum(["STUDENT", "LECTURER"]).optional(),
   })
   .strict();
 
@@ -17,6 +18,7 @@ export interface RegistrationRequest {
   readonly email: string;
   readonly password: string;
   readonly displayName: string;
+  readonly role?: "STUDENT" | "LECTURER" | undefined;
 }
 
 export interface RegistrationCommand extends RegistrationRequest {
@@ -28,7 +30,7 @@ export interface RegistrationCommand extends RegistrationRequest {
 export interface RegisteredAccount {
   readonly userId: string;
   readonly displayName: string;
-  readonly role: "STUDENT";
+  readonly role: "STUDENT" | "LECTURER";
   readonly status: "ACTIVE";
   readonly lecturerVerified: false;
   readonly profileVersion: number;
@@ -59,7 +61,7 @@ export function registrationFingerprint(request: RegistrationRequest): string {
         api: "IDN-01",
         email: request.email,
         displayName: request.displayName,
-        role: "STUDENT",
+        role: request.role ?? "STUDENT",
         passwordContribution,
       }),
       "utf8",

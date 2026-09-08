@@ -56,6 +56,7 @@ const files = [
   "010_identity_schema.cql",
   "011_identity_security_versions.cql",
   "012_lecturer_applications.cql",
+  "013_profile_avatar.cql",
   "020_learning_schema.cql",
   "021_learning_course_published_at.cql",
   "022_learning_lesson_authoring.cql",

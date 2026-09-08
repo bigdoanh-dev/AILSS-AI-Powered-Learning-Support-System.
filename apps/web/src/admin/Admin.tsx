@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { Link, Navigate, Outlet, useParams } from "react-router-dom";
-import { useSession } from "../auth/session";
+import { Link, Navigate, Outlet, useParams, useSearchParams } from "react-router-dom";
+import { sessionRequest, useSession } from "../auth/session";
 import { adminError, adminRequest } from "./api";
 
 type Role = "STUDENT" | "LECTURER" | "ADMIN";
@@ -19,29 +19,46 @@ type User = {
 
 export function AdminGuard() {
   const { state, profile } = useSession();
-  if (state !== "AUTHENTICATED") return <p role="status">Đang xác minh phiên…</p>;
+  if (state !== "AUTHENTICATED" && state !== "REFRESHING") return <p role="status">Đang xác minh phiên…</p>;
   return profile?.role === "ADMIN" ? <Outlet /> : <Navigate to="/app" replace />;
 }
 
 export function AdminHome() {
+  const { profile } = useSession();
   return (
     <>
-      <p className="eyebrow">ADMIN · ĐIỀU HÀNH</p>
-      <h1>Trung tâm quản trị.</h1>
-      <p className="lead">Các công cụ dùng dữ liệu chính thức và kiểm tra lại quyền trên mỗi thao tác.</p>
-      <div className="workspace-cards">
-        <Card title="Người dùng" to="/app/admin/users">
-          Tra cứu theo vai trò và trạng thái, xem chi tiết hoặc đổi trạng thái có xác minh lại.
-        </Card>
-        <Card title="Giảng viên" to="/app/admin/lecturer-applications">
-          Duyệt hồ sơ đăng ký và xác minh vai trò Giảng viên.
-        </Card>
-        <Card title="Khóa học" to="/app/admin/courses">
-          Xuất bản hoặc lưu trữ một khóa học bằng mã định danh.
-        </Card>
-        <Card title="Kiểm duyệt" to="/app/admin/moderation">
-          Xử lý nội dung đã được người dùng báo cáo.
-        </Card>
+      <div className="dashboard-heading">
+        <div>
+          <h1>Chào {profile?.displayName}, cùng quản lý AILSS.</h1>
+          <p>Quản lý thành viên, xác minh giảng viên và chăm sóc cộng đồng học tập.</p>
+        </div>
+        <Link className="button" to="/app/admin/users?role=LECTURER">
+          Xác minh giảng viên
+        </Link>
+      </div>
+      <div className="admin-overview">
+        <section className="admin-welcome">
+          <span className="admin-symbol" aria-hidden="true">
+            ▦
+          </span>
+          <h2>Một không gian học tập được chăm sóc.</h2>
+          <p>Bắt đầu từ hồ sơ giảng viên mới, nội dung cần duyệt hoặc một yêu cầu từ người học.</p>
+          <Link to="/app/admin/moderation">Xem nội dung cần kiểm duyệt</Link>
+        </section>
+        <div className="workspace-cards">
+          <Card title="Thành viên" to="/app/admin/users">
+            Tra cứu học viên và giảng viên; quản lý trạng thái tài khoản.
+          </Card>
+          <Card title="Giảng viên mới" to="/app/admin/users?role=LECTURER">
+            Xác minh tài khoản giảng viên đăng ký trực tiếp.
+          </Card>
+          <Card title="Khóa học" to="/app/admin/courses">
+            Duyệt xuất bản và quản lý nội dung khóa học.
+          </Card>
+          <Card title="Hồ sơ chuyển vai trò" to="/app/admin/lecturer-applications">
+            Xử lý yêu cầu trở thành giảng viên từ tài khoản học viên hiện có.
+          </Card>
+        </div>
       </div>
     </>
   );
@@ -49,16 +66,16 @@ export function AdminHome() {
 function Card({ title, to, children }: { title: string; to: string; children: ReactNode }) {
   return (
     <article>
-      <p className="eyebrow">QUẢN TRỊ</p>
       <h2>{title}</h2>
       <p>{children}</p>
-      <Link to={to}>Mở công cụ →</Link>
+      <Link to={to}>Xem chi tiết</Link>
     </article>
   );
 }
 
 export function Users() {
-  const [role, setRole] = useState<Role>("STUDENT"),
+  const [params, setParams] = useSearchParams();
+  const [role, setRole] = useState<Role>(params.get("role") === "LECTURER" ? "LECTURER" : "STUDENT"),
     [status, setStatus] = useState<Status>("ACTIVE");
   const [cursor, setCursor] = useState(""),
     [items, setItems] = useState<User[]>([]),
@@ -95,6 +112,7 @@ export function Users() {
             onChange={(e) => {
               setCursor("");
               setRole(e.target.value as Role);
+              setParams({ role: e.target.value });
             }}
           >
             <option value="STUDENT">Sinh viên</option>
@@ -201,30 +219,72 @@ export function UserDetail() {
   return (
     <>
       <Link to="/app/admin/users">← Danh sách người dùng</Link>
-      <p className="eyebrow">ADMIN · CHI TIẾT NGƯỜI DÙNG</p>
+      <p className="eyebrow">CHI TIẾT THÀNH VIÊN</p>
       <h1>{user?.displayName || "Đang tải người dùng…"}</h1>
       {message && <p role="status">{message}</p>}
       {user && (
         <div className="account-grid">
           <section className="study-card">
-            <h2>Thông tin vận hành</h2>
+            <h2>Thông tin tài khoản</h2>
             <dl className="profile-facts">
               <dt>Email</dt>
               <dd>{user.emailMasked}</dd>
               <dt>Vai trò</dt>
-              <dd>{user.role}</dd>
+              <dd>{{ STUDENT: "Học viên", LECTURER: "Giảng viên", ADMIN: "Quản trị viên" }[user.role]}</dd>
               <dt>Trạng thái</dt>
-              <dd>{user.status}</dd>
+              <dd>{user.status === "ACTIVE" ? "Đang hoạt động" : "Tạm khóa"}</dd>
               <dt>Xác minh GV</dt>
               <dd>{user.lecturerVerified ? "Đã xác minh" : "Chưa xác minh"}</dd>
               <dt>Phiên bản</dt>
               <dd>{user.profileVersion}</dd>
-              <dt>User ID</dt>
+              <dt>Mã thành viên</dt>
               <dd>{user.userId}</dd>
             </dl>
           </section>
+          {user.role === "LECTURER" && !user.lecturerVerified && (
+            <form
+              className="form-panel"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                setBusy(true);
+                setMessage("");
+                try {
+                  await sessionRequest(
+                    `admin/lecturers/${userId}/verify`,
+                    "POST",
+                    { currentPassword: String(new FormData(form).get("currentPassword")) },
+                    crypto.randomUUID(),
+                  );
+                  form.reset();
+                  await load();
+                  setMessage("Đã xác minh giảng viên. Tài khoản có thể bắt đầu giảng dạy.");
+                } catch (error) {
+                  setMessage(adminError(error));
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              <h2>Xác minh giảng viên</h2>
+              <p>Kiểm tra thông tin trước khi mở quyền tạo khóa học và lớp học.</p>
+              <label>
+                Mật khẩu quản trị viên
+                <input
+                  type="password"
+                  name="currentPassword"
+                  autoComplete="current-password"
+                  required
+                  maxLength={128}
+                />
+              </label>
+              <button className="button" disabled={busy}>
+                {busy ? "Đang xác minh…" : "Xác minh giảng viên"}
+              </button>
+            </form>
+          )}
           <form className="form-panel" onSubmit={(e) => void submit(e)}>
-            <h2>Đổi trạng thái</h2>
+            <h2>Đổi trạng thái tài khoản</h2>
             <label>
               Trạng thái mới
               <select name="status" defaultValue={user.status}>
@@ -237,7 +297,7 @@ export function UserDetail() {
               <input name="reason" maxLength={200} />
             </label>
             <label>
-              Mật khẩu Admin hiện tại
+              Mật khẩu quản trị viên hiện tại
               <input
                 name="currentPassword"
                 type="password"
@@ -284,14 +344,12 @@ export function CourseGovernance() {
   }
   return (
     <>
-      <p className="eyebrow">ADMIN · QUẢN TRỊ KHÓA HỌC</p>
-      <h1>Thao tác bằng Course ID.</h1>
-      <p className="lead">
-        API hiện không cung cấp hàng đợi xét duyệt. Nhập UUID từ hồ sơ vận hành đã được xác minh.
-      </p>
+      <p className="eyebrow">QUẢN LÝ KHÓA HỌC</p>
+      <h1>Quản lý xuất bản khóa học.</h1>
+      <p className="lead">Nhập mã khóa học do giảng viên gửi để xuất bản hoặc lưu trữ khóa học.</p>
       <form className="form-panel admin-action" onSubmit={(e) => void submit(e)}>
         <label>
-          Course ID
+          Mã khóa học
           <input
             name="courseId"
             type="text"
@@ -308,7 +366,7 @@ export function CourseGovernance() {
           </select>
         </label>
         <label>
-          Mật khẩu Admin hiện tại
+          Mật khẩu quản trị viên hiện tại
           <input name="currentPassword" type="password" autoComplete="current-password" required />
         </label>
         <button className="button" disabled={busy}>

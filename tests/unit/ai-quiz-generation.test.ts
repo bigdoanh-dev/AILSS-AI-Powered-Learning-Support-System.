@@ -52,6 +52,39 @@ describe("P10.2 objective-v1 boundary", () => {
       }),
     ).rejects.toMatchObject({ code: "RATE_LIMITED", retryable: true });
   });
+  it("maps Gemini native text and usage while excluding thought parts", async () => {
+    const mock = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({
+          candidates: [
+            {
+              content: {
+                parts: [{ thought: true, text: "private reasoning" }, { text: JSON.stringify(valid) }],
+              },
+            },
+          ],
+          usageMetadata: { promptTokenCount: 8, candidatesTokenCount: 12 },
+        }),
+      );
+    vi.stubGlobal("fetch", mock);
+    const provider = new HttpQuizProvider({
+      endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
+      apiKey: "secret",
+      model: "gemini-flash-latest",
+      timeoutMs: 1000,
+    });
+    const result = await provider.generate({
+      idempotencyKey: "native-test",
+      sourceText: "lesson",
+      questionCount: 1,
+      questionTypes: ["SINGLE_CHOICE"],
+      difficulty: "EASY",
+    });
+    expect(result).toMatchObject({ quiz: valid, inputUnits: 8, outputUnits: 12 });
+    expect(mock.mock.calls[0]?.[1]?.headers).toMatchObject({ "x-goog-api-key": "secret" });
+    expect(mock.mock.calls[0]?.[0]).not.toContain("secret");
+  });
   it("sends a stable provider idempotency key and parses structured JSON", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       Response.json({

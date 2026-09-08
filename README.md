@@ -70,7 +70,7 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 
 - 4 actor: `GUEST`, `STUDENT`, `LECTURER`, `ADMIN`.
 - 6 business services: Identity, Learning, Classroom, Assessment, Interaction và AI.
-- 98 public APIs, 15 internal APIs, 74 Query IDs và 22 Event Types.
+- 102 public APIs, 15 internal APIs, 75 Query IDs và 22 Event Types.
 - Cassandra 5 cho dữ liệu theo domain, RabbitMQ cho xử lý bất đồng bộ và MinIO cho tài liệu riêng tư.
 - Redis không được sử dụng.
 - Web production build có 30 public routes, trang 404 và workspace theo vai trò.

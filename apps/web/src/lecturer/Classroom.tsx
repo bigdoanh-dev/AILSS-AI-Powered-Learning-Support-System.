@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { lecturerError, lecturerRequest, month, range, useLecturer } from "./api";
+import { OwnedCourseSelect } from "./ui";
 import { Field, State } from "./ui";
 import { Breadcrumbs, EmptyState, ScheduleTime, StateChip } from "../components/product";
 type C = {
@@ -53,7 +54,7 @@ export function Classes() {
   }
   return (
     <>
-      <p className="eyebrow">CLASSROOM</p>
+      <p className="eyebrow">LỚP HỌC</p>
       <h1>Lớp phụ trách.</h1>
       <State q={q}>
         {(v) => (
@@ -74,12 +75,12 @@ export function Classes() {
         <label>
           Loại
           <select name="classKind">
-            <option>LIVE_COHORT</option>
-            <option>PRIVATE</option>
+            <option value="LIVE_COHORT">Lớp theo khóa</option>
+            <option value="PRIVATE">Lớp riêng</option>
             <option>INSTITUTIONAL</option>
           </select>
         </label>
-        <Field label="Course ID liên kết" name="linkedCourseId" />
+        <OwnedCourseSelect name="linkedCourseId" label="Liên kết khóa học"/>
         <Field label="Số học viên tối đa" name="maxMembers" type="number" defaultValue={100} />
         <button className="button">Tạo lớp</button>
         <p role="status">{msg}</p>

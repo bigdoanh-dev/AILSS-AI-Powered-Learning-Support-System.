@@ -1,6 +1,6 @@
 {
-  "version": "P12.2B",
-  "publicCount": 98,
+  "version": "P12-web-redesign",
+  "publicCount": 102,
   "internalCount": 15,
   "public": [
     {
@@ -1146,6 +1146,50 @@
         "Q-IDN-010"
       ],
       "event": "system.audit.requested.v1"
+    },
+    {
+      "id": "IDN-18",
+      "service": "Identity",
+      "method": "GET",
+      "path": "/api/v1/me/avatar",
+      "summary": "Đọc ảnh đại diện",
+      "auth": "Bearer",
+      "roles": "user",
+      "queryIds": ["Q-IDN-011"],
+      "event": null
+    },
+    {
+      "id": "IDN-19",
+      "service": "Identity",
+      "method": "POST",
+      "path": "/api/v1/me/avatar",
+      "summary": "Lưu hoặc xóa ảnh đại diện",
+      "auth": "Bearer",
+      "roles": "user",
+      "queryIds": ["Q-IDN-011"],
+      "event": null
+    },
+    {
+      "id": "LRN-29",
+      "service": "Learning",
+      "method": "GET",
+      "path": "/api/v1/me/owned-courses",
+      "summary": "Khóa học do giảng viên sở hữu",
+      "auth": "Bearer",
+      "roles": "LECTURER",
+      "queryIds": ["Q-LRN-001", "Q-LRN-005"],
+      "event": null
+    },
+    {
+      "id": "LRN-30",
+      "service": "Learning",
+      "method": "GET",
+      "path": "/api/v1/me/owned-courses/{courseId}",
+      "summary": "Chi tiết khóa học của giảng viên",
+      "auth": "Bearer",
+      "roles": "LECTURER",
+      "queryIds": ["Q-LRN-001"],
+      "event": null
     }
   ],
   "internal": [

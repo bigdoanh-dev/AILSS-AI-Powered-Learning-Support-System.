@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build && tsx scripts/prerender.tsx",
     "preview": "node scripts/serve.mjs",
-    "test": "vitest run && node --test server/session.test.mjs server/lecturer.test.mjs server/admin.test.mjs server/student-commerce.test.mjs",
+    "test": "vitest run && node --test server/session.test.mjs server/lecturer.test.mjs server/admin.test.mjs server/student-commerce.test.mjs server/local-library.test.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test:browser": "node scripts/verify-browser.mjs",

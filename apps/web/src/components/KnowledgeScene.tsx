@@ -7,11 +7,10 @@ export function KnowledgeScene() {
     const element = host.current;
     if (!element) return;
     const motion = matchMedia("(prefers-reduced-motion: reduce)");
-    const mobile = matchMedia("(max-width: 760px)");
     let disposed = false;
     let cleanup: (() => void) | undefined;
     let observer: IntersectionObserver | undefined;
-    if (enabled && !motion.matches && !mobile.matches) {
+    if (enabled && !motion.matches) {
       observer = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
@@ -37,11 +36,12 @@ export function KnowledgeScene() {
   }, [enabled]);
   return (
     <div className="knowledge-scene">
-      <Picture name="knowledge" alt="Quả cầu tri thức kết nối tài liệu, AI và bước giảng viên duyệt" eager />
+      <Picture name="ai" alt="Kết nối tri thức với khối 3D và các học liệu chuyển động" eager />
       <div ref={host} className="webgl-layer" aria-hidden="true" />
-      <div className="orbit-label top">01 · Tài liệu</div>
-      <div className="orbit-label right">02 · AI tạo bản nháp</div>
-      <div className="orbit-label bottom">03 · Giảng viên rà soát</div>
+      <div className="orbit-label top">▤ Tài liệu của bạn</div>
+      <div className="orbit-label right">✧ AI kết nối ý tưởng</div>
+      <div className="orbit-label bottom">✓ Giảng viên hướng dẫn</div>
+      <span className="scene-status">Di chuyển chuột để khám phá</span>
       <button className="scene-toggle" onClick={() => setEnabled(!enabled)} aria-pressed={enabled}>
         {enabled ? "Tạm dừng hiệu ứng 3D" : "Bật hiệu ứng 3D"}
       </button>

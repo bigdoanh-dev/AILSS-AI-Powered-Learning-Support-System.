@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { lecturerError, lecturerRequest, useLecturer } from "./api";
-import { Field, State } from "./ui";
+import { CourseArtwork, categories } from "../components/CourseArtwork";
+import { OwnedCourseSelect, Field, State } from "./ui";
 import { Breadcrumbs, EmptyState, StateChip, stateLabel, useUnsavedChanges } from "../components/product";
 type Course = {
   courseId: string;
@@ -34,26 +35,26 @@ type Offering = {
 };
 const values = (f: FormData) => Object.fromEntries(f.entries());
 export function TeachingHome() {
-  const courses = useLecturer<Course[] | { items: Course[] }>("/courses?limit=12"),
+  const courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses"),
     offerings = useLecturer<Offering[] | { items: Offering[] }>("/me/owned-offerings"),
     classes = useLecturer<{ classes?: unknown[] } | unknown[]>("/me/owned-classes");
   return (
     <>
       <p className="eyebrow">KHÔNG GIAN GIẢNG DẠY</p>
-      <h1>Điều hành khóa học từ dữ liệu thật.</h1>
+      <h1>Không gian giảng dạy của bạn.</h1>
       <p className="lead">Soạn nội dung, mở lớp, theo dõi đánh giá và duyệt bản nháp AI.</p>
       <div className="workspace-cards">
         <article>
           <h2>Khóa học</h2>
-          <p>Catalog không phải danh sách sở hữu; quyền sửa được backend xác nhận ở từng khóa.</p>
+          <p>Tạo bài giảng, sắp xếp nội dung và theo dõi khóa học của bạn.</p>
           <Link to="/app/teaching/courses/new">Tạo khóa học →</Link>
         </article>
         <article>
-          <h2>Offering</h2>
+          <h2>Đợt mở bán</h2>
           <State q={offerings}>
-            {(v) => <p>{Array.isArray(v) ? v.length : v.items?.length || 0} offering đang quản lý.</p>}
+            {(v) => <p>{Array.isArray(v) ? v.length : v.items?.length || 0} đợt mở bán đang quản lý.</p>}
           </State>
-          <Link to="/app/teaching/offerings">Quản lý offering →</Link>
+          <Link to="/app/teaching/offerings">Quản lý đợt mở bán →</Link>
         </article>
         <article>
           <h2>Lớp học</h2>
@@ -64,13 +65,13 @@ export function TeachingHome() {
         </article>
       </div>
       <section>
-        <h2>Catalog khóa học</h2>
+        <h2>Khóa học của tôi</h2>
         <State q={courses}>
           {(v) => (
             <div className="workspace-cards">
               {(Array.isArray(v) ? v : v.items || []).map((c) => (
                 <article key={c.courseId}>
-                  <span className="badge">{c.state}</span>
+                  <CourseArtwork title={c.title} categoryId={c.categoryId}/><StateChip state={c.state}/>
                   <h3>{c.title}</h3>
                   <Link to={`/app/teaching/courses/${c.courseId}`}>Mở chi tiết →</Link>
                 </article>
@@ -101,13 +102,13 @@ export function CourseCreate() {
       <h1>Tạo khóa học.</h1>
       <form className="form-panel form-grid" onSubmit={(e) => void submit(e)}>
         <Field label="Tên khóa học" name="title" required />
-        <Field label="Slug" name="slug" required />
-        <Field label="Category ID" name="categoryId" required />
+        <Field label="Đường dẫn khóa học" name="slug" required />
+        <label>Chủ đề<select name="categoryId">{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
         <label>
           Hình thức
           <select name="priceType">
-            <option>FREE</option>
-            <option>PAID</option>
+            <option value="FREE">Miễn phí</option>
+            <option value="PAID">Có học phí</option>
           </select>
         </label>
         <Field label="Giá" name="price" defaultValue="0" required />
@@ -133,7 +134,7 @@ export function CourseDetail() {
   async function command(path: string, body?: unknown) {
     try {
       await lecturerRequest(path, body ? "PATCH" : "POST", body);
-      setMsg("Đã cập nhật từ backend.");
+      setMsg("Đã lưu thay đổi.");
       if (body) setDirty(false);
       q.retry();
     } catch (x) {
@@ -204,7 +205,7 @@ export function CourseDetail() {
                         </Link>
                       }
                     >
-                      Khóa học chưa tự động mở quyền đăng ký. Hãy tạo Offering khi nội dung đủ điều kiện.
+                      Khóa học chưa tự động mở quyền đăng ký. Hãy tạo đợt mở bán khi nội dung đủ điều kiện.
                     </EmptyState>
                   );
                 }}
@@ -260,13 +261,13 @@ export function CourseDetail() {
             >
               <h2>Sửa bản nháp</h2>
               <Field label="Tên" name="title" defaultValue={c.title} required />
-              <Field label="Slug" name="slug" defaultValue={c.slug} required />
-              <Field label="Category ID" name="categoryId" defaultValue={c.categoryId} required />
+              <Field label="Đường dẫn khóa học" name="slug" defaultValue={c.slug} required />
+              <label>Chủ đề<select name="categoryId" defaultValue={c.categoryId}>{!categories.some(x => x.id === c.categoryId) && <option value={c.categoryId}>Chủ đề hiện tại</option>}{categories.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
               <label>
                 Hình thức
                 <select name="priceType" defaultValue={c.priceType}>
-                  <option>FREE</option>
-                  <option>PAID</option>
+                  <option value="FREE">Miễn phí</option>
+                  <option value="PAID">Có học phí</option>
                 </select>
               </label>
               <Field label="Giá" name="price" defaultValue={c.price} required />
@@ -404,7 +405,7 @@ export function Offerings() {
   return (
     <>
       <p className="eyebrow">OFFERING</p>
-      <h1>Offering đang quản lý.</h1>
+      <h1>Đợt mở bán của bạn.</h1>
       <State q={q}>
         {(v) => (
           <div className="workspace-cards">
@@ -448,15 +449,15 @@ function OfferingCreate({ onDone }: { onDone: () => void }) {
       }}
     >
       <h2>Tạo offering</h2>
-      <Field label="Course ID" name="courseId" required />
+      <OwnedCourseSelect label="Khóa học" name="courseId" required/>
       <label>
         Loại
         <select name="offeringType">
-          <option>SELF_PACED</option>
-          <option>LIVE_COHORT</option>
+          <option value="SELF_PACED">Tự học theo tiến độ</option>
+          <option value="LIVE_COHORT">Học theo lớp</option>
         </select>
       </label>
-      <Field label="Class ID (LIVE_COHORT)" name="classId" />
+      <Field label="Mã lớp liên kết (khi học theo lớp)" name="classId" />
       <Field label="Tên" name="title" required />
       <Field label="Giá" name="price" defaultValue="0" required />
       <Field label="Tiền tệ" name="currency" defaultValue="VND" required />

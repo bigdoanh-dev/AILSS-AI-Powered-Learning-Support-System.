@@ -37,11 +37,11 @@ describe("premium auth and motion", () => {
     );
     expect(screen.queryByLabelText("Mật khẩu")).toBeNull();
   });
-  it("lecturer fallback is truthful and has no submission", () => {
+  it("lecturer has a direct registration form and explains verification", () => {
     show("/auth/register/lecturer");
-    expect(screen.getByText("Chưa mở đăng ký giảng viên trực tuyến")).toBeTruthy();
-    expect(screen.queryByRole("textbox")).toBeNull();
-    expect(screen.queryByRole("button", { name: /đăng ký/i })).toBeNull();
+    expect(screen.getByText(/Đăng ký trực tiếp tài khoản giảng viên/)).toBeTruthy();
+    expect(screen.getByLabelText("Email")).toBeTruthy();
+    expect(screen.getByRole("button", {name: "Tạo tài khoản"})).toBeTruthy();
   });
   it("student uses existing required fields", () => {
     show("/auth/register/student");

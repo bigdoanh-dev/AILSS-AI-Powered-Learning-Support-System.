@@ -1,0 +1,22 @@
+import {afterEach,it,expect,vi} from 'vitest';
+import {render,screen,fireEvent,cleanup,waitFor} from '@testing-library/react';
+import {MemoryRouter} from 'react-router-dom';
+import {SessionProvider} from '../src/auth/session';
+import {PreferencesProvider,AvatarProvider} from '../src/components/Preferences';
+import {SiteHeader} from '../src/components/SiteHeader';
+afterEach(()=>{cleanup();vi.unstubAllGlobals();delete document.documentElement.dataset.theme;});
+it.each(['STUDENT','LECTURER','ADMIN'])('keeps %s identity and a return path on public pages',async role=>{
+ const storage=new Map<string,string>();
+ vi.stubGlobal('localStorage',{getItem:(key:string)=>storage.get(key) ?? null,setItem:(key:string,value:string)=>storage.set(key,value)});
+ vi.stubGlobal('matchMedia',()=>({matches:false}));
+ vi.stubGlobal('fetch',vi.fn(async(url:string)=>({ok:true,json:async()=>({data:url.endsWith('/avatar')?{dataUrl:null}:{userId:'user',displayName:'Nguyễn Minh',role,status:'ACTIVE',lecturerVerified:true}})})));
+ render(<MemoryRouter initialEntries={['/courses']}><PreferencesProvider><SessionProvider><AvatarProvider><SiteHeader/></AvatarProvider></SessionProvider></PreferencesProvider></MemoryRouter>);
+ const account=await screen.findByRole('button',{name:/Nguyễn Minh/});
+ expect(screen.queryByRole('link',{name:'Đăng nhập'})).toBeNull();
+ fireEvent.click(account);expect(screen.getByRole('link',{name:'Tổng quan tài khoản'}).getAttribute('href')).toBe('/app');
+ fireEvent.click(screen.getByRole('button',{name:'Bật chế độ tối'}));
+ await waitFor(()=>expect(document.documentElement.dataset.theme).toBe('dark'));
+ expect(localStorage.getItem('ailss-theme')).toBe('dark');
+ fireEvent.click(screen.getByRole('button',{name:'Bật chế độ sáng'}));
+ expect(document.documentElement.dataset.theme).toBe('light');
+});

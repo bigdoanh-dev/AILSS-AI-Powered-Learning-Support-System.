@@ -201,3 +201,55 @@ Worker có cơ chế tự reconnect sau RabbitMQ restart. Nếu consumer không 
 - Khi dùng cổng khác 5173, đặt `AILSS_WEB_ORIGIN` đúng bằng origin đang mở; ví dụ cổng 5177 dùng lệnh ở mục 2.
 - Kiểm tra origin/CSRF và cookie trong DevTools.
 - Không tự thêm token vào browser storage.
+
+## Giao diện web và học liệu minh họa
+
+- Đăng ký giảng viên trực tiếp tại `/auth/register/lecturer`. Không cần tạo tài khoản học viên trước. Quản trị viên vào **Người dùng → Giảng viên → Xem chi tiết → Xác minh giảng viên** để mở quyền giảng dạy.
+- Bấm biểu tượng mặt trăng/mặt trời trên thanh đầu trang để đổi sáng/tối; lựa chọn được lưu trên trình duyệt.
+- Bấm tên tài khoản → **Hồ sơ và ảnh đại diện** để tải ảnh PNG/JPEG/WebP. Ảnh được cắt vuông và thu nhỏ trước khi lưu trên máy chủ.
+- Các trang khóa học và trợ giúp dùng chung phiên đăng nhập, hiển thị tên người dùng cùng đường dẫn quay về không gian cá nhân.
+
+### Tài khoản phát triển
+
+| Vai trò       | Email                     | Mật khẩu mặc định  |
+| ------------- | ------------------------- | ------------------ |
+| Học viên      | student.demo@ailss.local  | AilssDemo!2026     |
+| Giảng viên    | lecturer.demo@ailss.local | AilssLecturer!2026 |
+| Quản trị viên | admin.demo@ailss.local    | AilssAdmin!2026    |
+
+Các tài khoản này thuộc dữ liệu phát triển trên máy hiện tại; đặt lại volume cơ sở dữ liệu sẽ xóa chúng. Script nạp học liệu yêu cầu ba tài khoản tồn tại và giảng viên đã được xác minh.
+
+### Nạp khóa học và cộng đồng mẫu
+
+Chạy từ thư mục gốc `ailss` khi `dev-async` đã sẵn sàng:
+
+```sh
+pnpm seed:web-demo
+node scripts/dev/seed-course-community.mjs
+node scripts/dev/seed-featured-instructors.mjs
+```
+
+Tạo sáu khóa học (miễn phí và có phí), 12 bài PDF/TXT, sáu bài kiểm tra, hai lớp riêng, một đợt học JavaScript trực tuyến có lịch, bình luận và đánh giá. Hai giảng viên mẫu bổ sung có khóa học Python riêng, dùng video freeCodeCamp qua YouTube. Thanh toán chỉ là mô phỏng. Các đánh giá được ghi rõ `[Dữ liệu mẫu]`, không phải nhận xét khách hàng thật. Nhật ký trong `tmp/` hỗ trợ chạy lại; không xóa nhật ký khi cơ sở dữ liệu vẫn còn.
+
+Tài khoản giảng viên mẫu bổ sung: `linh.english.demo@ailss.local` và `an.python.demo@ailss.local`, mật khẩu `AilssLecturer!2026`. Dùng tài khoản giảng viên chính để quản lý các khóa Python/IELTS của bạn.
+
+### Chuyển bộ Python và IELTS thành khóa học của bạn
+
+```sh
+node scripts/dev/index-local-library.mjs "/đường/dẫn/IELTS_Part1" "/đường/dẫn/IELTS_Part2"
+node scripts/dev/import-owned-courses.mjs
+```
+
+Script tạo **một khóa Python** sử dụng video Google Drive đã cung cấp và **bảy khóa IELTS**: Listening, Reading, Speaking, Writing, Ngữ pháp, Phát âm, Từ vựng. Toàn bộ 501 tệp được gắn thành bài giảng trong các chương; khóa học có chủ sở hữu, trạng thái xuất bản, đợt đăng ký và tiến độ trên API. Mở **Khóa học của tôi** (`/app/learn`) bằng tài khoản học viên hoặc **Giảng dạy** bằng tài khoản giảng viên. Đường dẫn cũ `/app/resources` chuyển về khóa học, không còn thư viện tệp riêng.
+
+Video/PDF/DOCX gốc vẫn ở thư mục Downloads. `tmp/local-library.json`, `tmp/course-media.json` và nhật ký không được đưa lên Git. Luồng đọc tệp cục bộ chỉ bật ở môi trường phát triển, kiểm tra quyền của bài học trước khi truyền dữ liệu và hỗ trợ tua video bằng byte range. Không sao chép nội dung vào thư mục public. Google Drive vẫn yêu cầu quyền chia sẻ của chủ tệp. Khi triển khai lên máy khác, cần cung cấp lại tệp nguồn và chuyển lưu trữ bài giảng sang kho đối tượng; đường dẫn trên máy này không hoạt động ở production.
+
+### Kiểm thử Gemini với đề thi của hệ thống
+
+```sh
+pnpm exec tsx scripts/dev/check-gemini-quiz.ts --live
+```
+
+Lệnh gửi ba yêu cầu thật bằng `GEMINI_API_KEY` trong `.env`: Python tiếng Việt, IELTS tiếng Anh và nguồn chứa chỉ dẫn gây nhiễu. Dùng đúng provider và bộ kiểm tra `objective-v1` của worker, kiểm tra bốn loại câu hỏi, số lượng và cấu trúc đáp án. Kết quả lưu riêng trong `tmp/gemini-check/`; không ghi khóa API. Kiểm tra cấu trúc không thay thế việc giảng viên đọc và duyệt tính chính xác của đề. Lỗi 503/429 từ nhà cung cấp phải được báo là lỗi, không tính là đạt.
+
+`OBJECT_STORAGE_PUBLIC_URL` mặc định `http://127.0.0.1:9000` dùng cho bài PDF/TXT lưu MinIO. Mật khẩu demo và nội dung chỉ dùng cho môi trường phát triển.

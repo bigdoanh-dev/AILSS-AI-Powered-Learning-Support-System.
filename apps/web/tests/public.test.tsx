@@ -59,7 +59,7 @@ describe("public foundation", () => {
     expect(screen.getByRole("link", { name: "Xem khóa học" }).getAttribute("href")).toBe(
       "/courses/" + course.courseId,
     );
-    expect(screen.getByText(/Ảnh minh họa/)).toBeTruthy();
+    expect(screen.getByRole("img", { name: /Minh họa chủ đề/ })).toBeTruthy();
     expect(priceLabel(course)).toBe("Miễn phí");
   });
   it("normalizes the same leading token supported by backend", () => {
@@ -67,36 +67,54 @@ describe("public foundation", () => {
     expect(normalizeQuery("Cassandra nâng cao")).toBe("cassandra");
   });
   it("never calls API for an invalid normalized token", async () => {
-    const fetchMock = vi.fn();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: [], meta: { pagination: { hasMore: false, nextCursor: null } } }),
+      });
     vi.stubGlobal("fetch", fetchMock);
     wrap(<CourseSearch />);
     await userEvent.type(screen.getByRole("searchbox"), "ab");
     await userEvent.click(screen.getByRole("button", { name: "Tìm khóa học" }));
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls.every(([url]) => !String(url).includes("/courses/search"))).toBe(true);
     expect(screen.getByRole("alert").textContent).toContain("3–20");
   });
   it("renders backend course search and next cursor correctly", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({
+    const fetchMock = vi.fn(async (input: unknown) => {
+      const url = String(input);
+      if (url.includes("/reviews"))
+        return {
+          ok: true,
+          json: async () => ({ data: [], ratingSummary: { reviewCount: 0, averageRating: null } }),
+        };
+      if (url.includes("/lecturers/"))
+        return { ok: true, json: async () => ({ data: { displayName: "Giảng viên" } }) };
+      return {
         ok: true,
         json: async () => ({
-          data: [course],
-          meta: { pagination: { hasMore: true, nextCursor: "opaque-cursor-12345" } },
+          data: url.includes("/courses/search") && !url.includes("cursor=") ? [course] : [],
+          meta: {
+            pagination: {
+              hasMore: url.includes("/courses/search") && !url.includes("cursor="),
+              nextCursor:
+                url.includes("/courses/search") && !url.includes("cursor=") ? "opaque-cursor-12345" : null,
+            },
+          },
         }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: [], meta: { pagination: { hasMore: false, nextCursor: null } } }),
-      });
+      };
+    });
     vi.stubGlobal("fetch", fetchMock);
     wrap(<CourseSearch />);
     await userEvent.type(screen.getByRole("searchbox"), "Cassandra");
     await userEvent.click(screen.getByRole("button", { name: "Tìm khóa học" }));
     await screen.findByText(course.title);
     await userEvent.click(screen.getByRole("button", { name: "Xem thêm khóa học" }));
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(fetchMock.mock.calls[1][0]).toContain("cursor=opaque-cursor-12345");
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url]) => String(url).includes("cursor=opaque-cursor-12345"))).toBe(
+        true,
+      ),
+    );
   });
   it("shows empty results without seeding fake courses", async () => {
     vi.stubGlobal(

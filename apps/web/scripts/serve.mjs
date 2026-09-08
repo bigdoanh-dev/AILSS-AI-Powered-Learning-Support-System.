@@ -1,3 +1,4 @@
+const contentOrigin = new URL(process.env.OBJECT_STORAGE_PUBLIC_URL || "http://127.0.0.1:9000").origin;
 import { createSessionAdapter } from "../server/session.mjs";
 import http from "node:http";
 import https from "node:https";
@@ -79,7 +80,7 @@ const server = http.createServer(async (req, res) => {
       "Referrer-Policy": "strict-origin-when-cross-origin",
       "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
       "Content-Security-Policy":
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+        `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' ${contentOrigin}; frame-src 'self' ${contentOrigin} https://www.youtube-nocookie.com https://drive.google.com; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'`,
       "Cache-Control": /-[A-Za-z0-9_-]{8,}\.(js|css)$/.test(file)
         ? "public, max-age=31536000, immutable"
         : "no-cache",

@@ -21,6 +21,8 @@ export interface Lesson {
   preview: boolean;
   state: string;
   contentUrl?: string;
+  externalVideo?: string;
+  contentType?: string;
   position?: { sectionOrder: number; lessonOrder: number };
 }
 export interface Progress {

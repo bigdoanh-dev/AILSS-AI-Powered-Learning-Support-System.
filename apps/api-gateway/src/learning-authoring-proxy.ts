@@ -11,7 +11,7 @@ import { parseBearerAuthorization } from "./protected-identity-proxy.js";
 
 export async function learningAuthoringProxyFactory(
   config: AppConfig,
-): Promise<{ create: RequestHandler; update: RequestHandler }> {
+): Promise<{ create: RequestHandler; update: RequestHandler; owned: RequestHandler }> {
   if (!config.JWT_PUBLIC_KEY_PATH || !config.ACTOR_CONTEXT_PRIVATE_KEY_PATH)
     throw new Error("Learning authoring proxy requires signing keys");
   const [jwtKey, actorKey] = await Promise.all([
@@ -19,7 +19,7 @@ export async function learningAuthoringProxyFactory(
     loadPrivateKey(config.ACTOR_CONTEXT_PRIVATE_KEY_PATH),
   ]);
   const handler =
-    (method: "POST" | "PATCH", purpose: string, path: (r: Request) => string): RequestHandler =>
+    (method: "GET" | "POST" | "PATCH", purpose: string, path: (r: Request) => string): RequestHandler =>
     async (req, res, next) => {
       try {
         const context = currentRequestContext();
@@ -61,7 +61,7 @@ export async function learningAuthoringProxyFactory(
             "x-correlation-id": context.correlationId,
             ...(idempotencyKey ? { "idempotency-key": idempotencyKey } : {}),
           },
-          body: JSON.stringify(req.body),
+          ...(method !== "GET" ? { body: JSON.stringify(req.body) } : {}),
           signal: AbortSignal.timeout(config.INTERNAL_HTTP_TIMEOUT_MS),
         });
         const type = upstream.headers.get("content-type");
@@ -81,6 +81,7 @@ export async function learningAuthoringProxyFactory(
       }
     };
   return {
+    owned: handler("GET", "learning.course.owned", r => "/api/v1/me/owned-courses" + (r.params.courseId ? "/" + encodeURIComponent(String(r.params.courseId)) : "")),
     create: handler("POST", "learning.course.create", () => "/api/v1/courses"),
     update: handler(
       "PATCH",

@@ -22,10 +22,11 @@ export function safeReturnTo(value: string | null): string {
     ].includes(value)
   )
     return value;
+  if (/^\/app\/(?:teaching|admin)(?:\/[a-zA-Z0-9-]+)*$/.test(value)) return value;
   const id = "[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}";
   if (
     new RegExp(
-      `^/app/(?:learn(?:/${id}(?:/lessons/${id})?)?|classes(?:/${id})?|assessments(?:/${id})?|attempts/${id}(?:/result)?|progress|notifications)$`,
+      `^/app/(?:learn(?:/${id}(?:/lessons/${id})?)?|classes(?:/${id})?|assessments(?:/${id})?|attempts/${id}(?:/result)?|progress|notifications|resources)$`,
     ).test(value)
   )
     return value;
@@ -134,7 +135,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setState("AUTHENTICATED");
       setMessage("");
     } catch (e) {
-      if (id === epoch.current) failure(e);
+      if (id === epoch.current) {
+        failure(e, true);
+        if (e instanceof ApiError && e.status === 401)
+          setMessage("Email hoặc mật khẩu chưa đúng. Vui lòng kiểm tra lại.");
+      }
       throw e;
     }
   }

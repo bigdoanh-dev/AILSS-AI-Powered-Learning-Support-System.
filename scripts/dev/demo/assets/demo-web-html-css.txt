@@ -1,0 +1,24 @@
+Lập trình web: từ ý tưởng đến trang đầu tiên
+
+Tạo trang giới thiệu cá nhân có cấu trúc rõ ràng, tương thích điện thoại và sử dụng bàn phím được.
+
+Cấu trúc trước, trang trí sau
+Dùng header, nav, main và footer để chia trang thành các vùng có ý nghĩa. Một h1 mô tả chủ đề chính; các h2 tổ chức nội dung bên dưới.
+
+Bố cục bằng CSS Grid
+Đặt display: grid cho vùng chứa; grid-template-columns: repeat(2, minmax(0, 1fr)) tạo hai cột bằng nhau. Với màn hình hẹp, chuyển về một cột.
+
+Thiết kế cho nhiều cách sử dụng
+Mỗi input cần label. Nút thực hiện hành động dùng button; liên kết chuyển trang dùng a. Kiểm tra thứ tự Tab và giữ viền focus rõ ràng.
+
+Thực hành và tự đánh giá
+Tạo trang giới thiệu có ba dự án, một biểu mẫu liên hệ và menu. Kiểm tra ở chiều rộng 375 và 1280 px; không có thanh cuộn ngang.
+
+BÀI TẬP
+Xây dựng trang giới thiệu bản thân bằng HTML và CSS. Yêu cầu: một tiêu đề chính, ba thẻ dự án, ảnh có alt, biểu mẫu có label, bố cục một cột trên điện thoại. Nộp thư mục nguồn kèm ghi chú các lựa chọn thiết kế.
+
+CÂU HỎI
+Phần tử nào phù hợp cho thao tác lưu biểu mẫu?
+button
+div
+span

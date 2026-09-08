@@ -1,0 +1,24 @@
+JavaScript: làm chủ dữ liệu và tương tác
+
+Viết bộ lọc danh sách khóa học và xử lý trạng thái tải, thành công, lỗi.
+
+Biến và giá trị
+Dùng const cho liên kết không gán lại, let khi cần gán lại. Một mảng chứa nhiều đối tượng; mỗi đối tượng mô tả một khóa học với id, title và category.
+
+Lọc dữ liệu không làm mất bản gốc
+Array.filter trả về mảng mới. Chuẩn hóa từ khóa bằng trim và toLowerCase trước khi so khớp. Giữ dữ liệu gốc để xóa bộ lọc có thể khôi phục danh sách.
+
+Yêu cầu bất đồng bộ
+fetch trả về Promise. Kiểm tra response.ok trước khi đọc dữ liệu; dùng try/catch/finally để luôn kết thúc trạng thái đang tải, kể cả khi có lỗi.
+
+Tránh kết quả cũ ghi đè
+Khi người dùng đổi từ khóa nhanh, hủy yêu cầu cũ bằng AbortController. Bỏ qua AbortError và hiển thị thông báo cho các lỗi kết nối thực sự.
+
+BÀI TẬP
+Tạo danh sách 8 khóa học và ô tìm kiếm. Lọc không phân biệt hoa thường. Có nút xóa bộ lọc, thông báo không tìm thấy và trạng thái đang tải. Giải thích vì sao không nên sửa trực tiếp mảng dữ liệu gốc.
+
+CÂU HỎI
+Phương thức nào trả về mảng các phần tử thỏa điều kiện?
+filter
+push
+pop

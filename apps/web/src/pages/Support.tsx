@@ -29,7 +29,7 @@ export function Help() {
     ],
     [
       "Tài khoản",
-      "Đăng ký với email và mật khẩu từ 12–128 ký tự. Đăng ký công khai tạo tài khoản sinh viên.",
+      "Đăng ký với email và mật khẩu từ 12–128 ký tự. Chọn tài khoản học viên hoặc giảng viên khi đăng ký.",
       "/auth/register",
     ],
     [
@@ -48,7 +48,7 @@ export function Help() {
       "/assessment",
     ],
     [
-      "AI workflow",
+      "Trợ lý giảng dạy AI",
       "Tải tài liệu bạn có quyền sử dụng. Kiểm tra nội dung và đáp án bản nháp trước khi phê duyệt.",
       "/ai-learning",
     ],
@@ -61,7 +61,7 @@ export function Help() {
   return (
     <>
       <PageHero
-        label="HELP CENTER"
+        label="Trợ giúp"
         title="Tìm đúng bước tiếp theo."
         description="Hướng dẫn ngắn gọn giúp bạn bắt đầu và hiểu các hành trình trong AILSS."
       />
@@ -177,7 +177,7 @@ export function Auth() {
   const path = location.pathname;
   const navigate = useNavigate();
   const auth = useSession();
-  const register = path.endsWith("register/student");
+  const register = path.endsWith("register/student") || path.endsWith("register/lecturer");
   const choose = path.endsWith("/register");
   const lecturer = path.endsWith("register/lecturer");
   const forgot = path.endsWith("forgot-password");
@@ -205,6 +205,7 @@ export function Auth() {
           email: String(data.get("email")).trim().toLowerCase(),
           password: data.get("password"),
           displayName: String(data.get("displayName")).trim(),
+          ...(lecturer ? { role: "LECTURER" } : {}),
         };
         const digest = Array.from(
           new Uint8Array(
@@ -217,7 +218,7 @@ export function Auth() {
         }
         key.current ??= crypto.randomUUID();
         await sessionRequest("register", "POST", body, key.current);
-        setStatus("Tài khoản sinh viên đã được tạo. Bạn có thể đăng nhập.");
+        setStatus(lecturer ? "Tài khoản giảng viên đã được tạo. Đăng nhập để hoàn thiện hồ sơ." : "Tài khoản học viên đã được tạo. Bạn có thể đăng nhập.");
         key.current = null;
         form.reset();
         if (new URLSearchParams(location.search).get("returnTo") === "/auth/register/lecturer")
@@ -254,7 +255,7 @@ export function Auth() {
         {choose
           ? "BƯỚC TIẾP THEO CỦA BẠN"
           : register
-            ? "TÀI KHOẢN HỌC VIÊN"
+            ? lecturer ? "TÀI KHOẢN GIẢNG VIÊN" : "TÀI KHOẢN HỌC VIÊN"
             : lecturer
               ? "DÀNH CHO GIẢNG VIÊN"
               : "CHÀO MỪNG ĐẾN AILSS"}
@@ -288,24 +289,6 @@ export function Auth() {
               Đã có tài khoản? <Link to="/auth/login">Đăng nhập</Link>
             </p>
           </>
-        ) : lecturer ? (
-          <>
-            <p>
-              Tài khoản giảng viên cần được đơn vị triển khai cấp và xác minh theo quy trình được chấp thuận.
-            </p>
-            <div className="notice">
-              <strong>Chưa mở đăng ký giảng viên trực tuyến</strong>
-              <p>
-                Trang này không gửi đơn đăng ký và không tự chuyển tài khoản học viên thành giảng viên. Hãy
-                liên hệ người quản trị của đơn vị bạn để được hướng dẫn.
-              </p>
-            </div>
-            <div className="lecturer-entry-actions">
-              <TextLink to="/auth/login">Đăng nhập tài khoản đã được cấp</TextLink>
-              <TextLink to="/lecturers">Khám phá công cụ giảng dạy</TextLink>
-              <TextLink to="/auth/register/student">Tiếp tục với vai trò học viên</TextLink>
-            </div>
-          </>
         ) : forgot ? (
           <>
             <h2>Quên mật khẩu?</h2>
@@ -338,7 +321,7 @@ export function Auth() {
         ) : (
           <form aria-busy={busy} onSubmit={(e) => void submit(e)}>
             <h2 className="sr-only">{register ? "Tạo tài khoản" : "Đăng nhập"}</h2>
-            <p>{register ? "Tạo tài khoản để bắt đầu học." : "Tiếp tục với tài khoản AILSS của bạn."}</p>
+            <p>{register ? (lecturer ? "Đăng ký trực tiếp tài khoản giảng viên. Quyền giảng dạy sẽ mở sau khi quản trị viên xác minh." : "Tạo tài khoản để bắt đầu học.") : "Tiếp tục với tài khoản AILSS của bạn."}</p>
             {register && (
               <label>
                 Họ và tên
