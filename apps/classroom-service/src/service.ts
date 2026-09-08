@@ -1190,16 +1190,6 @@ export class ClassroomService {
     if (cmd.status === "COMPLETE" && cmd.receipt.resource)
       return { data: cmd.receipt.resource, replayed: true };
     const occurredAt = new Date(cmd.receipt.occurredAt);
-    await this.repo.prepareEvent({
-      eventId: cmd.receipt.eventId ?? eventId,
-      eventType: "system.notification.requested.v1",
-      aggregateId: cmd.resourceId,
-      aggregateType: "CLASS_ANNOUNCEMENT",
-      version: 1,
-      occurredAt,
-      correlationId: input.requestId,
-      data: { announcementId: cmd.resourceId, classId: klass.classId, title: input.request.title },
-    });
     await this.repo.insertAnnouncement({
       classId: klass.classId,
       announcementId: cmd.resourceId,
@@ -1208,7 +1198,35 @@ export class ClassroomService {
       body: input.request.body.replaceAll("<", "").replaceAll(">", ""),
       now: occurredAt,
     });
-    await this.repo.readyEvent(cmd.receipt.eventId ?? eventId, occurredAt);
+    const title = input.request.title.normalize("NFC"),
+      body = `Thông báo lớp mới: ${title}`.normalize("NFC"),
+      recipients = (await this.repo.activeRecipientIds(klass.classId, klass.maxMembers)).filter(
+        (recipientId) => recipientId !== input.actor.userId,
+      );
+    for (const recipientId of recipients) {
+      const recipientEventId = deterministicUuid(
+        this.secret,
+        "class-announcement-recipient-event",
+        `${cmd.resourceId}:${recipientId}`,
+      );
+      await this.repo.prepareEvent({
+        eventId: recipientEventId,
+        eventType: "system.notification.requested.v1",
+        aggregateId: cmd.resourceId,
+        aggregateType: "CLASS_ANNOUNCEMENT",
+        version: 1,
+        occurredAt,
+        correlationId: input.requestId,
+        data: {
+          recipientId,
+          notificationType: "CLASS_ANNOUNCEMENT",
+          title,
+          body,
+          source: { announcementId: cmd.resourceId, classId: klass.classId },
+        },
+      });
+      await this.repo.readyEvent(recipientEventId, occurredAt);
+    }
     const data = {
       announcementId: cmd.resourceId,
       classId: klass.classId,

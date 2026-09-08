@@ -10,12 +10,12 @@ const events = await readJson("contracts/event-registry.json");
 function unique(values, label) {
   if (new Set(values).size !== values.length) throw new Error(`${label} contains duplicates`);
 }
-if (api.publicCount !== 93 || api.public.length !== 93)
-  throw new Error("Public API registry must contain exactly 93 contracts");
+if (api.publicCount !== 98 || api.public.length !== 98)
+  throw new Error("Public API registry must contain exactly 98 contracts");
 if (api.internalCount !== 15 || api.internal.length !== 15)
   throw new Error("Internal API registry must contain exactly 15 contracts");
-if (queries.count !== 71 || queries.queries.length !== 71)
-  throw new Error("Query registry must contain exactly 71 Query IDs");
+if (queries.count !== 74 || queries.queries.length !== 74)
+  throw new Error("Query registry must contain exactly 74 Query IDs");
 if (events.count !== 22 || events.events.length !== 22)
   throw new Error("Event registry must contain exactly 22 events");
 unique(
@@ -75,12 +75,22 @@ function assertRegistryMatchesOpenApi(registry, document, label) {
 }
 const publicOpenApi = YAML.parse(await readFile("contracts/openapi/public-v1.yaml", "utf8"));
 const internalOpenApi = YAML.parse(await readFile("contracts/openapi/internal-v1.yaml", "utf8"));
-if (publicOpenApi.openapi !== "3.1.0" || operationIds(publicOpenApi).length !== 93)
-  throw new Error("Public OpenAPI must expose 93 OpenAPI 3.1 operations");
+if (publicOpenApi.openapi !== "3.1.0" || operationIds(publicOpenApi).length !== 98)
+  throw new Error("Public OpenAPI must expose 98 OpenAPI 3.1 operations");
 if (internalOpenApi.openapi !== "3.1.0" || operationIds(internalOpenApi).length !== 15)
   throw new Error("Internal OpenAPI must expose 15 OpenAPI 3.1 operations");
 assertRegistryMatchesOpenApi(api.public, publicOpenApi, "Public");
 assertRegistryMatchesOpenApi(api.internal, internalOpenApi, "Internal");
+const businessServices = new Set(
+  api.public.map((value) => value.service).filter((value) => value !== "Notification"),
+);
+if (
+  businessServices.size !== 6 ||
+  !["Identity", "Learning", "Classroom", "Assessment", "Interaction", "AI"].every((value) =>
+    businessServices.has(value),
+  )
+)
+  throw new Error("Business service inventory must remain six");
 const packageJson = await readJson("package.json");
 if (
   Object.keys({ ...packageJson.dependencies, ...packageJson.devDependencies }).some((name) =>
@@ -92,9 +102,10 @@ console.log(
   JSON.stringify({
     stage: "contract-validation",
     status: "PASS",
-    publicApis: 93,
+    publicApis: 98,
+    businessServices: businessServices.size,
     internalApis: 15,
-    queryIds: 71,
+    queryIds: 74,
     events: 22,
     openApi: "3.1.0",
     redis: false,

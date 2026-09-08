@@ -33,6 +33,7 @@ export function sanitizeIdentityHeaders(): RequestHandler {
     "x-session-id",
     "x-service-identity",
     "x-actor-context",
+    "x-assessment-actor-context",
     "x-classroom-actor-context",
   ];
   return (request: Request, response: Response, next: NextFunction): void => {

@@ -227,7 +227,7 @@ const summary = {
   eventsCreated: 0,
   foreignKeyspaceDenied: true,
   backfill: { first: { inserted: 90, noOp: 23 }, rerun: { inserted: 0, noOp: 113 } },
-  counts: { publicApis: 93, internalApis: 15, queryIds: 71, events: 22, redis: false },
+  counts: { publicApis: 98, internalApis: 15, queryIds: 74, events: 22, redis: false },
 };
 await writeFile(new URL("p7.14-summary.json", evidence), JSON.stringify(summary, null, 2) + "\n");
 console.log(JSON.stringify({ ...summary, evidence: decodeURIComponent(evidence.pathname) }));

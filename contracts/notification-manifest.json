@@ -1,0 +1,102 @@
+{
+  "phase": "P11",
+  "contractStatus": "IMPLEMENTED",
+  "owner": {
+    "process": "notification-worker",
+    "shape": "SUPPORT_PROCESS",
+    "businessService": false,
+    "keyspace": "notification_keyspace",
+    "cassandraRole": "svc_notification"
+  },
+  "delivery": {
+    "scope": "IN_APP",
+    "brokerGuarantee": "AT_LEAST_ONCE",
+    "consumerAck": "MANUAL_AFTER_MATERIALIZED_OR_DEDUP_PROOF",
+    "retryMilliseconds": [10000, 30000, 120000, 600000],
+    "queue": "notification.q",
+    "exchange": "ailss.notifications",
+    "routingKey": "system.notification.requested.v1"
+  },
+  "trigger": {
+    "eventType": "system.notification.requested.v1",
+    "producer": "classroom-service",
+    "producerApi": "CLS-09",
+    "recipientAuthority": "PRODUCER_SIDE_FAN_OUT",
+    "recipients": "current ACTIVE class members excluding announcement author",
+    "fanOut": "one stable distinct eventId per (announcementId, recipientId)",
+    "safePayloadRule": {
+      "title": "NFC announcement title",
+      "body": "NFC canonical template: Th\u00f4ng b\u00e1o l\u1edbp m\u1edbi: {title}",
+      "maximumBodyCharacters": 500
+    }
+  },
+  "materialization": {
+    "queryId": "Q-NOT-002",
+    "dedupIdentity": ["event_id", "user_id"],
+    "userIdSource": "event.data.recipientId",
+    "states": ["RESERVED", "MATERIALIZED"],
+    "notificationId": "server-owned and persisted on first reservation; reused during recovery"
+  },
+  "publicState": {
+    "states": ["UNREAD", "READ"],
+    "representation": "readAt null means UNREAD; RFC3339 timestamp means READ",
+    "transition": "UNREAD_TO_READ_IDEMPOTENT"
+  },
+  "list": {
+    "apiId": "NOT-01",
+    "queryId": "Q-NOT-001",
+    "partition": ["authenticatedActorId", "requiredYearMonth"],
+    "ordering": ["created_at DESC", "notification_id ASC"],
+    "limit": {
+      "default": 20,
+      "minimum": 1,
+      "maximum": 50
+    },
+    "cursor": {
+      "purpose": "NOTIFICATION_LIST",
+      "encrypted": true,
+      "authenticated": true,
+      "bindings": ["actorId", "yearMonth", "limit", "pagingContinuation"],
+      "ttlSeconds": 900,
+      "crossesMonth": false
+    }
+  },
+  "read": {
+    "apiId": "NOT-02",
+    "queryId": "Q-NOT-001",
+    "locatorHeader": "X-Notification-Locator",
+    "locator": {
+      "purpose": "NOTIFICATION_READ",
+      "encrypted": true,
+      "authenticated": true,
+      "bindings": ["actorId", "notificationId", "yearMonth", "createdAt"],
+      "ttlSeconds": 86400
+    },
+    "emitsEvent": false
+  },
+  "retention": {
+    "policy": "NO_AUTOMATIC_EXPIRY",
+    "cassandraTtl": false,
+    "futureDecision": "Phase 14 Production Readiness / ADR"
+  },
+  "inventory": {
+    "publicApis": 98,
+    "internalApis": 15,
+    "queryIds": 74,
+    "eventTypes": 22,
+    "businessServices": 6,
+    "redis": false
+  },
+  "errata": [
+    "ERRATA-P11-001-01",
+    "ERRATA-P11-001-02",
+    "ERRATA-P11-001-03",
+    "ERRATA-P11-001-04",
+    "ERRATA-P11-001-05",
+    "ERRATA-P11-001-06",
+    "ERRATA-P11-001-07",
+    "ERRATA-P11-001-08",
+    "ERRATA-P11-001-09",
+    "ERRATA-P11-001-10"
+  ]
+}

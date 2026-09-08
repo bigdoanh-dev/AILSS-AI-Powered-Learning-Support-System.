@@ -1,0 +1,73 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { lecturerEnvelope, lecturerOperation } from "./lecturer.mjs";
+
+const id = "11111111-1111-4111-8111-111111111111";
+const command = { "idempotency-key": "logical-command-1" };
+
+test("Lecturer allowlist accepts documented reads and commands", () => {
+  assert.equal(
+    lecturerOperation("/web-session/lecturer/me/owned-classes", "GET", undefined, {}).path,
+    "/me/owned-classes",
+  );
+  assert.equal(
+    lecturerOperation(
+      `/web-session/lecturer/classes/${id}/announcements?month=2026-09-01`,
+      "GET",
+      undefined,
+      {},
+    ).path,
+    `/classes/${id}/announcements?month=2026-09-01`,
+  );
+  assert.equal(
+    lecturerOperation(`/web-session/lecturer/classes/${id}/join-code/reset`, "POST", {}, command).path,
+    `/classes/${id}/join-code/reset`,
+  );
+});
+
+test("Lecturer allowlist rejects undocumented routes, duplicate query and missing command key", () => {
+  assert.throws(() => lecturerOperation("/web-session/lecturer/me/courses", "GET", undefined, {}));
+  assert.throws(() =>
+    lecturerOperation(
+      `/web-session/lecturer/quizzes/${id}/results?month=2026-09&month=2026-08`,
+      "GET",
+      undefined,
+      {},
+    ),
+  );
+  assert.throws(() => lecturerOperation(`/web-session/lecturer/quizzes/${id}/publish`, "POST", {}, {}));
+});
+
+test("manual attendance forwards only a validated optimistic version", () => {
+  const operation = lecturerOperation(
+    `/web-session/lecturer/class-sessions/${id}/attendance/${id}`,
+    "PUT",
+    { attendanceStatus: "EXCUSED", note: "Có phép" },
+    { ...command, "if-match": '"v3"' },
+  );
+  assert.deepEqual(operation.headers, { "If-Match": '"v3"' });
+  assert.throws(() =>
+    lecturerOperation(
+      `/web-session/lecturer/class-sessions/${id}/attendance/${id}`,
+      "PUT",
+      { attendanceStatus: "PRESENT" },
+      { ...command, "if-match": "3" },
+    ),
+  );
+});
+
+test("Lecturer envelope preserves pagination and fails closed on credentials", () => {
+  assert.deepEqual(
+    lecturerEnvelope({ data: [{ classId: id }], meta: { page: { nextCursor: "next" }, ignored: true } }),
+    {
+      data: [{ classId: id }],
+      meta: { page: { nextCursor: "next" } },
+    },
+  );
+  assert.throws(
+    () => lecturerEnvelope({ data: { nested: { serviceToken: "secret" } } }),
+    /UNSAFE_LECTURER_RESPONSE/,
+  );
+  for (const key of ["rawProviderResponse", "providerCredential", "secretAccessKey", "actorContext"])
+    assert.throws(() => lecturerEnvelope({ data: { [key]: "secret" } }), /UNSAFE_LECTURER_RESPONSE/);
+});

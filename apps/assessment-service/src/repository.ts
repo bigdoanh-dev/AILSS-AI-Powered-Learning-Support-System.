@@ -12,8 +12,18 @@ import {
   type Attempt,
   type AttemptGuard,
   type AssessmentResult,
+  type AiDraftImportResult,
   type ResultItem,
 } from "./model.js";
+
+export interface AiImportRecord {
+  importOperationId: string;
+  draftId: string;
+  fingerprint: string;
+  quizId: string;
+  state: string;
+  result?: AiDraftImportResult;
+}
 
 export interface CommandRecord {
   operationId: string;
@@ -44,6 +54,69 @@ export interface ResultProjectionRow {
 
 export class AssessmentRepository {
   public constructor(private readonly db: CassandraClient) {}
+
+  async reserveAiImport(input: {
+    importOperationId: string;
+    draftId: string;
+    fingerprint: string;
+    quizId: string;
+    now: Date;
+  }): Promise<boolean> {
+    const rows = await this.db.execute(
+      `INSERT INTO ai_draft_import_by_id
+       (import_operation_id,draft_id,approved_draft_version,request_fingerprint,quiz_id,quiz_version,status,
+        command_state,created_at,updated_at)
+       VALUES (?,?,2,?,?,1,'DRAFT','IN_PROGRESS',?,?) IF NOT EXISTS`,
+      [
+        uuid(input.importOperationId),
+        uuid(input.draftId),
+        input.fingerprint,
+        uuid(input.quizId),
+        input.now,
+        input.now,
+      ],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
+    return applied(rows);
+  }
+
+  async aiImport(importOperationId: string): Promise<AiImportRecord | undefined> {
+    const row = (
+      await this.db.execute(
+        `SELECT import_operation_id,draft_id,request_fingerprint,quiz_id,command_state,response_json
+         FROM ai_draft_import_by_id WHERE import_operation_id=?`,
+        [uuid(importOperationId)],
+        "LOCAL_QUORUM",
+      )
+    )[0];
+    if (!row) return;
+    return {
+      importOperationId: String(row.import_operation_id),
+      draftId: String(row.draft_id),
+      fingerprint: String(row.request_fingerprint),
+      quizId: String(row.quiz_id),
+      state: String(row.command_state),
+      ...(row.response_json ? { result: JSON.parse(String(row.response_json)) as AiDraftImportResult } : {}),
+    };
+  }
+
+  async completeAiImport(
+    importOperationId: string,
+    result: AiDraftImportResult,
+    now: Date,
+  ): Promise<boolean> {
+    const rows = await this.db.execute(
+      `UPDATE ai_draft_import_by_id SET command_state='COMPLETE',response_json=?,updated_at=?
+       WHERE import_operation_id=? IF command_state='IN_PROGRESS'`,
+      [JSON.stringify(result), now, uuid(importOperationId)],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
+    if (applied(rows)) return true;
+    const current = await this.aiImport(importOperationId);
+    return current?.state === "COMPLETE" && JSON.stringify(current.result) === JSON.stringify(result);
+  }
 
   async reserveCommand(
     scope: string,

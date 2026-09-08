@@ -47,6 +47,7 @@ describe("P7.8 request log redaction", () => {
           headers: {
             authorization: "Bearer secret-jwt",
             "x-actor-context": "signed-actor",
+            "x-assessment-actor-context": "signed-assessment-actor",
             "x-classroom-actor-context": "signed-classroom-actor",
             "x-admin-step-up-proof": "signed-admin-proof",
             "idempotency-key": "p78-secret-key",
@@ -58,6 +59,7 @@ describe("P7.8 request log redaction", () => {
     const joined = lines.join("");
     expect(joined).not.toContain("secret-jwt");
     expect(joined).not.toContain("signed-actor");
+    expect(joined).not.toContain("signed-assessment-actor");
     expect(joined).not.toContain("signed-admin-proof");
     expect(joined).not.toContain("p78-secret-key");
     expect(joined).toContain("[REDACTED]");

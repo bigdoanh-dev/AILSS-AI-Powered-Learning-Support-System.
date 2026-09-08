@@ -1,6 +1,6 @@
 {
-  "version": "7.12C",
-  "count": 71,
+  "version": "P12.2B",
+  "count": 74,
   "queries": [
     {
       "queryId": "Q-AI-001",
@@ -363,7 +363,13 @@
         "IDN-07",
         "IDN-10",
         "IDN-11",
-        "IDN-12"
+        "IDN-12",
+        "IDN-13",
+        "IDN-14",
+        "IDN-15",
+        "IDN-16",
+        "IDN-17",
+        "identity-application-repair"
       ]
     },
     {
@@ -373,7 +379,15 @@
       "tables": ["credential_by_email"],
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["IDN-01", "IDN-02", "IDN-07", "IDN-11", "IDN-12"]
+      "apiConsumers": [
+        "IDN-01",
+        "IDN-02",
+        "IDN-07",
+        "IDN-11",
+        "IDN-12",
+        "IDN-17",
+        "identity-application-repair"
+      ]
     },
     {
       "queryId": "Q-IDN-003",
@@ -382,7 +396,20 @@
       "tables": ["session_by_id"],
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["IDN-02", "IDN-03", "IDN-04", "IDN-07", "IDN-09", "IDN-10", "IDN-11"]
+      "apiConsumers": [
+        "IDN-02",
+        "IDN-03",
+        "IDN-04",
+        "IDN-07",
+        "IDN-09",
+        "IDN-10",
+        "IDN-11",
+        "IDN-13",
+        "IDN-14",
+        "IDN-15",
+        "IDN-16",
+        "IDN-17"
+      ]
     },
     {
       "queryId": "Q-IDN-004",
@@ -398,9 +425,17 @@
       "owner": "Identity",
       "keyspace": "identity_keyspace",
       "tables": ["users_by_role_status_bucket"],
-      "operation": "R",
+      "operation": "R/W LWT",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["IDN-01", "IDN-06", "IDN-09", "IDN-11", "IDN-12"]
+      "apiConsumers": [
+        "IDN-01",
+        "IDN-06",
+        "IDN-09",
+        "IDN-11",
+        "IDN-12",
+        "IDN-17",
+        "identity-application-repair"
+      ]
     },
     {
       "queryId": "Q-IDN-006",
@@ -415,10 +450,31 @@
       "queryId": "Q-IDN-007",
       "owner": "Identity",
       "keyspace": "identity_keyspace",
-      "tables": ["pending_event_by_id", "pending_events_by_due_bucket", "idempotency_by_scope_key"],
+      "tables": [
+        "pending_event_by_id",
+        "pending_events_by_due_bucket",
+        "idempotency_by_scope_key",
+        "identity_commands_by_due_bucket"
+      ],
       "operation": "R/W worker",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["IDN-01", "IDN-06", "IDN-07", "IDN-11", "IDN-12"]
+      "apiConsumers": [
+        "IDN-01",
+        "IDN-06",
+        "IDN-07",
+        "IDN-11",
+        "IDN-12",
+        "IDN-13",
+        "IDN-17",
+        "identity-application-repair"
+      ],
+      "applicationRecovery": {
+        "retention": "NO_AUTOMATIC_EXPIRY",
+        "partition": ["due_day", "shard"],
+        "clustering": ["next_attempt_at", "operation_id"],
+        "lease": ["lease_owner", "lease_until", "fence"],
+        "semantics": "Discoverable durable intent before canonical mutation; bounded fenced repair, historical result and fingerprint. Existing consumers and TTL policy unchanged."
+      }
     },
     {
       "queryId": "Q-INT-001",
@@ -744,9 +800,10 @@
       "owner": "Notification",
       "keyspace": "notification_keyspace",
       "tables": ["notifications_by_user_bucket"],
-      "operation": "R",
+      "operation": "R/W LWT",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["NOT-01", "NOT-02"]
+      "apiConsumers": ["NOT-01", "NOT-02", "notification-worker"],
+      "semantics": "materialize; bounded single-month list; exact-row read_at mutation/read-back"
     },
     {
       "queryId": "Q-NOT-002",
@@ -755,7 +812,40 @@
       "tables": ["notification_dedup_by_event_user"],
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["background-worker"]
+      "apiConsumers": ["notification-worker"],
+      "dedupIdentity": ["event_id", "user_id"],
+      "recoveryStates": ["RESERVED", "MATERIALIZED"],
+      "semantics": "redelivery reuses the server-owned notification_id persisted on first reservation"
+    },
+    {
+      "queryId": "Q-IDN-008",
+      "owner": "Identity",
+      "keyspace": "identity_keyspace",
+      "tables": ["lecturer_application_by_applicant"],
+      "operation": "R/W LWT",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["IDN-13", "IDN-14", "IDN-15", "IDN-16", "IDN-17", "identity-application-repair"],
+      "semantics": "Canonical immutable one-application-per-applicant; conditional decision winner and durable command metadata"
+    },
+    {
+      "queryId": "Q-IDN-009",
+      "owner": "Identity",
+      "keyspace": "identity_keyspace",
+      "tables": ["lecturer_application_locator_by_id"],
+      "operation": "R/W LWT",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["IDN-13", "IDN-16", "IDN-17", "identity-application-repair"],
+      "semantics": "Immutable application UUID to applicant UUID exact lookup"
+    },
+    {
+      "queryId": "Q-IDN-010",
+      "owner": "Identity",
+      "keyspace": "identity_keyspace",
+      "tables": ["pending_lecturer_applications_by_month_shard"],
+      "operation": "R/W LWT",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["IDN-13", "IDN-15", "IDN-17", "identity-application-repair"],
+      "semantics": "One submission month/shard partition, at most 100 candidates; canonical hydrate, signed actor/filter bound expiring cursor"
     }
   ]
 }

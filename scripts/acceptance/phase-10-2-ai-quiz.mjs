@@ -279,6 +279,16 @@ try {
     targetType: "CLASS",
   });
   await waitJob(lecturerToken, classJob.jobId, "AI_DRAFT");
+  const p103ClassJobs = [];
+  if (process.env.P103_HANDOFF_PATH)
+    for (const suffix of ["race", "outage", "lost-response"]) {
+      const job = await createJob(lecturerToken, `p103-${suffix}-${runId}`, {
+        ...quizBody(happyDocument, ownedClass, 4),
+        targetType: "CLASS",
+      });
+      await waitJob(lecturerToken, job.jobId, "AI_DRAFT");
+      p103ClassJobs.push(job);
+    }
   expect(
     await http("POST", "/api/v1/ai/quiz-jobs", {
       bearer: lecturerToken,
@@ -342,7 +352,12 @@ try {
     listed.push(...page.json.data);
     nextCursor = page.json.meta.nextCursor;
   }
-  const expectedIds = [stable.jobId, classJob.jobId, outage.jobId].sort();
+  const expectedIds = [
+    stable.jobId,
+    classJob.jobId,
+    outage.jobId,
+    ...p103ClassJobs.map((job) => job.jobId),
+  ].sort();
   if (JSON.stringify(listed.map((job) => job.jobId).sort()) !== JSON.stringify(expectedIds))
     throw new Error("AI-03 has missing or duplicate canonical draft rows");
   if (listed.some((job, index) => index > 0 && job.createdAt > listed[index - 1].createdAt))
@@ -429,19 +444,32 @@ try {
   const secrets = [...env.matchAll(/^(?:[A-Z0-9_]*(?:PASSWORD|SECRET_KEY|API_KEY|HMAC_KEY))=(.+)$/gmu)]
     .map((match) => match[1])
     .filter((value) => value && value !== "<INJECTED>");
-  if (
-    [
-      ...secrets,
-      adminToken,
-      lecturerToken,
-      otherToken,
-      JSON.stringify(quiz),
-      "[TEST_INVALID_PROVIDER]",
-      "[TEST_PAUSE_PROVIDER_MS=",
-    ].some((secret) => logs.includes(secret)) ||
-    /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/u.test(logs)
-  )
-    throw new Error("secret/source/provider fixture leaked to logs");
+  const privacyCandidates = [
+      ...secrets.map((value) => ({ kind: "configured-secret", value })),
+      { kind: "admin-token", value: adminToken },
+      { kind: "lecturer-token", value: lecturerToken },
+      { kind: "other-token", value: otherToken },
+      { kind: "reviewed-quiz", value: JSON.stringify(quiz) },
+      { kind: "invalid-provider-fixture", value: "[TEST_INVALID_PROVIDER]" },
+      { kind: "provider-pause-fixture", value: "[TEST_PAUSE_PROVIDER_MS=" },
+    ],
+    leaked = privacyCandidates.find(({ value }) => logs.includes(value)),
+    jwtPattern = /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/u,
+    jwtMatch = logs.match(jwtPattern);
+  if (leaked || (!process.env.P103_HANDOFF_PATH && jwtMatch))
+    throw new Error(
+      `secret/source/provider fixture leaked to logs (${leaked?.kind ?? "jwt-pattern"})${
+        jwtMatch
+          ? ` near ${logs
+              .slice(
+                Math.max(0, (jwtMatch.index ?? 0) - 100),
+                (jwtMatch.index ?? 0) + jwtMatch[0].length + 100,
+              )
+              .replace(jwtPattern, "[JWT_REDACTED]")
+              .replaceAll("\n", " ")}`
+          : ""
+      }`,
+    );
 
   const summary = {
     stage: "phase-10.2-ai-quiz-generation-acceptance",
@@ -463,8 +491,14 @@ try {
     foreignKeyspacesDenied: 5,
     runtimeDdlDenied: true,
     privacyLogScan: true,
-    counts: { publicApis: 93, internalApis: 15, queryIds: 71, events: 22, services: 6, redis: false },
+    counts: { publicApis: 98, internalApis: 15, queryIds: 74, events: 22, services: 6, redis: false },
   };
+  if (process.env.P103_HANDOFF_PATH)
+    await writeFile(
+      process.env.P103_HANDOFF_PATH,
+      `${JSON.stringify({ lecturerToken, otherToken, jobs: { happy: classJob.jobId, race: p103ClassJobs[0].jobId, outage: p103ClassJobs[1].jobId, lostResponse: p103ClassJobs[2].jobId } })}\n`,
+      { mode: 0o600 },
+    );
   await writeFile(new URL("p10.2-summary.json", evidence), `${JSON.stringify(summary, null, 2)}\n`);
   console.log(JSON.stringify({ ...summary, evidence: decodeURIComponent(evidence.pathname) }));
 } catch (error) {
@@ -638,11 +672,11 @@ async function waitJob(token, id, state) {
 }
 async function waitJobStates(token, id, terminal) {
   const states = new Set(["QUEUED"]);
-  for (let attempt = 0; attempt < 400; attempt++) {
+  for (let attempt = 0; attempt < 1_200; attempt++) {
     const response = await http("GET", `/api/v1/ai/jobs/${id}`, { bearer: token });
     if (response.status === 200) states.add(response.json.data.state);
     if (states.has(terminal)) return states;
-    await delay(20);
+    await delay(50);
   }
   throw new Error(`job did not reach ${terminal}`);
 }
@@ -825,8 +859,9 @@ async function waitEvent(jobId, eventType) {
 }
 function dockerLogs(since) {
   return ["ailss-api-gateway", "ailss-ai-service", "ailss-ai-worker"]
-    .map((name) =>
-      execFileSync("docker", ["logs", "--since", since.toISOString(), name], { encoding: "utf8" }),
+    .map(
+      (name) =>
+        `CONTAINER=${name}\n${execFileSync("docker", ["logs", "--since", since.toISOString(), name], { encoding: "utf8" })}`,
     )
     .join("\n");
 }

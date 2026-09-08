@@ -186,9 +186,15 @@ export async function verifyServiceToken(
   return result.payload;
 }
 
-export const stepUpActionSchema = z.enum(["COURSE_PUBLISH", "COURSE_ARCHIVE", "INTERACTION_REPORT_MODERATE"]);
+export const stepUpActionSchema = z.enum([
+  "COURSE_PUBLISH",
+  "COURSE_ARCHIVE",
+  "INTERACTION_REPORT_MODERATE",
+  "LECTURER_APPLICATION_APPROVE",
+  "LECTURER_APPLICATION_REJECT",
+]);
 export type StepUpAction = z.infer<typeof stepUpActionSchema>;
-export const stepUpResourceTypeSchema = z.enum(["COURSE", "REPORT"]);
+export const stepUpResourceTypeSchema = z.enum(["COURSE", "REPORT", "LECTURER_APPLICATION"]);
 export type StepUpResourceType = z.infer<typeof stepUpResourceTypeSchema>;
 
 export interface StepUpProofInput {

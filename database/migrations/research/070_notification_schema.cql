@@ -24,3 +24,7 @@ CREATE TABLE IF NOT EXISTS notification_keyspace.notification_dedup_by_event_use
   PRIMARY KEY ((event_id, user_id))
 )
 WITH compaction = {'class': 'SizeTieredCompactionStrategy'};
+
+ALTER TABLE notification_keyspace.notifications_by_user_bucket ADD IF NOT EXISTS source_type text;
+ALTER TABLE notification_keyspace.notifications_by_user_bucket ADD IF NOT EXISTS source_id uuid;
+ALTER TABLE notification_keyspace.notifications_by_user_bucket ADD IF NOT EXISTS source_context_id uuid;

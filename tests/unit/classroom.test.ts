@@ -118,6 +118,52 @@ describe("P7.15A Classroom core", () => {
     ).rejects.toMatchObject({ code: "LIVE_COHORT_JOIN_CODE_DENIED", status: 409 });
   });
 
+  it("fans announcements out once to ACTIVE members and excludes the author", async () => {
+    const owner = randomUUID(),
+      studentA = randomUUID(),
+      studentB = randomUUID(),
+      store = new MemoryClassroom(),
+      service = classroom(store, owner);
+    const created = await service.create({
+      actor: actor(owner, "LECTURER"),
+      request: parseClassCreate({ name: "Private Lab", classKind: "PRIVATE" }),
+      key: "fanout-class",
+      requestId: randomUUID(),
+    });
+    for (const [key, studentId] of [
+      ["join-a", studentA],
+      ["join-b", studentB],
+    ] as const)
+      await service.join({
+        actor: actor(studentId, "STUDENT"),
+        request: { code: String(created.data.joinCode) },
+        key,
+        requestId: randomUUID(),
+      });
+    const input = {
+      classId: String(created.data.classId),
+      actor: actor(owner, "LECTURER"),
+      request: parseAnnouncement({ title: "Lịch học", body: "Chi tiết nội bộ" }),
+      key: "announcement",
+      requestId: randomUUID(),
+    };
+    const first = await service.announce(input);
+    const notifications = store.events.filter(
+      (value) => value.eventType === "system.notification.requested.v1",
+    );
+    expect(notifications).toHaveLength(2);
+    expect(notifications.map((value) => value.data?.recipientId).sort()).toEqual([studentA, studentB].sort());
+    expect(notifications.every((value) => value.data?.recipientId !== owner)).toBe(true);
+    expect(
+      notifications.every((value) => value.data?.body === `Thông báo lớp mới: ${String(value.data?.title)}`),
+    ).toBe(true);
+    await service.announce({ ...input, requestId: randomUUID() });
+    expect(
+      store.events.filter((value) => value.eventType === "system.notification.requested.v1"),
+    ).toHaveLength(2);
+    expect(first.data.announcementId).toBeTruthy();
+  });
+
   it("fails authoring closed when canonical Lecturer eligibility is absent", async () => {
     const owner = randomUUID(),
       store = new MemoryClassroom();
@@ -180,7 +226,7 @@ class MemoryClassroom {
     string,
     { operationId: string; resourceId: string; status: string; receipt: CommandReceipt }
   >();
-  readonly events: { eventId: string; eventType: string }[] = [];
+  readonly events: { eventId: string; eventType: string; data?: Record<string, unknown> }[] = [];
   key(scope: string, hash: number, key: string) {
     return `${scope}:${String(hash)}:${key}`;
   }
@@ -242,7 +288,7 @@ class MemoryClassroom {
   }
   async insertLecturer() {}
   async deleteLecturer() {}
-  async prepareEvent(input: { eventId: string; eventType: string }) {
+  async prepareEvent(input: { eventId: string; eventType: string; data?: Record<string, unknown> }) {
     if (!this.events.some((value) => value.eventId === input.eventId)) this.events.push(input);
   }
   async readyEvent() {}
@@ -256,4 +302,10 @@ class MemoryClassroom {
     return true;
   }
   async syncMembership() {}
+  async activeRecipientIds(classId: string) {
+    return [...this.memberships.values()]
+      .filter((value) => value.classId === classId && value.state === "ACTIVE")
+      .map((value) => value.studentId);
+  }
+  async insertAnnouncement() {}
 }

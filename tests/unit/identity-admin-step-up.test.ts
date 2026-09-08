@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { decodeJwt, importPKCS8, importSPKI } from "jose";
 import { createLogger } from "../../packages/logger/src/index.js";
 import { createMetrics } from "../../packages/observability/src/index.js";
-import { verifyStepUpProof, type ActorContext } from "../../packages/security/src/index.js";
+import { verifyStepUpProof, signStepUpProof, type ActorContext } from "../../packages/security/src/index.js";
 import type { AdminUser } from "../../apps/identity-service/src/admin/model.js";
 import type { LoginSession } from "../../apps/identity-service/src/login/model.js";
 import type { PasswordCredential } from "../../apps/identity-service/src/password/model.js";
@@ -14,6 +14,86 @@ import { AdminStepUpService } from "../../apps/identity-service/src/step-up/serv
 import { LearningAdminProofVerifier } from "../../apps/learning-service/src/admin-proof.js";
 
 describe("P7.12A INT-IDN-02 Admin step-up", () => {
+  it("binds application proofs to Identity, action and application while preserving report semantics", async () => {
+    const fixture = await makeFixture(),
+      id = randomUUID();
+    for (const action of ["LECTURER_APPLICATION_APPROVE", "LECTURER_APPLICATION_REJECT"] as const) {
+      const response = await fixture.service.authorize(fixture.actor, {
+        currentPassword: "correct horse battery staple",
+        action,
+        resourceType: "LECTURER_APPLICATION",
+        resourceId: id,
+      });
+      const expected = {
+        issuer: "identity-service",
+        audience: "identity-service",
+        kid: "identity-test",
+        action,
+        resourceType: "LECTURER_APPLICATION" as const,
+        resourceId: id,
+        adminUserId: fixture.admin.userId,
+      };
+      await expect(verifyStepUpProof(response.proof, fixture.publicKey, expected)).resolves.toMatchObject({
+        sessionId: fixture.actor.sessionId,
+        tokenVersion: fixture.actor.tokenVersion,
+      });
+      await expect(
+        verifyStepUpProof(response.proof, fixture.publicKey, { ...expected, resourceId: randomUUID() }),
+      ).rejects.toThrow();
+      await expect(
+        verifyStepUpProof(response.proof, fixture.publicKey, { ...expected, audience: "learning-service" }),
+      ).rejects.toThrow();
+      expect(() =>
+        parseAdminStepUpRequest({ currentPassword: "test", action, resourceType: "COURSE", resourceId: id }),
+      ).toThrow();
+    }
+    const report = await fixture.service.authorize(fixture.actor, {
+      currentPassword: "correct horse battery staple",
+      action: "INTERACTION_REPORT_MODERATE",
+      resourceType: "REPORT",
+      resourceId: id,
+    });
+    await expect(
+      verifyStepUpProof(report.proof, fixture.publicKey, {
+        issuer: "identity-service",
+        audience: "interaction-service",
+        kid: "identity-test",
+        action: "INTERACTION_REPORT_MODERATE",
+        resourceType: "REPORT",
+        resourceId: id,
+      }),
+    ).resolves.toMatchObject({ resourceType: "REPORT" });
+  });
+
+  it("rejects expired application proofs", async () => {
+    const f = await makeFixture(),
+      resourceId = randomUUID();
+    const token = await signStepUpProof(
+      f.privateKey,
+      "identity-test",
+      "identity-service",
+      "identity-service",
+      {
+        adminUserId: f.actor.userId,
+        sessionId: f.actor.sessionId,
+        tokenVersion: f.actor.tokenVersion,
+        action: "LECTURER_APPLICATION_APPROVE",
+        resourceType: "LECTURER_APPLICATION",
+        resourceId,
+      },
+      Math.floor(Date.now() / 1000) - 120,
+    );
+    await expect(
+      verifyStepUpProof(token, f.publicKey, {
+        issuer: "identity-service",
+        audience: "identity-service",
+        kid: "identity-test",
+        action: "LECTURER_APPLICATION_APPROVE",
+        resourceType: "LECTURER_APPLICATION",
+        resourceId,
+      }),
+    ).rejects.toThrow();
+  });
   it("issues an Ed25519 proof only for the exact ACTIVE Admin/password/action/resource", async () => {
     const fixture = await makeFixture();
     const resourceId = randomUUID();
@@ -240,7 +320,7 @@ async function makeFixture() {
     "identity-test",
     metrics,
   );
-  return { service, actor, admin, session, publicKey };
+  return { service, actor, admin, session, publicKey, privateKey };
 }
 
 type Mutable<Value> = { -readonly [Key in keyof Value]: Value[Key] };

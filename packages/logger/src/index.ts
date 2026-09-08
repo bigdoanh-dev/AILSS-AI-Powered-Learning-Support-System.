@@ -5,6 +5,8 @@ const REDACT_PATHS = [
   "headers.authorization",
   'req.headers["x-actor-context"]',
   'headers["x-actor-context"]',
+  'req.headers["x-assessment-actor-context"]',
+  'headers["x-assessment-actor-context"]',
   'req.headers["x-classroom-actor-context"]',
   'headers["x-classroom-actor-context"]',
   'req.headers["x-admin-step-up-proof"]',

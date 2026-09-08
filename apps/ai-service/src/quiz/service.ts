@@ -17,6 +17,14 @@ import {
 } from "./model.js";
 import type { AiQuizRepository } from "./repository.js";
 import type { AiTargetClient } from "./target-client.js";
+import type { AiAssessmentClient } from "./assessment-client.js";
+import { validateObjectiveQuiz } from "../../../../packages/contracts/src/objective-v1.js";
+import {
+  ASSESSMENT_AI_IMPORT_NAMESPACE,
+  uuidV5,
+  type ApprovalRequest,
+  type ApprovalResponse,
+} from "./model.js";
 export class AiQuizService {
   constructor(
     private readonly repo: AiQuizRepository,
@@ -24,11 +32,161 @@ export class AiQuizService {
     private readonly storage: ObjectStorage,
     private readonly identity: AiIdentityClient,
     private readonly target: AiTargetClient,
+    private readonly assessment: AiAssessmentClient,
     private readonly secret: string,
     private readonly dailyQuota: number,
     private readonly cursorSecret: string,
     private readonly cursorTtlSeconds: number,
   ) {}
+
+  async approve(input: {
+    actor: ActorContext;
+    draftId: string;
+    body: ApprovalRequest;
+    key: string;
+    ifMatch: string;
+    assessmentActorContext: string;
+    correlationId: string;
+  }): Promise<{ body: ApprovalResponse; replayed: boolean }> {
+    await this.lecturer(input.actor, input.correlationId);
+    if (input.ifMatch !== '"v1"')
+      throw new AppError("AI_DRAFT_VERSION_CONFLICT", 409, "If-Match must identify generated draft v1");
+    const reviewedDraft = validateObjectiveQuiz(input.body.reviewedDraft),
+      job = await this.repo.jobForDraft(input.draftId);
+    if (!job || job.lecturerId !== input.actor.userId)
+      throw new AppError("AI_DRAFT_NOT_FOUND", 404, "AI draft not found");
+    const generated = await this.repo.generatedDraft(job.jobId);
+    if (
+      !generated ||
+      String(generated.draft_id) !== input.draftId ||
+      Number(generated.draft_version) !== 1 ||
+      String(generated.validation_status) !== "VALID"
+    )
+      throw new AppError("AI_DRAFT_NOT_FOUND", 404, "AI draft not found");
+    const generatedBytes = await this.storage.read(String(generated.draft_object_key), 1024 * 1024);
+    if (sha256(generatedBytes) !== String(generated.draft_checksum))
+      throw new AppError("AI_DRAFT_CHECKSUM_MISMATCH", 409, "Generated draft integrity check failed");
+    validateObjectiveQuiz(JSON.parse(generatedBytes.toString("utf8")) as unknown);
+    const canonical = JSON.stringify(reviewedDraft),
+      fingerprintValue = fingerprint(this.secret, {
+        actorId: input.actor.userId,
+        draftId: input.draftId,
+        generatedDraftVersion: 1,
+        reviewedDraft,
+      }),
+      importOperationId = uuidV5(ASSESSMENT_AI_IMPORT_NAMESPACE, `${input.draftId}:2`),
+      operationId = uuidV5(ASSESSMENT_AI_IMPORT_NAMESPACE, `${input.draftId}:approval`),
+      now = new Date(),
+      won = await this.repo.reserveApproval({
+        draftId: input.draftId,
+        operationId,
+        key: input.key,
+        actorId: input.actor.userId,
+        fingerprint: fingerprintValue,
+        generatedChecksum: String(generated.draft_checksum),
+        importOperationId,
+        now,
+      });
+    let approval = await this.repo.approval(input.draftId);
+    if (!approval || approval.actorId !== input.actor.userId || approval.fingerprint !== fingerprintValue)
+      throw new AppError("IDEMPOTENCY_CONFLICT", 409, "Draft is owned by another approval command");
+    if (approval.response) return { body: approval.response, replayed: true };
+    if (job.state !== "AI_DRAFT" && job.state !== "APPROVED")
+      throw new AppError("AI_DRAFT_STATE_CONFLICT", 409, "Only AI_DRAFT may be approved");
+
+    const approvedChecksum = sha256(canonical),
+      approvedObjectKey = `quiz-drafts/${job.lecturerId}/${job.jobId}/2.json`;
+    if (approval.state === "RESERVED") {
+      const bytes = Buffer.from(canonical);
+      await this.storage.writePrivate(approvedObjectKey, bytes, "application/json");
+      await this.repo.storeApprovedDraft({
+        jobId: job.jobId,
+        draftId: input.draftId,
+        checksum: approvedChecksum,
+        objectKey: approvedObjectKey,
+        bytes: bytes.length,
+        questionCount: reviewedDraft.questions.length,
+        operationId: approval.operationId,
+        now: new Date(),
+      });
+      approval = await this.repo.approval(input.draftId);
+    }
+    if (!approval?.approvedChecksum || approval.approvedChecksum !== approvedChecksum)
+      throw new AppError("AI_APPROVAL_RECOVERY_CONFLICT", 409, "Approved snapshot does not match command");
+    let quizId = approval.assessmentQuizId;
+    if (!quizId) {
+      let target;
+      try {
+        target = await this.target.owned(
+          job.targetType,
+          job.targetId,
+          input.actor.userId,
+          input.correlationId,
+        );
+      } catch (error) {
+        throw new AppError(
+          error instanceof Error && error.message === "REJECTED"
+            ? "TARGET_NOT_FOUND"
+            : "TARGET_CONTEXT_UNAVAILABLE",
+          error instanceof Error && error.message === "REJECTED" ? 404 : 503,
+          "Target context unavailable",
+          true,
+        );
+      }
+      try {
+        const imported = await this.assessment.importDraft(
+          input.draftId,
+          {
+            importOperationId,
+            approvedDraftVersion: 2,
+            approvedDraftChecksum: approvedChecksum,
+            jobId: job.jobId,
+            targetType: job.targetType,
+            targetId: job.targetId,
+            targetVersion: target.version,
+            ownerLecturerId: input.actor.userId,
+            quiz: reviewedDraft,
+          },
+          input.assessmentActorContext,
+          input.correlationId,
+        );
+        quizId = imported.quizId;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "",
+          rejected = message.startsWith("REJECTED:");
+        throw new AppError(
+          rejected ? "ASSESSMENT_IMPORT_REJECTED" : "ASSESSMENT_UNAVAILABLE",
+          rejected ? Number(message.split(":")[1]) : 503,
+          "Assessment import unavailable",
+          true,
+        );
+      }
+      await this.repo.linkAssessment({
+        draftId: input.draftId,
+        operationId: approval.operationId,
+        quizId,
+        now: new Date(),
+      });
+      approval = await this.repo.approval(input.draftId);
+    }
+    if (!quizId || !approval)
+      throw new AppError("AI_APPROVAL_RECOVERY_UNAVAILABLE", 503, "Approval recovery unavailable", true);
+    const latest = await this.repo.job(job.jobId);
+    if (!latest) throw new AppError("AI_JOB_NOT_FOUND", 404, "AI job not found");
+    if (latest.state === "AI_DRAFT") await this.repo.approveJob(latest, new Date());
+    const approved = await this.repo.job(job.jobId);
+    if (approved?.state !== "APPROVED")
+      throw new AppError("AI_APPROVAL_STATE_CONFLICT", 409, "Approval lost a concurrent state transition");
+    const response: ApprovalResponse = {
+      jobId: job.jobId,
+      draftId: input.draftId,
+      state: "APPROVED",
+      approvedDraftVersion: 2,
+      assessment: { quizId, quizVersion: 1, status: "DRAFT" },
+    };
+    await this.repo.completeApproval(input.draftId, approval.operationId, response, new Date());
+    return { body: response, replayed: !won };
+  }
   private async lecturer(actor: ActorContext, correlationId: string) {
     if (!actor.roles.includes("LECTURER"))
       throw new AppError("LECTURER_REQUIRED", 403, "Verified Lecturer required");

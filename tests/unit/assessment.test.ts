@@ -23,8 +23,9 @@ import {
   type Attempt,
   type AttemptGuard,
   type AssessmentResult,
+  type AiDraftImportResult,
 } from "../../apps/assessment-service/src/model.js";
-import type { CommandRecord } from "../../apps/assessment-service/src/repository.js";
+import type { AiImportRecord, CommandRecord } from "../../apps/assessment-service/src/repository.js";
 import { AssessmentService, type AssessmentStore } from "../../apps/assessment-service/src/service.js";
 
 const targetId = randomUUID();
@@ -66,6 +67,7 @@ const createBody = {
 
 class MemoryAssessmentStore implements AssessmentStore {
   readonly commands = new Map<string, CommandRecord>();
+  readonly aiImports = new Map<string, AiImportRecord>();
   readonly quizzes = new Map<string, Quiz>();
   readonly snapshots = new Map<string, QuizQuestion[]>();
   readonly projections = new Map<string, QuizProjection>();
@@ -74,6 +76,37 @@ class MemoryAssessmentStore implements AssessmentStore {
   readonly results = new Map<string, AssessmentResult>();
   readonly resultProjections: Awaited<ReturnType<AssessmentStore["resultProjectionShard"]>> = [];
   ambiguousQuestionWriteOnce = false;
+  loseAiImportResponseOnce = false;
+
+  async reserveAiImport(input: {
+    importOperationId: string;
+    draftId: string;
+    fingerprint: string;
+    quizId: string;
+  }) {
+    if (this.aiImports.has(input.importOperationId)) return false;
+    this.aiImports.set(input.importOperationId, {
+      importOperationId: input.importOperationId,
+      draftId: input.draftId,
+      fingerprint: input.fingerprint,
+      quizId: input.quizId,
+      state: "IN_PROGRESS",
+    });
+    return true;
+  }
+  async aiImport(importOperationId: string) {
+    return this.aiImports.get(importOperationId);
+  }
+  async completeAiImport(importOperationId: string, result: AiDraftImportResult) {
+    const value = this.aiImports.get(importOperationId);
+    if (!value) return false;
+    this.aiImports.set(importOperationId, { ...value, state: "COMPLETE", result });
+    if (this.loseAiImportResponseOnce) {
+      this.loseAiImportResponseOnce = false;
+      throw new Error("SIMULATED_LOST_RESPONSE");
+    }
+    return true;
+  }
 
   async reserveCommand(
     scope: string,
@@ -412,6 +445,83 @@ const clients = {
 };
 
 describe("P8.1 Assessment quiz contract", () => {
+  it("imports objective-v1 once and recovers the same DRAFT after a lost response", async () => {
+    const store = new MemoryAssessmentStore(),
+      service = new AssessmentService(store, clients, "secret"),
+      importOperationId = randomUUID(),
+      draftId = randomUUID(),
+      request = {
+        importOperationId,
+        approvedDraftVersion: 2 as const,
+        approvedDraftChecksum: "a".repeat(64),
+        jobId: randomUUID(),
+        targetType: "COURSE" as const,
+        targetId,
+        targetVersion: 1,
+        ownerLecturerId: lecturerId,
+        quiz: {
+          schemaVersion: "objective-v1" as const,
+          title: "Reviewed objective quiz",
+          questions: [
+            {
+              id: "q1",
+              order: 1,
+              text: "One",
+              points: "1.00",
+              type: "SINGLE_CHOICE" as const,
+              options: [
+                { id: "a", text: "A" },
+                { id: "b", text: "B" },
+              ],
+              correctAnswer: { optionId: "b" },
+            },
+            {
+              id: "q2",
+              order: 2,
+              text: "Many",
+              points: "2.50",
+              type: "MULTIPLE_CHOICE" as const,
+              options: [
+                { id: "a", text: "A" },
+                { id: "b", text: "B" },
+              ],
+              correctAnswer: { optionIds: ["a", "b"] },
+            },
+            {
+              id: "q3",
+              order: 3,
+              text: "Truth",
+              points: "1",
+              type: "TRUE_FALSE" as const,
+              correctAnswer: { value: true },
+            },
+            {
+              id: "q4",
+              order: 4,
+              text: "Short",
+              points: "3.25",
+              type: "SHORT_ANSWER" as const,
+              correctAnswer: { acceptedAnswer: "Canonical" },
+            },
+          ],
+        },
+      };
+    store.loseAiImportResponseOnce = true;
+    await expect(service.importAiDraft({ actor, draftId, request, requestId })).rejects.toThrow(
+      "SIMULATED_LOST_RESPONSE",
+    );
+    const recovered = await service.importAiDraft({ actor, draftId, request, requestId });
+    expect(recovered).toMatchObject({
+      replayed: true,
+      result: { draftId, approvedDraftVersion: 2, quizVersion: 1, status: "DRAFT" },
+    });
+    expect(store.quizzes.size).toBe(1);
+    expect(store.aiImports.size).toBe(1);
+    const snapshot = [...store.snapshots.values()][0];
+    expect(snapshot?.map((question) => question.points)).toEqual(["1.00", "2.50", "1", "3.25"]);
+    expect(snapshot?.[0]).toMatchObject({ options: ["A", "B"], correctAnswer: "B" });
+    expect(snapshot?.[1]).toMatchObject({ options: ["A", "B"], correctAnswer: ["A", "B"] });
+  });
   it("normalizes a strict create DTO and keeps decimal values as strings", () => {
     const parsed = parseQuizCreate(createBody);
     expect(parsed.title).toBe("Distributed database quiz");

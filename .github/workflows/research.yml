@@ -1,0 +1,20 @@
+name: phase6-research
+on:
+  workflow_dispatch:
+jobs:
+  research-profile:
+    runs-on: [self-hosted, ailss-research]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.19.0, run_install: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24.20.0, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm keys:dev && node scripts/dev/bootstrap-dev-env.mjs
+      - run: pnpm env:research
+      - run: AILSS_PROFILE=research pnpm smoke
+      - run: AILSS_PROFILE=research pnpm evidence
+      - if: always()
+        run: pnpm env:down || true

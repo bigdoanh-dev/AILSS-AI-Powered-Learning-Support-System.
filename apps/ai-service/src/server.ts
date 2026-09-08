@@ -11,6 +11,7 @@ import { safeError } from "../../../packages/logger/src/index.js";
 import { AiQuizRepository } from "./quiz/repository.js";
 import { AiQuizService } from "./quiz/service.js";
 import { AiTargetClient } from "./quiz/target-client.js";
+import { AiAssessmentClient } from "./quiz/assessment-client.js";
 import { aiQuizRouter } from "./quiz/router.js";
 const manifest: ServiceManifest = {
   serviceId: "ai-service",
@@ -85,6 +86,14 @@ await startService(manifest, {
         key: serviceKey,
         kid: config.AI_SERVICE_TOKEN_KID,
         deadlineMs: config.INTERNAL_HTTP_TIMEOUT_MS,
+      }),
+      new AiAssessmentClient({
+        baseUrl: config.ASSESSMENT_SERVICE_URL,
+        key: serviceKey,
+        kid: config.AI_SERVICE_TOKEN_KID,
+        issuer: config.SERVICE_TOKEN_ISSUER,
+        ttlSeconds: config.SERVICE_TOKEN_TTL_SECONDS,
+        deadlineMs: 2_000,
       }),
       config.PASSWORD_IDEMPOTENCY_HMAC_KEY,
       config.AI_DAILY_QUIZ_QUOTA,

@@ -36,7 +36,42 @@ async function portFree(port) {
     server.listen(port, "127.0.0.1", () => server.close(() => resolve(true)));
   });
 }
-for (const port of [8080, 9042, 5672, 15672, 9000, 9001])
-  checks.push({ name: `port-${port}`, pass: await portFree(port), value: "must be free before startup" });
+function dockerPortOwners(port) {
+  try {
+    return execFileSync("docker", ["ps", "--filter", `publish=${port}`, "--format", "{{.Names}}"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    })
+      .trim()
+      .split("\n")
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+const expectedPortOwners = new Map([
+  [8080, new Set(["ailss-api-gateway"])],
+  [9042, new Set(["ailss-cassandra-dev", "ailss-cassandra-node1"])],
+  [5672, new Set(["ailss-rabbitmq"])],
+  [15672, new Set(["ailss-rabbitmq"])],
+  [9000, new Set(["ailss-minio"])],
+  [9001, new Set(["ailss-minio"])],
+]);
+for (const [port, expectedOwners] of expectedPortOwners) {
+  const free = await portFree(port);
+  const owners = free ? [] : dockerPortOwners(port);
+  const ownedByAilss = owners.length > 0 && owners.every((owner) => expectedOwners.has(owner));
+  checks.push({
+    name: `port-${port}`,
+    pass: free || ownedByAilss,
+    value: free
+      ? "free"
+      : ownedByAilss
+        ? `already published by ${owners.join(", ")}`
+        : owners.length
+          ? `occupied by unexpected container: ${owners.join(", ")}`
+          : "occupied by a non-Docker process",
+  });
+}
 console.log(JSON.stringify({ profile, checks }, null, 2));
 if (checks.some((check) => !check.pass)) process.exitCode = 1;

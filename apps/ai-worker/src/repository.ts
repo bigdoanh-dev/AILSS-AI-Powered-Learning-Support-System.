@@ -202,6 +202,12 @@ export class QuizWorkerRepository {
       "LOCAL_QUORUM",
       "LOCAL_SERIAL",
     );
+    await this.db.execute(
+      "INSERT INTO ai_job_by_draft (draft_id,job_id,lecturer_id,generated_draft_version,generated_draft_checksum,created_at) VALUES (?,?,?,1,?,?) IF NOT EXISTS",
+      [uuid(draft.id), uuid(j.jobId), uuid(j.lecturerId), draft.checksum, now],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
   }
   async commitDraft(j: WorkerJob, draftId: string, eventId: string, now: Date) {
     const r = await this.db.execute(

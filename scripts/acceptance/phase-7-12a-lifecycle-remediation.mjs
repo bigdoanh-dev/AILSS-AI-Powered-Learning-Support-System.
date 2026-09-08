@@ -142,7 +142,7 @@ const summary = {
   stage: "phase-7.12a-lifecycle-remediation-acceptance",
   status: "PASS",
   runId,
-  contracts: { publicApis: 93, internalApis: 15, queryIds: 71, eventTypes: 22, redis: false },
+  contracts: { publicApis: 98, internalApis: 15, queryIds: 74, eventTypes: 22, redis: false },
   intIdn02: {
     activeAdminProof: true,
     algorithm: "Ed25519",

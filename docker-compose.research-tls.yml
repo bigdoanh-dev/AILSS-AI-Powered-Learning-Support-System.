@@ -1,0 +1,87 @@
+services:
+  cassandra-node1:
+    environment:
+      AILSS_CASSANDRA_TLS: "true"
+    volumes:
+      - cassandra_node1_data:/var/lib/cassandra
+      - cassandra_audit1:/var/log/cassandra/audit
+      - ./infrastructure/tls/generated/ca:/opt/ailss/tls/ca:ro
+      - ./infrastructure/tls/generated/cassandra/node1:/opt/ailss/tls/cassandra:ro
+      - ./infrastructure/cassandra/cqlshrc-tls:/root/.cassandra/cqlshrc:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "cqlsh --ssl cassandra-node1 -u cassandra -p cassandra -e 'SELECT release_version FROM system.local' >/dev/null 2>&1",
+        ]
+  cassandra-node2:
+    environment:
+      AILSS_CASSANDRA_TLS: "true"
+    volumes:
+      - cassandra_node2_data:/var/lib/cassandra
+      - cassandra_audit2:/var/log/cassandra/audit
+      - ./infrastructure/tls/generated/ca:/opt/ailss/tls/ca:ro
+      - ./infrastructure/tls/generated/cassandra/node2:/opt/ailss/tls/cassandra:ro
+      - ./infrastructure/cassandra/cqlshrc-tls:/root/.cassandra/cqlshrc:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "cqlsh --ssl cassandra-node2 -u cassandra -p cassandra -e 'SELECT release_version FROM system.local' >/dev/null 2>&1",
+        ]
+  cassandra-node3:
+    environment:
+      AILSS_CASSANDRA_TLS: "true"
+    volumes:
+      - cassandra_node3_data:/var/lib/cassandra
+      - cassandra_audit3:/var/log/cassandra/audit
+      - ./infrastructure/tls/generated/ca:/opt/ailss/tls/ca:ro
+      - ./infrastructure/tls/generated/cassandra/node3:/opt/ailss/tls/cassandra:ro
+      - ./infrastructure/cassandra/cqlshrc-tls:/root/.cassandra/cqlshrc:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "cqlsh --ssl cassandra-node3 -u cassandra -p cassandra -e 'SELECT release_version FROM system.local' >/dev/null 2>&1",
+        ]
+
+  identity-service:
+    environment:
+      CASSANDRA_TLS_ENABLED: "true"
+      CASSANDRA_CA_PATH: /opt/ailss/tls/ca/ca-cert.pem
+      CASSANDRA_TLS_SERVER_NAME: cassandra
+    volumes:
+      - ./infrastructure/tls/generated/ca:/opt/ailss/tls/ca:ro
+      - ./infrastructure/tls/generated/identity/user-jwt-private.pem:/run/ailss/identity/user-jwt-private.pem:ro
+      - ./infrastructure/tls/generated/identity/user-jwt-public.pem:/run/ailss/identity/user-jwt-public.pem:ro
+  learning-service:
+    environment: &cassandra-client-tls
+      CASSANDRA_TLS_ENABLED: "true"
+      CASSANDRA_CA_PATH: /opt/ailss/tls/ca/ca-cert.pem
+      CASSANDRA_TLS_SERVER_NAME: cassandra
+    volumes: &service-tls
+      - ./infrastructure/tls/generated/ca:/opt/ailss/tls/ca:ro
+  classroom-service:
+    environment: *cassandra-client-tls
+    volumes: *service-tls
+  assessment-service:
+    environment: *cassandra-client-tls
+    volumes: *service-tls
+  interaction-service:
+    environment: *cassandra-client-tls
+    volumes: *service-tls
+  ai-service:
+    environment: *cassandra-client-tls
+    volumes: *service-tls
+  ai-worker:
+    environment: *cassandra-client-tls
+    volumes: *service-tls
+  document-worker:
+    environment: *cassandra-client-tls
+    volumes: *service-tls
+  notification-worker:
+    environment: *cassandra-client-tls
+    volumes: *service-tls
+  audit-worker:
+    environment: *cassandra-client-tls
+    volumes: *service-tls

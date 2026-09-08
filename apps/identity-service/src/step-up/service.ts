@@ -59,7 +59,11 @@ export class AdminStepUpService {
       this.privateKey,
       this.kid,
       "identity-service",
-      request.resourceType === "REPORT" ? "interaction-service" : "learning-service",
+      request.resourceType === "LECTURER_APPLICATION"
+        ? "identity-service"
+        : request.resourceType === "REPORT"
+          ? "interaction-service"
+          : "learning-service",
       {
         adminUserId: admin.userId,
         sessionId: actor.sessionId,

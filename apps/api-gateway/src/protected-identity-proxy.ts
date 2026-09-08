@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { publicDecisionSchema } from "../../identity-service/src/lecturer-application/model.js";
+import { AdminStepUpClientError, type AdminStepUpClient } from "./admin-step-up-client.js";
 import type { Request, RequestHandler } from "express";
 import type { AppConfig } from "../../../packages/config/src/index.js";
 import { AppError, currentRequestContext } from "../../../packages/http/src/index.js";
@@ -22,7 +25,10 @@ export interface ProtectedIdentityRoute {
   readonly onInvalidBearer: () => void;
 }
 
-export async function protectedIdentityProxyFactory(config: AppConfig): Promise<{
+export async function protectedIdentityProxyFactory(
+  config: AppConfig,
+  stepUp?: AdminStepUpClient,
+): Promise<{
   handler(route: ProtectedIdentityRoute): RequestHandler;
 }> {
   if (!config.JWT_PUBLIC_KEY_PATH || !config.ACTOR_CONTEXT_PRIVATE_KEY_PATH) {
@@ -55,6 +61,37 @@ export async function protectedIdentityProxyFactory(config: AppConfig): Promise<
             route.onInvalidBearer();
             throw invalidAccessToken();
           }
+          let decisionBody: { decision: "APPROVE" | "REJECT" } | undefined;
+          let stepUpProof: string | undefined;
+          if (route.purpose === "identity.lecturer-application.decision") {
+            const parsed = publicDecisionSchema.safeParse(request.body);
+            const id = z.string().uuid().safeParse(request.params.applicationId);
+            if (!parsed.success || !id.success || Object.keys(request.query).length)
+              throw new AppError("APPLICATION_INVALID_REQUEST", 422, "Invalid application decision");
+            if (!stepUp) throw new AppError("APPLICATION_UNAVAILABLE", 503, "Reauthentication unavailable");
+            try {
+              stepUpProof = await stepUp.authorize({
+                actor,
+                correlationId: context.correlationId,
+                currentPassword: parsed.data.currentPassword,
+                action:
+                  parsed.data.decision === "APPROVE"
+                    ? "LECTURER_APPLICATION_APPROVE"
+                    : "LECTURER_APPLICATION_REJECT",
+                resourceType: "LECTURER_APPLICATION",
+                resourceId: id.data,
+              });
+            } catch (error) {
+              throw new AppError(
+                error instanceof AdminStepUpClientError && error.status === 403
+                  ? "ADMIN_STEP_UP_FAILED"
+                  : "APPLICATION_UNAVAILABLE",
+                error instanceof AdminStepUpClientError && error.status === 403 ? 401 : 503,
+                "Application reauthentication failed",
+              );
+            }
+            decisionBody = { decision: parsed.data.decision };
+          }
           const issuedAt = Math.floor(Date.now() / 1_000);
           const actorContext = await signActorContext(
             actorPrivateKey,
@@ -83,11 +120,12 @@ export async function protectedIdentityProxyFactory(config: AppConfig): Promise<
             method: route.method,
             headers: {
               "x-actor-context": actorContext,
+              ...(stepUpProof ? { "x-admin-step-up-proof": stepUpProof } : {}),
               "x-correlation-id": context.correlationId,
               ...(route.forwardBody ? { "content-type": "application/json" } : {}),
               ...(route.forwardIdempotencyKey && idempotencyKey ? { "idempotency-key": idempotencyKey } : {}),
             },
-            ...(route.forwardBody ? { body: JSON.stringify(request.body) } : {}),
+            ...(route.forwardBody ? { body: JSON.stringify(decisionBody ?? request.body) } : {}),
             signal: AbortSignal.timeout(route.timeoutMs ?? config.INTERNAL_HTTP_TIMEOUT_MS),
           });
           const contentType = upstream.headers.get("content-type");

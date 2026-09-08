@@ -334,6 +334,25 @@ export class ClassroomRepository {
     }
     return out;
   }
+  async activeRecipientIds(classId: string, maximum = 10_000) {
+    const out: string[] = [];
+    for (let shard = 0; shard < 16; shard++) {
+      let pageState: string | undefined;
+      do {
+        const page = await this.db.executePage(
+          `SELECT student_id FROM students_by_class WHERE class_id=? AND state='ACTIVE' AND shard=?`,
+          [uuid(classId), shard],
+          LQ,
+          Math.min(500, maximum - out.length),
+          pageState,
+        );
+        out.push(...page.rows.map((row) => String(row.student_id)));
+        pageState = page.pageState;
+        if (out.length >= maximum && pageState) throw new Error("CLASS_RECIPIENT_LIMIT_EXCEEDED");
+      } while (pageState && out.length < maximum);
+    }
+    return out;
+  }
   async attendanceBySession(sessionId: string, limit = 10_000): Promise<AttendanceRow[]> {
     const rows = await this.db.execute(
       `SELECT session_id,student_id,attendance_status,source,manual_note,first_joined_at,last_joined_at,last_left_at,last_seen_at,connected_duration_seconds,presence_state,attendance_version,updated_at FROM attendance_by_session WHERE session_id=? LIMIT ?`,

@@ -20,7 +20,7 @@ export class ClassroomClients {
       correlationId,
       "identity-service",
       this.config.SERVICE_TOKEN_PURPOSE,
-      500,
+      this.config.INTERNAL_HTTP_TIMEOUT_MS,
     );
   }
   public async course(courseId: string, correlationId: string) {
@@ -30,7 +30,7 @@ export class ClassroomClients {
       correlationId,
       "learning-service",
       "learning.course.class-link.read",
-      800,
+      this.config.INTERNAL_HTTP_TIMEOUT_MS,
     );
     return z
       .object({

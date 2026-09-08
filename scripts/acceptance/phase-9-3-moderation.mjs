@@ -182,7 +182,7 @@ const summary = {
   auditEvidence: ["SUCCESS", "DENIED"],
   foreignKeyspaceDenied: true,
   runtimeDdlDenied: true,
-  counts: { publicApis: 93, internalApis: 15, queryIds: 71, events: 22, redis: false },
+  counts: { publicApis: 98, internalApis: 15, queryIds: 74, events: 22, redis: false },
 };
 await writeFile(new URL("p9.3-summary.json", evidence), JSON.stringify(summary, null, 2) + "\n");
 console.log(JSON.stringify({ ...summary, evidence: decodeURIComponent(evidence.pathname) }));

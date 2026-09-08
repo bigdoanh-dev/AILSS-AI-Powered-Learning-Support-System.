@@ -4,11 +4,158 @@ import type { CassandraClient } from "../../../../packages/cassandra/src/index.j
 import type { EventEnvelope } from "../../../../packages/contracts/src/index.js";
 import { eventShard, type DocumentRecord } from "../documents/model.js";
 import type { CreateQuizJob, QuizJob, QuizJobState } from "./model.js";
+import type { ApprovalResponse } from "./model.js";
 const uuid = (v: string) => types.Uuid.fromString(v),
   long = (v: number) => types.Long.fromNumber(v),
   day = (d: Date) => types.LocalDate.fromString(d.toISOString().slice(0, 10));
+export interface ApprovalRecord {
+  operationId: string;
+  idempotencyKey: string;
+  actorId: string;
+  fingerprint: string;
+  generatedChecksum: string;
+  importOperationId: string;
+  state: string;
+  approvedChecksum?: string;
+  approvedObjectKey?: string;
+  assessmentQuizId?: string;
+  response?: ApprovalResponse;
+}
 export class AiQuizRepository {
   constructor(private readonly db: CassandraClient) {}
+  async jobForDraft(draftId: string): Promise<QuizJob | undefined> {
+    const row = (
+      await this.db.execute(
+        "SELECT job_id FROM ai_job_by_draft WHERE draft_id=?",
+        [uuid(draftId)],
+        "LOCAL_QUORUM",
+      )
+    )[0];
+    return row ? this.job(String(row.job_id)) : undefined;
+  }
+  async generatedDraft(jobId: string) {
+    return (
+      await this.db.execute(
+        "SELECT draft_id,draft_version,draft_object_key,draft_checksum,validation_status,state FROM ai_draft_by_job WHERE job_id=? AND draft_version=1",
+        [uuid(jobId)],
+        "LOCAL_QUORUM",
+      )
+    )[0];
+  }
+  async reserveApproval(input: {
+    draftId: string;
+    operationId: string;
+    key: string;
+    actorId: string;
+    fingerprint: string;
+    generatedChecksum: string;
+    importOperationId: string;
+    now: Date;
+  }) {
+    const rows = await this.db.execute(
+      `INSERT INTO ai_approval_by_draft
+       (draft_id,operation_id,idempotency_key,actor_id,fingerprint,generated_draft_checksum,
+        import_operation_id,state,version,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,'RESERVED',1,?,?) IF NOT EXISTS`,
+      [
+        uuid(input.draftId),
+        uuid(input.operationId),
+        input.key,
+        uuid(input.actorId),
+        input.fingerprint,
+        input.generatedChecksum,
+        uuid(input.importOperationId),
+        input.now,
+        input.now,
+      ],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
+    return rows[0]?.["[applied]"] === true;
+  }
+  async approval(draftId: string): Promise<ApprovalRecord | undefined> {
+    const row = (
+      await this.db.execute(
+        "SELECT * FROM ai_approval_by_draft WHERE draft_id=?",
+        [uuid(draftId)],
+        "LOCAL_QUORUM",
+      )
+    )[0];
+    if (!row) return;
+    return {
+      operationId: String(row.operation_id),
+      idempotencyKey: String(row.idempotency_key),
+      actorId: String(row.actor_id),
+      fingerprint: String(row.fingerprint),
+      generatedChecksum: String(row.generated_draft_checksum),
+      importOperationId: String(row.import_operation_id),
+      state: String(row.state),
+      ...(row.approved_draft_checksum ? { approvedChecksum: String(row.approved_draft_checksum) } : {}),
+      ...(row.approved_object_key ? { approvedObjectKey: String(row.approved_object_key) } : {}),
+      ...(row.assessment_quiz_id ? { assessmentQuizId: String(row.assessment_quiz_id) } : {}),
+      ...(row.response_json ? { response: JSON.parse(String(row.response_json)) as ApprovalResponse } : {}),
+    };
+  }
+  async storeApprovedDraft(input: {
+    jobId: string;
+    draftId: string;
+    checksum: string;
+    objectKey: string;
+    bytes: number;
+    questionCount: number;
+    operationId: string;
+    now: Date;
+  }) {
+    await this.db.execute(
+      "INSERT INTO ai_draft_by_job (job_id,draft_version,draft_id,validation_status,draft_object_key,draft_checksum,content_bytes,question_count,state,created_at) VALUES (?,2,?,'VALID',?,?,?,?,'APPROVED',?) IF NOT EXISTS",
+      [
+        uuid(input.jobId),
+        uuid(input.draftId),
+        input.objectKey,
+        input.checksum,
+        long(input.bytes),
+        input.questionCount,
+        input.now,
+      ],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
+    const rows = await this.db.execute(
+      "UPDATE ai_approval_by_draft SET approved_draft_checksum=?,approved_object_key=?,state='SNAPSHOT_STORED',version=2,updated_at=? WHERE draft_id=? IF operation_id=? AND state='RESERVED'",
+      [input.checksum, input.objectKey, input.now, uuid(input.draftId), uuid(input.operationId)],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
+    return rows[0]?.["[applied]"] === true;
+  }
+  async linkAssessment(input: { draftId: string; operationId: string; quizId: string; now: Date }) {
+    const rows = await this.db.execute(
+      "UPDATE ai_approval_by_draft SET assessment_quiz_id=?,assessment_quiz_version=1,assessment_status='DRAFT',state='IMPORTED',version=3,updated_at=? WHERE draft_id=? IF operation_id=? AND state='SNAPSHOT_STORED'",
+      [uuid(input.quizId), input.now, uuid(input.draftId), uuid(input.operationId)],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
+    return rows[0]?.["[applied]"] === true;
+  }
+  async approveJob(job: QuizJob, now: Date) {
+    const rows = await this.db.execute(
+      "UPDATE ai_job_by_id SET state='APPROVED',version=?,updated_at=? WHERE job_id=? IF lecturer_id=? AND state='AI_DRAFT' AND version=?",
+      [long(job.version + 1), now, uuid(job.jobId), uuid(job.lecturerId), long(job.version)],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
+    if (rows[0]?.["[applied]"] === true) await this.moveProjection(job, "APPROVED", job.version + 1);
+    return rows[0]?.["[applied]"] === true;
+  }
+  async completeApproval(draftId: string, operationId: string, response: ApprovalResponse, now: Date) {
+    const rows = await this.db.execute(
+      "UPDATE ai_approval_by_draft SET response_json=?,state='COMPLETE',version=4,updated_at=? WHERE draft_id=? IF operation_id=? AND state='IMPORTED'",
+      [JSON.stringify(response), now, uuid(draftId), uuid(operationId)],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
+    return rows[0]?.["[applied]"] === true;
+  }
   async document(id: string): Promise<DocumentRecord | undefined> {
     const r = (
       await this.db.execute("SELECT * FROM document_by_id WHERE document_id=?", [uuid(id)], "LOCAL_QUORUM")

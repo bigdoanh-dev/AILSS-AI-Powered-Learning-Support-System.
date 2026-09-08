@@ -83,60 +83,188 @@ export interface ConsumerDisposition {
   readonly reason?: string;
 }
 export type EventHandler = (event: EventEnvelope) => Promise<ConsumerDisposition>;
+export interface ConsumerRetryPolicy {
+  readonly exchange: string;
+  readonly routingKey: string;
+  readonly attempts: number;
+  readonly deadLetterExchange?: string;
+  readonly deadLetterRoutingKey?: string;
+}
 
 export class RabbitConsumer {
   private closeHandler: (() => void) | undefined;
+  private closed = false;
+  private reconnectTimer: NodeJS.Timeout | undefined;
+  private reconnecting: Promise<void> | undefined;
+  private connection: amqp.ChannelModel;
+  private channel: amqp.Channel;
+  readonly #subscriptions = new Map<
+    string,
+    { queue: string; prefetch: number; handler: EventHandler; retryPolicy?: ConsumerRetryPolicy }
+  >();
   private constructor(
-    private readonly connection: amqp.ChannelModel,
-    private readonly channel: amqp.Channel,
+    private readonly url: string,
+    connection: amqp.ChannelModel,
+    channel: amqp.Channel,
   ) {
-    connection.on("error", () => undefined);
-    channel.on("error", () => undefined);
-    connection.on("close", () => this.closeHandler?.());
+    this.connection = connection;
+    this.channel = channel;
+    this.attach(connection, channel);
   }
 
   public static async connect(url: string): Promise<RabbitConsumer> {
     const connection = await amqp.connect(url);
-    return new RabbitConsumer(connection, await connection.createChannel());
+    return new RabbitConsumer(url, connection, await connection.createChannel());
   }
 
-  public async consume(queue: string, prefetch: number, handler: EventHandler): Promise<string> {
-    await this.channel.prefetch(prefetch);
-    const result = await this.channel.consume(
+  public async consume(
+    queue: string,
+    prefetch: number,
+    handler: EventHandler,
+    retryPolicy?: ConsumerRetryPolicy,
+  ): Promise<string> {
+    const subscriptionId = `ailss-${queue}-${randomUUID()}`;
+    this.#subscriptions.set(subscriptionId, {
       queue,
+      prefetch,
+      handler,
+      ...(retryPolicy ? { retryPolicy } : {}),
+    });
+    await this.startSubscription(subscriptionId);
+    return subscriptionId;
+  }
+
+  private async startSubscription(subscriptionId: string): Promise<void> {
+    const subscription = this.#subscriptions.get(subscriptionId);
+    if (!subscription) return;
+    const channel = this.channel;
+    await channel.prefetch(subscription.prefetch);
+    await channel.consume(
+      subscription.queue,
       (message: ConsumeMessage | null) => {
         if (!message) return;
         let event: EventEnvelope;
         try {
           event = decodeEvent(message.content);
         } catch {
-          this.channel.reject(message, false);
+          channel.reject(message, false);
           return;
         }
-        void handler(event)
+        void subscription
+          .handler(event)
           .then((disposition) => {
-            if (disposition.kind === "ack") this.channel.ack(message);
-            else if (disposition.kind === "retry") this.channel.nack(message, false, true);
-            else this.channel.reject(message, false);
+            if (disposition.kind === "ack") channel.ack(message);
+            else if (disposition.kind === "retry" && subscription.retryPolicy) {
+              const prior = Number(message.properties.headers?.["x-ailss-retry-count"] ?? 0);
+              if (prior < subscription.retryPolicy.attempts) {
+                channel.publish(
+                  subscription.retryPolicy.exchange,
+                  `${subscription.retryPolicy.routingKey}.retry.${String(prior + 1)}`,
+                  message.content,
+                  {
+                    ...message.properties,
+                    persistent: true,
+                    headers: { ...message.properties.headers, "x-ailss-retry-count": prior + 1 },
+                  },
+                );
+                channel.ack(message);
+              } else
+                this.deadLetter(
+                  message,
+                  subscription.queue,
+                  disposition.reason,
+                  subscription.retryPolicy,
+                  channel,
+                );
+            } else if (disposition.kind === "retry") channel.nack(message, false, true);
+            else if (subscription.retryPolicy)
+              this.deadLetter(
+                message,
+                subscription.queue,
+                disposition.reason,
+                subscription.retryPolicy,
+                channel,
+              );
+            else channel.reject(message, false);
           })
           .catch(() => {
-            this.channel.reject(message, false);
+            channel.reject(message, false);
           });
       },
-      { noAck: false, consumerTag: `ailss-${queue}-${randomUUID()}` },
+      { noAck: false, consumerTag: subscriptionId },
     );
-    return result.consumerTag;
+  }
+
+  private deadLetter(
+    message: ConsumeMessage,
+    queue: string,
+    reason: string | undefined,
+    policy: ConsumerRetryPolicy,
+    channel: amqp.Channel,
+  ): void {
+    channel.publish(
+      policy.deadLetterExchange ?? "ailss.dlx",
+      policy.deadLetterRoutingKey ?? queue.replace(/\.q$/u, ".dlq"),
+      message.content,
+      {
+        ...message.properties,
+        persistent: true,
+        headers: { ...message.properties.headers, "x-ailss-dead-letter-reason": reason ?? "REJECTED" },
+      },
+    );
+    channel.ack(message);
   }
 
   public async cancel(consumerTag: string): Promise<void> {
-    await this.channel.cancel(consumerTag);
+    this.#subscriptions.delete(consumerTag);
+    if (!this.closed) await this.channel.cancel(consumerTag).catch(() => undefined);
   }
   public onClose(handler: () => void): void {
     this.closeHandler = handler;
   }
   public async close(): Promise<void> {
-    await this.channel.close();
-    await this.connection.close();
+    this.closed = true;
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    await settleWithin(this.channel.close(), 2_000);
+    await settleWithin(this.connection.close(), 2_000);
+  }
+
+  private attach(connection: amqp.ChannelModel, channel: amqp.Channel): void {
+    connection.on("error", () => undefined);
+    channel.on("error", () => undefined);
+    connection.on("close", () => {
+      if (connection !== this.connection || this.closed) return;
+      this.closeHandler?.();
+      this.scheduleReconnect();
+    });
+  }
+
+  private scheduleReconnect(): void {
+    if (this.closed || this.reconnectTimer || this.reconnecting) return;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = undefined;
+      let reconnected = false;
+      this.reconnecting = this.reconnect()
+        .then(() => {
+          reconnected = true;
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          this.reconnecting = undefined;
+          if (!reconnected) this.scheduleReconnect();
+        });
+    }, 2_000);
+    this.reconnectTimer.unref();
+  }
+
+  private async reconnect(): Promise<void> {
+    if (this.closed) return;
+    const connection = await amqp.connect(this.url);
+    const channel = await connection.createChannel();
+    this.connection = connection;
+    this.channel = channel;
+    this.attach(connection, channel);
+    for (const subscriptionId of this.#subscriptions.keys()) await this.startSubscription(subscriptionId);
   }
 }
 

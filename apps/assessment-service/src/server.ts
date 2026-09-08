@@ -1,10 +1,15 @@
 import { startService, type ServiceManifest } from "../../../packages/runtime/src/index.js";
-import { loadPublicKey, verifyActorContext } from "../../../packages/security/src/index.js";
+import {
+  loadPublicKey,
+  verifyActorContext,
+  verifyServiceToken,
+} from "../../../packages/security/src/index.js";
 import { createAssessmentClients } from "./clients.js";
 import { AssessmentRepository } from "./repository.js";
 import { assessmentRouter } from "./router.js";
 import { AssessmentService } from "./service.js";
 import { AssessmentOutboxRelay } from "./relay.js";
+import { assessmentAiImportRouter } from "./ai-import-router.js";
 import type { AppConfig } from "../../../packages/config/src/index.js";
 const manifest: ServiceManifest = {
   serviceId: "assessment-service",
@@ -21,9 +26,12 @@ await startService(manifest, {
   configure: async (app, config, context) => {
     if (!context.cassandra) throw new Error("Assessment requires Cassandra");
     if (!config.PASSWORD_IDEMPOTENCY_HMAC_KEY) throw new Error("Assessment requires an idempotency HMAC key");
-    if (!config.ACTOR_CONTEXT_PUBLIC_KEY_PATH)
+    if (!config.ACTOR_CONTEXT_PUBLIC_KEY_PATH || !config.AI_SERVICE_TOKEN_PUBLIC_KEY_PATH)
       throw new Error("Assessment requires Gateway actor-context public key");
-    const actorKey = await loadPublicKey(config.ACTOR_CONTEXT_PUBLIC_KEY_PATH),
+    const [actorKey, aiServiceKey] = await Promise.all([
+        loadPublicKey(config.ACTOR_CONTEXT_PUBLIC_KEY_PATH),
+        loadPublicKey(config.AI_SERVICE_TOKEN_PUBLIC_KEY_PATH),
+      ]),
       repository = new AssessmentRepository(context.cassandra),
       service = new AssessmentService(
         repository,
@@ -54,6 +62,25 @@ await startService(manifest, {
           results: verifier("assessment.quiz.results"),
         },
         context.metrics,
+      ),
+    );
+    app.use(
+      assessmentAiImportRouter(
+        service,
+        (token) =>
+          verifyServiceToken(token, aiServiceKey, {
+            issuer: config.SERVICE_TOKEN_ISSUER,
+            audience: "assessment-service",
+            purpose: "assessment.ai-draft.import",
+            kid: config.AI_SERVICE_TOKEN_KID,
+          }),
+        verifier("assessment.ai-draft.import"),
+        config.NODE_ENV === "test" && config.ASSESSMENT_ACCEPTANCE_DELAY_AFTER_IMPORT_DRAFT_ID
+          ? async (draftId, replayed) => {
+              if (!replayed && draftId === config.ASSESSMENT_ACCEPTANCE_DELAY_AFTER_IMPORT_DRAFT_ID)
+                await new Promise((resolve) => setTimeout(resolve, 2_500));
+            }
+          : undefined,
       ),
     );
     const relay = config.ENABLE_RABBITMQ

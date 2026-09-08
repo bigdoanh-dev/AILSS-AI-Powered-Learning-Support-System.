@@ -29,6 +29,7 @@ import { assessmentProxyFactory } from "./assessment-proxy.js";
 import { interactionProxyFactory } from "./interaction-proxy.js";
 import { learningProgressProxyFactory } from "./learning-progress-proxy.js";
 import { aiDocumentProxyFactory } from "./ai-document-proxy.js";
+import { notificationProxyFactory } from "./notification-proxy.js";
 
 const config = loadConfig({
   APP_NAME: "api-gateway",
@@ -44,11 +45,12 @@ const logger = createLogger({
 const metrics = createMetrics("api-gateway");
 const readLimiter = new InProcessRateLimiter();
 const authLimiter = new InProcessRateLimiter();
-const protectedProxy = await protectedIdentityProxyFactory(config);
+const adminStepUp = await createAdminStepUpClient(config);
+const protectedProxy = await protectedIdentityProxyFactory(config, adminStepUp);
 const publicLecturerHandler = await publicLecturerProxyFactory(config);
 const learningCourses = await learningCoursesProxyFactory(config);
 const learningAuthoring = await learningAuthoringProxyFactory(config);
-const adminStepUp = await createAdminStepUpClient(config);
+
 const learningLifecycle = await learningLifecycleProxyFactory(config, adminStepUp);
 const learningLessons = await learningLessonsProxyFactory(config);
 const learningOfferings = await learningOfferingsProxyFactory(config);
@@ -60,6 +62,7 @@ const interaction = await interactionProxyFactory(config, adminStepUp, (record) 
 );
 const learningProgress = await learningProgressProxyFactory(config);
 const aiDocuments = await aiDocumentProxyFactory(config);
+const notifications = await notificationProxyFactory(config);
 const logoutHandler = protectedProxy.handler({
   method: "POST",
   path: "/api/v1/auth/logout",
@@ -160,6 +163,40 @@ app.post(
   logoutHandler,
 );
 app.get("/api/v1/me", profileReadHandler);
+for (const [method, path, action] of [
+  ["POST", "/api/v1/lecturer-applications", "submit"],
+  ["GET", "/api/v1/me/lecturer-application", "mine"],
+  ["GET", "/api/v1/admin/lecturer-applications", "list"],
+  ["GET", "/api/v1/admin/lecturer-applications/:applicationId", "detail"],
+  ["POST", "/api/v1/admin/lecturer-applications/:applicationId/decision", "decision"],
+] as const) {
+  const handler = protectedProxy.handler({
+    method,
+    path,
+    purpose: `identity.lecturer-application.${action}`,
+    forwardBody: method === "POST",
+    forwardQuery: true,
+    forwardIdempotencyKey: method === "POST",
+    upstreamPath: (request) =>
+      path.replace(":applicationId", encodeURIComponent(String(request.params.applicationId))),
+    onInvalidBearer: () => metrics.identityAdminAuthorization.inc({ outcome: "invalid_bearer" }),
+  });
+  app[method === "GET" ? "get" : "post"](
+    path,
+    authLimiter.middleware(
+      Number(
+        process.env[
+          path.includes("/admin/")
+            ? "RATE_LIMIT_ADMIN_PER_MINUTE"
+            : method === "GET"
+              ? "RATE_LIMIT_READ_PER_MINUTE"
+              : "RATE_LIMIT_WRITE_PER_MINUTE"
+        ] ?? 30,
+      ),
+    ),
+    handler,
+  );
+}
 app.get("/api/v1/lecturers/:lecturerId", publicLecturerHandler);
 app.get(
   "/api/v1/courses",
@@ -366,6 +403,13 @@ app.post(
   aiDocuments.cancel,
 );
 app.get("/api/v1/ai/usage", aiDocuments.usage);
+app.post(
+  "/api/v1/ai/drafts/:draftId/approve",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  aiDocuments.approve,
+);
+app.get("/api/v1/notifications", notifications.list);
+app.patch("/api/v1/notifications/:notificationId/read", notifications.read);
 app.get("/api/v1/admin/reports", interaction.reportList);
 app.post(
   "/api/v1/admin/reports/:reportId/moderate",

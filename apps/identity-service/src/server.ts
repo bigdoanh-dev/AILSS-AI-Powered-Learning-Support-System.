@@ -1,3 +1,7 @@
+import { ApplicationRepository } from "./lecturer-application/repository.js";
+import { ApplicationService } from "./lecturer-application/service.js";
+import { applicationRouter } from "./lecturer-application/router.js";
+import { startApplicationRepair } from "./lecturer-application/worker.js";
 import { randomBytes } from "node:crypto";
 import type { AppConfig } from "../../../packages/config/src/index.js";
 import {
@@ -6,6 +10,7 @@ import {
   publicJwk,
   signAccessToken,
   verifyActorContext,
+  verifyStepUpProof,
   verifyServiceToken,
 } from "../../../packages/security/src/index.js";
 import { startService, type ServiceManifest } from "../../../packages/runtime/src/index.js";
@@ -46,7 +51,7 @@ const manifest: ServiceManifest = {
   defaultPort: 8101,
   keyspace: "identity_keyspace",
   cassandraRole: "svc_identity",
-  publicApiIds: Array.from({ length: 12 }, (_, i) => `IDN-${String(i + 1).padStart(2, "0")}`),
+  publicApiIds: Array.from({ length: 17 }, (_, i) => `IDN-${String(i + 1).padStart(2, "0")}`),
   internalApiIds: ["INT-IDN-01", "INT-IDN-02"],
   producedEvents: [
     "identity.user.registered.v1",
@@ -375,8 +380,39 @@ await startService(manifest, {
     app.use(
       lecturerVerifyRouter(lecturerVerify, adminVerifier("identity.admin.lecturer.verify"), context.metrics),
     );
+    const applications = new ApplicationService(
+      new ApplicationRepository(context.cassandra),
+      adminRepository,
+      repository,
+      protectedValidator,
+      config.ADMIN_CURSOR_HMAC_KEY,
+    );
+    app.use(
+      applicationRouter(
+        applications,
+        (token, purpose) => adminVerifier(purpose)(token),
+        async (token, actor, id, decision) => {
+          const proof = await verifyStepUpProof(token, publicKey, {
+            issuer: "identity-service",
+            audience: "identity-service",
+            kid: config.JWT_KID,
+            action: decision === "APPROVE" ? "LECTURER_APPLICATION_APPROVE" : "LECTURER_APPLICATION_REJECT",
+            resourceType: "LECTURER_APPLICATION",
+            resourceId: id,
+            adminUserId: actor.userId,
+          });
+          if (
+            proof.sessionId !== actor.sessionId ||
+            proof.tokenVersion !== actor.tokenVersion ||
+            proof.exp <= Math.floor(Date.now() / 1000)
+          )
+            throw new Error("APPLICATION_PROOF_REJECTED");
+        },
+      ),
+    );
+    const stopApplicationRepair = startApplicationRepair(applications);
     app.get("/.well-known/jwks.json", (_request, response) => response.json({ keys: [jwk] }));
-    if (!config.ENABLE_RABBITMQ) return;
+    if (!config.ENABLE_RABBITMQ) return stopApplicationRepair;
     const relay = new IdentityOutboxRelay({
       repository,
       rabbitUrl: authenticatedRabbitUrl(config),
@@ -385,7 +421,10 @@ await startService(manifest, {
       metrics: context.metrics,
     });
     relay.start();
-    return () => relay.close();
+    return () => {
+      stopApplicationRepair();
+      return relay.close();
+    };
   },
 });
 

@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import { AppError, currentRequestContext } from "../../../../packages/http/src/index.js";
 import type { ActorContext } from "../../../../packages/security/src/index.js";
 import { validateIdempotencyKey } from "../documents/model.js";
-import { createQuizJobSchema, listSchema } from "./model.js";
+import { approvalSchema, createQuizJobSchema, listSchema } from "./model.js";
 import type { AiQuizService } from "./service.js";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 export function aiQuizRouter(
@@ -11,6 +11,24 @@ export function aiQuizRouter(
   verify: (token: string) => Promise<ActorContext>,
 ): Router {
   const r = Router();
+  r.post("/api/v1/ai/drafts/:draftId/approve", async (q, s, n) => {
+    try {
+      const c = ctx(),
+        a = await actor(q, verify, c.correlationId),
+        result = await service.approve({
+          actor: a,
+          draftId: id(q.params.draftId),
+          body: parse(() => approvalSchema.parse(q.body)),
+          key: idem(q),
+          ifMatch: required(q, "if-match", 32),
+          assessmentActorContext: required(q, "x-assessment-actor-context", 4096),
+          correlationId: c.correlationId,
+        });
+      s.status(200).json({ data: result.body, meta: meta(c.requestId, result.replayed) });
+    } catch (e) {
+      n(e);
+    }
+  });
   r.post("/api/v1/ai/quiz-jobs", async (q, s, n) => {
     try {
       const c = ctx(),
@@ -96,6 +114,13 @@ function one(q: Request, name: string, max: number) {
     if (q.rawHeaders[i]?.toLowerCase() === name) v.push(q.rawHeaders[i + 1] ?? "");
   if (v.length !== 1 || !v[0] || v[0].length > max) throw new Error();
   return v[0];
+}
+function required(q: Request, name: string, max: number) {
+  try {
+    return one(q, name, max);
+  } catch {
+    throw new AppError("INVALID_REQUIRED_HEADER", 400, `A valid ${name} header is required`);
+  }
 }
 async function actor(q: Request, verify: (v: string) => Promise<ActorContext>, correlationId: string) {
   try {

@@ -65,6 +65,8 @@
     "acceptance:p9.3": "node scripts/acceptance/phase-9-3-moderation.mjs",
     "acceptance:p10.1": "node scripts/acceptance/phase-10-1-documents.mjs",
     "acceptance:p10.2": "node scripts/acceptance/phase-10-2-ai-quiz.mjs",
+    "acceptance:p10.3": "node scripts/acceptance/phase-10-3-ai-approval.mjs",
+    "acceptance:p11": "node scripts/acceptance/phase-11-notification.mjs",
     "evidence": "node scripts/research/collect-evidence.mjs",
     "research:cassandra:stop-node": "node scripts/research/cassandra-node.mjs stop",
     "research:cassandra:start-node": "node scripts/research/cassandra-node.mjs start",
@@ -79,7 +81,12 @@
     "research:wrong-credential": "node scripts/research/simulate-wrong-credential.mjs",
     "research:untrusted-tls": "node scripts/research/simulate-untrusted-tls.mjs",
     "keys:dev": "node scripts/security/generate-dev-keys.mjs",
-    "keys:verify": "node scripts/security/verify-certificates.mjs"
+    "keys:verify": "node scripts/security/verify-certificates.mjs",
+    "dev:web": "pnpm --filter @ailss/web dev",
+    "build:web": "pnpm --filter @ailss/web build",
+    "test:web": "pnpm --filter @ailss/web test",
+    "lint:web": "pnpm --filter @ailss/web lint",
+    "typecheck:web": "pnpm --filter @ailss/web typecheck"
   },
   "dependencies": {
     "@node-rs/argon2": "2.1.0",

@@ -1,5 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import { objectiveQuizSchema, type ObjectiveQuiz } from "../../../packages/contracts/src/objective-v1.js";
 
 const safeText = (min: number, max: number) =>
   z
@@ -93,6 +94,72 @@ export type QuizCreateRequest = z.infer<typeof createSchema>;
 export type QuizPatchRequest = z.infer<typeof patchSchema>;
 export type QuestionInput = QuizCreateRequest["questions"][number];
 export type QuizState = "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED";
+
+export const aiDraftImportSchema = z
+  .object({
+    importOperationId: z.string().uuid(),
+    approvedDraftVersion: z.literal(2),
+    approvedDraftChecksum: z.string().regex(/^[a-f0-9]{64}$/u),
+    jobId: z.string().uuid(),
+    targetType: z.enum(["COURSE", "CLASS"]),
+    targetId: z.string().uuid(),
+    targetVersion: z.number().int().positive(),
+    ownerLecturerId: z.string().uuid(),
+    quiz: objectiveQuizSchema,
+  })
+  .strict();
+export type AiDraftImportRequest = z.infer<typeof aiDraftImportSchema>;
+export interface AiDraftImportResult {
+  draftId: string;
+  approvedDraftVersion: 2;
+  quizId: string;
+  quizVersion: 1;
+  status: "DRAFT";
+}
+
+export function objectiveToAssessment(quiz: ObjectiveQuiz): QuizCreateRequest["questions"] {
+  return [...quiz.questions]
+    .sort((left, right) => left.order - right.order)
+    .map((question): QuestionInput => {
+      if (question.type === "SINGLE_CHOICE") {
+        const byId = new Map(question.options.map((option) => [option.id, option.text]));
+        const correctAnswer = byId.get(question.correctAnswer.optionId);
+        if (!correctAnswer) throw new Error("OBJECTIVE_ANSWER_REFERENCE_INVALID");
+        return {
+          prompt: question.text,
+          points: question.points,
+          questionType: question.type,
+          options: question.options.map((option) => option.text),
+          correctAnswer,
+        };
+      }
+      if (question.type === "MULTIPLE_CHOICE") {
+        const answers = new Set(question.correctAnswer.optionIds);
+        return {
+          prompt: question.text,
+          points: question.points,
+          questionType: question.type,
+          options: question.options.map((option) => option.text),
+          correctAnswer: question.options
+            .filter((option) => answers.has(option.id))
+            .map((option) => option.text),
+        };
+      }
+      if (question.type === "TRUE_FALSE")
+        return {
+          prompt: question.text,
+          points: question.points,
+          questionType: question.type,
+          correctAnswer: question.correctAnswer.value,
+        };
+      return {
+        prompt: question.text,
+        points: question.points,
+        questionType: question.type,
+        correctAnswer: question.correctAnswer.acceptedAnswer,
+      };
+    });
+}
 
 export interface Quiz {
   quizId: string;

@@ -1,0 +1,850 @@
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Link, useParams } from "react-router-dom";
+import { ApiError } from "../lib/api";
+import { Breadcrumbs, EmptyState, StateChip, useUnsavedChanges } from "../components/product";
+import { lecturerError, lecturerRequest, month, useLecturer } from "./api";
+import { State } from "./ui";
+
+type DocumentState =
+  "UPLOAD_PENDING" | "EXTRACTION_QUEUED" | "EXTRACTING" | "EXTRACTED" | "FAILED" | "QUARANTINED";
+type DocumentDto = {
+  documentId: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  sha256: string;
+  status: DocumentState;
+  version: number;
+  failureCode?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+type Intent = DocumentDto & { objectKey: string; uploadUrl: string; expiresAt: string };
+type JobState = "QUEUED" | "PROCESSING" | "VALIDATING" | "AI_DRAFT" | "FAILED" | "APPROVED" | "CANCELLED";
+type Job = {
+  jobId: string;
+  jobKind: "QUIZ_GENERATION";
+  state: JobState;
+  version: number;
+  targetType: "COURSE" | "CLASS";
+  targetId: string;
+  documentId: string;
+  draftId?: string;
+  failureCode?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+type Option = { id: string; text: string };
+type ObjectiveQuestion = {
+  id: string;
+  order: number;
+  text: string;
+  points: string;
+  type: "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
+  options?: Option[];
+  correctAnswer:
+    { optionId: string } | { optionIds: string[] } | { value: boolean } | { acceptedAnswer: string };
+};
+type ObjectiveQuiz = { schemaVersion: "objective-v1"; title: string; questions: ObjectiveQuestion[] };
+type Draft = {
+  draftId: string;
+  draftVersion: number;
+  validationStatus: string;
+  questionCount: number;
+  state: string;
+  checksum: string;
+  content: ObjectiveQuiz;
+  createdAt: string;
+};
+type Approval = {
+  jobId: string;
+  draftId: string;
+  state: "APPROVED";
+  approvedDraftVersion: 2;
+  assessment: { quizId: string; quizVersion: 1; status: "DRAFT" };
+};
+type Usage = { day: string; limit: number; reserved: number; consumed: number; remaining: number };
+type Course = { courseId: string; title: string };
+type ClassItem = { classId: string; name: string };
+
+const stateCopy: Record<string, string> = {
+  QUEUED: "Đang xếp yêu cầu",
+  PROCESSING: "AI đang tạo câu hỏi",
+  VALIDATING: "Đang kiểm tra cấu trúc câu hỏi",
+  AI_DRAFT: "Bản nháp đã sẵn sàng",
+  FAILED: "Không thể tạo bản nháp",
+  APPROVED: "Đã được giảng viên phê duyệt",
+  CANCELLED: "Đã hủy",
+  UPLOAD_PENDING: "Đang chuẩn bị tải lên",
+  EXTRACTION_QUEUED: "Đang chờ xử lý nội dung",
+  EXTRACTING: "Đang xử lý nội dung",
+  EXTRACTED: "Sẵn sàng sử dụng",
+  QUARANTINED: "Tài liệu không thể sử dụng",
+};
+const terminal = new Set<JobState>(["AI_DRAFT", "FAILED", "APPROVED", "CANCELLED"]),
+  supported = new Set([
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+  ]);
+async function sha(file: File) {
+  const b = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  return Array.from(new Uint8Array(b), (x) => x.toString(16).padStart(2, "0")).join("");
+}
+const label = (state: string) => stateCopy[state] || state;
+
+function useDocument(documentId: string) {
+  const [value, setValue] = useState<DocumentDto>(),
+    [error, setError] = useState(""),
+    [stalled, setStalled] = useState(false);
+  useEffect(() => {
+    if (!documentId) return;
+    const controller = new AbortController(),
+      started = Date.now();
+    let timer = 0,
+      delay = 1500;
+    const read = async () => {
+      if (document.hidden) {
+        timer = window.setTimeout(read, delay);
+        return;
+      }
+      try {
+        const r = await lecturerRequest<DocumentDto>(
+          `/ai/documents/${documentId}`,
+          "GET",
+          undefined,
+          {},
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setValue(r.data);
+        setError("");
+        if (["EXTRACTED", "FAILED", "QUARANTINED"].includes(r.data.status)) return;
+        setStalled(Date.now() - started > 30000);
+        delay = Math.min(8000, Math.round(delay * 1.5));
+        timer = window.setTimeout(read, delay);
+      } catch (e) {
+        if (!controller.signal.aborted) {
+          setError(lecturerError(e));
+          delay = Math.min(10000, delay * 2);
+          timer = window.setTimeout(read, delay);
+        }
+      }
+    };
+    void read();
+    const visible = () => {
+      if (!document.hidden) {
+        clearTimeout(timer);
+        void read();
+      }
+    };
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", visible);
+    };
+  }, [documentId]);
+  return { value, error, stalled };
+}
+
+export function AiStudio() {
+  const [filter, setFilter] = useState<JobState>("AI_DRAFT"),
+    [cursor, setCursor] = useState(""),
+    [documentId, setDocumentId] = useState(""),
+    [uploadStage, setUploadStage] = useState(""),
+    [msg, setMsg] = useState("");
+  const jobs = useLecturer<Job[]>(
+      `/ai/jobs?state=${filter}&month=${month()}&limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    ),
+    usage = useLecturer<Usage>("/ai/usage"),
+    courses = useLecturer<Course[] | { items: Course[] }>("/courses?limit=50"),
+    classes = useLecturer<ClassItem[] | { classes: ClassItem[] }>("/me/owned-classes"),
+    documentQuery = useDocument(documentId);
+  const courseItems = courses.data
+      ? Array.isArray(courses.data)
+        ? courses.data
+        : courses.data.items || []
+      : [],
+    classItems = classes.data
+      ? Array.isArray(classes.data)
+        ? classes.data
+        : classes.data.classes || []
+      : [];
+  async function upload(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const file = new FormData(e.currentTarget).get("file") as File;
+    if (!file?.size || !supported.has(file.type) || file.size > 25 * 1024 * 1024)
+      return setMsg("Chọn tệp PDF, DOCX hoặc TXT có dung lượng không quá 25 MiB.");
+    let ephemeral: Intent | undefined;
+    try {
+      setUploadStage("Đang chuẩn bị tải lên");
+      const checksum = await sha(file);
+      ephemeral = (
+        await lecturerRequest<Intent>("/ai/documents/upload-intents", "POST", {
+          fileName: file.name,
+          contentType: file.type,
+          sizeBytes: file.size,
+          sha256: checksum,
+        })
+      ).data;
+      setUploadStage("Đang tải tài liệu");
+      const put = await fetch(ephemeral.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!put.ok) throw Error("UPLOAD_FAILED");
+      setUploadStage("Đang xác nhận");
+      await lecturerRequest(`/ai/documents/${ephemeral.documentId}/complete`, "POST", {
+        objectKey: ephemeral.objectKey,
+        sizeBytes: file.size,
+        sha256: checksum,
+        contentType: file.type,
+      });
+      setDocumentId(ephemeral.documentId);
+      setUploadStage("Đang xử lý nội dung");
+      setMsg("Tài liệu đã tải lên. Hệ thống đang xử lý nội dung.");
+    } catch (x) {
+      setUploadStage("");
+      setMsg(lecturerError(x));
+    } finally {
+      ephemeral = undefined;
+    }
+  }
+  async function generate(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (documentQuery.value?.status !== "EXTRACTED") return setMsg("Tài liệu vẫn đang được xử lý.");
+    const f = new FormData(e.currentTarget),
+      questionTypes = f.getAll("questionTypes").map(String);
+    if (!questionTypes.length) return setMsg("Chọn ít nhất một loại câu hỏi.");
+    try {
+      const r = await lecturerRequest<Job>("/ai/quiz-jobs", "POST", {
+        documentId,
+        targetType: String(f.get("targetType")),
+        targetId: String(f.get("targetId")),
+        questionCount: Number(f.get("questionCount")),
+        questionTypes,
+        difficulty: String(f.get("difficulty")),
+      });
+      setMsg("Yêu cầu đã được tạo. AI sẽ chuẩn bị một bản nháp để bạn xem lại.");
+      location.assign(`/app/teaching/ai/jobs/${r.data.jobId}`);
+    } catch (x) {
+      setMsg(
+        x instanceof ApiError && x.status === 503
+          ? "Chưa thể xác nhận yêu cầu đã được tạo. Hãy thử lại để tiếp tục yêu cầu trước."
+          : lecturerError(x),
+      );
+    }
+  }
+  return (
+    <>
+      <Breadcrumbs items={[{ label: "Giảng dạy", to: "/app/teaching" }, { label: "AI" }]} />
+      <section className="ai-hero">
+        <div>
+          <p className="eyebrow">TRỢ LÝ SOẠN CÂU HỎI</p>
+          <h1>Tạo câu hỏi từ học liệu.</h1>
+          <p className="lead">
+            AI tạo bản nháp. Giảng viên kiểm tra và quyết định nội dung cuối cùng. Không có gì được xuất bản
+            tự động.
+          </p>
+        </div>
+        <div className="ai-flow" aria-label="Quy trình AI">
+          <span>Tài liệu</span>
+          <span>AI tạo câu hỏi</span>
+          <span>Giảng viên duyệt</span>
+          <span>Bài kiểm tra nháp</span>
+        </div>
+      </section>
+      <div className="ai-workspace-grid">
+        <section className="form-panel">
+          <h2>1. Chọn hoặc tải tài liệu</h2>
+          <form onSubmit={(e) => void upload(e)}>
+            <label>
+              Tệp PDF, DOCX hoặc TXT
+              <input
+                name="file"
+                type="file"
+                accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                required
+              />
+            </label>
+            <p>Tối đa 25 MiB. Trình duyệt tính SHA-256; máy chủ vẫn xác minh tệp.</p>
+            <button className="button">Tải tài liệu</button>
+          </form>
+          {uploadStage && <p role="status">{uploadStage}</p>}
+          <label>
+            Hoặc dùng mã tài liệu bạn đã tải
+            <input value={documentId} onChange={(e) => setDocumentId(e.target.value)} />
+          </label>
+          {documentQuery.value && (
+            <article className="ai-document">
+              <StateChip state={documentQuery.value.status} />
+              <h3>{documentQuery.value.fileName}</h3>
+              <p>
+                {label(documentQuery.value.status)} · {(documentQuery.value.sizeBytes / 1024).toFixed(1)} KiB
+              </p>
+              {documentQuery.value.status === "EXTRACTED" && <p>Tài liệu đã xử lý xong.</p>}
+              {["FAILED", "QUARANTINED"].includes(documentQuery.value.status) && (
+                <p>Không thể xử lý tài liệu này. Hãy thử tải lại hoặc chọn tài liệu khác.</p>
+              )}
+              {documentQuery.stalled && <p>Quá trình xử lý đang tạm gián đoạn. Bạn có thể thử lại sau.</p>}
+            </article>
+          )}
+          {documentQuery.error && <p role="alert">{documentQuery.error}</p>}
+        </section>
+        <section className="form-panel">
+          <h2>2. Thiết lập bản nháp</h2>
+          <form className="form-grid" onSubmit={(e) => void generate(e)}>
+            <label>
+              Đích sử dụng
+              <select name="targetType">
+                <option value="COURSE">Khóa học</option>
+                <option value="CLASS">Lớp học</option>
+              </select>
+            </label>
+            <label>
+              Khóa học hoặc lớp
+              <select name="targetId" required>
+                <option value="">Chọn đích</option>
+                {courseItems.map((x) => (
+                  <option key={x.courseId} value={x.courseId}>
+                    {x.title}
+                  </option>
+                ))}
+                {classItems.map((x) => (
+                  <option key={x.classId} value={x.classId}>
+                    {x.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Số câu
+              <input name="questionCount" type="number" min="1" max="50" defaultValue="10" required />
+            </label>
+            <label>
+              Mức độ
+              <select name="difficulty">
+                <option value="EASY">Cơ bản</option>
+                <option value="MEDIUM">Trung bình</option>
+                <option value="HARD">Nâng cao</option>
+              </select>
+            </label>
+            <fieldset>
+              <legend>Loại câu hỏi</legend>
+              {[
+                ["SINGLE_CHOICE", "Một đáp án"],
+                ["MULTIPLE_CHOICE", "Nhiều đáp án"],
+                ["TRUE_FALSE", "Đúng / Sai"],
+                ["SHORT_ANSWER", "Trả lời ngắn"],
+              ].map(([v, t]) => (
+                <label className="answer-option" key={v}>
+                  <input type="checkbox" name="questionTypes" value={v} defaultChecked /> {t}
+                </label>
+              ))}
+            </fieldset>
+            <p>AI sẽ tạo một bản nháp. Bạn cần kiểm tra nội dung và đáp án trước khi phê duyệt.</p>
+            <button className="button" disabled={documentQuery.value?.status !== "EXTRACTED"}>
+              Tạo câu hỏi từ học liệu
+            </button>
+            {documentQuery.value?.status !== "EXTRACTED" && <small>Tài liệu vẫn đang được xử lý.</small>}
+          </form>
+        </section>
+      </div>
+      <p role="status">{msg}</p>
+      <section>
+        <h2>Công việc của tôi</h2>
+        <div className="inline-actions">
+          <label>
+            Trạng thái
+            <select
+              value={filter}
+              onChange={(e) => {
+                setFilter(e.target.value as JobState);
+                setCursor("");
+              }}
+            >
+              {(
+                [
+                  "QUEUED",
+                  "PROCESSING",
+                  "VALIDATING",
+                  "AI_DRAFT",
+                  "FAILED",
+                  "APPROVED",
+                  "CANCELLED",
+                ] as JobState[]
+              ).map((x) => (
+                <option key={x} value={x}>
+                  {label(x)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span>Tháng {month()}</span>
+        </div>
+        <State q={jobs}>
+          {(items) =>
+            items.length ? (
+              <div className="workspace-cards">
+                {items.map((x) => (
+                  <article key={x.jobId}>
+                    <StateChip state={x.state} />
+                    <h3>{label(x.state)}</h3>
+                    <p>
+                      {x.targetType === "COURSE" ? "Khóa học" : "Lớp học"} ·{" "}
+                      {new Date(x.createdAt).toLocaleString("vi-VN")}
+                    </p>
+                    <Link to={`/app/teaching/ai/jobs/${x.jobId}`}>Mở công việc →</Link>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="Không có công việc ở trạng thái này.">
+                Chọn trạng thái khác hoặc tạo một yêu cầu mới.
+              </EmptyState>
+            )
+          }
+        </State>
+        {jobs.meta?.nextCursor && (
+          <button className="button secondary" onClick={() => setCursor(jobs.meta!.nextCursor!)}>
+            Trang tiếp theo
+          </button>
+        )}
+      </section>
+      <State q={usage}>
+        {(v) => (
+          <section className="ai-usage">
+            <h2>Mức sử dụng hôm nay</h2>
+            <p>
+              <strong>{v.remaining}</strong> / {v.limit} câu còn lại
+            </p>
+            <p>
+              {v.consumed} đã dùng · {v.reserved} đang được giữ cho công việc xử lý.
+            </p>
+          </section>
+        )}
+      </State>
+      <details className="form-panel">
+        <summary>Hướng dẫn sử dụng AI an toàn</summary>
+        <p>
+          Chỉ tải học liệu bạn được phép sử dụng. Luôn kiểm tra câu hỏi, đáp án và ngữ cảnh trước khi phê
+          duyệt. Bài kiểm tra chỉ đến với học viên sau bước xuất bản riêng trong Assessment.
+        </p>
+      </details>
+    </>
+  );
+}
+
+function useJobPolling(jobId: string) {
+  const [value, setValue] = useState<Job>(),
+    [error, setError] = useState(""),
+    [stalled, setStalled] = useState(false),
+    revision = useRef(0);
+  useEffect(() => {
+    const controller = new AbortController(),
+      started = Date.now(),
+      epoch = ++revision.current;
+    let timer = 0,
+      delay = 1200;
+    const read = async () => {
+      if (document.hidden) {
+        timer = window.setTimeout(read, delay);
+        return;
+      }
+      try {
+        const r = await lecturerRequest<Job>(`/ai/jobs/${jobId}`, "GET", undefined, {}, controller.signal);
+        if (controller.signal.aborted || epoch !== revision.current) return;
+        setValue(r.data);
+        setError("");
+        if (terminal.has(r.data.state)) return;
+        setStalled(Date.now() - started > 30000);
+        delay = Math.min(8000, Math.round(delay * 1.5));
+        timer = window.setTimeout(read, delay);
+      } catch (e) {
+        if (!controller.signal.aborted) {
+          setError(lecturerError(e));
+          delay = Math.min(10000, delay * 2);
+          timer = window.setTimeout(read, delay);
+        }
+      }
+    };
+    void read();
+    const visible = () => {
+      if (!document.hidden) {
+        clearTimeout(timer);
+        void read();
+      }
+    };
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", visible);
+    };
+  }, [jobId]);
+  return {
+    value,
+    error,
+    stalled,
+    reload: () => {
+      revision.current += 1;
+      location.reload();
+    },
+  };
+}
+
+export function AiJob() {
+  const { jobId = "" } = useParams(),
+    job = useJobPolling(jobId),
+    drafts = useLecturer<Draft[]>(
+      job.value?.state === "AI_DRAFT" || job.value?.state === "APPROVED" ? `/ai/jobs/${jobId}/drafts` : null,
+    ),
+    [msg, setMsg] = useState("");
+  const cancel = async () => {
+    if (
+      !confirm(
+        "Hủy yêu cầu này sẽ dừng quá trình tạo bản nháp nếu hệ thống vẫn có thể hủy ở trạng thái hiện tại.",
+      )
+    )
+      return;
+    try {
+      await lecturerRequest(`/ai/jobs/${jobId}/cancel`, "POST", {});
+      setMsg("Đã cập nhật trạng thái từ máy chủ.");
+      job.reload();
+    } catch (e) {
+      setMsg(lecturerError(e));
+    }
+  };
+  return (
+    <>
+      <Breadcrumbs items={[{ label: "AI", to: "/app/teaching/ai" }, { label: "Công việc" }]} />
+      {job.value ? (
+        <section className="ai-job-status">
+          <StateChip state={job.value.state} />
+          <h1>{label(job.value.state)}</h1>
+          <p>
+            {job.value.targetType === "COURSE" ? "Khóa học" : "Lớp học"} · tạo lúc{" "}
+            {new Date(job.value.createdAt).toLocaleString("vi-VN")}
+          </p>
+          {!terminal.has(job.value.state) && <div className="ai-indeterminate" aria-label="Đang xử lý" />}
+          {job.stalled && <p>Quá trình xử lý đang tạm gián đoạn. Bạn có thể thử lại sau.</p>}
+          {job.value.state === "FAILED" && (
+            <p>Không thể tạo bản nháp. Bạn có thể quay lại và tạo một yêu cầu mới.</p>
+          )}
+          {["QUEUED", "PROCESSING", "VALIDATING"].includes(job.value.state) && (
+            <button className="button secondary" onClick={() => void cancel()}>
+              Hủy yêu cầu
+            </button>
+          )}
+          <details>
+            <summary>Chi tiết</summary>
+            <p>Mã công việc: {job.value.jobId}</p>
+            <p>Phiên bản trạng thái: v{job.value.version}</p>
+          </details>
+        </section>
+      ) : (
+        <p role="status">Đang đọc trạng thái…</p>
+      )}
+      {job.error && <p role="alert">{job.error}</p>}
+      <p role="status">{msg}</p>
+      <State q={drafts}>
+        {(items) =>
+          items[0] ? (
+            <ReviewEditor draft={items[0]} />
+          ) : (
+            <EmptyState title="Bản nháp chưa sẵn sàng.">
+              Trang sẽ chỉ tải nội dung khi trạng thái canonical là bản nháp.
+            </EmptyState>
+          )
+        }
+      </State>
+    </>
+  );
+}
+
+function reviewErrors(q: ObjectiveQuiz) {
+  return q.questions.flatMap((x, i) => {
+    const p = `Câu ${i + 1}: `,
+      e: string[] = [],
+      answer = x.correctAnswer;
+    if (!x.text.trim()) e.push(p + "chưa có nội dung.");
+    if (Number(x.points) <= 0) e.push(p + "điểm chưa hợp lệ.");
+    if (x.options && (x.options.length < 2 || x.options.some((o) => !o.text.trim())))
+      e.push(p + "chưa có đủ lựa chọn.");
+    if (
+      x.type === "SINGLE_CHOICE" &&
+      (!("optionId" in answer) || !x.options?.map((o) => o.id).includes(answer.optionId))
+    )
+      e.push(p + "chưa chọn đáp án đúng.");
+    if (x.type === "MULTIPLE_CHOICE" && (!("optionIds" in answer) || !answer.optionIds.length))
+      e.push(p + "chưa chọn đáp án đúng.");
+    if (x.type === "SHORT_ANSWER" && (!("acceptedAnswer" in answer) || !answer.acceptedAnswer.trim()))
+      e.push(p + "chưa có đáp án.");
+    return e;
+  });
+}
+
+function ReviewEditor({ draft }: { draft: Draft }) {
+  const [review, setReview] = useState(() => structuredClone(draft.content)),
+    [selected, setSelected] = useState(0),
+    [dirty, setDirty] = useState(false),
+    [msg, setMsg] = useState(""),
+    [approval, setApproval] = useState<Approval>(),
+    [conflict, setConflict] = useState(false);
+  useUnsavedChanges(
+    dirty && !approval,
+    "Các chỉnh sửa bản nháp chưa được lưu trên máy chủ. Rời trang và bỏ thay đổi?",
+  );
+  const errors = useMemo(() => reviewErrors(review), [review]),
+    question = review.questions[selected];
+  const update = (patch: Partial<ObjectiveQuestion>) => {
+    setReview((v) => ({
+      ...v,
+      questions: v.questions.map((q, i) => (i === selected ? ({ ...q, ...patch } as ObjectiveQuestion) : q)),
+    }));
+    setDirty(true);
+  };
+  async function approve() {
+    if (errors.length) return setMsg("Hãy sửa các lỗi trước khi phê duyệt.");
+    if (
+      !confirm(
+        "Phê duyệt bản nháp này sẽ tạo một bài kiểm tra DRAFT trong Assessment. Bài kiểm tra vẫn chưa được xuất bản cho học viên.",
+      )
+    )
+      return;
+    try {
+      const r = await lecturerRequest<Approval>(
+        `/ai/drafts/${draft.draftId}/approve`,
+        "POST",
+        { reviewedDraft: review },
+        { "If-Match": `"v${draft.draftVersion}"` },
+      );
+      setApproval(r.data);
+      setDirty(false);
+      setMsg("Đã tạo bài kiểm tra nháp.");
+    } catch (e) {
+      const stale = e instanceof ApiError && e.status === 409;
+      setConflict(stale);
+      setMsg(
+        stale
+          ? "Bản nháp đã thay đổi. Hãy tải phiên bản mới trước khi phê duyệt."
+          : e instanceof ApiError && e.status === 503
+            ? "Chưa thể xác nhận thao tác đã hoàn tất. Hãy thử lại để hệ thống tiếp tục yêu cầu trước."
+            : lecturerError(e),
+      );
+    }
+  }
+  if (approval)
+    return (
+      <section className="ai-approved">
+        <p className="eyebrow">GIẢNG VIÊN ĐÃ PHÊ DUYỆT</p>
+        <h2>Đã tạo bài kiểm tra nháp.</h2>
+        <p>
+          Assessment Quiz v{approval.assessment.quizVersion} · Trạng thái DRAFT. Bài kiểm tra chưa được xuất
+          bản cho học viên.
+        </p>
+        <Link className="button" to={`/app/teaching/assessments/${approval.assessment.quizId}`}>
+          Mở bài kiểm tra trong Assessment
+        </Link>
+      </section>
+    );
+  return (
+    <section>
+      <div className="ai-review-intro">
+        <p className="eyebrow">BẢN NHÁP v{draft.draftVersion}</p>
+        <h2>Giảng viên xem lại nội dung.</h2>
+        <p>
+          AI tạo bản nháp. Giảng viên là người kiểm tra và quyết định nội dung cuối cùng. Các thay đổi chưa
+          phê duyệt chỉ nằm trong trang này.
+        </p>
+      </div>
+      <div className="assessment-builder">
+        <aside className="builder-nav">
+          <h3>Câu hỏi</h3>
+          <select
+            className="builder-mobile-select"
+            aria-label="Chọn câu hỏi"
+            value={selected}
+            onChange={(e) => setSelected(Number(e.target.value))}
+          >
+            {review.questions.map((_, i) => (
+              <option key={i} value={i}>
+                Câu {i + 1}
+              </option>
+            ))}
+          </select>
+          <div className="builder-question-list">
+            {review.questions.map((x, i) => (
+              <button key={x.id} className={selected === i ? "active" : ""} onClick={() => setSelected(i)}>
+                Câu {i + 1}
+                <small>{x.text}</small>
+              </button>
+            ))}
+          </div>
+        </aside>
+        <main className="builder-editor">
+          <label>
+            Tiêu đề
+            <input
+              value={review.title}
+              maxLength={300}
+              onChange={(e) => {
+                setReview((v) => ({ ...v, title: e.target.value }));
+                setDirty(true);
+              }}
+            />
+          </label>
+          {question && <ObjectiveEditor q={question} update={update} />}
+        </main>
+        <aside className="builder-summary">
+          <h3>Tóm tắt kiểm tra</h3>
+          <p>
+            {review.questions.length} câu hỏi · {errors.length} lỗi
+          </p>
+          {errors.length ? (
+            <ul className="validation-list">
+              {errors.map((x) => (
+                <li key={x}>{x}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>Nội dung hợp lệ để gửi máy chủ kiểm tra.</p>
+          )}
+          {conflict && (
+            <div role="alert">
+              <p>Bản nháp đã thay đổi. Hãy tải phiên bản mới trước khi phê duyệt.</p>
+              <button className="button secondary" onClick={() => location.reload()}>
+                Tải bản mới
+              </button>
+              <button className="button secondary" onClick={() => setConflict(false)}>
+                Xem lại thay đổi hiện tại
+              </button>
+              <button
+                className="button secondary"
+                onClick={() => {
+                  setDirty(false);
+                  location.reload();
+                }}
+              >
+                Hủy chỉnh sửa cục bộ
+              </button>
+            </div>
+          )}
+          <div className="builder-actions">
+            <button className="button" onClick={() => void approve()}>
+              Phê duyệt và tạo bài kiểm tra nháp
+            </button>
+          </div>
+          <p role="status">{msg}</p>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function ObjectiveEditor({
+  q,
+  update,
+}: {
+  q: ObjectiveQuestion;
+  update: (p: Partial<ObjectiveQuestion>) => void;
+}) {
+  const answerIds = "optionIds" in q.correctAnswer ? q.correctAnswer.optionIds : [];
+  return (
+    <fieldset className="question-editor">
+      <legend>
+        Câu hỏi {q.order} · {labelType(q.type)}
+      </legend>
+      <label>
+        Nội dung
+        <textarea
+          rows={5}
+          maxLength={4000}
+          value={q.text}
+          onChange={(e) => update({ text: e.target.value })}
+        />
+      </label>
+      <label>
+        Điểm
+        <input value={q.points} onChange={(e) => update({ points: e.target.value })} />
+      </label>
+      {q.options?.map((o, i) => (
+        <div className="option-editor" key={o.id}>
+          <input
+            aria-label={`Lựa chọn ${i + 1}`}
+            value={o.text}
+            maxLength={1000}
+            onChange={(e) =>
+              update({ options: q.options!.map((x) => (x.id === o.id ? { ...x, text: e.target.value } : x)) })
+            }
+          />
+          <label>
+            <input
+              name={`answer-${q.id}`}
+              type={q.type === "MULTIPLE_CHOICE" ? "checkbox" : "radio"}
+              checked={
+                q.type === "MULTIPLE_CHOICE"
+                  ? answerIds.includes(o.id)
+                  : "optionId" in q.correctAnswer && q.correctAnswer.optionId === o.id
+              }
+              onChange={(e) =>
+                update({
+                  correctAnswer:
+                    q.type === "MULTIPLE_CHOICE"
+                      ? {
+                          optionIds: e.target.checked
+                            ? [...answerIds, o.id]
+                            : answerIds.filter((x) => x !== o.id),
+                        }
+                      : { optionId: o.id },
+                })
+              }
+            />
+            Đáp án đúng
+          </label>
+        </div>
+      ))}
+      {q.type === "TRUE_FALSE" && (
+        <div>
+          <label>
+            <input
+              type="radio"
+              name={`answer-${q.id}`}
+              checked={"value" in q.correctAnswer && q.correctAnswer.value}
+              onChange={() => update({ correctAnswer: { value: true } })}
+            />
+            Đúng
+          </label>
+          <label>
+            <input
+              type="radio"
+              name={`answer-${q.id}`}
+              checked={"value" in q.correctAnswer && !q.correctAnswer.value}
+              onChange={() => update({ correctAnswer: { value: false } })}
+            />
+            Sai
+          </label>
+        </div>
+      )}
+      {q.type === "SHORT_ANSWER" && (
+        <label>
+          Đáp án được chấp nhận
+          <input
+            maxLength={1000}
+            value={"acceptedAnswer" in q.correctAnswer ? q.correctAnswer.acceptedAnswer : ""}
+            onChange={(e) => update({ correctAnswer: { acceptedAnswer: e.target.value } })}
+          />
+        </label>
+      )}
+    </fieldset>
+  );
+}
+const labelType = (type: string) =>
+  ({
+    SINGLE_CHOICE: "Một đáp án",
+    MULTIPLE_CHOICE: "Nhiều đáp án",
+    TRUE_FALSE: "Đúng / Sai",
+    SHORT_ANSWER: "Trả lời ngắn",
+  })[type] || type;

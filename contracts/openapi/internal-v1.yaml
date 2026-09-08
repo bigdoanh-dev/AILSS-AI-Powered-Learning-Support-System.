@@ -703,11 +703,19 @@
                   "action":
                     {
                       "type": "string",
-                      "enum": ["COURSE_PUBLISH", "COURSE_ARCHIVE", "INTERACTION_REPORT_MODERATE"],
+                      "enum":
+                        [
+                          "COURSE_PUBLISH",
+                          "COURSE_ARCHIVE",
+                          "INTERACTION_REPORT_MODERATE",
+                          "LECTURER_APPLICATION_APPROVE",
+                          "LECTURER_APPLICATION_REJECT",
+                        ],
                     },
-                  "resourceType": { "type": "string", "enum": ["COURSE", "REPORT"] },
+                  "resourceType": { "type": "string", "enum": ["COURSE", "REPORT", "LECTURER_APPLICATION"] },
                   "resourceId": { "type": "string", "format": "uuid" },
                 },
+              "description": "Current-password reauthentication; COURSE_PUBLISH/COURSE_ARCHIVE bind COURSE and learning-service; INTERACTION_REPORT_MODERATE binds REPORT and interaction-service; LECTURER_APPLICATION_APPROVE/REJECT bind LECTURER_APPLICATION and identity-service. Proof binds Admin/session/epoch/resource/action, expires within 30 seconds.",
             },
           "AdminStepUpAuthorizationResponse":
             {

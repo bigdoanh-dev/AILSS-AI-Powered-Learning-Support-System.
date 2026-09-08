@@ -1287,9 +1287,9 @@
               "responses":
                 {
                   "201": { "description": "Order created with reservation metadata when LIVE_COHORT" },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
                   "401": { "$ref": "#/components/responses/ErrorResponse" },
                   "403": { "$ref": "#/components/responses/ErrorResponse" },
-                  "400": { "$ref": "#/components/responses/ErrorResponse" },
                   "404": { "$ref": "#/components/responses/ErrorResponse" },
                   "409": { "$ref": "#/components/responses/ErrorResponse" },
                   "503": { "$ref": "#/components/responses/ErrorResponse" },
@@ -1907,8 +1907,20 @@
               "summary": "Kết quả",
               "responses":
                 {
-                  "200": { "description": "Contract success response" },
-                  "501": { "description": "Foundation placeholder until Phase 7" },
+                  "200":
+                    {
+                      "description": "Owner-safe Student result summary",
+                      "content":
+                        {
+                          "application/json":
+                            { "schema": { "$ref": "#/components/schemas/AttemptResultResponse" } },
+                        },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                  "409": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
                 },
               "security": [{ "bearerAuth": [] }],
             },
@@ -3330,10 +3342,29 @@
             {
               "operationId": "NOT-01",
               "summary": "Danh sách thông báo",
+              "x-contract-status": "IMPLEMENTED",
+              "x-delivery-scope": "IN_APP",
+              "x-retention": "NO_AUTOMATIC_EXPIRY",
+              "parameters":
+                [
+                  { "$ref": "#/components/parameters/NotificationMonth" },
+                  { "$ref": "#/components/parameters/NotificationLimit" },
+                  { "$ref": "#/components/parameters/NotificationCursor" },
+                ],
               "responses":
                 {
-                  "200": { "description": "Contract success response" },
-                  "501": { "description": "Foundation placeholder until Phase 7" },
+                  "200":
+                    {
+                      "description": "One authenticated user's in-app notifications from exactly one month partition",
+                      "content":
+                        {
+                          "application/json":
+                            { "schema": { "$ref": "#/components/schemas/NotificationListResponse" } },
+                        },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
                 },
               "security": [{ "bearerAuth": [] }],
             },
@@ -3344,12 +3375,415 @@
             {
               "operationId": "NOT-02",
               "summary": "Đánh dấu đã đọc",
+              "x-contract-status": "IMPLEMENTED",
+              "parameters":
+                [
+                  { "$ref": "#/components/parameters/NotificationId" },
+                  { "$ref": "#/components/parameters/NotificationLocator" },
+                ],
               "responses":
                 {
-                  "200": { "description": "Contract success response" },
-                  "501": { "description": "Foundation placeholder until Phase 7" },
+                  "200":
+                    {
+                      "description": "Canonical idempotent READ state",
+                      "content":
+                        {
+                          "application/json":
+                            { "schema": { "$ref": "#/components/schemas/NotificationReadResponse" } },
+                        },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
                 },
               "security": [{ "bearerAuth": [] }],
+            },
+        },
+      "/api/v1/lecturer-applications":
+        {
+          "post":
+            {
+              "operationId": "IDN-13",
+              "summary": "Submit Lecturer application",
+              "security": [{ "bearerAuth": [] }],
+              "parameters":
+                [
+                  {
+                    "name": "Idempotency-Key",
+                    "in": "header",
+                    "required": true,
+                    "schema": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[!-~]+$" },
+                  },
+                ],
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        { "schema": { "$ref": "#/components/schemas/LecturerApplicationRequest" } },
+                    },
+                },
+              "responses":
+                {
+                  "201":
+                    {
+                      "description": "Canonical or historical application result",
+                      "content":
+                        {
+                          "application/json":
+                            {
+                              "schema":
+                                {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": ["data", "meta"],
+                                  "properties":
+                                    {
+                                      "data":
+                                        {
+                                          "type": "object",
+                                          "additionalProperties": false,
+                                          "required": ["applicationId", "status", "submittedAt"],
+                                          "properties":
+                                            {
+                                              "applicationId": { "type": "string", "format": "uuid" },
+                                              "status": { "const": "SUBMITTED" },
+                                              "submittedAt": { "type": "string", "format": "date-time" },
+                                            },
+                                        },
+                                      "meta": { "$ref": "#/components/schemas/ResponseMeta" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "409": { "$ref": "#/components/responses/ErrorResponse" },
+                  "413": { "$ref": "#/components/responses/ErrorResponse" },
+                  "422": { "$ref": "#/components/responses/ErrorResponse" },
+                  "429": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "x-error-codes":
+                [
+                  "APPLICATION_EXISTS",
+                  "IDEMPOTENCY_CONFLICT",
+                  "APPLICATION_INVALID_REQUEST",
+                  "APPLICATION_UNAVAILABLE",
+                ],
+            },
+        },
+      "/api/v1/me/lecturer-application":
+        {
+          "get":
+            {
+              "operationId": "IDN-14",
+              "summary": "Read own Lecturer application",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "Canonical or historical application result",
+                      "content":
+                        {
+                          "application/json":
+                            {
+                              "schema":
+                                {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": ["data", "meta"],
+                                  "properties":
+                                    {
+                                      "data":
+                                        {
+                                          "anyOf":
+                                            [
+                                              { "$ref": "#/components/schemas/LecturerApplication" },
+                                              { "type": "null" },
+                                            ],
+                                        },
+                                      "meta": { "$ref": "#/components/schemas/ResponseMeta" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "422": { "$ref": "#/components/responses/ErrorResponse" },
+                  "429": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "x-error-codes": ["APPLICATION_UNAVAILABLE"],
+            },
+        },
+      "/api/v1/admin/lecturer-applications":
+        {
+          "get":
+            {
+              "operationId": "IDN-15",
+              "summary": "List bounded pending Lecturer applications",
+              "security": [{ "bearerAuth": [] }],
+              "parameters":
+                [
+                  {
+                    "name": "month",
+                    "in": "query",
+                    "required": true,
+                    "schema": { "type": "string", "pattern": "^\\d{4}-(0[1-9]|1[0-2])$" },
+                  },
+                  {
+                    "name": "shard",
+                    "in": "query",
+                    "required": true,
+                    "schema": { "type": "integer", "minimum": 0, "maximum": 15 },
+                  },
+                  {
+                    "name": "limit",
+                    "in": "query",
+                    "required": false,
+                    "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 },
+                  },
+                  {
+                    "name": "cursor",
+                    "in": "query",
+                    "required": false,
+                    "schema": { "type": "string", "minLength": 16, "maxLength": 16384 },
+                  },
+                ],
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "Canonical or historical application result",
+                      "content":
+                        {
+                          "application/json":
+                            {
+                              "schema":
+                                {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": ["data", "meta"],
+                                  "properties":
+                                    {
+                                      "data":
+                                        {
+                                          "type": "object",
+                                          "additionalProperties": false,
+                                          "required": ["items", "nextCursor"],
+                                          "properties":
+                                            {
+                                              "items":
+                                                {
+                                                  "type": "array",
+                                                  "maxItems": 100,
+                                                  "items":
+                                                    {
+                                                      "type": "object",
+                                                      "additionalProperties": false,
+                                                      "required":
+                                                        [
+                                                          "applicationId",
+                                                          "displayNameSnapshot",
+                                                          "teachingArea",
+                                                          "submittedAt",
+                                                        ],
+                                                      "properties":
+                                                        {
+                                                          "applicationId":
+                                                            { "type": "string", "format": "uuid" },
+                                                          "displayNameSnapshot":
+                                                            {
+                                                              "type": "string",
+                                                              "minLength": 1,
+                                                              "maxLength": 120,
+                                                            },
+                                                          "teachingArea":
+                                                            {
+                                                              "type": "string",
+                                                              "minLength": 1,
+                                                              "maxLength": 160,
+                                                            },
+                                                          "submittedAt":
+                                                            { "type": "string", "format": "date-time" },
+                                                        },
+                                                    },
+                                                },
+                                              "nextCursor":
+                                                {
+                                                  "anyOf":
+                                                    [
+                                                      {
+                                                        "type": "string",
+                                                        "minLength": 16,
+                                                        "maxLength": 16384,
+                                                      },
+                                                      { "type": "null" },
+                                                    ],
+                                                },
+                                            },
+                                        },
+                                      "meta": { "$ref": "#/components/schemas/ResponseMeta" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "422": { "$ref": "#/components/responses/ErrorResponse" },
+                  "429": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "x-error-codes": ["APPLICATION_UNAVAILABLE"],
+            },
+        },
+      "/api/v1/admin/lecturer-applications/{applicationId}":
+        {
+          "get":
+            {
+              "operationId": "IDN-16",
+              "summary": "Read Lecturer application detail",
+              "security": [{ "bearerAuth": [] }],
+              "parameters":
+                [
+                  {
+                    "name": "applicationId",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                ],
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "Canonical or historical application result",
+                      "content":
+                        {
+                          "application/json":
+                            {
+                              "schema":
+                                {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": ["data", "meta"],
+                                  "properties":
+                                    {
+                                      "data": { "$ref": "#/components/schemas/LecturerApplicationDetail" },
+                                      "meta": { "$ref": "#/components/schemas/ResponseMeta" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                  "422": { "$ref": "#/components/responses/ErrorResponse" },
+                  "429": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "x-error-codes": ["APPLICATION_UNAVAILABLE", "APPLICATION_NOT_FOUND"],
+            },
+        },
+      "/api/v1/admin/lecturer-applications/{applicationId}/decision":
+        {
+          "post":
+            {
+              "operationId": "IDN-17",
+              "summary": "Decide Lecturer application",
+              "security": [{ "bearerAuth": [] }],
+              "parameters":
+                [
+                  {
+                    "name": "Idempotency-Key",
+                    "in": "header",
+                    "required": true,
+                    "schema": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[!-~]+$" },
+                  },
+                  {
+                    "name": "applicationId",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                ],
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        { "schema": { "$ref": "#/components/schemas/LecturerApplicationDecisionRequest" } },
+                    },
+                },
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "Canonical or historical application result",
+                      "content":
+                        {
+                          "application/json":
+                            {
+                              "schema":
+                                {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": ["data", "meta"],
+                                  "properties":
+                                    {
+                                      "data":
+                                        {
+                                          "type": "object",
+                                          "additionalProperties": false,
+                                          "required": ["applicationId", "status", "decidedAt"],
+                                          "properties":
+                                            {
+                                              "applicationId": { "type": "string", "format": "uuid" },
+                                              "status":
+                                                {
+                                                  "type": "string",
+                                                  "enum": ["SUBMITTED", "APPROVED", "REJECTED"],
+                                                },
+                                              "decidedAt": { "type": "string", "format": "date-time" },
+                                            },
+                                        },
+                                      "meta": { "$ref": "#/components/schemas/ResponseMeta" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "401": { "$ref": "#/components/responses/ErrorResponse" },
+                  "403": { "$ref": "#/components/responses/ErrorResponse" },
+                  "404": { "$ref": "#/components/responses/ErrorResponse" },
+                  "409": { "$ref": "#/components/responses/ErrorResponse" },
+                  "413": { "$ref": "#/components/responses/ErrorResponse" },
+                  "422": { "$ref": "#/components/responses/ErrorResponse" },
+                  "429": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "x-error-codes":
+                [
+                  "APPLICATION_DECISION_CONFLICT",
+                  "APPLICATION_TARGET_INELIGIBLE",
+                  "APPLICATION_NOT_FOUND",
+                  "IDEMPOTENCY_CONFLICT",
+                  "APPLICATION_INVALID_REQUEST",
+                  "APPLICATION_UNAVAILABLE",
+                ],
             },
         },
     },
@@ -3358,6 +3792,43 @@
       "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" } },
       "parameters":
         {
+          "NotificationMonth":
+            {
+              "name": "month",
+              "in": "query",
+              "required": true,
+              "schema": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
+            },
+          "NotificationLimit":
+            {
+              "name": "limit",
+              "in": "query",
+              "required": false,
+              "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 },
+            },
+          "NotificationCursor":
+            {
+              "name": "cursor",
+              "in": "query",
+              "required": false,
+              "description": "Encrypted/authenticated actor, month, limit and purpose-bound continuation; 15-minute TTL; never crosses month partitions",
+              "schema": { "type": "string", "minLength": 1, "maxLength": 4096 },
+            },
+          "NotificationId":
+            {
+              "name": "notificationId",
+              "in": "path",
+              "required": true,
+              "schema": { "type": "string", "format": "uuid" },
+            },
+          "NotificationLocator":
+            {
+              "name": "X-Notification-Locator",
+              "in": "header",
+              "required": true,
+              "description": "Encrypted/authenticated locator bound to actorId, notificationId, yearMonth, createdAt and NOTIFICATION_READ purpose; 24-hour TTL",
+              "schema": { "type": "string", "minLength": 1, "maxLength": 4096 },
+            },
           "IdempotencyKey":
             {
               "name": "Idempotency-Key",
@@ -5942,6 +6413,75 @@
                     },
                 },
             },
+          "NotificationSource":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["type", "id", "contextId"],
+              "properties":
+                {
+                  "type": { "const": "CLASS_ANNOUNCEMENT" },
+                  "id": { "type": "string", "format": "uuid" },
+                  "contextId": { "type": "string", "format": "uuid" },
+                },
+            },
+          "NotificationItem":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required":
+                ["notificationId", "type", "title", "body", "createdAt", "readAt", "source", "locator"],
+              "properties":
+                {
+                  "notificationId": { "type": "string", "format": "uuid" },
+                  "type": { "const": "CLASS_ANNOUNCEMENT" },
+                  "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+                  "body": { "type": "string", "minLength": 1, "maxLength": 500 },
+                  "createdAt": { "type": "string", "format": "date-time" },
+                  "readAt": { "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] },
+                  "source": { "$ref": "#/components/schemas/NotificationSource" },
+                  "locator": { "type": "string", "minLength": 1, "maxLength": 4096 },
+                },
+            },
+          "NotificationListResponse":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["items", "page"],
+              "properties":
+                {
+                  "items":
+                    {
+                      "type": "array",
+                      "maxItems": 50,
+                      "items": { "$ref": "#/components/schemas/NotificationItem" },
+                    },
+                  "page":
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["month", "nextCursor"],
+                      "properties":
+                        {
+                          "month": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
+                          "nextCursor":
+                            { "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+                        },
+                    },
+                },
+            },
+          "NotificationReadResponse":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["notificationId", "state", "readAt"],
+              "properties":
+                {
+                  "notificationId": { "type": "string", "format": "uuid" },
+                  "state": { "const": "READ" },
+                  "readAt": { "type": "string", "format": "date-time" },
+                },
+            },
           "ErrorEnvelope":
             {
               "type": "object",
@@ -5967,6 +6507,112 @@
                       "required": ["requestId"],
                       "properties": { "requestId": { "type": "string", "format": "uuid" } },
                     },
+                },
+            },
+          "LecturerApplicationRequest":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["professionalTitle", "institution", "teachingArea", "motivation"],
+              "properties":
+                {
+                  "professionalTitle": { "type": "string", "minLength": 1, "maxLength": 120 },
+                  "institution": { "type": "string", "minLength": 1, "maxLength": 160 },
+                  "teachingArea": { "type": "string", "minLength": 1, "maxLength": 160 },
+                  "motivation": { "type": "string", "minLength": 20, "maxLength": 2000 },
+                },
+              "description": "Normalize NFC, trim outer whitespace, preserve internal whitespace; lengths count Unicode code points. One immutable application per canonical ACTIVE STUDENT.",
+            },
+          "LecturerApplication":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required":
+                [
+                  "applicationId",
+                  "professionalTitle",
+                  "institution",
+                  "teachingArea",
+                  "motivation",
+                  "displayNameSnapshot",
+                  "emailMaskedSnapshot",
+                  "status",
+                  "submittedAt",
+                  "decidedAt",
+                  "result",
+                ],
+              "properties":
+                {
+                  "applicationId": { "type": "string", "format": "uuid" },
+                  "professionalTitle": { "type": "string", "minLength": 1, "maxLength": 120 },
+                  "institution": { "type": "string", "minLength": 1, "maxLength": 160 },
+                  "teachingArea": { "type": "string", "minLength": 1, "maxLength": 160 },
+                  "motivation": { "type": "string", "minLength": 20, "maxLength": 2000 },
+                  "displayNameSnapshot": { "type": "string", "minLength": 1, "maxLength": 120 },
+                  "emailMaskedSnapshot": { "type": "string" },
+                  "status": { "type": "string", "enum": ["SUBMITTED", "APPROVED", "REJECTED"] },
+                  "submittedAt": { "type": "string", "format": "date-time" },
+                  "decidedAt": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] },
+                  "result":
+                    {
+                      "type": "string",
+                      "enum": ["PENDING", "APPROVED_AWAITING_VERIFICATION", "APPROVED_VERIFIED", "REJECTED"],
+                    },
+                },
+            },
+          "LecturerApplicationDetail":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required":
+                [
+                  "applicationId",
+                  "professionalTitle",
+                  "institution",
+                  "teachingArea",
+                  "motivation",
+                  "displayNameSnapshot",
+                  "emailMaskedSnapshot",
+                  "status",
+                  "submittedAt",
+                  "decidedAt",
+                  "result",
+                  "applicantId",
+                  "reviewerId",
+                  "decision",
+                ],
+              "properties":
+                {
+                  "applicationId": { "type": "string", "format": "uuid" },
+                  "professionalTitle": { "type": "string", "minLength": 1, "maxLength": 120 },
+                  "institution": { "type": "string", "minLength": 1, "maxLength": 160 },
+                  "teachingArea": { "type": "string", "minLength": 1, "maxLength": 160 },
+                  "motivation": { "type": "string", "minLength": 20, "maxLength": 2000 },
+                  "displayNameSnapshot": { "type": "string", "minLength": 1, "maxLength": 120 },
+                  "emailMaskedSnapshot": { "type": "string" },
+                  "status": { "type": "string", "enum": ["SUBMITTED", "APPROVED", "REJECTED"] },
+                  "submittedAt": { "type": "string", "format": "date-time" },
+                  "decidedAt": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] },
+                  "result":
+                    {
+                      "type": "string",
+                      "enum": ["PENDING", "APPROVED_AWAITING_VERIFICATION", "APPROVED_VERIFIED", "REJECTED"],
+                    },
+                  "applicantId": { "type": "string", "format": "uuid" },
+                  "reviewerId": { "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }] },
+                  "decision":
+                    { "anyOf": [{ "type": "string", "enum": ["APPROVE", "REJECT"] }, { "type": "null" }] },
+                },
+            },
+          "LecturerApplicationDecisionRequest":
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["decision", "currentPassword"],
+              "properties":
+                {
+                  "decision": { "type": "string", "enum": ["APPROVE", "REJECT"] },
+                  "currentPassword": { "type": "string", "minLength": 1, "maxLength": 128 },
                 },
             },
         },

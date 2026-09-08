@@ -1,6 +1,6 @@
 {
-  "version": "7.12C",
-  "publicCount": 93,
+  "version": "P12.2B",
+  "publicCount": 98,
   "internalCount": 15,
   "public": [
     {
@@ -897,7 +897,7 @@
       "path": "/api/v1/reviews/{reviewId}",
       "summary": "Xóa đánh giá",
       "auth": "Bearer",
-      "roles": "owner/moderator",
+      "roles": "owner student",
       "queryIds": ["Q-INT-003", "Q-INT-004", "Q-INT-007", "Q-INT-008"],
       "event": null
     },
@@ -1062,7 +1062,12 @@
       "auth": "Bearer",
       "roles": "user",
       "queryIds": ["Q-NOT-001"],
-      "event": null
+      "event": null,
+      "contractStatus": "IMPLEMENTED",
+      "deliveryScope": "IN_APP",
+      "partition": "authenticated actor + required month YYYY-MM",
+      "pagination": "limit 1..50 default 20; encrypted actor/month/limit-bound cursor; TTL 15 minutes",
+      "retention": "NO_AUTOMATIC_EXPIRY"
     },
     {
       "id": "NOT-02",
@@ -1073,7 +1078,74 @@
       "auth": "Bearer",
       "roles": "owner",
       "queryIds": ["Q-NOT-001"],
+      "event": null,
+      "contractStatus": "IMPLEMENTED",
+      "locator": "required encrypted X-Notification-Locator bound to actorId, notificationId, yearMonth and createdAt; TTL 24 hours",
+      "stateTransition": "UNREAD_TO_READ_IDEMPOTENT"
+    },
+    {
+      "id": "IDN-13",
+      "service": "Identity",
+      "method": "POST",
+      "path": "/api/v1/lecturer-applications",
+      "summary": "Submit Lecturer application",
+      "auth": "Bearer",
+      "roles": "student",
+      "queryIds": ["Q-IDN-001", "Q-IDN-003", "Q-IDN-007", "Q-IDN-008", "Q-IDN-009", "Q-IDN-010"],
+      "event": "system.audit.requested.v1"
+    },
+    {
+      "id": "IDN-14",
+      "service": "Identity",
+      "method": "GET",
+      "path": "/api/v1/me/lecturer-application",
+      "summary": "Read own Lecturer application",
+      "auth": "Bearer",
+      "roles": "owner",
+      "queryIds": ["Q-IDN-001", "Q-IDN-003", "Q-IDN-008"],
       "event": null
+    },
+    {
+      "id": "IDN-15",
+      "service": "Identity",
+      "method": "GET",
+      "path": "/api/v1/admin/lecturer-applications",
+      "summary": "List bounded pending Lecturer applications",
+      "auth": "Bearer",
+      "roles": "admin",
+      "queryIds": ["Q-IDN-001", "Q-IDN-003", "Q-IDN-008", "Q-IDN-010"],
+      "event": null
+    },
+    {
+      "id": "IDN-16",
+      "service": "Identity",
+      "method": "GET",
+      "path": "/api/v1/admin/lecturer-applications/{applicationId}",
+      "summary": "Read Lecturer application detail",
+      "auth": "Bearer",
+      "roles": "admin",
+      "queryIds": ["Q-IDN-001", "Q-IDN-003", "Q-IDN-008", "Q-IDN-009"],
+      "event": null
+    },
+    {
+      "id": "IDN-17",
+      "service": "Identity",
+      "method": "POST",
+      "path": "/api/v1/admin/lecturer-applications/{applicationId}/decision",
+      "summary": "Decide Lecturer application",
+      "auth": "Bearer + step-up current-password",
+      "roles": "admin",
+      "queryIds": [
+        "Q-IDN-001",
+        "Q-IDN-002",
+        "Q-IDN-003",
+        "Q-IDN-005",
+        "Q-IDN-007",
+        "Q-IDN-008",
+        "Q-IDN-009",
+        "Q-IDN-010"
+      ],
+      "event": "system.audit.requested.v1"
     }
   ],
   "internal": [
@@ -1229,7 +1301,8 @@
       "path": "/internal/v1/admin/step-up-authorizations",
       "deadline": "800 ms",
       "failure": "fail-closed",
-      "queryIds": ["Q-IDN-001", "Q-IDN-002", "Q-IDN-003"]
+      "queryIds": ["Q-IDN-001", "Q-IDN-002", "Q-IDN-003"],
+      "applicationAudience": "identity-service"
     }
   ]
 }

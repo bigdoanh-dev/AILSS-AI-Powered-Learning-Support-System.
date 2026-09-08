@@ -65,7 +65,24 @@
       "type": "object"
     },
     "data": {
-      "type": "object"
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recipientId", "notificationType", "title", "body", "source"],
+      "properties": {
+        "recipientId": { "type": "string", "format": "uuid" },
+        "notificationType": { "const": "CLASS_ANNOUNCEMENT" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "body": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["announcementId", "classId"],
+          "properties": {
+            "announcementId": { "type": "string", "format": "uuid" },
+            "classId": { "type": "string", "format": "uuid" }
+          }
+        }
+      }
     }
   },
   "additionalProperties": false

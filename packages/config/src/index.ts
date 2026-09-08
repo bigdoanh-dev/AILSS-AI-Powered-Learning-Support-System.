@@ -23,6 +23,7 @@ const baseSchema = z.object({
   ASSESSMENT_SERVICE_URL: z.string().url().default("http://127.0.0.1:8104"),
   INTERACTION_SERVICE_URL: z.string().url().default("http://127.0.0.1:8105"),
   AI_SERVICE_URL: z.string().url().default("http://127.0.0.1:8106"),
+  NOTIFICATION_SERVICE_URL: z.string().url().default("http://127.0.0.1:8203"),
   INTERNAL_HTTP_TIMEOUT_MS: z.coerce.number().int().min(100).max(10_000).default(5_000),
   PASSWORD_CHANGE_HTTP_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(60_000).default(20_000),
   IDENTITY_OUTBOX_POLL_MS: z.coerce.number().int().min(250).max(60_000).default(1_000),
@@ -59,6 +60,8 @@ const baseSchema = z.object({
   ADMIN_CURSOR_HMAC_KEY: optionalInjected,
   LEARNING_CURSOR_HMAC_KEY: optionalInjected,
   AI_CURSOR_HMAC_KEY: optionalInjected,
+  NOTIFICATION_TOKEN_SECRET: optionalInjected,
+  NOTIFICATION_CURSOR_TTL_SECONDS: z.coerce.number().int().min(1).max(900).default(900),
   AI_CURSOR_TTL_SECONDS: z.coerce.number().int().min(1).max(3600).default(900),
   AI_DAILY_QUIZ_QUOTA: z.coerce.number().int().min(1).max(10_000).default(200),
   AI_PROVIDER_ENDPOINT: z.string().url().default("https://api.openai.com/v1/chat/completions"),
@@ -83,6 +86,10 @@ const baseSchema = z.object({
   INTERACTION_SERVICE_TOKEN_KID: z.string().min(1).default("dev-interaction-2026-01"),
   AI_SERVICE_TOKEN_PUBLIC_KEY_PATH: z.string().optional(),
   AI_SERVICE_TOKEN_KID: z.string().min(1).default("dev-ai-2026-01"),
+  ASSESSMENT_ACCEPTANCE_DELAY_AFTER_IMPORT_DRAFT_ID: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().uuid().optional(),
+  ),
   SERVICE_TOKEN_TTL_SECONDS: z.coerce.number().int().min(1).max(60).default(60),
   IDENTITY_PUBLIC_PROFILE_DEADLINE_MS: z.coerce.number().int().min(100).max(500).default(500),
   HTTPS_CERT_PATH: z.string().optional(),
@@ -116,6 +123,9 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   }
   if (result.data.ENABLE_RABBITMQ && (!result.data.RABBITMQ_USERNAME || !result.data.RABBITMQ_PASSWORD)) {
     throw new ConfigurationError(["RabbitMQ is enabled but per-process credentials are missing"]);
+  }
+  if (result.data.NODE_ENV === "production" && result.data.NOTIFICATION_CURSOR_TTL_SECONDS !== 900) {
+    throw new ConfigurationError(["Notification cursor TTL override is disabled in production"]);
   }
   return result.data;
 }

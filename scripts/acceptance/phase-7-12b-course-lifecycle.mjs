@@ -173,7 +173,7 @@ await writeFile(
         recoveredState: recovered.state,
         stableEventId: true,
       },
-      counts: { publicApis: 93, internalApis: 15, queryIds: 71, events: 22, redis: false },
+      counts: { publicApis: 98, internalApis: 15, queryIds: 74, events: 22, redis: false },
     },
     null,
     2,

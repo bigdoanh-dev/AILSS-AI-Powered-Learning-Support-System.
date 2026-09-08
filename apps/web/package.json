@@ -1,0 +1,36 @@
+{
+  "name": "@ailss/web",
+  "version": "12.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build && tsx scripts/prerender.tsx",
+    "preview": "node scripts/serve.mjs",
+    "test": "vitest run && node --test server/session.test.mjs server/lecturer.test.mjs server/admin.test.mjs server/student-commerce.test.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test:browser": "node scripts/verify-browser.mjs",
+    "assets": "node scripts/assets.mjs",
+    "video": "node scripts/video.mjs"
+  },
+  "dependencies": {
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "react-router-dom": "7.8.2",
+    "three": "0.179.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.12",
+    "@types/react-dom": "19.1.9",
+    "@types/three": "0.179.0",
+    "@vitejs/plugin-react": "5.0.2",
+    "vite": "7.1.4",
+    "@testing-library/react": "16.3.0",
+    "@testing-library/user-event": "14.6.1",
+    "jsdom": "26.1.0",
+    "@playwright/test": "1.55.0",
+    "@axe-core/playwright": "4.10.2",
+    "sharp": "0.34.3"
+  }
+}

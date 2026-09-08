@@ -22,6 +22,9 @@ import {
   quizFromDto,
   snapshotChecksum,
   validateSchedule,
+  objectiveToAssessment,
+  type AiDraftImportRequest,
+  type AiDraftImportResult,
   type CommandReceipt,
   type QuestionInput,
   type Quiz,
@@ -37,6 +40,9 @@ import type { AssessmentRepository, CommandRecord, ResultProjectionRow } from ".
 
 export type AssessmentStore = Pick<
   AssessmentRepository,
+  | "reserveAiImport"
+  | "aiImport"
+  | "completeAiImport"
   | "reserveCommand"
   | "command"
   | "checkpoint"
@@ -85,6 +91,107 @@ export class AssessmentService {
     private readonly clients: Pick<AssessmentClients, "eligibleLecturer" | "target" | "studentTarget">,
     private readonly secret: string,
   ) {}
+
+  async importAiDraft(input: {
+    actor: ActorContext;
+    draftId: string;
+    request: AiDraftImportRequest;
+    requestId: string;
+  }): Promise<{ result: AiDraftImportResult; replayed: boolean }> {
+    await this.requireLecturer(input.actor, input.requestId);
+    if (input.actor.userId !== input.request.ownerLecturerId)
+      throw new AppError("AI_IMPORT_ACTOR_MISMATCH", 403, "Approving Lecturer does not match owner");
+    const target = await this.requireTargetOwner(
+      input.request.targetType,
+      input.request.targetId,
+      input.request.ownerLecturerId,
+      input.requestId,
+    );
+    if (target.version !== input.request.targetVersion)
+      throw conflict("AI_IMPORT_TARGET_VERSION_CONFLICT", "Target version changed before import");
+    const requestFingerprint = fingerprint(this.secret, {
+        route: "/internal/v1/ai-drafts/{id}/import",
+        draftId: input.draftId,
+        body: input.request,
+      }),
+      quizId = deterministicUuid(this.secret, "ai-import-quiz", input.request.importOperationId),
+      now = new Date(),
+      reserved = await this.repository.reserveAiImport({
+        importOperationId: input.request.importOperationId,
+        draftId: input.draftId,
+        fingerprint: requestFingerprint,
+        quizId,
+        now,
+      }),
+      command = await this.repository.aiImport(input.request.importOperationId);
+    if (!command || command.draftId !== input.draftId || command.fingerprint !== requestFingerprint)
+      throw conflict("IDEMPOTENCY_CONFLICT", "Import operation conflicts with another request");
+    if (command.state === "COMPLETE" && command.result) return { result: command.result, replayed: true };
+
+    const questionInput = objectiveToAssessment(input.request.quiz),
+      questions = materializeQuestions(
+        this.secret,
+        input.request.importOperationId,
+        command.quizId,
+        1,
+        questionInput,
+      ),
+      checksum = snapshotChecksum(questions),
+      request: QuizCreateRequest = {
+        title: input.request.quiz.title,
+        targetType: input.request.targetType,
+        targetId: input.request.targetId,
+        questions: questionInput,
+      },
+      intended: Quiz = {
+        quizId: command.quizId,
+        targetType: request.targetType,
+        targetId: request.targetId,
+        ownerId: input.request.ownerLecturerId,
+        title: request.title,
+        state: "DRAFT",
+        currentVersion: 1,
+        recordVersion: 1,
+        questionCount: questions.length,
+        snapshotChecksum: checksum,
+        snapshotReady: true,
+        createdAt: now,
+        updatedAt: now,
+      };
+    let canonical = await this.repository.quiz(command.quizId);
+    if (!canonical) {
+      await this.repository.createQuiz({
+        quizId: command.quizId,
+        operationId: input.request.importOperationId,
+        ownerId: input.request.ownerLecturerId,
+        request,
+        questionCount: questions.length,
+        snapshotChecksum: checksum,
+        now,
+      });
+      canonical = await this.repository.quiz(command.quizId);
+    }
+    if (!canonical || !sameQuizIntent(canonical, intended, false))
+      throw conflict("AI_IMPORT_QUIZ_CONFLICT", "Imported Quiz could not be recovered safely");
+    await this.writeQuestionsRecoverably(questions);
+    await this.verifySnapshot(command.quizId, 1, questions.length, checksum);
+    if (!canonical.snapshotReady) {
+      await this.repository.finalizeCreate(command.quizId, input.request.importOperationId);
+      canonical = await this.repository.quiz(command.quizId);
+    }
+    if (!canonical?.snapshotReady || !sameQuizIntent(canonical, intended, true)) throw unavailable();
+    await this.convergeProjection(undefined, canonical);
+    const result: AiDraftImportResult = {
+      draftId: input.draftId,
+      approvedDraftVersion: 2,
+      quizId: command.quizId,
+      quizVersion: 1,
+      status: "DRAFT",
+    };
+    if (!(await this.repository.completeAiImport(input.request.importOperationId, result, new Date())))
+      throw unavailable();
+    return { result, replayed: !reserved };
+  }
 
   async create(input: {
     actor: ActorContext;

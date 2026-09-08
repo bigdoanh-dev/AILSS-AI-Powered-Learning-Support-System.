@@ -53,7 +53,7 @@ const summary = {
   status: matrix.length === phases.length && matrix.every((row) => row.status === "PASS") ? "PASS" : "FAIL",
   runId,
   matrix,
-  counts: { publicApis: 93, internalApis: 15, queryIds: 71, events: 22, redis: false },
+  counts: { publicApis: 98, internalApis: 15, queryIds: 74, events: 22, redis: false },
   evidence: evidenceDir,
 };
 writeFileSync(resolve(evidenceDir, "summary.json"), `${JSON.stringify(summary, null, 2)}\n`, "utf8");

@@ -1,5 +1,5 @@
 {
-  "version": "7.12C",
+  "version": "P12.2B",
   "count": 22,
   "events": [
     {
@@ -101,12 +101,44 @@
     {
       "index": 20,
       "eventType": "system.notification.requested.v1",
-      "schema": "system/system.notification.requested.v1.schema.json"
+      "schema": "system/system.notification.requested.v1.schema.json",
+      "contractStatus": "IMPLEMENTED",
+      "deliveryScope": "IN_APP",
+      "producer": "classroom-service:CLS-09",
+      "recipientAuthority": "producer fan-out to current ACTIVE class members excluding announcement author",
+      "fanOutIdentity": "one stable distinct eventId per (announcementId, recipientId)",
+      "exchange": "ailss.notifications",
+      "routingKey": "system.notification.requested.v1",
+      "consumerQueue": "notification.q",
+      "dedupIdentity": ["eventId", "data.recipientId"],
+      "retention": "NO_AUTOMATIC_EXPIRY"
     },
     {
       "index": 21,
       "eventType": "system.audit.requested.v1",
-      "schema": "system/system.audit.requested.v1.schema.json"
+      "schema": "system/system.audit.requested.v1.schema.json",
+      "lecturerApplication": {
+        "producer": "identity-service",
+        "actions": [
+          "LECTURER_APPLICATION_SUBMITTED",
+          "LECTURER_APPLICATION_APPROVED",
+          "LECTURER_APPLICATION_REJECTED"
+        ],
+        "aggregateType": "LECTURER_APPLICATION",
+        "targetType": "LECTURER_APPLICATION",
+        "stableEventId": "derived from operationId",
+        "allowedData": ["action", "actorType", "actorId", "targetType", "targetId", "outcome", "requestId"],
+        "forbiddenData": [
+          "password",
+          "currentPassword",
+          "proof",
+          "rawEmail",
+          "motivation",
+          "professionalTitle",
+          "institution",
+          "teachingArea"
+        ]
+      }
     },
     {
       "index": 22,

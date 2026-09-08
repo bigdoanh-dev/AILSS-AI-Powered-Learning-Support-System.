@@ -19,6 +19,7 @@ export async function aiDocumentProxyFactory(c: AppConfig): Promise<{
   draftList: RequestHandler;
   cancel: RequestHandler;
   usage: RequestHandler;
+  approve: RequestHandler;
 }> {
   if (!c.JWT_PUBLIC_KEY_PATH || !c.ACTOR_CONTEXT_PRIVATE_KEY_PATH)
     throw new Error("AI document proxy requires keys");
@@ -60,13 +61,32 @@ export async function aiDocumentProxyFactory(c: AppConfig): Promise<{
               expiresAt: now + c.ACTOR_CONTEXT_TTL_SECONDS,
             },
           ),
+          assessmentActor = await signActorContext(
+            key,
+            c.ACTOR_CONTEXT_KID,
+            c.ACTOR_CONTEXT_ISSUER,
+            "assessment-service",
+            "assessment.ai-draft.import",
+            {
+              userId: actor.userId,
+              roles: [...actor.roles],
+              sessionId: actor.sessionId,
+              tokenVersion: actor.tokenVersion,
+              correlationId: ctx.correlationId,
+              issuedAt: now,
+              expiresAt: now + c.ACTOR_CONTEXT_TTL_SECONDS,
+            },
+          ),
           idem = r.header("idempotency-key"),
+          ifMatch = r.header("if-match"),
           up = await fetch(new URL(path(r), c.AI_SERVICE_URL), {
             method,
             headers: {
               "x-actor-context": trusted,
+              "x-assessment-actor-context": assessmentActor,
               "x-correlation-id": ctx.correlationId,
               ...(idem ? { "idempotency-key": idem } : {}),
+              ...(ifMatch ? { "if-match": ifMatch } : {}),
               ...(method === "POST" ? { "content-type": "application/json" } : {}),
             },
             ...(method === "POST" ? { body: JSON.stringify(r.body) } : {}),
@@ -96,6 +116,10 @@ export async function aiDocumentProxyFactory(c: AppConfig): Promise<{
     draftList: handler("GET", (r) => `/api/v1/ai/jobs/${encodeURIComponent(String(r.params.jobId))}/drafts`),
     cancel: handler("POST", (r) => `/api/v1/ai/jobs/${encodeURIComponent(String(r.params.jobId))}/cancel`),
     usage: handler("GET", () => "/api/v1/ai/usage"),
+    approve: handler(
+      "POST",
+      (r) => `/api/v1/ai/drafts/${encodeURIComponent(String(r.params.draftId))}/approve`,
+    ),
   };
 }
 

@@ -31,11 +31,31 @@ const dcOutput = cql("SELECT data_center, release_version FROM system.local;");
 if (!dcOutput.includes("ailss_dc"))
   throw new Error(`Cassandra DC mismatch; expected ailss_dc. Output: ${dcOutput}`);
 
+// Some additive migrations grant table permissions. Roles must therefore exist before
+// the migration loop on a brand-new volume; CREATE ROLE IF NOT EXISTS keeps reruns safe.
+let roles = await readFile(new URL("../../database/roles/roles.cql.template", import.meta.url), "utf8");
+const roleSecrets = [
+  "CASSANDRA_ADMIN_PASSWORD",
+  "CASSANDRA_MIGRATOR_PASSWORD",
+  "CASSANDRA_SVC_IDENTITY_PASSWORD",
+  "CASSANDRA_SVC_LEARNING_PASSWORD",
+  "CASSANDRA_SVC_CLASSROOM_PASSWORD",
+  "CASSANDRA_SVC_ASSESSMENT_PASSWORD",
+  "CASSANDRA_SVC_INTERACTION_PASSWORD",
+  "CASSANDRA_SVC_AI_PASSWORD",
+  "CASSANDRA_SVC_NOTIFICATION_PASSWORD",
+  "CASSANDRA_SVC_AUDIT_PASSWORD",
+];
+for (const name of roleSecrets)
+  roles = roles.replaceAll(`{{${name}}}`, required(env, name).replaceAll("'", "''"));
+cql(roles);
+
 const migrationDir = new URL(`../../database/migrations/${migrationProfile}/`, import.meta.url);
 const files = [
   "001_keyspaces.cql",
   "010_identity_schema.cql",
   "011_identity_security_versions.cql",
+  "012_lecturer_applications.cql",
   "020_learning_schema.cql",
   "021_learning_course_published_at.cql",
   "022_learning_lesson_authoring.cql",
@@ -52,6 +72,7 @@ const files = [
   "041_assessment_quiz_authoring.cql",
   "042_assessment_attempt_guard.cql",
   "043_assessment_submit.cql",
+  "044_assessment_ai_import.cql",
   "050_interaction_schema.cql",
   "051_interaction_comments.cql",
   "052_interaction_reviews.cql",
@@ -59,6 +80,7 @@ const files = [
   "060_ai_schema.cql",
   "061_ai_document_extraction.cql",
   "062_ai_quiz_generation.cql",
+  "063_ai_human_approval.cql",
   "070_notification_schema.cql",
   "075_audit_support_schema.cql",
 ];
@@ -405,22 +427,6 @@ if (adminSearchProjectionBackfillStatements.length > 0) {
   cql(adminSearchProjectionBackfillStatements.join("\n"));
 }
 
-let roles = await readFile(new URL("../../database/roles/roles.cql.template", import.meta.url), "utf8");
-const roleSecrets = [
-  "CASSANDRA_ADMIN_PASSWORD",
-  "CASSANDRA_MIGRATOR_PASSWORD",
-  "CASSANDRA_SVC_IDENTITY_PASSWORD",
-  "CASSANDRA_SVC_LEARNING_PASSWORD",
-  "CASSANDRA_SVC_CLASSROOM_PASSWORD",
-  "CASSANDRA_SVC_ASSESSMENT_PASSWORD",
-  "CASSANDRA_SVC_INTERACTION_PASSWORD",
-  "CASSANDRA_SVC_AI_PASSWORD",
-  "CASSANDRA_SVC_NOTIFICATION_PASSWORD",
-  "CASSANDRA_SVC_AUDIT_PASSWORD",
-];
-for (const name of roleSecrets)
-  roles = roles.replaceAll(`{{${name}}}`, required(env, name).replaceAll("'", "''"));
-cql(roles);
 cql(await readFile(new URL("../../database/grants/grants.cql", import.meta.url), "utf8"));
 
 await writeFile(

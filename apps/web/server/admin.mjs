@@ -1,0 +1,91 @@
+import { z } from "zod";
+const uuid = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+const page = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    cursor: z.string().min(1).max(16384).optional(),
+  })
+  .strict();
+const userPage = z
+  .object({
+    role: z.enum(["STUDENT", "LECTURER", "ADMIN"]),
+    status: z.enum(["ACTIVE", "SUSPENDED"]),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    cursor: z.string().min(16).max(16384).optional(),
+  })
+  .strict();
+const statusChange = z
+  .object({
+    status: z.enum(["ACTIVE", "SUSPENDED"]),
+    currentPassword: z.string().min(1).max(128),
+    reason: z.string().min(1).max(200).optional(),
+  })
+  .strict();
+const courseAction = z.object({ currentPassword: z.string().min(1).max(1024) }).strict();
+const keyOf = (headers) =>
+  z
+    .string()
+    .regex(/^[!-~]{1,200}$/)
+    .parse(headers["idempotency-key"]);
+const moderate = z
+  .object({
+    action: z.enum(["HIDE", "RESTORE", "DISMISS", "WARN"]),
+    reason: z.string().min(1).max(1000),
+    currentPassword: z.string().min(1).max(128),
+  })
+  .strict();
+export function adminOperation(url, method, body, headers) {
+  if (!url.startsWith("/web-session/admin/")) return null;
+  const raw = url.slice("/web-session/admin".length),
+    [path, query = ""] = raw.split("?");
+  if (raw.includes("#") || /[%\\]/.test(path)) throw Error("INVALID_ADMIN_REQUEST");
+  if (method === "GET" && path === "/users") {
+    const params = new URLSearchParams(query),
+      values = {};
+    for (const [k, v] of params) {
+      if (k in values) throw Error("INVALID_ADMIN_REQUEST");
+      values[k] = v;
+    }
+    userPage.parse(values);
+    return { path: "/admin/users?" + params.toString(), headers: {} };
+  }
+  const user = new RegExp(`^/users/(${uuid})$`).exec(path);
+  if (method === "GET" && user && !query) return { path: `/admin/users/${user[1]}`, headers: {} };
+  const status = new RegExp(`^/users/(${uuid})/status$`).exec(path);
+  if (method === "PATCH" && status && !query) {
+    statusChange.parse(body);
+    return { path: `/admin/users/${status[1]}/status`, headers: {}, key: keyOf(headers) };
+  }
+  const course = new RegExp(`^/courses/(${uuid})/(publish|archive)$`).exec(path);
+  if (method === "POST" && course && !query) {
+    courseAction.parse(body);
+    return { path: `/admin/courses/${course[1]}/${course[2]}`, headers: {}, key: keyOf(headers) };
+  }
+  if (method === "GET" && path === "/interaction-reports") {
+    const values = Object.fromEntries(new URLSearchParams(query));
+    if ([...new URLSearchParams(query).keys()].length !== Object.keys(values).length)
+      throw Error("INVALID_ADMIN_REQUEST");
+    page.parse(values);
+    return { path: "/admin/reports" + (query ? `?${new URLSearchParams(query)}` : ""), headers: {} };
+  }
+  const match = new RegExp(`^/interaction-reports/(${uuid})/moderate$`).exec(path);
+  if (method !== "POST" || !match) throw Error("INVALID_ADMIN_REQUEST");
+  moderate.parse(body);
+  const key = keyOf(headers);
+  const ifMatch = z
+    .string()
+    .regex(/^"v[1-9][0-9]{0,9}"$/)
+    .parse(headers["if-match"]);
+  return { path: `/admin/reports/${match[1]}/moderate`, headers: { "If-Match": ifMatch }, key };
+}
+
+export function adminEnvelope(value) {
+  return {
+    data: value.data ?? null,
+    meta: {
+      ...(value.meta?.page ? { page: value.meta.page } : {}),
+      ...(value.meta?.pagination ? { pagination: value.meta.pagination } : {}),
+      ...(typeof value.meta?.replayed === "boolean" ? { replayed: value.meta.replayed } : {}),
+    },
+  };
+}

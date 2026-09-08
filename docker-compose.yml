@@ -175,6 +175,7 @@ services:
       ASSESSMENT_SERVICE_URL: http://assessment-service:8104
       INTERACTION_SERVICE_URL: http://interaction-service:8105
       AI_SERVICE_URL: http://ai-service:8106
+      NOTIFICATION_SERVICE_URL: http://notification-worker:8203
       JWT_PUBLIC_KEY_PATH: /run/ailss/identity/user-jwt-public.pem
       ACTOR_CONTEXT_PRIVATE_KEY_PATH: /run/ailss/services/gateway-private.pem
       CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH: /run/ailss/services/classroom-public.pem
@@ -348,6 +349,9 @@ services:
         SERVICE_TOKEN_ISSUER: "${SERVICE_TOKEN_ISSUER:-ailss-internal}",
         SERVICE_TOKEN_KID: "dev-assessment-2026-01",
         ASSESSMENT_SERVICE_TOKEN_KID: "dev-assessment-2026-01",
+        AI_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/ai-public.pem",
+        AI_SERVICE_TOKEN_KID: "dev-ai-2026-01",
+        ASSESSMENT_ACCEPTANCE_DELAY_AFTER_IMPORT_DRAFT_ID: "${ASSESSMENT_ACCEPTANCE_DELAY_AFTER_IMPORT_DRAFT_ID:-}",
         ACTOR_CONTEXT_PUBLIC_KEY_PATH: "/run/ailss/services/gateway-public.pem",
         PASSWORD_IDEMPOTENCY_HMAC_KEY: "${PASSWORD_IDEMPOTENCY_HMAC_KEY}",
       }
@@ -357,6 +361,7 @@ services:
     volumes:
       - ./infrastructure/tls/generated/services/assessment-private.pem:/run/ailss/services/assessment-private.pem:ro
       - ./infrastructure/tls/generated/services/gateway-public.pem:/run/ailss/services/gateway-public.pem:ro
+      - ./infrastructure/tls/generated/services/ai-public.pem:/run/ailss/services/ai-public.pem:ro
 
   interaction-service:
     <<: *app-common
@@ -401,6 +406,7 @@ services:
         IDENTITY_SERVICE_URL: "http://identity-service:8101",
         LEARNING_SERVICE_URL: "http://learning-service:8102",
         CLASSROOM_SERVICE_URL: "http://classroom-service:8103",
+        ASSESSMENT_SERVICE_URL: "http://assessment-service:8104",
         ACTOR_CONTEXT_PUBLIC_KEY_PATH: "/run/ailss/services/gateway-public.pem",
         SERVICE_TOKEN_PRIVATE_KEY_PATH: "/run/ailss/services/ai-private.pem",
         AI_SERVICE_TOKEN_KID: "dev-ai-2026-01",
@@ -497,10 +503,15 @@ services:
         CASSANDRA_KEYSPACE: notification_keyspace,
         CASSANDRA_USERNAME: svc_notification,
         CASSANDRA_PASSWORD: "${CASSANDRA_SVC_NOTIFICATION_PASSWORD}",
+        ACTOR_CONTEXT_PUBLIC_KEY_PATH: /run/ailss/services/gateway-public.pem,
+        NOTIFICATION_TOKEN_SECRET: "${PASSWORD_IDEMPOTENCY_HMAC_KEY}",
+        NOTIFICATION_CURSOR_TTL_SECONDS: "${NOTIFICATION_CURSOR_TTL_SECONDS:-900}",
       }
     ports: ["127.0.0.1:8203:8203"]
     mem_limit: 256m
     cpus: 0.25
+    volumes:
+      - ./infrastructure/tls/generated/services/gateway-public.pem:/run/ailss/services/gateway-public.pem:ro
 
   audit-worker:
     <<: *app-common
