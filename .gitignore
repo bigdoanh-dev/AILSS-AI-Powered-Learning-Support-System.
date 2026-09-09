@@ -23,6 +23,9 @@ MASTER_PROMPT_*.md
 ERRATA_*.md
 *_REPORT.md
 *_FEASIBILITY_ASSESSMENT.md
+AILSS_P12_*.md
+BAO_CAO_*.md
+LECTURER_*_DECISION.md
 
 # Local credentials and real cryptographic material
 credentials/
