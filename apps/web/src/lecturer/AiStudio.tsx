@@ -101,6 +101,12 @@ const documentFailureCopy: Record<string, string> = {
   CONTENT_INTEGRITY_MISMATCH: "Tệp nhận được không khớp với tệp đã chọn. Hãy tải lại.",
   CONTENT_TYPE_MISMATCH: "Nội dung tệp không khớp với định dạng đã chọn.",
 };
+const jobFailureCopy: Record<string, string> = {
+  PROVIDER_OUTPUT_REJECTED:
+    "AI đã phản hồi nhưng dữ liệu trả về không hoàn chỉnh hoặc không đúng định dạng câu hỏi. Hãy tạo lại yêu cầu; hệ thống đã điều chỉnh để hạn chế phản hồi bị cắt giữa chừng.",
+  OBJECTIVE_V1_INVALID:
+    "Nội dung AI trả về chưa đáp ứng cấu trúc bài kiểm tra. Hãy tạo lại yêu cầu hoặc giảm số câu trong một lần tạo.",
+};
 
 function useDocument(documentId: string) {
   const [value, setValue] = useState<DocumentDto>(),
@@ -607,7 +613,15 @@ export function AiJob() {
           {!terminal.has(job.value.state) && <div className="ai-indeterminate" aria-label="Đang xử lý" />}
           {job.stalled && <p>Quá trình xử lý đang tạm gián đoạn. Bạn có thể thử lại sau.</p>}
           {job.value.state === "FAILED" && (
-            <p>Không thể tạo bản nháp. Bạn có thể quay lại và tạo một yêu cầu mới.</p>
+            <div className="ai-job-failure" role="alert">
+              <p>
+                {jobFailureCopy[job.value.failureCode || ""] ||
+                  "Không thể tạo bản nháp do dịch vụ AI gặp lỗi. Hãy quay lại và tạo một yêu cầu mới."}
+              </p>
+              <Link className="button" to="/app/teaching/ai">
+                Tạo yêu cầu mới
+              </Link>
+            </div>
           )}
           {["QUEUED", "PROCESSING", "VALIDATING"].includes(job.value.state) && (
             <button className="button secondary" onClick={() => void cancel()}>
@@ -625,17 +639,19 @@ export function AiJob() {
       )}
       {job.error && <p role="alert">{job.error}</p>}
       <p role="status">{msg}</p>
-      <State q={drafts}>
-        {(items) =>
-          items[0] ? (
-            <ReviewEditor draft={items[0]} />
-          ) : (
-            <EmptyState title="Bản nháp chưa sẵn sàng.">
-              Trang sẽ chỉ tải nội dung khi trạng thái canonical là bản nháp.
-            </EmptyState>
-          )
-        }
-      </State>
+      {(job.value?.state === "AI_DRAFT" || job.value?.state === "APPROVED") && (
+        <State q={drafts}>
+          {(items) =>
+            items[0] ? (
+              <ReviewEditor draft={items[0]} />
+            ) : (
+              <EmptyState title="Bản nháp chưa sẵn sàng.">
+                Hệ thống đang đồng bộ nội dung bản nháp. Hãy tải lại trang sau ít phút.
+              </EmptyState>
+            )
+          }
+        </State>
+      )}
     </>
   );
 }

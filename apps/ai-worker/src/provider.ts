@@ -82,7 +82,15 @@ Shape: {"schemaVersion":"objective-v1","title":"Quiz title","questions":[...]}. 
             ? {
                 systemInstruction: { parts: [{ text: payload.messages[0]!.content }] },
                 contents: [{ role: "user", parts: [{ text: payload.messages[1]!.content }] }],
-                generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192 },
+                generationConfig: {
+                  responseMimeType: "application/json",
+                  // Keep the token budget for the answer. Some Gemini Flash aliases
+                  // otherwise spend part of this budget on hidden reasoning and can
+                  // return truncated JSON for multi-question quizzes.
+                  thinkingConfig: { thinkingBudget: 0 },
+                  temperature: 0.2,
+                  maxOutputTokens: Math.min(32768, Math.max(8192, request.questionCount * 1400)),
+                },
               }
             : payload,
         ),

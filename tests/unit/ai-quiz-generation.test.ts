@@ -84,6 +84,13 @@ describe("P10.2 objective-v1 boundary", () => {
     expect(result).toMatchObject({ quiz: valid, inputUnits: 8, outputUnits: 12 });
     expect(mock.mock.calls[0]?.[1]?.headers).toMatchObject({ "x-goog-api-key": "secret" });
     expect(mock.mock.calls[0]?.[0]).not.toContain("secret");
+    const body = JSON.parse(String(mock.mock.calls[0]?.[1]?.body));
+    expect(body.generationConfig).toMatchObject({
+      responseMimeType: "application/json",
+      thinkingConfig: { thinkingBudget: 0 },
+      temperature: 0.2,
+      maxOutputTokens: 8192,
+    });
   });
   it("sends a stable provider idempotency key and parses structured JSON", async () => {
     const fetchMock = vi.fn().mockResolvedValue(

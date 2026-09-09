@@ -1432,6 +1432,50 @@ dialog {
   }
 }
 
+/* AI job details must use the active theme instead of the legacy fixed white card. */
+.learning-site .ai-job-status,
+.learning-site .ai-approved,
+.learning-site .ai-usage,
+.learning-site .ai-review-intro,
+.learning-site .ai-document {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+.learning-site .ai-job-status > p,
+.learning-site .ai-job-status details,
+.learning-site .ai-job-status details p {
+  color: var(--muted);
+}
+.learning-site .ai-job-status h1,
+.learning-site .ai-job-status summary {
+  color: var(--ink);
+}
+.ai-job-failure {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-block: 20px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, #d45b66 45%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, #d45b66 10%, var(--surface));
+}
+.ai-job-failure p {
+  margin: 0;
+  color: var(--ink);
+}
+.ai-job-failure .button {
+  flex: none;
+}
+@media (max-width: 600px) {
+  .ai-job-failure {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 .admin-overview {
   display: grid;
   grid-template-columns: 0.8fr 1.4fr;
