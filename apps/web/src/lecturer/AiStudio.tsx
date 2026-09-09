@@ -92,6 +92,15 @@ async function sha(file: File) {
   return Array.from(new Uint8Array(b), (x) => x.toString(16).padStart(2, "0")).join("");
 }
 const label = (state: string) => stateCopy[state] || state;
+const documentFailureCopy: Record<string, string> = {
+  DOCX_DECOMPRESSION_LIMIT:
+    "Tài liệu DOCX vượt giới hạn xử lý an toàn. Nếu đây là tệp thông thường, hãy lưu lại bằng Word rồi tải lại.",
+  DOCX_ACTIVE_CONTENT: "Tài liệu có macro, nội dung nhúng hoặc điều khiển chủ động nên không thể sử dụng.",
+  DOCX_MAGIC_MISMATCH: "Nội dung tệp không đúng định dạng DOCX.",
+  MALFORMED_DOCX: "Tệp DOCX bị lỗi hoặc thiếu dữ liệu cần thiết.",
+  CONTENT_INTEGRITY_MISMATCH: "Tệp nhận được không khớp với tệp đã chọn. Hãy tải lại.",
+  CONTENT_TYPE_MISMATCH: "Nội dung tệp không khớp với định dạng đã chọn.",
+};
 
 function useDocument(documentId: string) {
   const [value, setValue] = useState<DocumentDto>(),
@@ -337,7 +346,10 @@ export function AiStudio() {
               </p>
               {documentQuery.value.status === "EXTRACTED" && <p>Tài liệu đã xử lý xong.</p>}
               {["FAILED", "QUARANTINED"].includes(documentQuery.value.status) && (
-                <p>Không thể xử lý tài liệu này. Hãy thử tải lại hoặc chọn tài liệu khác.</p>
+                <p>
+                  {documentFailureCopy[documentQuery.value.failureCode || ""] ||
+                    "Không thể xử lý tài liệu này. Hãy thử tải lại hoặc chọn tài liệu khác."}
+                </p>
               )}
               {documentQuery.stalled && <p>Quá trình xử lý đang tạm gián đoạn. Bạn có thể thử lại sau.</p>}
             </article>

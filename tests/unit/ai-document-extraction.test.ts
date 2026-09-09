@@ -32,6 +32,35 @@ describe("P10.1 secure document primitives", () => {
       ).text.toString(),
     ).toBe("Hello DOCX");
   });
+  it("accepts a normal text-heavy DOCX even when XML compresses beyond eight times", () => {
+    const paragraph = "Nguyên lý hệ điều hành và quản lý tiến trình. ".repeat(4000);
+    const docx = zipSync({
+      "[Content_Types].xml": strToU8("<Types/>"),
+      "word/document.xml": strToU8(`<w:document><w:p><w:r><w:t>${paragraph}</w:t></w:r></w:p></w:document>`),
+    });
+    expect(paragraph.length / docx.length).toBeGreaterThan(8);
+    expect(
+      extractDocument(
+        Buffer.from(docx),
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ).characters,
+    ).toBe(paragraph.trim().length);
+  });
+  it("still quarantines a highly compressed DOCX beyond the absolute safety floor", () => {
+    const docx = zipSync({
+      "[Content_Types].xml": strToU8("<Types/>"),
+      "word/document.xml": strToU8(`<w:document><w:t>${"A".repeat(9 * 1024 * 1024)}</w:t></w:document>`),
+    });
+    try {
+      extractDocument(
+        Buffer.from(docx),
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      );
+      throw new Error("expected failure");
+    } catch (error) {
+      expect(error).toMatchObject({ code: "DOCX_DECOMPRESSION_LIMIT", quarantined: true });
+    }
+  });
   it("quarantines active PDF and rejects malformed UTF-8", () => {
     expect(() =>
       extractDocument(Buffer.from("%PDF-1.4 /JavaScript (x) Tj %%EOF"), "application/pdf"),

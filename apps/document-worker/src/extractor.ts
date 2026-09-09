@@ -10,7 +10,9 @@ export class ExtractionFailure extends Error {
   }
 }
 const OUTPUT_MAX = 5 * 1024 * 1024,
-  DOCX_EXPANSION_MAX = 8,
+  DOCX_UNCOMPRESSED_MAX = 100 * 1024 * 1024,
+  DOCX_UNCOMPRESSED_FLOOR = 8 * 1024 * 1024,
+  DOCX_EXPANSION_MAX = 100,
   DOCX_ENTRY_MAX = 2000;
 export function extractDocument(
   input: Buffer,
@@ -57,6 +59,12 @@ function extractPdf(input: Buffer) {
 }
 function extractDocx(input: Buffer) {
   if (input[0] !== 0x50 || input[1] !== 0x4b) throw new ExtractionFailure("DOCX_MAGIC_MISMATCH", true);
+  // XML inside a normal DOCX compresses extremely well. Give small documents a
+  // practical floor while retaining both a ratio limit and a hard memory bound.
+  const uncompressedLimit = Math.min(
+    DOCX_UNCOMPRESSED_MAX,
+    Math.max(DOCX_UNCOMPRESSED_FLOOR, input.length * DOCX_EXPANSION_MAX),
+  );
   let total = 0,
     entries = 0;
   let files: Record<string, Uint8Array>;
@@ -65,7 +73,7 @@ function extractDocx(input: Buffer) {
       filter(file) {
         entries++;
         total += file.originalSize;
-        if (entries > DOCX_ENTRY_MAX || total > OUTPUT_MAX || total > input.length * DOCX_EXPANSION_MAX)
+        if (entries > DOCX_ENTRY_MAX || total > uncompressedLimit)
           throw new ExtractionFailure("DOCX_DECOMPRESSION_LIMIT", true);
         if (file.name.includes("..") || file.name.startsWith("/") || file.name.includes("\\"))
           throw new ExtractionFailure("DOCX_PATH_TRAVERSAL", true);
