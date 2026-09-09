@@ -166,7 +166,10 @@ app.get("/api/v1/me", profileReadHandler);
 app.get(["/api/v1/me/owned-courses", "/api/v1/me/owned-courses/:courseId"], learningAuthoring.owned);
 for (const method of ["GET", "POST"] as const) {
   const handler = protectedProxy.handler({
-    method, path: "/api/v1/me/avatar", purpose: "identity.profile.avatar", forwardBody: method === "POST",
+    method,
+    path: "/api/v1/me/avatar",
+    purpose: "identity.profile.avatar",
+    forwardBody: method === "POST",
     onInvalidBearer: () => {},
   });
   if (method === "GET") app.get("/api/v1/me/avatar", handler);
@@ -254,6 +257,22 @@ app.post(
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
   learningCommerce.orderCreate,
 );
+app.post("/api/v1/payments/sepay/webhook", async (req, res, next) => {
+  try {
+    const upstream = await fetch(new URL("/api/v1/payments/sepay/webhook", config.LEARNING_SERVICE_URL), {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: req.header("authorization") ?? "" },
+      body: JSON.stringify(req.body),
+      signal: AbortSignal.timeout(config.INTERNAL_HTTP_TIMEOUT_MS),
+    });
+    res
+      .status(upstream.status)
+      .type("application/json")
+      .send(await upstream.text());
+  } catch (error) {
+    next(error);
+  }
+});
 app.get("/api/v1/orders/:orderId", learningCommerce.orderRead);
 app.post(
   "/api/v1/orders/:orderId/simulate-payment",

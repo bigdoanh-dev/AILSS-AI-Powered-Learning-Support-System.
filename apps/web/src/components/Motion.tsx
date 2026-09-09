@@ -2,6 +2,111 @@ import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { flushSync } from "react-dom";
 import { mountScrollMotion } from "../motion/scroll";
+
+type RevealKind = "depth" | "line" | "mask" | "text";
+type RevealTarget = { element: HTMLElement; kind: RevealKind; delay: number };
+
+const GROUP_SELECTOR = [
+  ".account-grid",
+  ".admin-list",
+  ".ai-workspace-grid",
+  ".builder-question-list",
+  ".calendar-list",
+  ".card-grid",
+  ".check-list",
+  ".contact-grid",
+  ".course-grid",
+  ".experience-list",
+  ".feature-rail",
+  ".gallery-grid",
+  ".help-grid",
+  ".instructor-grid",
+  ".learning-modes-grid",
+  ".media-grid",
+  ".notification-list",
+  ".readiness-list",
+  ".service-grid",
+  ".study-grid",
+  ".timeline",
+  ".workspace-cards",
+].join(",");
+
+const PANEL_SELECTOR = [
+  ".admin-welcome",
+  ".ai-hero",
+  ".application-panel",
+  ".attendance-scroll",
+  ".auth-route-panel",
+  ".dashboard-heading",
+  ".form-panel",
+  ".preview-panel",
+  ".schedule-panel",
+  ".study-card",
+  ".verification-welcome",
+].join(",");
+
+function visibleBlock(element: HTMLElement) {
+  if (
+    element.matches("script,style,link,template,.route-loading,.sr-only,[role='dialog']") ||
+    element.closest("[hidden],[aria-hidden='true'],dialog:not([open]),[role='dialog']")
+  )
+    return false;
+  const style = getComputedStyle(element);
+  return (
+    style.display !== "none" &&
+    style.visibility !== "hidden" &&
+    style.position !== "fixed" &&
+    element.getBoundingClientRect().width > 1 &&
+    element.getBoundingClientRect().height > 1
+  );
+}
+
+function revealKind(element: HTMLElement): RevealKind {
+  const requested = element.dataset.reveal;
+  if (requested === "depth" || requested === "line" || requested === "mask" || requested === "text")
+    return requested;
+  if (element.matches("picture,img,table,.attendance-scroll,.gallery-item,.video-story")) return "mask";
+  if (element.matches("article,.study-card,.form-panel,.application-panel,.preview-panel")) return "depth";
+  return "text";
+}
+
+function siblingDelay(element: HTMLElement) {
+  const parent = element.parentElement;
+  if (!parent?.matches(GROUP_SELECTOR)) return 0;
+  const siblings = [...parent.children].filter((child): child is HTMLElement => child instanceof HTMLElement);
+  return Math.min(Math.max(0, siblings.indexOf(element)) * 120, 600);
+}
+
+/** Finds meaningful content blocks in every route, including items mounted after data loads. */
+function collectRevealTargets(root: HTMLElement): RevealTarget[] {
+  const candidates = new Map<HTMLElement, RevealTarget>();
+  const add = (element: Element, delay = 0) => {
+    if (!(element instanceof HTMLElement) || !visibleBlock(element)) return;
+    candidates.set(element, { element, kind: revealKind(element), delay: Math.max(delay, siblingDelay(element)) });
+  };
+
+  [...root.children].forEach((element) => add(element));
+  root.querySelectorAll<HTMLElement>(".section > .container").forEach((container) =>
+    [...container.children].forEach((element, index) => add(element, Math.min(index * 55, 220))),
+  );
+  root.querySelectorAll<HTMLElement>("section").forEach((section) => {
+    add(section);
+    if (!section.matches(PANEL_SELECTOR))
+      [...section.children].forEach((element, index) => add(element, Math.min(index * 55, 220)));
+  });
+  root.querySelectorAll<HTMLElement>(`${PANEL_SELECTOR},article,form,details,table,[data-reveal]`).forEach((element) =>
+    add(element),
+  );
+  root.querySelectorAll<HTMLElement>(GROUP_SELECTOR).forEach((group) =>
+    [...group.children].forEach((element, index) => add(element, Math.min(index * 120, 600))),
+  );
+
+  const all = [...candidates.values()];
+  return all.filter(
+    ({ element }) => !all.some(({ element: child }) => child !== element && element.contains(child)),
+  );
+}
+
 export function Motion() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -67,11 +172,13 @@ export function Motion() {
   useEffect(() => {
     const preference = matchMedia("(prefers-reduced-motion: reduce)");
     const animations = new Set<Animation>();
-    const seen = new WeakSet<Element>();
+    const tracked = new Set<HTMLElement>();
     let stopScroll: (() => void) | undefined;
-    const reveal = (element: Element) => {
+    const targetData = new WeakMap<HTMLElement, RevealTarget>();
+    const reveal = (element: HTMLElement) => {
+      element.classList.remove("motion-pending");
       if (preference.matches || !element.animate) return;
-      const kind = (element as HTMLElement).dataset.reveal;
+      const { kind, delay } = targetData.get(element) || { kind: revealKind(element), delay: 0 };
       const frames =
         kind === "mask"
           ? [
@@ -85,52 +192,61 @@ export function Motion() {
               ]
             : [
                 {
-                  opacity: 0.15,
-                  transform: `translateY(${kind === "text" ? 14 : 28}px) scale(${kind === "depth" ? 0.975 : 1})`,
+                  opacity: 0,
+                  transform: `translateY(${kind === "text" ? 56 : 72}px) scale(${kind === "depth" ? 0.975 : 1})`,
                 },
                 { opacity: 1, transform: "translateY(0) scale(1)" },
               ];
-      const targets = kind === "stagger" ? [...element.children] : [element];
-      targets.forEach((target, index) => {
-        const animation = target.animate(frames, {
-          duration: kind === "mask" ? 1000 : 820,
-          delay: Math.min(index * 65, 260),
-          easing: "cubic-bezier(.22,1,.36,1)",
-          fill: "backwards",
-        });
-        animations.add(animation);
-        animation.onfinish = () => animations.delete(animation);
+      const animation = element.animate(frames, {
+        duration: kind === "mask" ? 1400 : 1100,
+        delay,
+        easing: "cubic-bezier(.16,.65,.25,1)",
+        fill: "backwards",
       });
+      animations.add(animation);
+      animation.onfinish = () => animations.delete(animation);
     };
     const observer = new IntersectionObserver(
       (entries) => {
         for (const e of entries)
           if (e.isIntersecting) {
-            reveal(e.target);
+            reveal(e.target as HTMLElement);
             observer.unobserve(e.target);
           }
       },
-      { threshold: 0.01, rootMargin: "0px 0px 40px 0px" },
+      { threshold: 0.01, rootMargin: "0px 0px -90px 0px" },
     );
+    const retire = (element: HTMLElement) => {
+      observer.unobserve(element);
+      element.classList.remove("motion-pending");
+      delete element.dataset.motionReveal;
+      tracked.delete(element);
+      animations.forEach((animation) => {
+        if ((animation.effect as KeyframeEffect | null)?.target === element) {
+          animation.cancel();
+          animations.delete(animation);
+        }
+      });
+    };
     const scan = () => {
-      document
-        .querySelectorAll(
-          "main .section-heading, main .page-hero .container, main .hero-copy, main [data-reveal], main .feature-rail, main .experience-list, main .split > picture",
-        )
-        .forEach((element) => {
-          if (seen.has(element)) return;
-          seen.add(element);
-          if (!element.hasAttribute("data-reveal"))
-            (element as HTMLElement).dataset.reveal = element.matches("picture")
-              ? "mask"
-              : element.matches(".feature-rail,.experience-list")
-                ? "stagger"
-                : "text";
-          observer.observe(element);
-        });
       const root = document.querySelector<HTMLElement>("main");
+      if (!root) return;
+      const targets = collectRevealTargets(root);
+      const current = new Set(targets.map(({ element }) => element));
+      tracked.forEach((element) => {
+        if (!element.isConnected || !current.has(element)) retire(element);
+      });
+      targets.forEach((target) => {
+        const { element } = target;
+        targetData.set(element, target);
+        if (tracked.has(element)) return;
+        tracked.add(element);
+        element.dataset.motionReveal = target.kind;
+        if (!preference.matches && element.getBoundingClientRect().top >= innerHeight - 90)
+          element.classList.add("motion-pending");
+        observer.observe(element);
+      });
       if (
-        root &&
         !stopScroll &&
         !preference.matches &&
         matchMedia("(min-width: 761px) and (pointer: fine)").matches
@@ -138,18 +254,38 @@ export function Motion() {
         stopScroll = mountScrollMotion(root);
     };
     const mutations = new MutationObserver(scan);
-    mutations.observe(document.getElementById("root")!, { childList: true, subtree: true });
+    mutations.observe(document.getElementById("root")!, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["hidden", "open", "aria-hidden"],
+    });
     const reduce = () => {
       animations.forEach((a) => a.cancel());
+      animations.clear();
+      tracked.forEach((node) => {
+        observer.unobserve(node);
+        node.classList.remove("motion-pending");
+      });
       stopScroll?.();
       stopScroll = undefined;
-      if (!preference.matches) scan();
+      if (!preference.matches) {
+        tracked.forEach((node) => {
+          if (node.getBoundingClientRect().top >= innerHeight - 90) node.classList.add("motion-pending");
+          observer.observe(node);
+        });
+        scan();
+      }
     };
     preference.addEventListener("change", reduce);
     scan();
     return () => {
       observer.disconnect();
       mutations.disconnect();
+      tracked.forEach((node) => {
+        node.classList.remove("motion-pending");
+        delete node.dataset.motionReveal;
+      });
       animations.forEach((a) => a.cancel());
       stopScroll?.();
       preference.removeEventListener("change", reduce);

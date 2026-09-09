@@ -1,23 +1,27 @@
-import { useEffect, useRef, useState } from "react";
-import { Picture } from "./ui";
+import { useEffect, useRef } from "react";
 export function KnowledgeScene() {
   const host = useRef<HTMLDivElement>(null);
-  const [enabled, setEnabled] = useState(true);
   useEffect(() => {
     const element = host.current;
     if (!element) return;
     const motion = matchMedia("(prefers-reduced-motion: reduce)");
     let disposed = false;
+    let generation = 0;
     let cleanup: (() => void) | undefined;
     let observer: IntersectionObserver | undefined;
-    if (enabled && !motion.matches) {
+    const observe = () => {
+      const current = ++generation;
+      observer?.disconnect();
+      cleanup?.();
+      cleanup = undefined;
+      if (motion.matches) return;
       observer = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
             observer?.disconnect();
             void import("../lib/scene")
               .then(({ mountScene }) => {
-                if (!disposed) cleanup = mountScene(element);
+                if (!disposed && generation === current && !cleanup) cleanup = mountScene(element);
               })
               .catch(() => {
                 /* Poster remains fully available. */
@@ -27,24 +31,35 @@ export function KnowledgeScene() {
         { rootMargin: "80px" },
       );
       observer.observe(element);
-    }
+    };
+    observe();
+    motion.addEventListener("change", observe);
     return () => {
       disposed = true;
+      motion.removeEventListener("change", observe);
       observer?.disconnect();
       cleanup?.();
     };
-  }, [enabled]);
+  }, []);
   return (
-    <div className="knowledge-scene">
-      <Picture name="ai" alt="Kết nối tri thức với khối 3D và các học liệu chuyển động" eager />
+    <div
+      className="knowledge-scene"
+      tabIndex={0}
+      role="region"
+      aria-label="Không gian tri thức tương tác"
+      aria-description="Di chuyển chuột để tương tác với các hạt sáng. Kéo hoặc dùng phím mũi tên để xoay góc nhìn."
+    >
+      <div className="galaxy-poster" aria-hidden="true" />
       <div ref={host} className="webgl-layer" aria-hidden="true" />
-      <div className="orbit-label top">▤ Tài liệu của bạn</div>
-      <div className="orbit-label right">✧ AI kết nối ý tưởng</div>
-      <div className="orbit-label bottom">✓ Giảng viên hướng dẫn</div>
-      <span className="scene-status">Di chuyển chuột để khám phá</span>
-      <button className="scene-toggle" onClick={() => setEnabled(!enabled)} aria-pressed={enabled}>
-        {enabled ? "Tạm dừng hiệu ứng 3D" : "Bật hiệu ứng 3D"}
-      </button>
+      <div className="galaxy-caption">
+        <span>AILSS</span>
+        <strong>
+          Không gian
+          <br />
+          tri thức.
+        </strong>
+      </div>
+      <span className="scene-status">Di chuột để khám phá · Kéo để xoay</span>
     </div>
   );
 }

@@ -40,13 +40,17 @@ await startService(manifest, {
       loadPublicKey(config.ACTOR_CONTEXT_PUBLIC_KEY_PATH),
       loadPrivateKey(config.SERVICE_TOKEN_PRIVATE_KEY_PATH),
     ]);
-    const storage = new MinioStorage(config.OBJECT_STORAGE_BUCKET, {
-      endPoint: config.OBJECT_STORAGE_ENDPOINT,
-      port: config.OBJECT_STORAGE_PORT,
-      useSSL: config.OBJECT_STORAGE_USE_SSL,
-      accessKey: config.OBJECT_STORAGE_ACCESS_KEY,
-      secretKey: config.OBJECT_STORAGE_SECRET_KEY,
-    });
+    const storage = new MinioStorage(
+      config.OBJECT_STORAGE_BUCKET,
+      {
+        endPoint: config.OBJECT_STORAGE_ENDPOINT,
+        port: config.OBJECT_STORAGE_PORT,
+        useSSL: config.OBJECT_STORAGE_USE_SSL,
+        accessKey: config.OBJECT_STORAGE_ACCESS_KEY,
+        secretKey: config.OBJECT_STORAGE_SECRET_KEY,
+      },
+      config.OBJECT_STORAGE_PUBLIC_URL,
+    );
     const repository = new AiDocumentRepository(context.cassandra);
     const service = new AiDocumentService(
       repository,

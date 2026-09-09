@@ -1,3 +1,4 @@
+import { OperationResult } from "../components/OperationResult";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -9,7 +10,6 @@ import {
   safeContentUrl,
   type ClassItem,
   type SessionItem,
-  type Attendance,
 } from "./api";
 import { Heading, State, Empty, Status } from "./ui";
 import Discussion from "./Discussion";
@@ -17,9 +17,23 @@ import { Breadcrumbs, ScheduleTime, StateChip } from "../components/product";
 export function Classes() {
   const query = useStudent<ClassItem[]>("/me/classes"),
     [code, setCode] = useState(""),
-    [month, setMonth] = useState(monthNow()),
     navigate = useNavigate();
   const command = useCommand();
+  if (command.outcome === "failure")
+    return (
+      <OperationResult
+        success={false}
+        title="Chưa thể tham gia lớp"
+        onComplete={command.clear}
+        action={
+          <button className="button" onClick={command.clear}>
+            Kiểm tra lại mã lớp
+          </button>
+        }
+      >
+        <p>{command.message}</p>
+      </OperationResult>
+    );
   return (
     <>
       <Heading title="Lớp học của tôi">Theo dõi lịch học và kết nối với lớp của bạn.</Heading>
@@ -35,7 +49,15 @@ export function Classes() {
             if (joined) {
               setCode("");
               query.retry();
-              navigate("/app/classes/" + joined.classId);
+              navigate("/app/result", {
+                state: {
+                  success: true,
+                  title: "Tham gia lớp thành công",
+                  message: "Bạn đã được thêm vào lớp. Lịch học và thông báo đã sẵn sàng.",
+                  to: "/app/classes/" + joined.classId,
+                  label: "Vào lớp học",
+                },
+              });
             }
           }}
         >
@@ -71,58 +93,14 @@ export function Classes() {
           <Empty>Bạn chưa có lớp học. Nhập mã được giảng viên cung cấp để tham gia.</Empty>
         )}
       </State>
-      <section className="study-card">
-        <h2>Lịch học & điểm danh của tôi</h2>
-        <label>
-          Tháng (UTC)
-          <input
-            type="month"
-            required
-            value={month}
-            onChange={(e) => {
-              if (e.target.value) setMonth(e.target.value);
-            }}
-          />
-        </label>
-        <Schedule key={month} month={month} />
-      </section>
-    </>
-  );
-}
-function Schedule({ month }: { month: string }) {
-  const q = useStudent<SessionItem[]>("/me/schedule?" + new URLSearchParams(rangeForMonth(month))),
-    a = useStudent<Attendance[]>("/me/attendance?month=" + month);
-  return (
-    <>
-      <h3>Lịch đã xác nhận</h3>
-      <p className="muted">Lọc theo ngày UTC. Giờ từng buổi hiển thị theo múi giờ của lớp.</p>
-      <State query={q}>
-        {q.data?.length ? (
-          <Sessions items={q.data} />
-        ) : (
-          <Empty>Chưa có lịch học được xác nhận trong tháng.</Empty>
-        )}
-      </State>
-      <h3>Điểm danh đã ghi nhận</h3>
-      <State query={a}>
-        {a.data?.length ? (
-          a.data.map((v) => (
-            <p key={v.sessionId}>
-              {v.title} ·{" "}
-              {(
-                {
-                  PRESENT: "Có mặt",
-                  ABSENT: "Vắng",
-                  EXCUSED: "Vắng có phép",
-                  NOT_RECORDED: "Chưa ghi nhận",
-                } as Record<string, string>
-              )[v.attendanceStatus] || "Chưa ghi nhận"}
-            </p>
-          ))
-        ) : (
-          <Empty>Chưa có dữ liệu điểm danh trong tháng.</Empty>
-        )}
-      </State>
+      <div className="inline-actions">
+        <Link className="button secondary" to="/app/schedule">
+          Lịch học
+        </Link>
+        <Link className="button secondary" to="/app/attendance">
+          Thông tin điểm danh
+        </Link>
+      </div>
     </>
   );
 }

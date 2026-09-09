@@ -238,6 +238,10 @@ services:
       {
         <<: *app-env,
         PORT: 8102,
+        SEPAY_WEBHOOK_API_KEY: "${SEPAY_WEBHOOK_API_KEY:-}",
+        SEPAY_ACCOUNT_NUMBER: "${SEPAY_ACCOUNT_NUMBER:-}",
+        SEPAY_ACCOUNT_NAME: "${SEPAY_ACCOUNT_NAME:-}",
+        SEPAY_BANK: "${SEPAY_BANK:-}",
         CASSANDRA_KEYSPACE: learning_keyspace,
         CASSANDRA_USERNAME: svc_learning,
         CASSANDRA_PASSWORD: "${CASSANDRA_SVC_LEARNING_PASSWORD}",
@@ -435,6 +439,7 @@ services:
 
   ai-worker:
     <<: *app-common
+    networks: [service_net, data_net, ai_egress]
     profiles: [dev-async, research, demo]
     container_name: ailss-ai-worker
     command: ["dist/apps/ai-worker/src/server.js"]
@@ -449,6 +454,7 @@ services:
         AI_PROVIDER_ENDPOINT: "${AI_PROVIDER_ENDPOINT:-https://api.openai.com/v1/chat/completions}",
         AI_PROVIDER_MODEL: "${AI_PROVIDER_MODEL:-gpt-5-mini}",
         AI_PROVIDER_API_KEY: "${AI_PROVIDER_API_KEY:-<INJECTED>}",
+        AI_PROVIDER_TIMEOUT_MS: "${AI_PROVIDER_TIMEOUT_MS:-45000}",
         LEARNING_SERVICE_URL: "http://learning-service:8102",
         CLASSROOM_SERVICE_URL: "http://classroom-service:8103",
         SERVICE_TOKEN_PRIVATE_KEY_PATH: "/run/ailss/services/ai-private.pem",
@@ -545,6 +551,7 @@ services:
     cpus: 0.25
 
 networks:
+  ai_egress: { name: ailss_ai_egress }
   edge_net: { name: ailss_edge_net }
   # Loopback-published management/API ports need one non-internal network on
   # Docker Desktop. Application traffic still uses the isolated data_net.

@@ -185,6 +185,10 @@ export function createSessionAdapter({
       if (verificationMatch) allowed[route] = "POST";
       const isLibrary = /^\/web-session\/library(?:\/[a-f0-9]{24})?$/.test(route);
       if (isLibrary && !production && ["GET", "HEAD"].includes(method)) allowed[route] = method;
+      const isNotification =
+        route === "/web-session/notifications" ||
+        /^\/web-session\/notifications\/[a-f0-9-]{36}\/read$/i.test(route);
+      if (isNotification) allowed[route] = route.endsWith("/read") ? "PATCH" : "GET";
       const isStudent = route.startsWith("/web-session/student/");
       const isLecturer = route.startsWith("/web-session/lecturer/");
       const isAdmin = route.startsWith("/web-session/admin/");
@@ -224,6 +228,36 @@ export function createSessionAdapter({
       if (!s) {
         res.setHeader("Set-Cookie", cookie("", 0));
         throw new SessionError(401, "SESSION_EXPIRED");
+      }
+      if (isNotification) {
+        const profile = await protectedCall(s, "/me");
+        if (profile.status !== "ACTIVE" || !["STUDENT", "LECTURER", "ADMIN"].includes(profile.role))
+          throw new SessionError(403, "ACCOUNT_DISABLED");
+        const locator = body?.locator;
+        if (method === "PATCH" && (!body || Object.keys(body).length !== 1 || typeof locator !== "string"))
+          throw new SessionError(400, "INVALID_NOTIFICATION_REQUEST");
+        let operation;
+        try {
+          operation = studentOperation(
+            req.url.replace("/web-session/notifications", "/web-session/student/notifications"),
+            method,
+            method === "PATCH" ? {} : undefined,
+            { "x-notification-locator": locator },
+          );
+        } catch {
+          throw new SessionError(400, "INVALID_NOTIFICATION_REQUEST");
+        }
+        if (!operation) throw new SessionError(400, "INVALID_NOTIFICATION_REQUEST");
+        const value = await protectedCall(
+          s,
+          operation.path,
+          method,
+          method === "PATCH" ? {} : undefined,
+          undefined,
+          { kind: "student", headers: operation.headers },
+        );
+        send(200, value);
+        return true;
       }
       if (isLibrary && !production) {
         const profile = await protectedCall(s, "/me");

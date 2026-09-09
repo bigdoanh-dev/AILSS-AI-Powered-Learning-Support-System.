@@ -1,3 +1,4 @@
+import { sepayConfig, paymentOrderId, type SepayTransaction } from "./sepay.js";
 import { randomUUID } from "node:crypto";
 import { AppError } from "../../../../packages/http/src/index.js";
 import type { ActorContext } from "../../../../packages/security/src/index.js";
@@ -180,6 +181,17 @@ export class LearningCommerceService {
         true,
       );
     const offering = await this.requireOffering(input.request.offeringId, now);
+    if (
+      offering.currency !== "VND" ||
+      !/^\d+(?:\.0+)?$/.test(offering.price) ||
+      !Number.isSafeInteger(Number(offering.price)) ||
+      Number(offering.price) <= 0
+    )
+      throw new AppError(
+        "PAYMENT_CURRENCY_UNSUPPORTED",
+        422,
+        "Thanh toán SePay yêu cầu số tiền VND nguyên và lớn hơn 0",
+      );
     let reservationId: string | undefined, reservationOperationId: string | undefined;
     if (offering.offeringType === "LIVE_COHORT") {
       if (!offering.classId || !input.classroomActorContext)
@@ -262,6 +274,65 @@ export class LearningCommerceService {
     if (order.studentId !== actor.userId && !actor.roles.includes("ADMIN"))
       throw notFound("ORDER_NOT_FOUND", "Order not found");
     return orderDto(order);
+  }
+
+  async receiveSepay(transaction: SepayTransaction, correlationId: string) {
+    const config = sepayConfig();
+    if (transaction.transferType !== "in" || transaction.accountNumber !== config.accountNumber)
+      return { success: true, processed: false };
+    const orderId = paymentOrderId(transaction.content);
+    if (!orderId) return { success: true, processed: false };
+    let order = await this.repo.order(orderId);
+    if (!order) return { success: true, processed: false };
+    if (
+      order.currency !== "VND" ||
+      !/^\d+(?:\.0+)?$/.test(order.price) ||
+      !Number.isSafeInteger(Number(order.price)) ||
+      Number(order.price) !== transaction.transferAmount
+    )
+      throw new AppError("PAYMENT_AMOUNT_MISMATCH", 422, "Transfer amount does not match order");
+    if (order.state === "PAYMENT_FAILED")
+      throw conflict(
+        "PAYMENT_REQUIRES_REVIEW",
+        "Transfer received for a failed order; manual review required",
+      );
+    const payment = await this.repo.claimSepayTransaction(
+      String(transaction.id),
+      orderId,
+      fingerprint(this.secret, {
+        orderId,
+        accountNumber: transaction.accountNumber,
+        amount: transaction.transferAmount,
+        type: transaction.transferType,
+      }),
+      new Date(),
+    );
+    if (payment.transactionId !== String(transaction.id))
+      throw conflict("DUPLICATE_ORDER_TRANSFER", "Additional transfer requires manual review");
+    const occurredAt = order.paidAt ?? payment.receivedAt;
+    if (order.state === "PENDING") {
+      await this.repo.prepareEvent({
+        eventId: order.paidEventId,
+        eventType: "learning.order.paid.v1",
+        aggregateId: orderId,
+        aggregateType: "ORDER",
+        version: order.version + 1,
+        occurredAt,
+        correlationId,
+        data: {
+          orderId,
+          studentId: order.studentId,
+          offeringId: order.offeringId,
+          courseId: order.courseId,
+          version: order.version + 1,
+        },
+      });
+      await this.repo.transitionPayment(order, true, occurredAt);
+      order = await this.repo.order(orderId);
+      if (!order || !["PAID_PENDING_ENTITLEMENT", "ENTITLED"].includes(order.state)) throw unavailable();
+    }
+    await this.repo.readyEvent(order.paidEventId, occurredAt);
+    return { success: true, processed: true };
   }
 
   async simulatePayment(input: {

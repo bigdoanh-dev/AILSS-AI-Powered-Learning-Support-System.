@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useSession, roleLabel } from "../auth/session";
 import { Logo } from "./Logo";
 import { Dialog } from "./ui";
@@ -7,6 +7,7 @@ import { Avatar, ThemeToggle } from "./Preferences";
 
 export function SiteHeader() {
   const auth = useSession();
+  const navigate = useNavigate();
   const location = useLocation();
   const [menu, setMenu] = useState(false);
   const [mobile, setMobile] = useState(false);
@@ -23,6 +24,16 @@ export function SiteHeader() {
     try {
       await auth.logout();
       setMenu(false);
+      navigate("/auth/result", {
+        replace: true,
+        state: {
+          success: true,
+          title: "Đăng xuất thành công",
+          message: "Phiên đăng nhập đã kết thúc.",
+          to: "/auth/login",
+          label: "Đăng nhập lại",
+        },
+      });
     } catch {
       setError("Chưa thể đăng xuất. Vui lòng thử lại.");
     } finally {
@@ -33,9 +44,25 @@ export function SiteHeader() {
     <>
       <NavLink to="/courses">Khóa học</NavLink>
       {p ? (
-        <NavLink to="/app">
-          {p.role === "ADMIN" ? "Quản trị" : p.role === "LECTURER" ? "Giảng dạy" : "Học tập"}
-        </NavLink>
+        <>
+          <Link className="notification-shortcut" to="/app/notifications" aria-label="Mở thông báo">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              aria-hidden="true"
+            >
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+            </svg>{" "}
+            Thông báo
+          </Link>
+          <NavLink to="/app">
+            {p.role === "ADMIN" ? "Quản trị" : p.role === "LECTURER" ? "Giảng dạy" : "Học tập"}
+          </NavLink>
+        </>
       ) : (
         <NavLink to="/lecturers">Dành cho giảng viên</NavLink>
       )}

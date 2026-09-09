@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { ApiError } from "../lib/api";
 import { Breadcrumbs, EmptyState, StateChip, useUnsavedChanges } from "../components/product";
 import { lecturerError, lecturerRequest, month, useLecturer } from "./api";
@@ -98,7 +98,10 @@ function useDocument(documentId: string) {
     [error, setError] = useState(""),
     [stalled, setStalled] = useState(false);
   useEffect(() => {
-    if (!documentId) return;
+    setValue(undefined);
+    setError("");
+    setStalled(false);
+    if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(documentId)) return;
     const controller = new AbortController(),
       started = Date.now();
     let timer = 0,
@@ -145,10 +148,16 @@ function useDocument(documentId: string) {
       document.removeEventListener("visibilitychange", visible);
     };
   }, [documentId]);
-  return { value, error, stalled };
+  return { value: value?.documentId === documentId ? value : undefined, error, stalled };
 }
 
 export function AiStudio() {
+  const navigate = useNavigate();
+  const [targetType, setTargetType] = useState("COURSE");
+  const [uploading, setUploading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const flight = useRef(false);
+  const uploadFlight = useRef(false);
   const [filter, setFilter] = useState<JobState>("AI_DRAFT"),
     [cursor, setCursor] = useState(""),
     [documentId, setDocumentId] = useState(""),
@@ -173,9 +182,22 @@ export function AiStudio() {
       : [];
   async function upload(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (uploadFlight.current) return;
     const file = new FormData(e.currentTarget).get("file") as File;
-    if (!file?.size || !supported.has(file.type) || file.size > 25 * 1024 * 1024)
+    const contentType =
+      file?.type ||
+      (file?.name.toLowerCase().endsWith(".docx")
+        ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        : file?.name.toLowerCase().endsWith(".txt")
+          ? "text/plain"
+          : file?.name.toLowerCase().endsWith(".pdf")
+            ? "application/pdf"
+            : "");
+    if (!file?.size || !supported.has(contentType) || file.size > 25 * 1024 * 1024)
       return setMsg("Chọn tệp PDF, DOCX hoặc TXT có dung lượng không quá 25 MiB.");
+    uploadFlight.current = true;
+    setUploading(true);
+    setMsg("");
     let ephemeral: Intent | undefined;
     try {
       setUploadStage("Đang chuẩn bị tải lên");
@@ -183,7 +205,7 @@ export function AiStudio() {
       ephemeral = (
         await lecturerRequest<Intent>("/ai/documents/upload-intents", "POST", {
           fileName: file.name,
-          contentType: file.type,
+          contentType,
           sizeBytes: file.size,
           sha256: checksum,
         })
@@ -191,8 +213,9 @@ export function AiStudio() {
       setUploadStage("Đang tải tài liệu");
       const put = await fetch(ephemeral.uploadUrl, {
         method: "PUT",
-        headers: { "Content-Type": file.type },
+        headers: { "Content-Type": contentType },
         body: file,
+        signal: AbortSignal.timeout(120000),
       });
       if (!put.ok) throw Error("UPLOAD_FAILED");
       setUploadStage("Đang xác nhận");
@@ -200,24 +223,36 @@ export function AiStudio() {
         objectKey: ephemeral.objectKey,
         sizeBytes: file.size,
         sha256: checksum,
-        contentType: file.type,
+        contentType,
       });
       setDocumentId(ephemeral.documentId);
       setUploadStage("Đang xử lý nội dung");
       setMsg("Tài liệu đã tải lên. Hệ thống đang xử lý nội dung.");
     } catch (x) {
       setUploadStage("");
-      setMsg(lecturerError(x));
+      setMsg(
+        x instanceof TypeError
+          ? "Không kết nối được máy chủ tải tệp. Kiểm tra địa chỉ kho tài liệu và kết nối mạng rồi thử lại."
+          : lecturerError(x),
+      );
     } finally {
+      uploadFlight.current = false;
+      setUploading(false);
       ephemeral = undefined;
     }
   }
   async function generate(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (flight.current) return;
     if (documentQuery.value?.status !== "EXTRACTED") return setMsg("Tài liệu vẫn đang được xử lý.");
     const f = new FormData(e.currentTarget),
       questionTypes = f.getAll("questionTypes").map(String);
     if (!questionTypes.length) return setMsg("Chọn ít nhất một loại câu hỏi.");
+    if (Number(f.get("questionCount")) < questionTypes.length)
+      return setMsg("Số câu cần ít nhất bằng số loại câu hỏi đã chọn.");
+    flight.current = true;
+    setGenerating(true);
+    setMsg("");
     try {
       const r = await lecturerRequest<Job>("/ai/quiz-jobs", "POST", {
         documentId,
@@ -228,13 +263,16 @@ export function AiStudio() {
         difficulty: String(f.get("difficulty")),
       });
       setMsg("Yêu cầu đã được tạo. AI sẽ chuẩn bị một bản nháp để bạn xem lại.");
-      location.assign(`/app/teaching/ai/jobs/${r.data.jobId}`);
+      navigate(`/app/teaching/ai/jobs/${r.data.jobId}`);
     } catch (x) {
       setMsg(
         x instanceof ApiError && x.status === 503
           ? "Chưa thể xác nhận yêu cầu đã được tạo. Hãy thử lại để tiếp tục yêu cầu trước."
           : lecturerError(x),
       );
+    } finally {
+      flight.current = false;
+      setGenerating(false);
     }
   }
   return (
@@ -270,9 +308,22 @@ export function AiStudio() {
               />
             </label>
             <p>Tối đa 25 MiB. Trình duyệt tính SHA-256; máy chủ vẫn xác minh tệp.</p>
-            <button className="button">Tải tài liệu</button>
+            <button className="button" disabled={uploading}>
+              {uploading ? "Đang tải tài liệu…" : "Tải tài liệu"}
+            </button>
           </form>
-          {uploadStage && <p role="status">{uploadStage}</p>}
+          {uploadStage && (
+            <p role="status">
+              {documentQuery.value?.status === "EXTRACTED"
+                ? "Tài liệu đã sẵn sàng — bạn có thể tạo câu hỏi."
+                : uploadStage}
+            </p>
+          )}
+          {msg && (
+            <p className="ai-feedback" role="status">
+              {msg}
+            </p>
+          )}
           <label>
             Hoặc dùng mã tài liệu bạn đã tải
             <input value={documentId} onChange={(e) => setDocumentId(e.target.value)} />
@@ -298,25 +349,27 @@ export function AiStudio() {
           <form className="form-grid" onSubmit={(e) => void generate(e)}>
             <label>
               Đích sử dụng
-              <select name="targetType">
+              <select name="targetType" value={targetType} onChange={(e) => setTargetType(e.target.value)}>
                 <option value="COURSE">Khóa học</option>
                 <option value="CLASS">Lớp học</option>
               </select>
             </label>
             <label>
               Khóa học hoặc lớp
-              <select name="targetId" required>
+              <select name="targetId" key={targetType} required>
                 <option value="">Chọn đích</option>
-                {courseItems.map((x) => (
-                  <option key={x.courseId} value={x.courseId}>
-                    {x.title}
-                  </option>
-                ))}
-                {classItems.map((x) => (
-                  <option key={x.classId} value={x.classId}>
-                    {x.name}
-                  </option>
-                ))}
+                {targetType === "COURSE" &&
+                  courseItems.map((x) => (
+                    <option key={x.courseId} value={x.courseId}>
+                      {x.title}
+                    </option>
+                  ))}
+                {targetType === "CLASS" &&
+                  classItems.map((x) => (
+                    <option key={x.classId} value={x.classId}>
+                      {x.name}
+                    </option>
+                  ))}
               </select>
             </label>
             <label>
@@ -345,10 +398,21 @@ export function AiStudio() {
               ))}
             </fieldset>
             <p>AI sẽ tạo một bản nháp. Bạn cần kiểm tra nội dung và đáp án trước khi phê duyệt.</p>
-            <button className="button" disabled={documentQuery.value?.status !== "EXTRACTED"}>
-              Tạo câu hỏi từ học liệu
+            <button
+              className="button"
+              disabled={uploading || generating || documentQuery.value?.status !== "EXTRACTED"}
+            >
+              {generating ? "Đang tạo yêu cầu…" : "Tạo câu hỏi từ học liệu"}
             </button>
-            {documentQuery.value?.status !== "EXTRACTED" && <small>Tài liệu vẫn đang được xử lý.</small>}
+            {documentQuery.value?.status !== "EXTRACTED" && (
+              <small>
+                {!documentId
+                  ? "Tải tài liệu ở bước 1 để bắt đầu."
+                  : documentQuery.error
+                    ? "Chưa đọc được tài liệu. Kiểm tra mã tài liệu."
+                    : "Đợi tài liệu xử lý xong trước khi tạo câu hỏi."}
+              </small>
+            )}
           </form>
         </section>
       </div>
@@ -684,7 +748,7 @@ function ReviewEditor({ draft }: { draft: Draft }) {
             ))}
           </div>
         </aside>
-        <main className="builder-editor">
+        <section className="builder-editor" aria-label="Chỉnh sửa câu hỏi">
           <label>
             Tiêu đề
             <input
@@ -697,7 +761,7 @@ function ReviewEditor({ draft }: { draft: Draft }) {
             />
           </label>
           {question && <ObjectiveEditor q={question} update={update} />}
-        </main>
+        </section>
         <aside className="builder-summary">
           <h3>Tóm tắt kiểm tra</h3>
           <p>

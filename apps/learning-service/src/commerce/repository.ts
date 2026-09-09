@@ -20,6 +20,38 @@ const uuid = (v: string) => types.Uuid.fromString(v),
 
 export class LearningCommerceRepository {
   public constructor(private readonly db: CassandraClient) {}
+  async claimSepayTransaction(transactionId: string, orderId: string, fingerprint: string, now: Date) {
+    await this.db.execute(
+      `INSERT INTO sepay_transaction_by_id (transaction_id,order_id,fingerprint,received_at) VALUES (?,?,?,?) IF NOT EXISTS`,
+      [transactionId, uuid(orderId), fingerprint, now],
+      LQ,
+      LS,
+    );
+    const row = (
+      await this.db.execute(
+        `SELECT order_id,fingerprint FROM sepay_transaction_by_id WHERE transaction_id=?`,
+        [transactionId],
+        LQ,
+      )
+    )[0];
+    if (!row || String(row.order_id) !== orderId || row.fingerprint !== fingerprint)
+      throw new Error("SEPAY_TRANSACTION_CONFLICT");
+    await this.db.execute(
+      `INSERT INTO sepay_payment_by_order (order_id,transaction_id,received_at) VALUES (?,?,?) IF NOT EXISTS`,
+      [uuid(orderId), transactionId, now],
+      LQ,
+      LS,
+    );
+    const payment = (
+      await this.db.execute(
+        `SELECT transaction_id,received_at FROM sepay_payment_by_order WHERE order_id=?`,
+        [uuid(orderId)],
+        LQ,
+      )
+    )[0];
+    if (!payment) throw new Error("SEPAY_PAYMENT_UNAVAILABLE");
+    return { transactionId: String(payment.transaction_id), receivedAt: date(payment.received_at) };
+  }
   async offering(id: string): Promise<Offering | undefined> {
     const r = (
       await this.db.execute(

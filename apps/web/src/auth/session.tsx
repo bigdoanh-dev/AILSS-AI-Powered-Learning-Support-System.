@@ -24,9 +24,10 @@ export function safeReturnTo(value: string | null): string {
     return value;
   if (/^\/app\/(?:teaching|admin)(?:\/[a-zA-Z0-9-]+)*$/.test(value)) return value;
   const id = "[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}";
+  if (new RegExp(`^/app/purchase/${id}(?:\\?order=${id})?$`).test(value)) return value;
   if (
     new RegExp(
-      `^/app/(?:learn(?:/${id}(?:/lessons/${id})?)?|classes(?:/${id})?|assessments(?:/${id})?|attempts/${id}(?:/result)?|progress|notifications|resources)$`,
+      `^/app/(?:purchase/${id}|learn(?:/${id}(?:/lessons/${id})?)?|classes(?:/${id})?|assessments(?:/${id})?|attempts/${id}(?:/result)?|schedule|attendance|progress|notifications|resources)$`,
     ).test(value)
   )
     return value;

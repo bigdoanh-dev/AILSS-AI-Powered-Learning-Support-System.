@@ -1,7 +1,7 @@
 import { CourseArtwork } from "../components/CourseArtwork";
 import { CourseSearch } from "../pages/Courses";
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useSession } from "../auth/session";
 import { normalizeQuery } from "../lib/api";
 import {
@@ -202,6 +202,7 @@ function CourseCards({ items }: { items: LearningCourse[] }) {
   );
 }
 export function CourseLearning() {
+  const navigate = useNavigate();
   const { courseId = "", lessonId } = useParams();
   const [lessonSearch, setLessonSearch] = useState("");
   const course = useStudent<LearningCourse>("/courses/" + courseId),
@@ -225,8 +226,17 @@ export function CourseLearning() {
                       className="button"
                       disabled={command.busy}
                       onClick={async () => {
-                        if (await command.run("/courses/" + courseId + "/enrollments", "POST"))
-                          progress.retry();
+                        if (await command.run("/courses/" + courseId + "/enrollments", "POST")) {
+                          navigate("/app/result", {
+                            state: {
+                              success: true,
+                              title: "Đăng ký khóa học thành công",
+                              message: "Khóa học miễn phí đã được thêm vào tài khoản của bạn.",
+                              to: "/app/learn/" + courseId,
+                              label: "Bắt đầu học",
+                            },
+                          });
+                        }
                       }}
                     >
                       Đăng ký học miễn phí

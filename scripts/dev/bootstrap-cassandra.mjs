@@ -63,6 +63,7 @@ const files = [
   "023_learning_course_offerings.cql",
   "024_learning_entitlement_commerce.cql",
   "025_learning_progress.cql",
+  "026_learning_sepay.cql",
   "030_classroom_schema.cql",
   "031_classroom_class_model.cql",
   "032_classroom_sessions.cql",

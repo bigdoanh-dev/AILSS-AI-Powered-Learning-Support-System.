@@ -218,21 +218,58 @@ export function Auth() {
         }
         key.current ??= crypto.randomUUID();
         await sessionRequest("register", "POST", body, key.current);
-        setStatus(lecturer ? "Tài khoản giảng viên đã được tạo. Đăng nhập để hoàn thiện hồ sơ." : "Tài khoản học viên đã được tạo. Bạn có thể đăng nhập.");
         key.current = null;
         form.reset();
-        if (new URLSearchParams(location.search).get("returnTo") === "/auth/register/lecturer")
-          navigate("/auth/login?returnTo=%2Fauth%2Fregister%2Flecturer");
+        navigate("/auth/result", {
+          replace: true,
+          state: {
+            success: true,
+            title: "Đăng ký thành công",
+            message: lecturer
+              ? "Tài khoản giảng viên đã được tạo. Đăng nhập để hoàn thiện hồ sơ."
+              : "Tài khoản học viên đã được tạo. Bạn có thể đăng nhập.",
+            to: lecturer ? "/auth/login?returnTo=%2Fauth%2Fregister%2Flecturer" : "/auth/login",
+            label: "Đăng nhập",
+          },
+        });
       } else {
         await auth.login({
           email: String(data.get("email")).trim().toLowerCase(),
           password: data.get("password"),
         });
-        navigate(safeReturnTo(new URLSearchParams(location.search).get("returnTo")), { replace: true });
+        navigate("/auth/result", {
+          replace: true,
+          state: {
+            success: true,
+            title: "Đăng nhập thành công",
+            message: "Tài khoản đã sẵn sàng. Bạn có thể tiếp tục công việc của mình.",
+            to: safeReturnTo(new URLSearchParams(location.search).get("returnTo")),
+            label: "Tiếp tục",
+          },
+        });
         form.reset();
       }
     } catch (error) {
-      setStatus(errorMessage(error));
+      if (register)
+        navigate("/auth/result", {
+          state: {
+            success: false,
+            title: "Đăng ký chưa thành công",
+            message: errorMessage(error),
+            to: location.pathname + location.search,
+            label: "Quay lại đăng ký",
+          },
+        });
+      else
+        navigate("/auth/result", {
+          state: {
+            success: false,
+            title: "Đăng nhập chưa thành công",
+            message: errorMessage(error),
+            to: location.pathname + location.search,
+            label: "Quay lại đăng nhập",
+          },
+        });
     } finally {
       setBusy(false);
     }
@@ -242,7 +279,16 @@ export function Auth() {
     setBusy(true);
     try {
       await auth.logout();
-      setStatus("Đã đăng xuất và thu hồi phiên hiện tại.");
+      navigate("/auth/result", {
+        replace: true,
+        state: {
+          success: true,
+          title: "Đăng xuất thành công",
+          message: "Phiên đăng nhập đã kết thúc.",
+          to: "/auth/login",
+          label: "Đăng nhập lại",
+        },
+      });
     } catch (e) {
       setStatus(errorMessage(e));
     } finally {
@@ -255,7 +301,9 @@ export function Auth() {
         {choose
           ? "BƯỚC TIẾP THEO CỦA BẠN"
           : register
-            ? lecturer ? "TÀI KHOẢN GIẢNG VIÊN" : "TÀI KHOẢN HỌC VIÊN"
+            ? lecturer
+              ? "TÀI KHOẢN GIẢNG VIÊN"
+              : "TÀI KHOẢN HỌC VIÊN"
             : lecturer
               ? "DÀNH CHO GIẢNG VIÊN"
               : "CHÀO MỪNG ĐẾN AILSS"}
@@ -321,7 +369,13 @@ export function Auth() {
         ) : (
           <form aria-busy={busy} onSubmit={(e) => void submit(e)}>
             <h2 className="sr-only">{register ? "Tạo tài khoản" : "Đăng nhập"}</h2>
-            <p>{register ? (lecturer ? "Đăng ký trực tiếp tài khoản giảng viên. Quyền giảng dạy sẽ mở sau khi quản trị viên xác minh." : "Tạo tài khoản để bắt đầu học.") : "Tiếp tục với tài khoản AILSS của bạn."}</p>
+            <p>
+              {register
+                ? lecturer
+                  ? "Đăng ký trực tiếp tài khoản giảng viên. Quyền giảng dạy sẽ mở sau khi quản trị viên xác minh."
+                  : "Tạo tài khoản để bắt đầu học."
+                : "Tiếp tục với tài khoản AILSS của bạn."}
+            </p>
             {register && (
               <label>
                 Họ và tên

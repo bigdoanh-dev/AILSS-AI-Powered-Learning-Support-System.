@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
-import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSession, roleLabel } from "../auth/session";
 import { SiteHeader } from "../components/SiteHeader";
 import { Avatar, useAvatar } from "../components/Preferences";
@@ -16,7 +16,12 @@ export function AppShell() {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location.pathname]);
   if (auth.state === "UNAUTHENTICATED")
-    return <Navigate to={`/auth/login?returnTo=${encodeURIComponent(location.pathname)}`} replace />;
+    return (
+      <Navigate
+        to={`/auth/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
+        replace
+      />
+    );
   if (!auth.profile)
     return (
       <>
@@ -41,20 +46,26 @@ export function AppShell() {
           ["/app/admin/lecturer-applications", "Giảng viên"],
           ["/app/admin/courses", "Khóa học"],
           ["/app/admin/moderation", "Kiểm duyệt"],
+          ["/app/notifications", "Thông báo"],
         ]
       : role === "LECTURER"
         ? [
             ["/app", "Tổng quan"],
             ["/app/teaching", "Khóa học của tôi"],
             ["/app/teaching/classes", "Lớp phụ trách"],
+            ["/app/teaching/schedule", "Lịch dạy"],
+            ["/app/teaching/attendance", "Điểm danh"],
             ["/app/teaching/offerings", "Đợt mở bán"],
             ["/app/teaching/assessments", "Bài kiểm tra"],
             ["/app/teaching/ai", "Trợ lý AI"],
+            ["/app/notifications", "Thông báo"],
           ]
         : [
             ["/app", "Tổng quan"],
             ["/app/learn", "Khóa học của tôi"],
             ["/app/classes", "Lớp học"],
+            ["/app/schedule", "Lịch học"],
+            ["/app/attendance", "Điểm danh"],
             ["/app/assessments", "Bài kiểm tra"],
             ["/app/progress", "Tiến độ"],
             ["/app/notifications", "Thông báo"],
@@ -113,6 +124,18 @@ export function AppHome() {
   );
 }
 export function Account() {
+  const navigate = useNavigate();
+  function result(success: boolean, message: string) {
+    navigate("/app/result", {
+      state: {
+        success,
+        title: success ? "Cập nhật thành công" : "Cập nhật chưa thành công",
+        message,
+        to: "/app/account",
+        label: "Về tài khoản",
+      },
+    });
+  }
   const auth = useSession();
   const avatar = useAvatar();
   const p = auth.profile;
@@ -148,9 +171,9 @@ export function Account() {
       bitmap.close();
       await sessionRequest("avatar", "POST", { dataUrl: canvas.toDataURL("image/jpeg", 0.84) });
       avatar.reload();
-      setMessage("Đã lưu ảnh đại diện. Ảnh sẽ xuất hiện trên tài khoản của bạn.");
+      result(true, "Đã lưu ảnh đại diện. Ảnh sẽ xuất hiện trên tài khoản của bạn.");
     } catch (e) {
-      setMessage(e instanceof Error && !("status" in e) ? e.message : errorMessage(e));
+      result(false, e instanceof Error && !("status" in e) ? e.message : errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -160,9 +183,9 @@ export function Account() {
     try {
       await sessionRequest("avatar", "POST", { dataUrl: null });
       avatar.reload();
-      setMessage("Đã xóa ảnh đại diện.");
+      result(true, "Đã xóa ảnh đại diện.");
     } catch (e) {
-      setMessage(errorMessage(e));
+      result(false, errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -189,14 +212,24 @@ export function Account() {
           passwordAttempt.current = { digest, key: crypto.randomUUID() };
         await auth.password(body, passwordAttempt.current.key);
         form.reset();
+        navigate("/auth/result", {
+          replace: true,
+          state: {
+            success: true,
+            title: "Đổi mật khẩu thành công",
+            message: "Vui lòng đăng nhập lại bằng mật khẩu mới.",
+            to: "/auth/login",
+            label: "Đăng nhập lại",
+          },
+        });
       } else {
         const value = String(data.get("displayName")).trim();
         if (nameAttempt.current.value !== value) nameAttempt.current = { value, key: crypto.randomUUID() };
         await auth.update(value, nameAttempt.current.key);
-        setMessage("Đã cập nhật tên từ hồ sơ chính thức.");
+        result(true, "Tên hiển thị đã được cập nhật.");
       }
     } catch (error) {
-      setMessage(errorMessage(error));
+      result(false, errorMessage(error));
     } finally {
       setBusy(false);
     }

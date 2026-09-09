@@ -54,7 +54,7 @@ function fixture(options = {}) {
       data:
         mode === "lecturer"
           ? { ...profile, role: "LECTURER", lecturerVerified: options.verified === true }
-          : profile,
+          : { ...profile, role: options.role || profile.role },
     });
   };
   const handle = createSessionAdapter({
@@ -313,4 +313,28 @@ test("Student response mapping preserves opaque pagination and rejects private a
       () => studentEnvelope({ data: { questions: [{ [field]: "private" }] } }),
       /UNSAFE_STUDENT_RESPONSE/,
     );
+});
+
+for (const role of ["STUDENT", "LECTURER", "ADMIN"])
+  test(`Shared notifications authenticate ${role} and validate requests`, async () => {
+    const f = fixture({ role });
+    const login = await f.request("login", "POST", { email: "test@example.com", password: "test" });
+    const read = await f.request("notifications?month=2026-09&limit=20", "GET", undefined, login.cookie);
+    assert.equal(read.status, 200);
+    assert.equal(f.calls.at(-1).route, "/api/v1/notifications");
+    const bad = await f.request("notifications?month=2026-09&userId=other", "GET", undefined, login.cookie);
+    assert.equal(bad.status, 400);
+    const unauth = await f.request("notifications?month=2026-09", "GET");
+    assert.equal(unauth.status, 401);
+  });
+test("Notification mark-read forwards locator only after validation", async () => {
+  const f = fixture({ role: "ADMIN" });
+  const login = await f.request("login", "POST", { email: "test@example.com", password: "test" });
+  const path = "notifications/00000000-0000-4000-8000-000000000001/read";
+  const good = await f.request(path, "PATCH", { locator: "opaque_locator" }, login.cookie);
+  assert.equal(good.status, 200);
+  assert.equal(f.calls.at(-1).headers["x-notification-locator"], "opaque_locator");
+  assert.equal(f.calls.at(-1).body, "{}");
+  const bad = await f.request(path, "PATCH", { locator: "opaque", userId: "other" }, login.cookie);
+  assert.equal(bad.status, 400);
 });

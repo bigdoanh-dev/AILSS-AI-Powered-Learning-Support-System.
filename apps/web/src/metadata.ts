@@ -46,10 +46,15 @@ export const pages: Record<string, [string, string]> = {
   "/accessibility": ["Khả năng tiếp cận", "Điều hướng bàn phím, giảm chuyển động và các lựa chọn truy cập."],
 };
 export function metadata(path: string) {
+  if (path === "/app/schedule") return ["Lịch học", "Lịch học theo danh sách, tuần và tháng."];
+  if (path === "/app/attendance") return ["Thông tin điểm danh", "Tổng hợp và chi tiết điểm danh theo lớp."];
+  if (path === "/app/teaching/schedule") return ["Lịch dạy", "Theo dõi lịch giảng dạy theo lớp."];
+  if (path === "/app/teaching/attendance") return ["Điểm danh lớp học", "Quản lý điểm danh các buổi học."];
   if (path.startsWith("/app/admin")) return ["Quản trị", "Quản lý người dùng, khóa học và nội dung AILSS."];
   if (path.startsWith("/app/teaching")) return ["Giảng dạy", "Khóa học và lớp học của bạn."];
   if (path.startsWith("/app/learn")) return ["Học tập", "Tiếp tục hành trình học tập của bạn."];
-  if (path.startsWith("/app/") && path !== "/app/account") return ["Không gian học tập", "Lớp học, bài kiểm tra và tiến độ của bạn."];
+  if (path.startsWith("/app/") && path !== "/app/account")
+    return ["Không gian học tập", "Lớp học, bài kiểm tra và tiến độ của bạn."];
   if (path === "/auth/register/student")
     return ["Đăng ký học viên", "Bắt đầu hành trình học tập cùng AILSS."];
   if (path === "/auth/register/lecturer")

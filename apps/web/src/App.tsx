@@ -1,3 +1,4 @@
+import OperationResultPage from "./components/OperationResult";
 import { LecturerApplication, AdminLecturerApplications } from "./pages/LecturerApplication";
 import { AuthLayout } from "./components/AuthLayout";
 import { Motion } from "./components/Motion";
@@ -49,7 +50,19 @@ const TeachingHome = teaching("TeachingHome"),
   AiJob = lecturerAi("AiJob");
 const Classes = lazy(() => import("./student/Classes").then((m) => ({ default: m.Classes })));
 const ClassDetail = lazy(() => import("./student/Classes").then((m) => ({ default: m.ClassDetail })));
-const Notifications = lazy(() => import("./student/Notifications"));
+const StudentSchedule = lazy(() =>
+  import("./student/Planning").then((m) => ({ default: m.StudentSchedule })),
+);
+const StudentAttendance = lazy(() =>
+  import("./student/Planning").then((m) => ({ default: m.StudentAttendance })),
+);
+const TeachingSchedule = lazy(() =>
+  import("./lecturer/Planning").then((m) => ({ default: m.TeachingSchedule })),
+);
+const TeachingAttendance = lazy(() =>
+  import("./lecturer/Planning").then((m) => ({ default: m.TeachingAttendance })),
+);
+const Notifications = lazy(() => import("./pages/Notifications"));
 const Moderation = lazy(() => import("./admin/Moderation"));
 const admin = (name: keyof typeof import("./admin/Admin")) =>
   lazy(() => import("./admin/Admin").then((m) => ({ default: m[name] })));
@@ -122,6 +135,7 @@ export default function App() {
             >
               <Routes>
                 <Route path="auth" element={<AuthLayout />}>
+                  <Route path="result" element={<OperationResultPage />} />
                   <Route path="register/lecturer" element={<Auth key={location.pathname} />} />
                   <Route path="register/lecturer/status" element={<LecturerApplication />} />
                   {["login", "register", "register/student", "forgot-password"].map((path) => (
@@ -131,6 +145,8 @@ export default function App() {
                 <Route path="app" element={<AppShell />}>
                   <Route index element={<AppHome />} />
                   <Route path="account" element={<Account />} />
+                  <Route path="notifications" element={<Notifications />} />
+                  <Route path="result" element={<OperationResultPage />} />
                   <Route path="resources" element={<Navigate to="/app/learn" replace />} />
                   <Route element={<StudentGuard />}>
                     <Route path="learn" element={<Learn />} />
@@ -139,8 +155,10 @@ export default function App() {
                     <Route path="purchase/:courseId" element={<Purchase />} />
                     <Route path="progress" element={<ProgressPage />} />
                     <Route path="classes" element={<Classes />} />
+                    <Route path="schedule" element={<StudentSchedule />} />
+                    <Route path="attendance" element={<StudentAttendance />} />
                     <Route path="classes/:classId" element={<ClassDetail />} />
-                    <Route path="notifications" element={<Notifications />} />
+
                     <Route path="assessments" element={<Assessments />} />
                     <Route path="assessments/:quizId" element={<QuizDetail />} />
                     <Route path="attempts/:attemptId" element={<AttemptPage />} />
@@ -156,6 +174,8 @@ export default function App() {
                     <Route path="teaching/offerings" element={<Offerings />} />
                     <Route path="teaching/offerings/:offeringId" element={<OfferingDetail />} />
                     <Route path="teaching/classes" element={<TeachingClasses />} />
+                    <Route path="teaching/schedule" element={<TeachingSchedule />} />
+                    <Route path="teaching/attendance" element={<TeachingAttendance />} />
                     <Route path="teaching/classes/:classId" element={<TeachingClass />} />
                     <Route path="teaching/classes/:classId/roster" element={<ClassRoster />} />
                     <Route path="teaching/classes/:classId/announcements" element={<Announcements />} />

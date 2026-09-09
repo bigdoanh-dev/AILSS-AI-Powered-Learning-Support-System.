@@ -239,6 +239,8 @@ export function logicalCommand() {
   };
 }
 export function useCommand() {
+  const [outcome, setOutcome] = useState<"success" | "failure" | null>(null);
+  const [revision, setRevision] = useState(0);
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const flight = useRef(false),
@@ -258,6 +260,7 @@ export function useCommand() {
     flight.current = true;
     setBusy(true);
     setMessage("");
+    setOutcome(null);
     try {
       const r = await studentRequest<T>(
         path,
@@ -270,16 +273,32 @@ export function useCommand() {
       if (controller.current.signal.aborted) return;
       logical.current.success();
       setMessage("Đã lưu thay đổi.");
+      setOutcome("success");
+      setRevision((value) => value + 1);
       return r.data;
     } catch (e) {
-      if (!controller.current.signal.aborted) setMessage(studentError(e));
+      if (!controller.current.signal.aborted) {
+        setMessage(studentError(e));
+        setOutcome("failure");
+        setRevision((value) => value + 1);
+      }
       return;
     } finally {
       flight.current = false;
       if (!controller.current.signal.aborted) setBusy(false);
     }
   }
-  return { run, busy, message };
+  return {
+    run,
+    busy,
+    message,
+    outcome,
+    revision,
+    clear: () => {
+      setMessage("");
+      setOutcome(null);
+    },
+  };
 }
 export const monthNow = () => new Date().toISOString().slice(0, 7);
 export const rangeForMonth = (month: string) => ({

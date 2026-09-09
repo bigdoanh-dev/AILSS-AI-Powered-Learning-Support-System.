@@ -1,11 +1,14 @@
+import { ResultAnimation } from "../components/OperationResult";
 import type { ReactNode } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useSession } from "../auth/session";
 import { studentError, type Progress } from "./api";
 export function StudentGuard() {
   const auth = useSession();
-  if (auth.state !== "AUTHENTICATED" && auth.state !== "REFRESHING") return <p role="status">Đang xác minh phiên…</p>;
-  return (auth.state === "AUTHENTICATED" || auth.state === "REFRESHING") && auth.profile?.role === "STUDENT" ? (
+  if (auth.state !== "AUTHENTICATED" && auth.state !== "REFRESHING")
+    return <p role="status">Đang xác minh phiên…</p>;
+  return (auth.state === "AUTHENTICATED" || auth.state === "REFRESHING") &&
+    auth.profile?.role === "STUDENT" ? (
     <Outlet />
   ) : (
     <Navigate to="/app" replace />
@@ -63,7 +66,18 @@ export function ProgressView({ value }: { value: Progress }) {
     </div>
   );
 }
-export function Status({ command }: { command: { busy: boolean; message: string } }) {
+export function Status({
+  command,
+}: {
+  command: { busy: boolean; message: string; outcome?: "success" | "failure" | null; revision?: number };
+}) {
+  if (!command.busy && command.outcome && command.message)
+    return (
+      <div className="command-result" role={command.outcome === "failure" ? "alert" : "status"}>
+        <ResultAnimation key={command.revision} success={command.outcome === "success"} />
+        <span>{command.message}</span>
+      </div>
+    );
   return (
     <p role="status" className="study-status">
       {command.busy ? "Đang lưu…" : command.message}

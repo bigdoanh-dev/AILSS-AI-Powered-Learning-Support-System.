@@ -123,13 +123,7 @@ try {
       } else {
         await page.goto(`${base}/app/purchase/${id(3)}`);
         await expect(page.getByText("Tự học dữ liệu nâng cao")).toBeVisible();
-        await page.getByRole("button", { name: "Tạo đơn mô phỏng" }).click();
-        await page.getByRole("button", { name: "Mô phỏng thất bại" }).click();
-        await expect(page.getByRole("heading", { name: "Thanh toán mô phỏng thất bại" })).toBeVisible();
-        await page.getByRole("button", { name: "Chọn lại offering" }).click();
-        orderState = "PENDING";
-        await page.getByRole("button", { name: "Tạo đơn mô phỏng" }).click();
-        await page.getByRole("button", { name: "Mô phỏng thanh toán thành công" }).click();
+        await page.getByRole("button", { name: "Tạo đơn thanh toán" }).click();
         await expect(page.getByRole("link", { name: /Bắt đầu học/ })).toBeVisible({ timeout: 6000 });
         alreadyEntitled = true;
         await page.reload();

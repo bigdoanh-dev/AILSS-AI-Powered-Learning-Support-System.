@@ -1,3 +1,4 @@
+import { authenticateSepay, sepayConfig, sepaySchema } from "./sepay.js";
 import { Router, type Request } from "express";
 import { z, ZodError } from "zod";
 import { AppError, currentRequestContext } from "../../../../packages/http/src/index.js";
@@ -15,6 +16,15 @@ export function learningCommerceRouter(
   >,
 ): Router {
   const r = Router();
+  r.post("/api/v1/payments/sepay/webhook", async (req, res, next) => {
+    try {
+      authenticateSepay(req.header("authorization"));
+      const transaction = body(() => sepaySchema.parse(req.body));
+      res.status(200).json(await service.receiveSepay(transaction, context().correlationId));
+    } catch (error) {
+      next(error);
+    }
+  });
   r.post("/api/v1/courses/:courseId/enrollments", async (req, res, next) => {
     try {
       const c = context(),
@@ -57,6 +67,7 @@ export function learningCommerceRouter(
     try {
       const c = context(),
         actor = await requiredActor(req, verify.orderCreate, c.correlationId);
+      sepayConfig();
       const result = await service.createOrder({
         actor,
         request: body(() => orderCreateSchema.parse(req.body)),
@@ -84,6 +95,8 @@ export function learningCommerceRouter(
     try {
       const c = context(),
         actor = await requiredActor(req, verify.payment, c.correlationId);
+      if (process.env.NODE_ENV !== "test")
+        throw new AppError("PAYMENT_SIMULATION_DISABLED", 403, "Payment simulation is disabled");
       const result = await service.simulatePayment({
         orderId: id(req.params.orderId),
         actor,

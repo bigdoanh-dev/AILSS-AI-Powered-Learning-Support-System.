@@ -48,9 +48,22 @@ export class MinioStorage implements ObjectStorage {
     this.#client = new Client(options);
     if (publicOrigin) {
       const origin = new URL(publicOrigin);
-      if (!["http:", "https:"].includes(origin.protocol) || origin.username || origin.password || origin.pathname !== "/" || origin.search || origin.hash)
+      if (
+        !["http:", "https:"].includes(origin.protocol) ||
+        origin.username ||
+        origin.password ||
+        origin.pathname !== "/" ||
+        origin.search ||
+        origin.hash
+      )
         throw new Error("INVALID_PUBLIC_STORAGE_ORIGIN");
-      this.#readSigner = new Client({ ...options, endPoint: origin.hostname, port: Number(origin.port || (origin.protocol === "https:" ? 443 : 80)), useSSL: origin.protocol === "https:", region: options.region || "us-east-1" });
+      this.#readSigner = new Client({
+        ...options,
+        endPoint: origin.hostname,
+        port: Number(origin.port || (origin.protocol === "https:" ? 443 : 80)),
+        useSSL: origin.protocol === "https:",
+        region: options.region || "us-east-1",
+      });
     } else this.#readSigner = this.#client;
   }
 
@@ -64,7 +77,7 @@ export class MinioStorage implements ObjectStorage {
       throw new Error("UPLOAD_POLICY_REJECTED");
     return {
       objectKey,
-      uploadUrl: await this.#client.presignedPutObject(this.bucket, objectKey, 15 * 60),
+      uploadUrl: await this.#readSigner.presignedPutObject(this.bucket, objectKey, 15 * 60),
       expiresInSeconds: 15 * 60,
     };
   }

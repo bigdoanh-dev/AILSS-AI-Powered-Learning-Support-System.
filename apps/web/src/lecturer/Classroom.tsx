@@ -1,5 +1,6 @@
+import { attendanceLabel } from "../student/Planning";
 import { useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { lecturerError, lecturerRequest, month, range, useLecturer } from "./api";
 import { OwnedCourseSelect } from "./ui";
 import { Field, State } from "./ui";
@@ -80,7 +81,7 @@ export function Classes() {
             <option>INSTITUTIONAL</option>
           </select>
         </label>
-        <OwnedCourseSelect name="linkedCourseId" label="Liên kết khóa học"/>
+        <OwnedCourseSelect name="linkedCourseId" label="Liên kết khóa học" />
         <Field label="Số học viên tối đa" name="maxMembers" type="number" defaultValue={100} />
         <button className="button">Tạo lớp</button>
         <p role="status">{msg}</p>
@@ -372,49 +373,92 @@ export function SessionDetail() {
   );
 }
 export function Attendance() {
+  const [params] = useSearchParams();
+  const [busy, setBusy] = useState(false);
   const { sessionId = "" } = useParams(),
     q = useLecturer<A[] | { attendance: A[] }>(`/class-sessions/${sessionId}/attendance`),
     [msg, setMsg] = useState("");
   return (
     <>
-      <h1>Điểm danh.</h1>
+      <Link to={`/app/teaching/attendance?${params.toString()}`}>← Danh sách buổi điểm danh</Link>
+      <h1>Điểm danh buổi học</h1>
       <State q={q}>
-        {(v) => (
-          <div className="workspace-cards">
-            {(Array.isArray(v) ? v : v.attendance || []).map((x) => (
-              <article key={x.studentId}>
-                <h2>{x.studentId}</h2>
-                <p>
-                  {x.attendanceStatus} · {x.source}
-                </p>
-                <div className="inline-actions">
-                  {["PRESENT", "ABSENT", "EXCUSED"].map((s) => (
-                    <button
-                      className="button secondary"
-                      key={s}
-                      onClick={async () => {
-                        try {
-                          await lecturerRequest(
-                            `/class-sessions/${sessionId}/attendance/${x.studentId}`,
-                            "PUT",
-                            { attendanceStatus: s },
-                            { "If-Match": `"v${x.attendanceVersion}"` },
-                          );
-                          q.retry();
-                        } catch (y) {
-                          setMsg(lecturerError(y));
-                          q.retry();
-                        }
-                      }}
-                    >
-                      {s}
-                    </button>
+        {(v) => {
+          const rows = Array.isArray(v) ? v : v.attendance || [];
+          return (
+            <div className="attendance-scroll">
+              <table className="attendance-table">
+                <caption>Thông tin điểm danh học viên</caption>
+                <thead>
+                  <tr>
+                    <th>STT</th>
+                    <th>Mã học viên</th>
+                    <th>Trạng thái</th>
+                    <th>Cập nhật điểm danh</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((x, i) => (
+                    <tr key={x.studentId}>
+                      <td>{i + 1}</td>
+                      <th scope="row" className="attendance-id-cell">
+                        {x.studentId}
+                      </th>
+                      <td>
+                        <span className={`attendance-chip status-${x.attendanceStatus.toLowerCase()}`}>
+                          {attendanceLabel[x.attendanceStatus] || "Chưa ghi nhận"}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="inline-actions">
+                          {["PRESENT", "ABSENT", "EXCUSED"].map((status) => (
+                            <button
+                              className="button secondary small"
+                              key={status}
+                              disabled={busy || status === x.attendanceStatus}
+                              onClick={async () => {
+                                setBusy(true);
+                                setMsg("");
+                                try {
+                                  await lecturerRequest(
+                                    `/class-sessions/${sessionId}/attendance/${x.studentId}`,
+                                    "PUT",
+                                    { attendanceStatus: status },
+                                    { "If-Match": `"v${x.attendanceVersion}"` },
+                                  );
+                                  setMsg("Đã cập nhật điểm danh.");
+                                  q.retry();
+                                } catch (error) {
+                                  setMsg(lecturerError(error));
+                                  q.retry();
+                                } finally {
+                                  setBusy(false);
+                                }
+                              }}
+                            >
+                              {attendanceLabel[status]}
+                            </button>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
                   ))}
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th colSpan={4}>
+                      Tổng: {rows.length} học viên · Có mặt:{" "}
+                      {rows.filter((x) => x.attendanceStatus === "PRESENT").length} · Vắng có phép:{" "}
+                      {rows.filter((x) => x.attendanceStatus === "EXCUSED").length} · Vắng không phép:{" "}
+                      {rows.filter((x) => x.attendanceStatus === "ABSENT").length}
+                    </th>
+                  </tr>
+                </tfoot>
+              </table>
+              {!rows.length && <p>Chưa có dữ liệu điểm danh cho buổi học này.</p>}
+            </div>
+          );
+        }}
       </State>
       <p role="status">{msg}</p>
     </>
