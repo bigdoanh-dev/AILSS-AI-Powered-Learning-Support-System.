@@ -22,12 +22,14 @@ const labels: Record<string, string> = {
   PRIVATE: "Lớp riêng",
   INSTITUTIONAL: "Lớp tổ chức",
 };
-export const stateLabel = (state: string) => labels[state] || state;
-export function StateChip({ state }: { state: string }) {
+export const stateLabel = (state?: string) => (state && labels[state]) || state || "Hoạt động";
+export function StateChip({ state }: { state?: string }) {
+  const safeState = (state || "PUBLISHED").trim();
+  const lower = safeState.toLowerCase();
   return (
-    <span className={`product-status state-${state.toLowerCase()}`}>
+    <span className={`product-status state-${lower}`}>
       <span aria-hidden="true">●</span>
-      {stateLabel(state)}
+      {stateLabel(safeState)}
     </span>
   );
 }

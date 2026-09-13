@@ -1,6 +1,6 @@
 {
-  "version": "P12.2B",
-  "count": 75,
+  "version": "P12.9R",
+  "count": 78,
   "queries": [
     {
       "queryId": "Q-AI-001",
@@ -584,8 +584,8 @@
         "LRN-24",
         "LRN-25",
         "LRN-26",
-        "LRN-29",
-        "LRN-30"
+        "LRN-31",
+        "learning-sepay-recovery"
       ]
     },
     {
@@ -622,7 +622,7 @@
       "tables": ["courses_by_lecturer"],
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["LRN-05", "LRN-06", "LRN-29"]
+      "apiConsumers": ["LRN-05", "LRN-06"]
     },
     {
       "queryId": "Q-LRN-006",
@@ -694,7 +694,7 @@
       "tables": ["order_by_id"],
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
-      "apiConsumers": ["LRN-19", "LRN-20", "LRN-21"]
+      "apiConsumers": ["LRN-19", "LRN-20", "LRN-21", "LRN-31"]
     },
     {
       "queryId": "Q-LRN-014",
@@ -857,7 +857,37 @@
       "operation": "R/W",
       "candidateConsistency": "LOCAL_QUORUM",
       "apiConsumers": ["IDN-18", "IDN-19"],
-      "contractNotes": "Single user partition derived from validated session; image up to 256 KiB."
+      "contractNotes": "Single user partition derived from validated session; Cassandra stores MIME and private MinIO object reference only, never binary. Existing authenticated route reads at most 256 KiB; no public object URL."
+    },
+    {
+      "queryId": "Q-LRN-024",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["sepay_transaction_by_id"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["LRN-31"],
+      "semantics": "Single-row primary-key partition; INSERT IF NOT EXISTS and keyed SELECT; no TTL to preserve replay fencing; recovery requires known transaction/order identity."
+    },
+    {
+      "queryId": "Q-LRN-025",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["sepay_payment_by_order"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["LRN-31"],
+      "semantics": "Single-row primary-key partition; INSERT IF NOT EXISTS and keyed SELECT; no TTL to preserve replay fencing; recovery requires known transaction/order identity."
+    },
+    {
+      "queryId": "Q-LRN-026",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["sepay_recovery_by_shard"],
+      "operation": "R/W worker",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["LRN-31", "learning-sepay-recovery"],
+      "contractNotes": "Approved pending payment recovery: exact 16-shard bounded keyset pages LIMIT25; candidate INSERT IF NOT EXISTS; exact-key read; HMAC integrity over accepted identity; fenced 15-second leases, retry/manual-review and terminal cleanup. No TTL or calendar cutoff. No raw webhook payload or credentials."
     }
   ]
 }

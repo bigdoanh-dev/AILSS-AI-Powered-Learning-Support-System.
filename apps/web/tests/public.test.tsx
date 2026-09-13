@@ -67,12 +67,10 @@ describe("public foundation", () => {
     expect(normalizeQuery("Cassandra nâng cao")).toBe("cassandra");
   });
   it("never calls API for an invalid normalized token", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: [], meta: { pagination: { hasMore: false, nextCursor: null } } }),
-      });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [], meta: { pagination: { hasMore: false, nextCursor: null } } }),
+    });
     vi.stubGlobal("fetch", fetchMock);
     wrap(<CourseSearch />);
     await userEvent.type(screen.getByRole("searchbox"), "ab");

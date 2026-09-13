@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { chromium, expect } from "@playwright/test";
 import fs from "node:fs/promises";
 const base = process.env.AILSS_QA_URL || "http://127.0.0.1:5177",
-  out = "../../docs/evidence/p12.7-ai",
+  out = process.env.AILSS_QA_OUT || "../../docs/evidence/p12.7-ai",
   id = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 await fs.mkdir(out, { recursive: true });
 const graph = {
@@ -82,7 +82,8 @@ try {
     await page.route("**/*", async (route) => {
       const req = route.request(),
         u = new URL(req.url());
-      if (u.hostname === "upload.ailss.test") return route.fulfill({ status: 200, body: "" });
+      if (u.pathname === `/fixture-upload/${graph.documentId}`)
+        return route.fulfill({ status: 200, body: "" });
       if (!u.pathname.startsWith("/web-session/")) return route.continue();
       const p = u.pathname.replace(/^\/web-session\/lecturer/, "");
       requests.push({ method: req.method(), path: p, body: req.postDataJSON?.(), headers: req.headers() });
@@ -106,7 +107,7 @@ try {
         data = {
           documentId: graph.documentId,
           objectKey: "EPHEMERAL-PRIVATE-OBJECT",
-          uploadUrl: "https://upload.ailss.test/ephemeral",
+          uploadUrl: `${base}/fixture-upload/${graph.documentId}`,
           status: "UPLOAD_PENDING",
           version: 1,
         };
@@ -164,7 +165,7 @@ try {
       await route.fulfill({ status: 200, json: { data, meta } });
     });
     await page.goto(`${base}/app/teaching/ai`);
-    await expect(page.getByRole("heading", { name: "Tạo câu hỏi từ học liệu." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Cùng bạn chuẩn bị/ })).toBeVisible();
     await page.getByLabel("Tệp PDF, DOCX hoặc TXT").setInputFiles({
       name: "hoc-lieu.txt",
       mimeType: "text/plain",
@@ -174,7 +175,10 @@ try {
     await expect(page.getByText("Sẵn sàng sử dụng").first()).toBeVisible({ timeout: 10000 });
     await page.getByLabel("Khóa học hoặc lớp").selectOption(graph.courseId);
     await page.getByRole("button", { name: "Tạo câu hỏi từ học liệu" }).click();
-    await expect(page.getByText("Bản nháp đã sẵn sàng").first()).toBeVisible({ timeout: 15000 });
+    const reviewLink = page.getByRole("link", { name: "Xem và duyệt câu hỏi", exact: true });
+    await expect(reviewLink).toBeVisible({ timeout: 15000 });
+    await reviewLink.click();
+    await expect(page).toHaveURL(`${base}/app/teaching/ai/jobs/${graph.generationJobId}`);
     await expect(page.getByRole("textbox", { name: "Nội dung" })).toHaveValue("CAP ưu tiên điều gì?");
     await page.getByLabel("Nội dung").fill("CAP yêu cầu đánh đổi điều gì?");
     page.once("dialog", (dialog) => dialog.accept());
@@ -199,6 +203,14 @@ try {
     expect(storage.local).toEqual({});
     expect(storage.session).toEqual({});
     expect(storage.databases).toEqual([]);
+    await page.evaluate(() =>
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+          .map((animation) => animation.finished.catch(() => undefined)),
+      ),
+    );
     const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
     expect(axe.violations).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);

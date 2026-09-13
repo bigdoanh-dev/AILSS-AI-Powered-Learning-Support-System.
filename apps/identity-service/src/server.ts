@@ -1,3 +1,4 @@
+import { MinioStorage } from "../../../packages/storage/src/index.js";
 import { ApplicationRepository } from "./lecturer-application/repository.js";
 import { ApplicationService } from "./lecturer-application/service.js";
 import { applicationRouter } from "./lecturer-application/router.js";
@@ -52,7 +53,7 @@ const manifest: ServiceManifest = {
   defaultPort: 8101,
   keyspace: "identity_keyspace",
   cassandraRole: "svc_identity",
-  publicApiIds: Array.from({ length: 17 }, (_, i) => `IDN-${String(i + 1).padStart(2, "0")}`),
+  publicApiIds: Array.from({ length: 19 }, (_, i) => `IDN-${String(i + 1).padStart(2, "0")}`),
   internalApiIds: ["INT-IDN-01", "INT-IDN-02"],
   producedEvents: [
     "identity.user.registered.v1",
@@ -166,12 +167,28 @@ await startService(manifest, {
       context.metrics,
       context.logger,
     );
-    app.use(avatarRouter(context.cassandra, profile, (token) => verifyActorContext(token, actorContextPublicKey, {
-      issuer: config.ACTOR_CONTEXT_ISSUER,
-      audience: config.ACTOR_CONTEXT_AUDIENCE,
-      purpose: "identity.profile.avatar",
-      kid: config.ACTOR_CONTEXT_KID,
-    })));
+    app.use(
+      avatarRouter(
+        context.cassandra,
+        profile,
+        (token) =>
+          verifyActorContext(token, actorContextPublicKey, {
+            issuer: config.ACTOR_CONTEXT_ISSUER,
+            audience: config.ACTOR_CONTEXT_AUDIENCE,
+            purpose: "identity.profile.avatar",
+            kid: config.ACTOR_CONTEXT_KID,
+          }),
+        config.OBJECT_STORAGE_ACCESS_KEY && config.OBJECT_STORAGE_SECRET_KEY
+          ? new MinioStorage(config.OBJECT_STORAGE_BUCKET, {
+              endPoint: config.OBJECT_STORAGE_ENDPOINT,
+              port: config.OBJECT_STORAGE_PORT,
+              useSSL: config.OBJECT_STORAGE_USE_SSL,
+              accessKey: config.OBJECT_STORAGE_ACCESS_KEY,
+              secretKey: config.OBJECT_STORAGE_SECRET_KEY,
+            })
+          : undefined,
+      ),
+    );
     app.use(
       profileRouter(
         profile,

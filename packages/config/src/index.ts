@@ -128,6 +128,16 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   if (result.data.NODE_ENV === "production" && result.data.NOTIFICATION_CURSOR_TTL_SECONDS !== 900) {
     throw new ConfigurationError(["Notification cursor TTL override is disabled in production"]);
   }
+  if (result.data.NODE_ENV === "production" && result.data.AI_PROVIDER_MODE !== "production") {
+    throw new ConfigurationError(["Deterministic AI provider is disabled in production"]);
+  }
+  if (
+    result.data.NODE_ENV === "production" &&
+    result.data.SERVICE_ID === "ai-worker" &&
+    !result.data.AI_PROVIDER_API_KEY
+  ) {
+    throw new ConfigurationError(["Production AI worker provider credential is missing"]);
+  }
   return result.data;
 }
 

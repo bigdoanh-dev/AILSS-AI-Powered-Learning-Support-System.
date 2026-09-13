@@ -299,6 +299,37 @@ export class LearningAuthoringRepository {
     return rows[0]?.["[applied]"] === true;
   }
 
+  public async paymentEventAt(eventId: string, occurredAt: Date): Promise<DueLearningEvent | undefined> {
+    const dueDay = occurredAt.toISOString().slice(0, 10);
+    const shard = eventBucket(eventId);
+    const rows = await this.db.execute(
+      "SELECT due_day,shard,next_attempt_at,event_id,payload_json,state,retry_count,lease_fence,lease_until FROM pending_events_by_due_bucket WHERE due_day=? AND shard=? AND next_attempt_at=? AND event_id=?",
+      [types.LocalDate.fromString(dueDay), shard, occurredAt, types.Uuid.fromString(eventId)],
+      "LOCAL_QUORUM",
+    );
+    const r = rows[0];
+    if (!r) return undefined;
+    return {
+      dueDay,
+      shard,
+      nextAttemptAt: occurredAt,
+      eventId,
+      event: JSON.parse(String(r.payload_json)) as EventEnvelope,
+      state: String(r.state),
+      retryCount: Number(r.retry_count),
+      leaseFence: Number(r.lease_fence ?? 0),
+      ...(r.lease_until instanceof Date ? { leaseUntil: r.lease_until } : {}),
+    };
+  }
+  public async paymentPublished(eventId: string): Promise<boolean> {
+    const rows = await this.db.execute(
+      "SELECT state FROM pending_event_by_id WHERE event_id=?",
+      [types.Uuid.fromString(eventId)],
+      "LOCAL_QUORUM",
+    );
+    return rows[0]?.state === "PUBLISHED";
+  }
+
   public async listDue(now: Date): Promise<readonly DueLearningEvent[]> {
     const result: DueLearningEvent[] = [];
     for (let days = 0; days <= 1; days += 1) {

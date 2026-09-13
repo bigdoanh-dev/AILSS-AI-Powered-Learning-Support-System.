@@ -37,14 +37,6 @@ export function OperationResult({
   onComplete?: () => void;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
-  const callback = useRef(onComplete);
-  callback.current = onComplete;
-  const automatic = !!onComplete;
-  useEffect(() => {
-    if (!automatic) return;
-    const timer = window.setTimeout(() => callback.current?.(), success ? 1600 : 2600);
-    return () => window.clearTimeout(timer);
-  }, [automatic, success, title]);
   useEffect(() => {
     heading.current?.focus();
   }, [title]);
@@ -55,13 +47,14 @@ export function OperationResult({
         {title}
       </h1>
       <div role={success ? "status" : "alert"}>{children}</div>
-      {automatic ? (
-        <p className="result-redirect" role="status">
-          Đang chuyển trang…
-        </p>
-      ) : (
-        <div className="inline-actions">{action}</div>
-      )}
+      <div className="inline-actions">
+        {action ||
+          (onComplete && (
+            <button className="button" onClick={onComplete}>
+              Tiếp tục
+            </button>
+          ))}
+      </div>
     </section>
   );
 }

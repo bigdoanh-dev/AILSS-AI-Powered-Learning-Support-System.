@@ -84,7 +84,10 @@ describe("private avatar authorization and persistence", () => {
     expect(uploaded.next).not.toHaveBeenCalled();
     expect(uploaded.json).toHaveBeenCalledWith({ data: { dataUrl: png }, meta: { requestId } });
     expect(uploaded.setHeader).toHaveBeenCalledWith("Cache-Control", "no-store");
-    expect(fixture.execute.mock.calls[0]?.[0]).toContain("INSERT INTO avatar_by_user");
+    expect(fixture.execute.mock.calls.some(([query]) => query.startsWith("INSERT"))).toBe(true);
+    expect(
+      fixture.execute.mock.calls.flatMap(([, params]) => params).some((value) => Buffer.isBuffer(value)),
+    ).toBe(false);
     for (const [, params, consistency] of fixture.execute.mock.calls) {
       expect(String(params[0])).toBe(actor.userId);
       expect(consistency).toBe("LOCAL_QUORUM");
@@ -147,15 +150,29 @@ describe("private avatar authorization and persistence", () => {
 });
 
 function avatarFixture() {
-  const images = new Map<string, { content_type: string; image: Buffer }>();
+  const images = new Map<string, { content_type: string; object_key: string }>();
   const execute = vi.fn(async (query: string, params: unknown[], _consistency: string) => {
     const owner = String(params[0]);
     if (query.startsWith("INSERT"))
-      images.set(owner, { content_type: String(params[1]), image: params[2] as Buffer });
+      images.set(owner, { content_type: String(params[1]), object_key: String(params[2]) });
     if (query.startsWith("DELETE")) images.delete(owner);
     const row = images.get(owner);
     return query.startsWith("SELECT") && row ? [{ get: (key: string) => row[key as keyof typeof row] }] : [];
   });
+  const objects = new Map<string, Buffer>();
+  const storage = {
+    writePrivate: vi.fn(async (key: string, bytes: Buffer) => {
+      objects.set(key, bytes);
+    }),
+    read: vi.fn(async (key: string) => {
+      const bytes = objects.get(key);
+      if (!bytes) throw new Error("missing");
+      return bytes;
+    }),
+    removePrivate: vi.fn(async (key: string) => {
+      objects.delete(key);
+    }),
+  };
   const read = vi.fn().mockResolvedValue({ userId: actor.userId });
   const verify = vi.fn().mockResolvedValue(actor);
   return {
@@ -167,6 +184,7 @@ function avatarFixture() {
         { execute } as unknown as Parameters<typeof avatarRouter>[0],
         { read } as unknown as Parameters<typeof avatarRouter>[1],
         verify,
+        storage,
       );
       const handler = router.stack[0]?.route?.stack[0]?.handle as (
         req: Request,

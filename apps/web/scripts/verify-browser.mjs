@@ -16,6 +16,9 @@ const routes = [
   "/lecturers",
   "/contact",
   "/auth/login",
+  "/auth/register/lecturer/application",
+  "/auth/register/lecturer/status",
+  "/p12-9rc-final-not-found",
 ];
 for (const width of [1440, 375]) {
   const context = await browser.newContext({
@@ -79,13 +82,16 @@ async function check(name, fn) {
     await page.keyboard.press("Escape");
   }
 }
-await check("Desktop mega menu keyboard Escape", async () => {
+await check("Desktop navigation keyboard activation", async () => {
   await page.goto(base);
-  await page.getByRole("button", { name: "Platform", exact: true }).click();
-  await expect(page.locator("#menu-Platform")).toBeVisible();
-  await page.screenshot({ path: `${out}/mega-menu.png` });
-  await page.keyboard.press("Escape");
-  await expect(page.locator("#menu-Platform")).toHaveCount(0);
+  const courses = page.getByRole("navigation", { name: "Điều hướng chính" }).getByRole("link", {
+    name: "Khóa học",
+    exact: true,
+  });
+  await courses.focus();
+  await expect(courses).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(base + "/courses");
 });
 await check("Mobile drawer focus trap / Escape / scroll restoration", async () => {
   await page.setViewportSize({ width: 375, height: 812 });
@@ -103,6 +109,7 @@ await check("Mobile drawer focus trap / Escape / scroll restoration", async () =
   await expect(page.getByRole("button", { name: "Mở điều hướng" })).toBeFocused();
 });
 await check("Mobile navigation closes after route change", async () => {
+  await page.goto(base);
   await page.getByRole("button", { name: "Mở điều hướng" }).click();
   await page.getByRole("dialog").getByRole("link", { name: "Khóa học", exact: true }).click();
   await expect(page).toHaveURL(base + "/courses");
@@ -159,14 +166,17 @@ await check("Reduced motion and mobile skip WebGL", async () => {
   await expect(page.locator("canvas")).toHaveCount(0);
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior)).toBe("auto");
 });
-await check("Desktop WebGL is lazy and can be paused", async () => {
+await check("Desktop WebGL is lazy and keyboard reachable", async () => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.reload();
   await expect(page.locator(".webgl-layer canvas")).toHaveCount(1);
-  await page.getByRole("button", { name: "Tạm dừng hiệu ứng 3D" }).click();
-  await expect(page.locator(".webgl-layer canvas")).toHaveCount(0);
-  await page.screenshot({ path: `${out}/home-poster-fallback.png` });
+  const scene = page.getByRole("region", { name: "Không gian tri thức tương tác" });
+  await scene.focus();
+  await expect(scene).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.locator(".webgl-layer canvas")).toHaveCount(1);
+  await page.screenshot({ path: `${out}/home-webgl.png` });
 });
 await check("Search API success empty error offline and pagination", async () => {
   let mode = "success";
@@ -239,11 +249,13 @@ await check("Login and logout adapter UX; no browser token storage", async () =>
   await page.getByLabel("Email", { exact: true }).fill("qa@example.com");
   await page.getByLabel("Mật khẩu", { exact: true }).fill("test-password");
   await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Xin chào, QA User." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Đăng nhập thành công" })).toBeVisible();
+  await page.getByRole("link", { name: "Tiếp tục", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Chào QA User, hôm nay học gì?" })).toBeVisible();
   expect(await page.evaluate(() => localStorage.length + sessionStorage.length)).toBe(0);
-  await page.getByRole("button", { name: "Tài khoản", exact: true }).click();
+  await page.getByRole("button", { name: "Menu tài khoản: QA User" }).click();
   await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("thu hồi");
+  await expect(page.getByRole("heading", { name: "Đăng xuất thành công" })).toBeVisible();
   await page.unroute("**/web-session/**");
 });
 for (const width of [768, 1920]) {

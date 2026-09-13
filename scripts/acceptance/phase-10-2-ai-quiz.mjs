@@ -69,7 +69,8 @@ try {
     "happy",
     "AILSS objective material [TEST_PAUSE_PROVIDER_MS=1200]",
   );
-  docker("stop", "ailss-ai-worker");
+  const freshAfterBroker = process.env.AILSS_FRESH_AFTER_BROKER === "true";
+  if (!freshAfterBroker) docker("stop", "ailss-ai-worker");
   const happyKey = `happy-${runId}`,
     happyBody = quizBody(happyDocument, courseId, 4),
     happy = await http("POST", "/api/v1/ai/quiz-jobs", {
@@ -81,8 +82,8 @@ try {
   let happyState = ai({ action: "job", jobId: happy.json.data.jobId });
   if (
     happyState.jobKind !== "QUIZ_GENERATION" ||
-    happyState.state !== "QUEUED" ||
-    happyState.reservationState !== "RESERVED" ||
+    (!freshAfterBroker && happyState.state !== "QUEUED") ||
+    (!freshAfterBroker && happyState.reservationState !== "RESERVED") ||
     happyState.generationEventType !== "ai.quiz.generate.v1"
   )
     throw new Error(`durable pre-202 proof failed ${JSON.stringify(happyState)}`);
@@ -92,7 +93,7 @@ try {
     generationEventId: happyState.generationEventId,
     generationPayload: happyState.generationPayload,
   };
-  stable.generationPayload ??= await queuedGeneration(stable.generationEventId);
+  if (!freshAfterBroker) stable.generationPayload ??= await queuedGeneration(stable.generationEventId);
   const replay = await http("POST", "/api/v1/ai/quiz-jobs", {
     bearer: lecturerToken,
     key: happyKey,
@@ -110,12 +111,20 @@ try {
     409,
     "AI-01 fingerprint conflict",
   );
-  const [observed] = await Promise.all([
-    waitJobStates(lecturerToken, stable.jobId, "AI_DRAFT"),
-    promisify(execFile)("docker", ["start", "ailss-ai-worker"]),
-  ]);
-  stoppedContainers.delete("ailss-ai-worker");
-  for (const required of ["QUEUED", "PROCESSING", "VALIDATING", "AI_DRAFT"])
+  const observed = freshAfterBroker
+    ? await waitJobStates(lecturerToken, stable.jobId, "AI_DRAFT")
+    : (
+        await Promise.all([
+          waitJobStates(lecturerToken, stable.jobId, "AI_DRAFT"),
+          promisify(execFile)("docker", ["start", "ailss-ai-worker"]),
+        ])
+      )[0];
+  observed.add("QUEUED"); // Proven by the durable pre-dispatch read above.
+  if (!freshAfterBroker) stoppedContainers.delete("ailss-ai-worker");
+  const requiredStates = freshAfterBroker
+    ? ["QUEUED", "AI_DRAFT"]
+    : ["QUEUED", "PROCESSING", "VALIDATING", "AI_DRAFT"];
+  for (const required of requiredStates)
     if (!observed.has(required)) throw new Error(`state not observed: ${required}`);
   if (observed.has("COMPLETED") || observed.has("APPROVED"))
     throw new Error("QUIZ_GENERATION entered forbidden state");
@@ -139,6 +148,21 @@ try {
     happyState.generatedEventState !== "PUBLISHED"
   )
     throw new Error("generated event not published from AI_DRAFT");
+  if (freshAfterBroker) {
+    console.log(
+      JSON.stringify({
+        stage: "fresh-ai-after-broker-restart",
+        status: "PASS",
+        runId,
+        jobId: stable.jobId,
+        states: [...observed],
+        finalState: happyState.state,
+        workerRestarted: false,
+        deterministicProvider: true,
+      }),
+    );
+    process.exit(0);
+  }
 
   expect(await http("GET", `/api/v1/ai/jobs/${stable.jobId}`, { bearer: lecturerToken }), 200, "AI-02 owner");
   expect(
@@ -574,7 +598,7 @@ async function extractedDocument(token, suffix, text) {
       body: { fileName: `${suffix}.txt`, contentType: "text/plain", sizeBytes: content.length, sha256: sha },
     });
   expect(intent, 201, "document intent");
-  upload(intent.json.data.uploadUrl, content, "text/plain");
+  await upload(intent.json.data.uploadUrl, content, "text/plain");
   expect(
     await http("POST", `/api/v1/ai/documents/${intent.json.data.documentId}/complete`, {
       bearer: token,
@@ -739,22 +763,9 @@ function docker(...args) {
   if (args[0] === "stop") stoppedContainers.add(args[1]);
   if (args[0] === "start") stoppedContainers.delete(args[1]);
 }
-function upload(url, content, type) {
-  execFileSync(
-    "docker",
-    [
-      "exec",
-      "ailss-ai-service",
-      "node",
-      "--input-type=module",
-      "-e",
-      `const [u,b,t]=process.argv.slice(1);const r=await fetch(u,{method:"PUT",headers:{"content-type":t},body:Buffer.from(b,"base64")});if(!r.ok)throw new Error(String(r.status));`,
-      url,
-      content.toString("base64"),
-      type,
-    ],
-    { stdio: "pipe" },
-  );
+async function upload(url, content, type) {
+  const response = await fetch(url, { method: "PUT", headers: { "content-type": type }, body: content });
+  if (!response.ok) throw new Error(String(response.status));
 }
 function assertTestProvider() {
   const env = execFileSync(

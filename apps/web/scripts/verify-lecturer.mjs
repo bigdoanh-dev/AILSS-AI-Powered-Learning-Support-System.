@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { chromium, expect } from "@playwright/test";
 import fs from "node:fs/promises";
 const base = process.env.AILSS_QA_URL || "http://127.0.0.1:5175",
-  out = "../../docs/evidence/p12.4-browser",
+  out = process.env.AILSS_QA_OUT || "../../docs/evidence/p12.4-browser",
   id = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 await fs.mkdir(out, { recursive: true });
 const profile = {
@@ -72,13 +72,18 @@ try {
       await route.fulfill({ status: 200, json: { data } });
     });
     await page.goto(base + "/app/teaching");
-    await expect(page.getByRole("heading", { name: /Điều hành khóa học/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Không gian giảng dạy của bạn/ })).toBeVisible();
     await page.goto(base + `/app/teaching/classes/${id(3)}`);
     await expect(page.getByRole("heading", { name: "Lớp Cassandra" })).toBeVisible();
     await page.goto(base + "/app/teaching/ai");
-    await expect(page.getByRole("heading", { name: /Tạo câu hỏi từ học liệu/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Cùng bạn chuẩn bị/ })).toBeVisible();
     await page.evaluate(() =>
-      Promise.all(document.getAnimations().map((animation) => animation.finished.catch(() => undefined))),
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+          .map((animation) => animation.finished.catch(() => undefined)),
+      ),
     );
     const axe = await new AxeBuilder({ page }).analyze();
     expect(axe.violations).toEqual([]);

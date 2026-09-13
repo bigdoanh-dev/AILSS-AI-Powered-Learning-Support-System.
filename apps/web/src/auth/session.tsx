@@ -1,3 +1,4 @@
+import { useHydrated } from "../lib/hydration";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { ApiError, errorMessage } from "../lib/api";
 export interface Profile {
@@ -17,6 +18,7 @@ export function safeReturnTo(value: string | null): string {
   if (
     [
       "/auth/register/lecturer",
+      "/auth/register/lecturer/application",
       "/auth/register/lecturer/status",
       "/app/admin/lecturer-applications",
     ].includes(value)
@@ -146,13 +148,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }
   async function logout() {
     const id = ++epoch.current;
-    setProfile(null);
-    setState("REFRESHING");
     try {
       await sessionRequest("logout", "POST");
       if (id !== epoch.current) return;
-      setState("UNAUTHENTICATED");
-      setMessage("Đã đăng xuất và thu hồi phiên hiện tại.");
+      window.setTimeout(() => {
+        if (id !== epoch.current) return;
+        setProfile(null);
+        setState("UNAUTHENTICATED");
+        setMessage("Đã đăng xuất và thu hồi phiên hiện tại.");
+      }, 0);
     } catch (e) {
       if (id !== epoch.current) throw e;
       failure(e);
@@ -202,6 +206,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 }
 export function useSession() {
   const value = useContext(Context);
+  const hydrated = useHydrated();
   if (!value) throw new Error("SessionProvider required");
-  return value;
+  // A lazy route may hydrate after bootstrap has resolved in its parent provider.
+  // Its first render must still match the server's unauthenticated loading snapshot.
+  return hydrated ? value : { ...value, state: "BOOTSTRAPPING" as State, profile: null, message: "" };
 }

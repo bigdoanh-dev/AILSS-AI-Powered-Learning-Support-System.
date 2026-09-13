@@ -85,6 +85,7 @@ const files = [
   "063_ai_human_approval.cql",
   "070_notification_schema.cql",
   "075_audit_support_schema.cql",
+  "076_learning_sepay_recovery.cql",
 ];
 const checksums = [];
 for (const file of files) {

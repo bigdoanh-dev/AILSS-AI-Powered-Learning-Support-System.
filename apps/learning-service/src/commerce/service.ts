@@ -1,4 +1,6 @@
-import { sepayConfig, paymentOrderId, type SepayTransaction } from "./sepay.js";
+import type { SepayRecoveryRepository, RecoveryCandidate } from "./recovery-repository.js";
+import { crashAfter } from "./crash-injection.js";
+import { paymentMode, sepayConfig, paymentOrderId, type SepayTransaction } from "./sepay.js";
 import { randomUUID } from "node:crypto";
 import { AppError } from "../../../../packages/http/src/index.js";
 import type { ActorContext } from "../../../../packages/security/src/index.js";
@@ -27,6 +29,7 @@ export class LearningCommerceService {
     private readonly classroom: CommerceClassroomClient,
     private readonly classroomContext: ClassroomOfferingContextClient,
     private readonly secret: string,
+    private readonly recovery?: SepayRecoveryRepository,
   ) {}
 
   async freeEnroll(input: { courseId: string; actor: ActorContext; key: string; correlationId: string }) {
@@ -182,10 +185,11 @@ export class LearningCommerceService {
       );
     const offering = await this.requireOffering(input.request.offeringId, now);
     if (
-      offering.currency !== "VND" ||
-      !/^\d+(?:\.0+)?$/.test(offering.price) ||
-      !Number.isSafeInteger(Number(offering.price)) ||
-      Number(offering.price) <= 0
+      paymentMode() === "sepay" &&
+      (offering.currency !== "VND" ||
+        !/^\d+(?:\.0+)?$/.test(offering.price) ||
+        !Number.isSafeInteger(Number(offering.price)) ||
+        Number(offering.price) <= 0)
     )
       throw new AppError(
         "PAYMENT_CURRENCY_UNSUPPORTED",
@@ -279,35 +283,70 @@ export class LearningCommerceService {
   async receiveSepay(transaction: SepayTransaction, correlationId: string) {
     const config = sepayConfig();
     if (transaction.transferType !== "in" || transaction.accountNumber !== config.accountNumber)
-      return { success: true, processed: false };
+      throw new AppError("PAYMENT_REJECTED", 422, "Payment could not be accepted");
     const orderId = paymentOrderId(transaction.content);
-    if (!orderId) return { success: true, processed: false };
-    let order = await this.repo.order(orderId);
-    if (!order) return { success: true, processed: false };
+    if (!orderId) throw new AppError("PAYMENT_REJECTED", 422, "Payment could not be accepted");
+    const order = await this.repo.order(orderId);
+    if (!order) throw new AppError("PAYMENT_REJECTED", 422, "Payment could not be accepted");
     if (
       order.currency !== "VND" ||
       !/^\d+(?:\.0+)?$/.test(order.price) ||
       !Number.isSafeInteger(Number(order.price)) ||
       Number(order.price) !== transaction.transferAmount
     )
-      throw new AppError("PAYMENT_AMOUNT_MISMATCH", 422, "Transfer amount does not match order");
+      throw new AppError("PAYMENT_REJECTED", 422, "Payment could not be accepted");
     if (order.state === "PAYMENT_FAILED")
       throw conflict(
         "PAYMENT_REQUIRES_REVIEW",
         "Transfer received for a failed order; manual review required",
       );
-    const payment = await this.repo.claimSepayTransaction(
-      String(transaction.id),
-      orderId,
-      fingerprint(this.secret, {
+    if (!this.recovery)
+      throw new AppError("PAYMENT_UNAVAILABLE", 503, "Payment processing is temporarily unavailable", true);
+    const receivedAt = new Date(),
+      accepted = {
+        transactionId: String(transaction.id),
         orderId,
-        accountNumber: transaction.accountNumber,
+        paidEventId: order.paidEventId,
         amount: transaction.transferAmount,
-        type: transaction.transferType,
-      }),
-      new Date(),
+        receivedAt,
+        correlationId,
+        fingerprint: fingerprint(this.secret, {
+          orderId,
+          accountNumber: transaction.accountNumber,
+          amount: transaction.transferAmount,
+          type: transaction.transferType,
+          content: transaction.content,
+          code: transaction.code ?? null,
+          referenceCode: transaction.referenceCode ?? null,
+        }),
+      };
+    const candidate = await this.recovery.ensure({
+      ...accepted,
+      recoveryMac: recoveryMac(this.secret, accepted),
+    });
+    await this.resumeSepay(candidate);
+    return { success: true, processed: true };
+  }
+
+  async resumeSepay(candidate: RecoveryCandidate) {
+    const { orderId, correlationId } = candidate;
+    let order = await this.repo.order(orderId);
+    if (
+      !order ||
+      candidate.recoveryMac !== recoveryMac(this.secret, candidate) ||
+      order.paidEventId !== candidate.paidEventId ||
+      order.currency !== "VND" ||
+      Number(order.price) !== candidate.amount ||
+      order.state === "PAYMENT_FAILED"
+    )
+      throw new AppError("PAYMENT_REQUIRES_REVIEW", 409, "Payment requires review");
+    const payment = await this.repo.claimSepayTransaction(
+      candidate.transactionId,
+      orderId,
+      candidate.fingerprint,
+      candidate.receivedAt,
     );
-    if (payment.transactionId !== String(transaction.id))
+    if (payment.transactionId !== candidate.transactionId)
       throw conflict("DUPLICATE_ORDER_TRANSFER", "Additional transfer requires manual review");
     const occurredAt = order.paidAt ?? payment.receivedAt;
     if (order.state === "PENDING") {
@@ -328,11 +367,21 @@ export class LearningCommerceService {
         },
       });
       await this.repo.transitionPayment(order, true, occurredAt);
+      crashAfter("D_ORDER_PAID", {
+        transactionId: candidate.transactionId,
+        orderId,
+        eventId: order.paidEventId,
+      });
       order = await this.repo.order(orderId);
       if (!order || !["PAID_PENDING_ENTITLEMENT", "ENTITLED"].includes(order.state)) throw unavailable();
     }
     await this.repo.readyEvent(order.paidEventId, occurredAt);
-    return { success: true, processed: true };
+    crashAfter("F_READY_BEFORE_PUBLISH", {
+      transactionId: candidate.transactionId,
+      orderId,
+      eventId: order.paidEventId,
+    });
+    return order;
   }
 
   async simulatePayment(input: {
@@ -755,6 +804,24 @@ export class LearningCommerceService {
       throw error;
     }
   }
+}
+function recoveryMac(
+  secret: string,
+  value: Pick<
+    RecoveryCandidate,
+    "transactionId" | "orderId" | "fingerprint" | "receivedAt" | "paidEventId" | "correlationId" | "amount"
+  >,
+) {
+  return fingerprint(secret, {
+    purpose: "sepay-recovery-v1",
+    transactionId: value.transactionId,
+    orderId: value.orderId,
+    fingerprint: value.fingerprint,
+    receivedAt: value.receivedAt.toISOString(),
+    paidEventId: value.paidEventId,
+    correlationId: value.correlationId,
+    amount: value.amount,
+  });
 }
 function student(actor: ActorContext) {
   if (!actor.roles.includes("STUDENT"))

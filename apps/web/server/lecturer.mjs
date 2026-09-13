@@ -34,8 +34,8 @@ const pos = z
         "application/pdf",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "text/plain",
-      "video/mp4",
-      "video/webm",
+        "video/mp4",
+        "video/webm",
       ]),
       sha256: z.string().regex(/^[a-f0-9]{64}$/i),
     })
@@ -155,7 +155,6 @@ for (const p of [
   "/lessons/:id",
   "/courses/:id/roster",
   "/me/owned-offerings",
-  "/me/owned-courses",
   "/offerings/:id",
   "/me/owned-classes",
   "/classes/:id",
@@ -309,9 +308,7 @@ export function lecturerOperation(url, method, body, headers) {
       .string()
       .regex(/^"v(?:0|[1-9]\d{0,9})"$/)
       .parse(headers["if-match"]);
-  const target = method === "GET" && new RegExp(`^/courses/${U}$`).test(path)
-    ? path.replace("/courses/", "/me/owned-courses/") : path;
-  return { path: target + (query ? "?" + params.toString() : ""), headers: extra };
+  return { path: path + (query ? "?" + params.toString() : ""), headers: extra };
 }
 export function lecturerEnvelope(value) {
   const forbidden =

@@ -59,7 +59,9 @@ describe("P7.1 IDN-01 idempotency and uniqueness", () => {
     expect(first.account).toMatchObject({ role: "LECTURER", lecturerVerified: false, status: "ACTIVE" });
     expect(replay.account).toEqual(first.account);
     expect(parseRegistrationRequest({ ...validBody, role: "LECTURER" }).role).toBe("LECTURER");
-    await expect(service.register({ ...command, role: "STUDENT" })).rejects.toMatchObject({ code: "IDEMPOTENCY_CONFLICT" });
+    await expect(service.register({ ...command, role: "STUDENT" })).rejects.toMatchObject({
+      code: "IDEMPOTENCY_CONFLICT",
+    });
   });
   it("replays the original logical result and keeps stable event IDs", async () => {
     const store = new MemoryRegistrationStore();

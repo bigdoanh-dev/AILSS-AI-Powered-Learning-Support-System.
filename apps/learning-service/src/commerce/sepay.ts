@@ -2,7 +2,20 @@ import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { AppError } from "../../../../packages/http/src/index.js";
 
+export function paymentMode(): "simulation" | "sepay" {
+  const mode = process.env.PAYMENT_MODE;
+  if (mode === "sepay") return mode;
+  if (
+    mode === "simulation" &&
+    process.env.NODE_ENV !== "production" &&
+    (process.env.NODE_ENV === "test" || ["dev-core", "dev-async"].includes(process.env.AILSS_PROFILE ?? ""))
+  )
+    return mode;
+  throw new AppError("PAYMENT_MODE_INVALID", 503, "Payment mode is not configured for this runtime");
+}
 export function sepayConfig() {
+  if (paymentMode() !== "sepay")
+    throw new AppError("PAYMENT_PROVIDER_DISABLED", 403, "Payment provider is disabled");
   const apiKey = process.env.SEPAY_WEBHOOK_API_KEY;
   const accountNumber = process.env.SEPAY_ACCOUNT_NUMBER;
   const bank = process.env.SEPAY_BANK;

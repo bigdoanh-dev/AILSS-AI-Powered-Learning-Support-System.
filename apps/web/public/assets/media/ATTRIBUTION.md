@@ -27,3 +27,7 @@ The coding, database, ai and study images in 640/1280 AVIF/WebP were generated w
 Original Vietnamese demonstration curricula are in scripts/dev/demo/courses.json. PDF/text handouts are generated from that source; the video builder presents the same explanations as silent teaching slides. These are sample teaching materials, not accreditation claims.
 
 Các bìa `cover-*.svg` được vẽ riêng bằng vector cho từng chủ đề trong AILSS; mã tạo tại `scripts/dev/demo/build-covers.mjs`. Video Python tham khảo được nhúng từ freeCodeCamp, không tải lại hoặc phân phối lại video. Các khóa IELTS cục bộ giữ nguyên quyền của tác giả và không thuộc giấy phép mã nguồn.
+
+## UI Motion and Learning Experience Assets (2026-09-13)
+
+Các hình ảnh minh họa cho các phương thức học tập (`mode-self-paced`, `mode-live-cohort`, `mode-private-class`) và giao diện xem trước không gian AI (`ai-workspace-preview`) được tác tạo riêng dạng đồ họa vector kỹ thuật cao và tối ưu hóa đa định dạng (AVIF/WebP 640w/1280w) bằng Sharp. Toàn bộ hình ảnh phục vụ minh họa giao diện học tập tương tác cho AILSS, không sử dụng ảnh thương mại của bên thứ ba.

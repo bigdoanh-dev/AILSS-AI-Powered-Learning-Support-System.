@@ -41,6 +41,7 @@ x-app-common: &app-common
   restart: unless-stopped
   environment: &app-env
     NODE_ENV: ${NODE_ENV:-development}
+    AILSS_PROFILE: ${AILSS_PROFILE:-dev-async}
     LOG_LEVEL: ${LOG_LEVEL:-info}
     ENABLE_CASSANDRA: "true"
     ENABLE_RABBITMQ: "false"
@@ -196,6 +197,12 @@ services:
     environment:
       <<: *app-env
       PORT: 8101
+      OBJECT_STORAGE_ENDPOINT: minio
+      OBJECT_STORAGE_PORT: 9000
+      OBJECT_STORAGE_USE_SSL: "false"
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-ailss-documents}
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY}
       CASSANDRA_KEYSPACE: identity_keyspace
       CASSANDRA_USERNAME: svc_identity
       CASSANDRA_PASSWORD: ${CASSANDRA_SVC_IDENTITY_PASSWORD}
@@ -238,10 +245,13 @@ services:
       {
         <<: *app-env,
         PORT: 8102,
+        PAYMENT_MODE: "${PAYMENT_MODE:-simulation}",
         SEPAY_WEBHOOK_API_KEY: "${SEPAY_WEBHOOK_API_KEY:-}",
         SEPAY_ACCOUNT_NUMBER: "${SEPAY_ACCOUNT_NUMBER:-}",
         SEPAY_ACCOUNT_NAME: "${SEPAY_ACCOUNT_NAME:-}",
         SEPAY_BANK: "${SEPAY_BANK:-}",
+        AILSS_TEST_CRASH_BOUNDARY: "${AILSS_TEST_CRASH_BOUNDARY:-}",
+        AILSS_TEST_CRASH_RUN_ID: "${AILSS_TEST_CRASH_RUN_ID:-}",
         CASSANDRA_KEYSPACE: learning_keyspace,
         CASSANDRA_USERNAME: svc_learning,
         CASSANDRA_PASSWORD: "${CASSANDRA_SVC_LEARNING_PASSWORD}",

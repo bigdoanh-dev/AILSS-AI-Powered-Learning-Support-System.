@@ -1,5 +1,6 @@
 const contentOrigin = new URL(process.env.OBJECT_STORAGE_PUBLIC_URL || "http://127.0.0.1:9000").origin;
 import { createSessionAdapter } from "../server/session.mjs";
+import { attachAiRealtime } from "../server/realtime.mjs";
 import http from "node:http";
 import https from "node:https";
 import fs from "node:fs/promises";
@@ -64,8 +65,7 @@ const server = http.createServer(async (req, res) => {
       const info = await fs.stat(file);
       if (info.isDirectory()) file = path.join(file, "index.html");
     } catch {
-      if (["/app", "/app/", "/app/account", "/app/account/"].includes(pathname))
-        file = path.join(root, "app-shell.html");
+      if (/^\/app(?:\/|$)/.test(pathname)) file = path.join(root, "app-shell.html");
       else if (/^\/courses\/[0-9a-f-]+\/?$/i.test(pathname)) file = path.join(root, "course-shell.html");
       else {
         file = path.join(root, "404.html");
@@ -79,8 +79,7 @@ const server = http.createServer(async (req, res) => {
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "strict-origin-when-cross-origin",
       "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-      "Content-Security-Policy":
-        `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://qr.sepay.vn; media-src 'self' ${contentOrigin}; frame-src 'self' ${contentOrigin} https://www.youtube-nocookie.com https://drive.google.com; connect-src 'self' ${contentOrigin}; object-src 'none'; base-uri 'self'; frame-ancestors 'none'`,
+      "Content-Security-Policy": `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://qr.sepay.vn; media-src 'self' ${contentOrigin}; frame-src 'self' ${contentOrigin} https://www.youtube-nocookie.com https://drive.google.com; connect-src 'self' ${contentOrigin}; object-src 'none'; base-uri 'self'; frame-ancestors 'none'`,
       "Cache-Control": /-[A-Za-z0-9_-]{8,}\.(js|css)$/.test(file)
         ? "public, max-age=31536000, immutable"
         : "no-cache",
@@ -116,6 +115,11 @@ const server = http.createServer(async (req, res) => {
     res.end("Invalid request");
   }
 });
+attachAiRealtime(
+  server,
+  sessionAdapter,
+  process.env.AILSS_WEB_ORIGIN || `http://127.0.0.1:${process.env.PORT || 4174}`,
+);
 server.listen(Number(process.env.PORT || 4174), "127.0.0.1", () =>
   console.log(`AILSS production preview http://127.0.0.1:${process.env.PORT || 4174}`),
 );

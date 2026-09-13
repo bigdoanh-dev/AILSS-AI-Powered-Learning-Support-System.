@@ -1,5 +1,5 @@
 import { createHash, createHmac } from "node:crypto";
-import { paymentInstructions } from "./sepay.js";
+import { paymentInstructions, paymentMode } from "./sepay.js";
 import { z } from "zod";
 import type { OfferingType } from "../offerings/model.js";
 
@@ -82,6 +82,7 @@ export interface CommerceReceipt {
 
 export function orderDto(v: LearningOrder) {
   return {
+    paymentMode: paymentMode(),
     payment: paymentInstructions(v),
     orderId: v.orderId,
     studentId: v.studentId,

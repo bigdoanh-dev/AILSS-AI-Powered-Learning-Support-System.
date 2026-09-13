@@ -10,12 +10,12 @@ const events = await readJson("contracts/event-registry.json");
 function unique(values, label) {
   if (new Set(values).size !== values.length) throw new Error(`${label} contains duplicates`);
 }
-if (api.publicCount !== 102 || api.public.length !== 102)
-  throw new Error("Public API registry must contain exactly 102 contracts");
+if (api.publicCount !== 101 || api.public.length !== 101)
+  throw new Error("Public API registry must contain exactly 101 contracts");
 if (api.internalCount !== 15 || api.internal.length !== 15)
   throw new Error("Internal API registry must contain exactly 15 contracts");
-if (queries.count !== 75 || queries.queries.length !== 75)
-  throw new Error("Query registry must contain exactly 75 Query IDs");
+if (queries.count !== 78 || queries.queries.length !== 78)
+  throw new Error("Query registry must contain exactly 78 Query IDs");
 if (events.count !== 22 || events.events.length !== 22)
   throw new Error("Event registry must contain exactly 22 events");
 unique(
@@ -75,8 +75,8 @@ function assertRegistryMatchesOpenApi(registry, document, label) {
 }
 const publicOpenApi = YAML.parse(await readFile("contracts/openapi/public-v1.yaml", "utf8"));
 const internalOpenApi = YAML.parse(await readFile("contracts/openapi/internal-v1.yaml", "utf8"));
-if (publicOpenApi.openapi !== "3.1.0" || operationIds(publicOpenApi).length !== 102)
-  throw new Error("Public OpenAPI must expose 102 OpenAPI 3.1 operations");
+if (publicOpenApi.openapi !== "3.1.0" || operationIds(publicOpenApi).length !== 101)
+  throw new Error("Public OpenAPI must expose 101 OpenAPI 3.1 operations");
 if (internalOpenApi.openapi !== "3.1.0" || operationIds(internalOpenApi).length !== 15)
   throw new Error("Internal OpenAPI must expose 15 OpenAPI 3.1 operations");
 assertRegistryMatchesOpenApi(api.public, publicOpenApi, "Public");
@@ -98,14 +98,31 @@ if (
   )
 )
   throw new Error("Redis dependency is forbidden by Phase 5 errata");
+
+const callback = api.public.find((operation) => operation.id === "LRN-31");
+if (
+  api.externalCallbacks?.length !== 1 ||
+  api.externalCallbacks[0] !== "LRN-31" ||
+  callback?.auth !== "SePayApiKey"
+)
+  throw new Error("External callback inventory mismatch");
+for (const table of ["sepay_transaction_by_id", "sepay_payment_by_order"])
+  if (
+    !queries.queries.some(
+      (query) =>
+        query.owner === "Learning" && query.tables.includes(table) && query.apiConsumers.includes("LRN-31"),
+    )
+  )
+    throw new Error(`Unregistered callback table ${table}`);
+
 console.log(
   JSON.stringify({
     stage: "contract-validation",
     status: "PASS",
-    publicApis: 102,
+    publicApis: 101,
     businessServices: businessServices.size,
     internalApis: 15,
-    queryIds: 75,
+    queryIds: 78,
     events: 22,
     openApi: "3.1.0",
     redis: false,

@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { chromium, expect } from "@playwright/test";
 import fs from "node:fs/promises";
 const base = process.env.AILSS_QA_URL || "http://127.0.0.1:5177",
-  out = "../../docs/evidence/p12.6-assessment",
+  out = process.env.AILSS_QA_OUT || "../../docs/evidence/p12.6-assessment",
   id = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 await fs.mkdir(out, { recursive: true });
 const graph = { courseId: id(1), quizId: id(2), lecturerId: id(3), studentId: id(4), attemptId: id(5) };
@@ -131,9 +131,42 @@ try {
       if (role === "LECTURER") {
         await page.goto(`${base}/app/teaching/assessments/${graph.quizId}`);
         await expect(page.getByText("Phiên bản hiện tại: v2")).toBeVisible();
-        await page.getByRole("button", { name: "Xem trước" }).click();
+        const previewButton = page.getByRole("button", { name: "Xem trước" });
+        await previewButton.focus();
+        await previewButton.click();
+        const previewDialog = page.getByRole("dialog");
+        await expect(previewDialog).toBeVisible();
+        expect(await page.evaluate(() => document.activeElement?.closest('[role="dialog"]') !== null)).toBe(
+          true,
+        );
         await expect(page.getByText(/Đáp án đúng/).first()).toBeVisible();
         await page.getByRole("button", { name: "Đóng xem trước" }).click();
+        await expect(previewDialog).not.toBeVisible();
+        await expect(previewButton).toBeFocused();
+        await previewButton.click();
+        await expect(previewDialog).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(previewDialog).not.toBeVisible();
+        await expect(previewButton).toBeFocused();
+        if (width === 375) {
+          await previewButton.click();
+          await expect(previewDialog).toBeVisible();
+          const geometry = await page.evaluate(() => {
+            const dialog = document.querySelector('[role="dialog"]');
+            const panel = document.querySelector(".preview-panel")?.getBoundingClientRect();
+            const header = document.querySelector("header");
+            return {
+              panelLeft: panel?.left ?? -1,
+              panelRight: panel?.right ?? innerWidth + 1,
+              dialogZ: dialog ? Number(getComputedStyle(dialog).zIndex) : 0,
+              headerZ: header ? Number(getComputedStyle(header).zIndex || 0) : 0,
+            };
+          });
+          expect(geometry.panelLeft).toBeGreaterThanOrEqual(0);
+          expect(geometry.panelRight).toBeLessThanOrEqual(375);
+          expect(geometry.dialogZ).toBeGreaterThan(geometry.headerZ);
+          await page.keyboard.press("Escape");
+        }
         page.once("dialog", (dialog) => dialog.accept());
         await page.getByRole("button", { name: "Xuất bản" }).click();
         await expect

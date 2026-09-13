@@ -1,3 +1,5 @@
+import { SepayRecoveryRepository } from "./commerce/recovery-repository.js";
+import { SepayRecoveryRunner } from "./commerce/recovery-runner.js";
 import { startService, type ServiceManifest } from "../../../packages/runtime/src/index.js";
 import { LearningCatalogRepository } from "./catalog/repository.js";
 import { learningCatalogRouter } from "./catalog/router.js";
@@ -12,7 +14,6 @@ import { createIdentityPublicProfileClient } from "./identity-client.js";
 import { LearningAuthoringRepository } from "./authoring/repository.js";
 import { LearningAuthoringService } from "./authoring/service.js";
 import { learningAuthoringRouter } from "./authoring/router.js";
-import { ownedCoursesRouter } from "./authoring/owned-router.js";
 import { LearningOutboxRelay } from "./authoring/relay.js";
 import type { AppConfig } from "../../../packages/config/src/index.js";
 import { LearningLifecycleRepository } from "./lifecycle/repository.js";
@@ -48,7 +49,7 @@ const manifest: ServiceManifest = {
   defaultPort: 8102,
   keyspace: "learning_keyspace",
   cassandraRole: "svc_learning",
-  publicApiIds: Array.from({ length: 28 }, (_, i) => `LRN-${String(i + 1).padStart(2, "0")}`),
+  publicApiIds: [...Array.from({ length: 28 }, (_, i) => `LRN-${String(i + 1).padStart(2, "0")}`), "LRN-31"],
   internalApiIds: ["INT-LRN-01", "INT-LRN-02", "INT-LRN-03", "INT-LRN-04"],
   producedEvents: [
     "learning.course.created.v1",
@@ -180,7 +181,6 @@ await startService(manifest, {
         kid: config.ACTOR_CONTEXT_KID,
         clockToleranceSeconds: config.JWT_CLOCK_SKEW_SECONDS,
       });
-    app.use(ownedCoursesRouter(context.cassandra, authoringRepository, identity, verifier("learning.course.owned")));
     app.use(
       learningAuthoringRouter(
         authoring,
@@ -214,13 +214,17 @@ await startService(manifest, {
     );
     const objectStorage =
       config.OBJECT_STORAGE_ACCESS_KEY && config.OBJECT_STORAGE_SECRET_KEY
-        ? new MinioStorage(config.OBJECT_STORAGE_BUCKET, {
-            endPoint: config.OBJECT_STORAGE_ENDPOINT,
-            port: config.OBJECT_STORAGE_PORT,
-            useSSL: config.OBJECT_STORAGE_USE_SSL,
-            accessKey: config.OBJECT_STORAGE_ACCESS_KEY,
-            secretKey: config.OBJECT_STORAGE_SECRET_KEY,
-          }, config.OBJECT_STORAGE_PUBLIC_URL)
+        ? new MinioStorage(
+            config.OBJECT_STORAGE_BUCKET,
+            {
+              endPoint: config.OBJECT_STORAGE_ENDPOINT,
+              port: config.OBJECT_STORAGE_PORT,
+              useSSL: config.OBJECT_STORAGE_USE_SSL,
+              accessKey: config.OBJECT_STORAGE_ACCESS_KEY,
+              secretKey: config.OBJECT_STORAGE_SECRET_KEY,
+            },
+            config.OBJECT_STORAGE_PUBLIC_URL,
+          )
         : undefined;
     const lessons = new LearningLessonService(
       new LearningLessonRepository(context.cassandra),
@@ -257,11 +261,13 @@ await startService(manifest, {
         owned: verifier("learning.offering.owned"),
       }),
     );
+    const paymentRecovery = new SepayRecoveryRepository(context.cassandra);
     const commerce = new LearningCommerceService(
       new LearningCommerceRepository(context.cassandra),
       await createCommerceClassroomClient(config),
       classroomContext,
       config.LEARNING_CURSOR_HMAC_KEY,
+      paymentRecovery,
     );
     app.use(
       learningCommerceRouter(commerce, {
@@ -298,12 +304,18 @@ await startService(manifest, {
       ? new LearningOutboxRelay(authoringRepository, authenticatedRabbitUrl(config), context.logger)
       : undefined;
     relay?.start();
+    const paymentRunner = relay
+      ? new SepayRecoveryRunner(paymentRecovery, commerce, authoringRepository, relay, context.logger)
+      : undefined;
+    const paymentTimer = paymentRunner ? setInterval(() => void paymentRunner.tick(), 1000) : undefined;
+    paymentTimer?.unref();
     const fulfillment = config.ENABLE_RABBITMQ
       ? new EntitlementFulfillmentConsumer(authenticatedRabbitUrl(config), reconciliationRepository)
       : undefined;
     await fulfillment?.start();
     return async () => {
       clearInterval(reconcileTimer);
+      if (paymentTimer) clearInterval(paymentTimer);
       await fulfillment?.close();
       await relay?.close();
     };

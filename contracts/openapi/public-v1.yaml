@@ -48,55 +48,15 @@
                                     {
                                       "type": ["string", "null"],
                                       "maxLength": 350000,
-                                      "description": "PNG, JPEG or WebP base64 data URI up to 256 KiB; null removes image.",
+                                      "description":
+                                        "PNG, JPEG or WebP base64 data URI up to 256 KiB; null removes
+                                        image.",
                                     },
                                 },
                             },
                         },
                     },
                 },
-            },
-        },
-      "/api/v1/me/owned-courses":
-        {
-          "get":
-            {
-              "operationId": "LRN-29",
-              "summary": "Khóa học do giảng viên sở hữu",
-              "security": [{ "bearerAuth": [] }],
-              "responses":
-                {
-                  "200": { "description": "Success" },
-                  "401": { "description": "Invalid session" },
-                  "403": { "description": "Not permitted" },
-                  "503": { "description": "Service unavailable" },
-                },
-              "description": "Bounded to the latest 100 projection rows; deduplicates and rechecks canonical ownership. Includes drafts.",
-            },
-        },
-      "/api/v1/me/owned-courses/{courseId}":
-        {
-          "get":
-            {
-              "operationId": "LRN-30",
-              "summary": "Chi tiết khóa học của giảng viên",
-              "security": [{ "bearerAuth": [] }],
-              "responses":
-                {
-                  "200": { "description": "Success" },
-                  "401": { "description": "Invalid session" },
-                  "403": { "description": "Not permitted" },
-                  "503": { "description": "Service unavailable" },
-                },
-              "parameters":
-                [
-                  {
-                    "name": "courseId",
-                    "in": "path",
-                    "required": true,
-                    "schema": { "type": "string", "format": "uuid" },
-                  },
-                ],
             },
         },
       "/api/v1/auth/register":
@@ -157,24 +117,8 @@
                     { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } } },
                 },
               "responses":
-                {
-                  "200":
-                    {
-                      "description": "Initial access and refresh credentials issued for a persisted session",
-                      "content":
-                        {
-                          "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponse" } },
-                        },
-                    },
-                  "400": { "$ref": "#/components/responses/ErrorResponse" },
-                  "401": { "$ref": "#/components/responses/ErrorResponse" },
-                  "403": { "$ref": "#/components/responses/ErrorResponse" },
-                  "413": { "$ref": "#/components/responses/ErrorResponse" },
-                  "422": { "$ref": "#/components/responses/ErrorResponse" },
-                  "429": { "$ref": "#/components/responses/ErrorResponse" },
-                  "500": { "$ref": "#/components/responses/ErrorResponse" },
-                  "503": { "$ref": "#/components/responses/ErrorResponse" },
-                },
+                { "200": { "description": "Initial access and refresh credentials issued for a persisted
+                        session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponse" } } } }, "400": { "$ref": "#/components/responses/ErrorResponse" }, "401": { "$ref": "#/components/responses/ErrorResponse" }, "403": { "$ref": "#/components/responses/ErrorResponse" }, "413": { "$ref": "#/components/responses/ErrorResponse" }, "422": { "$ref": "#/components/responses/ErrorResponse" }, "429": { "$ref": "#/components/responses/ErrorResponse" }, "500": { "$ref": "#/components/responses/ErrorResponse" }, "503": { "$ref": "#/components/responses/ErrorResponse" } },
               "security": [],
             },
         },
@@ -218,7 +162,8 @@
             {
               "operationId": "IDN-04",
               "summary": "Thu hồi phiên hiện tại",
-              "description": "Revokes only the canonical session identified by the verified Bearer access token. The request has no body.",
+              "description": "Revokes only the canonical session identified by the verified
+                Bearer access token. The request has no body.",
               "responses":
                 {
                   "200":
@@ -264,7 +209,8 @@
             {
               "operationId": "IDN-05",
               "summary": "Hồ sơ của tôi",
-              "description": "Returns the canonical current-user profile only after session-aware owner authorization.",
+              "description": "Returns the canonical current-user profile only after
+                session-aware owner authorization.",
               "responses":
                 {
                   "200":
@@ -288,7 +234,9 @@
             {
               "operationId": "IDN-06",
               "summary": "Cập nhật hồ sơ",
-              "description": "Updates only the current user's display name. Profile-version concurrency is server-side because no client If-Match binding exists in the locked contract.",
+              "description": "Updates only the current user's display name. Profile-version
+                concurrency is server-side because no client If-Match binding
+                exists in the locked contract.",
               "parameters":
                 [
                   {
@@ -308,25 +256,8 @@
                     },
                 },
               "responses":
-                {
-                  "200":
-                    {
-                      "description": "Profile updated, no-op completed, or original idempotent outcome replayed",
-                      "content":
-                        {
-                          "application/json":
-                            { "schema": { "$ref": "#/components/schemas/ProfileUpdateResponse" } },
-                        },
-                    },
-                  "400": { "$ref": "#/components/responses/ErrorResponse" },
-                  "401": { "$ref": "#/components/responses/ErrorResponse" },
-                  "409": { "$ref": "#/components/responses/ErrorResponse" },
-                  "413": { "$ref": "#/components/responses/ErrorResponse" },
-                  "422": { "$ref": "#/components/responses/ErrorResponse" },
-                  "429": { "$ref": "#/components/responses/ErrorResponse" },
-                  "500": { "$ref": "#/components/responses/ErrorResponse" },
-                  "503": { "$ref": "#/components/responses/ErrorResponse" },
-                },
+                { "200": { "description": "Profile updated, no-op completed, or original idempotent outcome
+                        replayed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProfileUpdateResponse" } } } }, "400": { "$ref": "#/components/responses/ErrorResponse" }, "401": { "$ref": "#/components/responses/ErrorResponse" }, "409": { "$ref": "#/components/responses/ErrorResponse" }, "413": { "$ref": "#/components/responses/ErrorResponse" }, "422": { "$ref": "#/components/responses/ErrorResponse" }, "429": { "$ref": "#/components/responses/ErrorResponse" }, "500": { "$ref": "#/components/responses/ErrorResponse" }, "503": { "$ref": "#/components/responses/ErrorResponse" } },
               "security": [{ "bearerAuth": [] }],
             },
         },
@@ -336,7 +267,10 @@
             {
               "operationId": "IDN-07",
               "summary": "Đổi mật khẩu",
-              "description": "Changes the authenticated user's password after operation-bound current-password reauthentication. Success invalidates prior access and refresh authorization and returns no replacement credentials.",
+              "description": "Changes the authenticated user's password after operation-bound
+                current-password reauthentication. Success invalidates prior
+                access and refresh authorization and returns no replacement
+                credentials.",
               "parameters":
                 [
                   {
@@ -384,7 +318,9 @@
             {
               "operationId": "IDN-08",
               "summary": "Hồ sơ giảng viên công khai",
-              "description": "Anonymous access is allowed. If Authorization is present it must be one strict, valid Bearer access token; invalid credentials are never downgraded to anonymous.",
+              "description": "Anonymous access is allowed. If Authorization is present it must
+                be one strict, valid Bearer access token; invalid credentials
+                are never downgraded to anonymous.",
               "parameters":
                 [
                   {
@@ -420,7 +356,9 @@
             {
               "operationId": "IDN-09",
               "summary": "Tra cứu người dùng",
-              "description": "Canonical ADMIN authorization. Exact required role/status filters route a bounded 16-shard Q-IDN-005 merge; cursor is opaque and integrity protected.",
+              "description": "Canonical ADMIN authorization. Exact required role/status
+                filters route a bounded 16-shard Q-IDN-005 merge; cursor is
+                opaque and integrity protected.",
               "parameters":
                 [
                   {
@@ -511,7 +449,9 @@
             {
               "operationId": "IDN-11",
               "summary": "Đổi trạng thái người dùng",
-              "description": "Bearer plus canonical ADMIN/session authorization and operation-bound current-password step-up. This is reauthentication, not MFA.",
+              "description": "Bearer plus canonical ADMIN/session authorization and
+                operation-bound current-password step-up. This is
+                reauthentication, not MFA.",
               "parameters":
                 [
                   {
@@ -565,7 +505,11 @@
             {
               "operationId": "IDN-12",
               "summary": "Xác minh giảng viên",
-              "description": "Bearer plus canonical ADMIN/session authorization and operation-bound current-password step-up. This is privilege-elevating reauthentication, not MFA. Advances the target security epoch once and converges the Q-IDN-006 public and Q-IDN-005 admin-search projections.",
+              "description": "Bearer plus canonical ADMIN/session authorization and
+                operation-bound current-password step-up. This is
+                privilege-elevating reauthentication, not MFA. Advances the
+                target security epoch once and converges the Q-IDN-006 public
+                and Q-IDN-005 admin-search projections.",
               "parameters":
                 [
                   {
@@ -619,7 +563,10 @@
             {
               "operationId": "LRN-01",
               "summary": "Danh mục khóa học",
-              "description": "Public published-course catalog for an exact category. Optional Bearer; invalid bearer is rejected, never downgraded. Served from Q-LRN-003 with a Q-LRN-001 canonical published-visibility guard.",
+              "description": "Public published-course catalog for an exact category. Optional
+                Bearer; invalid bearer is rejected, never downgraded. Served
+                from Q-LRN-003 with a Q-LRN-001 canonical published-visibility
+                guard.",
               "parameters":
                 [
                   {
@@ -664,7 +611,9 @@
             {
               "operationId": "LRN-05",
               "summary": "Tạo khóa học",
-              "description": "Create a private DRAFT course. Requires a canonically eligible Lecturer and an Idempotency-Key. Draft slug is normalized but not globally reserved until publish.",
+              "description": "Create a private DRAFT course. Requires a canonically eligible
+                Lecturer and an Idempotency-Key. Draft slug is normalized but
+                not globally reserved until publish.",
               "parameters":
                 [
                   {
@@ -710,7 +659,10 @@
             {
               "operationId": "LRN-02",
               "summary": "Tìm kiếm khóa học",
-              "description": "Limited normalized prefix/token search over published courses. Not full-text, fuzzy, or LIKE. Served from Q-LRN-004 with a Q-LRN-001 canonical published-visibility guard and canonical search-predicate revalidation.",
+              "description": "Limited normalized prefix/token search over published courses.
+                Not full-text, fuzzy, or LIKE. Served from Q-LRN-004 with a
+                Q-LRN-001 canonical published-visibility guard and canonical
+                search-predicate revalidation.",
               "parameters":
                 [
                   {
@@ -758,7 +710,9 @@
             {
               "operationId": "LRN-03",
               "summary": "Chi tiết khóa học",
-              "description": "Public detail of a published course from the Q-LRN-001 canonical read. Missing or non-PUBLISHED courses return a safe 404; internal state is never revealed.",
+              "description": "Public detail of a published course from the Q-LRN-001 canonical
+                read. Missing or non-PUBLISHED courses return a safe 404;
+                internal state is never revealed.",
               "parameters":
                 [
                   {
@@ -791,7 +745,8 @@
             {
               "operationId": "LRN-06",
               "summary": "Cập nhật khóa học",
-              "description": "Owner-only metadata PATCH for a private DRAFT course. Empty, unknown, protected and state-transition fields are rejected.",
+              "description": "Owner-only metadata PATCH for a private DRAFT course. Empty,
+                unknown, protected and state-transition fields are rejected.",
               "parameters":
                 [
                   {
@@ -844,7 +799,10 @@
             {
               "operationId": "LRN-04",
               "summary": "Chi tiết theo slug",
-              "description": "Public detail by normalized slug. Q-LRN-002 maps slug to courseId, then a Q-LRN-001 canonical guard requires PUBLISHED and matching normalized slug. The slug projection is not authoritative by itself.",
+              "description": "Public detail by normalized slug. Q-LRN-002 maps slug to
+                courseId, then a Q-LRN-001 canonical guard requires PUBLISHED
+                and matching normalized slug. The slug projection is not
+                authoritative by itself.",
               "parameters":
                 [
                   {
@@ -1362,7 +1320,9 @@
             {
               "operationId": "LRN-19",
               "summary": "Tạo Order cho CourseOffering",
-              "description": "SELF_PACED proceeds without Classroom. LIVE_COHORT first obtains an idempotent Classroom schedule reservation; overlap returns SCHEDULE_CONFLICT before payment can succeed.",
+              "description": "SELF_PACED proceeds without Classroom. LIVE_COHORT first obtains
+                an idempotent Classroom schedule reservation; overlap returns
+                SCHEDULE_CONFLICT before payment can succeed.",
               "parameters":
                 [
                   {
@@ -1430,7 +1390,11 @@
             {
               "operationId": "LRN-21",
               "summary": "Mô phỏng thanh toán",
-              "description": "LIVE_COHORT fulfillment activates Enrollment, Entitlement and Class Membership and then confirms the held reservation. A failed/expired reservation cannot yield an active paid entitlement; compensation moves the Order to FULFILLMENT_PENDING or REFUND_REQUIRED.",
+              "description": "LIVE_COHORT fulfillment activates Enrollment, Entitlement and
+                Class Membership and then confirms the held reservation. A
+                failed/expired reservation cannot yield an active paid
+                entitlement; compensation moves the Order to FULFILLMENT_PENDING
+                or REFUND_REQUIRED.",
               "parameters":
                 [
                   {
@@ -1547,7 +1511,9 @@
             {
               "operationId": "CLS-04",
               "summary": "Tham gia bằng mã",
-              "description": "P7.15A compatibility path permits PRIVATE/INSTITUTIONAL DRAFT join-by-code without a schedule reservation. LIVE_COHORT is denied; a PUBLISHED schedule fails closed until P7.15B.",
+              "description": "P7.15A compatibility path permits PRIVATE/INSTITUTIONAL DRAFT
+                join-by-code without a schedule reservation. LIVE_COHORT is
+                denied; a PUBLISHED schedule fails closed until P7.15B.",
               "parameters":
                 [
                   {
@@ -1974,24 +1940,8 @@
                         { "schema": { "$ref": "#/components/schemas/AttemptSubmitRequest" } },
                     },
                 },
-              "responses":
-                {
-                  "202":
-                    {
-                      "description": "Canonical objective result committed; submitted event is asynchronous",
-                      "content":
-                        {
-                          "application/json":
-                            { "schema": { "$ref": "#/components/schemas/AttemptSubmitResponse" } },
-                        },
-                    },
-                  "400": { "$ref": "#/components/responses/ErrorResponse" },
-                  "401": { "$ref": "#/components/responses/ErrorResponse" },
-                  "404": { "$ref": "#/components/responses/ErrorResponse" },
-                  "409": { "$ref": "#/components/responses/ErrorResponse" },
-                  "422": { "$ref": "#/components/responses/ErrorResponse" },
-                  "503": { "$ref": "#/components/responses/ErrorResponse" },
-                },
+              "responses": { "202": { "description": "Canonical objective result committed; submitted event is
+                        asynchronous", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AttemptSubmitResponse" } } } }, "400": { "$ref": "#/components/responses/ErrorResponse" }, "401": { "$ref": "#/components/responses/ErrorResponse" }, "404": { "$ref": "#/components/responses/ErrorResponse" }, "409": { "$ref": "#/components/responses/ErrorResponse" }, "422": { "$ref": "#/components/responses/ErrorResponse" }, "503": { "$ref": "#/components/responses/ErrorResponse" } },
               "security": [{ "bearerAuth": [] }],
             },
         },
@@ -2439,7 +2389,8 @@
             {
               "operationId": "INT-11",
               "summary": "Xử lý kiểm duyệt",
-              "description": "Canonical ADMIN plus operation-bound current-password reauthentication. This is PASSWORD_REAUTH, not MFA.",
+              "description": "Canonical ADMIN plus operation-bound current-password
+                reauthentication. This is PASSWORD_REAUTH, not MFA.",
               "parameters":
                 [
                   { "$ref": "#/components/parameters/ReportId" },
@@ -2599,12 +2550,8 @@
                     "schema": { "type": "string", "format": "uuid" },
                   },
                 ],
-              "responses":
-                {
-                  "200":
-                    { "description": "Owner-safe validated objective-v1 drafts including exact answers" },
-                  "404": { "$ref": "#/components/responses/ErrorResponse" },
-                },
+              "responses": { "200": { "description": "Owner-safe validated objective-v1 drafts including exact
+                        answers" }, "404": { "$ref": "#/components/responses/ErrorResponse" } },
               "security": [{ "bearerAuth": [] }],
             },
         },
@@ -2646,8 +2593,13 @@
                       "persist-original-public-response",
                     ],
                 },
-              "summary": "Submit a reviewed objective-v1 draft and approve it after Assessment DRAFT import",
-              "description": "Reviewed-edit and approval are one command. Generated version 1 remains immutable; every successful initial approval creates immutable reviewed version 2. APPROVED is committed only after the Assessment DRAFT import and AI linkage are durably known. Emits no event.",
+              "summary": "Submit a reviewed objective-v1 draft and approve it after Assessment
+                DRAFT import",
+              "description": "Reviewed-edit and approval are one command. Generated version 1
+                remains immutable; every successful initial approval creates
+                immutable reviewed version 2. APPROVED is committed only after
+                the Assessment DRAFT import and AI linkage are durably known.
+                Emits no event.",
               "parameters":
                 [
                   {
@@ -2865,7 +2817,9 @@
             {
               "operationId": "LRN-22",
               "summary": "Public CourseOffering catalog",
-              "description": "Lists only offerings whose canonical Offering and Course are both PUBLISHED. type is required so every request remains an exact bounded Q-LRN-020 partition fan-out.",
+              "description": "Lists only offerings whose canonical Offering and Course are
+                both PUBLISHED. type is required so every request remains an
+                exact bounded Q-LRN-020 partition fan-out.",
               "parameters":
                 [
                   {
@@ -3021,7 +2975,8 @@
             {
               "operationId": "LRN-26",
               "summary": "Publish a CourseOffering",
-              "description": "LIVE_COHORT fails closed unless Classroom confirms an immutable published schedule and matching linked Class.",
+              "description": "LIVE_COHORT fails closed unless Classroom confirms an immutable
+                published schedule and matching linked Class.",
               "parameters":
                 [
                   {
@@ -3223,7 +3178,8 @@
             {
               "operationId": "CLS-14",
               "summary": "Authorized ClassSession detail",
-              "description": "meetingUrl is returned only to an active member or authorized class Lecturer and only within the configured join window.",
+              "description": "meetingUrl is returned only to an active member or authorized
+                class Lecturer and only within the configured join window.",
               "parameters":
                 [
                   {
@@ -3448,20 +3404,8 @@
                   { "$ref": "#/components/parameters/NotificationCursor" },
                 ],
               "responses":
-                {
-                  "200":
-                    {
-                      "description": "One authenticated user's in-app notifications from exactly one month partition",
-                      "content":
-                        {
-                          "application/json":
-                            { "schema": { "$ref": "#/components/schemas/NotificationListResponse" } },
-                        },
-                    },
-                  "400": { "$ref": "#/components/responses/ErrorResponse" },
-                  "401": { "$ref": "#/components/responses/ErrorResponse" },
-                  "503": { "$ref": "#/components/responses/ErrorResponse" },
-                },
+                { "200": { "description": "One authenticated user's in-app notifications from exactly one
+                        month partition", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NotificationListResponse" } } } }, "400": { "$ref": "#/components/responses/ErrorResponse" }, "401": { "$ref": "#/components/responses/ErrorResponse" }, "503": { "$ref": "#/components/responses/ErrorResponse" } },
               "security": [{ "bearerAuth": [] }],
             },
         },
@@ -3882,10 +3826,157 @@
                 ],
             },
         },
+      "/api/v1/payments/sepay/webhook":
+        {
+          "post":
+            {
+              "operationId": "LRN-31",
+              "tags": ["Learning"],
+              "summary": "Receive authenticated SePay payment",
+              "security": [{ "SePayApiKey": [] }],
+              "description": "External callback; 16 KiB JSON, 60 requests/minute/source IP at
+                Gateway. Same transaction reuses paid event; changed
+                replay/additional payment rejected. No browser authority.
+                Durable claim metadata; HTTP body/credential excluded from
+                logs.",
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            {
+                              "type": "object",
+                              "required":
+                                ["id", "accountNumber", "transferType", "transferAmount", "content"],
+                              "properties":
+                                {
+                                  "id": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                                  "accountNumber": { "type": "string", "minLength": 1 },
+                                  "transferType": { "type": "string", "enum": ["in", "out"] },
+                                  "transferAmount":
+                                    { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+                                  "content": { "type": "string", "maxLength": 4000 },
+                                  "code": { "type": ["string", "null"] },
+                                  "referenceCode": { "type": ["string", "null"] },
+                                },
+                              "additionalProperties": true,
+                            },
+                        },
+                    },
+                },
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "Canonical payment recorded or identical replay",
+                      "content":
+                        {
+                          "application/json":
+                            {
+                              "schema":
+                                {
+                                  "type": "object",
+                                  "required": ["success", "processed"],
+                                  "properties":
+                                    { "success": { "const": true }, "processed": { "const": true } },
+                                  "additionalProperties": false,
+                                },
+                            },
+                        },
+                    },
+                  "400":
+                    {
+                      "description": "Malformed JSON",
+                      "content":
+                        {
+                          "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } },
+                        },
+                    },
+                  "401":
+                    {
+                      "description": "Invalid callback credentials",
+                      "content":
+                        {
+                          "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } },
+                        },
+                    },
+                  "403":
+                    {
+                      "description": "Provider disabled",
+                      "content":
+                        {
+                          "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } },
+                        },
+                    },
+                  "409":
+                    {
+                      "description": "Payment requires review",
+                      "content":
+                        {
+                          "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } },
+                        },
+                    },
+                  "413":
+                    {
+                      "description": "Body limit exceeded",
+                      "content":
+                        {
+                          "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } },
+                        },
+                    },
+                  "422":
+                    {
+                      "description": "Invalid or unmatched payment (uniform)",
+                      "content":
+                        {
+                          "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } },
+                        },
+                    },
+                  "429":
+                    {
+                      "description": "Rate limited",
+                      "content":
+                        {
+                          "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } },
+                        },
+                    },
+                  "500":
+                    {
+                      "description": "Persistence failure; retry",
+                      "content":
+                        {
+                          "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } },
+                        },
+                    },
+                  "503":
+                    {
+                      "description": "Runtime unavailable or configuration invalid",
+                      "content":
+                        {
+                          "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } },
+                        },
+                    },
+                },
+            },
+        },
     },
   "components":
     {
-      "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" } },
+      "securitySchemes":
+        {
+          "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" },
+          "SePayApiKey":
+            {
+              "type": "apiKey",
+              "in": "header",
+              "name": "Authorization",
+              "description": "Apikey followed by the configured server-only credential;
+                PAYMENT_MODE=sepay. No credential examples.",
+            },
+        },
       "parameters":
         {
           "NotificationMonth":
@@ -3907,7 +3998,8 @@
               "name": "cursor",
               "in": "query",
               "required": false,
-              "description": "Encrypted/authenticated actor, month, limit and purpose-bound continuation; 15-minute TTL; never crosses month partitions",
+              "description": "Encrypted/authenticated actor, month, limit and purpose-bound
+                continuation; 15-minute TTL; never crosses month partitions",
               "schema": { "type": "string", "minLength": 1, "maxLength": 4096 },
             },
           "NotificationId":
@@ -3922,7 +4014,9 @@
               "name": "X-Notification-Locator",
               "in": "header",
               "required": true,
-              "description": "Encrypted/authenticated locator bound to actorId, notificationId, yearMonth, createdAt and NOTIFICATION_READ purpose; 24-hour TTL",
+              "description": "Encrypted/authenticated locator bound to actorId,
+                notificationId, yearMonth, createdAt and NOTIFICATION_READ
+                purpose; 24-hour TTL",
               "schema": { "type": "string", "minLength": 1, "maxLength": 4096 },
             },
           "IdempotencyKey":
@@ -4153,16 +4247,12 @@
               "properties":
                 {
                   "fileName": { "type": "string", "minLength": 1, "maxLength": 180 },
-                  "contentType":
-                    {
-                      "type": "string",
-                      "enum":
-                        [
+                  "contentType": { "type": "string", "enum": [
                           "application/pdf",
-                          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                          "application/vnd.openxmlformats-officedocument.word\
+                          processingml.document",
                           "text/plain",
-                        ],
-                    },
+                        ] },
                   "sizeBytes": { "type": "integer", "minimum": 1, "maximum": 26214400 },
                   "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
                 },
@@ -4175,16 +4265,12 @@
               "properties":
                 {
                   "objectKey": { "type": "string", "maxLength": 512 },
-                  "contentType":
-                    {
-                      "type": "string",
-                      "enum":
-                        [
+                  "contentType": { "type": "string", "enum": [
                           "application/pdf",
-                          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                          "application/vnd.openxmlformats-officedocument.word\
+                          processingml.document",
                           "text/plain",
-                        ],
-                    },
+                        ] },
                   "sizeBytes": { "type": "integer", "minimum": 1, "maximum": 26214400 },
                   "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
                 },
@@ -4640,22 +4726,8 @@
                       "uniqueItems": true,
                       "items": { "type": "string", "minLength": 1, "maxLength": 500 },
                     },
-                  "correctAnswer":
-                    {
-                      "description": "Present only for the current canonically eligible owner Lecturer.",
-                      "oneOf":
-                        [
-                          { "type": "string", "minLength": 1, "maxLength": 500 },
-                          { "type": "boolean" },
-                          {
-                            "type": "array",
-                            "minItems": 1,
-                            "maxItems": 10,
-                            "uniqueItems": true,
-                            "items": { "type": "string", "minLength": 1, "maxLength": 500 },
-                          },
-                        ],
-                    },
+                  "correctAnswer": { "description": "Present only for the current canonically eligible owner
+                        Lecturer.", "oneOf": [{ "type": "string", "minLength": 1, "maxLength": 500 }, { "type": "boolean" }, { "type": "array", "minItems": 1, "maxItems": 10, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 500 } }] },
                   "points": { "type": "string", "pattern": "^(?:0|[1-9][0-9]{0,2})(?:\\.[0-9]{1,2})?$" },
                 },
             },
@@ -4828,6 +4900,7 @@
                   "version",
                   "createdAt",
                   "updatedAt",
+                  "paymentMode",
                 ],
               "properties":
                 {
@@ -4855,6 +4928,22 @@
                   "createdAt": { "type": "string", "format": "date-time" },
                   "updatedAt": { "type": "string", "format": "date-time" },
                   "paidAt": { "type": "string", "format": "date-time" },
+                  "paymentMode": { "type": "string", "enum": ["simulation", "sepay"] },
+                  "payment":
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["provider", "accountNumber", "accountName", "bank", "content", "qrUrl"],
+                      "properties":
+                        {
+                          "provider": { "const": "SEPAY" },
+                          "accountNumber": { "type": "string" },
+                          "accountName": { "type": "string" },
+                          "bank": { "type": "string" },
+                          "content": { "type": "string" },
+                          "qrUrl": { "type": "string" },
+                        },
+                    },
                 },
             },
           "OrderResponse":
@@ -5856,18 +5945,14 @@
                   "objectKey":
                     { "type": "string", "pattern": "^learning/lessons/[A-Za-z0-9/_-]+$", "maxLength": 512 },
                   "size": { "type": "integer", "minimum": 1, "maximum": 26214400 },
-                  "contentType":
-                    {
-                      "type": "string",
-                      "enum":
-                        [
+                  "contentType": { "type": "string", "enum": [
                           "application/pdf",
-                          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                          "application/vnd.openxmlformats-officedocument.word\
+                          processingml.document",
                           "text/plain",
                           "video/mp4",
                           "video/webm",
-                        ],
-                    },
+                        ] },
                   "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
                 },
             },
@@ -6621,7 +6706,9 @@
                   "teachingArea": { "type": "string", "minLength": 1, "maxLength": 160 },
                   "motivation": { "type": "string", "minLength": 20, "maxLength": 2000 },
                 },
-              "description": "Normalize NFC, trim outer whitespace, preserve internal whitespace; lengths count Unicode code points. One immutable application per canonical ACTIVE STUDENT.",
+              "description": "Normalize NFC, trim outer whitespace, preserve internal
+                whitespace; lengths count Unicode code points. One immutable
+                application per canonical ACTIVE STUDENT.",
             },
           "LecturerApplication":
             {

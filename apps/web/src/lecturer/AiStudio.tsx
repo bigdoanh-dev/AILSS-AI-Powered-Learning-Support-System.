@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../lib/api";
 import { Breadcrumbs, EmptyState, StateChip, useUnsavedChanges } from "../components/product";
 import { lecturerError, lecturerRequest, month, useLecturer } from "./api";
 import { State } from "./ui";
+import { useAiLive } from "./useAiLive";
+import "./ai-studio.css";
 
 type DocumentState =
   "UPLOAD_PENDING" | "EXTRACTION_QUEUED" | "EXTRACTING" | "EXTRACTED" | "FAILED" | "QUARANTINED";
@@ -103,7 +105,23 @@ const documentFailureCopy: Record<string, string> = {
 };
 const jobFailureCopy: Record<string, string> = {
   PROVIDER_OUTPUT_REJECTED:
-    "AI đã phản hồi nhưng dữ liệu trả về không hoàn chỉnh hoặc không đúng định dạng câu hỏi. Hãy tạo lại yêu cầu; hệ thống đã điều chỉnh để hạn chế phản hồi bị cắt giữa chừng.",
+    "Yêu cầu cũ không hoàn thành. Hệ thống chưa lưu nguyên nhân chi tiết cho yêu cầu này. Hãy tạo yêu cầu mới.",
+  PROVIDER_UNAVAILABLE:
+    "Dịch vụ AI tạm thời không sẵn sàng. Hệ thống đã thử tối đa 3 lần. Bạn có thể tạo lại yêu cầu sau; không cần tải lại tài liệu.",
+  RATE_LIMITED:
+    "Dịch vụ AI đang giới hạn số yêu cầu hoặc hạn mức sử dụng. Hệ thống đã thử tối đa 3 lần. Hãy chờ rồi thử lại hoặc liên hệ quản trị viên kiểm tra hạn mức.",
+  AMBIGUOUS_TIMEOUT:
+    "Dịch vụ AI phản hồi quá lâu. Hệ thống đã thử tối đa 3 lần. Hãy thử lại sau hoặc giảm số câu hỏi.",
+  PROVIDER_NOT_FOUND:
+    "Không tìm thấy model hoặc tài nguyên AI đã cấu hình (404). Quản trị viên cần kiểm tra tên model và địa chỉ API.",
+  PROVIDER_ACCESS_DENIED:
+    "Dịch vụ AI từ chối quyền truy cập. Quản trị viên cần kiểm tra API key và quyền của dự án.",
+  PROVIDER_BAD_REQUEST:
+    "Dịch vụ AI không chấp nhận cấu hình yêu cầu. Quản trị viên cần kiểm tra tham số của model.",
+  INVALID_RESPONSE:
+    "AI trả về dữ liệu không đọc được hoặc không đúng định dạng JSON. Hãy tạo lại yêu cầu hoặc giảm số câu hỏi.",
+  AI_STORAGE_ERROR:
+    "Không thể đọc tài liệu hoặc lưu kết quả AI. Hãy thử lại; nếu vẫn lỗi, liên hệ quản trị viên kiểm tra kho lưu trữ.",
   OBJECTIVE_V1_INVALID:
     "Nội dung AI trả về chưa đáp ứng cấu trúc bài kiểm tra. Hãy tạo lại yêu cầu hoặc giảm số câu trong một lần tạo.",
 };
@@ -166,8 +184,39 @@ function useDocument(documentId: string) {
   return { value: value?.documentId === documentId ? value : undefined, error, stalled };
 }
 
+function AssistantOrb({ busy = false }: { busy?: boolean }) {
+  return (
+    <div className={`assistant-orb ${busy ? "is-working" : ""}`} aria-hidden="true">
+      <i />
+      <i />
+      <i />
+      <span>✦</span>
+    </div>
+  );
+}
+
 export function AiStudio() {
-  const navigate = useNavigate();
+  const [activeJob, setActiveJob] = useState(""),
+    [requestCopy, setRequestCopy] = useState("");
+  const live = useAiLive<Job>(activeJob),
+    polled = useJobPolling(activeJob, !live.connected);
+  const currentJob = live.connected ? live.job || polled.value : polled.value || live.job;
+  const [count, setCount] = useState(10),
+    [difficulty, setDifficulty] = useState("EASY");
+  const working = !!currentJob && !terminal.has(currentJob.state);
+  const announced = useRef("");
+  useEffect(() => {
+    if (
+      !currentJob ||
+      !["AI_DRAFT", "FAILED"].includes(currentJob.state) ||
+      announced.current === currentJob.jobId
+    )
+      return;
+    announced.current = currentJob.jobId;
+    window.dispatchEvent(
+      new CustomEvent("ailss-ai-complete", { detail: { jobId: currentJob.jobId, state: currentJob.state } }),
+    );
+  }, [currentJob]);
   const [targetType, setTargetType] = useState("COURSE");
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -182,7 +231,7 @@ export function AiStudio() {
       `/ai/jobs?state=${filter}&month=${month()}&limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
     ),
     usage = useLecturer<Usage>("/ai/usage"),
-    courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses"),
+    courses = useLecturer<Course[] | { items: Course[] }>("/courses?limit=50"),
     classes = useLecturer<ClassItem[] | { classes: ClassItem[] }>("/me/owned-classes"),
     documentQuery = useDocument(documentId);
   const courseItems = courses.data
@@ -269,7 +318,7 @@ export function AiStudio() {
     setGenerating(true);
     setMsg("");
     try {
-      const r = await lecturerRequest<Job>("/ai/quiz-jobs", "POST", {
+      const r = await live.create({
         documentId,
         targetType: String(f.get("targetType")),
         targetId: String(f.get("targetId")),
@@ -278,7 +327,10 @@ export function AiStudio() {
         difficulty: String(f.get("difficulty")),
       });
       setMsg("Yêu cầu đã được tạo. AI sẽ chuẩn bị một bản nháp để bạn xem lại.");
-      navigate(`/app/teaching/ai/jobs/${r.data.jobId}`);
+      setRequestCopy(
+        `Tạo ${String(f.get("questionCount"))} câu hỏi từ “${documentQuery.value.fileName}” để tôi xem lại.`,
+      );
+      setActiveJob(r.data.jobId);
     } catch (x) {
       setMsg(
         x instanceof ApiError && x.status === 503
@@ -293,148 +345,266 @@ export function AiStudio() {
   return (
     <>
       <Breadcrumbs items={[{ label: "Giảng dạy", to: "/app/teaching" }, { label: "AI" }]} />
-      <section className="ai-hero">
+      <section className="assistant-header">
         <div>
-          <p className="eyebrow">TRỢ LÝ SOẠN CÂU HỎI</p>
-          <h1>Tạo câu hỏi từ học liệu.</h1>
+          <p className="assistant-kicker">Không gian soạn bài</p>
+          <h1>
+            Cùng bạn chuẩn bị
+            <br />
+            bài kiểm tra tiếp theo.
+          </h1>
           <p className="lead">
-            AI tạo bản nháp. Giảng viên kiểm tra và quyết định nội dung cuối cùng. Không có gì được xuất bản
-            tự động.
+            Đưa học liệu của bạn vào đây. Trợ lý sẽ soạn câu hỏi, chuẩn bị đáp án và gửi bản nháp để bạn
+            duyệt.
           </p>
         </div>
-        <div className="ai-flow" aria-label="Quy trình AI">
-          <span>Tài liệu</span>
-          <span>AI tạo câu hỏi</span>
-          <span>Giảng viên duyệt</span>
-          <span>Bài kiểm tra nháp</span>
-        </div>
+        <AssistantOrb busy={working || uploading} />
       </section>
-      <div className="ai-workspace-grid">
-        <section className="form-panel">
-          <h2>1. Chọn hoặc tải tài liệu</h2>
-          <form onSubmit={(e) => void upload(e)}>
-            <label>
-              Tệp PDF, DOCX hoặc TXT
-              <input
-                name="file"
-                type="file"
-                accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
-                required
-              />
-            </label>
-            <p>Tối đa 25 MiB. Trình duyệt tính SHA-256; máy chủ vẫn xác minh tệp.</p>
-            <button className="button" disabled={uploading}>
-              {uploading ? "Đang tải tài liệu…" : "Tải tài liệu"}
-            </button>
-          </form>
-          {uploadStage && (
-            <p role="status">
-              {documentQuery.value?.status === "EXTRACTED"
-                ? "Tài liệu đã sẵn sàng — bạn có thể tạo câu hỏi."
-                : uploadStage}
-            </p>
-          )}
-          {msg && (
-            <p className="ai-feedback" role="status">
-              {msg}
-            </p>
-          )}
-          <label>
-            Hoặc dùng mã tài liệu bạn đã tải
-            <input value={documentId} onChange={(e) => setDocumentId(e.target.value)} />
-          </label>
-          {documentQuery.value && (
-            <article className="ai-document">
-              <StateChip state={documentQuery.value.status} />
-              <h3>{documentQuery.value.fileName}</h3>
-              <p>
-                {label(documentQuery.value.status)} · {(documentQuery.value.sizeBytes / 1024).toFixed(1)} KiB
+      <div className="assistant-layout">
+        <div className="assistant-tools">
+          <section className="form-panel">
+            <h2>Học liệu của bạn</h2>
+            <form onSubmit={(e) => void upload(e)}>
+              <label>
+                Tệp PDF, DOCX hoặc TXT
+                <input
+                  name="file"
+                  type="file"
+                  accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                  required
+                />
+              </label>
+              <p>PDF, Word hoặc văn bản · Tối đa 25 MiB</p>
+              <button className="button" disabled={uploading}>
+                {uploading ? "Đang tải tài liệu…" : "Tải tài liệu"}
+              </button>
+            </form>
+            {uploadStage && (
+              <p role="status">
+                {documentQuery.value?.status === "EXTRACTED"
+                  ? "Tài liệu đã sẵn sàng — bạn có thể tạo câu hỏi."
+                  : uploadStage}
               </p>
-              {documentQuery.value.status === "EXTRACTED" && <p>Tài liệu đã xử lý xong.</p>}
-              {["FAILED", "QUARANTINED"].includes(documentQuery.value.status) && (
+            )}
+            {msg && (
+              <p className="ai-feedback" role="status">
+                {msg}
+              </p>
+            )}
+            <details className="assistant-existing">
+              <summary>Dùng tài liệu đã tải trước đó</summary>
+              <label>
+                Hoặc dùng mã tài liệu bạn đã tải
+                <input value={documentId} onChange={(e) => setDocumentId(e.target.value)} />
+              </label>
+            </details>
+            {documentQuery.value && (
+              <article className="ai-document">
+                <StateChip state={documentQuery.value.status} />
+                <h3>{documentQuery.value.fileName}</h3>
                 <p>
-                  {documentFailureCopy[documentQuery.value.failureCode || ""] ||
-                    "Không thể xử lý tài liệu này. Hãy thử tải lại hoặc chọn tài liệu khác."}
+                  {label(documentQuery.value.status)} · {(documentQuery.value.sizeBytes / 1024).toFixed(1)}{" "}
+                  KiB
                 </p>
+                {documentQuery.value.status === "EXTRACTED" && <p>Tài liệu đã xử lý xong.</p>}
+                {["FAILED", "QUARANTINED"].includes(documentQuery.value.status) && (
+                  <p>
+                    {documentFailureCopy[documentQuery.value.failureCode || ""] ||
+                      "Không thể xử lý tài liệu này. Hãy thử tải lại hoặc chọn tài liệu khác."}
+                  </p>
+                )}
+                {documentQuery.stalled && <p>Quá trình xử lý đang tạm gián đoạn. Bạn có thể thử lại sau.</p>}
+              </article>
+            )}
+            {documentQuery.error && <p role="alert">{documentQuery.error}</p>}
+          </section>
+          <section className="form-panel">
+            <h2>Thiết lập bài kiểm tra</h2>
+            <form id="assistant-generate" className="form-grid" onSubmit={(e) => void generate(e)}>
+              <label>
+                Đích sử dụng
+                <select name="targetType" value={targetType} onChange={(e) => setTargetType(e.target.value)}>
+                  <option value="COURSE">Khóa học</option>
+                  <option value="CLASS">Lớp học</option>
+                </select>
+              </label>
+              <label>
+                Khóa học hoặc lớp
+                <select name="targetId" key={targetType} required>
+                  <option value="">Chọn đích</option>
+                  {targetType === "COURSE" &&
+                    courseItems.map((x) => (
+                      <option key={x.courseId} value={x.courseId}>
+                        {x.title}
+                      </option>
+                    ))}
+                  {targetType === "CLASS" &&
+                    classItems.map((x) => (
+                      <option key={x.classId} value={x.classId}>
+                        {x.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label>
+                Số câu
+                <input
+                  name="questionCount"
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={count}
+                  onChange={(e) => setCount(Number(e.target.value))}
+                  required
+                />
+              </label>
+              <label>
+                Mức độ
+                <select name="difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+                  <option value="EASY">Cơ bản</option>
+                  <option value="MEDIUM">Trung bình</option>
+                  <option value="HARD">Nâng cao</option>
+                </select>
+              </label>
+              <fieldset>
+                <legend>Loại câu hỏi</legend>
+                {[
+                  ["SINGLE_CHOICE", "Một đáp án"],
+                  ["MULTIPLE_CHOICE", "Nhiều đáp án"],
+                  ["TRUE_FALSE", "Đúng / Sai"],
+                  ["SHORT_ANSWER", "Trả lời ngắn"],
+                ].map(([v, t]) => (
+                  <label className="answer-option" key={v}>
+                    <input type="checkbox" name="questionTypes" value={v} defaultChecked /> {t}
+                  </label>
+                ))}
+              </fieldset>
+              <p>AI sẽ tạo một bản nháp. Bạn cần kiểm tra nội dung và đáp án trước khi phê duyệt.</p>
+              <button
+                className="button"
+                disabled={uploading || generating || working || documentQuery.value?.status !== "EXTRACTED"}
+              >
+                {generating ? "Đang tạo yêu cầu…" : "Tạo câu hỏi từ học liệu"}
+              </button>
+              {documentQuery.value?.status !== "EXTRACTED" && (
+                <small>
+                  {!documentId
+                    ? "Tải tài liệu ở bước 1 để bắt đầu."
+                    : documentQuery.error
+                      ? "Chưa đọc được tài liệu. Kiểm tra mã tài liệu."
+                      : "Đợi tài liệu xử lý xong trước khi tạo câu hỏi."}
+                </small>
               )}
-              {documentQuery.stalled && <p>Quá trình xử lý đang tạm gián đoạn. Bạn có thể thử lại sau.</p>}
+            </form>
+          </section>
+        </div>
+        <section className="assistant-conversation" aria-label="Hội thoại tạo câu hỏi">
+          <header>
+            <div className="assistant-avatar">✦</div>
+            <div>
+              <h2>Trợ lý soạn câu hỏi</h2>
+              <span className={live.connected ? "assistant-online" : "assistant-offline"}>
+                {live.connected ? "Đang kết nối trực tiếp" : "Cập nhật định kỳ"}
+              </span>
+            </div>
+            <Link className="button secondary" to="/app/notifications">
+              Thông báo
+            </Link>
+          </header>
+          <div className="assistant-messages" role="log" aria-live="polite" aria-relevant="additions text">
+            <article className="assistant-message">
+              <span>Trợ lý</span>
+              <p>
+                Bạn muốn chuẩn bị bài kiểm tra nào hôm nay? Chọn học liệu và lớp học, tôi sẽ giúp bạn tạo một
+                bản nháp có đáp án.
+              </p>
+              <div className="assistant-presets">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCount(10);
+                    setDifficulty("EASY");
+                  }}
+                >
+                  Ôn tập nhanh · 10 câu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCount(20);
+                    setDifficulty("HARD");
+                  }}
+                >
+                  Kiểm tra nâng cao · 20 câu
+                </button>
+              </div>
             </article>
-          )}
-          {documentQuery.error && <p role="alert">{documentQuery.error}</p>}
-        </section>
-        <section className="form-panel">
-          <h2>2. Thiết lập bản nháp</h2>
-          <form className="form-grid" onSubmit={(e) => void generate(e)}>
-            <label>
-              Đích sử dụng
-              <select name="targetType" value={targetType} onChange={(e) => setTargetType(e.target.value)}>
-                <option value="COURSE">Khóa học</option>
-                <option value="CLASS">Lớp học</option>
-              </select>
-            </label>
-            <label>
-              Khóa học hoặc lớp
-              <select name="targetId" key={targetType} required>
-                <option value="">Chọn đích</option>
-                {targetType === "COURSE" &&
-                  courseItems.map((x) => (
-                    <option key={x.courseId} value={x.courseId}>
-                      {x.title}
-                    </option>
-                  ))}
-                {targetType === "CLASS" &&
-                  classItems.map((x) => (
-                    <option key={x.classId} value={x.classId}>
-                      {x.name}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label>
-              Số câu
-              <input name="questionCount" type="number" min="1" max="50" defaultValue="10" required />
-            </label>
-            <label>
-              Mức độ
-              <select name="difficulty">
-                <option value="EASY">Cơ bản</option>
-                <option value="MEDIUM">Trung bình</option>
-                <option value="HARD">Nâng cao</option>
-              </select>
-            </label>
-            <fieldset>
-              <legend>Loại câu hỏi</legend>
-              {[
-                ["SINGLE_CHOICE", "Một đáp án"],
-                ["MULTIPLE_CHOICE", "Nhiều đáp án"],
-                ["TRUE_FALSE", "Đúng / Sai"],
-                ["SHORT_ANSWER", "Trả lời ngắn"],
-              ].map(([v, t]) => (
-                <label className="answer-option" key={v}>
-                  <input type="checkbox" name="questionTypes" value={v} defaultChecked /> {t}
-                </label>
-              ))}
-            </fieldset>
-            <p>AI sẽ tạo một bản nháp. Bạn cần kiểm tra nội dung và đáp án trước khi phê duyệt.</p>
+            {documentQuery.value && (
+              <article className="assistant-message">
+                <span>Học liệu</span>
+                <p>
+                  <strong>{documentQuery.value.fileName}</strong>
+                </p>
+                <p>
+                  {documentQuery.value.status === "EXTRACTED"
+                    ? "Tôi đã nhận được nội dung. Bạn có thể gửi yêu cầu tạo câu hỏi."
+                    : ["FAILED", "QUARANTINED"].includes(documentQuery.value.status)
+                      ? "Tài liệu chưa thể sử dụng. Xem lý do trong phần học liệu."
+                      : "Hệ thống đang đọc nội dung tài liệu…"}
+                </p>
+              </article>
+            )}
+            {requestCopy && (
+              <article className="assistant-message from-user">
+                <span>Bạn</span>
+                <p>{requestCopy}</p>
+              </article>
+            )}
+            {currentJob && (
+              <article className="assistant-message assistant-task" key={currentJob.state}>
+                <span>Trợ lý</span>
+                <h3>{label(currentJob.state)}</h3>
+                {working ? (
+                  <>
+                    <div className="assistant-thinking" aria-label="Đang soạn câu hỏi">
+                      <b />
+                      <b />
+                      <b />
+                    </div>
+                    <p>
+                      Tôi đang chuẩn bị câu hỏi và đáp án từ tài liệu. Bản nháp sẽ hiện ở đây khi hoàn thành.
+                    </p>
+                  </>
+                ) : currentJob.state === "FAILED" ? (
+                  <p role="alert">
+                    {jobFailureCopy[currentJob.failureCode || ""] ||
+                      "Chưa thể tạo bản nháp. Bạn hãy thử lại sau."}
+                  </p>
+                ) : (
+                  <p>Bạn có thể mở công việc để xem nội dung và trạng thái mới nhất.</p>
+                )}
+                <Link className="button" to={`/app/teaching/ai/jobs/${currentJob.jobId}`}>
+                  {currentJob.state === "AI_DRAFT" ? "Xem và duyệt câu hỏi" : "Mở chi tiết công việc"}
+                </Link>
+              </article>
+            )}
+          </div>
+          <footer className="assistant-composer">
+            <p>
+              <strong>{count || 0} câu hỏi</strong> ·{" "}
+              {difficulty === "EASY" ? "Cơ bản" : difficulty === "HARD" ? "Nâng cao" : "Trung bình"}
+            </p>
             <button
               className="button"
-              disabled={uploading || generating || documentQuery.value?.status !== "EXTRACTED"}
+              form="assistant-generate"
+              disabled={uploading || generating || working || documentQuery.value?.status !== "EXTRACTED"}
             >
-              {generating ? "Đang tạo yêu cầu…" : "Tạo câu hỏi từ học liệu"}
+              {working ? "Đang soạn câu hỏi…" : generating ? "Đang gửi…" : "Gửi yêu cầu tạo câu hỏi ↑"}
             </button>
-            {documentQuery.value?.status !== "EXTRACTED" && (
-              <small>
-                {!documentId
-                  ? "Tải tài liệu ở bước 1 để bắt đầu."
-                  : documentQuery.error
-                    ? "Chưa đọc được tài liệu. Kiểm tra mã tài liệu."
-                    : "Đợi tài liệu xử lý xong trước khi tạo câu hỏi."}
-              </small>
-            )}
-          </form>
+            <small>Bạn kiểm tra và duyệt trước khi xuất bản.</small>
+          </footer>
         </section>
       </div>
-      <p role="status">{msg}</p>
       <section>
         <h2>Công việc của tôi</h2>
         <div className="inline-actions">
@@ -519,12 +689,14 @@ export function AiStudio() {
   );
 }
 
-function useJobPolling(jobId: string) {
+function useJobPolling(jobId: string, enabled = true) {
   const [value, setValue] = useState<Job>(),
     [error, setError] = useState(""),
     [stalled, setStalled] = useState(false),
     revision = useRef(0);
   useEffect(() => {
+    setValue(undefined);
+    if (!jobId || !enabled) return;
     const controller = new AbortController(),
       started = Date.now(),
       epoch = ++revision.current;
@@ -565,7 +737,7 @@ function useJobPolling(jobId: string) {
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", visible);
     };
-  }, [jobId]);
+  }, [jobId, enabled]);
   return {
     value,
     error,
@@ -579,7 +751,9 @@ function useJobPolling(jobId: string) {
 
 export function AiJob() {
   const { jobId = "" } = useParams(),
-    job = useJobPolling(jobId),
+    live = useAiLive<Job>(jobId),
+    polled = useJobPolling(jobId, !live.connected),
+    job = { ...polled, value: live.connected ? live.job || polled.value : polled.value || live.job },
     drafts = useLecturer<Draft[]>(
       job.value?.state === "AI_DRAFT" || job.value?.state === "APPROVED" ? `/ai/jobs/${jobId}/drafts` : null,
     ),
@@ -603,7 +777,8 @@ export function AiJob() {
     <>
       <Breadcrumbs items={[{ label: "AI", to: "/app/teaching/ai" }, { label: "Công việc" }]} />
       {job.value ? (
-        <section className="ai-job-status">
+        <section className="ai-job-status assistant-job">
+          <AssistantOrb busy={!terminal.has(job.value.state)} />
           <StateChip state={job.value.state} />
           <h1>{label(job.value.state)}</h1>
           <p>

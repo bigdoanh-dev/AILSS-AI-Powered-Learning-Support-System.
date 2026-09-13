@@ -2,7 +2,7 @@ import { attendanceLabel } from "../student/Planning";
 import { useState, type FormEvent } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { lecturerError, lecturerRequest, month, range, useLecturer } from "./api";
-import { OwnedCourseSelect } from "./ui";
+import { CatalogCourseSelect } from "./ui";
 import { Field, State } from "./ui";
 import { Breadcrumbs, EmptyState, ScheduleTime, StateChip } from "../components/product";
 type C = {
@@ -61,10 +61,20 @@ export function Classes() {
         {(v) => (
           <div className="workspace-cards">
             {arr(v).map((x) => (
-              <article key={x.classId}>
-                <StateChip state={x.scheduleState} />
-                <h2>{x.name}</h2>
-                <Link to={`/app/teaching/classes/${x.classId}`}>Điều hành lớp →</Link>
+              <article key={x.classId} className="study-card-rich">
+                <div>
+                  <div className="study-card-top">
+                    <span className="study-card-icon" aria-hidden="true">👥</span>
+                    <StateChip state={x.scheduleState} />
+                  </div>
+                  <h2>{x.name}</h2>
+                  <p className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>
+                    Tối đa {x.maxMembers} học viên · {x.classKind === "LIVE_COHORT" ? "Lớp theo khóa" : "Lớp riêng"}
+                  </p>
+                </div>
+                <Link className="card-action-btn" to={`/app/teaching/classes/${x.classId}`}>
+                  Điều hành lớp →
+                </Link>
               </article>
             ))}
           </div>
@@ -81,7 +91,7 @@ export function Classes() {
             <option>INSTITUTIONAL</option>
           </select>
         </label>
-        <OwnedCourseSelect name="linkedCourseId" label="Liên kết khóa học" />
+        <CatalogCourseSelect name="linkedCourseId" label="Liên kết khóa học" />
         <Field label="Số học viên tối đa" name="maxMembers" type="number" defaultValue={100} />
         <button className="button">Tạo lớp</button>
         <p role="status">{msg}</p>
@@ -411,9 +421,15 @@ export function Attendance() {
                       </td>
                       <td>
                         <div className="inline-actions">
-                          {["PRESENT", "ABSENT", "EXCUSED"].map((status) => (
+                          {(
+                            [
+                              { key: "PRESENT", icon: "✓", cls: "btn-attendance-present" },
+                              { key: "ABSENT", icon: "✗", cls: "btn-attendance-absent" },
+                              { key: "EXCUSED", icon: "⏳", cls: "btn-attendance-excused" },
+                            ] as const
+                          ).map(({ key: status, icon, cls }) => (
                             <button
-                              className="button secondary small"
+                              className={`button small ${cls}`}
                               key={status}
                               disabled={busy || status === x.attendanceStatus}
                               onClick={async () => {
@@ -436,7 +452,7 @@ export function Attendance() {
                                 }
                               }}
                             >
-                              {attendanceLabel[status]}
+                              <span aria-hidden="true">{icon}</span> {attendanceLabel[status]}
                             </button>
                           ))}
                         </div>

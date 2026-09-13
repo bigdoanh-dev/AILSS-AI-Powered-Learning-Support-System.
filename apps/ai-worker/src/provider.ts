@@ -19,10 +19,35 @@ export interface QuizProvider {
 }
 export class ProviderFailure extends Error {
   constructor(
-    public readonly code: "RATE_LIMITED" | "PROVIDER_UNAVAILABLE" | "AMBIGUOUS_TIMEOUT" | "INVALID_RESPONSE",
+    public readonly code:
+      | "RATE_LIMITED"
+      | "PROVIDER_UNAVAILABLE"
+      | "AMBIGUOUS_TIMEOUT"
+      | "INVALID_RESPONSE"
+      | "PROVIDER_NOT_FOUND"
+      | "PROVIDER_ACCESS_DENIED"
+      | "PROVIDER_BAD_REQUEST",
     public readonly retryable: boolean,
+    public readonly httpStatus?: number,
   ) {
     super(code);
+  }
+}
+/** Bound transient retries inside one delivery so the queue cannot hot-loop. */
+export class RetryingQuizProvider implements QuizProvider {
+  constructor(private readonly provider: QuizProvider) {}
+  async generate(request: ProviderRequest): Promise<ProviderResult> {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.provider.generate(request);
+      } catch (error) {
+        if (!(error instanceof ProviderFailure) || !error.retryable) throw error;
+        if (attempt >= 2) throw new ProviderFailure(error.code, false, error.httpStatus);
+        await new Promise((resolve) =>
+          setTimeout(resolve, 2000 * 2 ** attempt + Math.floor(Math.random() * 500)),
+        );
+      }
+    }
   }
 }
 const response = z
@@ -101,9 +126,17 @@ Shape: {"schemaVersion":"objective-v1","title":"Quiz title","questions":[...]}. 
         throw new ProviderFailure("AMBIGUOUS_TIMEOUT", true);
       throw new ProviderFailure("PROVIDER_UNAVAILABLE", true);
     }
-    if (result.status === 429) throw new ProviderFailure("RATE_LIMITED", true);
-    if (result.status >= 500) throw new ProviderFailure("PROVIDER_UNAVAILABLE", true);
-    if (!result.ok) throw new ProviderFailure("INVALID_RESPONSE", false);
+    if (!result.ok) {
+      // Discard provider bodies: they can contain private lesson text or credentials.
+      await result.body?.cancel();
+      if (result.status === 429) throw new ProviderFailure("RATE_LIMITED", true, result.status);
+      if (result.status === 408) throw new ProviderFailure("AMBIGUOUS_TIMEOUT", true, result.status);
+      if (result.status >= 500) throw new ProviderFailure("PROVIDER_UNAVAILABLE", true, result.status);
+      if (result.status === 404) throw new ProviderFailure("PROVIDER_NOT_FOUND", false, result.status);
+      if (result.status === 401 || result.status === 403)
+        throw new ProviderFailure("PROVIDER_ACCESS_DENIED", false, result.status);
+      throw new ProviderFailure("PROVIDER_BAD_REQUEST", false, result.status);
+    }
     try {
       const raw: unknown = await result.json();
       const nativeResult = native

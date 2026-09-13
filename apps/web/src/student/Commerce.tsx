@@ -25,6 +25,7 @@ type Order = {
   price: string;
   currency: string;
   compensationReason?: string;
+  paymentMode?: "simulation" | "sepay";
   payment?: { accountNumber: string; accountName: string; bank: string; content: string; qrUrl: string };
 };
 const offeringsOf = (v?: Offering[] | { items: Offering[] }) => (Array.isArray(v) ? v : v?.items || []);
@@ -118,7 +119,7 @@ export default function Purchase() {
       <Heading title="Đăng ký khóa học có phí">
         Chuyển khoản đúng thông tin bên dưới. Hệ thống tự động xác nhận khi nhận được giao dịch.
       </Heading>
-      {entitled ? (
+      {entitled && !order ? (
         <section className="study-card commerce-status">
           <p className="eyebrow">QUYỀN HỌC</p>
           <h2>Bạn đã có quyền truy cập khóa học này.</h2>
@@ -197,7 +198,29 @@ export default function Purchase() {
             <dd>{order.fulfillmentState}</dd>
           </dl>
           {order.state === "PENDING" &&
-            (order.payment ? (
+            (order.paymentMode === "simulation" ? (
+              <div>
+                <p>Chế độ mô phỏng — không chuyển tiền thật.</p>
+                <button
+                  className="button"
+                  disabled={busy}
+                  onClick={() =>
+                    void command(`/orders/${order.orderId}/simulate-payment`, { outcome: "SUCCESS" })
+                  }
+                >
+                  Mô phỏng thành công
+                </button>
+                <button
+                  className="button"
+                  disabled={busy}
+                  onClick={() =>
+                    void command(`/orders/${order.orderId}/simulate-payment`, { outcome: "FAILURE" })
+                  }
+                >
+                  Mô phỏng thất bại
+                </button>
+              </div>
+            ) : order.payment ? (
               <div className="payment-instructions">
                 <img
                   src={order.payment.qrUrl}

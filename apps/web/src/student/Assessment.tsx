@@ -65,10 +65,20 @@ function QuizList({ target }: { target: string }) {
       {q.data?.length ? (
         <div className="study-grid">
           {q.data.map((v) => (
-            <article className="study-card" key={v.quizId}>
-              <h2>{v.title}</h2>
-              <p>{v.questionCount} câu hỏi</p>
-              <Link to={"/app/assessments/" + v.quizId}>Xem bài kiểm tra →</Link>
+            <article className="study-card study-card-rich" key={v.quizId}>
+              <div>
+                <div className="study-card-top">
+                  <span className="study-card-icon" aria-hidden="true">📝</span>
+                  <span className="kpi-tag accent">{v.questionCount} câu hỏi</span>
+                </div>
+                <h2>{v.title}</h2>
+                <p className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>
+                  Bài kiểm tra đánh giá năng lực & củng cố kiến thức
+                </p>
+              </div>
+              <Link className="card-action-btn" to={"/app/assessments/" + v.quizId}>
+                Làm bài kiểm tra →
+              </Link>
             </article>
           ))}
         </div>

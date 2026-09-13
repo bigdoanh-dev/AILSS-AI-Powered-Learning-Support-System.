@@ -38,7 +38,10 @@ export function Classes() {
     <>
       <Heading title="Lớp học của tôi">Theo dõi lịch học và kết nối với lớp của bạn.</Heading>
       <section className="study-card">
-        <h2>Tham gia lớp</h2>
+        <h2>Tham gia lớp học mới</h2>
+        <p className="muted" style={{ marginBottom: "12px" }}>
+          Nhập mã tham gia do giảng viên cung cấp (từ 6 - 32 ký tự) để tự động ghi danh vào lớp học.
+        </p>
         <form
           className="study-search"
           onSubmit={async (e) => {
@@ -66,6 +69,7 @@ export function Classes() {
             <input
               value={code}
               onChange={(e) => setCode(e.target.value)}
+              placeholder="VD: AILSS-REACT-2026"
               required
               minLength={6}
               maxLength={32}
@@ -73,7 +77,7 @@ export function Classes() {
             />
           </label>
           <button className="button" disabled={command.busy}>
-            Tham gia
+            Tham gia lớp →
           </button>
         </form>
         <Status command={command} />
@@ -82,10 +86,20 @@ export function Classes() {
         {query.data?.length ? (
           <div className="study-grid">
             {query.data.map((c) => (
-              <article className="study-card" key={c.classId}>
-                <StateChip state={c.state} />
-                <h2>{c.name}</h2>
-                <Link to={"/app/classes/" + c.classId}>Mở lớp học →</Link>
+              <article className="study-card study-card-rich" key={c.classId}>
+                <div>
+                  <div className="study-card-top">
+                    <span className="study-card-icon" aria-hidden="true">🏛️</span>
+                    <StateChip state={c.state} />
+                  </div>
+                  <h2>{c.name}</h2>
+                  <p className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>
+                    Lớp học theo lịch trình · Điểm danh và thảo luận
+                  </p>
+                </div>
+                <Link className="card-action-btn" to={"/app/classes/" + c.classId}>
+                  Vào lớp học →
+                </Link>
               </article>
             ))}
           </div>
@@ -93,12 +107,12 @@ export function Classes() {
           <Empty>Bạn chưa có lớp học. Nhập mã được giảng viên cung cấp để tham gia.</Empty>
         )}
       </State>
-      <div className="inline-actions">
+      <div className="inline-actions" style={{ marginTop: "24px" }}>
         <Link className="button secondary" to="/app/schedule">
-          Lịch học
+          📅 Xem lịch học
         </Link>
         <Link className="button secondary" to="/app/attendance">
-          Thông tin điểm danh
+          📋 Bảng điểm danh
         </Link>
       </div>
     </>

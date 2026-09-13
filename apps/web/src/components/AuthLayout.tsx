@@ -35,15 +35,53 @@ export function AuthLayout() {
       document.removeEventListener("visibilitychange", pause);
     };
   }, []);
-  const register = pathname.includes("register");
+  const isRegister = pathname.includes("register");
+  const register = isRegister;
+  const isForgot = pathname.includes("forgot-password");
+  const isLogin = !isRegister && !isForgot;
+  const showModeNav = ["/auth/login", "/auth/register", "/auth/forgot-password", "/auth"].some(
+    (p) => pathname === p || pathname.startsWith("/auth/register/"),
+  );
+
   return (
     <div className="auth-environment">
       <header className="auth-brandbar">
         <Logo />
-        <div><ThemeToggle/><Link to="/">← Về trang chủ</Link></div>
+        <div>
+          <ThemeToggle />
+          <Link to="/">← Về trang chủ</Link>
+        </div>
       </header>
       <div className="auth-composition">
         <main id="main" tabIndex={-1} className="auth-main">
+          {showModeNav && (
+            <div className="auth-mode-container" aria-label="Chuyển chế độ xác thực">
+              <nav className="auth-mode-nav" data-mode={isRegister ? "register" : "login"}>
+                <div
+                  className="auth-mode-slider"
+                  style={{
+                    transform: isRegister ? "translateX(calc(100% + 4px))" : "translateX(0)",
+                  }}
+                />
+                <Link
+                  to="/auth/login"
+                  className={`auth-mode-pill ${isLogin ? "active" : ""}`}
+                  aria-current={isLogin ? "page" : undefined}
+                >
+                  <span className="pill-icon" aria-hidden="true">🔑</span>
+                  <span>Đăng nhập</span>
+                </Link>
+                <Link
+                  to="/auth/register"
+                  className={`auth-mode-pill ${isRegister ? "active" : ""}`}
+                  aria-current={isRegister ? "page" : undefined}
+                >
+                  <span className="pill-icon" aria-hidden="true">✨</span>
+                  <span>Đăng ký</span>
+                </Link>
+              </nav>
+            </div>
+          )}
           <div key={pathname} className="auth-route-panel">
             <Outlet />
           </div>
@@ -68,7 +106,10 @@ export function AuthLayout() {
             <p>Học theo nhịp của bạn. Dạy bằng thế mạnh của bạn. AI hỗ trợ những bước chuẩn bị.</p>
           </div>
           <div className="auth-art">
-            <Picture name={register ? "study" : "coding"} alt={register ? "Cùng học tập và chia sẻ tri thức" : "Góc học tập để bắt đầu một ý tưởng mới"} />
+            <Picture
+              name={register ? "study" : "coding"}
+              alt={register ? "Cùng học tập và chia sẻ tri thức" : "Góc học tập để bắt đầu một ý tưởng mới"}
+            />
             <span className="auth-orbit orbit-one" />
             <span className="auth-orbit orbit-two" />
             <span className="floating-note note-document">↗ Tài liệu của bạn</span>

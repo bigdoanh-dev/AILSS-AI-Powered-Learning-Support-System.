@@ -1,44 +1,174 @@
 [
   {
-    "slug":"demo-web-html-css","title":"Lập trình web: từ ý tưởng đến trang đầu tiên","category":1,
-    "summary":"Tạo trang giới thiệu cá nhân có cấu trúc rõ ràng, tương thích điện thoại và sử dụng bàn phím được.",
-    "steps":[["Cấu trúc trước, trang trí sau","Dùng header, nav, main và footer để chia trang thành các vùng có ý nghĩa. Một h1 mô tả chủ đề chính; các h2 tổ chức nội dung bên dưới."],["Bố cục bằng CSS Grid","Đặt display: grid cho vùng chứa; grid-template-columns: repeat(2, minmax(0, 1fr)) tạo hai cột bằng nhau. Với màn hình hẹp, chuyển về một cột."],["Thiết kế cho nhiều cách sử dụng","Mỗi input cần label. Nút thực hiện hành động dùng button; liên kết chuyển trang dùng a. Kiểm tra thứ tự Tab và giữ viền focus rõ ràng."],["Thực hành và tự đánh giá","Tạo trang giới thiệu có ba dự án, một biểu mẫu liên hệ và menu. Kiểm tra ở chiều rộng 375 và 1280 px; không có thanh cuộn ngang."]],
-    "exercise":"Xây dựng trang giới thiệu bản thân bằng HTML và CSS. Yêu cầu: một tiêu đề chính, ba thẻ dự án, ảnh có alt, biểu mẫu có label, bố cục một cột trên điện thoại. Nộp thư mục nguồn kèm ghi chú các lựa chọn thiết kế.",
-    "question":"Phần tử nào phù hợp cho thao tác lưu biểu mẫu?","options":["button","div","span"],"answer":"button"
+    "slug": "demo-web-html-css",
+    "title": "Lập trình web: từ ý tưởng đến trang đầu tiên",
+    "category": 1,
+    "summary": "Tạo trang giới thiệu cá nhân có cấu trúc rõ ràng, tương thích điện thoại và sử dụng bàn phím được.",
+    "steps": [
+      [
+        "Cấu trúc trước, trang trí sau",
+        "Dùng header, nav, main và footer để chia trang thành các vùng có ý nghĩa. Một h1 mô tả chủ đề chính; các h2 tổ chức nội dung bên dưới."
+      ],
+      [
+        "Bố cục bằng CSS Grid",
+        "Đặt display: grid cho vùng chứa; grid-template-columns: repeat(2, minmax(0, 1fr)) tạo hai cột bằng nhau. Với màn hình hẹp, chuyển về một cột."
+      ],
+      [
+        "Thiết kế cho nhiều cách sử dụng",
+        "Mỗi input cần label. Nút thực hiện hành động dùng button; liên kết chuyển trang dùng a. Kiểm tra thứ tự Tab và giữ viền focus rõ ràng."
+      ],
+      [
+        "Thực hành và tự đánh giá",
+        "Tạo trang giới thiệu có ba dự án, một biểu mẫu liên hệ và menu. Kiểm tra ở chiều rộng 375 và 1280 px; không có thanh cuộn ngang."
+      ]
+    ],
+    "exercise": "Xây dựng trang giới thiệu bản thân bằng HTML và CSS. Yêu cầu: một tiêu đề chính, ba thẻ dự án, ảnh có alt, biểu mẫu có label, bố cục một cột trên điện thoại. Nộp thư mục nguồn kèm ghi chú các lựa chọn thiết kế.",
+    "question": "Phần tử nào phù hợp cho thao tác lưu biểu mẫu?",
+    "options": ["button", "div", "span"],
+    "answer": "button"
   },
   {
-    "slug":"demo-javascript","title":"JavaScript: làm chủ dữ liệu và tương tác","category":1,
-    "summary":"Viết bộ lọc danh sách khóa học và xử lý trạng thái tải, thành công, lỗi.",
-    "steps":[["Biến và giá trị","Dùng const cho liên kết không gán lại, let khi cần gán lại. Một mảng chứa nhiều đối tượng; mỗi đối tượng mô tả một khóa học với id, title và category."],["Lọc dữ liệu không làm mất bản gốc","Array.filter trả về mảng mới. Chuẩn hóa từ khóa bằng trim và toLowerCase trước khi so khớp. Giữ dữ liệu gốc để xóa bộ lọc có thể khôi phục danh sách."],["Yêu cầu bất đồng bộ","fetch trả về Promise. Kiểm tra response.ok trước khi đọc dữ liệu; dùng try/catch/finally để luôn kết thúc trạng thái đang tải, kể cả khi có lỗi."],["Tránh kết quả cũ ghi đè","Khi người dùng đổi từ khóa nhanh, hủy yêu cầu cũ bằng AbortController. Bỏ qua AbortError và hiển thị thông báo cho các lỗi kết nối thực sự."]],
-    "exercise":"Tạo danh sách 8 khóa học và ô tìm kiếm. Lọc không phân biệt hoa thường. Có nút xóa bộ lọc, thông báo không tìm thấy và trạng thái đang tải. Giải thích vì sao không nên sửa trực tiếp mảng dữ liệu gốc.",
-    "question":"Phương thức nào trả về mảng các phần tử thỏa điều kiện?","options":["filter","push","pop"],"answer":"filter"
+    "slug": "demo-javascript",
+    "title": "JavaScript: làm chủ dữ liệu và tương tác",
+    "category": 1,
+    "summary": "Viết bộ lọc danh sách khóa học và xử lý trạng thái tải, thành công, lỗi.",
+    "steps": [
+      [
+        "Biến và giá trị",
+        "Dùng const cho liên kết không gán lại, let khi cần gán lại. Một mảng chứa nhiều đối tượng; mỗi đối tượng mô tả một khóa học với id, title và category."
+      ],
+      [
+        "Lọc dữ liệu không làm mất bản gốc",
+        "Array.filter trả về mảng mới. Chuẩn hóa từ khóa bằng trim và toLowerCase trước khi so khớp. Giữ dữ liệu gốc để xóa bộ lọc có thể khôi phục danh sách."
+      ],
+      [
+        "Yêu cầu bất đồng bộ",
+        "fetch trả về Promise. Kiểm tra response.ok trước khi đọc dữ liệu; dùng try/catch/finally để luôn kết thúc trạng thái đang tải, kể cả khi có lỗi."
+      ],
+      [
+        "Tránh kết quả cũ ghi đè",
+        "Khi người dùng đổi từ khóa nhanh, hủy yêu cầu cũ bằng AbortController. Bỏ qua AbortError và hiển thị thông báo cho các lỗi kết nối thực sự."
+      ]
+    ],
+    "exercise": "Tạo danh sách 8 khóa học và ô tìm kiếm. Lọc không phân biệt hoa thường. Có nút xóa bộ lọc, thông báo không tìm thấy và trạng thái đang tải. Giải thích vì sao không nên sửa trực tiếp mảng dữ liệu gốc.",
+    "question": "Phương thức nào trả về mảng các phần tử thỏa điều kiện?",
+    "options": ["filter", "push", "pop"],
+    "answer": "filter"
   },
   {
-    "slug":"demo-sql","title":"Cơ sở dữ liệu: truy vấn SQL qua bài toán lớp học","category":2,
-    "summary":"Thiết kế bảng học viên, lớp học và đăng ký; thực hành JOIN, GROUP BY và kiểm tra kết quả.",
-    "steps":[["Từ thực thể đến bảng","Tạo students(id, name), classes(id, title) và enrollments(student_id, class_id). Bảng enrollments biểu diễn quan hệ nhiều-nhiều giữa học viên và lớp."],["Kết nối dữ liệu bằng JOIN","SELECT s.name, c.title FROM enrollments e JOIN students s ON s.id=e.student_id JOIN classes c ON c.id=e.class_id; trả về học viên cùng tên lớp đã đăng ký."],["Đếm và nhóm có chủ đích","GROUP BY class_id nhóm lượt đăng ký theo lớp. COUNT(*) đếm dòng trong nhóm. LEFT JOIN từ classes giúp giữ cả các lớp chưa có học viên."],["Kiểm tra trường hợp biên","Thử với một lớp trống, hai học viên cùng tên và một học viên đăng ký hai lớp. Dùng khóa định danh thay cho tên để kết nối bảng."]],
-    "exercise":"Tạo 3 bảng với ít nhất 5 học viên và 3 lớp, trong đó có một lớp trống. Viết truy vấn danh sách học viên theo lớp, số học viên từng lớp và các học viên chưa đăng ký lớp nào. Kèm kết quả mong đợi.",
-    "question":"Phép nối nào giữ cả lớp chưa có lượt đăng ký?","options":["LEFT JOIN từ bảng classes","INNER JOIN từ bảng enrollments","CROSS JOIN"],"answer":"LEFT JOIN từ bảng classes"
+    "slug": "demo-sql",
+    "title": "Cơ sở dữ liệu: truy vấn SQL qua bài toán lớp học",
+    "category": 2,
+    "summary": "Thiết kế bảng học viên, lớp học và đăng ký; thực hành JOIN, GROUP BY và kiểm tra kết quả.",
+    "steps": [
+      [
+        "Từ thực thể đến bảng",
+        "Tạo students(id, name), classes(id, title) và enrollments(student_id, class_id). Bảng enrollments biểu diễn quan hệ nhiều-nhiều giữa học viên và lớp."
+      ],
+      [
+        "Kết nối dữ liệu bằng JOIN",
+        "SELECT s.name, c.title FROM enrollments e JOIN students s ON s.id=e.student_id JOIN classes c ON c.id=e.class_id; trả về học viên cùng tên lớp đã đăng ký."
+      ],
+      [
+        "Đếm và nhóm có chủ đích",
+        "GROUP BY class_id nhóm lượt đăng ký theo lớp. COUNT(*) đếm dòng trong nhóm. LEFT JOIN từ classes giúp giữ cả các lớp chưa có học viên."
+      ],
+      [
+        "Kiểm tra trường hợp biên",
+        "Thử với một lớp trống, hai học viên cùng tên và một học viên đăng ký hai lớp. Dùng khóa định danh thay cho tên để kết nối bảng."
+      ]
+    ],
+    "exercise": "Tạo 3 bảng với ít nhất 5 học viên và 3 lớp, trong đó có một lớp trống. Viết truy vấn danh sách học viên theo lớp, số học viên từng lớp và các học viên chưa đăng ký lớp nào. Kèm kết quả mong đợi.",
+    "question": "Phép nối nào giữ cả lớp chưa có lượt đăng ký?",
+    "options": ["LEFT JOIN từ bảng classes", "INNER JOIN từ bảng enrollments", "CROSS JOIN"],
+    "answer": "LEFT JOIN từ bảng classes"
   },
   {
-    "slug":"demo-cassandra","title":"Cơ sở dữ liệu phân tán với Cassandra","category":2,
-    "summary":"Luyện cách thiết kế bảng từ câu truy vấn và phân biệt khóa phân vùng với khóa sắp xếp.",
-    "steps":[["Bắt đầu từ câu hỏi cần trả lời","Ví dụ: lấy 20 thông báo mới nhất của một học viên trong tháng. Xác định trước user_id, year_month, thời gian sắp xếp và giới hạn kết quả."],["Chọn khóa phân vùng","PRIMARY KEY ((user_id, year_month), created_at, notification_id) gom thông báo cùng người và tháng vào một phân vùng. Việc chia theo tháng hạn chế phân vùng tăng vô hạn."],["Thiết kế thứ tự đọc","CLUSTERING ORDER BY (created_at DESC) hỗ trợ đọc thông báo mới nhất trước. Dùng LIMIT phù hợp với màn hình; không tải toàn bộ lịch sử rồi lọc trong trình duyệt."],["Đánh đổi của bảng theo truy vấn","Một nội dung có thể được ghi vào nhiều bảng phục vụ nhiều cách đọc. Cần cơ chế cập nhật và đối soát các bản chiếu khi dữ liệu gốc thay đổi."]],
-    "exercise":"Thiết kế bảng lưu lịch học theo học viên và ngày. Viết CREATE TABLE và SELECT lấy các buổi học trong một ngày. Giải thích lựa chọn khóa và cách tránh một phân vùng chứa toàn bộ lịch sử.",
-    "question":"Khóa phân vùng phù hợp cho thông báo của một học viên theo tháng là gì?","options":["(user_id, year_month)","title","created_at"],"answer":"(user_id, year_month)"
+    "slug": "demo-cassandra",
+    "title": "Cơ sở dữ liệu phân tán với Cassandra",
+    "category": 2,
+    "summary": "Luyện cách thiết kế bảng từ câu truy vấn và phân biệt khóa phân vùng với khóa sắp xếp.",
+    "steps": [
+      [
+        "Bắt đầu từ câu hỏi cần trả lời",
+        "Ví dụ: lấy 20 thông báo mới nhất của một học viên trong tháng. Xác định trước user_id, year_month, thời gian sắp xếp và giới hạn kết quả."
+      ],
+      [
+        "Chọn khóa phân vùng",
+        "PRIMARY KEY ((user_id, year_month), created_at, notification_id) gom thông báo cùng người và tháng vào một phân vùng. Việc chia theo tháng hạn chế phân vùng tăng vô hạn."
+      ],
+      [
+        "Thiết kế thứ tự đọc",
+        "CLUSTERING ORDER BY (created_at DESC) hỗ trợ đọc thông báo mới nhất trước. Dùng LIMIT phù hợp với màn hình; không tải toàn bộ lịch sử rồi lọc trong trình duyệt."
+      ],
+      [
+        "Đánh đổi của bảng theo truy vấn",
+        "Một nội dung có thể được ghi vào nhiều bảng phục vụ nhiều cách đọc. Cần cơ chế cập nhật và đối soát các bản chiếu khi dữ liệu gốc thay đổi."
+      ]
+    ],
+    "exercise": "Thiết kế bảng lưu lịch học theo học viên và ngày. Viết CREATE TABLE và SELECT lấy các buổi học trong một ngày. Giải thích lựa chọn khóa và cách tránh một phân vùng chứa toàn bộ lịch sử.",
+    "question": "Khóa phân vùng phù hợp cho thông báo của một học viên theo tháng là gì?",
+    "options": ["(user_id, year_month)", "title", "created_at"],
+    "answer": "(user_id, year_month)"
   },
   {
-    "slug":"demo-ai-study","title":"Trí tuệ nhân tạo: học cùng AI có kiểm chứng","category":3,
-    "summary":"Đặt câu hỏi rõ ràng, kiểm tra câu trả lời và sử dụng AI để luyện tập chủ động.",
-    "steps":[["Xác định mục tiêu học","Nêu kiến thức cần học, trình độ hiện tại và kết quả mong muốn. Ví dụ: giải thích LEFT JOIN cho người đã biết SELECT, kèm dữ liệu nhỏ và kết quả."],["Cung cấp ngữ cảnh cần thiết","Đưa phần tài liệu liên quan và yêu cầu chỉ rõ điều chưa chắc chắn. Không đưa mật khẩu, thông tin riêng tư hoặc dữ liệu người khác vào câu hỏi."],["Kiểm chứng bằng ví dụ","Chạy đoạn mã hoặc truy vấn trên dữ liệu thử. Đối chiếu định nghĩa với tài liệu môn học. Câu trả lời rõ ràng vẫn có thể chứa sai sót."],["Biến câu trả lời thành luyện tập","Yêu cầu AI ra câu hỏi nhưng chưa hiện đáp án. Tự trả lời, giải thích cách nghĩ rồi mới xem phản hồi. Giảng viên quyết định nội dung dùng để đánh giá."]],
-    "exercise":"Chọn một khái niệm SQL chưa rõ. Viết câu hỏi có mục tiêu, ngữ cảnh và định dạng đáp án mong muốn. Tạo ví dụ để kiểm chứng; ghi lại ít nhất một điểm cần sửa hoặc làm rõ trong câu trả lời.",
-    "question":"Sau khi nhận câu trả lời từ AI, bước phù hợp nhất là gì?","options":["Kiểm chứng bằng tài liệu và ví dụ","Sao chép ngay vào bài nộp","Bỏ qua các điểm chưa chắc chắn"],"answer":"Kiểm chứng bằng tài liệu và ví dụ"
+    "slug": "demo-ai-study",
+    "title": "Trí tuệ nhân tạo: học cùng AI có kiểm chứng",
+    "category": 3,
+    "summary": "Đặt câu hỏi rõ ràng, kiểm tra câu trả lời và sử dụng AI để luyện tập chủ động.",
+    "steps": [
+      [
+        "Xác định mục tiêu học",
+        "Nêu kiến thức cần học, trình độ hiện tại và kết quả mong muốn. Ví dụ: giải thích LEFT JOIN cho người đã biết SELECT, kèm dữ liệu nhỏ và kết quả."
+      ],
+      [
+        "Cung cấp ngữ cảnh cần thiết",
+        "Đưa phần tài liệu liên quan và yêu cầu chỉ rõ điều chưa chắc chắn. Không đưa mật khẩu, thông tin riêng tư hoặc dữ liệu người khác vào câu hỏi."
+      ],
+      [
+        "Kiểm chứng bằng ví dụ",
+        "Chạy đoạn mã hoặc truy vấn trên dữ liệu thử. Đối chiếu định nghĩa với tài liệu môn học. Câu trả lời rõ ràng vẫn có thể chứa sai sót."
+      ],
+      [
+        "Biến câu trả lời thành luyện tập",
+        "Yêu cầu AI ra câu hỏi nhưng chưa hiện đáp án. Tự trả lời, giải thích cách nghĩ rồi mới xem phản hồi. Giảng viên quyết định nội dung dùng để đánh giá."
+      ]
+    ],
+    "exercise": "Chọn một khái niệm SQL chưa rõ. Viết câu hỏi có mục tiêu, ngữ cảnh và định dạng đáp án mong muốn. Tạo ví dụ để kiểm chứng; ghi lại ít nhất một điểm cần sửa hoặc làm rõ trong câu trả lời.",
+    "question": "Sau khi nhận câu trả lời từ AI, bước phù hợp nhất là gì?",
+    "options": [
+      "Kiểm chứng bằng tài liệu và ví dụ",
+      "Sao chép ngay vào bài nộp",
+      "Bỏ qua các điểm chưa chắc chắn"
+    ],
+    "answer": "Kiểm chứng bằng tài liệu và ví dụ"
   },
   {
-    "slug":"demo-study-skills","title":"Kỹ năng học tập: ghi nhớ và luyện tập chủ động","category":4,
-    "summary":"Lập kế hoạch học nhỏ, tự kiểm tra kiến thức và điều chỉnh theo kết quả thực hành.",
-    "steps":[["Chọn một kết quả cụ thể","Thay mục tiêu học SQL bằng viết được truy vấn JOIN ba bảng. Một kết quả quan sát được giúp bạn biết khi nào hoàn thành buổi học."],["Nhớ lại trước khi đọc lại","Đóng tài liệu và viết những gì bạn nhớ. Sau đó mở tài liệu để kiểm tra phần thiếu. Việc tự nhớ lại cho thấy rõ lỗ hổng kiến thức."],["Chia lịch ôn tập","Ôn lại sau buổi học, vài ngày sau và tuần kế tiếp. Điều chỉnh khoảng cách theo mức độ nhớ; chủ đề khó cần được quay lại sớm hơn."],["Theo dõi bằng minh chứng","Lưu bài tập đã làm, lỗi gặp phải và cách sửa. Cuối tuần chọn một bài mới để kiểm tra khả năng áp dụng thay vì chỉ đếm số giờ đã học."]],
-    "exercise":"Lập kế hoạch 7 ngày cho một chủ đề bạn đang học. Mỗi ngày có mục tiêu nhỏ, một câu tự kiểm tra và thời gian ôn lại. Cuối tuần ghi rõ điều làm được và điều cần học tiếp.",
-    "question":"Cách nào giúp phát hiện lỗ hổng kiến thức rõ nhất?","options":["Tự trả lời trước khi xem tài liệu","Chỉ đọc lại phần tô màu","Chỉ đếm thời gian học"],"answer":"Tự trả lời trước khi xem tài liệu"
+    "slug": "demo-study-skills",
+    "title": "Kỹ năng học tập: ghi nhớ và luyện tập chủ động",
+    "category": 4,
+    "summary": "Lập kế hoạch học nhỏ, tự kiểm tra kiến thức và điều chỉnh theo kết quả thực hành.",
+    "steps": [
+      [
+        "Chọn một kết quả cụ thể",
+        "Thay mục tiêu học SQL bằng viết được truy vấn JOIN ba bảng. Một kết quả quan sát được giúp bạn biết khi nào hoàn thành buổi học."
+      ],
+      [
+        "Nhớ lại trước khi đọc lại",
+        "Đóng tài liệu và viết những gì bạn nhớ. Sau đó mở tài liệu để kiểm tra phần thiếu. Việc tự nhớ lại cho thấy rõ lỗ hổng kiến thức."
+      ],
+      [
+        "Chia lịch ôn tập",
+        "Ôn lại sau buổi học, vài ngày sau và tuần kế tiếp. Điều chỉnh khoảng cách theo mức độ nhớ; chủ đề khó cần được quay lại sớm hơn."
+      ],
+      [
+        "Theo dõi bằng minh chứng",
+        "Lưu bài tập đã làm, lỗi gặp phải và cách sửa. Cuối tuần chọn một bài mới để kiểm tra khả năng áp dụng thay vì chỉ đếm số giờ đã học."
+      ]
+    ],
+    "exercise": "Lập kế hoạch 7 ngày cho một chủ đề bạn đang học. Mỗi ngày có mục tiêu nhỏ, một câu tự kiểm tra và thời gian ôn lại. Cuối tuần ghi rõ điều làm được và điều cần học tiếp.",
+    "question": "Cách nào giúp phát hiện lỗ hổng kiến thức rõ nhất?",
+    "options": ["Tự trả lời trước khi xem tài liệu", "Chỉ đọc lại phần tô màu", "Chỉ đếm thời gian học"],
+    "answer": "Tự trả lời trước khi xem tài liệu"
   }
 ]

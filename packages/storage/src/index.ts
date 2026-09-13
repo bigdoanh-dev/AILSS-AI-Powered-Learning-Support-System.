@@ -120,6 +120,11 @@ export class MinioStorage implements ObjectStorage {
     return Buffer.concat(chunks, size);
   }
 
+  public async removePrivate(objectKey: string): Promise<void> {
+    validateObjectKey(objectKey);
+    await this.#client.removeObject(this.bucket, objectKey);
+  }
+
   public async writePrivate(objectKey: string, content: Buffer, contentType: string): Promise<void> {
     validateObjectKey(objectKey);
     await this.#client.putObject(this.bucket, objectKey, content, content.length, {

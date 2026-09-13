@@ -121,6 +121,9 @@ export function Dialog({
     const previous = document.activeElement as HTMLElement;
     const overflow = document.body.style.overflow;
     d.showModal();
+    d.querySelector<HTMLElement>(
+      'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex="0"]',
+    )?.focus();
     document.body.style.overflow = "hidden";
     return () => {
       d.close();

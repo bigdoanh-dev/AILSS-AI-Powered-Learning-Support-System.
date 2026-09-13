@@ -1,0 +1,25 @@
+{
+  "schemaAgreement": true,
+  "cassandraVersion": "<OBSERVED_VERSION>",
+  "datacenters": ["<OBSERVED_DATACENTER>"],
+  "replication": {
+    "strategy": "NetworkTopologyStrategy",
+    "approved": false,
+    "factors": { "<OBSERVED_DATACENTER>": 0 }
+  },
+  "observedTables": ["<KEYSPACE.TABLE>"],
+  "observedColumns": { "<KEYSPACE.TABLE>": ["<COLUMN>"] },
+  "tableOptions": { "<KEYSPACE.TABLE>": { "defaultTimeToLive": 0 } },
+  "diskFreeBytes": 1,
+  "capacityApproved": false,
+  "populationFacts": {
+    "reviewedMigrations": {
+      "013": false,
+      "024": false,
+      "026": false,
+      "033": false,
+      "052": false,
+      "076": false
+    }
+  }
+}

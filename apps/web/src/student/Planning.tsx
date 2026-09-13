@@ -34,7 +34,14 @@ export function StudentSchedule() {
   return (
     <>
       <Heading title="Lịch học">Theo dõi các buổi học theo danh sách, tuần hoặc tháng.</Heading>
-      <Link to="/app/attendance">Xem thông tin điểm danh</Link>
+      <div className="module-segmented-bar" role="navigation" aria-label="Phân hệ lịch trình & điểm danh">
+        <Link to="/app/schedule" className="segmented-tab active">
+          <span>📅 Lịch học theo tuần / tháng</span>
+        </Link>
+        <Link to="/app/attendance" className="segmented-tab">
+          <span>📋 Bảng tổng hợp điểm danh</span>
+        </Link>
+      </div>
       <State query={q}>
         <ScheduleCalendar
           calendar={calendar}
@@ -59,6 +66,31 @@ export function StudentAttendance() {
       <Heading title="Thông tin điểm danh">
         Tổng hợp theo lớp, mở từng dòng để xem các buổi đã được ghi nhận.
       </Heading>
+      <div className="module-segmented-bar" role="navigation" aria-label="Phân hệ lịch trình & điểm danh">
+        <Link to="/app/schedule" className="segmented-tab">
+          <span>📅 Lịch học theo tuần / tháng</span>
+        </Link>
+        <Link to="/app/attendance" className="segmented-tab active">
+          <span>📋 Bảng tổng hợp điểm danh</span>
+        </Link>
+      </div>
+      <div className="attendance-summary-bar">
+        <div className="attendance-summary-pill">
+          <span>Tổng số lượt ghi nhận: <strong>{rows.length}</strong></span>
+        </div>
+        <div className="attendance-summary-pill present">
+          <span className="dot" aria-hidden="true" />
+          <span>Có mặt: <strong>{count(rows, "PRESENT")}</strong></span>
+        </div>
+        <div className="attendance-summary-pill absent">
+          <span className="dot" aria-hidden="true" />
+          <span>Vắng không phép: <strong>{count(rows, "ABSENT")}</strong></span>
+        </div>
+        <div className="attendance-summary-pill excused">
+          <span className="dot" aria-hidden="true" />
+          <span>Vắng có phép: <strong>{count(rows, "EXCUSED")}</strong></span>
+        </div>
+      </div>
       <div className="calendar-toolbar">
         <label>
           Tháng điểm danh (UTC)
@@ -71,7 +103,6 @@ export function StudentAttendance() {
             }}
           />
         </label>
-        <Link to="/app/schedule">Xem lịch học</Link>
       </div>
       <p className="muted">
         Đơn vị: buổi học. Chỉ tổng hợp bản ghi điểm danh đã có; chưa có bản ghi không có nghĩa là vắng học.

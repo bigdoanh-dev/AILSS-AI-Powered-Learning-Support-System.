@@ -4,7 +4,7 @@ import { MinioStorage } from "../../../packages/storage/src/index.js";
 import { RabbitConsumer } from "../../../packages/rabbitmq/src/index.js";
 import { QuizWorkerRepository } from "./repository.js";
 import { QuizGenerationWorker } from "./worker.js";
-import { DeterministicQuizProvider, HttpQuizProvider } from "./provider.js";
+import { DeterministicQuizProvider, HttpQuizProvider, RetryingQuizProvider } from "./provider.js";
 import { loadPrivateKey } from "../../../packages/security/src/index.js";
 import { AiTargetClient } from "../../ai-service/src/quiz/target-client.js";
 const manifest: ServiceManifest = {
@@ -51,7 +51,7 @@ await startService(manifest, {
       worker = new QuizGenerationWorker(
         new QuizWorkerRepository(context.cassandra),
         storage,
-        provider,
+        new RetryingQuizProvider(provider),
         new AiTargetClient({
           learningUrl: config.LEARNING_SERVICE_URL,
           classroomUrl: config.CLASSROOM_SERVICE_URL,

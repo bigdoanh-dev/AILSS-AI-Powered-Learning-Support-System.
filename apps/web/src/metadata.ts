@@ -31,6 +31,14 @@ export const pages: Record<string, [string, string]> = {
     "Tham gia với vai trò giảng viên",
     "Thông tin cấp và xác minh tài khoản giảng viên AILSS.",
   ],
+  "/auth/register/lecturer/application": [
+    "Gửi yêu cầu giảng dạy",
+    "Sinh viên gửi và xem lại yêu cầu chuyển sang vai trò giảng viên AILSS.",
+  ],
+  "/auth/register/lecturer/status": [
+    "Trạng thái yêu cầu giảng dạy",
+    "Theo dõi trạng thái yêu cầu chuyển sang vai trò giảng viên AILSS.",
+  ],
   "/auth/login": ["Đăng nhập", "Đăng nhập tài khoản AILSS bằng email và mật khẩu."],
   "/auth/register": ["Tạo tài khoản", "Đăng ký tài khoản sinh viên để bắt đầu cùng AILSS."],
   "/auth/forgot-password": [

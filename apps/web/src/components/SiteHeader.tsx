@@ -13,6 +13,20 @@ export function SiteHeader() {
   const [mobile, setMobile] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [aiNotice, setAiNotice] = useState<{ jobId: string; state: string }>();
+  useEffect(() => {
+    let timer = 0;
+    const notify = (event: Event) => {
+      setAiNotice((event as CustomEvent<{ jobId: string; state: string }>).detail);
+      clearTimeout(timer);
+      timer = window.setTimeout(() => setAiNotice(undefined), 12000);
+    };
+    window.addEventListener("ailss-ai-complete", notify);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("ailss-ai-complete", notify);
+    };
+  }, []);
   const p = auth.profile;
   useEffect(() => {
     setMenu(false);
@@ -21,6 +35,15 @@ export function SiteHeader() {
   async function logout() {
     setBusy(true);
     setError("");
+    navigate("/auth/result", {
+      state: {
+        success: true,
+        title: "Đang đăng xuất…",
+        message: "AILSS đang thu hồi phiên hiện tại.",
+        to: "/auth/login",
+        label: "Đợi hoàn tất",
+      },
+    });
     try {
       await auth.logout();
       setMenu(false);
@@ -35,13 +58,36 @@ export function SiteHeader() {
         },
       });
     } catch {
-      setError("Chưa thể đăng xuất. Vui lòng thử lại.");
+      navigate("/auth/result", {
+        replace: true,
+        state: {
+          success: false,
+          title: "Chưa thể đăng xuất",
+          message: "Chưa xác nhận được việc thu hồi phiên. Vui lòng thử lại.",
+          to: "/app",
+          label: "Quay lại tài khoản",
+        },
+      });
     } finally {
       setBusy(false);
     }
   }
   const links = (
     <>
+      {aiNotice && (
+        <aside className="assistant-notice" role="status">
+          {aiNotice.state === "AI_DRAFT"
+            ? "Bản nháp câu hỏi đã sẵn sàng."
+            : "Chưa thể tạo câu hỏi. Xem chi tiết để biết lý do."}
+          <Link
+            className="button"
+            to={`/app/teaching/ai/jobs/${aiNotice.jobId}`}
+            onClick={() => setAiNotice(undefined)}
+          >
+            Mở công việc
+          </Link>
+        </aside>
+      )}
       <NavLink to="/courses">Khóa học</NavLink>
       {p ? (
         <>
@@ -75,7 +121,7 @@ export function SiteHeader() {
       <a className="skip-link" href="#main">
         Đến nội dung chính
       </a>
-      <header className="site-header">
+      <header className={`site-header ${location.pathname === "/" ? "home-hero-header" : ""}`}>
         <div className="site-header-inner">
           <Logo />
           <nav className="site-navigation" aria-label="Điều hướng chính">
@@ -99,6 +145,7 @@ export function SiteHeader() {
                 <button
                   type="button"
                   className="user-menu-trigger"
+                  aria-label={`Menu tài khoản: ${p.displayName}`}
                   aria-expanded={menu}
                   aria-controls="account-menu"
                   onClick={() => setMenu(!menu)}
@@ -155,7 +202,12 @@ export function SiteHeader() {
         </div>
       </header>
       <Dialog open={mobile} onClose={() => setMobile(false)} title="Điều hướng">
-        <nav className="mobile-nav">
+        <nav
+          className="mobile-nav"
+          onClick={(event) => {
+            if ((event.target as Element).closest("a")) setMobile(false);
+          }}
+        >
           {links}
           {p ? <Link to="/app/account">Hồ sơ của tôi</Link> : <Link to="/auth/login">Đăng nhập</Link>}
         </nav>

@@ -2,14 +2,15 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { lecturerError, lecturerRequest, useLecturer } from "./api";
 import { CourseArtwork, categories } from "../components/CourseArtwork";
-import { OwnedCourseSelect, Field, State } from "./ui";
+import { CatalogCourseSelect, Field, State } from "./ui";
 import { Breadcrumbs, EmptyState, StateChip, stateLabel, useUnsavedChanges } from "../components/product";
 type Course = {
   courseId: string;
   title: string;
   slug: string;
   categoryId: string;
-  state: string;
+  state?: string;
+  publishedAt?: string;
   priceType: string;
   price: string;
   currency: string;
@@ -35,49 +36,171 @@ type Offering = {
 };
 const values = (f: FormData) => Object.fromEntries(f.entries());
 export function TeachingHome() {
-  const courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses"),
+  const [selectedCat, setSelectedCat] = useState<string>("all");
+  const courses = useLecturer<Course[] | { items: Course[] }>("/courses?limit=50"),
     offerings = useLecturer<Offering[] | { items: Offering[] }>("/me/owned-offerings"),
     classes = useLecturer<{ classes?: unknown[] } | unknown[]>("/me/owned-classes");
+
+  const coursesList = Array.isArray(courses.data) ? courses.data : courses.data?.items || [];
+  const offeringsList = Array.isArray(offerings.data) ? offerings.data : offerings.data?.items || [];
+  const classesList = Array.isArray(classes.data) ? classes.data : (classes.data as { classes?: unknown[] })?.classes || [];
+
+  const displayedCourses = selectedCat === "all"
+    ? coursesList
+    : coursesList.filter((c) => c.categoryId === selectedCat);
+
   return (
     <>
-      <p className="eyebrow">KHÔNG GIAN GIẢNG DẠY</p>
-      <h1>Không gian giảng dạy của bạn.</h1>
-      <p className="lead">Soạn nội dung, mở lớp, theo dõi đánh giá và duyệt bản nháp AI.</p>
+      <div className="dashboard-heading">
+        <div>
+          <p className="eyebrow">KHÔNG GIAN GIẢNG DẠY</p>
+          <h1>Không gian giảng dạy của bạn.</h1>
+          <p className="lead">Soạn nội dung, mở lớp, theo dõi đánh giá và duyệt bản nháp AI.</p>
+        </div>
+        <Link className="button" to="/app/teaching/courses/new">
+          + Tạo khóa học mới
+        </Link>
+      </div>
+
+      <div className="workspace-kpi-grid">
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-icon" aria-hidden="true">📖</span>
+            <span className="kpi-tag accent">Catalog</span>
+          </div>
+          <div className="kpi-value">{courses.pending ? "…" : `${coursesList.length} khóa`}</div>
+          <div className="kpi-label">Khóa học trong hệ thống</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-icon" aria-hidden="true">🏷️</span>
+            <span className="kpi-tag">Tuyển sinh</span>
+          </div>
+          <div className="kpi-value">{offerings.pending ? "…" : `${offeringsList.length} đợt`}</div>
+          <div className="kpi-label">Đợt mở bán đang quản lý</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-icon" aria-hidden="true">👥</span>
+            <span className="kpi-tag accent">Đang dạy</span>
+          </div>
+          <div className="kpi-value">{classes.pending ? "…" : `${classesList.length} lớp`}</div>
+          <div className="kpi-label">Lớp học phụ trách</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-icon" aria-hidden="true">🤖</span>
+            <span className="kpi-tag accent">AI Copilot</span>
+          </div>
+          <div className="kpi-value">Sẵn sàng</div>
+          <div className="kpi-label">Soạn giáo trình & Quiz AI</div>
+        </div>
+      </div>
+
+      <div className="workspace-quick-actions" role="toolbar" aria-label="Thao tác giảng dạy nhanh">
+        <Link className="quick-action-chip" to="/app/teaching/courses/new">
+          <span className="chip-icon" aria-hidden="true">➕</span>
+          <span>Tạo khóa học mới</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/teaching/classes">
+          <span className="chip-icon" aria-hidden="true">📅</span>
+          <span>Lịch dạy & Điểm danh</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/teaching/offerings">
+          <span className="chip-icon" aria-hidden="true">🎯</span>
+          <span>Quản lý đợt mở bán</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/teaching/assessments">
+          <span className="chip-icon" aria-hidden="true">📝</span>
+          <span>Ngân hàng câu hỏi</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/teaching/ai">
+          <span className="chip-icon" aria-hidden="true">🤖</span>
+          <span>AI Studio</span>
+        </Link>
+      </div>
+
       <div className="workspace-cards">
         <article>
-          <h2>Khóa học</h2>
-          <p>Tạo bài giảng, sắp xếp nội dung và theo dõi khóa học của bạn.</p>
-          <Link to="/app/teaching/courses/new">Tạo khóa học →</Link>
+          <div className="card-kicker">ĐÀO TẠO & HỌC TẬP</div>
+          <h2>Lớp học</h2>
+          <State q={classes}>
+            {(v) => <p>{Array.isArray(v) ? v.length : v.classes?.length || 0} lớp phụ trách. Điểm danh theo buổi và gửi thông báo.</p>}
+          </State>
+          <Link to="/app/teaching/classes">Mở lớp học →</Link>
         </article>
         <article>
+          <div className="card-kicker">TUYỂN SINH & DOANH THU</div>
           <h2>Đợt mở bán</h2>
           <State q={offerings}>
-            {(v) => <p>{Array.isArray(v) ? v.length : v.items?.length || 0} đợt mở bán đang quản lý.</p>}
+            {(v) => <p>{Array.isArray(v) ? v.length : v.items?.length || 0} đợt mở bán đang quản lý. Cấu hình học phí và lịch mở.</p>}
           </State>
           <Link to="/app/teaching/offerings">Quản lý đợt mở bán →</Link>
         </article>
         <article>
-          <h2>Lớp học</h2>
-          <State q={classes}>
-            {(v) => <p>{Array.isArray(v) ? v.length : v.classes?.length || 0} lớp phụ trách.</p>}
-          </State>
-          <Link to="/app/teaching/classes">Mở lớp học →</Link>
+          <div className="card-kicker">QUẢN LÝ NỘI DUNG</div>
+          <h2>Khóa học</h2>
+          <p>Catalog hiển thị khóa học đã xuất bản; quyền chỉnh sửa được kiểm tra trên từng khóa học.</p>
+          <Link to="/app/teaching/courses/new">Tạo khóa học →</Link>
         </article>
       </div>
-      <section>
-        <h2>Khóa học của tôi</h2>
-        <State q={courses}>
-          {(v) => (
-            <div className="workspace-cards">
-              {(Array.isArray(v) ? v : v.items || []).map((c) => (
-                <article key={c.courseId}>
-                  <CourseArtwork title={c.title} categoryId={c.categoryId}/><StateChip state={c.state}/>
-                  <h3>{c.title}</h3>
-                  <Link to={`/app/teaching/courses/${c.courseId}`}>Mở chi tiết →</Link>
-                </article>
-              ))}
+
+      <section className="catalog-section">
+        <div className="catalog-header-wrap">
+          <div className="catalog-header-title">
+            <div>
+              <h2>Catalog khóa học</h2>
+              <p>Khám phá và biên soạn giáo trình theo từng chuyên ngành đào tạo.</p>
             </div>
-          )}
+            <Link className="button secondary small" to="/app/teaching/courses/new">
+              + Soạn khóa học mới
+            </Link>
+          </div>
+          <div className="catalog-filter-bar" role="tablist" aria-label="Lọc theo danh mục">
+            <button
+              type="button"
+              className={`catalog-filter-pill ${selectedCat === "all" ? "active" : ""}`}
+              onClick={() => setSelectedCat("all")}
+            >
+              Tất cả ({coursesList.length})
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                className={`catalog-filter-pill ${selectedCat === cat.id ? "active" : ""}`}
+                onClick={() => setSelectedCat(cat.id)}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <State q={courses}>
+          {() =>
+            displayedCourses.length ? (
+              <div className="workspace-cards">
+                {displayedCourses.map((c) => (
+                  <article key={c.courseId}>
+                    <CourseArtwork title={c.title} categoryId={c.categoryId} />
+                    <StateChip state={(c as { state?: string }).state || (c.publishedAt ? "PUBLISHED" : "ACTIVE")} />
+                    <h3>{c.title}</h3>
+                    <Link className="card-action-btn" to={`/app/teaching/courses/${c.courseId}`}>Chi tiết giáo trình →</Link>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="catalog-empty-hub">
+                <span className="empty-hub-icon" aria-hidden="true">📖</span>
+                <h3>Chưa có khóa học trong danh mục này</h3>
+                <p>Bắt đầu tạo giáo trình hoặc chọn danh mục khác để xem tài liệu.</p>
+                <Link className="button" to="/app/teaching/courses/new">
+                  + Tạo khóa học mới
+                </Link>
+              </div>
+            )
+          }
         </State>
       </section>
     </>
@@ -103,7 +226,16 @@ export function CourseCreate() {
       <form className="form-panel form-grid" onSubmit={(e) => void submit(e)}>
         <Field label="Tên khóa học" name="title" required />
         <Field label="Đường dẫn khóa học" name="slug" required />
-        <label>Chủ đề<select name="categoryId">{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+        <label>
+          Chủ đề
+          <select name="categoryId">
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <label>
           Hình thức
           <select name="priceType">
@@ -192,7 +324,7 @@ export function CourseDetail() {
                           <StateChip state={o.state} />
                           <h3>{o.title}</h3>
                           <p>{stateLabel(o.offeringType)}</p>
-                          <Link to={`/app/teaching/offerings/${o.offeringId}`}>Mở đợt đăng ký →</Link>
+                          <Link className="card-action-btn" to={`/app/teaching/offerings/${o.offeringId}`}>Mở đợt đăng ký →</Link>
                         </article>
                       ))}
                     </div>
@@ -262,7 +394,19 @@ export function CourseDetail() {
               <h2>Sửa bản nháp</h2>
               <Field label="Tên" name="title" defaultValue={c.title} required />
               <Field label="Đường dẫn khóa học" name="slug" defaultValue={c.slug} required />
-              <label>Chủ đề<select name="categoryId" defaultValue={c.categoryId}>{!categories.some(x => x.id === c.categoryId) && <option value={c.categoryId}>Chủ đề hiện tại</option>}{categories.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
+              <label>
+                Chủ đề
+                <select name="categoryId" defaultValue={c.categoryId}>
+                  {!categories.some((x) => x.id === c.categoryId) && (
+                    <option value={c.categoryId}>Chủ đề hiện tại</option>
+                  )}
+                  {categories.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label>
                 Hình thức
                 <select name="priceType" defaultValue={c.priceType}>
@@ -449,7 +593,7 @@ function OfferingCreate({ onDone }: { onDone: () => void }) {
       }}
     >
       <h2>Tạo offering</h2>
-      <OwnedCourseSelect label="Khóa học" name="courseId" required/>
+      <CatalogCourseSelect label="Khóa học" name="courseId" required />
       <label>
         Loại
         <select name="offeringType">

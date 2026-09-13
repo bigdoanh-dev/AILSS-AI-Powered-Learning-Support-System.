@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import type { MinioStorage } from "../../../../packages/storage/src/index.js";
 import { Router } from "express";
 import { types } from "cassandra-driver";
 import { z } from "zod";
@@ -36,6 +38,7 @@ export function avatarRouter(
   client: CassandraClient,
   profile: ProfileService,
   verify: ProfileActorContextVerifier,
+  storage?: Pick<MinioStorage, "read" | "writePrivate" | "removePrivate">,
 ): Router {
   const router = Router();
   router.all("/api/v1/me/avatar", async (request, response, next) => {
@@ -55,24 +58,37 @@ export function avatarRouter(
         throw new AppError("INVALID_ACTOR_CONTEXT", 401, "Invalid actor");
       await profile.read(actor);
       const owner = types.Uuid.fromString(actor.userId);
-      if (request.method === "POST") {
-        const image = parseAvatar(request.body);
-        if (image)
-          await client.execute(
-            "INSERT INTO avatar_by_user (user_id,content_type,image,updated_at) VALUES (?,?,?,?)",
-            [owner, image.contentType, image.bytes, new Date()],
-            "LOCAL_QUORUM",
-          );
-        else await client.execute("DELETE FROM avatar_by_user WHERE user_id=?", [owner], "LOCAL_QUORUM");
-      }
-      const rows = await client.execute(
-        "SELECT content_type,image FROM avatar_by_user WHERE user_id=?",
+      const image = request.method === "POST" ? parseAvatar(request.body) : undefined;
+      if (!storage) throw new AppError("STORAGE_UNAVAILABLE", 503, "Avatar storage unavailable");
+      const previous = await client.execute(
+        "SELECT content_type,object_key FROM avatar_by_user WHERE user_id=?",
         [owner],
         "LOCAL_QUORUM",
       );
+      if (request.method === "POST") {
+        if (image) {
+          const objectKey = `avatars/${actor.userId}/${randomUUID()}`;
+          await storage.writePrivate(objectKey, image.bytes, image.contentType);
+          await client.execute(
+            "INSERT INTO avatar_by_user (user_id,content_type,object_key,updated_at) VALUES (?,?,?,?)",
+            [owner, image.contentType, objectKey, new Date()],
+            "LOCAL_QUORUM",
+          );
+        } else await client.execute("DELETE FROM avatar_by_user WHERE user_id=?", [owner], "LOCAL_QUORUM");
+        const oldKey = previous[0]?.get("object_key") as string | undefined;
+        if (oldKey) await storage.removePrivate(oldKey);
+      }
+      const rows =
+        request.method === "POST"
+          ? await client.execute(
+              "SELECT content_type,object_key FROM avatar_by_user WHERE user_id=?",
+              [owner],
+              "LOCAL_QUORUM",
+            )
+          : previous;
       const row = rows[0];
       const dataUrl = row
-        ? `data:${String(row.get("content_type"))};base64,${(row.get("image") as Buffer).toString("base64")}`
+        ? `data:${String(row.get("content_type"))};base64,${(await storage.read(String(row.get("object_key")), MAX_BYTES)).toString("base64")}`
         : null;
       response.setHeader("Cache-Control", "no-store");
       response.json({ data: { dataUrl }, meta: { requestId: context.requestId } });

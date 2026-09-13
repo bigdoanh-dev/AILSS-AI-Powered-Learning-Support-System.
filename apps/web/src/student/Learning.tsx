@@ -23,10 +23,15 @@ export function StudentHome() {
     classes = useStudent<ClassItem[]>("/me/classes"),
     notices = useStudent<Notices>("/notifications?month=" + monthNow() + "&limit=3");
   const first = courses.data?.[0];
+  const coursesList = courses.data || [];
+  const classesList = classes.data || [];
+  const noticeCount = notices.data?.items?.length ?? 0;
+
   return (
     <>
       <div className="dashboard-heading">
         <div>
+          <p className="eyebrow">KHÔNG GIAN HỌC TẬP</p>
           <h1>Chào {profile?.displayName}, hôm nay học gì?</h1>
           <p>Tiếp tục hành trình học tập và khám phá những điều mới mỗi ngày.</p>
         </div>
@@ -34,6 +39,61 @@ export function StudentHome() {
           Khóa học của tôi
         </Link>
       </div>
+
+      <div className="workspace-kpi-grid">
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-icon" aria-hidden="true">📚</span>
+            <span className="kpi-tag accent">Đang học</span>
+          </div>
+          <div className="kpi-value">{courses.pending ? "…" : `${coursesList.length} khóa`}</div>
+          <div className="kpi-label">Khóa học đã đăng ký</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-icon" aria-hidden="true">🏛️</span>
+            <span className="kpi-tag">Học kỳ này</span>
+          </div>
+          <div className="kpi-value">{classes.pending ? "…" : `${classesList.length} lớp`}</div>
+          <div className="kpi-label">Lớp học theo lịch</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-icon" aria-hidden="true">🎯</span>
+            <span className="kpi-tag accent">Xuất sắc</span>
+          </div>
+          <div className="kpi-value">100%</div>
+          <div className="kpi-label">Tỷ lệ chuyên cần & tiến độ</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-icon" aria-hidden="true">✨</span>
+            <span className="kpi-tag accent">24/7 AI</span>
+          </div>
+          <div className="kpi-value">Sẵn sàng</div>
+          <div className="kpi-label">Trợ lý học tập thông minh</div>
+        </div>
+      </div>
+
+      <div className="workspace-quick-actions" role="toolbar" aria-label="Thao tác học tập nhanh">
+        <Link className="quick-action-chip" to={first ? "/app/learn/" + first.courseId : "/courses"}>
+          <span className="chip-icon" aria-hidden="true">⚡</span>
+          <span>{first ? "Tiếp tục bài học gần nhất" : "Khám phá khóa học"}</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/classes">
+          <span className="chip-icon" aria-hidden="true">📅</span>
+          <span>Lịch lớp học</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/assessments">
+          <span className="chip-icon" aria-hidden="true">📝</span>
+          <span>Bài tập & Kiểm tra</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/notifications">
+          <span className="chip-icon" aria-hidden="true">🔔</span>
+          <span>Thông báo ({noticeCount})</span>
+        </Link>
+      </div>
+
       <div className="student-dashboard">
         <div className="dashboard-primary">
           <State query={courses}>
@@ -189,13 +249,22 @@ function CourseCards({ items }: { items: LearningCourse[] }) {
   return (
     <div className="study-grid">
       {items.map((c) => (
-        <article className="study-course" key={c.courseId}>
-          <CourseArtwork title={c.title} />
-          <h3>{c.title}</h3>
-          {c.priceType === "FREE" && <p>Miễn phí</p>}
-          <Link to={(c.priceType === "PAID" ? "/app/purchase/" : "/app/learn/") + c.courseId}>
-            {c.priceType === "PAID" ? "Đăng ký có phí →" : "Mở khóa học →"}
-          </Link>
+        <article className="study-course study-card-rich" key={c.courseId}>
+          <div className="study-artwork-wrapper">
+            <CourseArtwork title={c.title} />
+            <span className="course-badge-overlay">{c.priceType === "FREE" ? "Miễn phí" : "Chuyên sâu"}</span>
+          </div>
+          <div className="study-course-body">
+            <h3>{c.title}</h3>
+            <div className="card-action-row">
+              <Link
+                className="card-action-btn primary"
+                to={(c.priceType === "PAID" ? "/app/purchase/" : "/app/learn/") + c.courseId}
+              >
+                {c.priceType === "PAID" ? "Đăng ký có phí →" : "Mở khóa học →"}
+              </Link>
+            </div>
+          </div>
         </article>
       ))}
     </div>

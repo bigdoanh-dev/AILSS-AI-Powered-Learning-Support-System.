@@ -190,7 +190,9 @@ export function Auth() {
   const title = forgot
     ? "Tìm lại lối vào việc học."
     : register
-      ? "Hành trình mới bắt đầu ở đây."
+      ? lecturer
+        ? "Mang tri thức của bạn đến gần người học."
+        : "Hành trình mới bắt đầu ở đây."
       : "Chào mừng bạn trở lại.";
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -295,150 +297,278 @@ export function Auth() {
       setBusy(false);
     }
   }
+  const isRegister = register || choose;
+  const isLogin = !isRegister && !forgot;
+
   return (
     <section className="focused-auth">
-      <p className="eyebrow">
-        {choose
-          ? "BƯỚC TIẾP THEO CỦA BẠN"
-          : register
-            ? lecturer
-              ? "TÀI KHOẢN GIẢNG VIÊN"
-              : "TÀI KHOẢN HỌC VIÊN"
-            : lecturer
-              ? "DÀNH CHO GIẢNG VIÊN"
-              : "CHÀO MỪNG ĐẾN AILSS"}
-      </p>
-      <h1>
-        {choose ? "Bạn muốn bắt đầu thế nào?" : lecturer ? "Mang tri thức của bạn đến gần người học." : title}
-      </h1>
-      <div className="auth-panel">
-        {choose ? (
-          <>
-            <p>Tôi muốn tham gia AILSS với vai trò…</p>
-            <div className="auth-choices">
-              <Link to="/auth/register/student">
-                <span className="choice-icon">01</span>
-                <div>
-                  <h2>Học viên</h2>
-                  <p>Tham gia khóa học, làm bài kiểm tra và nhìn thấy từng bước tiến bộ.</p>
-                </div>
-                <span aria-hidden="true">↗</span>
-              </Link>
-              <Link to="/auth/register/lecturer">
-                <span className="choice-icon">02</span>
-                <div>
-                  <h2>Giảng viên</h2>
-                  <p>Tổ chức lớp học, tạo khóa học và chuẩn bị bản nháp câu hỏi cùng AI.</p>
-                </div>
-                <span aria-hidden="true">↗</span>
-              </Link>
-            </div>
-            <p>
-              Đã có tài khoản? <Link to="/auth/login">Đăng nhập</Link>
-            </p>
-          </>
-        ) : forgot ? (
-          <>
-            <h2>Quên mật khẩu?</h2>
-            <p>
-              Phiên bản hiện tại chưa hỗ trợ gửi email đặt lại mật khẩu. Không có yêu cầu khôi phục nào được
-              gửi từ trang này.
-            </p>
-            <ol className="check-list">
-              <li>Kiểm tra đúng email đã dùng khi đăng ký.</li>
-              <li>Nếu còn nhớ mật khẩu, thử đăng nhập lại.</li>
-              <li>
-                Nếu không thể đăng nhập, liên hệ người quản trị của đơn vị triển khai qua kênh bạn đã được
-                cung cấp.
-              </li>
-            </ol>
-            <TextLink to="/auth/login">Quay lại đăng nhập</TextLink>
-            <TextLink to="/help">Trợ giúp tài khoản</TextLink>
-          </>
-        ) : session ? (
-          <>
-            <span className="eyebrow">ĐÃ XÁC THỰC</span>
-            <h2>Xin chào, {session.displayName}.</h2>
-            <p>Phiên của bạn đã được xác thực. Mở không gian cá nhân để xem hồ sơ tài khoản.</p>
-            <TextLink to="/app">Mở không gian cá nhân</TextLink>
-            <button className="button" disabled={busy} onClick={() => void logout()}>
-              Đăng xuất
-            </button>
-            <p role="status">{status}</p>
-          </>
-        ) : (
-          <form aria-busy={busy} onSubmit={(e) => void submit(e)}>
-            <h2 className="sr-only">{register ? "Tạo tài khoản" : "Đăng nhập"}</h2>
-            <p>
-              {register
-                ? lecturer
-                  ? "Đăng ký trực tiếp tài khoản giảng viên. Quyền giảng dạy sẽ mở sau khi quản trị viên xác minh."
-                  : "Tạo tài khoản để bắt đầu học."
-                : "Tiếp tục với tài khoản AILSS của bạn."}
-            </p>
-            {register && (
-              <label>
-                Họ và tên
-                <input name="displayName" autoComplete="name" required minLength={2} maxLength={100} />
-              </label>
-            )}
-            <label>
-              Email
-              <input name="email" type="email" autoComplete="email" required maxLength={254} />
-            </label>
-            <label>
-              Mật khẩu
-              <div className="password-field">
-                <input
-                  id="auth-password"
-                  aria-label="Mật khẩu"
-                  name="password"
-                  type={show ? "text" : "password"}
-                  autoComplete={register ? "new-password" : "current-password"}
-                  required
-                  minLength={register ? 12 : 1}
-                  maxLength={128}
-                  aria-describedby={register ? "password-help" : undefined}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShow(!show)}
-                  aria-pressed={show}
-                  aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                >
-                  {show ? "Ẩn" : "Hiện"}
-                </button>
+      <div
+        className={`auth-motion-panel ${
+          forgot
+            ? "auth-slide-bottom auth-slide-up"
+            : isRegister
+              ? "auth-slide-right"
+              : "auth-slide-left"
+        }`}
+      >
+        <p className="eyebrow">
+          {choose
+            ? "BƯỚC TIẾP THEO CỦA BẠN"
+            : register
+              ? lecturer
+                ? "TÀI KHOẢN GIẢNG VIÊN"
+                : "TÀI KHOẢN HỌC VIÊN"
+              : forgot
+                ? "HỖ TRỢ TRUY CẬP AN TOÀN"
+                : lecturer
+                  ? "DÀNH CHO GIẢNG VIÊN"
+                  : "CHÀO MỪNG ĐẾN AILSS"}
+        </p>
+        <h1>
+          {choose ? "Bạn muốn bắt đầu thế nào?" : lecturer ? "Mang tri thức của bạn đến gần người học." : title}
+        </h1>
+        <div className="auth-panel">
+          {choose ? (
+            <div className="auth-card-motion auth-form-card">
+              <p className="auth-role-header">Tôi muốn tham gia AILSS với vai trò…</p>
+              <div className="auth-choices">
+                <Link to="/auth/register/student" className="choice-card">
+                  <span className="choice-icon">01</span>
+                  <div>
+                    <div className="choice-title-row">
+                      <span className="role-emoji" aria-hidden="true">🎓</span>
+                      <h2>Học viên</h2>
+                    </div>
+                    <p>Tham gia khóa học, làm bài kiểm tra và nhìn thấy từng bước tiến bộ.</p>
+                    <span className="choice-action-btn">Đăng ký học viên →</span>
+                  </div>
+                  <span aria-hidden="true" className="choice-arrow">↗</span>
+                </Link>
+                <Link to="/auth/register/lecturer" className="choice-card">
+                  <span className="choice-icon">02</span>
+                  <div>
+                    <div className="choice-title-row">
+                      <span className="role-emoji" aria-hidden="true">👨‍🏫</span>
+                      <h2>Giảng viên</h2>
+                    </div>
+                    <p>Tổ chức lớp học, tạo khóa học và chuẩn bị bản nháp câu hỏi cùng AI.</p>
+                    <span className="choice-action-btn">Đăng ký giảng viên →</span>
+                  </div>
+                  <span aria-hidden="true" className="choice-arrow">↗</span>
+                </Link>
               </div>
-            </label>
-            {register ? (
-              <>
-                <small id="password-help">Dùng 12–128 ký tự. Không chia sẻ mật khẩu.</small>
-                <label className="checkbox">
-                  <input type="checkbox" required />
-                  Tôi đã đọc <Link to="/legal/terms">điều khoản</Link> và{" "}
-                  <Link to="/legal/privacy">quyền riêng tư</Link>.
+              <p className="auth-switch-prompt">
+                Đã có tài khoản? <Link to="/auth/login">Đăng nhập ngay</Link>
+              </p>
+            </div>
+          ) : forgot ? (
+            <div className="forgot-password-card auth-form-card">
+              <div className="forgot-header-badge">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <span>Xác thực &amp; Bảo mật</span>
+              </div>
+              <h2>Quên mật khẩu?</h2>
+              <div className="forgot-notice-box">
+                <p>
+                  Phiên bản hiện tại chưa hỗ trợ gửi email đặt lại mật khẩu trực tuyến để đảm bảo an toàn tài khoản
+                  học thuật và chính sách xác minh danh tính tập trung. Không có yêu cầu khôi phục nào được gửi từ trang này.
+                </p>
+              </div>
+              <div className="forgot-steps-list">
+                <div className="forgot-step-item">
+                  <span className="step-badge">1</span>
+                  <div>
+                    <strong>Kiểm tra lại email</strong>
+                    <p>Hãy đảm bảo bạn đang dùng đúng email đã dùng khi đăng ký (email cơ quan hoặc sinh viên).</p>
+                  </div>
+                </div>
+                <div className="forgot-step-item">
+                  <span className="step-badge">2</span>
+                  <div>
+                    <strong>Thử lại với mật khẩu cũ</strong>
+                    <p>Nếu còn nhớ mật khẩu, hãy thử đăng nhập lại hoặc kiểm tra trình quản lý mật khẩu của thiết bị.</p>
+                  </div>
+                </div>
+                <div className="forgot-step-item">
+                  <span className="step-badge">3</span>
+                  <div>
+                    <strong>Liên hệ Quản trị viên</strong>
+                    <p>
+                      Nếu không thể đăng nhập, liên hệ người quản trị của đơn vị triển khai qua kênh bạn đã được
+                      cung cấp để được cấp mã truy cập mới.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="forgot-support-contacts">
+                <p>
+                  <strong>Hỗ trợ kỹ thuật:</strong> support@ailss.edu.vn · Hotline: 1900-6888 (08:00 - 18:00)
+                </p>
+              </div>
+              <div className="forgot-card-actions">
+                <Link to="/auth/login" className="button auth-submit-btn">
+                  Quay lại đăng nhập
+                </Link>
+                <TextLink to="/help">Trợ giúp tài khoản</TextLink>
+              </div>
+            </div>
+          ) : session ? (
+            <div className="auth-card-motion auth-form-card">
+              <span className="eyebrow">ĐÃ XÁC THỰC</span>
+              <h2>Xin chào, {session.displayName}.</h2>
+              <p>Phiên của bạn đã được xác thực. Mở không gian cá nhân để xem hồ sơ tài khoản.</p>
+              <TextLink to="/app">Mở không gian cá nhân</TextLink>
+              <button className="button" disabled={busy} onClick={() => void logout()}>
+                Đăng xuất
+              </button>
+              <p role="status">{status}</p>
+            </div>
+          ) : (
+            <form aria-busy={busy} onSubmit={(e) => void submit(e)} className="auth-card-motion auth-form-card">
+              <h2 className="sr-only">{register ? "Tạo tài khoản" : "Đăng nhập"}</h2>
+
+              {register && (
+                <div className="auth-role-subswitcher" role="tablist" aria-label="Đối tượng đăng ký">
+                  <Link
+                    to="/auth/register/student"
+                    className={`role-subpill ${!lecturer ? "active" : ""}`}
+                    role="tab"
+                    aria-selected={!lecturer}
+                  >
+                    <span aria-hidden="true">🎓</span>
+                    <span>Học viên</span>
+                  </Link>
+                  <Link
+                    to="/auth/register/lecturer"
+                    className={`role-subpill ${lecturer ? "active" : ""}`}
+                    role="tab"
+                    aria-selected={lecturer}
+                  >
+                    <span aria-hidden="true">👨‍🏫</span>
+                    <span>Giảng viên</span>
+                  </Link>
+                </div>
+              )}
+
+              <p className="auth-form-subtext">
+                {register
+                  ? lecturer
+                    ? "Đăng ký trực tiếp tài khoản giảng viên. Quyền giảng dạy sẽ mở sau khi quản trị viên xác minh."
+                    : "Tạo tài khoản để bắt đầu học."
+                  : "Tiếp tục với tài khoản AILSS của bạn."}
+              </p>
+              {register && (
+                <label className="auth-field-label">
+                  <span className="label-text">
+                    <span className="label-icon" aria-hidden="true">👤</span> Họ và tên
+                  </span>
+                  <input
+                    aria-label="Họ và tên"
+                    name="displayName"
+                    autoComplete="name"
+                    required
+                    minLength={2}
+                    maxLength={100}
+                    className="auth-text-input"
+                    placeholder={lecturer ? "VD: TS. Nguyễn Văn A" : "VD: Trần Hoàng Nam"}
+                  />
                 </label>
-              </>
-            ) : (
-              <Link className="forgot-link" to="/auth/forgot-password">
-                Quên mật khẩu?
-              </Link>
-            )}
-            <button className="button" disabled={busy} type="submit">
-              {busy ? "Đang xử lý…" : register ? "Tạo tài khoản" : "Đăng nhập"}
-            </button>
-            <p className="form-status" role="status">
-              {status || auth.message}
-            </p>
-            <p>
-              {register ? "Đã có tài khoản?" : "Chưa có tài khoản?"}{" "}
-              <Link to={register ? "/auth/login" : "/auth/register"}>
-                {register ? "Đăng nhập" : "Đăng ký"}
-              </Link>
-            </p>
-            <small>Thông tin đăng nhập được bảo vệ. Bạn có thể kết thúc phiên bất cứ lúc nào.</small>
-          </form>
-        )}
+              )}
+              <label className="auth-field-label">
+                <span className="label-text">
+                  <span className="label-icon" aria-hidden="true">✉️</span> Email
+                </span>
+                <input
+                  aria-label="Email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  maxLength={254}
+                  className="auth-text-input"
+                  placeholder="name@domain.edu.vn"
+                />
+              </label>
+              <label className="auth-field-label">
+                <span className="label-text">
+                  <span className="label-icon" aria-hidden="true">🔒</span> Mật khẩu
+                </span>
+                <div className="password-field">
+                  <input
+                    id="auth-password"
+                    aria-label="Mật khẩu"
+                    name="password"
+                    type={show ? "text" : "password"}
+                    autoComplete={register ? "new-password" : "current-password"}
+                    required
+                    minLength={register ? 12 : 1}
+                    maxLength={128}
+                    className="auth-text-input"
+                    placeholder={register ? "Tối thiểu 12 ký tự" : "••••••••••••"}
+                    aria-describedby={register ? "password-help" : undefined}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShow(!show)}
+                    aria-pressed={show}
+                    aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {show ? "Ẩn" : "Hiện"}
+                  </button>
+                </div>
+              </label>
+              {register ? (
+                <>
+                  <div id="password-help" className="password-req-badge">
+                    <span aria-hidden="true">🛡️</span> Dùng 12–128 ký tự. Không chia sẻ mật khẩu.
+                  </div>
+                  <label className="checkbox auth-terms-checkbox">
+                    <input type="checkbox" required />
+                    <span>
+                      Tôi đã đọc <Link to="/legal/terms">điều khoản</Link> và{" "}
+                      <Link to="/legal/privacy">quyền riêng tư</Link>.
+                    </span>
+                  </label>
+                </>
+              ) : (
+                <div className="auth-forgot-row">
+                  <Link className="forgot-link" to="/auth/forgot-password">
+                    Quên mật khẩu?
+                  </Link>
+                </div>
+              )}
+              <button className="button auth-submit-btn" disabled={busy} type="submit">
+                {busy ? "Đang xử lý…" : register ? "Tạo tài khoản" : "Đăng nhập"}
+              </button>
+              <p className="form-status" role="status">
+                {status || auth.message}
+              </p>
+              <p className="auth-switch-prompt">
+                {register ? "Đã có tài khoản?" : "Chưa có tài khoản?"}{" "}
+                <Link to={register ? "/auth/login" : "/auth/register"}>
+                  {register ? "Đăng nhập ngay" : "Đăng ký ngay"}
+                </Link>
+              </p>
+              <small className="auth-secure-note">
+                <span aria-hidden="true">🔒</span> Thông tin đăng nhập được mã hóa đầu cuối và bảo vệ an toàn.
+              </small>
+            </form>
+          )}
+        </div>
       </div>
     </section>
   );

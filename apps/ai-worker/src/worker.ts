@@ -113,10 +113,18 @@ export class QuizGenerationWorker {
         result = provided;
       }
     } catch (e) {
+      this.logger.warn(
+        {
+          jobId: job.jobId,
+          code: e instanceof ProviderFailure ? e.code : "AI_STORAGE_ERROR",
+          httpStatus: e instanceof ProviderFailure ? e.httpStatus : undefined,
+        },
+        "quiz generation failed",
+      );
       if (e instanceof ProviderFailure && e.retryable) return { kind: "retry", reason: e.code };
       await this.repo.fail(
         job,
-        "PROVIDER_OUTPUT_REJECTED",
+        e instanceof ProviderFailure ? e.code : "AI_STORAGE_ERROR",
         stableUuid(`${job.operationId}:failed`),
         event.correlationId,
         new Date(),

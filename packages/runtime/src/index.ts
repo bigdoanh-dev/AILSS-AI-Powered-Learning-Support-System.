@@ -90,6 +90,7 @@ export async function startService(manifest: ServiceManifest, hooks: RuntimeHook
   app.disable("x-powered-by");
   app.use(requestContextMiddleware());
   app.use(pinoHttp({ logger, serializers: { req: httpRequestSerializer } }));
+  app.use("/api/v1/payments/sepay/webhook", express.json({ limit: "16kb", strict: true }));
   app.use(express.json({ limit: config.HTTP_BODY_LIMIT }));
   app.get("/health/live", (_request, response) =>
     response.json({ status: "UP", service: manifest.serviceId }),

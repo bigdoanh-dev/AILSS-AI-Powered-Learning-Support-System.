@@ -1,9 +1,13 @@
 import { Link } from "react-router-dom";
+import { TiltCard } from "./TiltCard";
+
 const modes = [
   {
     name: "Khóa học video",
     code: "SELF_PACED",
     tag: "Tự học theo tiến độ",
+    icon: "⚡",
+    image: "mode-self-paced",
     description: "Học bằng video, tài liệu và bài tập. Bạn chọn thời gian và tốc độ học phù hợp.",
     entry: "Đăng ký miễn phí hoặc mua khóa học",
     schedule: "Không có lịch cố định",
@@ -15,6 +19,8 @@ const modes = [
     name: "Khóa học trực tuyến theo lịch",
     code: "LIVE_COHORT",
     tag: "Học cùng giảng viên",
+    icon: "🎙️",
+    image: "mode-live-cohort",
     description: "Chọn một đợt mở lớp, xem lịch trước khi đăng ký và tham gia các buổi học cùng nhóm.",
     entry: "Mua một đợt mở bán gắn với lớp",
     schedule: "Có lịch học và thời gian từng buổi",
@@ -26,6 +32,8 @@ const modes = [
     name: "Lớp riêng hoặc lớp của đơn vị",
     code: "PRIVATE_CLASS",
     tag: "Học cùng lớp của bạn",
+    icon: "🏛️",
+    image: "mode-private-class",
     description: "Tham gia lớp do giảng viên hoặc đơn vị tổ chức bằng mã mời hay được thêm vào lớp.",
     entry: "Nhập mã tham gia hoặc được thêm",
     schedule: "Có thể có lịch tùy lớp",
@@ -34,6 +42,7 @@ const modes = [
     action: "Tham gia bằng mã lớp",
   },
 ];
+
 export function LearningModes() {
   return (
     <section className="section learning-modes">
@@ -44,22 +53,47 @@ export function LearningModes() {
         </div>
         <div className="learning-modes-grid">
           {modes.map((mode) => (
-            <article key={mode.code}>
-              <span className="mode-tag">{mode.tag}</span>
-              <h3>{mode.name}</h3>
-              <p>{mode.description}</p>
-              <dl>
-                <dt>Cách tham gia</dt>
-                <dd>{mode.entry}</dd>
-                <dt>Lịch học</dt>
-                <dd>{mode.schedule}</dd>
-                <dt>Hình thức</dt>
-                <dd>{mode.format}</dd>
-              </dl>
-              <Link className="button secondary" to={mode.to}>
-                {mode.action}
-              </Link>
-            </article>
+            <TiltCard as="article" key={mode.code} className="learning-mode-card" tiltOptions={{ maxTilt: 6, scale: 1.02 }}>
+              <div className="mode-media-wrap">
+                <picture>
+                  <source
+                    type="image/avif"
+                    srcSet={`/assets/media/${mode.image}-640.avif 640w, /assets/media/${mode.image}-1280.avif 1280w`}
+                    sizes="(max-width: 760px) 100vw, 33vw"
+                  />
+                  <img
+                    className="mode-cover-image"
+                    src={`/assets/media/${mode.image}-1280.webp`}
+                    srcSet={`/assets/media/${mode.image}-640.webp 640w, /assets/media/${mode.image}-1280.webp 1280w`}
+                    sizes="(max-width: 760px) 100vw, 33vw"
+                    alt={`Minh họa hình thức ${mode.name}`}
+                    width="1280"
+                    height="853"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </picture>
+                <span className="mode-tag-overlay">
+                  <span aria-hidden="true">{mode.icon}</span> {mode.tag}
+                </span>
+              </div>
+              <div className="mode-content">
+                <span className="mode-tag">{mode.tag}</span>
+                <h3>{mode.name}</h3>
+                <p>{mode.description}</p>
+                <dl>
+                  <dt>Cách tham gia</dt>
+                  <dd>{mode.entry}</dd>
+                  <dt>Lịch học</dt>
+                  <dd>{mode.schedule}</dd>
+                  <dt>Hình thức</dt>
+                  <dd>{mode.format}</dd>
+                </dl>
+                <Link className="button secondary" to={mode.to}>
+                  {mode.action}
+                </Link>
+              </div>
+            </TiltCard>
           ))}
         </div>
       </div>

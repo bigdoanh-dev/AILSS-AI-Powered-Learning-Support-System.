@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { chromium, expect } from "@playwright/test";
 import fs from "node:fs/promises";
 const base = process.env.AILSS_QA_URL || "http://127.0.0.1:5177",
-  out = "../../docs/evidence/p12.8b-admin-commerce";
+  out = process.env.AILSS_QA_OUT || "../../docs/evidence/p12.8b-admin-commerce";
 const id = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 await fs.mkdir(out, { recursive: true });
 const profiles = {
@@ -127,12 +127,15 @@ try {
         await expect(page.getByRole("link", { name: /Bắt đầu học/ })).toBeVisible({ timeout: 6000 });
         alreadyEntitled = true;
         await page.reload();
-        await expect(
-          page.getByRole("heading", { name: "Bạn đã có quyền truy cập khóa học này." }),
-        ).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Thanh toán thành công" })).toBeVisible();
       }
       await page.evaluate(() =>
-        Promise.all(document.getAnimations().map((animation) => animation.finished.catch(() => undefined))),
+        Promise.all(
+          document
+            .getAnimations()
+            .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+            .map((animation) => animation.finished.catch(() => undefined)),
+        ),
       );
       const overflow = await page.evaluate(
           () => document.documentElement.scrollWidth > document.documentElement.clientWidth,

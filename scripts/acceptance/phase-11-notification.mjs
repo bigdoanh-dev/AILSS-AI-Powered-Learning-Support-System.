@@ -119,6 +119,22 @@ const repeated = await http("PATCH", `/api/v1/notifications/${target.notificatio
 expectStatus(repeated, 200, "repeat read");
 if (repeated.json.data.readAt !== concurrent[0].json.data.readAt)
   throw new Error("idempotent readAt changed");
+if (process.env.AILSS_FRESH_AFTER_BROKER === "true") {
+  console.log(
+    JSON.stringify({
+      stage: "fresh-notification-after-broker-restart",
+      status: "PASS",
+      runId,
+      classId: created.json.data.classId,
+      announcementId: announcement.json.data.announcementId,
+      notificationId: target.notificationId,
+      visible: true,
+      read: true,
+      workerRestarted: false,
+    }),
+  );
+  process.exit(0);
+}
 expectStatus(
   await http("GET", `/api/v1/notifications?month=${month}&limit=0`, { bearer: tokenA }),
   400,

@@ -41,7 +41,7 @@ describe("premium auth and motion", () => {
     show("/auth/register/lecturer");
     expect(screen.getByText(/Đăng ký trực tiếp tài khoản giảng viên/)).toBeTruthy();
     expect(screen.getByLabelText("Email")).toBeTruthy();
-    expect(screen.getByRole("button", {name: "Tạo tài khoản"})).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Tạo tài khoản" })).toBeTruthy();
   });
   it("student uses existing required fields", () => {
     show("/auth/register/student");

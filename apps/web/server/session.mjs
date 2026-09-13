@@ -309,6 +309,40 @@ export function createSessionAdapter({
         if (profile.status !== "ACTIVE") throw new SessionError(403, "ACCOUNT_DISABLED");
         if (profile.role !== "LECTURER") throw new SessionError(403, "LECTURER_REQUIRED");
         if (!profile.lecturerVerified) throw new SessionError(403, "LECTURER_VERIFICATION_REQUIRED");
+        if (
+          method === "GET" &&
+          (operation.path === "/courses" || operation.path.startsWith("/courses?")) &&
+          !operation.path.includes("categoryId=")
+        ) {
+          const defaultCategories = [
+            "10000000-0000-4000-8000-000000000001",
+            "10000000-0000-4000-8000-000000000002",
+            "10000000-0000-4000-8000-000000000003",
+            "10000000-0000-4000-8000-000000000004",
+          ];
+          const queryPart = operation.path.includes("?")
+            ? operation.path.slice(operation.path.indexOf("?") + 1)
+            : "";
+          const params = new URLSearchParams(queryPart);
+          const limitPerCat = Math.min(
+            20,
+            Math.max(5, Math.ceil((Number(params.get("limit")) || 20) / defaultCategories.length)),
+          );
+          const pages = await Promise.all(
+            defaultCategories.map(async (catId) => {
+              const p = new URLSearchParams(params);
+              p.set("categoryId", catId);
+              p.set("limit", String(limitPerCat));
+              return protectedCall(s, `/courses?${p.toString()}`, method, body, key, {
+                kind: "lecturer",
+                headers: operation.headers,
+              }).catch(() => ({ data: [] }));
+            }),
+          );
+          const allItems = pages.flatMap((p) => (Array.isArray(p?.data) ? p.data : p?.data?.items || []));
+          send(200, { data: allItems, meta: { pagination: { limit: 50, hasMore: false } } });
+          return true;
+        }
         const result = await protectedCall(s, operation.path, method, body, key, {
           kind: "lecturer",
           headers: operation.headers,

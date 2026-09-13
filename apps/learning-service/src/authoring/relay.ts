@@ -3,7 +3,8 @@ import type { Logger } from "pino";
 import { eventEnvelopeSchema } from "../../../../packages/contracts/src/index.js";
 import { RabbitPublisher } from "../../../../packages/rabbitmq/src/index.js";
 import { safeError } from "../../../../packages/logger/src/index.js";
-import type { LearningAuthoringRepository } from "./repository.js";
+import type { DueLearningEvent, LearningAuthoringRepository } from "./repository.js";
+import { crashAfter } from "../commerce/crash-injection.js";
 
 export class LearningOutboxRelay {
   readonly #owner = `learning-relay-${randomUUID()}`;
@@ -21,12 +22,12 @@ export class LearningOutboxRelay {
     this.#timer.unref();
     void this.poll();
   }
-  public async poll() {
+  public async poll(extra: readonly DueLearningEvent[] = []) {
     if (this.#running) return;
     this.#running = true;
     try {
       const now = new Date();
-      for (const item of await this.repository.listDue(now)) {
+      for (const item of [...extra, ...(await this.repository.listDue(now))]) {
         if (item.state === "PUBLISHING" && item.leaseUntil && item.leaseUntil <= now) {
           await this.repository.recover(item);
           continue;
@@ -43,6 +44,8 @@ export class LearningOutboxRelay {
             event.eventType,
             event,
           );
+          if (event.eventType === "learning.order.paid.v1")
+            crashAfter("G_PUBLISHED_BEFORE_ACK", { eventId: event.eventId, orderId: event.aggregate.id });
           await this.repository.published(item, new Date());
         } catch (error) {
           await this.repository.retry(

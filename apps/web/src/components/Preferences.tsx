@@ -1,3 +1,4 @@
+import { useHydrated } from "../lib/hydration";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { sessionRequest, useSession } from "../auth/session";
 
@@ -37,7 +38,8 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   return <ThemeContext.Provider value={{ theme, toggle }}>{children}</ThemeContext.Provider>;
 }
 export function ThemeToggle() {
-  const { theme, toggle } = useContext(ThemeContext);
+  const { theme: currentTheme, toggle } = useContext(ThemeContext);
+  const theme = useHydrated() ? currentTheme : "light";
   return (
     <button
       className="theme-toggle"

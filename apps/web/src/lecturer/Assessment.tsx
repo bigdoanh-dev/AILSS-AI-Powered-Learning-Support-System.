@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ApiError } from "../lib/api";
 import { Breadcrumbs, EmptyState, StateChip, useUnsavedChanges } from "../components/product";
@@ -74,7 +75,7 @@ const validate = (questions: Question[]) =>
 
 export function Assessments() {
   const [params] = useSearchParams(),
-    courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses"),
+    courses = useLecturer<Course[] | { items: Course[] }>("/courses?limit=50"),
     classes = useLecturer<ClassItem[] | { classes: ClassItem[] }>("/me/owned-classes");
   const [target, setTarget] = useState(
       params.get("course")
@@ -473,10 +474,27 @@ function QuestionEditor({
   );
 }
 function Preview({ title, questions, close }: { title: string; questions: Question[]; close: () => void }) {
-  return (
-    <div className="preview-overlay" role="dialog" aria-modal="true" aria-label="Xem trước bài kiểm tra">
+  const closeButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    closeButton.current?.focus();
+    return () => previous?.focus();
+  }, []);
+  return createPortal(
+    <div
+      className="preview-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Xem trước bài kiểm tra"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          close();
+        }
+      }}
+    >
       <section className="preview-panel">
-        <button className="button secondary" onClick={close}>
+        <button ref={closeButton} className="button secondary" onClick={close}>
           Đóng xem trước
         </button>
         <h1>{title}</h1>
@@ -500,7 +518,8 @@ function Preview({ title, questions, close }: { title: string; questions: Questi
           </article>
         ))}
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

@@ -64,7 +64,7 @@ expect(
   409,
   "intent conflict",
 );
-upload(intent.json.data.uploadUrl, content, "text/plain");
+await upload(intent.json.data.uploadUrl, content, "text/plain");
 expect(
   await http("GET", `/api/v1/ai/documents/${intent.json.data.documentId}`, { bearer: otherToken }),
   404,
@@ -109,6 +109,20 @@ if (
 const state = db("ai", { action: "inspect", documentId: intent.json.data.documentId });
 if (state.eventState !== "PUBLISHED" || state.jobState !== "COMPLETED" || !state.extractedPrivate)
   throw new Error(`canonical async state ${JSON.stringify(state)}`);
+if (process.env.AILSS_FRESH_AFTER_BROKER === "true") {
+  console.log(
+    JSON.stringify({
+      stage: "fresh-document-after-broker-restart",
+      status: "PASS",
+      runId,
+      documentId: intent.json.data.documentId,
+      state: "EXTRACTED",
+      eventState: state.eventState,
+      workerRestarted: false,
+    }),
+  );
+  process.exit(0);
+}
 const outageBytes = Buffer.from("durable extraction while broker unavailable"),
   outageSha = createHash("sha256").update(outageBytes).digest("hex"),
   outageIntent = await http("POST", "/api/v1/ai/documents/upload-intents", {
@@ -122,7 +136,7 @@ const outageBytes = Buffer.from("durable extraction while broker unavailable"),
     },
   });
 expect(outageIntent, 201, "outage intent");
-upload(outageIntent.json.data.uploadUrl, outageBytes, "text/plain");
+await upload(outageIntent.json.data.uploadUrl, outageBytes, "text/plain");
 execFileSync("docker", ["stop", "ailss-rabbitmq"], { stdio: "ignore" });
 let outageEventId;
 try {
@@ -161,7 +175,7 @@ const bad = Buffer.from("actual bytes differ"),
     body: { fileName: "bad.txt", contentType: "text/plain", sizeBytes: bad.length, sha256: badDeclared },
   });
 expect(badIntent, 201, "bad intent");
-upload(badIntent.json.data.uploadUrl, bad, "text/plain");
+await upload(badIntent.json.data.uploadUrl, bad, "text/plain");
 expect(
   await http("POST", `/api/v1/ai/documents/${badIntent.json.data.documentId}/complete`, {
     bearer: lecturerToken,
@@ -268,22 +282,9 @@ async function rabbitReady() {
   }
   throw new Error("RabbitMQ did not recover");
 }
-function upload(url, content, type) {
-  execFileSync(
-    "docker",
-    [
-      "exec",
-      "ailss-ai-service",
-      "node",
-      "--input-type=module",
-      "-e",
-      `const [u,b,t]=process.argv.slice(1);const r=await fetch(u,{method:"PUT",headers:{"content-type":t},body:Buffer.from(b,"base64")});if(!r.ok)throw new Error("upload "+r.status);`,
-      url,
-      content.toString("base64"),
-      type,
-    ],
-    { stdio: "pipe" },
-  );
+async function upload(url, content, type) {
+  const response = await fetch(url, { method: "PUT", headers: { "content-type": type }, body: content });
+  if (!response.ok) throw new Error(`upload ${response.status}`);
 }
 async function waitDocument(token, id, status) {
   for (let i = 0; i < 120; i++) {

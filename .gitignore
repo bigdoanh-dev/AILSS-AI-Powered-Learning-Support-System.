@@ -46,3 +46,7 @@ infrastructure/cassandra/data/
 .vscode/
 *.swp
 *.swo
+
+# Keep internal reports and release documentation local
+AILSS_P13_*.md
+BAO_CAO_*

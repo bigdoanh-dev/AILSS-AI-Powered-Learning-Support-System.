@@ -1,8 +1,10 @@
+import { AppError } from "../../../../packages/http/src/index.js";
 import { createHash } from "node:crypto";
 import { types } from "cassandra-driver";
 import type { CassandraClient } from "../../../../packages/cassandra/src/index.js";
 import type { EventEnvelope } from "../../../../packages/contracts/src/index.js";
 import type { AuthoringCourse } from "../authoring/model.js";
+import { crashAfter } from "./crash-injection.js";
 import type { Offering } from "../offerings/model.js";
 import {
   eventShard,
@@ -21,37 +23,46 @@ const uuid = (v: string) => types.Uuid.fromString(v),
 export class LearningCommerceRepository {
   public constructor(private readonly db: CassandraClient) {}
   async claimSepayTransaction(transactionId: string, orderId: string, fingerprint: string, now: Date) {
-    await this.db.execute(
-      `INSERT INTO sepay_transaction_by_id (transaction_id,order_id,fingerprint,received_at) VALUES (?,?,?,?) IF NOT EXISTS`,
-      [transactionId, uuid(orderId), fingerprint, now],
-      LQ,
-      LS,
-    );
-    const row = (
+    try {
       await this.db.execute(
-        `SELECT order_id,fingerprint FROM sepay_transaction_by_id WHERE transaction_id=?`,
-        [transactionId],
+        `INSERT INTO sepay_transaction_by_id (transaction_id,order_id,fingerprint,received_at) VALUES (?,?,?,?) IF NOT EXISTS`,
+        [transactionId, uuid(orderId), fingerprint, now],
         LQ,
-      )
-    )[0];
-    if (!row || String(row.order_id) !== orderId || row.fingerprint !== fingerprint)
-      throw new Error("SEPAY_TRANSACTION_CONFLICT");
-    await this.db.execute(
-      `INSERT INTO sepay_payment_by_order (order_id,transaction_id,received_at) VALUES (?,?,?) IF NOT EXISTS`,
-      [uuid(orderId), transactionId, now],
-      LQ,
-      LS,
-    );
-    const payment = (
+        LS,
+      );
+      crashAfter("B_TRANSACTION", { transactionId, orderId, fingerprint, receivedAt: now.toISOString() });
+      const row = (
+        await this.db.execute(
+          `SELECT order_id,fingerprint FROM sepay_transaction_by_id WHERE transaction_id=?`,
+          [transactionId],
+          LQ,
+        )
+      )[0];
+      if (!row)
+        throw new AppError("PAYMENT_UNAVAILABLE", 503, "Payment processing is temporarily unavailable", true);
+      if (String(row.order_id) !== orderId || row.fingerprint !== fingerprint)
+        throw new AppError("PAYMENT_REPLAY_CONFLICT", 409, "Payment could not be accepted");
       await this.db.execute(
-        `SELECT transaction_id,received_at FROM sepay_payment_by_order WHERE order_id=?`,
-        [uuid(orderId)],
+        `INSERT INTO sepay_payment_by_order (order_id,transaction_id,received_at) VALUES (?,?,?) IF NOT EXISTS`,
+        [uuid(orderId), transactionId, now],
         LQ,
-      )
-    )[0];
-    if (!payment) throw new Error("SEPAY_PAYMENT_UNAVAILABLE");
-    return { transactionId: String(payment.transaction_id), receivedAt: date(payment.received_at) };
+        LS,
+      );
+      const payment = (
+        await this.db.execute(
+          `SELECT transaction_id,received_at FROM sepay_payment_by_order WHERE order_id=?`,
+          [uuid(orderId)],
+          LQ,
+        )
+      )[0];
+      if (!payment) throw new Error("SEPAY_PAYMENT_UNAVAILABLE");
+      return { transactionId: String(payment.transaction_id), receivedAt: date(payment.received_at) };
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError("PAYMENT_UNAVAILABLE", 503, "Payment processing is temporarily unavailable", true);
+    }
   }
+
   async offering(id: string): Promise<Offering | undefined> {
     const r = (
       await this.db.execute(
@@ -512,6 +523,8 @@ export class LearningCommerceRepository {
       LQ,
       LS,
     );
+    if (input.eventType === "learning.order.paid.v1")
+      crashAfter("C1_OUTBOX_DUE_PREPARED", { eventId: input.eventId, orderId: input.aggregateId });
     await this.db.execute(
       `INSERT INTO pending_event_by_id (event_id,event_type,aggregate_id,aggregate_version,state,next_attempt_at,retry_count,lease_fence,created_at) VALUES (?,?,?,?, 'PREPARED',?,0,0,?) IF NOT EXISTS`,
       [
@@ -525,6 +538,8 @@ export class LearningCommerceRepository {
       LQ,
       LS,
     );
+    if (input.eventType === "learning.order.paid.v1")
+      crashAfter("C2_OUTBOX_ID_PREPARED", { eventId: input.eventId, orderId: input.aggregateId });
   }
   async readyEvent(eventId: string, occurredAt: Date) {
     const day = occurredAt.toISOString().slice(0, 10),
@@ -535,12 +550,14 @@ export class LearningCommerceRepository {
       LQ,
       LS,
     );
+    crashAfter("E1_OUTBOX_DUE_READY", { eventId });
     await this.db.execute(
       `UPDATE pending_event_by_id SET state='READY' WHERE event_id=? IF state='PREPARED'`,
       [uuid(eventId)],
       LQ,
       LS,
     );
+    crashAfter("E2_OUTBOX_ID_READY", { eventId });
   }
 }
 

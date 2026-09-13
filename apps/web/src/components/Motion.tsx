@@ -36,7 +36,6 @@ const PANEL_SELECTOR = [
   ".ai-hero",
   ".application-panel",
   ".attendance-scroll",
-  ".auth-route-panel",
   ".dashboard-heading",
   ".form-panel",
   ".preview-panel",
@@ -48,7 +47,7 @@ const PANEL_SELECTOR = [
 function visibleBlock(element: HTMLElement) {
   if (
     element.matches("script,style,link,template,.route-loading,.sr-only,[role='dialog']") ||
-    element.closest("[hidden],[aria-hidden='true'],dialog:not([open]),[role='dialog']")
+    element.closest("[hidden],[aria-hidden='true'],dialog:not([open]),[role='dialog'],.auth-environment,.auth-main,.focused-auth")
   )
     return false;
   const style = getComputedStyle(element);
@@ -82,24 +81,32 @@ function collectRevealTargets(root: HTMLElement): RevealTarget[] {
   const candidates = new Map<HTMLElement, RevealTarget>();
   const add = (element: Element, delay = 0) => {
     if (!(element instanceof HTMLElement) || !visibleBlock(element)) return;
-    candidates.set(element, { element, kind: revealKind(element), delay: Math.max(delay, siblingDelay(element)) });
+    candidates.set(element, {
+      element,
+      kind: revealKind(element),
+      delay: Math.max(delay, siblingDelay(element)),
+    });
   };
 
   [...root.children].forEach((element) => add(element));
-  root.querySelectorAll<HTMLElement>(".section > .container").forEach((container) =>
-    [...container.children].forEach((element, index) => add(element, Math.min(index * 55, 220))),
-  );
+  root
+    .querySelectorAll<HTMLElement>(".section > .container")
+    .forEach((container) =>
+      [...container.children].forEach((element, index) => add(element, Math.min(index * 55, 220))),
+    );
   root.querySelectorAll<HTMLElement>("section").forEach((section) => {
     add(section);
     if (!section.matches(PANEL_SELECTOR))
       [...section.children].forEach((element, index) => add(element, Math.min(index * 55, 220)));
   });
-  root.querySelectorAll<HTMLElement>(`${PANEL_SELECTOR},article,form,details,table,[data-reveal]`).forEach((element) =>
-    add(element),
-  );
-  root.querySelectorAll<HTMLElement>(GROUP_SELECTOR).forEach((group) =>
-    [...group.children].forEach((element, index) => add(element, Math.min(index * 120, 600))),
-  );
+  root
+    .querySelectorAll<HTMLElement>(`${PANEL_SELECTOR},article,form,details,table,[data-reveal]`)
+    .forEach((element) => add(element));
+  root
+    .querySelectorAll<HTMLElement>(GROUP_SELECTOR)
+    .forEach((group) =>
+      [...group.children].forEach((element, index) => add(element, Math.min(index * 120, 600))),
+    );
 
   const all = [...candidates.values()];
   return all.filter(
@@ -131,7 +138,9 @@ export function Motion() {
         url.pathname === location.pathname ||
         url.hash ||
         url.pathname.startsWith("/app") ||
-        location.pathname.startsWith("/app")
+        location.pathname.startsWith("/app") ||
+        url.pathname.startsWith("/auth") ||
+        location.pathname.startsWith("/auth")
       )
         return;
       const doc = document as Document & {
@@ -246,11 +255,7 @@ export function Motion() {
           element.classList.add("motion-pending");
         observer.observe(element);
       });
-      if (
-        !stopScroll &&
-        !preference.matches &&
-        matchMedia("(min-width: 761px) and (pointer: fine)").matches
-      )
+      if (!stopScroll && !preference.matches && matchMedia("(min-width: 761px) and (pointer: fine)").matches)
         stopScroll = mountScrollMotion(root);
     };
     const mutations = new MutationObserver(scan);

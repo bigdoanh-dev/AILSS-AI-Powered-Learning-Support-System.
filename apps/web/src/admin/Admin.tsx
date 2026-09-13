@@ -29,46 +29,136 @@ export function AdminHome() {
     <>
       <div className="dashboard-heading">
         <div>
+          <p className="eyebrow">BẢNG ĐIỀU KHIỂN QUẢN TRỊ</p>
           <h1>Chào {profile?.displayName}, cùng quản lý AILSS.</h1>
-          <p>Quản lý thành viên, xác minh giảng viên và chăm sóc cộng đồng học tập.</p>
+          <p className="lead">Quản lý thành viên, xác minh giảng viên và chăm sóc cộng đồng học tập.</p>
         </div>
         <Link className="button" to="/app/admin/users?role=LECTURER">
           Xác minh giảng viên
         </Link>
       </div>
+
+      <div className="workspace-kpi-grid">
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-icon" aria-hidden="true">⚡</span>
+            <span className="kpi-tag accent">Vận hành</span>
+          </div>
+          <div className="kpi-value">99.99%</div>
+          <div className="kpi-label">SLA Vận hành & Liveness</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-icon" aria-hidden="true">🛡️</span>
+            <span className="kpi-tag">Kiểm duyệt</span>
+          </div>
+          <div className="kpi-value">Sẵn sàng</div>
+          <div className="kpi-label">Hàng đợi kiểm duyệt & báo cáo</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-icon" aria-hidden="true">🎓</span>
+            <span className="kpi-tag accent">Giảng viên</span>
+          </div>
+          <div className="kpi-value">Xác minh</div>
+          <div className="kpi-label">Thẩm định danh tính giảng viên</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <span className="kpi-icon" aria-hidden="true">⚖️</span>
+            <span className="kpi-tag accent">Tuân thủ</span>
+          </div>
+          <div className="kpi-value">Đạt chuẩn</div>
+          <div className="kpi-label">Bảo mật dữ liệu & Phân quyền</div>
+        </div>
+      </div>
+
+      <div className="workspace-quick-actions" role="toolbar" aria-label="Thao tác quản trị nhanh">
+        <Link className="quick-action-chip" to="/app/admin/users">
+          <span className="chip-icon" aria-hidden="true">👥</span>
+          <span>Tra cứu tài khoản</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/admin/users?role=LECTURER">
+          <span className="chip-icon" aria-hidden="true">🎓</span>
+          <span>Xác minh giảng viên</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/admin/courses">
+          <span className="chip-icon" aria-hidden="true">📚</span>
+          <span>Duyệt khóa học</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/admin/moderation">
+          <span className="chip-icon" aria-hidden="true">🛡️</span>
+          <span>Trung tâm kiểm duyệt</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/admin/lecturer-applications">
+          <span className="chip-icon" aria-hidden="true">📑</span>
+          <span>Hồ sơ chuyển vai trò</span>
+        </Link>
+      </div>
+
       <div className="admin-overview">
         <section className="admin-welcome">
-          <span className="admin-symbol" aria-hidden="true">
-            ▦
-          </span>
-          <h2>Một không gian học tập được chăm sóc.</h2>
-          <p>Bắt đầu từ hồ sơ giảng viên mới, nội dung cần duyệt hoặc một yêu cầu từ người học.</p>
-          <Link to="/app/admin/moderation">Xem nội dung cần kiểm duyệt</Link>
+          <div>
+            <div className="admin-welcome-top">
+              <span className="admin-symbol" aria-hidden="true">
+                ▦
+              </span>
+              <span className="kpi-tag accent">Hệ thống điều hành</span>
+            </div>
+            <h2>Một không gian học tập được chăm sóc.</h2>
+            <p>
+              Theo dõi và giải quyết kịp thời các báo cáo vi phạm, hồ sơ giảng viên chờ duyệt
+              và đảm bảo môi trường học tập trực tuyến an toàn, tin cậy.
+            </p>
+          </div>
+          <Link className="button" to="/app/admin/moderation">
+            🛡️ Trung tâm kiểm duyệt nội dung →
+          </Link>
         </section>
         <div className="workspace-cards">
-          <Card title="Thành viên" to="/app/admin/users">
-            Tra cứu học viên và giảng viên; quản lý trạng thái tài khoản.
+          <Card title="Quản lý thành viên" icon="👥" badge="Học viên & GV" actionText="Tra cứu tài khoản →" to="/app/admin/users">
+            Tra cứu thông tin, phân quyền, kiểm tra lịch sử và quản lý trạng thái tài khoản.
           </Card>
-          <Card title="Giảng viên mới" to="/app/admin/users?role=LECTURER">
-            Xác minh tài khoản giảng viên đăng ký trực tiếp.
+          <Card title="Xác minh giảng viên" icon="🎓" badge="Cần duyệt" actionText="Thẩm định hồ sơ →" to="/app/admin/users?role=LECTURER">
+            Thẩm định hồ sơ, bằng cấp chuyên môn của giảng viên đăng ký trực tiếp.
           </Card>
-          <Card title="Khóa học" to="/app/admin/courses">
-            Duyệt xuất bản và quản lý nội dung khóa học.
+          <Card title="Kiểm định khóa học" icon="📚" badge="Nội dung" actionText="Kiểm tra giáo trình →" to="/app/admin/courses">
+            Duyệt xuất bản, kiểm tra bài giảng và bảo vệ chất lượng đào tạo trên hệ thống.
           </Card>
-          <Card title="Hồ sơ chuyển vai trò" to="/app/admin/lecturer-applications">
-            Xử lý yêu cầu trở thành giảng viên từ tài khoản học viên hiện có.
+          <Card title="Hồ sơ chuyển vai trò" icon="📑" badge="Đơn thăng hạng" actionText="Xét duyệt yêu cầu →" to="/app/admin/lecturer-applications">
+            Xử lý nguyện vọng trở thành giảng viên từ tài khoản học viên hiện có.
           </Card>
         </div>
       </div>
     </>
   );
 }
-function Card({ title, to, children }: { title: string; to: string; children: ReactNode }) {
+function Card({
+  title,
+  to,
+  icon,
+  badge,
+  actionText = "Xem chi tiết →",
+  children,
+}: {
+  title: string;
+  to: string;
+  icon?: string;
+  badge?: string;
+  actionText?: string;
+  children: ReactNode;
+}) {
   return (
-    <article>
-      <h2>{title}</h2>
-      <p>{children}</p>
-      <Link to={to}>Xem chi tiết</Link>
+    <article className="governance-card">
+      <div>
+        <div className="card-top">
+          {icon && <span className="card-icon" aria-hidden="true">{icon}</span>}
+          {badge && <span className="kpi-tag accent">{badge}</span>}
+        </div>
+        <h2>{title}</h2>
+        <p>{children}</p>
+      </div>
+      <Link className="card-action-btn" to={to}>{actionText}</Link>
     </article>
   );
 }
@@ -146,13 +236,22 @@ export function Users() {
       ) : items.length ? (
         <div className="admin-list">
           {items.map((u) => (
-            <article key={u.userId}>
-              <span className="badge">
-                {u.role} · {u.status}
-              </span>
-              <h2>{u.displayName}</h2>
-              <p>{u.userId}</p>
-              <Link to={"/app/admin/users/" + u.userId}>Xem chi tiết →</Link>
+            <article key={u.userId} className="study-card study-card-rich">
+              <div>
+                <div className="study-card-top">
+                  <span className="study-card-icon" aria-hidden="true">
+                    {u.role === "LECTURER" ? "🎓" : u.role === "ADMIN" ? "🛡️" : "👤"}
+                  </span>
+                  <span className="badge">
+                    {u.role === "LECTURER" ? "Giảng viên" : u.role === "ADMIN" ? "Quản trị" : "Sinh viên"} · {u.status === "ACTIVE" ? "Hoạt động" : "Tạm khóa"}
+                  </span>
+                </div>
+                <h2>{u.displayName}</h2>
+                <p className="muted" style={{ fontSize: "12.5px" }}>ID: {u.userId}</p>
+              </div>
+              <Link className="card-action-btn" to={"/app/admin/users/" + u.userId}>
+                Xem chi tiết →
+              </Link>
             </article>
           ))}
         </div>
@@ -353,7 +452,7 @@ export function CourseGovernance() {
           <input
             name="courseId"
             type="text"
-            pattern="[0-9a-fA-F-]{36}"
+            pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
             required
             placeholder="00000000-0000-4000-8000-000000000000"
           />

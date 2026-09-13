@@ -1,7 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import fs from "node:fs/promises";
 const base = process.env.AILSS_QA_URL || "http://127.0.0.1:5175",
-  out = "../../docs/evidence/p12.2b-browser";
+  out = process.env.AILSS_QA_OUT || "../../docs/evidence/p12.2b-browser";
 await fs.mkdir(out, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome", headless: true }),
   evidence = [];
@@ -72,12 +72,13 @@ try {
         data = { ...application, applicantId: student.userId };
       return route.fulfill({ status: 200, json: { data } });
     });
-    await page.goto(base + "/auth/register");
-    await page.getByRole("link", { name: /Giảng viên/ }).click();
+    await page.goto(base + "/auth/register/lecturer/application");
     await page.getByRole("link", { name: "Đăng nhập", exact: true }).click();
     await page.locator('input[name="email"]').fill("test@example.test");
     await page.locator('input[name="password"]').fill("Fixture-Only-Password123!");
     await page.locator('form button[type="submit"]').click();
+    await expect(page.getByRole("heading", { name: "Đăng nhập thành công" })).toBeVisible();
+    await page.getByRole("link", { name: "Tiếp tục", exact: true }).click();
     for (const [label, value] of [
       ["Chức danh chuyên môn", "Giảng viên"],
       ["Đơn vị công tác", "Trường thử nghiệm"],
@@ -99,7 +100,9 @@ try {
     profile = { ...student, role: "ADMIN" };
     await page.goto(base + "/app/admin/lecturer-applications");
     await page.getByRole("button", { name: "Tải danh sách chờ" }).click();
-    await page.getByRole("button", { name: /Test Applicant/ }).click();
+    await page.getByRole("button", { name: "Test Applicant · Cơ sở dữ liệu", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Test Applicant" })).toBeVisible();
+    await expect(page.getByText("Đơn đang chờ duyệt", { exact: true })).toBeVisible();
     await page.getByLabel("Mật khẩu hiện tại").fill("Fixture-Only-Admin123!");
     await page.getByRole("button", { name: "Xác nhận quyết định" }).click();
     await expect(page.getByRole("heading", { name: "Xác minh Giảng viên — bước riêng" })).toBeVisible();
@@ -108,7 +111,7 @@ try {
     application.status = "SUBMITTED";
     application.result = "PENDING";
     await page.getByRole("button", { name: "Tải danh sách chờ" }).click();
-    await page.getByRole("button", { name: /Test Applicant/ }).click();
+    await page.getByRole("button", { name: "Test Applicant · Cơ sở dữ liệu", exact: true }).click();
     await page.locator('select[name="decision"]').selectOption("REJECT");
     await page.getByLabel("Mật khẩu hiện tại").fill("Fixture-Only-Admin123!");
     await page.getByRole("button", { name: "Xác nhận quyết định" }).click();

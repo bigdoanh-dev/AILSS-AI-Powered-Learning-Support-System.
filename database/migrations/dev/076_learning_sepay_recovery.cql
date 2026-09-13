@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS learning_keyspace.sepay_recovery_by_shard (
+  shard int,
+  transaction_id text,
+  order_id uuid,
+  fingerprint text,
+  recovery_mac text,
+  received_at timestamp,
+  paid_event_id uuid,
+  correlation_id uuid,
+  amount bigint,
+  state text,
+  next_attempt_at timestamp,
+  lease_owner text,
+  lease_until timestamp,
+  lease_fence bigint,
+  retry_count int,
+  created_at timestamp,
+  updated_at timestamp,
+  PRIMARY KEY ((shard), transaction_id)
+);

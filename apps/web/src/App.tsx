@@ -2,6 +2,8 @@ import OperationResultPage from "./components/OperationResult";
 import { LecturerApplication, AdminLecturerApplications } from "./pages/LecturerApplication";
 import { AuthLayout } from "./components/AuthLayout";
 import { Motion } from "./components/Motion";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { CinematicIntro } from "./components/CinematicIntro";
 import { AvatarProvider, PreferencesProvider } from "./components/Preferences";
 import { SessionProvider } from "./auth/session";
 import { AppShell, Account, AppHome } from "./pages/Workspace";
@@ -122,10 +124,10 @@ export default function App() {
   return (
     <>
       <PreferencesProvider>
+        <CinematicIntro />
         <SessionProvider>
           <AvatarProvider>
             <Head />
-            <Motion />
             <Suspense
               fallback={
                 <div className="route-loading" role="status">
@@ -133,10 +135,13 @@ export default function App() {
                 </div>
               }
             >
-              <Routes>
+              <Motion />
+              <ErrorBoundary>
+                <Routes>
                 <Route path="auth" element={<AuthLayout />}>
                   <Route path="result" element={<OperationResultPage />} />
                   <Route path="register/lecturer" element={<Auth key={location.pathname} />} />
+                  <Route path="register/lecturer/application" element={<LecturerApplication />} />
                   <Route path="register/lecturer/status" element={<LecturerApplication />} />
                   {["login", "register", "register/student", "forgot-password"].map((path) => (
                     <Route key={path} path={path} element={<Auth key={location.pathname} />} />
@@ -244,7 +249,8 @@ export default function App() {
                   />
                 </Route>
               </Routes>
-            </Suspense>
+            </ErrorBoundary>
+          </Suspense>
           </AvatarProvider>
         </SessionProvider>
       </PreferencesProvider>

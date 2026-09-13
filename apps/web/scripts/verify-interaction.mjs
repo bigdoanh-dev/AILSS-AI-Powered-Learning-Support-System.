@@ -1,9 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
 import fs from "node:fs/promises";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 const base = process.env.BASE_URL || "http://127.0.0.1:4174",
-  out = fileURLToPath(new URL("../../../docs/evidence/p12.8/", import.meta.url));
+  out = process.env.AILSS_QA_OUT || fileURLToPath(new URL("../../../docs/evidence/p12.8/", import.meta.url));
 await fs.mkdir(out, { recursive: true });
 const id = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const roles = ["STUDENT", "LECTURER", "ADMIN"],
@@ -14,6 +15,16 @@ for (const role of roles)
     const browser = await chromium.launch({ channel: "chrome", headless: true }),
       context = await browser.newContext({ viewport: { width, height: 900 } }),
       page = await context.newPage();
+    const errors = [];
+    page.on("console", (message) => {
+      if (message.type() === "error") errors.push(`console: ${message.text()}`);
+    });
+    page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
+    page.on("requestfailed", (request) =>
+      errors.push(
+        `request: ${request.method()} ${request.url()} ${request.failure()?.errorText ?? "failed"}`,
+      ),
+    );
     await page.route("**/web-session/**", async (route) => {
       const req = route.request(),
         path = new URL(req.url()).pathname;
@@ -81,13 +92,9 @@ for (const role of roles)
         : role === "LECTURER"
           ? `/app/teaching/discussion/COURSE/${id(6)}`
           : "/app/notifications";
-    await page.goto(base + "/app");
-    await page.evaluate((path) => {
-      history.pushState({}, "", path);
-      dispatchEvent(new PopStateEvent("popstate"));
-    }, target);
+    await page.goto(base + target);
     await page.waitForLoadState("networkidle");
-    await page.locator(".workspace").waitFor();
+    await page.locator("main#main.workspace-content").waitFor();
     if (role === "STUDENT") await page.getByText("Thông báo lớp").waitFor();
     if (role === "LECTURER") await page.getByText("Câu hỏi về nội dung khóa học").waitFor();
     if (role === "ADMIN")
@@ -95,7 +102,6 @@ for (const role of roles)
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
     );
-    const errors = [];
     if (role === "ADMIN") await page.getByText(id(2)).click();
     if (role === "STUDENT") {
       const link = page.getByRole("link", { name: /Xem lớp học/ });
@@ -104,10 +110,21 @@ for (const role of roles)
         if (href !== `/app/classes/${id(5)}`) throw Error("unsafe deep link");
       }
     }
+    await page.waitForFunction(() =>
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+        .every((animation) => animation.playState === "finished"),
+    );
     const violations = (await new AxeBuilder({ page }).analyze()).violations
       .filter((v) => v.impact === "critical" || v.impact === "serious")
-      .map((v) => v.id);
-    await page.screenshot({ path: `${out}${role.toLowerCase()}-${width}.png`, fullPage: true });
+      .map((v) => ({
+        id: v.id,
+        impact: v.impact,
+        help: v.help,
+        nodes: v.nodes.map((node) => ({ target: node.target, summary: node.failureSummary })),
+      }));
+    await page.screenshot({ path: path.join(out, `${role.toLowerCase()}-${width}.png`), fullPage: true });
     report.push({
       role,
       width,
@@ -120,7 +137,7 @@ for (const role of roles)
     await browser.close();
   }
 await fs.writeFile(
-  `${out}interaction-results.json`,
+  path.join(out, "interaction-results.json"),
   JSON.stringify({ status: report.every((x) => x.status === "PASS") ? "PASS" : "FAIL", report }, null, 2),
 );
 console.log(JSON.stringify(report));

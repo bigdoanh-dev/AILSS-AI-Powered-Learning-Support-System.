@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { chromium, expect } from "@playwright/test";
 import fs from "node:fs/promises";
 const base = process.env.AILSS_QA_URL || "http://127.0.0.1:5177",
-  out = "../../docs/evidence/p12.5-cross-role",
+  out = process.env.AILSS_QA_OUT || "../../docs/evidence/p12.5-cross-role",
   id = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 await fs.mkdir(out, { recursive: true });
 const course = {
@@ -84,7 +84,7 @@ try {
     await page.route("**/web-session/**", async (route) => {
       const req = route.request(),
         u = new URL(req.url()),
-        p = u.pathname.replace(/^\/web-session\/(lecturer|student)/, "");
+        p = u.pathname.replace(/^\/web-session(?:\/(?:lecturer|student))?/, "");
       calls.push(`${actor.role}:${req.method()}:${p}`);
       let data = {};
       if (u.pathname === "/web-session/bootstrap") data = actor;
@@ -148,6 +148,14 @@ try {
     await expect(page.getByRole("link", { name: /Xem lớp học/ })).toHaveAttribute(
       "href",
       `/app/classes/${id(3)}`,
+    );
+    await page.evaluate(() =>
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+          .map((animation) => animation.finished.catch(() => undefined)),
+      ),
     );
     const axe = await new AxeBuilder({ page }).analyze();
     expect(axe.violations).toEqual([]);

@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { chromium, expect } from "@playwright/test";
 import fs from "node:fs/promises";
 const base = process.env.AILSS_QA_URL || "http://127.0.0.1:5175",
-  out = "../../docs/evidence/p12.3-browser";
+  out = process.env.AILSS_QA_OUT || "../../docs/evidence/p12.3-browser";
 await fs.mkdir(out, { recursive: true });
 const id = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const student = {
@@ -92,13 +92,17 @@ try {
     await page.route("**/web-session/**", async (route) => {
       const req = route.request(),
         url = new URL(req.url()),
-        p = url.pathname.replace("/web-session/student", ""),
+        p = url.pathname.replace(/^\/web-session(?:\/student)?/, ""),
         method = req.method();
       calls.push({ path: p, method, body: req.postDataJSON(), query: url.search });
       let data = {},
         meta = {};
       if (url.pathname === "/web-session/bootstrap") data = profile;
-      else if (url.pathname.startsWith("/web-session/student/")) {
+      else if (
+        url.pathname.startsWith("/web-session/student/") ||
+        p === "/notifications" ||
+        p.endsWith("/read")
+      ) {
         if (p === failPath) {
           if (delay) await new Promise((r) => setTimeout(r, 1000));
           if (mode !== 200)
@@ -190,7 +194,8 @@ try {
             page: { month: url.searchParams.get("month"), nextCursor: null },
           };
         else if (p.endsWith("/read")) {
-          expect(req.headers()["x-notification-locator"]).toBe("OPAQUE_LOCATOR-unchanged");
+          expect(req.headers()["x-notification-locator"]).toBeUndefined();
+          expect(req.postDataJSON()).toEqual({ locator: "OPAQUE_LOCATOR-unchanged" });
           read = true;
           data = { state: "READ" };
         } else if (p.startsWith("/resources/")) {
@@ -231,7 +236,7 @@ try {
     });
     const visit = async (path) => {
       await page.goto(base + path);
-      await expect(page.locator("main h1")).toBeVisible();
+      await expect(page.locator("main h1")).toBeVisible({ timeout: 15000 });
     };
     const shot = async (name) => {
       await page.evaluate(async () => {
@@ -255,6 +260,8 @@ try {
     if (width === 375) {
       await page.getByRole("button", { name: "Mở điều hướng" }).click();
       await page.getByRole("dialog").getByRole("link", { name: "Học tập", exact: true }).click();
+      await expect(page.getByRole("dialog")).not.toBeVisible();
+      await page.locator("#main").getByRole("link", { name: "Khóa học của tôi", exact: true }).click();
     } else await visit("/app/learn");
     await page.getByLabel("Từ khóa").fill("database");
     await page.getByRole("button", { name: "Tìm kiếm", exact: true }).click();
@@ -290,6 +297,8 @@ try {
     await visit("/app/classes");
     await page.getByLabel("Mã tham gia").fill("ABCDEF");
     await page.getByRole("button", { name: "Tham gia", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Tham gia lớp thành công" })).toBeVisible();
+    await page.getByRole("link", { name: "Vào lớp học", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/app/classes/${id(3)}$`));
     await expect(page.getByRole("heading", { name: klass.name })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Buổi thực hành mô hình" })).toBeVisible();
@@ -315,10 +324,22 @@ try {
     await expect(page.getByRole("heading", { name: "Bài đã nộp" })).toBeVisible();
     await page.goForward();
     await visit("/app/notifications");
+    expect(page.url()).not.toContain("OPAQUE_LOCATOR-unchanged");
+    expect(await page.locator("body").innerText()).not.toContain("OPAQUE_LOCATOR-unchanged");
+    expect(
+      await page.evaluate(async () => {
+        const storage = JSON.stringify({ ...localStorage, ...sessionStorage });
+        const databases = await indexedDB.databases();
+        return (
+          storage.includes("OPAQUE_LOCATOR-unchanged") ||
+          databases.some((x) => x.name?.includes("OPAQUE_LOCATOR-unchanged"))
+        );
+      }),
+    ).toBe(false);
     await page.getByRole("button", { name: "Đánh dấu đã đọc" }).click();
     await expect(page.getByText("Đã đọc", { exact: true })).toBeVisible();
     await shot("notifications");
-    await page.getByRole("link", { name: "Xem lớp học →" }).click();
+    await page.getByRole("link", { name: "Xem lớp học", exact: true }).click();
     await expect(page.getByRole("heading", { name: klass.name })).toBeVisible();
     for (const status of [403, 404, 503]) {
       mode = status;
@@ -347,7 +368,7 @@ try {
     delay = false;
     mode = 204;
     await visit("/app/notifications");
-    await expect(page.getByText(/Không có thông báo trong tháng này/)).toBeVisible();
+    await expect(page.getByText(/Chưa có thông báo trong tháng này/)).toBeVisible();
     mode = 401;
     failPath = "/me/courses";
     await page.goto(base + "/app/learn");

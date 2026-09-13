@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { RabbitConsumer } from "../../../../packages/rabbitmq/src/index.js";
 import type { LearningReconciliationRepository } from "../reconciliation/repository.js";
+import { crashAfter } from "./crash-injection.js";
 
 const paidData = z.object({ orderId: z.string().uuid(), version: z.number().int().positive() }).passthrough();
 export class EntitlementFulfillmentConsumer {
@@ -38,6 +39,7 @@ export class EntitlementFulfillmentConsumer {
             now: new Date(),
             shard: (createHash("sha256").update(event.eventId).digest()[0] ?? 0) % 16,
           });
+          crashAfter("H_ENTITLEMENT_SCHEDULED", { eventId: event.eventId, orderId: parsed.data.orderId });
           return { kind: "ack" };
         } catch {
           return { kind: "retry", reason: "RECONCILIATION_SCHEDULE_UNAVAILABLE" };

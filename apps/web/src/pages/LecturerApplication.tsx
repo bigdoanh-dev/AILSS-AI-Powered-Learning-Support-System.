@@ -86,10 +86,12 @@ export function LecturerApplication() {
             Hãy đăng ký tài khoản Sinh viên và đăng nhập trước khi gửi yêu cầu. Nếu phiên vừa hết hạn sau khi
             duyệt, hãy đăng nhập lại để cập nhật vai trò.
           </p>
-          <Link className="button" to="/auth/login?returnTo=%2Fauth%2Fregister%2Flecturer">
+          <Link className="button" to="/auth/login?returnTo=%2Fauth%2Fregister%2Flecturer%2Fapplication">
             Đăng nhập
           </Link>
-          <Link to="/auth/register/student?returnTo=%2Fauth%2Fregister%2Flecturer">Tạo tài khoản</Link>
+          <Link to="/auth/register/student?returnTo=%2Fauth%2Fregister%2Flecturer%2Fapplication">
+            Tạo tài khoản
+          </Link>
         </>
       ) : loading ? (
         <p role="status">Đang đọc yêu cầu…</p>
@@ -124,7 +126,7 @@ export function LecturerApplication() {
       ) : statusRoute ? (
         <>
           <p>Bạn chưa gửi yêu cầu.</p>
-          <Link to="/auth/register/lecturer">Điền đơn</Link>
+          <Link to="/auth/register/lecturer/application">Điền đơn</Link>
         </>
       ) : auth.profile?.role !== "STUDENT" ? (
         <p>Luồng đăng ký này dành cho tài khoản Sinh viên.</p>

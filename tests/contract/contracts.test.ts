@@ -21,7 +21,7 @@ describe("Phase 5 binding contracts", () => {
     const api = JSON.parse(await readFile("contracts/api-registry.json", "utf8"));
     const query = JSON.parse(await readFile("contracts/query-registry.json", "utf8"));
     expect([api.public.length, api.internal.length, query.queries.length, EVENT_TYPES.length]).toEqual([
-      102, 15, 75, 22,
+      101, 15, 78, 22,
     ]);
   });
 
@@ -79,7 +79,7 @@ describe("Phase 5 binding contracts", () => {
       aggregate: { type: "quiz", id: crypto.randomUUID(), version: 1 },
       data: { prompt: "x".repeat(70_000) },
     } as const;
-    expect(() => encodeEvent(huge, 64 * 1024)).toThrow("EVENT_TOO_LARGE");
+    expect(() => encodeEvent(huge, 64 * 1034)).toThrow("EVENT_TOO_LARGE");
   });
 
   it("binds IDN-01 exactly once to its strict registration contract", async () => {

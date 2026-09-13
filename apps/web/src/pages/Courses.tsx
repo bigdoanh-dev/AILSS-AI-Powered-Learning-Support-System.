@@ -5,12 +5,20 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { CourseArtwork, categories, courseSubject } from "../components/CourseArtwork";
 import { PageHero, Section, TextLink, Picture, ButtonLink } from "../components/ui";
 import { searchCourses, normalizeQuery, request, errorMessage, priceLabel, type Course } from "../lib/api";
+import { TiltCard } from "../components/TiltCard";
+
 export function CourseCard({ course }: { course: Course }) {
+  const subject = courseSubject(course.title, course.categoryId);
   return (
-    <article className="course-card">
-      <CourseArtwork title={course.title} categoryId={course.categoryId} />
+    <TiltCard as="article" className="course-card" tiltOptions={{ maxTilt: 5, scale: 1.02 }}>
+      <div className="course-artwork-container">
+        <CourseArtwork title={course.title} categoryId={course.categoryId} />
+        <span className="course-ai-badge" aria-hidden="true">
+          <span>⚡</span> AI Hỗ trợ
+        </span>
+      </div>
       <div>
-        <small>{courseSubject(course.title, course.categoryId).name}</small>
+        <small>{subject.name}</small>
         <h3>{course.title}</h3>
         <p className={course.priceType === "FREE" ? "course-price free" : "course-price paid"}>
           {priceLabel(course)}
@@ -18,7 +26,7 @@ export function CourseCard({ course }: { course: Course }) {
         <CourseRating id={course.courseId} />
         <TextLink to={`/courses/${course.courseId}`}>Xem khóa học</TextLink>
       </div>
-    </article>
+    </TiltCard>
   );
 }
 export function CourseSearch({ compact = false }: { compact?: boolean }) {

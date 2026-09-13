@@ -53,20 +53,18 @@ describe("P10.2 objective-v1 boundary", () => {
     ).rejects.toMatchObject({ code: "RATE_LIMITED", retryable: true });
   });
   it("maps Gemini native text and usage while excluding thought parts", async () => {
-    const mock = vi
-      .fn()
-      .mockResolvedValue(
-        Response.json({
-          candidates: [
-            {
-              content: {
-                parts: [{ thought: true, text: "private reasoning" }, { text: JSON.stringify(valid) }],
-              },
+    const mock = vi.fn().mockResolvedValue(
+      Response.json({
+        candidates: [
+          {
+            content: {
+              parts: [{ thought: true, text: "private reasoning" }, { text: JSON.stringify(valid) }],
             },
-          ],
-          usageMetadata: { promptTokenCount: 8, candidatesTokenCount: 12 },
-        }),
-      );
+          },
+        ],
+        usageMetadata: { promptTokenCount: 8, candidatesTokenCount: 12 },
+      }),
+    );
     vi.stubGlobal("fetch", mock);
     const provider = new HttpQuizProvider({
       endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",

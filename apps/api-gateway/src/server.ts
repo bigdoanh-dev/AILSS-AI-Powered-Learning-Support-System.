@@ -140,6 +140,7 @@ app.use((_request, response, next) => {
 app.use(sanitizeIdentityHeaders());
 app.use(requestContextMiddleware());
 app.use(pinoHttp({ logger, serializers: { req: httpRequestSerializer } }));
+app.use("/api/v1/payments/sepay/webhook", express.json({ limit: "16kb", strict: true }));
 app.use(express.json({ limit: config.HTTP_BODY_LIMIT }));
 app.use(readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)));
 app.post(
@@ -163,7 +164,6 @@ app.post(
   logoutHandler,
 );
 app.get("/api/v1/me", profileReadHandler);
-app.get(["/api/v1/me/owned-courses", "/api/v1/me/owned-courses/:courseId"], learningAuthoring.owned);
 for (const method of ["GET", "POST"] as const) {
   const handler = protectedProxy.handler({
     method,
@@ -257,7 +257,7 @@ app.post(
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
   learningCommerce.orderCreate,
 );
-app.post("/api/v1/payments/sepay/webhook", async (req, res, next) => {
+app.post("/api/v1/payments/sepay/webhook", authLimiter.middleware(60), async (req, res, next) => {
   try {
     const upstream = await fetch(new URL("/api/v1/payments/sepay/webhook", config.LEARNING_SERVICE_URL), {
       method: "POST",

@@ -6,6 +6,7 @@ import { Avatar, useAvatar } from "../components/Preferences";
 import { sessionRequest } from "../auth/session";
 
 import { errorMessage } from "../lib/api";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 const StudentHome = lazy(() => import("../student/Learning").then((m) => ({ default: m.StudentHome })));
 const AdminHome = lazy(() => import("../admin/Admin").then((m) => ({ default: m.AdminHome })));
 const TeachingHome = lazy(() => import("../lecturer/Teaching").then((m) => ({ default: m.TeachingHome })));
@@ -38,59 +39,73 @@ export function AppShell() {
       </>
     );
   const role = auth.profile.role;
-  const tabs =
+  const tabs: [to: string, label: string, icon: string][] =
     role === "ADMIN"
       ? [
-          ["/app", "Tổng quan"],
-          ["/app/admin/users", "Người dùng"],
-          ["/app/admin/lecturer-applications", "Giảng viên"],
-          ["/app/admin/courses", "Khóa học"],
-          ["/app/admin/moderation", "Kiểm duyệt"],
-          ["/app/notifications", "Thông báo"],
+          ["/app", "Tổng quan", "⚡"],
+          ["/app/admin/users", "Người dùng", "👥"],
+          ["/app/admin/lecturer-applications", "Giảng viên", "🎓"],
+          ["/app/admin/courses", "Khóa học", "📚"],
+          ["/app/admin/moderation", "Kiểm duyệt", "🛡️"],
+          ["/app/notifications", "Thông báo", "🔔"],
         ]
       : role === "LECTURER"
         ? [
-            ["/app", "Tổng quan"],
-            ["/app/teaching", "Khóa học của tôi"],
-            ["/app/teaching/classes", "Lớp phụ trách"],
-            ["/app/teaching/schedule", "Lịch dạy"],
-            ["/app/teaching/attendance", "Điểm danh"],
-            ["/app/teaching/offerings", "Đợt mở bán"],
-            ["/app/teaching/assessments", "Bài kiểm tra"],
-            ["/app/teaching/ai", "Trợ lý AI"],
-            ["/app/notifications", "Thông báo"],
+            ["/app", "Tổng quan", "⚡"],
+            ["/app/teaching", "Khóa học của tôi", "📚"],
+            ["/app/teaching/classes", "Lớp phụ trách", "👥"],
+            ["/app/teaching/schedule", "Lịch dạy", "📅"],
+            ["/app/teaching/attendance", "Điểm danh", "📋"],
+            ["/app/teaching/offerings", "Đợt mở bán", "🎯"],
+            ["/app/teaching/assessments", "Bài kiểm tra", "📝"],
+            ["/app/teaching/ai", "Trợ lý AI", "🤖"],
+            ["/app/notifications", "Thông báo", "🔔"],
           ]
         : [
-            ["/app", "Tổng quan"],
-            ["/app/learn", "Khóa học của tôi"],
-            ["/app/classes", "Lớp học"],
-            ["/app/schedule", "Lịch học"],
-            ["/app/attendance", "Điểm danh"],
-            ["/app/assessments", "Bài kiểm tra"],
-            ["/app/progress", "Tiến độ"],
-            ["/app/notifications", "Thông báo"],
+            ["/app", "Tổng quan", "⚡"],
+            ["/app/learn", "Khóa học của tôi", "📚"],
+            ["/app/classes", "Lớp học", "🏛️"],
+            ["/app/schedule", "Lịch học", "📅"],
+            ["/app/attendance", "Điểm danh", "✅"],
+            ["/app/assessments", "Bài kiểm tra", "📝"],
+            ["/app/progress", "Tiến độ", "📈"],
+            ["/app/notifications", "Thông báo", "🔔"],
           ];
   return (
     <div className="learning-site">
       <SiteHeader />
       <div className="workspace-tabs">
         <nav aria-label="Không gian cá nhân">
-          {tabs.map(([to, label]) => (
+          {tabs.map(([to, label, icon]) => (
             <NavLink key={to} to={to} end={to === "/app" || to === "/app/teaching"}>
-              {label}
+              <span className="tab-icon" aria-hidden="true">{icon}</span>
+              <span>{label}</span>
             </NavLink>
           ))}
 
-          <NavLink to="/app/account">Hồ sơ</NavLink>
+          <NavLink to="/app/account">
+            <span className="tab-icon" aria-hidden="true">👤</span>
+            <span>Hồ sơ</span>
+          </NavLink>
         </nav>
       </div>
       <main id="main" tabIndex={-1} className="workspace-content">
-        <Suspense fallback={<p role="status">Đang mở nội dung…</p>}>
-          <Outlet />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<p role="status">Đang mở nội dung…</p>}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
       <footer className="workspace-footer">
         <span>© 2026 AILSS · Nguyễn Viết Doanh</span>
+        <button
+          type="button"
+          className="plain-button"
+          onClick={() => window.dispatchEvent(new CustomEvent("ailss-play-intro"))}
+          style={{ cursor: "pointer", background: "none", border: "none", font: "inherit", color: "var(--muted)" }}
+        >
+          🎬 Xem lại giới thiệu
+        </button>
         <Link to="/help">Cần hỗ trợ?</Link>
         <Link to="/courses">Khám phá khóa học</Link>
       </footer>
