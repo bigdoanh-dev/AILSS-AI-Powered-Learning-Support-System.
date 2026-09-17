@@ -24,11 +24,12 @@ import { learningLessonsProxyFactory } from "./learning-lessons-proxy.js";
 import { learningOfferingsProxyFactory } from "./learning-offerings-proxy.js";
 import { learningCommerceProxyFactory } from "./learning-commerce-proxy.js";
 import { classroomProxyFactory } from "./classroom-proxy.js";
-import { loginProxy, refreshProxy, registrationProxy } from "./registration-proxy.js";
+import { loginProxy, refreshProxy, registrationProxy, socialLoginProxy } from "./registration-proxy.js";
 import { assessmentProxyFactory } from "./assessment-proxy.js";
 import { interactionProxyFactory } from "./interaction-proxy.js";
 import { learningProgressProxyFactory } from "./learning-progress-proxy.js";
 import { aiDocumentProxyFactory } from "./ai-document-proxy.js";
+import { assistantProxyFactory } from "./assistant-proxy.js";
 import { notificationProxyFactory } from "./notification-proxy.js";
 
 const config = loadConfig({
@@ -62,6 +63,7 @@ const interaction = await interactionProxyFactory(config, adminStepUp, (record) 
 );
 const learningProgress = await learningProgressProxyFactory(config);
 const aiDocuments = await aiDocumentProxyFactory(config);
+const assistant = await assistantProxyFactory(config);
 const notifications = await notificationProxyFactory(config);
 const logoutHandler = protectedProxy.handler({
   method: "POST",
@@ -128,13 +130,42 @@ const adminLecturerVerifyHandler = protectedProxy.handler({
   timeoutMs: config.PASSWORD_CHANGE_HTTP_TIMEOUT_MS,
   onInvalidBearer: () => metrics.identityAdminAuthorization.inc({ outcome: "invalid_bearer" }),
 });
+const adminStatsHandler = protectedProxy.handler({
+  method: "GET",
+  path: "/api/v1/admin/dashboard/stats",
+  purpose: "identity.admin.dashboard.stats",
+  onInvalidBearer: () => metrics.identityAdminAuthorization.inc({ outcome: "invalid_bearer" }),
+});
+const identitiesListHandler = protectedProxy.handler({
+  method: "GET",
+  path: "/api/v1/auth/identities",
+  purpose: "identity.identities",
+  onInvalidBearer: () => {},
+});
+const identitiesLinkHandler = protectedProxy.handler({
+  method: "POST",
+  path: "/api/v1/auth/identities/link",
+  purpose: "identity.identities",
+  forwardBody: true,
+  onInvalidBearer: () => {},
+});
+const identitiesUnlinkHandler = protectedProxy.handler({
+  method: "POST",
+  path: "/api/v1/auth/identities/:provider/unlink",
+  upstreamPath: (request) =>
+    `/api/v1/auth/identities/${encodeURIComponent(String(request.params.provider))}/unlink`,
+  purpose: "identity.identities",
+  onInvalidBearer: () => {},
+});
 const app = express();
 app.disable("x-powered-by");
+if (config.TRUST_PROXY_HOPS > 0) app.set("trust proxy", config.TRUST_PROXY_HOPS);
 app.use((_request, response, next) => {
   response.setHeader("X-Content-Type-Options", "nosniff");
   response.setHeader("X-Frame-Options", "DENY");
   response.setHeader("Referrer-Policy", "no-referrer");
   response.setHeader("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+  response.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   next();
 });
 app.use(sanitizeIdentityHeaders());
@@ -162,6 +193,22 @@ app.post(
   "/api/v1/auth/logout",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
   logoutHandler,
+);
+app.post(
+  "/api/v1/auth/social/:provider",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  socialLoginProxy(config),
+);
+app.get("/api/v1/auth/identities", identitiesListHandler);
+app.post(
+  "/api/v1/auth/identities/link",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  identitiesLinkHandler,
+);
+app.post(
+  "/api/v1/auth/identities/:provider/unlink",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  identitiesUnlinkHandler,
 );
 app.get("/api/v1/me", profileReadHandler);
 for (const method of ["GET", "POST"] as const) {
@@ -369,6 +416,12 @@ app.post(
 );
 app.get("/api/v1/attempts/:attemptId/result", assessment.result);
 app.get("/api/v1/quizzes/:quizId/results", assessment.results);
+app.post(
+  "/api/v1/quizzes/:quizId/grades/:attemptId",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  assessment.gradeAttempt,
+);
+app.get("/api/v1/quizzes/:quizId/grades", assessment.listGrades);
 app.get("/api/v1/resources/:resourceType/:resourceId/comments", interaction.list);
 app.post(
   "/api/v1/resources/:resourceType/:resourceId/comments",
@@ -435,6 +488,21 @@ app.post(
   "/api/v1/ai/drafts/:draftId/approve",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
   aiDocuments.approve,
+);
+app.post(
+  "/api/v1/assistant/chat",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  assistant.chat,
+);
+app.get(
+  "/api/v1/assistant/conversations",
+  readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)),
+  assistant.conversationsList,
+);
+app.get(
+  "/api/v1/assistant/conversations/:id",
+  readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)),
+  assistant.conversationDetail,
 );
 app.get("/api/v1/notifications", notifications.list);
 app.patch("/api/v1/notifications/:notificationId/read", notifications.read);
@@ -528,6 +596,21 @@ app.post(
   "/api/v1/admin/lecturers/:userId/verify",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_ADMIN_PER_MINUTE ?? 30)),
   adminLecturerVerifyHandler,
+);
+app.get(
+  "/api/v1/admin/dashboard/stats",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_ADMIN_PER_MINUTE ?? 30)),
+  adminStatsHandler,
+);
+app.get(
+  "/api/v1/admin/dashboard/revenue",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_ADMIN_PER_MINUTE ?? 30)),
+  learningCommerce.dashboardRevenue,
+);
+app.get(
+  "/api/v1/admin/audit-logs",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_ADMIN_PER_MINUTE ?? 30)),
+  interaction.auditLogs,
 );
 app.get("/health/live", (_request, response) => response.json({ status: "UP", service: "api-gateway" }));
 app.get("/health/ready", (_request, response) =>

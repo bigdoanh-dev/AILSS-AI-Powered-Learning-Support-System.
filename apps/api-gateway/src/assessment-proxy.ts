@@ -20,6 +20,8 @@ export async function assessmentProxyFactory(config: AppConfig): Promise<{
   submit: RequestHandler;
   result: RequestHandler;
   results: RequestHandler;
+  gradeAttempt: RequestHandler;
+  listGrades: RequestHandler;
 }> {
   if (!config.JWT_PUBLIC_KEY_PATH || !config.ACTOR_CONTEXT_PRIVATE_KEY_PATH)
     throw new Error("Assessment proxy requires signing keys");
@@ -142,6 +144,19 @@ export async function assessmentProxyFactory(config: AppConfig): Promise<{
       for (const key of ["month", "limit", "cursor"])
         if (typeof request.query[key] === "string") query.set(key, request.query[key]);
       return `/api/v1/quizzes/${encodeURIComponent(String(request.params.quizId))}/results?${query.toString()}`;
+    }),
+    gradeAttempt: handler(
+      "POST",
+      "assessment.grade.record",
+      (request) =>
+        `/api/v1/quizzes/${encodeURIComponent(String(request.params.quizId))}/grades/${encodeURIComponent(String(request.params.attemptId))}`,
+    ),
+    listGrades: handler("GET", "assessment.grade.list", (request) => {
+      const query = new URLSearchParams();
+      for (const key of ["month", "limit"])
+        if (typeof request.query[key] === "string") query.set(key, request.query[key]);
+      const qs = query.toString();
+      return `/api/v1/quizzes/${encodeURIComponent(String(request.params.quizId))}/grades${qs ? `?${qs}` : ""}`;
     }),
   };
 }
