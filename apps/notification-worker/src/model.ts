@@ -1,13 +1,23 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 
+export const NOTIFICATION_CATEGORIES = [
+  "CLASS_ANNOUNCEMENT",
+  "TRANSACTIONAL",
+  "ACADEMIC",
+  "RECOMMENDATION",
+  "MARKETING",
+  "SECURITY",
+] as const;
+export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
+
 export const notificationEventDataSchema = z
   .object({
     recipientId: z.string().uuid(),
-    notificationType: z.literal("CLASS_ANNOUNCEMENT"),
+    notificationType: z.enum(NOTIFICATION_CATEGORIES),
     title: z.string().min(1).max(200),
     body: z.string().min(1).max(500),
-    source: z.object({ announcementId: z.string().uuid(), classId: z.string().uuid() }).strict(),
+    source: z.record(z.string(), z.unknown()),
   })
   .strict();
 
@@ -19,18 +29,46 @@ export const notificationListSchema = z
   })
   .strict();
 
+export const NOTIFICATION_DELIVERY_STATUSES = [
+  "PENDING",
+  "SENT",
+  "DELIVERED",
+  "FAILED",
+] as const;
+
+export type NotificationDeliveryStatus = (typeof NOTIFICATION_DELIVERY_STATUSES)[number];
+
+export const NOTIFICATION_CHANNELS = [
+  "IN_APP",
+  "EMAIL",
+  "PUSH",
+  "SMS",
+] as const;
+
+export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
+
+export interface NotificationDeliveryReceipt {
+  readonly channel: NotificationChannel;
+  readonly status: NotificationDeliveryStatus;
+  readonly attemptedAt: string;
+  readonly deliveredAt?: string;
+  readonly failureReason?: string;
+}
+
 export interface Notification {
   notificationId: string;
   eventId: string;
   userId: string;
-  type: "CLASS_ANNOUNCEMENT";
+  type: NotificationCategory;
   title: string;
   body: string;
-  sourceType: "CLASS_ANNOUNCEMENT";
+  sourceType: string;
   sourceId: string;
   sourceContextId: string;
   createdAt: Date;
   readAt?: Date;
+  deliveryStatus?: NotificationDeliveryStatus;
+  deliveryChannel?: NotificationChannel;
 }
 
 export type ListToken = {
@@ -89,6 +127,8 @@ export function notificationDto(notification: Notification, locator: string) {
     },
     createdAt: notification.createdAt.toISOString(),
     readAt: notification.readAt?.toISOString() ?? null,
+    deliveryStatus: notification.deliveryStatus ?? "DELIVERED",
+    deliveryChannel: notification.deliveryChannel ?? "IN_APP",
     locator,
   };
 }
