@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/restrict-template-expressions */
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import {
+  cognitiveDistributionSchema,
+  hasValidDistribution,
+} from "../../../packages/contracts/src/cognitive-levels.js";
 import type { EventEnvelope } from "../../../packages/contracts/src/index.js";
 import type { ObjectStorage } from "../../../packages/storage/src/index.js";
 import type { ConsumerDisposition } from "../../../packages/rabbitmq/src/index.js";
@@ -8,6 +12,7 @@ import { validateObjectiveQuiz } from "./objective-v1.js";
 import { ProviderFailure, type QuizProvider } from "./provider.js";
 import type { QuizWorkerRepository } from "./repository.js";
 import type { AiTargetClient } from "../../ai-service/src/quiz/target-client.js";
+import type { createMetrics } from "../../../packages/observability/src/index.js";
 const dataSchema = z
   .object({
     jobId: z.string().uuid(),
@@ -23,8 +28,13 @@ const dataSchema = z
       .min(1)
       .max(4),
     difficulty: z.enum(["EASY", "MEDIUM", "HARD"]),
+    cognitiveDistribution: cognitiveDistributionSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine(hasValidDistribution, {
+    message: "Cognitive distribution must sum to questionCount",
+    path: ["cognitiveDistribution"],
+  });
 export class QuizGenerationWorker {
   constructor(
     private readonly repo: QuizWorkerRepository,
@@ -32,6 +42,11 @@ export class QuizGenerationWorker {
     private readonly provider: QuizProvider,
     private readonly target: Pick<AiTargetClient, "owned">,
     private readonly logger: { info(v: object, m: string): void; warn(v: object, m: string): void },
+    private readonly metrics?: Pick<
+      ReturnType<typeof createMetrics>,
+      "aiGenerations" | "aiProviderCalls" | "aiGenerationDuration"
+    >,
+    private readonly maximumExtractedTextBytes = 1024 * 1024,
   ) {}
   async handle(event: EventEnvelope): Promise<ConsumerDisposition> {
     if (event.eventType !== "ai.quiz.generate.v1")
@@ -82,15 +97,29 @@ export class QuizGenerationWorker {
           model: fence.model,
         };
       } else {
-        const text = (await this.storage.read(source.key, 1024 * 1024)).toString("utf8"),
+        const text = (await this.storage.read(source.key, this.maximumExtractedTextBytes)).toString("utf8"),
+          stopProviderTimer = this.metrics?.aiGenerationDuration.startTimer();
+        let provided;
+        try {
           provided = await this.provider.generate({
             idempotencyKey: providerKey,
             sourceText: text,
             questionCount: d.questionCount,
             questionTypes: d.questionTypes,
             difficulty: d.difficulty,
-          }),
-          bytes = Buffer.from(JSON.stringify(provided.quiz)),
+            cognitiveDistribution: d.cognitiveDistribution,
+          });
+          this.metrics?.aiProviderCalls.inc({ outcome: "success", code: "none" });
+        } catch (error) {
+          this.metrics?.aiProviderCalls.inc({
+            outcome: "failure",
+            code: error instanceof ProviderFailure ? error.code : "unknown",
+          });
+          throw error;
+        } finally {
+          stopProviderTimer?.();
+        }
+        const bytes = Buffer.from(JSON.stringify(provided.quiz)),
           ref = `provider-results/${job.lecturerId}/${job.operationId}.json`,
           checksum = createHash("sha256").update(bytes).digest("hex");
         await this.storage.writePrivate(ref, bytes, "application/json");
@@ -129,6 +158,7 @@ export class QuizGenerationWorker {
         event.correlationId,
         new Date(),
       );
+      this.metrics?.aiGenerations.inc({ outcome: "provider_failure" });
       return { kind: "ack" };
     }
     job = (await this.repo.job(job.jobId))!;
@@ -144,8 +174,13 @@ export class QuizGenerationWorker {
     if (result.provider === "deterministic-test") await new Promise((resolve) => setTimeout(resolve, 250));
     let quiz;
     try {
-      quiz = validateObjectiveQuiz(result.quiz, { count: d.questionCount, types: d.questionTypes });
+      quiz = validateObjectiveQuiz(result.quiz, {
+        count: d.questionCount,
+        types: d.questionTypes,
+        cognitiveDistribution: d.cognitiveDistribution,
+      });
     } catch {
+      this.metrics?.aiGenerations.inc({ outcome: "invalid_output" });
       await this.repo.finalizeUsage(job, result, new Date());
       await this.repo.fail(
         job,
@@ -216,6 +251,7 @@ export class QuizGenerationWorker {
       },
       "quiz generation completed",
     );
+    this.metrics?.aiGenerations.inc({ outcome: "success" });
     return { kind: "ack" };
   }
 }

@@ -4,7 +4,12 @@ import { MinioStorage } from "../../../packages/storage/src/index.js";
 import { RabbitConsumer } from "../../../packages/rabbitmq/src/index.js";
 import { QuizWorkerRepository } from "./repository.js";
 import { QuizGenerationWorker } from "./worker.js";
-import { DeterministicQuizProvider, HttpQuizProvider, RetryingQuizProvider } from "./provider.js";
+import {
+  CircuitBreakingQuizProvider,
+  DeterministicQuizProvider,
+  HttpQuizProvider,
+  RetryingQuizProvider,
+} from "./provider.js";
 import { loadPrivateKey } from "../../../packages/security/src/index.js";
 import { AiTargetClient } from "../../ai-service/src/quiz/target-client.js";
 const manifest: ServiceManifest = {
@@ -51,7 +56,18 @@ await startService(manifest, {
       worker = new QuizGenerationWorker(
         new QuizWorkerRepository(context.cassandra),
         storage,
-        new RetryingQuizProvider(provider),
+        new RetryingQuizProvider(
+          new CircuitBreakingQuizProvider(
+            provider,
+            {
+              failureThreshold: config.AI_CIRCUIT_BREAKER_FAILURE_THRESHOLD,
+              cooldownMs: config.AI_CIRCUIT_BREAKER_COOLDOWN_MS,
+            },
+            Date.now,
+            () => context.metrics.aiCircuitRejections.inc(),
+          ),
+          (reason) => context.metrics.aiGenerationRetries.inc({ reason }),
+        ),
         new AiTargetClient({
           learningUrl: config.LEARNING_SERVICE_URL,
           classroomUrl: config.CLASSROOM_SERVICE_URL,
@@ -60,6 +76,8 @@ await startService(manifest, {
           deadlineMs: config.INTERNAL_HTTP_TIMEOUT_MS,
         }),
         context.logger,
+        context.metrics,
+        config.AI_MAX_EXTRACTED_TEXT_BYTES,
       ),
       url = new URL(config.RABBITMQ_URL);
     url.username = config.RABBITMQ_USERNAME;
