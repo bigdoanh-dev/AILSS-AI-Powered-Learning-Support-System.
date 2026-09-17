@@ -60,3 +60,16 @@ export function decodeEvent(content: Buffer, maxBytes = 128 * 1024): EventEnvelo
   if (content.byteLength > maxBytes) throw new Error("EVENT_TOO_LARGE");
   return eventEnvelopeSchema.parse(JSON.parse(content.toString("utf8")));
 }
+
+export * from "./analytics-events.js";
+export * from "./prerequisite-policy.js";
+export * from "./interoperability.js";
+export * from "./integrations.js";
+export * from "./onboarding.js";
+export * from "./scim.js";
+export * from "./oneroster.js";
+export * from "./institutional-pilot.js";
+
+
+
+

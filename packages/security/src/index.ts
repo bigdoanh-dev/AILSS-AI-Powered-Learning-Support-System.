@@ -192,9 +192,11 @@ export const stepUpActionSchema = z.enum([
   "INTERACTION_REPORT_MODERATE",
   "LECTURER_APPLICATION_APPROVE",
   "LECTURER_APPLICATION_REJECT",
+  "ADMIN_USER_STATUS_CHANGE",
+  "ADMIN_LECTURER_VERIFY",
 ]);
 export type StepUpAction = z.infer<typeof stepUpActionSchema>;
-export const stepUpResourceTypeSchema = z.enum(["COURSE", "REPORT", "LECTURER_APPLICATION"]);
+export const stepUpResourceTypeSchema = z.enum(["COURSE", "REPORT", "LECTURER_APPLICATION", "USER"]);
 export type StepUpResourceType = z.infer<typeof stepUpResourceTypeSchema>;
 
 export interface StepUpProofInput {
@@ -488,3 +490,11 @@ export async function verifyPresenceTicket(
     throw new Error("PRESENCE_TICKET_POLICY_REJECTED");
   return claims;
 }
+
+export * from "./social.js";
+export * from "./scorm.js";
+export * from "./secret-provider.js";
+export * from "./oidc.js";
+export * from "./retention.js";
+export * from "./saml.js";
+

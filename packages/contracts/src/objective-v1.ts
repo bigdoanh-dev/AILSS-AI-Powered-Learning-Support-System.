@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cognitiveLevelSchema, cognitiveLevels, type CognitiveDistribution } from "./cognitive-levels.js";
 
 const id = z
   .string()
@@ -11,7 +12,13 @@ const points = z
   .regex(/^(?:0|[1-9]\d{0,2})(?:\.\d{1,2})?$/u)
   .refine((value) => Number(value) > 0);
 const option = z.object({ id, text: text(1_000) }).strict();
-const base = { id, order: z.number().int().min(1).max(50), text: text(4_000), points };
+const base = {
+  cognitiveLevel: cognitiveLevelSchema.optional(),
+  id,
+  order: z.number().int().min(1).max(50),
+  text: text(4_000),
+  points,
+};
 const single = z
   .object({
     ...base,
@@ -95,11 +102,24 @@ export type ObjectiveQuiz = z.infer<typeof objectiveQuizSchema>;
 
 export function validateObjectiveQuiz(
   value: unknown,
-  expected?: { count: number; types: readonly string[] },
+  expected?: {
+    count: number;
+    types: readonly string[];
+    cognitiveDistribution?: CognitiveDistribution | undefined;
+  },
 ): ObjectiveQuiz {
   const quiz = objectiveQuizSchema.parse(value);
   if (expected && quiz.questions.length !== expected.count) throw new Error("QUESTION_COUNT_MISMATCH");
   if (expected && quiz.questions.some((question) => !expected.types.includes(question.type)))
     throw new Error("QUESTION_TYPE_MISMATCH");
+  if (expected?.cognitiveDistribution) {
+    for (const level of cognitiveLevels) {
+      if (
+        quiz.questions.filter((q) => q.cognitiveLevel === level).length !==
+        expected.cognitiveDistribution[level]
+      )
+        throw new Error("COGNITIVE_DISTRIBUTION_MISMATCH");
+    }
+  }
   return quiz;
 }

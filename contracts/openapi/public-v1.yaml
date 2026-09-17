@@ -2807,7 +2807,13 @@
             {
               "operationId": "AI-10",
               "summary": "Hạn mức AI",
-              "responses": { "200": { "description": "Current Lecturer own UTC-day canonical quota usage" } },
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "Current Lecturer own Asia/Ho_Chi_Minh calendar-day canonical quota usage. Includes day, timeZone and resetsAt; quota renews at 00:00 Vietnam time.",
+                    },
+                },
               "security": [{ "bearerAuth": [] }],
             },
         },
@@ -4156,6 +4162,20 @@
                         },
                     },
                   "difficulty": { "type": "string", "enum": ["EASY", "MEDIUM", "HARD"] },
+                  "cognitiveDistribution":
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["RECOGNITION", "UNDERSTANDING", "APPLICATION", "ADVANCED_APPLICATION"],
+                      "properties":
+                        {
+                          "RECOGNITION": { "type": "integer", "minimum": 0, "maximum": 50 },
+                          "UNDERSTANDING": { "type": "integer", "minimum": 0, "maximum": 50 },
+                          "APPLICATION": { "type": "integer", "minimum": 0, "maximum": 50 },
+                          "ADVANCED_APPLICATION": { "type": "integer", "minimum": 0, "maximum": 50 },
+                        },
+                      "description": "Counts must sum to questionCount. Overrides overall difficulty.",
+                    },
                 },
             },
           "AiJob":

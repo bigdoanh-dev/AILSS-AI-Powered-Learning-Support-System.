@@ -69,6 +69,15 @@ const baseSchema = z.object({
   AI_PROVIDER_API_KEY: optionalInjected,
   AI_PROVIDER_MODE: z.enum(["production", "deterministic-test"]).default("production"),
   AI_PROVIDER_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(120_000).default(30_000),
+  AI_CIRCUIT_BREAKER_FAILURE_THRESHOLD: z.coerce.number().int().min(1).max(100).default(5),
+  AI_CIRCUIT_BREAKER_COOLDOWN_MS: z.coerce.number().int().min(1_000).max(300_000).default(30_000),
+  AI_MAX_EXTRACTED_TEXT_BYTES: z.coerce
+    .number()
+    .int()
+    .min(64 * 1024)
+    .max(5 * 1024 * 1024)
+    .default(1024 * 1024),
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(10).default(0),
   SERVICE_TOKEN_PRIVATE_KEY_PATH: z.string().optional(),
   SERVICE_TOKEN_PUBLIC_KEY_PATH: z.string().optional(),
   SERVICE_TOKEN_ISSUER: z.string().min(1).default("ailss-internal"),
@@ -101,6 +110,8 @@ const baseSchema = z.object({
   OBJECT_STORAGE_BUCKET: z.string().min(3).default("ailss-documents"),
   OBJECT_STORAGE_ACCESS_KEY: optionalInjected,
   OBJECT_STORAGE_SECRET_KEY: optionalInjected,
+  GOOGLE_CLIENT_IDS: z.string().default("ailss-web-google-client-id,ailss-mobile-google-client-id"),
+  APPLE_CLIENT_IDS: z.string().default("com.ailss.web,com.ailss.mobile"),
 });
 
 export type AppConfig = z.infer<typeof baseSchema>;
