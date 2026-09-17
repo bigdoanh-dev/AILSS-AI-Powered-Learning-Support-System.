@@ -47,7 +47,7 @@ export interface SamlReplayCache {
   clear(): void;
 }
 
-class InMemorySamlReplayCache implements SamlReplayCache {
+export class InMemorySamlReplayCache implements SamlReplayCache {
   private readonly seen = new Set<string>();
 
   public has(id: string): boolean {
@@ -242,6 +242,21 @@ export function validateSamlResponse(
       throw new AppError("SAML_SIGNATURE_INVALID", 401, `SAML cryptographic verification failed: ${(err as Error).message}`);
     }
 
+    // Verify Reference URI binds to the Assertion ID (Anti-Reference-Hijacking, Phase 25.8)
+    const referenceUriMatch = /<(?:ds:)?Reference[^>]*\bURI="([^"]*)"/u.exec(xml);
+    const assertionIdMatchForRef = /<(?:saml:)?Assertion[^>]*\bID="([^"]+)"/u.exec(xml);
+    if (referenceUriMatch?.[1] !== undefined && assertionIdMatchForRef?.[1]) {
+      const refId = referenceUriMatch[1].replace(/^#/u, "");
+      const assertionId = assertionIdMatchForRef[1];
+      if (refId !== assertionId) {
+        throw new AppError(
+          "SAML_SIGNATURE_REFERENCE_MISMATCH",
+          401,
+          `SAML Signature Reference URI (#${refId}) does not match Assertion ID (${assertionId})`,
+        );
+      }
+    }
+
     // Verify target element digest if DigestValue is present
     if (digestValueMatch?.[1]) {
       const expectedDigest = digestValueMatch[1].trim();
@@ -258,7 +273,13 @@ export function validateSamlResponse(
     }
   }
 
-  // 7. Audience check
+  // 7. Destination check if specified in Response
+  const destinationMatch = /<(?:samlp:)?Response[^>]*\bDestination="([^"]+)"/u.exec(xml);
+  if (destinationMatch?.[1] && options.expectedDestination && destinationMatch[1] !== options.expectedDestination) {
+    throw new AppError("SAML_DESTINATION_MISMATCH", 401, "SAML response destination does not match ACS URL");
+  }
+
+  // 8. Audience check
   const audienceMatch = /<saml:Audience(?:Restriction)?[^>]*>([^<]+)<\/saml:Audience>/u.exec(xml);
   if (!audienceMatch || audienceMatch[1]?.trim() !== options.expectedAudience) {
     throw new AppError("SAML_AUDIENCE_MISMATCH", 401, "SAML audience does not match SP entity ID");
@@ -393,8 +414,13 @@ export function mapSamlRoles(rawRoles: readonly string[]): readonly string[] {
 export function signSamlElement(
   xmlContent: string,
   privateKeyPem: string,
-  targetId: string,
+  targetIdOrOptions: string | { readonly referenceUri?: string },
 ): string {
+  const targetId =
+    typeof targetIdOrOptions === "string"
+      ? targetIdOrOptions
+      : (targetIdOrOptions.referenceUri?.replace(/^#/u, "") ?? "");
+
   // Compute SHA-256 digest of target XML content
   const digest = createHash("sha256").update(xmlContent).digest("base64");
 

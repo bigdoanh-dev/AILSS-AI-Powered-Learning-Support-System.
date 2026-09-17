@@ -17,6 +17,7 @@ export interface SafetyContext {
   readonly conversationId?: string;
   readonly hasActiveAssessment: boolean;
   readonly activeAssessmentTitle?: string;
+  readonly conversationHistory?: readonly string[] | undefined;
 }
 
 export interface SafetyPolicyResult {

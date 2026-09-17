@@ -1,0 +1,46 @@
+{
+  "inventoryVersion": "1.0.0",
+  "generatedAt": "2026-09-17T22:45:00.000Z",
+  "provenanceCommit": "50b11a1248f06ffe8179c448d158938054075ddb",
+  "releaseTag": "v6.0.0-GA",
+  "summary": {
+    "CANONICAL_LOGICAL_MIGRATIONS": 44,
+    "DEV_FILES": 44,
+    "RESEARCH_FILES": 44,
+    "TOTAL_CQL_FILES": 88,
+    "PAIRED_FILES": 44,
+    "IDENTICAL_PAIRS": 38,
+    "ENVIRONMENT_SPECIFIC_PAIRS": 1,
+    "SEMANTIC_EQUIVALENT_PAIRS": 5,
+    "INVALID_DRIFT": 0
+  },
+  "highestMigrationIndex": "078",
+  "highestMigrationFile": "078_verified_credentials_and_lti.cql",
+  "reconciliationRationale": "Historical references citing '78 migrations' confused the highest lexicographical prefix '078' with the cardinal migration file count. The migrations use subsystem prefix ranges (001: system keyspaces, 01x: identity, 02x: learning, 03x: classroom, 04x: assessment, 05x: interaction, 06x: AI, 07x: audit/notification/analytics/credentials). There are exactly 44 distinct migration files in dev/ and 44 in research/ for a total of 88 CQL files.",
+  "driftAnalysis": {
+    "001_keyspaces.cql": {
+      "classification": "ENVIRONMENT_SPECIFIC",
+      "reason": "dev uses ailss_dc:1 (single-node development container) whereas research uses ailss_dc:3 (3-node production replication strategy)."
+    },
+    "023_learning_course_offerings.cql": {
+      "classification": "SEMANTIC_EQUIVALENT",
+      "reason": "Formatting and line-wrapping variance; schema definition and column types are identical."
+    },
+    "024_learning_entitlement_commerce.cql": {
+      "classification": "SEMANTIC_EQUIVALENT",
+      "reason": "Single comment line difference ('-- P7.12C-approved additive Q-LRN-013 saga columns.'); CQL statements are byte-equivalent."
+    },
+    "033_classroom_student_schedule.cql": {
+      "classification": "SEMANTIC_EQUIVALENT",
+      "reason": "Explicit vs default compaction options specified; table schema structure and primary keys are identical."
+    },
+    "043_assessment_submit.cql": {
+      "classification": "SEMANTIC_EQUIVALENT",
+      "reason": "Line ordering and whitespace variance; CQL statement payloads are identical."
+    },
+    "062_ai_quiz_generation.cql": {
+      "classification": "SEMANTIC_EQUIVALENT",
+      "reason": "Statement ordering between ALTER TABLE and CREATE TABLE; final keyspace schema state is identical."
+    }
+  }
+}
