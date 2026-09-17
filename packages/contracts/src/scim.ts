@@ -171,7 +171,34 @@ export interface ScimResponse {
   readonly body: unknown;
 }
 
-export class InMemoryScimRepository {
+// ---------------------------------------------------------------------------
+// Phase 25.5 — Persistent SCIM Repository Interface
+// ---------------------------------------------------------------------------
+
+/**
+ * ScimRepository — the authoritative SCIM persistence contract.
+ *
+ * Phase 24 shipped InMemoryScimRepository (test/development use only).
+ * Phase 25.5 requires a production implementation backed by the identity
+ * service's Cassandra keyspace, scoped per tenant (institutionId).
+ *
+ * The interface is intentionally narrow: Scim2ServerHandler uses it
+ * exclusively, ensuring a single seam for swapping implementations.
+ */
+export interface ScimRepository {
+  findUserById(id: string): Promise<ScimUser | null>;
+  findUserByExternalId(externalId: string): Promise<ScimUser | null>;
+  listUsers(options?: {
+    startIndex?: number | undefined;
+    count?: number | undefined;
+    filter?: string | undefined;
+  }): Promise<{ totalResults: number; resources: ScimUser[] }>;
+  saveUser(user: ScimUser): Promise<ScimUser>;
+  deleteUser(id: string): Promise<boolean>;
+  listGroups(): Promise<ScimGroup[]>;
+}
+
+export class InMemoryScimRepository implements ScimRepository {
   private readonly users = new Map<string, ScimUser>();
   private readonly groups = new Map<string, ScimGroup>();
 
@@ -244,7 +271,8 @@ export class InMemoryScimRepository {
         created: user.meta?.created ?? now,
         lastModified: now,
         location: `/api/v1/scim/v2/Users/${id}`,
-        version: user.meta?.version ?? "1",
+        // Increment version on each save for ETag support (RFC 7644 §3.14)
+        version: String(Number(user.meta?.version ?? "0") + 1),
       },
     };
     this.users.set(id, saved);
@@ -262,7 +290,7 @@ export class InMemoryScimRepository {
 
 export class Scim2ServerHandler {
   public constructor(
-    private readonly repo: InMemoryScimRepository = new InMemoryScimRepository(),
+    private readonly repo: ScimRepository = new InMemoryScimRepository(),
     private readonly institutionId: string = "tenant-pilot-polytech",
   ) {}
 
@@ -290,6 +318,48 @@ export class Scim2ServerHandler {
               specUri: "http://www.rfc-editor.org/info/rfc6750",
               type: "oauthbearertoken",
               primary: true,
+            },
+          ],
+        },
+      };
+    }
+
+    // 1b. GET /ResourceTypes (RFC 7643 §6) — Phase 25.6
+    if (req.method === "GET" && (cleanPath === "/ResourceTypes" || cleanPath.endsWith("/ResourceTypes"))) {
+      return {
+        status: 200,
+        headers: { "Content-Type": "application/scim+json" },
+        body: {
+          schemas: [SCIM_LIST_RESPONSE_URI],
+          totalResults: 2,
+          startIndex: 1,
+          itemsPerPage: 2,
+          Resources: [
+            {
+              schemas: ["urn:ietf:params:scim:schemas:core:2.0:ResourceType"],
+              id: "User",
+              name: "User",
+              endpoint: "/Users",
+              description: "SCIM 2.0 Core User",
+              schema: SCIM_USER_SCHEMA_URI,
+              schemaExtensions: [],
+              meta: {
+                resourceType: "ResourceType",
+                location: `/api/v1/scim/v2/ResourceTypes/User`,
+              },
+            },
+            {
+              schemas: ["urn:ietf:params:scim:schemas:core:2.0:ResourceType"],
+              id: "Group",
+              name: "Group",
+              endpoint: "/Groups",
+              description: "SCIM 2.0 Core Group",
+              schema: SCIM_GROUP_SCHEMA_URI,
+              schemaExtensions: [],
+              meta: {
+                resourceType: "ResourceType",
+                location: `/api/v1/scim/v2/ResourceTypes/Group`,
+              },
             },
           ],
         },

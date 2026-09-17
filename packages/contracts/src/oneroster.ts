@@ -182,7 +182,7 @@ export interface OneRosterParsedCsvResult {
   readonly summary: OneRosterSyncSummary;
 }
 
-function parseCsvLines(csvText: string): Array<Record<string, string>> {
+export function parseCsvLines(csvText: string): Array<Record<string, string>> {
   const lines = csvText
     .split(/\r?\n/u)
     .map((l) => l.trim())
