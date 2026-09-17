@@ -19,6 +19,7 @@ export class DocumentExtractionWorker {
     private readonly repo: DocumentWorkerRepository,
     private readonly storage: ObjectStorage,
     private readonly logger: { info(v: object, m: string): void; warn(v: object, m: string): void },
+    private readonly maximumExtractedTextBytes = 1024 * 1024,
   ) {}
   async handle(event: EventEnvelope): Promise<ConsumerDisposition> {
     if (event.eventType !== "ai.document.extract.v1")
@@ -53,7 +54,7 @@ export class DocumentExtractionWorker {
       return { kind: "ack" };
     }
     try {
-      const result = extractDocument(bytes, d.mime);
+      const result = extractDocument(bytes, d.mime, this.maximumExtractedTextBytes);
       await this.repo.validating(d, new Date());
       const key = `extracted/${d.ownerId}/${d.documentId}/${d.operationId}.txt`;
       await this.storage.writePrivate(key, result.text, "text/plain; charset=utf-8");
