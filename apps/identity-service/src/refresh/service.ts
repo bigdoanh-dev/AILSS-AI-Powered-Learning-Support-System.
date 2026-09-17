@@ -13,7 +13,11 @@ import type { RefreshCommand, RefreshResult } from "./model.js";
 export interface IdentityRefreshStore {
   getSession(sessionId: string): Promise<LoginSession | undefined>;
   getUser(userId: string): Promise<CanonicalLoginUser | undefined>;
-  rotateSession(input: { expected: LoginSession; nextRefreshFingerprint: string }): Promise<boolean>;
+  rotateSession(input: {
+    expected: LoginSession;
+    nextRefreshFingerprint: string;
+    nextAuthVersion?: number | null;
+  }): Promise<boolean>;
   revokeSession(sessionId: string, expectedVersion: number, revokedAt: Date): Promise<boolean>;
 }
 
@@ -85,7 +89,11 @@ export class RefreshService {
         this.#metrics.identityRefreshes.inc({ outcome: "account_denied" });
         throw invalidRefreshError();
       }
-      if (session.authVersion === null || session.authVersion !== user.tokenVersion) {
+      if (
+        session.authVersion === null ||
+        session.authVersion > user.tokenVersion ||
+        (session.authVersion < user.tokenVersion && user.credentialVersion > session.authVersion)
+      ) {
         await this.#revokeFamily(session, "auth_version_mismatch", command);
         this.#metrics.identityRefreshes.inc({ outcome: "auth_version_mismatch" });
         throw invalidRefreshError();
@@ -101,6 +109,7 @@ export class RefreshService {
       const nextSession: LoginSession = {
         ...session,
         refreshFingerprint: nextCredential.fingerprint,
+        authVersion: user.tokenVersion,
         generation: session.generation + 1,
         version: session.version + 1,
       };
@@ -263,6 +272,7 @@ export class RefreshService {
       applied = await this.#store.rotateSession({
         expected,
         nextRefreshFingerprint: next.refreshFingerprint,
+        nextAuthVersion: next.authVersion,
       });
     } catch (error) {
       return this.#resolveAmbiguousRotation(expected, next, command, error);
@@ -283,6 +293,7 @@ export class RefreshService {
         const applied = await this.#store.rotateSession({
           expected,
           nextRefreshFingerprint: next.refreshFingerprint,
+          nextAuthVersion: next.authVersion,
         });
         if (applied) return next;
       } catch (error) {

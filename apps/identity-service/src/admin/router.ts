@@ -22,6 +22,7 @@ export function adminRouter(
     statusChange(token: string): Promise<ActorContext>;
   },
   metrics: ReturnType<typeof createMetrics>,
+  verifyStepUp?: (token: string, actor: ActorContext, targetId: string) => Promise<void>,
 ): Router {
   const router = Router();
   router.get("/api/v1/admin/users", async (request, response, next): Promise<void> => {
@@ -61,6 +62,18 @@ export function adminRouter(
     }
   });
 
+  router.get("/api/v1/admin/dashboard/stats", async (request, response, next): Promise<void> => {
+    try {
+      if (hasRequestBody(request))
+        throw new AppError("ADMIN_STATS_BODY_NOT_ALLOWED", 422, "Request body is not allowed");
+      const { actor, requestId } = await verifiedActor(request, (token) => verifiers.detail(token), metrics);
+      const data = await service.stats(actor);
+      response.status(200).json({ data, meta: responseMeta(requestId) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.patch("/api/v1/admin/users/:userId/status", async (request, response, next): Promise<void> => {
     try {
       const { actor, requestId } = await verifiedActor(
@@ -69,6 +82,13 @@ export function adminRouter(
         metrics,
       );
       const targetId = parseUuid(request.params.userId);
+      if (verifyStepUp) {
+        try {
+          await verifyStepUp(request.header("x-admin-step-up-proof") ?? "", actor, targetId);
+        } catch {
+          throw new AppError("ADMIN_STEP_UP_FAILED", 401, "Current-password reauthentication required");
+        }
+      }
       let idempotencyKey: string;
       try {
         idempotencyKey = validateIdempotencyKey(request.header("idempotency-key"));

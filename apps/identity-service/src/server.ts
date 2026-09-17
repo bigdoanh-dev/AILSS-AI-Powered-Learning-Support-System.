@@ -46,6 +46,9 @@ import { lecturerVerifyRouter } from "./lecturer-verify/router.js";
 import { LecturerVerifyService } from "./lecturer-verify/service.js";
 import { AdminStepUpService } from "./step-up/service.js";
 import { adminStepUpRouter } from "./step-up/router.js";
+import { IdentityExternalAuthRepository } from "./external-auth/repository.js";
+import { IdentityExternalAuthService } from "./external-auth/service.js";
+import { externalAuthRouter } from "./external-auth/router.js";
 
 const manifest: ServiceManifest = {
   serviceId: "identity-service",
@@ -134,6 +137,41 @@ await startService(manifest, {
       accessTokenSigner,
     });
     app.use(refreshRouter(refresh, context.metrics));
+    const externalAuthRepository = new IdentityExternalAuthRepository(context.cassandra);
+    const googleClientIds = (config.GOOGLE_CLIENT_IDS || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const appleClientIds = (config.APPLE_CLIENT_IDS || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const externalAuth = new IdentityExternalAuthService({
+      repository: externalAuthRepository,
+      loginStore: loginRepository,
+      verificationConfig: {
+        googleClientIds,
+        appleClientIds,
+        clockToleranceSeconds: config.JWT_CLOCK_SKEW_SECONDS,
+      },
+      accessTokenSigner,
+      accessTokenTtlSeconds: config.ACCESS_TOKEN_TTL_SECONDS,
+      refreshTokenTtlSeconds: config.REFRESH_TOKEN_TTL_SECONDS,
+      logger: context.logger,
+    });
+    app.use(
+      externalAuthRouter(
+        externalAuth,
+        (token) =>
+          verifyActorContext(token, actorContextPublicKey, {
+            issuer: config.ACTOR_CONTEXT_ISSUER,
+            audience: config.ACTOR_CONTEXT_AUDIENCE,
+            purpose: "identity.identities",
+            kid: config.ACTOR_CONTEXT_KID,
+          }),
+        context.metrics,
+      ),
+    );
     const logout = new LogoutService({
       store: loginRepository,
       logger: context.logger,
@@ -375,6 +413,23 @@ await startService(manifest, {
           statusChange: adminVerifier("identity.admin.user.status.change"),
         },
         context.metrics,
+        async (token, actor, targetId) => {
+          const proof = await verifyStepUpProof(token, publicKey, {
+            issuer: "identity-service",
+            audience: "identity-service",
+            kid: config.JWT_KID,
+            action: "ADMIN_USER_STATUS_CHANGE",
+            resourceType: "USER",
+            resourceId: targetId,
+            adminUserId: actor.userId,
+          });
+          if (
+            proof.sessionId !== actor.sessionId ||
+            proof.tokenVersion !== actor.tokenVersion ||
+            proof.exp <= Math.floor(Date.now() / 1000)
+          )
+            throw new Error("STATUS_PROOF_REJECTED");
+        },
       ),
     );
     const lecturerVerifyRepository = new LecturerVerifyRepository(context.cassandra);
@@ -402,7 +457,28 @@ await startService(manifest, {
       context.logger,
     );
     app.use(
-      lecturerVerifyRouter(lecturerVerify, adminVerifier("identity.admin.lecturer.verify"), context.metrics),
+      lecturerVerifyRouter(
+        lecturerVerify,
+        adminVerifier("identity.admin.lecturer.verify"),
+        context.metrics,
+        async (token, actor, targetId) => {
+          const proof = await verifyStepUpProof(token, publicKey, {
+            issuer: "identity-service",
+            audience: "identity-service",
+            kid: config.JWT_KID,
+            action: "ADMIN_LECTURER_VERIFY",
+            resourceType: "USER",
+            resourceId: targetId,
+            adminUserId: actor.userId,
+          });
+          if (
+            proof.sessionId !== actor.sessionId ||
+            proof.tokenVersion !== actor.tokenVersion ||
+            proof.exp <= Math.floor(Date.now() / 1000)
+          )
+            throw new Error("LECTURER_VERIFY_PROOF_REJECTED");
+        },
+      ),
     );
     const applications = new ApplicationService(
       new ApplicationRepository(context.cassandra),

@@ -163,16 +163,20 @@ export class IdentityLoginRepository {
   public async rotateSession(input: {
     expected: LoginSession;
     nextRefreshFingerprint: string;
+    nextAuthVersion?: number | null;
   }): Promise<boolean> {
     // Q-IDN-003: one-row CAS prevents two requests from rotating the same generation.
+    const nextAuthVersion =
+      input.nextAuthVersion !== undefined ? input.nextAuthVersion : input.expected.authVersion;
     const rows = await this.client.execute(
-      `UPDATE session_by_id SET refresh_fingerprint=?,generation=?,version=?
+      `UPDATE session_by_id SET refresh_fingerprint=?,generation=?,version=?,auth_version=?
        WHERE session_id=?
        IF state=? AND generation=? AND version=? AND refresh_fingerprint=?`,
       [
         input.nextRefreshFingerprint,
         input.expected.generation + 1,
         long(input.expected.version + 1),
+        nextAuthVersion,
         uuid(input.expected.sessionId),
         "ACTIVE",
         input.expected.generation,

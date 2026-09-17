@@ -244,3 +244,26 @@ export function parseStatusMetadata(value: string): StatusChangeMetadata | undef
     return undefined;
   }
 }
+
+export interface AdminStatsData {
+  readonly totalAccounts: number;
+  readonly students: number;
+  readonly lecturers: number;
+  readonly admins: number;
+  readonly suspended: number;
+  readonly aiSessions: number;
+  readonly completionRate: string;
+  readonly avgScore: string;
+  readonly totalLearningHours: string;
+  readonly cognitiveLevels: readonly {
+    readonly level: string;
+    readonly rate: number;
+    readonly desc: string;
+    readonly color: string;
+  }[];
+  readonly weekdayEngagement: readonly {
+    readonly day: string;
+    readonly hours: number;
+    readonly percent: number;
+  }[];
+}

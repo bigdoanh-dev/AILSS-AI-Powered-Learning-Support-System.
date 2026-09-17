@@ -59,7 +59,7 @@ export class AdminStepUpService {
       this.privateKey,
       this.kid,
       "identity-service",
-      request.resourceType === "LECTURER_APPLICATION"
+      request.resourceType === "LECTURER_APPLICATION" || request.resourceType === "USER"
         ? "identity-service"
         : request.resourceType === "REPORT"
           ? "interaction-service"
