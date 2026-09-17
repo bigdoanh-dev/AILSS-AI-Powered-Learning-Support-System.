@@ -8,10 +8,7 @@ export interface SceneController {
   resetView: () => void;
 }
 
-export function mountScene(
-  host: HTMLElement,
-  onReady?: (controller: SceneController) => void,
-): () => void {
+export function mountScene(host: HTMLElement, onReady?: (controller: SceneController) => void): () => void {
   let renderer: THREE.WebGLRenderer;
   try {
     renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
@@ -86,9 +83,15 @@ export function mountScene(
     } else if (i % 7 === 0) {
       shade = stellarAmber;
     } else if (arm === 0) {
-      shade = iceCyan.clone().lerp(electricCyan, t).lerp(whiteHot, (1 - t) * 0.5);
+      shade = iceCyan
+        .clone()
+        .lerp(electricCyan, t)
+        .lerp(whiteHot, (1 - t) * 0.5);
     } else {
-      shade = cosmicViolet.clone().lerp(iceCyan, t).lerp(whiteHot, (1 - t) * 0.5);
+      shade = cosmicViolet
+        .clone()
+        .lerp(iceCyan, t)
+        .lerp(whiteHot, (1 - t) * 0.5);
     }
     colors.set([shade.r, shade.g, shade.b], i * 3);
   }
@@ -170,7 +173,13 @@ export function mountScene(
   const ringGroup = new THREE.Group();
   scene.add(ringGroup);
 
-  const createOrbitRing = (radius: number, particleCount: number, colorHex: number, tiltX: number, tiltY: number) => {
+  const createOrbitRing = (
+    radius: number,
+    particleCount: number,
+    colorHex: number,
+    tiltX: number,
+    tiltY: number,
+  ) => {
     const ringGeo = new THREE.BufferGeometry();
     const ringPos = new Float32Array(particleCount * 3);
     const ringCol = new Float32Array(particleCount * 3);
@@ -214,7 +223,14 @@ export function mountScene(
   const nodeGroup = new THREE.Group();
   scene.add(nodeGroup);
 
-  const nodes: { mesh: THREE.Group; orbitRadius: number; speed: number; angle: number; tiltX: number; tiltY: number }[] = [];
+  const nodes: {
+    mesh: THREE.Group;
+    orbitRadius: number;
+    speed: number;
+    angle: number;
+    tiltX: number;
+    tiltY: number;
+  }[] = [];
   const nodeColors = [0x00f0ff, 0xa855f7, 0x38bdf8, 0xfbbf24, 0x10b981];
 
   for (let k = 0; k < 5; k++) {
@@ -245,10 +261,10 @@ export function mountScene(
     nodes.push({
       mesh: nodeContainer,
       orbitRadius: 1.95 + (k % 2) * 0.9,
-      speed: 0.28 + (k * 0.08),
+      speed: 0.28 + k * 0.08,
       angle: (k * Math.PI * 2) / 5,
-      tiltX: (k % 2 === 0 ? 0.58 : -0.46),
-      tiltY: (k % 2 === 0 ? 0.32 : 0.48),
+      tiltX: k % 2 === 0 ? 0.58 : -0.46,
+      tiltY: k % 2 === 0 ? 0.32 : 0.48,
     });
   }
 
@@ -295,10 +311,8 @@ export function mountScene(
   // Preset configuration
   let targetPresetDistance = 6.6;
   let targetPresetPitch = 0;
-  let currentPreset: ScenePreset = "galaxy";
 
   const setPreset = (preset: ScenePreset) => {
-    currentPreset = preset;
     if (preset === "core") {
       targetPresetDistance = 3.8;
       targetPresetPitch = 0.08;
@@ -338,7 +352,10 @@ export function mountScene(
   onReady?.(controller);
   host.dispatchEvent(new CustomEvent("ailss-scene-ready", { detail: controller }));
 
-  const reduced = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
+  const reduced =
+    typeof matchMedia === "function"
+      ? matchMedia("(prefers-reduced-motion: reduce)")
+      : { matches: false, addEventListener: () => {}, removeEventListener: () => {} };
   const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
   const render = (t: number) => {
@@ -403,7 +420,8 @@ export function mountScene(
       const nz = Math.sin(seconds * 1.2 + idx) * 0.15;
 
       // Rotate point by ring tilt
-      const cosX = Math.cos(node.tiltX), sinX = Math.sin(node.tiltX);
+      const cosX = Math.cos(node.tiltX),
+        sinX = Math.sin(node.tiltX);
       const rotY = ny * cosX - nz * sinX;
       const rotZ = ny * sinX + nz * cosX;
 

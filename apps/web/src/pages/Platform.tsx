@@ -5,33 +5,40 @@ import { Section, PageHero, TextLink, ButtonLink, Picture } from "../components/
 import { Workflow } from "../components/Workflow";
 import { Architecture } from "../components/Architecture";
 import { ProgressPreview } from "./Home";
+import { Icon } from "../components/Icon";
+import { KnowledgeScene } from "../components/KnowledgeScene";
+
 export function AiLearning() {
   return (
     <>
       <PageHero
-        label="AI LEARNING"
-        title="Tài liệu của bạn. Khả năng mới từ AI."
-        description="Biến học liệu thành bản nháp câu hỏi có cấu trúc, trong một quy trình luôn có giảng viên rà soát."
+        label="AILSS ADAPTIVE AI LEARNING"
+        title="Học Cùng AI: Tri thức của bạn. Năng lực mới từ AI."
+        description="Hệ sinh thái học tập và khảo thí thích ứng thông minh. Biến học liệu thành câu hỏi chuẩn hóa theo thang nhận thức Bloom, kết hợp chặt chẽ với sự rà soát và định hướng của giảng viên."
       />
       <Section className="dark">
         <div className="split">
           <div>
             <h2>
-              Tri thức bắt đầu
+              Tri thức chuyển động.
               <br />
-              từ học liệu.
+              Từ học liệu số.
             </h2>
             <p>
-              PDF, DOCX và TXT đi qua kiểm tra, lưu trữ riêng tư và trích xuất trước khi được dùng để tạo bản
-              nháp.
+              Giáo trình và tài liệu định dạng PDF, DOCX, TXT được phân đoạn ngữ nghĩa (Semantic Chunking), lưu
+              trữ bảo mật và tạo Vector Embeddings theo chuẩn RAG Pipeline chuyên sâu trước khi hỗ trợ giảng
+              viên biên soạn đề thi.
             </p>
             <div className="format-tags">
               <span>PDF</span>
               <span>DOCX</span>
               <span>TXT</span>
+              <span>RAG PIPELINE</span>
+              <span>VECTOR DB</span>
+              <span>BLOOM TAXONOMY</span>
             </div>
           </div>
-          <Picture name="knowledge" alt="Minh họa mạng tri thức kết nối tài liệu" />
+          <KnowledgeScene />
         </div>
       </Section>
       <Section>
@@ -41,7 +48,9 @@ export function AiLearning() {
             <br />
             phán đoán của con người.
           </h2>
-          <p>Khám phá từng bước từ tài liệu đầu vào đến bài đánh giá nháp.</p>
+          <p>
+            Khám phá quy trình 6 bước tự động từ tài liệu đầu vào đến bài đánh giá nháp sẵn sàng cho người học.
+          </p>
         </div>
         <Workflow />
       </Section>
@@ -50,19 +59,19 @@ export function AiLearning() {
           <div>
             <h2>Đúng cấu trúc chưa có nghĩa là đúng kiến thức.</h2>
             <p>
-              AI giúp chuẩn bị câu hỏi. Giảng viên vẫn cần kiểm tra tính chính xác, mức độ phù hợp và đáp án
-              trước khi duyệt.
+              AI giúp chuẩn bị câu hỏi và phân tích mục tiêu sư phạm. Giảng viên vẫn là người giữ tay lái: kiểm
+              tra tính chính xác, mức độ phù hợp và đáp án trước khi duyệt.
             </p>
           </div>
           <div>
-            <h3>Ranh giới an toàn</h3>
+            <h3>Ranh giới an toàn &amp; Bảo mật tri thức</h3>
             <ul className="check-list">
-              <li>Học liệu được xử lý riêng tư để chuẩn bị câu hỏi.</li>
-              <li>Không tự động xuất bản bài đánh giá.</li>
-              <li>Chỉ chuyển bản đã phê duyệt sang bài đánh giá nháp.</li>
-              <li>Không dùng AI thay quyết định đánh giá của giảng viên.</li>
+              <li>Học liệu được xử lý riêng tư, không huấn luyện mô hình chung ra bên ngoài.</li>
+              <li>Tuyệt đối không tự động xuất bản bài đánh giá khi chưa được giảng viên duyệt.</li>
+              <li>Chỉ chuyển bản đã phê duyệt sang bài đánh giá nháp có mã định danh.</li>
+              <li>Không dùng AI thay thế quyết định đánh giá và chấm điểm của giảng viên.</li>
             </ul>
-            <ButtonLink to="/ai-quiz">Thử minh họa rà soát</ButtonLink>
+            <ButtonLink to="/ai-quiz">Thử minh họa rà soát câu hỏi ↗</ButtonLink>
           </div>
         </div>
       </Section>
@@ -70,18 +79,206 @@ export function AiLearning() {
     </>
   );
 }
+
+interface SampleQuizQuestion {
+  id: string;
+  topic: string;
+  sourceDoc: string;
+  sourceChunk: string;
+  bloomLevel: string;
+  difficulty: string;
+  question: string;
+  options: {
+    text: string;
+    isCorrect: boolean;
+    rationale: string;
+  }[];
+  explanation: string;
+}
+
+const SAMPLE_QUESTIONS: SampleQuizQuestion[] = [
+  {
+    id: "q-dist-01",
+    topic: "Kiến trúc Phân tán & Message Queue",
+    sourceDoc: "Giao-trinh-He-thong-Phan-tan-2026.pdf (Trang 14, Mục 3.2)",
+    sourceChunk:
+      "\"Trong mô hình phân phối At-Least-Once của Apache Kafka và RabbitMQ, mạng lưới có thể gửi lại cùng một thông điệp nhiều lần (retries). Để tránh việc thực hiện giao dịch tài chính hoặc trừ tồn kho bị trùng lặp, consumer bắt buộc phải triển khai cơ chế xử lý thông điệp lặp an toàn (Idempotent Consumer) dựa trên Deduplication Key...\"",
+    bloomLevel: "Bloom Level 3: Vận dụng (Application)",
+    difficulty: "Trung bình · 1 điểm",
+    question: "Vì sao consumer cần xử lý thông điệp lặp an toàn?",
+    options: [
+      {
+        text: "Để việc giao lại không tạo tác động nghiệp vụ trùng.",
+        isCorrect: true,
+        rationale: "Chính xác. Tính chất lũy đẳng (Idempotence) đảm bảo khi một thông điệp được xử lý nhiều lần, trạng thái hệ thống và kết quả nghiệp vụ chỉ thay đổi duy nhất một lần.",
+      },
+      {
+        text: "Để bảo đảm mạng không bao giờ bị gián đoạn.",
+        isCorrect: false,
+        rationale: "Không đúng. Xử lý thông điệp lặp diễn ra ở tầng ứng dụng, không thể ngăn chặn sự cố đứt gãy vật lý của hạ tầng mạng.",
+      },
+      {
+        text: "Để thay thế kiểm tra quyền truy cập.",
+        isCorrect: false,
+        rationale: "Không đúng. Xử lý lặp không có chức năng xác thực (Authentication) hay phân quyền (Authorization).",
+      },
+    ],
+    explanation:
+      "Trong kiến trúc hướng sự kiện (EDA), mạng lưới không tin cậy đòi hỏi consumer phải có tính lũy đẳng (Idempotency) để ngăn ngừa các tác vụ bị nhân đôi khi có cơ chế retry.",
+  },
+  {
+    id: "q-db-02",
+    topic: "Cơ sở Dữ liệu & Tối ưu hóa Index",
+    sourceDoc: "PostgreSQL-Query-Optimization-Guide.pdf (Trang 48, Mục 5.1)",
+    sourceChunk:
+      "\"Quy tắc Leftmost Prefix trong B-Tree Composite Index (A, B, C) quy định rằng bộ tối ưu hóa truy vấn chỉ có thể sử dụng chỉ mục nếu điều kiện WHERE tham chiếu đến cột đầu tiên bên trái (cột A). Nếu truy vấn chỉ lọc theo cột B hoặc C, index scan sẽ bị bỏ qua và chuyển sang sequential scan toàn bảng...\"",
+    bloomLevel: "Bloom Level 4: Phân tích (Analysis)",
+    difficulty: "Nâng cao · 1.5 điểm",
+    question: "Khi tạo Composite Index (A, B, C), câu truy vấn nào sau đây sử dụng được Index scan?",
+    options: [
+      {
+        text: "SELECT * FROM orders WHERE A = 10 AND B > 20;",
+        isCorrect: true,
+        rationale: "Chính xác. Điều kiện truy vấn chứa tiền tố tận cùng bên trái (cột A), thỏa mãn nguyên lý Leftmost Prefix của cây chỉ mục B-Tree.",
+      },
+      {
+        text: "SELECT * FROM orders WHERE B = 20 AND C = 30;",
+        isCorrect: false,
+        rationale: "Không đúng. Truy vấn thiếu cột tiền tố A, PostgreSQL sẽ phải quét toàn bộ bảng (Seq Scan) do không thể duyệt cây từ gốc.",
+      },
+      {
+        text: "SELECT * FROM orders WHERE C = 30;",
+        isCorrect: false,
+        rationale: "Không đúng. Cột C nằm ở vị trí thứ ba trong chỉ mục phức hợp, không thể đứng độc lập để kích hoạt Index Scan.",
+      },
+    ],
+    explanation:
+      "B-Tree Composite Index được sắp xếp tuần tự theo thứ tự khai báo các cột từ trái sang phải. Truy vấn bắt buộc phải chứa cột bên trái nhất để tận dụng được cây tìm kiếm.",
+  },
+  {
+    id: "q-ai-03",
+    topic: "Trí tuệ Nhân tạo & Kỹ thuật RAG",
+    sourceDoc: "LangChain-Vector-Search-Best-Practices.pdf (Trang 82, Mục 7.4)",
+    sourceChunk:
+      "\"Kỹ thuật Semantic Chunking chia nhỏ văn bản dài thành các đoạn ngữ nghĩa có tính liên kết chặt chẽ. Kích thước chunk quá lớn sẽ làm loãng vector embedding của câu trả lời, trong khi kích thước chunk quá nhỏ sẽ làm mất ngữ cảnh ngữ pháp cần thiết để LLM tổng hợp thông tin chính xác...\"",
+    bloomLevel: "Bloom Level 2: Thông hiểu (Comprehension)",
+    difficulty: "Cơ bản · 1 điểm",
+    question: "Mục đích chính của kỹ thuật Chunking trong quy trình Retrieval-Augmented Generation (RAG) là gì?",
+    options: [
+      {
+        text: "Chia nhỏ tài liệu để vector embeddings lưu giữ trọn vẹn ngữ nghĩa cục bộ.",
+        isCorrect: true,
+        rationale: "Chính xác. Giúp thuật toán tìm kiếm vector (Cosine Similarity) truy xuất chính xác đoạn văn bản liên quan nhất tới câu hỏi của người dùng.",
+      },
+      {
+        text: "Nén kích thước file tài liệu để giảm dung lượng ổ cứng lưu trữ.",
+        isCorrect: false,
+        rationale: "Không đúng. Chunking chia nhỏ dữ liệu phục vụ embedding và retrieval, không phải thuật toán nén file (như gzip/zip).",
+      },
+      {
+        text: "Tự động dịch tài liệu sang nhiều ngôn ngữ khác nhau.",
+        isCorrect: false,
+        rationale: "Không đúng. Chunking không thực hiện chức năng dịch thuật ngôn ngữ.",
+      },
+    ],
+    explanation:
+      "Chunking tối ưu hóa kích thước đoạn văn để cân bằng giữa độ chính xác khi truy vấn vector và giới hạn context window của mô hình ngôn ngữ lớn (LLM).",
+  },
+];
+
 export function AiQuiz() {
+  const [selectedTopicIdx, setSelectedTopicIdx] = useState(0);
+  const currentSample = SAMPLE_QUESTIONS[selectedTopicIdx];
+
   const [answer, setAnswer] = useState(0);
   const [approved, setApproved] = useState(false);
-  const [title, setTitle] = useState("Vì sao consumer cần xử lý thông điệp lặp an toàn?");
+  const [title, setTitle] = useState(currentSample.question);
+  const [options, setOptions] = useState(currentSample.options);
+
+  // Student test simulation state
+  const [studentChoice, setStudentChoice] = useState<number | null>(null);
+
+  const handleSelectTopic = (idx: number) => {
+    setSelectedTopicIdx(idx);
+    const s = SAMPLE_QUESTIONS[idx];
+    setTitle(s.question);
+    setOptions(s.options);
+    setAnswer(s.options.findIndex((o) => o.isCorrect) >= 0 ? s.options.findIndex((o) => o.isCorrect) : 0);
+    setApproved(false);
+    setStudentChoice(null);
+  };
+
+  const handleReset = () => {
+    setApproved(false);
+    setAnswer(0);
+    setSelectedTopicIdx(0);
+    const s = SAMPLE_QUESTIONS[0];
+    setTitle(s.question);
+    setOptions(s.options);
+    setStudentChoice(null);
+  };
+
   return (
     <>
       <PageHero
         label="AI QUIZ SHOWCASE"
         title="Một bản nháp tốt cần một người duyệt."
-        description="Thử quy trình rà soát câu hỏi minh họa. Không tải tài liệu, không gọi mô hình AI và không tạo quiz thật."
+        description="Thử quy trình rà soát câu hỏi minh họa. Trực quan hóa cách AI phân tích học liệu nguồn, gán cấp độ nhận thức Bloom và chuyển đổi thành đề thi nháp an toàn."
       />
       <Section>
+        {/* Stepper Workflow */}
+        <div className="ai-quiz-stepper" role="region" aria-label="Quy trình minh họa AI Quiz">
+          <div className="ai-quiz-step-item completed">
+            <span className="ai-quiz-step-dot">✓</span>
+            <span>1. Nạp học liệu PDF</span>
+          </div>
+          <span style={{ color: "var(--line)" }}>→</span>
+          <div className="ai-quiz-step-item completed">
+            <span className="ai-quiz-step-dot">✓</span>
+            <span>2. AI Soạn câu hỏi &amp; Bloom</span>
+          </div>
+          <span style={{ color: "var(--line)" }}>→</span>
+          <div className={`ai-quiz-step-item ${!approved ? "active" : "completed"}`}>
+            <span className="ai-quiz-step-dot">{approved ? "✓" : "3"}</span>
+            <span>3. Giảng viên rà soát</span>
+          </div>
+          <span style={{ color: "var(--line)" }}>→</span>
+          <div className={`ai-quiz-step-item ${approved ? "active" : ""}`}>
+            <span className="ai-quiz-step-dot">4</span>
+            <span>4. Đề thi nháp hoàn chỉnh</span>
+          </div>
+        </div>
+
+        {/* Topic Selector */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 8,
+            marginBottom: 24,
+            padding: "12px 16px",
+            background: "var(--surface-soft)",
+            borderRadius: 12,
+            border: "1px solid var(--line)",
+          }}
+        >
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)", marginRight: 4 }}>
+            Đổi chủ đề minh họa:
+          </span>
+          {SAMPLE_QUESTIONS.map((s, idx) => (
+            <button
+              key={s.id}
+              type="button"
+              className={`filter-pill-button ${selectedTopicIdx === idx ? "active" : ""}`}
+              onClick={() => handleSelectTopic(idx)}
+            >
+              {idx === 0 ? "📡 " : idx === 1 ? "🗄️ " : "🤖 "}
+              {s.topic}
+            </button>
+          ))}
+        </div>
+
         <div className="split">
           <div>
             <span className="eyebrow">MINH HỌA TƯƠNG TÁC</span>
@@ -94,66 +291,319 @@ export function AiQuiz() {
               Kiểm tra câu hỏi và đáp án trước khi phê duyệt. Trong hệ thống thật, bước tiếp theo tạo bài đánh
               giá nháp, không xuất bản.
             </p>
-            <ol className="check-list">
+
+            {/* Source Document Card */}
+            <div className="ai-quiz-source-box">
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <span className="kpi-tag accent" style={{ fontSize: 11 }}>
+                  📄 Bằng chứng tài liệu nguồn (Grounding)
+                </span>
+              </div>
+              <div style={{ fontWeight: 600, fontSize: 12.5, color: "var(--muted)", marginBottom: 4 }}>
+                {currentSample.sourceDoc}
+              </div>
+              <blockquote
+                style={{
+                  margin: "6px 0 0 0",
+                  fontStyle: "italic",
+                  fontSize: 12.5,
+                  color: "var(--ink)",
+                  opacity: 0.9,
+                }}
+              >
+                {currentSample.sourceChunk}
+              </blockquote>
+            </div>
+
+            {/* Bloom taxonomy badge card */}
+            <div
+              style={{
+                marginTop: 14,
+                padding: "12px 14px",
+                background: "var(--surface-soft)",
+                border: "1px solid var(--line)",
+                borderRadius: 8,
+                fontSize: 12.5,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                <span style={{ fontWeight: 700, color: "var(--ink)" }}>{currentSample.bloomLevel}</span>
+                <span className="kpi-tag" style={{ fontSize: 11 }}>
+                  {currentSample.difficulty}
+                </span>
+              </div>
+              <span style={{ color: "var(--muted)" }}>
+                Câu hỏi được AI định hình theo ma trận nhận thức giáo dục chuẩn Bloom.
+              </span>
+            </div>
+
+            <ol className="check-list" style={{ marginTop: 20 }}>
               <li>Đối chiếu với tài liệu nguồn.</li>
               <li>Kiểm tra câu hỏi và các lựa chọn.</li>
               <li>Xác định đáp án đúng.</li>
               <li>Chỉ phê duyệt khi nội dung phù hợp.</li>
             </ol>
           </div>
+
           <div className="review-preview">
             <small>Dữ liệu minh họa · chỉ tồn tại trên trang này</small>
-            <label>
-              Câu hỏi
-              <textarea
-                aria-label="Câu hỏi"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  setApproved(false);
-                }}
-                maxLength={500}
-              />
-            </label>
-            <fieldset>
-              <legend>Chọn đáp án đúng</legend>
-              {[
-                "Để việc giao lại không tạo tác động nghiệp vụ trùng.",
-                "Để bảo đảm mạng không bao giờ bị gián đoạn.",
-                "Để thay thế kiểm tra quyền truy cập.",
-              ].map((text, i) => (
-                <label className={`answer ${answer === i ? "selected" : ""}`} key={text}>
-                  <input
-                    type="radio"
-                    name="answer"
-                    checked={answer === i}
-                    onChange={() => {
-                      setAnswer(i);
+
+            {!approved ? (
+              <>
+                <label>
+                  Câu hỏi
+                  <textarea
+                    aria-label="Câu hỏi"
+                    value={title}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
                       setApproved(false);
                     }}
+                    maxLength={500}
+                    rows={3}
                   />
-                  {text}
                 </label>
-              ))}
-            </fieldset>
-            <button className="button" disabled={!title.trim() || approved} onClick={() => setApproved(true)}>
-              Phê duyệt minh họa
-            </button>
-            <p role="status">
-              {approved
-                ? "Đã duyệt trong minh họa. Bước tiếp theo: nhập bài đánh giá nháp. Chưa có quiz nào được tạo."
-                : "Bản nháp đang chờ bạn rà soát."}
-            </p>
-            <button
-              className="plain-button"
-              onClick={() => {
-                setApproved(false);
-                setAnswer(0);
-                setTitle("Vì sao consumer cần xử lý thông điệp lặp an toàn?");
-              }}
-            >
-              Đặt lại minh họa
-            </button>
+
+                <fieldset>
+                  <legend>Chọn đáp án đúng</legend>
+                  {options.map((opt, i) => (
+                    <div key={i} className={`answer ${answer === i ? "selected" : ""}`} style={{ marginBottom: 12 }}>
+                      <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", width: "100%" }}>
+                        <input
+                          type="radio"
+                          name="answer"
+                          checked={answer === i}
+                          onChange={() => {
+                            setAnswer(i);
+                            setApproved(false);
+                          }}
+                          style={{ marginTop: 3 }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: answer === i ? 600 : 400, color: "var(--ink)" }}>{opt.text}</div>
+                          <div
+                            style={{
+                              fontSize: 11.5,
+                              color: answer === i ? "#16a34a" : "var(--muted)",
+                              marginTop: 4,
+                            }}
+                          >
+                            {answer === i ? "✓ Đang chọn làm đáp án đúng" : "Phương án lựa chọn"}
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  ))}
+                </fieldset>
+
+                <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 16 }}>
+                  <button
+                    className="button"
+                    disabled={!title.trim() || approved}
+                    onClick={() => {
+                      setApproved(true);
+                      setStudentChoice(null);
+                    }}
+                  >
+                    Phê duyệt minh họa
+                  </button>
+                </div>
+
+                <p role="status">Bản nháp đang chờ bạn rà soát.</p>
+
+                <button className="plain-button" onClick={handleReset}>
+                  Đặt lại minh họa
+                </button>
+              </>
+            ) : (
+              /* Approved State with Rich Visual Showcase */
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "12px 16px",
+                    background: "rgba(16, 185, 129, 0.12)",
+                    border: "1px solid #10b981",
+                    borderRadius: 10,
+                    color: "#15803d",
+                    fontWeight: 600,
+                    marginBottom: 16,
+                  }}
+                >
+                  <Icon name="checkCircle" size={20} />
+                  <span>Đã phê duyệt thành công! Câu hỏi đã sẵn sàng đưa vào Đề thi nháp.</span>
+                </div>
+
+                {/* Complete Approved Quiz Card Preview */}
+                <div className="ai-quiz-approved-preview">
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 12,
+                      borderBottom: "1px solid var(--line)",
+                      paddingBottom: 10,
+                    }}
+                  >
+                    <span className="kpi-tag accent" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <Icon name="check" size={13} /> ĐÃ PHÊ DUYỆT (DRAFT ASSESSMENT)
+                    </span>
+                    <span style={{ fontSize: 12, color: "var(--muted)" }}>Mã: #{currentSample.id.toUpperCase()}</span>
+                  </div>
+
+                  <h3 style={{ fontSize: "1.15rem", margin: "0 0 14px 0", color: "var(--ink)" }}>{title}</h3>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {options.map((opt, i) => {
+                      const isChosenAnswer = answer === i;
+                      return (
+                        <div
+                          key={i}
+                          className={`ai-quiz-option-card ${isChosenAnswer ? "correct" : "incorrect"}`}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                            <div style={{ fontWeight: isChosenAnswer ? 700 : 500, color: "var(--ink)", fontSize: 13.5 }}>
+                              {String.fromCharCode(65 + i)}. {opt.text}
+                            </div>
+                            {isChosenAnswer ? (
+                              <span className="status-pill status-success" style={{ fontSize: 11, flexShrink: 0 }}>
+                                ✓ Đáp án đúng
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: 11, color: "var(--muted)", flexShrink: 0 }}>
+                                Phương án gây nhiễu
+                              </span>
+                            )}
+                          </div>
+                          <p style={{ margin: "6px 0 0 0", fontSize: 12, color: "var(--muted)", lineHeight: 1.45 }}>
+                            <strong>Giải thích:</strong> {opt.rationale}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 14,
+                      padding: "10px 14px",
+                      background: "var(--surface-soft)",
+                      borderRadius: 8,
+                      fontSize: 12.5,
+                      color: "var(--muted)",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <strong>Tóm tắt kiến thức AI:</strong> {currentSample.explanation}
+                  </div>
+                </div>
+
+                {/* Interactive Student Test Simulation */}
+                <div
+                  style={{
+                    background: "var(--surface-soft)",
+                    border: "1px dashed var(--line)",
+                    borderRadius: 12,
+                    padding: "16px",
+                    marginTop: 16,
+                    marginBottom: 16,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                    <Icon name="target" size={16} />
+                    <strong style={{ fontSize: 13.5, color: "var(--ink)" }}>
+                      Làm thử câu hỏi như học viên:
+                    </strong>
+                  </div>
+                  <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "0 0 10px 0" }}>
+                    Bấm vào một phương án bên dưới để trải nghiệm phản hồi chấm điểm tức thì:
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {options.map((opt, i) => {
+                      const isSelected = studentChoice === i;
+                      const isCorrect = answer === i;
+                      let classNames = "ai-quiz-test-interactive-option";
+                      if (isSelected) {
+                        classNames += isCorrect ? " user-selected-correct" : " user-selected-wrong";
+                      }
+                      return (
+                        <div
+                          key={i}
+                          className={classNames}
+                          onClick={() => setStudentChoice(i)}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Chọn phương án ${String.fromCharCode(65 + i)}`}
+                        >
+                          <span
+                            style={{
+                              width: 22,
+                              height: 22,
+                              borderRadius: "50%",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 12,
+                              fontWeight: 700,
+                              background: isSelected
+                                ? isCorrect
+                                  ? "#10b981"
+                                  : "#ef4444"
+                                : "var(--line)",
+                              color: isSelected ? "#ffffff" : "var(--ink)",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {String.fromCharCode(65 + i)}
+                          </span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: isSelected ? 600 : 400 }}>
+                              {opt.text}
+                            </div>
+                            {isSelected && (
+                              <div
+                                style={{
+                                  marginTop: 6,
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  color: isCorrect ? "#15803d" : "#b91c1c",
+                                }}
+                              >
+                                {isCorrect
+                                  ? "🎉 Chính xác! (+1.0 điểm) - " + opt.rationale
+                                  : "⚠️ Chưa chính xác. " + opt.rationale}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <p role="status">
+                  Đã duyệt trong minh họa. Bước tiếp theo: nhập bài đánh giá nháp. Chưa có quiz nào được tạo.
+                </p>
+
+                <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 14 }}>
+                  <button
+                    className="button button-small button-subtle"
+                    onClick={() => {
+                      setApproved(false);
+                      setStudentChoice(null);
+                    }}
+                  >
+                    ✏️ Chỉnh sửa lại câu hỏi
+                  </button>
+                  <button className="plain-button" onClick={handleReset}>
+                    Đặt lại minh họa
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </Section>
@@ -163,6 +613,7 @@ export function AiQuiz() {
     </>
   );
 }
+
 export const featureItems = [
   [
     "Identity & Security",

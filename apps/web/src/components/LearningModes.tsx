@@ -53,7 +53,12 @@ export function LearningModes() {
         </div>
         <div className="learning-modes-grid">
           {modes.map((mode) => (
-            <TiltCard as="article" key={mode.code} className="learning-mode-card" tiltOptions={{ maxTilt: 6, scale: 1.02 }}>
+            <TiltCard
+              as="article"
+              key={mode.code}
+              className="learning-mode-card"
+              tiltOptions={{ maxTilt: 6, scale: 1.02 }}
+            >
               <div className="mode-media-wrap">
                 <picture>
                   <source

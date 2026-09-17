@@ -20,6 +20,10 @@ test("Lecturer allowlist accepts documented reads and commands", () => {
     `/classes/${id}/announcements?month=2026-09-01`,
   );
   assert.equal(
+    lecturerOperation(`/web-session/lecturer/courses/${id}/reviews`, "GET", undefined, {}).path,
+    `/courses/${id}/reviews`,
+  );
+  assert.equal(
     lecturerOperation(`/web-session/lecturer/classes/${id}/join-code/reset`, "POST", {}, command).path,
     `/classes/${id}/join-code/reset`,
   );
@@ -70,4 +74,22 @@ test("Lecturer envelope preserves pagination and fails closed on credentials", (
   );
   for (const key of ["rawProviderResponse", "providerCredential", "secretAccessKey", "actorContext"])
     assert.throws(() => lecturerEnvelope({ data: { [key]: "secret" } }), /UNSAFE_LECTURER_RESPONSE/);
+});
+
+test("AI distribution survives the BFF and rejects mismatched totals", () => {
+  const cognitiveDistribution = { RECOGNITION: 2, UNDERSTANDING: 3, APPLICATION: 3, ADVANCED_APPLICATION: 2 };
+  const body = {
+    documentId: id,
+    targetId: id,
+    targetType: "COURSE",
+    questionCount: 10,
+    questionTypes: ["SINGLE_CHOICE"],
+    difficulty: "MEDIUM",
+    cognitiveDistribution,
+  };
+  const operation = lecturerOperation("/web-session/lecturer/ai/quiz-jobs", "POST", body, command);
+  assert.equal(operation.path, "/ai/quiz-jobs");
+  assert.throws(() =>
+    lecturerOperation("/web-session/lecturer/ai/quiz-jobs", "POST", { ...body, questionCount: 9 }, command),
+  );
 });

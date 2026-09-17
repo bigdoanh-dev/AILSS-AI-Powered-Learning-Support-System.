@@ -68,7 +68,9 @@ export function AuthLayout() {
                   className={`auth-mode-pill ${isLogin ? "active" : ""}`}
                   aria-current={isLogin ? "page" : undefined}
                 >
-                  <span className="pill-icon" aria-hidden="true">🔑</span>
+                  <span className="pill-icon" aria-hidden="true">
+                    🔑
+                  </span>
                   <span>Đăng nhập</span>
                 </Link>
                 <Link
@@ -76,7 +78,9 @@ export function AuthLayout() {
                   className={`auth-mode-pill ${isRegister ? "active" : ""}`}
                   aria-current={isRegister ? "page" : undefined}
                 >
-                  <span className="pill-icon" aria-hidden="true">✨</span>
+                  <span className="pill-icon" aria-hidden="true">
+                    ✨
+                  </span>
                   <span>Đăng ký</span>
                 </Link>
               </nav>

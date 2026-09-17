@@ -57,7 +57,8 @@ export function MetricsBanner() {
     const el = containerRef.current;
     if (!el) return;
 
-    const reduced = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)").matches : false;
+    const reduced =
+      typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)").matches : false;
     if (reduced) {
       setCounts(metrics.map((m) => m.target));
       setActivated(true);
@@ -85,7 +86,8 @@ export function MetricsBanner() {
 
   useEffect(() => {
     if (!activated) return;
-    const reduced = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)").matches : false;
+    const reduced =
+      typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)").matches : false;
     if (reduced) return;
 
     const startTime = performance.now();

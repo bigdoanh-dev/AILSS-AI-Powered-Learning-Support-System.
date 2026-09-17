@@ -3,23 +3,17 @@ import { useEffect, useRef, useState } from "react";
 export function CinematicIntro() {
   const [visible, setVisible] = useState(true);
   const [closing, setClosing] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
       video.currentTime = 0;
-      // Try playing with sound; if browser autoplay policy blocks unmuted audio, fallback to muted so it never fails
-      video.muted = false;
-      const promise = video.play();
-      if (promise !== undefined) {
-        promise.catch(() => {
-          if (videoRef.current) {
-            videoRef.current.muted = true;
-            void videoRef.current.play().catch(() => {});
-          }
-        });
-      }
+      video.volume = 1.0;
+      // Start completely muted so no sound plays automatically on Home
+      video.muted = true;
+      void video.play().catch(() => {});
     }
 
     // Support replay trigger if requested via custom event
@@ -28,12 +22,15 @@ export function CinematicIntro() {
       setVisible(true);
       if (videoRef.current) {
         videoRef.current.currentTime = 0;
+        videoRef.current.volume = 1.0;
         videoRef.current.muted = false;
+        setIsMuted(false);
         const p = videoRef.current.play();
         if (p !== undefined) {
           p.catch(() => {
             if (videoRef.current) {
               videoRef.current.muted = true;
+              setIsMuted(true);
               void videoRef.current.play().catch(() => {});
             }
           });
@@ -42,7 +39,16 @@ export function CinematicIntro() {
     };
 
     window.addEventListener("ailss-play-intro", handleReplay);
-    return () => window.removeEventListener("ailss-play-intro", handleReplay);
+
+    // Safety timeout in case video stalls or fails to trigger onEnded
+    const safetyTimer = setTimeout(() => {
+      handleEnded();
+    }, 14000);
+
+    return () => {
+      clearTimeout(safetyTimer);
+      window.removeEventListener("ailss-play-intro", handleReplay);
+    };
   }, []);
 
   const handleEnded = () => {
@@ -53,6 +59,33 @@ export function CinematicIntro() {
     }, 800);
   };
 
+  const handleSkip = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleEnded();
+  };
+
+  const toggleSound = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      const nextMuted = !videoRef.current.muted;
+      videoRef.current.muted = nextMuted;
+      videoRef.current.volume = 1.0;
+      setIsMuted(nextMuted);
+      if (!nextMuted) {
+        void videoRef.current.play().catch(() => {});
+      }
+    }
+  };
+
+  const handleOverlayClick = () => {
+    if (videoRef.current && videoRef.current.muted) {
+      videoRef.current.muted = false;
+      videoRef.current.volume = 1.0;
+      setIsMuted(false);
+      void videoRef.current.play().catch(() => {});
+    }
+  };
+
   if (!visible) return null;
 
   return (
@@ -60,6 +93,7 @@ export function CinematicIntro() {
       className={`cinematic-intro-overlay ${closing ? "closing" : ""}`}
       aria-label="Video giới thiệu"
       aria-hidden={closing ? "true" : "false"}
+      onClick={handleOverlayClick}
       onContextMenu={(e) => e.preventDefault()}
     >
       <video
@@ -75,6 +109,32 @@ export function CinematicIntro() {
         onEnded={handleEnded}
       />
       <div className="cinematic-corner-mask" aria-hidden="true" />
+
+      {/* Interactive Controls Overlay */}
+      <div className="cinematic-controls">
+        <button
+          type="button"
+          className={`cinematic-audio-btn ${isMuted ? "pulse" : "active"}`}
+          onClick={toggleSound}
+          aria-label={isMuted ? "Bật âm thanh video giới thiệu" : "Tắt âm thanh video giới thiệu"}
+        >
+          {isMuted ? "🔇 Bật âm thanh" : "🔊 Đang phát âm thanh"}
+        </button>
+        <button
+          type="button"
+          className="cinematic-skip-btn"
+          onClick={handleSkip}
+          aria-label="Bỏ qua video giới thiệu"
+        >
+          Bỏ qua ✕
+        </button>
+      </div>
+
+      {isMuted && (
+        <div className="cinematic-unmute-hint" aria-hidden="true">
+          Nhấn bất kỳ đâu để bật âm thanh 🔊
+        </div>
+      )}
     </aside>
   );
 }

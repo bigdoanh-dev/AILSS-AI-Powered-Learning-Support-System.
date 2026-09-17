@@ -1,47 +1,66 @@
 import { useEffect, useRef, useState } from "react";
+
 const stages = [
-  ["Tài liệu của bạn", "Bắt đầu từ học liệu bạn muốn chia sẻ.", "PDF · DOCX · TXT"],
   [
-    "Kết nối kiến thức",
-    "Đưa những ý chính trong tài liệu vào quá trình chuẩn bị câu hỏi.",
-    "Đọc & trích xuất",
+    "Tài liệu của bạn",
+    "Bắt đầu từ giáo trình, bài giảng và tài liệu học tập bạn muốn chia sẻ.",
+    "PDF · DOCX · TXT",
   ],
   [
-    "AI hỗ trợ bản nháp",
-    "Có một điểm bắt đầu để giảng viên rà soát, thay vì soạn từ trang trắng.",
-    "Câu hỏi đề xuất",
+    "RAG & Trích xuất ngữ nghĩa",
+    "Phân đoạn thông minh (Semantic Chunking) và tạo Vector Embeddings riêng tư.",
+    "Trích xuất & Vector DB",
   ],
   [
-    "Giảng viên quyết định",
-    "Kiểm tra đáp án, chỉnh sửa cách hỏi và duyệt nội dung phù hợp.",
-    "Rà soát & chỉnh sửa",
+    "AI soạn thảo bản nháp",
+    "Mô hình AI chuyên sâu phân tích tài liệu và định hình ngân hàng câu hỏi có cấu trúc.",
+    "Sinh câu hỏi theo RAG",
   ],
   [
-    "Chuẩn bị bài kiểm tra",
-    "Đưa câu hỏi đã duyệt vào bài đánh giá nháp để tiếp tục biên tập.",
-    "Bài đánh giá nháp",
+    "Định hình thang đo Bloom",
+    "Chuẩn hóa 6 cấp độ từ Nhận biết, Thông hiểu tới Vận dụng, Phân tích chuyên sâu.",
+    "Ma trận Bloom L1 - L6",
   ],
   [
-    "Một bước tiến của người học",
-    "Nội dung được chuẩn bị kỹ để người học luyện tập và hiểu rõ hơn.",
-    "Học · Luyện tập · Phản hồi",
+    "Giảng viên rà soát & quyết định",
+    "Kiểm tra đối chiếu tài liệu nguồn, tinh chỉnh câu từ và phê duyệt phương án chính xác.",
+    "Rà soát & Phê duyệt",
+  ],
+  [
+    "Đề thi nháp & Luyện tập thích ứng",
+    "Xuất bản bài đánh giá nháp, kích hoạt trợ lý AI luyện đề cá nhân hóa theo năng lực.",
+    "Luyện thi thích ứng AI",
   ],
 ];
+
 export function ScrollStory() {
   const root = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
+  const [autoPlay, setAutoPlay] = useState(true);
+
+  // Auto-play cycling through 3D stages every 4 seconds
+  useEffect(() => {
+    if (!autoPlay) return;
+    const timer = setInterval(() => {
+      setActive((prev) => (prev + 1) % stages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [autoPlay]);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries.filter((e) => e.isIntersecting);
-        if (visible.length)
+        if (visible.length) {
           setActive(Number((visible[visible.length - 1].target as HTMLElement).dataset.stage));
+        }
       },
       { rootMargin: "-28% 0px -38% 0px", threshold: 0 },
     );
     root.current?.querySelectorAll("[data-stage]").forEach((e) => observer.observe(e));
     return () => observer.disconnect();
   }, []);
+
   return (
     <section ref={root} className="scroll-story section dark">
       <div className="container story-grid">
@@ -52,7 +71,28 @@ export function ScrollStory() {
             <br />
             Bạn giữ tay lái.
           </h2>
-          <p>Cuộn để khám phá cách tài liệu trở thành một cơ hội học tập.</p>
+          <p>Cuộn hoặc xem tự động để khám phá cách tài liệu trở thành một cơ hội học tập.</p>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, marginBottom: 12 }}>
+            <button
+              type="button"
+              className="button button-subtle button-small"
+              style={{
+                fontSize: 12,
+                padding: "4px 10px",
+                borderRadius: 8,
+                background: "rgba(255,255,255,0.06)",
+                color: "#7dd3fc",
+                border: "1px solid rgba(125,211,252,0.25)",
+                cursor: "pointer",
+              }}
+              onClick={() => setAutoPlay(!autoPlay)}
+              title={autoPlay ? "Bấm để tạm dừng tự động chuyển động" : "Bấm để tiếp tục tự động chuyển động"}
+            >
+              <span>{autoPlay ? "⏸ Tự động chuyển động 3D: Bật" : "▶ Tiếp tục chuyển động 3D"}</span>
+            </button>
+          </div>
+
           <div
             className="story-stage"
             aria-hidden="true"
@@ -81,7 +121,17 @@ export function ScrollStory() {
         </div>
         <ol className="story-chapters">
           {stages.map(([title, copy], i) => (
-            <li key={title} data-stage={i} className={active === i ? "is-current" : ""}>
+            <li
+              key={title}
+              data-stage={i}
+              className={active === i ? "is-current" : ""}
+              onClick={() => {
+                setActive(i);
+                setAutoPlay(false);
+              }}
+              style={{ cursor: "pointer" }}
+              title={`Nhấp để chuyển sang giai đoạn 0${i + 1}`}
+            >
               <span className="story-number">0{i + 1}</span>
               <div>
                 <h3>{title}</h3>
@@ -94,3 +144,4 @@ export function ScrollStory() {
     </section>
   );
 }
+

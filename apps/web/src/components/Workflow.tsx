@@ -1,44 +1,67 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 export const steps = [
   [
     "Tài liệu",
     "PDF / DOCX / TXT",
-    "Giảng viên tải tài liệu phục vụ khóa học. Chỉ dùng nội dung bạn có quyền sử dụng.",
+    "Giảng viên tải tài liệu phục vụ khóa học (giáo trình, slide bài giảng, đề cương). Chỉ xử lý nội dung bạn có quyền sử dụng và bảo mật riêng tư tuyệt đối.",
   ],
   [
     "Trích xuất riêng tư",
     "Nội dung có cấu trúc",
-    "Tài liệu được kiểm tra checksum, lưu riêng tư và chuyển qua quy trình trích xuất.",
+    "Tài liệu được kiểm tra checksum SHA-256, lưu trữ bảo mật và chuyển qua quy trình phân đoạn ngữ nghĩa (Semantic Chunking) để lập chỉ mục Vector.",
   ],
   [
     "AI tạo bản nháp",
     "Câu hỏi từ học liệu",
-    "AI đề xuất câu hỏi khách quan từ nội dung tài liệu. Nội dung vẫn cần được rà soát.",
+    "Mô hình AI chuyên sâu phân tích tài liệu để đề xuất các câu hỏi trắc nghiệm khách quan bám sát mục tiêu học tập theo thang nhận thức Bloom.",
   ],
   [
     "Giảng viên rà soát",
     "Kiểm tra & chỉnh sửa",
-    "Đọc câu hỏi, kiểm tra đáp án và chỉnh sửa nội dung trước khi phê duyệt.",
+    "Quy trình Human-in-the-Loop: Giảng viên đọc câu hỏi, đối chiếu tài liệu nguồn, kiểm tra đáp án và chỉnh sửa nội dung trước khi phê duyệt.",
   ],
   [
     "Phê duyệt",
     "Quyết định của con người",
-    "Chỉ bản nháp được giảng viên chấp thuận mới đi vào bước chuẩn bị bài đánh giá.",
+    "Quyền quyết định chất lượng thuộc về người dạy. Chỉ bản nháp được giảng viên chấp thuận mới đi vào bước chuẩn bị bài đánh giá chính thức.",
   ],
   [
     "Bài đánh giá nháp",
     "Sẵn sàng để biên tập",
-    "Kết quả nhập vào bài đánh giá ở trạng thái nháp. AI không tự xuất bản quiz.",
+    "Kết quả nhập vào bài đánh giá ở trạng thái nháp, sẵn sàng cho học viên luyện tập thích ứng. AI không tự xuất bản quiz khi chưa được mở thi.",
   ],
 ];
+
 export function Workflow() {
   const [active, setActive] = useState(0);
+  const [autoPlay, setAutoPlay] = useState(true);
+
+  // Auto-advance through workflow steps every 4.5 seconds
+  useEffect(() => {
+    if (!autoPlay) return;
+    const timer = setInterval(() => {
+      setActive((prev) => (prev + 1) % steps.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [autoPlay]);
+
   return (
-    <div className="workflow">
+    <div
+      className="workflow"
+      onMouseEnter={() => setAutoPlay(false)}
+      onMouseLeave={() => setAutoPlay(true)}
+    >
       <ol className="workflow-steps">
         {steps.map(([title, sub], i) => (
           <li key={title}>
-            <button onClick={() => setActive(i)} aria-pressed={active === i}>
+            <button
+              onClick={() => {
+                setActive(i);
+                setAutoPlay(false);
+              }}
+              aria-pressed={active === i}
+            >
               <span className="step-number">0{i + 1}</span>
               <strong>{title}</strong>
               <small>{sub}</small>
@@ -48,7 +71,25 @@ export function Workflow() {
       </ol>
       <div className="workflow-detail" aria-live="polite">
         <div key={active} className="panel-motion">
-          <span className="eyebrow">Bước {active + 1} / 6</span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <span className="eyebrow">Bước {active + 1} / 6</span>
+            <button
+              type="button"
+              className="button button-subtle button-small"
+              style={{
+                fontSize: 11,
+                padding: "2px 7px",
+                borderRadius: 6,
+                background: "rgba(255,255,255,0.06)",
+                color: "var(--muted)",
+                cursor: "pointer",
+              }}
+              onClick={() => setAutoPlay(!autoPlay)}
+              title={autoPlay ? "Bấm để dừng tự động chuyển bước" : "Bấm để tiếp tục tự động chuyển bước"}
+            >
+              <span>{autoPlay ? "⏸ Tự động: Bật" : "▶ Tiếp tục tự động"}</span>
+            </button>
+          </div>
           <h3>{steps[active][0]}</h3>
           <p>{steps[active][2]}</p>
         </div>
@@ -56,10 +97,24 @@ export function Workflow() {
           <span style={{ width: `${((active + 1) / 6) * 100}%` }} />
         </div>
         <div className="inline-actions">
-          <button className="plain-button" disabled={active === 0} onClick={() => setActive(active - 1)}>
+          <button
+            className="plain-button"
+            disabled={active === 0}
+            onClick={() => {
+              setActive(active - 1);
+              setAutoPlay(false);
+            }}
+          >
             Bước trước
           </button>
-          <button className="plain-button" disabled={active === 5} onClick={() => setActive(active + 1)}>
+          <button
+            className="plain-button"
+            disabled={active === 5}
+            onClick={() => {
+              setActive(active + 1);
+              setAutoPlay(false);
+            }}
+          >
             Bước tiếp theo
           </button>
         </div>
@@ -67,3 +122,4 @@ export function Workflow() {
     </div>
   );
 }
+

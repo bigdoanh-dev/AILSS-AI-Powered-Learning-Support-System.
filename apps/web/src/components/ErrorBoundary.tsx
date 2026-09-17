@@ -25,8 +25,13 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
       return (
-        <div className="workspace-alert-box" style={{ margin: "3rem auto", maxWidth: "680px", padding: "1.5rem" }}>
-          <span className="alert-icon" aria-hidden="true" style={{ fontSize: "1.75rem" }}>⚠️</span>
+        <div
+          className="workspace-alert-box"
+          style={{ margin: "3rem auto", maxWidth: "680px", padding: "1.5rem" }}
+        >
+          <span className="alert-icon" aria-hidden="true" style={{ fontSize: "1.75rem" }}>
+            ⚠️
+          </span>
           <div className="alert-body">
             <strong style={{ fontSize: "1.1rem", display: "block", marginBottom: "0.5rem" }}>
               Đã xảy ra sự cố khi hiển thị giao diện

@@ -58,8 +58,8 @@ export default function Home() {
             Một khả năng mới.
           </h1>
           <p className="lead">
-            Từ bài giảng đầu tiên đến dự án của riêng bạn. Khám phá khóa học, luyện tập và tiến bộ cùng
-            giảng viên và AI.
+            Từ bài giảng đầu tiên đến dự án của riêng bạn. Khám phá khóa học, luyện tập và tiến bộ cùng giảng
+            viên và AI.
           </p>
           <div className="actions astra-hero-actions">
             <ButtonLink to="/courses">Khám phá khóa học</ButtonLink>
@@ -154,7 +154,10 @@ export default function Home() {
           <div className="studio-caption">
             <span className="eyebrow">AILSS AI STUDIO</span>
             <h3>Giao diện làm việc &amp; rà soát bài giảng thực tế</h3>
-            <p>Minh họa quy trình trích xuất tài liệu nguồn, tạo câu hỏi tự động và sự phê duyệt của giảng viên.</p>
+            <p>
+              Minh họa quy trình trích xuất tài liệu nguồn, tạo câu hỏi tự động và sự phê duyệt của giảng
+              viên.
+            </p>
           </div>
           <div className="studio-preview-card">
             <div className="studio-window-bar" aria-hidden="true">

@@ -18,6 +18,13 @@ export const localDay = (value = new Date()) =>
 export const addDays = (day: string, count: number) =>
   new Date(Date.parse(day + "T00:00:00Z") + count * 86400000).toISOString().slice(0, 10);
 export function calendarWindow(day: string, view: string) {
+  if (view === "day") {
+    const start = day;
+    const end = day;
+    const from = addDays(start, -1);
+    const to = addDays(end, 1);
+    return { start, end, queries: [new URLSearchParams({ from, to }).toString()] };
+  }
   const first = view === "week" ? day : day.slice(0, 7) + "-01";
   const weekday = (new Date(first + "T00:00:00Z").getUTCDay() + 6) % 7;
   const start = view === "list" ? first : addDays(first, -weekday);
@@ -35,7 +42,9 @@ export function useCalendar() {
   const [params, setParams] = useSearchParams();
   const raw = params.get("date") || "";
   const day = /^\d{4}-\d{2}-\d{2}$/.test(raw) && !Number.isNaN(Date.parse(raw)) ? raw : localDay();
-  const view = ["list", "week", "month"].includes(params.get("view") || "") ? params.get("view")! : "week";
+  const view = ["day", "week", "month", "list"].includes(params.get("view") || "")
+    ? params.get("view")!
+    : "week";
   const update = (values: Record<string, string>) =>
     setParams((previous) => {
       const next = new URLSearchParams(previous);
@@ -67,11 +76,13 @@ export function ScheduleCalendar({
   const move = (delta: number) =>
     update({
       date:
-        view === "week"
-          ? addDays(day, delta * 7)
-          : new Date(Date.UTC(Number(day.slice(0, 4)), Number(day.slice(5, 7)) - 1 + delta, 1))
-              .toISOString()
-              .slice(0, 10),
+        view === "day"
+          ? addDays(day, delta)
+          : view === "week"
+            ? addDays(day, delta * 7)
+            : new Date(Date.UTC(Number(day.slice(0, 4)), Number(day.slice(5, 7)) - 1 + delta, 1))
+                .toISOString()
+                .slice(0, 10),
     });
   const event = (x: CalendarSession) => (
     <Link
@@ -114,9 +125,10 @@ export function ScheduleCalendar({
         </label>
         <div className="calendar-views" role="group" aria-label="Chế độ xem lịch">
           {[
-            ["list", "Danh sách"],
+            ["day", "Ngày"],
             ["week", "Tuần"],
             ["month", "Tháng"],
+            ["list", "Danh sách"],
           ].map(([v, label]) => (
             <button key={v} aria-pressed={view === v} onClick={() => update({ view: v })}>
               {label}
@@ -125,11 +137,49 @@ export function ScheduleCalendar({
         </div>
       </div>
       <p className="muted">
-        {view === "week" ? `${start} – ${end}` : `Tháng ${day.slice(5, 7)}/${day.slice(0, 4)}`} · Giờ Việt Nam
-        (UTC+7)
+        {view === "day"
+          ? `Ngày ${day.slice(8, 10)}/${day.slice(5, 7)}/${day.slice(0, 4)}`
+          : view === "week"
+            ? `${start} – ${end}`
+            : `Tháng ${day.slice(5, 7)}/${day.slice(0, 4)}`} · Giờ Việt Nam (UTC+7)
       </p>
-      {!sorted.length && <p role="status">Chưa có buổi học trong khoảng thời gian này.</p>}
-      {view === "list" ? (
+      {!sorted.length && view !== "day" && <p role="status">Chưa có buổi học trong khoảng thời gian này.</p>}
+      {view === "day" ? (
+        <div className="calendar-day-agenda">
+          <div className="calendar-day-header">
+            <h3>Lịch học ngày {day.slice(8, 10)}/{day.slice(5, 7)}/{day.slice(0, 4)}</h3>
+            <span className="badge">{sorted.length} buổi học</span>
+          </div>
+          {!sorted.length ? (
+            <div className="empty-day-box" style={{ padding: "32px 16px", textAlign: "center", color: "var(--muted)" }}>
+              <p style={{ margin: 0, fontWeight: 600 }}>Không có buổi học nào được xếp lịch vào ngày này.</p>
+              <small>Bạn có thể chọn ngày khác hoặc chuyển sang xem theo Tuần/Tháng.</small>
+            </div>
+          ) : (
+            <div className="day-agenda-list" style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "12px" }}>
+              {sorted.map((x) => (
+                <article key={x.sessionId} className="home-activity-card">
+                  <div className="home-activity-card-top">
+                    <span className="badge" style={{ fontWeight: 700 }}>
+                      ⏰ {time(x.startAt)} – {time(x.endAt)}
+                    </span>
+                    <span className={x.status === "CANCELLED" ? "red-badge-pill" : "green-badge-pill"}>
+                      {x.status === "CANCELLED" ? "● Đã hủy" : "● Sắp diễn ra"}
+                    </span>
+                  </div>
+                  <h4 className="home-activity-card-title">{x.title}</h4>
+                  <div className="home-activity-card-meta">
+                    <span>{x.className ? `Lớp: ${x.className}` : "Lớp học chính khóa"}</span>
+                    <Link to={x.href} className="button small" style={{ textDecoration: "none" }}>
+                      Vào chi tiết →
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : view === "list" ? (
         <div className="calendar-list">
           {sorted.map((x) => (
             <article key={x.sessionId}>
