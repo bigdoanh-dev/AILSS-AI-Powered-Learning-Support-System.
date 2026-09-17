@@ -1,3 +1,8 @@
+import {
+  aiUsageDay,
+  aiUsageResetsAt,
+  AI_USAGE_TIME_ZONE,
+} from "../../../../packages/contracts/src/ai-usage-day.js";
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { types } from "cassandra-driver";
 import type { CassandraClient } from "../../../../packages/cassandra/src/index.js";
@@ -294,7 +299,7 @@ export class AiQuizRepository {
   async usage(owner: string, date: Date) {
     return this.db.execute(
       "SELECT occurred_at,operation_id,provider,model,input_units,output_units,cost_estimate,state FROM ai_usage_by_user_day WHERE user_id=? AND usage_day=?",
-      [uuid(owner), day(date)],
+      [uuid(owner), types.LocalDate.fromString(aiUsageDay(date))],
       "LOCAL_QUORUM",
     );
   }
@@ -333,7 +338,7 @@ export class AiQuizRepository {
   async reserveQuota(owner: string, operationId: string, units: number, limit: number, now: Date) {
     const inserted = await this.db.execute(
       "INSERT INTO ai_usage_operation_by_id (operation_id,user_id,usage_day,state,reserved_units,occurred_at,updated_at) VALUES (?,?,?,'RESERVING',?,?,?) IF NOT EXISTS",
-      [uuid(operationId), uuid(owner), day(now), units, now, now],
+      [uuid(operationId), uuid(owner), types.LocalDate.fromString(aiUsageDay(now)), units, now, now],
       "LOCAL_QUORUM",
       "LOCAL_SERIAL",
     );
@@ -354,7 +359,7 @@ export class AiQuizRepository {
     }
     await this.db.execute(
       "INSERT INTO ai_quota_by_user_day (user_id,usage_day,quota_limit,reserved,consumed,version,updated_at) VALUES (?,?,?,0,0,0,?) IF NOT EXISTS",
-      [uuid(owner), day(now), limit, now],
+      [uuid(owner), types.LocalDate.fromString(aiUsageDay(now)), limit, now],
       "LOCAL_QUORUM",
       "LOCAL_SERIAL",
     );
@@ -362,7 +367,7 @@ export class AiQuizRepository {
       const row = (
         await this.db.execute(
           "SELECT quota_limit,reserved,consumed,version FROM ai_quota_by_user_day WHERE user_id=? AND usage_day=?",
-          [uuid(owner), day(now)],
+          [uuid(owner), types.LocalDate.fromString(aiUsageDay(now))],
           "LOCAL_QUORUM",
         )
       )[0];
@@ -382,7 +387,7 @@ export class AiQuizRepository {
           long(Number(row.version) + 1),
           now,
           uuid(owner),
-          day(now),
+          types.LocalDate.fromString(aiUsageDay(now)),
           long(Number(row.version)),
         ],
         "LOCAL_QUORUM",
@@ -405,20 +410,21 @@ export class AiQuizRepository {
     const r = (
       await this.db.execute(
         "SELECT quota_limit,reserved,consumed,updated_at FROM ai_quota_by_user_day WHERE user_id=? AND usage_day=?",
-        [uuid(owner), day(now)],
+        [uuid(owner), types.LocalDate.fromString(aiUsageDay(now))],
         "LOCAL_QUORUM",
       )
     )[0];
+    const window = { day: aiUsageDay(now), timeZone: AI_USAGE_TIME_ZONE, resetsAt: aiUsageResetsAt(now) };
     return r
       ? {
-          day: now.toISOString().slice(0, 10),
+          ...window,
           limit: Number(r.quota_limit),
           reserved: Number(r.reserved),
           consumed: Number(r.consumed),
           remaining: Math.max(0, Number(r.quota_limit) - Number(r.reserved) - Number(r.consumed)),
           updatedAt: new Date(String(r.updated_at)).toISOString(),
         }
-      : { day: now.toISOString().slice(0, 10), limit: 0, reserved: 0, consumed: 0, remaining: 0 };
+      : { ...window, limit: 0, reserved: 0, consumed: 0, remaining: 0 };
   }
   async releaseQuota(owner: string, operationId: string, now: Date) {
     const op = (
