@@ -60,6 +60,8 @@ await startService(manifest, {
           submit: verifier("assessment.attempt.submit"),
           result: verifier("assessment.attempt.result"),
           results: verifier("assessment.quiz.results"),
+          gradeAttempt: verifier("assessment.grade.record"),
+          listGrades: verifier("assessment.grade.list"),
         },
         context.metrics,
       ),
