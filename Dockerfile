@@ -5,6 +5,7 @@ RUN corepack enable && corepack prepare pnpm@11.19.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig*.json ./
 COPY apps ./apps
 COPY packages ./packages
+COPY patches ./patches
 COPY scripts ./scripts
 COPY tests ./tests
 RUN pnpm install --frozen-lockfile && pnpm build && pnpm prune --prod

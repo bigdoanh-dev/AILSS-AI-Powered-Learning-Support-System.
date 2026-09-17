@@ -8,3 +8,12 @@ allowBuilds:
 
 onlyBuiltDependencies:
   - esbuild
+
+patchedDependencies:
+  expo-modules-jsi@57.1.0: patches/expo-modules-jsi@57.1.0.patch
+
+overrides:
+  "cassandra-driver>adm-zip": 0.6.1
+
+minimumReleaseAgeExclude:
+  - expo-image-picker@57.0.18

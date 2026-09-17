@@ -8,6 +8,7 @@ export default tseslint.config(
       "dist/**",
       "node_modules/**",
       "apps/web/**",
+      "apps/mobile/**",
       "infrastructure/tls/generated/**",
       "docs/evidence/**",
     ],

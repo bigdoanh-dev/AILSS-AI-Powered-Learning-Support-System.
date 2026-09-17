@@ -3,3 +3,5 @@ node_modules
 pnpm-lock.yaml
 docs/evidence
 infrastructure/tls/generated
+apps/mobile/android
+apps/mobile/ios
