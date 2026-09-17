@@ -72,4 +72,13 @@ describe("P10.1 secure document primitives", () => {
       expect(error).toMatchObject({ code: "INVALID_UTF8", quarantined: false });
     }
   });
+  it("rejects empty and oversized extracted text at the configured boundary", () => {
+    expect(() => extractDocument(Buffer.from("   \r\n"), "text/plain", 16)).toThrowError(
+      expect.objectContaining({ code: "EMPTY_DOCUMENT", quarantined: false }),
+    );
+    expect(() => extractDocument(Buffer.from("12345"), "text/plain", 4)).toThrowError(
+      expect.objectContaining({ code: "EXTRACTED_OUTPUT_TOO_LARGE", quarantined: true }),
+    );
+    expect(extractDocument(Buffer.from("1234"), "text/plain", 4).text.toString()).toBe("1234");
+  });
 });
