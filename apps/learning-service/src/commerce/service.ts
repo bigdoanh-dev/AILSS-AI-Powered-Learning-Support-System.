@@ -32,6 +32,12 @@ export class LearningCommerceService {
     private readonly recovery?: SepayRecoveryRepository,
   ) {}
 
+  async revenueDashboard(actor: ActorContext, range: string) {
+    if (!actor.roles.includes("ADMIN"))
+      throw new AppError("ADMIN_REQUIRED", 403, "Admin authorization is required");
+    return this.repo.revenueDashboard(range);
+  }
+
   async freeEnroll(input: { courseId: string; actor: ActorContext; key: string; correlationId: string }) {
     student(input.actor);
     const offeringId = defaultOfferingId(input.courseId),
@@ -302,6 +308,33 @@ export class LearningCommerceService {
       );
     if (!this.recovery)
       throw new AppError("PAYMENT_UNAVAILABLE", 503, "Payment processing is temporarily unavailable", true);
+    if (typeof this.recovery.get === "function") {
+      const existing = await this.recovery.get(String(transaction.id));
+      if (existing) {
+        if (
+          existing.orderId !== orderId ||
+          existing.amount !== transaction.transferAmount
+        ) {
+          console.warn(
+            JSON.stringify({
+              eventType: "APPSEC_AUDIT_PAYLOAD_COLLISION",
+              severity: "HIGH",
+              transactionId: String(transaction.id),
+              existingOrderId: existing.orderId,
+              incomingOrderId: orderId,
+              existingAmount: existing.amount,
+              incomingAmount: transaction.transferAmount,
+              correlationId,
+            }),
+          );
+          throw new AppError(
+            "PROVIDER_TRANSACTION_CONFLICT",
+            409,
+            "Payment could not be accepted: transaction payload conflict",
+          );
+        }
+      }
+    }
     const receivedAt = new Date(),
       accepted = {
         transactionId: String(transaction.id),

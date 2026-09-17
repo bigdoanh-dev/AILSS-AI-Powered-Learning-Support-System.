@@ -13,7 +13,9 @@ export function learningCommerceRouter(
   verify: Record<
     "enroll" | "myCourses" | "roster" | "orderCreate" | "orderRead" | "payment",
     (token: string) => Promise<ActorContext>
-  >,
+  > & {
+    dashboardRevenue?: (token: string) => Promise<ActorContext>;
+  },
 ): Router {
   const r = Router();
   r.post("/api/v1/payments/sepay/webhook", async (req, res, next) => {
@@ -106,6 +108,19 @@ export function learningCommerceRouter(
         ...classroomActor(req),
       });
       res.status(200).json({ data: result.order, meta: { ...meta(c.requestId), replayed: result.replayed } });
+    } catch (e) {
+      next(e);
+    }
+  });
+  r.get("/api/v1/admin/dashboard/revenue", async (req, res, next) => {
+    try {
+      const c = context();
+      const actor = await requiredActor(req, verify.dashboardRevenue ?? verify.orderRead, c.correlationId);
+      if (!actor.roles.includes("ADMIN"))
+        throw new AppError("ADMIN_REQUIRED", 403, "Admin authorization is required");
+      const range = typeof req.query.range === "string" ? req.query.range : "30d";
+      const data = await service.revenueDashboard(actor, range);
+      res.status(200).json({ data, meta: meta(c.requestId) });
     } catch (e) {
       next(e);
     }
