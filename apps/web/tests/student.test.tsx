@@ -10,6 +10,11 @@ import Discussion from "../src/student/Discussion";
 const id = "00000000-0000-4000-8000-000000000001";
 const profile = { userId: id, displayName: "Student", role: "STUDENT", status: "ACTIVE", profileVersion: 1 };
 const ok = (data: unknown) => ({ ok: true, json: async () => ({ data }) });
+const notFound = () => ({
+  ok: false,
+  status: 404,
+  json: async () => ({ error: { code: "QUIZ_NOT_FOUND" } }),
+});
 function setup(
   component: React.ReactNode,
   path = "/app/assessments/" + id,
@@ -72,8 +77,9 @@ describe("Student contracts and privacy", () => {
     expect(fetch.mock.calls.filter((c) => c[0].includes("/student/"))).toHaveLength(0);
   });
   it("never starts an attempt when opening quiz detail", async () => {
-    const f = setup(<QuizDetail />, undefined, "STUDENT", () =>
-      ok({ quizId: id, title: "A real quiz", questionCount: 4, state: "PUBLISHED" }),
+    const realQuizId = "00000000-0000-4000-8000-000000000099";
+    const f = setup(<QuizDetail />, "/app/assessments/" + realQuizId, "STUDENT", () =>
+      ok({ quizId: realQuizId, title: "A real quiz", questionCount: 4, state: "PUBLISHED" }),
     );
     await screen.findByText("A real quiz");
     expect(f.mock.calls.some((c) => c[1].method === "POST")).toBe(false);
@@ -81,6 +87,18 @@ describe("Student contracts and privacy", () => {
     await waitFor(() =>
       expect(f.mock.calls.some((c) => c[0].endsWith("/attempts") && c[1].body === "{}")).toBe(true),
     );
+  });
+  it("shows safe metadata instead of a retry error for an unpublished demo quiz", async () => {
+    const demoQuizId = "00000000-0000-4000-8000-000000000010";
+    setup(<QuizDetail />, "/app/assessments/" + demoQuizId, "STUDENT", () => notFound());
+
+    await screen.findByText(/Nội dung giới thiệu/);
+    expect(screen.getByText(/Kiểm tra 15 phút: Đại số quan hệ/)).toBeTruthy();
+    expect(screen.queryByText("Không tìm thấy nội dung hoặc nội dung không còn khả dụng.")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Thử lại" })).toBeNull();
+    expect(
+      (screen.getByRole("button", { name: "Chưa mở nội dung bài kiểm tra" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
   });
   it("result renders only score summary even if unexpected private fields arrive", async () => {
     setup(<ResultPage />, "/app/attempts/" + id + "/result", "STUDENT", () =>

@@ -9,7 +9,7 @@ import {
 } from "../../../packages/security/src/index.js";
 import { parseBearerAuthorization } from "./protected-identity-proxy.js";
 
-type Name = "enroll" | "myCourses" | "roster" | "orderCreate" | "orderRead" | "payment";
+type Name = "enroll" | "myCourses" | "roster" | "orderCreate" | "orderRead" | "payment" | "dashboardRevenue";
 export async function learningCommerceProxyFactory(config: AppConfig): Promise<Record<Name, RequestHandler>> {
   if (!config.JWT_PUBLIC_KEY_PATH || !config.ACTOR_CONTEXT_PRIVATE_KEY_PATH)
     throw new Error("Learning commerce proxy requires signing keys");
@@ -116,6 +116,11 @@ export async function learningCommerceProxyFactory(config: AppConfig): Promise<R
       "learning.order.payment",
       (r) => `/api/v1/orders/${enc(r.params.orderId)}/simulate-payment`,
       true,
+    ),
+    dashboardRevenue: handler(
+      "GET",
+      "learning.admin.dashboard.revenue",
+      (r) => `/api/v1/admin/dashboard/revenue${r.url.includes("?") ? r.url.slice(r.url.indexOf("?")) : ""}`,
     ),
   };
 }

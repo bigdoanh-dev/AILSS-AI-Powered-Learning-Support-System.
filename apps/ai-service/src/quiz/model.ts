@@ -1,5 +1,9 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from "node:crypto";
 import { z } from "zod";
+import {
+  cognitiveDistributionSchema,
+  hasValidDistribution,
+} from "../../../../packages/contracts/src/cognitive-levels.js";
 import { objectiveQuizSchema, type ObjectiveQuiz } from "../../../../packages/contracts/src/objective-v1.js";
 
 const questionType = z.enum(["SINGLE_CHOICE", "MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"]);
@@ -15,8 +19,13 @@ export const createQuizJobSchema = z
       .max(4)
       .refine((v) => new Set(v).size === v.length),
     difficulty: z.enum(["EASY", "MEDIUM", "HARD"]),
+    cognitiveDistribution: cognitiveDistributionSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine(hasValidDistribution, {
+    message: "Cognitive distribution must sum to questionCount",
+    path: ["cognitiveDistribution"],
+  });
 export type CreateQuizJob = z.infer<typeof createQuizJobSchema>;
 export const states = [
   "QUEUED",

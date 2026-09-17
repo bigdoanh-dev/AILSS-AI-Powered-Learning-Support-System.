@@ -170,6 +170,7 @@ rule("POST", "/courses/:id/submit-review", { command: true });
 rule("POST", "/courses/:id/lessons", { body: lesson, command: true });
 rule("PATCH", "/lessons/:id", { body: lessonPatch, command: true });
 rule("GET", "/courses/:id/offerings", { query: z.object(page).strict() });
+rule("GET", "/courses/:id/reviews", { query: z.object(page).strict() });
 rule("GET", "/resources/(COURSE|CLASS)/:id/comments", { query: z.object(page).strict() });
 rule("POST", "/resources/(COURSE|CLASS)/:id/comments", {
   body: z.object({ body: txt(1, 4000), parentId: id.nullable().optional() }).strict(),
@@ -265,8 +266,22 @@ rule("POST", "/ai/quiz-jobs", {
         .min(1)
         .max(4),
       difficulty: z.enum(["EASY", "MEDIUM", "HARD"]),
+      cognitiveDistribution: z
+        .object({
+          RECOGNITION: z.number().int().min(0).max(50),
+          UNDERSTANDING: z.number().int().min(0).max(50),
+          APPLICATION: z.number().int().min(0).max(50),
+          ADVANCED_APPLICATION: z.number().int().min(0).max(50),
+        })
+        .strict()
+        .optional(),
     })
-    .strict(),
+    .strict()
+    .refine(
+      (v) =>
+        !v.cognitiveDistribution ||
+        Object.values(v.cognitiveDistribution).reduce((sum, count) => sum + count, 0) === v.questionCount,
+    ),
   command: true,
 });
 rule("GET", "/ai/jobs", {

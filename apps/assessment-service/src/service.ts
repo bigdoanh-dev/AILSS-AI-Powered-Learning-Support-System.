@@ -35,6 +35,7 @@ import {
   type Attempt,
   type AttemptSubmitRequest,
   type ResultCursorPosition,
+  type ManualGradeRequest,
 } from "./model.js";
 import type { AssessmentRepository, CommandRecord, ResultProjectionRow } from "./repository.js";
 
@@ -74,8 +75,11 @@ export type AssessmentStore = Pick<
   | "result"
   | "submitAttempt"
   | "writeResultProjection"
+  | "updateResultProjection"
+  | "recordManualGrade"
   | "prepareSubmittedEvent"
   | "readySubmittedEvent"
+  | "prepareGradedEvent"
   | "resultProjectionShard"
 >;
 
@@ -921,11 +925,20 @@ export class AssessmentService {
       attemptId,
       quizId: result.quizId,
       quizVersion: result.quizVersion,
-      score: result.score,
+      score: result.manualScore ?? result.score,
       maxScore: result.maxScore,
       submittedAt: attempt.submittedAt.toISOString(),
       resultVersion: result.resultVersion,
       gradingAlgorithmVersion: result.gradingAlgorithmVersion,
+      ...(result.manualScore ? { autoScore: result.score, manualScore: result.manualScore } : {}),
+      ...(result.teacherFeedback ? { teacherFeedback: result.teacherFeedback } : {}),
+      ...(result.gradedBy ? { gradedBy: result.gradedBy } : {}),
+      ...(result.gradedAt ? { gradedAt: result.gradedAt.toISOString() } : {}),
+      ...(result.gradingStatus
+        ? { gradingStatus: result.gradingStatus }
+        : result.manualScore
+          ? { gradingStatus: "MANUALLY_GRADED" }
+          : {}),
     };
   }
 
@@ -973,9 +986,15 @@ export class AssessmentService {
         attemptId: string;
         studentId: string;
         score: string;
+        autoScore?: string;
+        manualScore?: string;
         maxScore: string;
         submittedAt: string;
         resultVersion: number;
+        teacherFeedback?: string;
+        gradedBy?: string;
+        gradedAt?: string;
+        gradingStatus?: string;
       }> = [];
     let consumed = 0;
     for (const row of candidates) {
@@ -990,7 +1009,7 @@ export class AssessmentService {
         !canonical ||
         canonical.quizId !== input.quizId ||
         canonical.studentId !== row.studentId ||
-        canonical.score !== row.score ||
+        (canonical.manualScore ?? canonical.score) !== row.score ||
         canonical.maxScore !== row.maxScore ||
         canonical.resultVersion !== row.resultVersion
       )
@@ -998,10 +1017,16 @@ export class AssessmentService {
       items.push({
         attemptId: row.attemptId,
         studentId: row.studentId,
-        score: row.score,
+        score: canonical.manualScore ?? row.score,
+        autoScore: row.score,
+        ...(canonical.manualScore ? { manualScore: canonical.manualScore } : {}),
         maxScore: row.maxScore,
         submittedAt: row.submittedAt.toISOString(),
         resultVersion: row.resultVersion,
+        ...(canonical.teacherFeedback ? { teacherFeedback: canonical.teacherFeedback } : {}),
+        ...(canonical.gradedBy ? { gradedBy: canonical.gradedBy } : {}),
+        ...(canonical.gradedAt ? { gradedAt: canonical.gradedAt.toISOString() } : {}),
+        gradingStatus: canonical.gradingStatus ?? (canonical.manualScore ? "MANUALLY_GRADED" : "AUTO_GRADED"),
       });
     }
     const hasMore = consumed < candidates.length || shardRows.some((rows) => rows.length > input.limit),
@@ -1022,6 +1047,159 @@ export class AssessmentService {
             }),
           }
         : {}),
+    };
+  }
+
+  async gradeAttempt(input: {
+    actor: ActorContext;
+    quizId: string;
+    attemptId: string;
+    request: ManualGradeRequest;
+    requestId: string;
+  }) {
+    if (!input.actor.roles.includes("LECTURER") && !input.actor.roles.includes("ADMIN"))
+      throw new AppError("LECTURER_REQUIRED", 403, "Lecturer or Admin authorization is required");
+    if (input.actor.roles.includes("LECTURER")) {
+      await this.requireLecturer(input.actor, input.requestId);
+    }
+    const quiz = await this.requiredQuiz(input.quizId);
+    if (!input.actor.roles.includes("ADMIN") && quiz.ownerId !== input.actor.userId) {
+      await this.requireTargetOwner(quiz.targetType, quiz.targetId, input.actor.userId, input.requestId);
+    }
+
+    const attempt = await this.repository.attempt(input.attemptId);
+    if (!attempt || attempt.quizId !== input.quizId)
+      throw new AppError("ATTEMPT_NOT_FOUND", 404, "Attempt not found for this quiz");
+    if (attempt.state !== "SUBMITTED" || !attempt.submittedAt)
+      throw conflict("ATTEMPT_NOT_SUBMITTED", "Attempt has not been submitted yet");
+
+    const currentResult = await this.repository.result(input.attemptId);
+    if (!currentResult)
+      throw new AppError("RESULT_NOT_FOUND", 404, "Assessment result not found for this attempt");
+
+    const expectedVersion = input.request.expectedResultVersion ?? currentResult.resultVersion;
+    if (expectedVersion !== currentResult.resultVersion)
+      throw conflict("VERSION_CONFLICT", "Assessment result was modified concurrently");
+
+    const maxScoreNum = Number(currentResult.maxScore);
+    const scoreNum = Number(input.request.score);
+    if (scoreNum > maxScoreNum)
+      throw new AppError(
+        "SCORE_EXCEEDS_MAX",
+        422,
+        `Score cannot exceed maximum score of ${currentResult.maxScore}`,
+      );
+
+    const nextVersion = currentResult.resultVersion + 1;
+    const now = new Date();
+    const updated = await this.repository.recordManualGrade({
+      attemptId: input.attemptId,
+      manualScore: input.request.score,
+      ...(input.request.feedback ? { teacherFeedback: input.request.feedback } : {}),
+      gradedBy: input.actor.userId,
+      gradedAt: now,
+      expectedResultVersion: expectedVersion,
+      nextResultVersion: nextVersion,
+    });
+
+    if (!updated) throw conflict("VERSION_CONFLICT", "Assessment result was modified concurrently");
+
+    await this.repository.updateResultProjection(
+      input.quizId,
+      attempt.submittedAt,
+      shard(input.attemptId),
+      input.attemptId,
+      input.request.score,
+      nextVersion,
+    );
+
+    const canonical = await this.repository.result(input.attemptId);
+    if (!canonical) throw unavailable();
+
+    const eventId = deterministicUuid(
+      this.secret,
+      "graded-event",
+      `${input.attemptId}:${String(nextVersion)}`,
+    );
+    try {
+      await this.repository.prepareGradedEvent({
+        eventId,
+        result: canonical,
+        occurredAt: now,
+        correlationId: input.actor.correlationId,
+        actorId: input.actor.userId,
+      });
+      await this.repository.readySubmittedEvent(eventId, now);
+    } catch {
+      /* outbox event preparation is resilient */
+    }
+
+    return {
+      attemptId: canonical.attemptId,
+      quizId: canonical.quizId,
+      studentId: canonical.studentId,
+      score: canonical.manualScore ?? canonical.score,
+      autoScore: canonical.score,
+      ...(canonical.manualScore ? { manualScore: canonical.manualScore } : {}),
+      maxScore: canonical.maxScore,
+      ...(canonical.teacherFeedback ? { teacherFeedback: canonical.teacherFeedback } : {}),
+      ...(canonical.gradedBy ? { gradedBy: canonical.gradedBy } : {}),
+      ...(canonical.gradedAt ? { gradedAt: canonical.gradedAt.toISOString() } : {}),
+      gradingStatus: canonical.gradingStatus ?? "MANUALLY_GRADED",
+      resultVersion: canonical.resultVersion,
+    };
+  }
+
+  async listGrades(input: {
+    quizId: string;
+    month?: string;
+    limit?: number;
+    actor: ActorContext;
+    requestId: string;
+  }) {
+    if (!input.actor.roles.includes("LECTURER") && !input.actor.roles.includes("ADMIN"))
+      throw new AppError("LECTURER_REQUIRED", 403, "Lecturer or Admin authorization is required");
+    if (input.actor.roles.includes("LECTURER")) {
+      await this.requireLecturer(input.actor, input.requestId);
+    }
+    const quiz = await this.requiredQuiz(input.quizId);
+    if (!input.actor.roles.includes("ADMIN") && quiz.ownerId !== input.actor.userId) {
+      await this.requireTargetOwner(quiz.targetType, quiz.targetId, input.actor.userId, input.requestId);
+    }
+
+    const month = input.month ?? new Date().toISOString().slice(0, 7);
+    const limit = input.limit ?? 50;
+
+    const shardRows = await Promise.all(
+      Array.from({ length: 16 }, async (_, shardNo) => {
+        return this.repository.resultProjectionShard(input.quizId, month, shardNo, limit);
+      }),
+    );
+    const candidates = shardRows.flat().sort(compareProjection);
+    const items = [];
+    for (const row of candidates.slice(0, limit)) {
+      const canonical = await this.repository.result(row.attemptId);
+      if (!canonical || canonical.quizId !== input.quizId) continue;
+      items.push({
+        attemptId: row.attemptId,
+        studentId: row.studentId,
+        score: canonical.manualScore ?? row.score,
+        autoScore: row.score,
+        ...(canonical.manualScore ? { manualScore: canonical.manualScore } : {}),
+        maxScore: row.maxScore,
+        submittedAt: row.submittedAt.toISOString(),
+        resultVersion: canonical.resultVersion,
+        ...(canonical.teacherFeedback ? { teacherFeedback: canonical.teacherFeedback } : {}),
+        ...(canonical.gradedBy ? { gradedBy: canonical.gradedBy } : {}),
+        ...(canonical.gradedAt ? { gradedAt: canonical.gradedAt.toISOString() } : {}),
+        gradingStatus: canonical.gradingStatus ?? (canonical.manualScore ? "MANUALLY_GRADED" : "AUTO_GRADED"),
+      });
+    }
+
+    return {
+      quizId: input.quizId,
+      month,
+      items,
     };
   }
 

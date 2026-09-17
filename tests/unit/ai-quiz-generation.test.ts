@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { validateObjectiveQuiz } from "../../apps/ai-worker/src/objective-v1.js";
-import { HttpQuizProvider } from "../../apps/ai-worker/src/provider.js";
+import { HttpQuizProvider, parseStructuredJson } from "../../apps/ai-worker/src/provider.js";
 import { decodeCursor, encodeCursor } from "../../apps/ai-service/src/quiz/model.js";
 const valid = {
   schemaVersion: "objective-v1",
@@ -114,6 +114,13 @@ describe("P10.2 objective-v1 boundary", () => {
       }),
     ).resolves.toMatchObject({ inputUnits: 3, outputUnits: 4 });
     expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({ "idempotency-key": "stable-op" });
+  });
+  it("accepts only exact JSON or one complete JSON fence", () => {
+    expect(parseStructuredJson(JSON.stringify(valid))).toEqual(valid);
+    expect(parseStructuredJson(`\n\`\`\`json\n${JSON.stringify(valid)}\n\`\`\`\n`)).toEqual(valid);
+    expect(() => parseStructuredJson(`prefix ${JSON.stringify(valid)}`)).toThrow("INVALID_RESPONSE");
+    expect(() => parseStructuredJson(`\`\`\`json\n{bad}\n\`\`\``)).toThrow("INVALID_RESPONSE");
+    expect(() => parseStructuredJson("x".repeat(1024 * 1024 + 1))).toThrow("INVALID_RESPONSE");
   });
 });
 

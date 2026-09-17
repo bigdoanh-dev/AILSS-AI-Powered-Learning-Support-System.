@@ -9,15 +9,17 @@ export class ExtractionFailure extends Error {
     super(code);
   }
 }
-const OUTPUT_MAX = 5 * 1024 * 1024,
-  DOCX_UNCOMPRESSED_MAX = 100 * 1024 * 1024,
+const DOCX_UNCOMPRESSED_MAX = 100 * 1024 * 1024,
   DOCX_UNCOMPRESSED_FLOOR = 8 * 1024 * 1024,
   DOCX_EXPANSION_MAX = 100,
   DOCX_ENTRY_MAX = 2000;
 export function extractDocument(
   input: Buffer,
   mime: string,
+  maximumOutputBytes = 1024 * 1024,
 ): { text: Buffer; checksum: string; characters: number; parserVersion: string } {
+  if (!Number.isInteger(maximumOutputBytes) || maximumOutputBytes < 1)
+    throw new Error("INVALID_EXTRACTION_LIMIT");
   let text: string;
   if (mime === "text/plain") text = extractTxt(input);
   else if (mime === "application/pdf") text = extractPdf(input);
@@ -26,7 +28,8 @@ export function extractDocument(
   else throw new ExtractionFailure("UNSUPPORTED_CONTENT_TYPE", true);
   const normalized = text.normalize("NFKC").replace(/\r\n?/gu, "\n").trim(),
     output = Buffer.from(normalized, "utf8");
-  if (output.length > OUTPUT_MAX) throw new ExtractionFailure("EXTRACTED_OUTPUT_TOO_LARGE", true);
+  if (output.length === 0) throw new ExtractionFailure("EMPTY_DOCUMENT", false);
+  if (output.length > maximumOutputBytes) throw new ExtractionFailure("EXTRACTED_OUTPUT_TOO_LARGE", true);
   return {
     text: output,
     checksum: createHash("sha256").update(output).digest("hex"),
@@ -52,7 +55,6 @@ function extractPdf(input: Buffer) {
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(source)) !== null) {
     values.push((match[1] ?? "").replace(/\\([()\\])/gu, "$1"));
-    if (values.join(" ").length > OUTPUT_MAX) throw new ExtractionFailure("EXTRACTED_OUTPUT_TOO_LARGE", true);
   }
   if (values.length === 0) throw new ExtractionFailure("PDF_TEXT_UNAVAILABLE", false);
   return values.join("\n");

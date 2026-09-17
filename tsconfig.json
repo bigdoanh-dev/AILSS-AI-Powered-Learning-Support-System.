@@ -12,5 +12,5 @@
     "scripts/dev/check-gemini-quiz.ts",
     "vitest.config.ts"
   ],
-  "exclude": ["dist", "node_modules", "apps/web"]
+  "exclude": ["dist", "node_modules", "apps/web", "apps/mobile"]
 }

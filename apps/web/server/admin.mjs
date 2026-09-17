@@ -68,6 +68,41 @@ export function adminOperation(url, method, body, headers) {
     page.parse(values);
     return { path: "/admin/reports" + (query ? `?${new URLSearchParams(query)}` : ""), headers: {} };
   }
+  // --- Dashboard data routes ---
+  if (method === "GET" && path === "/dashboard/revenue") {
+    const params = new URLSearchParams(query);
+    const range = params.get("range") ?? "30d";
+    if (!["today", "7d", "30d", "all"].includes(range)) throw Error("INVALID_ADMIN_REQUEST");
+    return { path: `/admin/dashboard/revenue?range=${encodeURIComponent(range)}`, headers: {} };
+  }
+  if (method === "GET" && path === "/dashboard/stats" && !query) {
+    return { path: "/admin/dashboard/stats", headers: {} };
+  }
+  if (method === "GET" && path === "/audit-logs") {
+    const params = new URLSearchParams(query);
+    const allowed = ["category", "search", "limit", "cursor"];
+    for (const k of params.keys()) {
+      if (!allowed.includes(k)) throw Error("INVALID_ADMIN_REQUEST");
+    }
+    page.parse(Object.fromEntries(
+      [...params.entries()].filter(([k]) => ["limit", "cursor"].includes(k))
+    ));
+    return { path: "/admin/audit-logs" + (query ? `?${params.toString()}` : ""), headers: {} };
+  }
+  // --- Export routes ---
+  if (method === "GET" && path === "/export/revenue") {
+    const params = new URLSearchParams(query);
+    const range = params.get("range") ?? "30d";
+    if (!["today", "7d", "30d", "all"].includes(range)) throw Error("INVALID_ADMIN_REQUEST");
+    return { path: `/admin/export/revenue?range=${encodeURIComponent(range)}`, headers: {}, export: true };
+  }
+  if (method === "GET" && path === "/export/audit-logs") {
+    const params = new URLSearchParams(query);
+    const category = params.get("category");
+    if (category && !["COMMERCE", "AUTH", "MODERATION", "ADMIN"].includes(category))
+      throw Error("INVALID_ADMIN_REQUEST");
+    return { path: `/admin/export/audit-logs` + (query ? `?${params.toString()}` : ""), headers: {}, export: true };
+  }
   const match = new RegExp(`^/interaction-reports/(${uuid})/moderate$`).exec(path);
   if (method !== "POST" || !match) throw Error("INVALID_ADMIN_REQUEST");
   moderate.parse(body);

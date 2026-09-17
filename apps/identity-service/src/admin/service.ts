@@ -23,6 +23,7 @@ import {
   type AdminCursorPayload,
   type AdminProjectionRow,
   type AdminSearchQuery,
+  type AdminStatsData,
   type AdminStatusRequest,
   type AdminUser,
   type StatusChangeMetadata,
@@ -41,6 +42,7 @@ const STATUS_STATE_ORDER = [
 
 export interface IdentityAdminStore {
   getUser(userId: string): Promise<AdminUser | undefined>;
+  getStats?(): Promise<AdminStatsData>;
   listShard(input: {
     role: AdminProjectionRow["role"];
     status: AccountStatus;
@@ -208,6 +210,35 @@ export class IdentityAdminService {
       if (error instanceof AppError) throw error;
       this.metrics.identityAdminReads.inc({ operation: "detail", outcome: "dependency_failure" });
       throw unavailable("ADMIN_DETAIL_UNAVAILABLE", "Admin user detail is temporarily unavailable");
+    } finally {
+      stop();
+    }
+  }
+
+  public async stats(actor: ActorContext): Promise<AdminStatsData> {
+    const stop = this.metrics.identityAdminDuration.startTimer({ operation: "stats" });
+    try {
+      await this.#requireAdmin(actor);
+      if (this.store.getStats) {
+        return await this.store.getStats();
+      }
+      return {
+        totalAccounts: 0,
+        students: 0,
+        lecturers: 0,
+        admins: 0,
+        suspended: 0,
+        aiSessions: 0,
+        completionRate: "0%",
+        avgScore: "N/A",
+        totalLearningHours: "0 giờ",
+        cognitiveLevels: [],
+        weekdayEngagement: [],
+      };
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      this.metrics.identityAdminReads.inc({ operation: "stats", outcome: "dependency_failure" });
+      throw unavailable("ADMIN_STATS_UNAVAILABLE", "Admin stats are temporarily unavailable");
     } finally {
       stop();
     }

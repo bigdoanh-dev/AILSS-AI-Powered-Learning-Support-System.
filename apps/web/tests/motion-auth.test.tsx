@@ -61,6 +61,32 @@ describe("premium auth and motion", () => {
     expect(s.velocity).toBeCloseTo(0);
     expect(advanceScroll(s, 0, 16, 1000).direction).toBe(-1);
   });
+  it("login screen offers Google and Apple SSO buttons along with demo chips", () => {
+    show("/auth/login");
+    expect(screen.getByRole("button", { name: "Đăng nhập với Google" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Đăng nhập với Apple" })).toBeTruthy();
+    expect(screen.getByText("hoặc tiếp tục với email")).toBeTruthy();
+    expect(screen.getByText(/Tài khoản thử nghiệm nhanh/)).toBeTruthy();
+  });
+  it("password field provides eye icon toggle for visibility with symmetric accessibility", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    show("/auth/login");
+    const pwdInput = screen.getByLabelText("Mật khẩu") as HTMLInputElement;
+    expect(pwdInput.type).toBe("password");
+
+    const toggleBtn = screen.getByRole("button", { name: "Hiện mật khẩu" });
+    expect(toggleBtn).toBeTruthy();
+    expect(toggleBtn.getAttribute("title")).toBe("Hiện mật khẩu");
+    expect(toggleBtn.querySelector(".password-eye-svg")).toBeTruthy();
+
+    fireEvent.click(toggleBtn);
+    expect(pwdInput.type).toBe("text");
+    expect(toggleBtn.getAttribute("title")).toBe("Ẩn mật khẩu");
+
+    fireEvent.click(toggleBtn);
+    expect(pwdInput.type).toBe("password");
+    expect(toggleBtn.getAttribute("title")).toBe("Hiện mật khẩu");
+  });
   it("video remains a poster until requested and transcript is available", () => {
     render(<VideoStory />);
     expect(document.querySelector("video")).toBeNull();
@@ -68,3 +94,4 @@ describe("premium auth and motion", () => {
     expect(screen.getByText("Bản mô tả video")).toBeTruthy();
   });
 });
+

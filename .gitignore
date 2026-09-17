@@ -14,6 +14,12 @@ coverage/
 
 # Project reports, prompts, evidence, and manually generated output
 docs/
+!docs/
+docs/*
+!docs/STABILIZATION_AUDIT.md
+!docs/REVIEW_REMEDIATION.md
+!docs/architecture-sequences.md
+!docs/product-roadmap.md
 evidence/
 logs/
 screenshots/
@@ -50,3 +56,9 @@ infrastructure/cassandra/data/
 # Keep internal reports and release documentation local
 AILSS_P13_*.md
 BAO_CAO_*
+
+# Generated runtime artifacts — do NOT commit
+.audit-runtime/
+RELEASE_MANIFEST.json
+phase*-evidence-bundle.json
+doc/

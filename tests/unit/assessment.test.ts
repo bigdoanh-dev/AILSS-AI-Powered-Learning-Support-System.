@@ -420,10 +420,49 @@ class MemoryAssessmentStore implements AssessmentStore {
   async writeResultProjection() {
     return;
   }
+  async updateResultProjection(
+    _quizId: string,
+    _submittedAt: Date,
+    _shard: number,
+    attemptId: string,
+    score: string,
+    resultVersion: number,
+  ) {
+    const row = this.resultProjections.find((r) => r.attemptId === attemptId);
+    if (row) {
+      row.score = score;
+      row.resultVersion = resultVersion;
+    }
+  }
+  async recordManualGrade(input: {
+    attemptId: string;
+    manualScore: string;
+    teacherFeedback?: string;
+    gradedBy: string;
+    gradedAt: Date;
+    expectedResultVersion: number;
+    nextResultVersion: number;
+  }) {
+    const r = this.results.get(input.attemptId);
+    if (!r || r.resultVersion !== input.expectedResultVersion) return false;
+    this.results.set(input.attemptId, {
+      ...r,
+      manualScore: input.manualScore,
+      ...(input.teacherFeedback ? { teacherFeedback: input.teacherFeedback } : {}),
+      gradedBy: input.gradedBy,
+      gradedAt: input.gradedAt,
+      gradingStatus: "MANUALLY_GRADED",
+      resultVersion: input.nextResultVersion,
+    });
+    return true;
+  }
   async prepareSubmittedEvent() {
     return;
   }
   async readySubmittedEvent() {
+    return;
+  }
+  async prepareGradedEvent() {
     return;
   }
 }
@@ -1025,5 +1064,328 @@ describe("P8.4 result reads", () => {
       requestId,
     });
     expect(page.items.map((item) => item.attemptId)).toEqual([first]);
+  });
+
+  describe("P8.3 Assessment manual grading & gradebook persistence", () => {
+    it("persists manual grade, teacher feedback, updates result_version and reflects in listGrades", async () => {
+      const store = new MemoryAssessmentStore(),
+        service = new AssessmentService(store, clients, "secret"),
+        quizId = randomUUID(),
+        attemptId = randomUUID(),
+        studentId = randomUUID(),
+        at = new Date();
+
+      store.quizzes.set(quizId, {
+        quizId,
+        targetType: "COURSE",
+        targetId,
+        ownerId: lecturerId,
+        title: "Test Quiz",
+        state: "PUBLISHED",
+        currentVersion: 1,
+        recordVersion: 1,
+        questionCount: 1,
+        snapshotChecksum: "s",
+        snapshotReady: true,
+        createdAt: at,
+        updatedAt: at,
+      });
+
+      store.attempts.set(attemptId, {
+        attemptId,
+        studentId,
+        quizId,
+        quizVersion: 1,
+        attemptNo: 1,
+        state: "SUBMITTED",
+        submittedAt: at,
+        version: 2,
+      });
+
+      store.results.set(attemptId, {
+        attemptId,
+        studentId,
+        quizId,
+        quizVersion: 1,
+        score: "5.0",
+        maxScore: "10.0",
+        gradingChecksum: "chk",
+        answerCount: 1,
+        resultItemsChecksum: "items-chk",
+        gradingAlgorithmVersion: "objective-v1",
+        resultVersion: 1,
+        createdAt: at,
+      });
+
+      store.resultProjections.push({
+        attemptId,
+        studentId,
+        score: "5.0",
+        maxScore: "10.0",
+        resultVersion: 1,
+        submittedAt: at,
+        shard: 0,
+      });
+
+      // Lecturer submits manual grade
+      const gradeResult = await service.gradeAttempt({
+        actor,
+        quizId,
+        attemptId,
+        request: {
+          score: "9.5",
+          feedback: "Great analytical answer!",
+          expectedResultVersion: 1,
+        },
+        requestId,
+      });
+
+      expect(gradeResult).toMatchObject({
+        attemptId,
+        quizId,
+        studentId,
+        score: "9.5",
+        autoScore: "5.0",
+        manualScore: "9.5",
+        maxScore: "10.0",
+        teacherFeedback: "Great analytical answer!",
+        gradedBy: lecturerId,
+        gradingStatus: "MANUALLY_GRADED",
+        resultVersion: 2,
+      });
+
+      // Gradebook listGrades returns the updated manual score
+      const gradesList = await service.listGrades({
+        quizId,
+        actor,
+        requestId,
+      });
+
+      expect(gradesList.items).toHaveLength(1);
+      expect(gradesList.items[0]).toMatchObject({
+        attemptId,
+        score: "9.5",
+        manualScore: "9.5",
+        teacherFeedback: "Great analytical answer!",
+        gradingStatus: "MANUALLY_GRADED",
+        resultVersion: 2,
+      });
+
+      // Student result summary reflects manual grade
+      const studentActor: ActorContext = {
+        ...actor,
+        userId: studentId,
+        roles: ["STUDENT"],
+      };
+      const summary = await service.resultSummary(attemptId, studentActor);
+      expect(summary).toMatchObject({
+        score: "9.5",
+        manualScore: "9.5",
+        autoScore: "5.0",
+        teacherFeedback: "Great analytical answer!",
+        gradingStatus: "MANUALLY_GRADED",
+        resultVersion: 2,
+      });
+    });
+
+    it("rejects concurrent grading when expectedResultVersion conflicts", async () => {
+      const store = new MemoryAssessmentStore(),
+        service = new AssessmentService(store, clients, "secret"),
+        quizId = randomUUID(),
+        attemptId = randomUUID(),
+        studentId = randomUUID(),
+        at = new Date();
+
+      store.quizzes.set(quizId, {
+        quizId,
+        targetType: "COURSE",
+        targetId,
+        ownerId: lecturerId,
+        title: "Test Quiz",
+        state: "PUBLISHED",
+        currentVersion: 1,
+        recordVersion: 1,
+        questionCount: 1,
+        snapshotChecksum: "s",
+        snapshotReady: true,
+        createdAt: at,
+        updatedAt: at,
+      });
+
+      store.attempts.set(attemptId, {
+        attemptId,
+        studentId,
+        quizId,
+        quizVersion: 1,
+        attemptNo: 1,
+        state: "SUBMITTED",
+        submittedAt: at,
+        version: 2,
+      });
+
+      store.results.set(attemptId, {
+        attemptId,
+        studentId,
+        quizId,
+        quizVersion: 1,
+        score: "5.0",
+        maxScore: "10.0",
+        gradingChecksum: "chk",
+        answerCount: 1,
+        resultItemsChecksum: "items-chk",
+        gradingAlgorithmVersion: "objective-v1",
+        resultVersion: 2, // version is already 2
+        createdAt: at,
+      });
+
+      // Attempting to grade with stale expectedResultVersion 1 should fail with 409
+      await expect(
+        service.gradeAttempt({
+          actor,
+          quizId,
+          attemptId,
+          request: {
+            score: "8.0",
+            expectedResultVersion: 1,
+          },
+          requestId,
+        }),
+      ).rejects.toMatchObject({ status: 409, code: "VERSION_CONFLICT" });
+    });
+
+    it("rejects score exceeding maximum score", async () => {
+      const store = new MemoryAssessmentStore(),
+        service = new AssessmentService(store, clients, "secret"),
+        quizId = randomUUID(),
+        attemptId = randomUUID(),
+        studentId = randomUUID(),
+        at = new Date();
+
+      store.quizzes.set(quizId, {
+        quizId,
+        targetType: "COURSE",
+        targetId,
+        ownerId: lecturerId,
+        title: "Test Quiz",
+        state: "PUBLISHED",
+        currentVersion: 1,
+        recordVersion: 1,
+        questionCount: 1,
+        snapshotChecksum: "s",
+        snapshotReady: true,
+        createdAt: at,
+        updatedAt: at,
+      });
+
+      store.attempts.set(attemptId, {
+        attemptId,
+        studentId,
+        quizId,
+        quizVersion: 1,
+        attemptNo: 1,
+        state: "SUBMITTED",
+        submittedAt: at,
+        version: 2,
+      });
+
+      store.results.set(attemptId, {
+        attemptId,
+        studentId,
+        quizId,
+        quizVersion: 1,
+        score: "5.0",
+        maxScore: "10.0",
+        gradingChecksum: "chk",
+        answerCount: 1,
+        resultItemsChecksum: "items-chk",
+        gradingAlgorithmVersion: "objective-v1",
+        resultVersion: 1,
+        createdAt: at,
+      });
+
+      await expect(
+        service.gradeAttempt({
+          actor,
+          quizId,
+          attemptId,
+          request: {
+            score: "15.0", // Exceeds max 10.0
+          },
+          requestId,
+        }),
+      ).rejects.toMatchObject({ status: 422, code: "SCORE_EXCEEDS_MAX" });
+    });
+
+    it("rejects unauthorized students from manual grading but allows admin", async () => {
+      const store = new MemoryAssessmentStore(),
+        service = new AssessmentService(store, clients, "secret"),
+        quizId = randomUUID(),
+        attemptId = randomUUID(),
+        studentId = randomUUID(),
+        at = new Date();
+
+      store.quizzes.set(quizId, {
+        quizId,
+        targetType: "COURSE",
+        targetId,
+        ownerId: lecturerId,
+        title: "Test Quiz",
+        state: "PUBLISHED",
+        currentVersion: 1,
+        recordVersion: 1,
+        questionCount: 1,
+        snapshotChecksum: "s",
+        snapshotReady: true,
+        createdAt: at,
+        updatedAt: at,
+      });
+
+      store.attempts.set(attemptId, {
+        attemptId,
+        studentId,
+        quizId,
+        quizVersion: 1,
+        attemptNo: 1,
+        state: "SUBMITTED",
+        submittedAt: at,
+        version: 2,
+      });
+
+      store.results.set(attemptId, {
+        attemptId,
+        studentId,
+        quizId,
+        quizVersion: 1,
+        score: "5.0",
+        maxScore: "10.0",
+        gradingChecksum: "chk",
+        answerCount: 1,
+        resultItemsChecksum: "items-chk",
+        gradingAlgorithmVersion: "objective-v1",
+        resultVersion: 1,
+        createdAt: at,
+      });
+
+      // Student attempt
+      await expect(
+        service.gradeAttempt({
+          actor: { ...actor, userId: studentId, roles: ["STUDENT"] },
+          quizId,
+          attemptId,
+          request: { score: "10.0" },
+          requestId,
+        }),
+      ).rejects.toMatchObject({ status: 403, code: "LECTURER_REQUIRED" });
+
+      // Admin attempt succeeds
+      const adminResult = await service.gradeAttempt({
+        actor: { ...actor, userId: randomUUID(), roles: ["ADMIN"] },
+        quizId,
+        attemptId,
+        request: { score: "9.0" },
+        requestId,
+      });
+      expect(adminResult.score).toBe("9.0");
+    });
   });
 });

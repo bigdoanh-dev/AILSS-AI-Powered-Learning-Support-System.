@@ -71,7 +71,9 @@ export function State<T>({
   if (q.error)
     return (
       <div className="workspace-alert-box" role="alert">
-        <span className="alert-icon" aria-hidden="true">⚠️</span>
+        <span className="alert-icon" aria-hidden="true">
+          ⚠️
+        </span>
         <div className="alert-details">
           <strong>Chưa thể tải dữ liệu</strong>
           <p>{lecturerError(q.error) || "Hệ thống đang đồng bộ dữ liệu. Vui lòng thử lại sau giây lát."}</p>
@@ -95,15 +97,26 @@ export const Field = ({
   type = "text",
   required = false,
   defaultValue,
+  placeholder,
+  min,
 }: {
   label: string;
   name: string;
   type?: string;
   required?: boolean;
   defaultValue?: string | number;
+  placeholder?: string;
+  min?: number;
 }) => (
   <label>
     {label}
-    <input name={name} type={type} required={required} defaultValue={defaultValue} />
+    <input
+      name={name}
+      type={type}
+      required={required}
+      defaultValue={defaultValue}
+      placeholder={placeholder}
+      min={min}
+    />
   </label>
 );

@@ -682,7 +682,8 @@ export class AssessmentRepository {
     const r = (
       await this.db.execute(
         `SELECT attempt_id,student_id,quiz_id,quiz_version,score,max_score,
-      grading_checksum,answer_count,result_items_checksum,grading_algorithm_version,result_version,created_at
+      grading_checksum,answer_count,result_items_checksum,grading_algorithm_version,result_version,created_at,
+      manual_score,teacher_feedback,graded_by,graded_at,grading_status
       FROM result_by_attempt WHERE attempt_id=?`,
         [uuid(attemptId)],
         "LOCAL_QUORUM",
@@ -702,8 +703,45 @@ export class AssessmentRepository {
           gradingAlgorithmVersion: "objective-v1",
           resultVersion: Number(r.result_version),
           createdAt: timestamp(r.created_at),
+          ...(r.manual_score !== null && r.manual_score !== undefined
+            ? { manualScore: String(r.manual_score) }
+            : {}),
+          ...(r.teacher_feedback ? { teacherFeedback: String(r.teacher_feedback) } : {}),
+          ...(r.graded_by ? { gradedBy: String(r.graded_by) } : {}),
+          ...(r.graded_at ? { gradedAt: timestamp(r.graded_at) } : {}),
+          ...(r.grading_status
+            ? { gradingStatus: String(r.grading_status) as NonNullable<AssessmentResult["gradingStatus"]> }
+            : {}),
         }
       : undefined;
+  }
+
+  async recordManualGrade(input: {
+    attemptId: string;
+    manualScore: string;
+    teacherFeedback?: string;
+    gradedBy: string;
+    gradedAt: Date;
+    expectedResultVersion: number;
+    nextResultVersion: number;
+  }): Promise<boolean> {
+    const rows = await this.db.execute(
+      `UPDATE result_by_attempt SET manual_score=?, teacher_feedback=?, graded_by=?, graded_at=?,
+              grading_status='MANUALLY_GRADED', result_version=?
+       WHERE attempt_id=? IF result_version=?`,
+      [
+        types.BigDecimal.fromString(input.manualScore),
+        input.teacherFeedback ?? null,
+        input.gradedBy,
+        input.gradedAt,
+        long(input.nextResultVersion),
+        uuid(input.attemptId),
+        long(input.expectedResultVersion),
+      ],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
+    return applied(rows);
   }
   async resultProjectionShard(
     quizId: string,
@@ -788,6 +826,30 @@ export class AssessmentRepository {
       "LOCAL_QUORUM",
     );
   }
+  async updateResultProjection(
+    quizId: string,
+    submittedAt: Date,
+    shard: number,
+    attemptId: string,
+    score: string,
+    resultVersion: number,
+  ): Promise<void> {
+    const ym = types.LocalDate.fromString(submittedAt.toISOString().slice(0, 7) + "-01");
+    await this.db.execute(
+      `UPDATE results_by_quiz_bucket SET score=?, result_version=?
+       WHERE quiz_id=? AND year_month=? AND shard=? AND submitted_at=? AND attempt_id=?`,
+      [
+        types.BigDecimal.fromString(score),
+        long(resultVersion),
+        uuid(quizId),
+        ym,
+        shard,
+        submittedAt,
+        uuid(attemptId),
+      ],
+      "LOCAL_QUORUM",
+    );
+  }
   async prepareSubmittedEvent(input: {
     eventId: string;
     result: AssessmentResult;
@@ -837,6 +899,71 @@ export class AssessmentRepository {
       [
         uuid(input.eventId),
         "assessment.quiz.submitted.v1",
+        uuid(input.result.attemptId),
+        long(input.result.resultVersion),
+        input.occurredAt,
+        input.occurredAt,
+      ],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
+  }
+  async prepareGradedEvent(input: {
+    eventId: string;
+    result: AssessmentResult;
+    occurredAt: Date;
+    correlationId: string;
+    actorId: string;
+  }) {
+    const event = {
+      specVersion: "1.0",
+      eventId: input.eventId,
+      eventType: "assessment.quiz.graded.v1",
+      occurredAt: input.occurredAt.toISOString(),
+      producer: "assessment-service",
+      correlationId: input.correlationId,
+      actor: { type: "USER", id: input.actorId },
+      aggregate: { type: "ATTEMPT", id: input.result.attemptId, version: input.result.resultVersion },
+      data: {
+        quizId: input.result.quizId,
+        attemptId: input.result.attemptId,
+        studentId: input.result.studentId,
+        score: input.result.manualScore ?? input.result.score,
+        autoScore: input.result.score,
+        manualScore: input.result.manualScore,
+        maxScore: input.result.maxScore,
+        teacherFeedback: input.result.teacherFeedback,
+        gradedBy: input.result.gradedBy,
+        resultVersion: input.result.resultVersion,
+        gradingStatus: input.result.gradingStatus ?? "MANUALLY_GRADED",
+      },
+    };
+    const day = types.LocalDate.fromString(input.occurredAt.toISOString().slice(0, 10)),
+      bucket = eventShard(input.eventId);
+    await this.db.execute(
+      `INSERT INTO pending_events_by_due_bucket (due_day,shard,next_attempt_at,event_id,event_type,
+      aggregate_id,aggregate_version,payload_json,state,retry_count,lease_fence,created_at)
+      VALUES (?,?,?,?,?,?,?,?,'PREPARED',0,0,?) IF NOT EXISTS`,
+      [
+        day,
+        bucket,
+        input.occurredAt,
+        uuid(input.eventId),
+        "assessment.quiz.graded.v1",
+        uuid(input.result.attemptId),
+        long(input.result.resultVersion),
+        JSON.stringify(event),
+        input.occurredAt,
+      ],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
+    await this.db.execute(
+      `INSERT INTO pending_event_by_id (event_id,event_type,aggregate_id,aggregate_version,state,
+      next_attempt_at,retry_count,lease_fence,created_at) VALUES (?,?,?,?,'PREPARED',?,0,0,?) IF NOT EXISTS`,
+      [
+        uuid(input.eventId),
+        "assessment.quiz.graded.v1",
         uuid(input.result.attemptId),
         long(input.result.resultVersion),
         input.occurredAt,

@@ -22,8 +22,8 @@ const safeSnapshot = {
 };
 
 describe("populated migration precheck", () => {
-  it("has an exact explicit 34-file policy covering both profiles", async () => {
-    expect(Object.keys(canonicalPolicy)).toHaveLength(34);
+  it("has an exact explicit 44-file policy covering both profiles", async () => {
+    expect(Object.keys(canonicalPolicy)).toHaveLength(44);
     const result = (await runPrecheck()) as {
       status: string;
       networkAccessPerformed: boolean;
@@ -35,7 +35,7 @@ describe("populated migration precheck", () => {
       status: "PASS_SOURCE_POLICY",
       networkAccessPerformed: false,
       targetMutationPerformed: false,
-      profiles: { dev: 34, research: 34 },
+      profiles: { dev: 44, research: 44 },
       targetQualification: { status: "BLOCKED_EXTERNAL" },
     });
   });
@@ -110,5 +110,43 @@ describe("populated migration precheck", () => {
 
   it("qualifies a complete synthetic read-only snapshot", () => {
     expect(evaluateTargetSnapshot(safeSnapshot)).toEqual({ status: "QUALIFIED_READ_ONLY", reasons: [] });
+  });
+
+  it("verifies canonical migration registry contains 44 migrations matching precheck baseline", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const registryContent = await readFile("database/migration-registry.json", "utf8");
+    interface MigrationEntry {
+      id: string;
+      filename: string;
+      sha256Dev: string;
+      sha256Research: string;
+      keyspace: string;
+      classification: string;
+      status: string;
+      predecessor: string | null;
+      environmentParity: boolean;
+    }
+    interface MigrationRegistry {
+      version: string;
+      totalMigrations: number;
+      migrations: MigrationEntry[];
+    }
+    const registry = JSON.parse(registryContent) as MigrationRegistry;
+
+    expect(registry.totalMigrations).toBe(44);
+    expect(registry.migrations).toHaveLength(44);
+
+    const ids = registry.migrations.map((m: MigrationEntry) => m.id);
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(44); // No duplicates
+
+    // Verify ordering
+    for (let i = 1; i < registry.migrations.length; i++) {
+      const prev = registry.migrations[i - 1];
+      const curr = registry.migrations[i];
+      if (!prev || !curr) continue;
+      expect(curr.predecessor).toBe(prev.id);
+      expect(parseInt(curr.id, 10)).toBeGreaterThan(parseInt(prev.id, 10));
+    }
   });
 });

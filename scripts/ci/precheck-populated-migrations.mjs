@@ -19,6 +19,14 @@ export const canonicalPolicy = {
     "BACKFILL_OR_RECONCILIATION_REVIEW",
     "Inventory existing avatar objects and metadata.",
   ),
+  "014_external_identity.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify identity keyspace and external identity tables.",
+  ),
+  "015_institution_tenancy.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify identity keyspace and institutional tenancy/SSO tables.",
+  ),
   "020_learning_schema.cql": P("SAFE_ADDITIVE", "Verify learning keyspace, roles and schema agreement."),
   "021_learning_course_published_at.cql": P(
     "PRECHECK_REQUIRED",
@@ -34,6 +42,18 @@ export const canonicalPolicy = {
   "026_learning_sepay.cql": P(
     "BACKFILL_OR_RECONCILIATION_REVIEW",
     "Reconcile orders/provider transactions without synthesizing success.",
+  ),
+  "027_learning_finance_ledger.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify learning keyspace, financial ledger, refund and payout tables.",
+  ),
+  "028_course_versioning.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify learning keyspace and course release versioning tables.",
+  ),
+  "029_learner_mastery.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify learning keyspace, concept mastery, and adaptive graph tables.",
   ),
   "030_classroom_schema.cql": P("SAFE_ADDITIVE", "Verify classroom keyspace, roles and schema agreement."),
   "031_classroom_class_model.cql": P(
@@ -61,6 +81,10 @@ export const canonicalPolicy = {
   "042_assessment_attempt_guard.cql": P("SAFE_ADDITIVE", "Verify assessment keyspace and writer rollout."),
   "043_assessment_submit.cql": P("PRECHECK_REQUIRED", "Review historical attempt/result null compatibility."),
   "044_assessment_ai_import.cql": P("SAFE_ADDITIVE", "Verify assessment keyspace and writer rollout."),
+  "045_assessment_manual_grading.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify assessment keyspace and manual grading columns.",
+  ),
   "050_interaction_schema.cql": P(
     "SAFE_ADDITIVE",
     "Verify interaction keyspace, roles and schema agreement.",
@@ -75,11 +99,21 @@ export const canonicalPolicy = {
   "061_ai_document_extraction.cql": P("PRECHECK_REQUIRED", "Review document object metadata linkage."),
   "062_ai_quiz_generation.cql": P("PRECHECK_REQUIRED", "Review quotas and historical provider operations."),
   "063_ai_human_approval.cql": P("SAFE_ADDITIVE", "Verify AI keyspace and writer rollout."),
+  "064_ai_assistant.cql": P("SAFE_ADDITIVE", "Verify AI keyspace and assistant tables."),
+  "065_ai_safety_audit.cql": P("SAFE_ADDITIVE", "Verify AI keyspace and safety audit tables."),
   "070_notification_schema.cql": P("PRECHECK_REQUIRED", "Review source fields on historical notifications."),
   "075_audit_support_schema.cql": P("SAFE_ADDITIVE", "Verify audit keyspace, roles and schema agreement."),
   "076_learning_sepay_recovery.cql": P(
     "BACKFILL_OR_RECONCILIATION_REVIEW",
     "Define unresolved-order eligibility and manual review.",
+  ),
+  "077_product_analytics_events.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify audit keyspace and product analytics events tables.",
+  ),
+  "078_verified_credentials_and_lti.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify learning keyspace and credentials/LTI tables.",
   ),
 };
 
@@ -194,19 +228,80 @@ export function evaluateTargetSnapshot(snapshot) {
 export async function runPrecheck({ snapshotPath } = {}) {
   const inventory = {};
   const expected = Object.keys(canonicalPolicy);
+
+  // 1. Check for duplicate IDs or unclassified entries in policy
+  const policyIds = new Set();
+  for (const name of expected) {
+    const id = name.split("_")[0];
+    if (policyIds.has(id)) {
+      throw new Error(`DUPLICATE_MIGRATION_ID: Duplicate migration ID ${id} in policy`);
+    }
+    policyIds.add(id);
+  }
+
+  // 2. Load canonical migration registry baseline if present
+  let registryMap = null;
+  try {
+    const registryContent = await readFile(join("database", "migration-registry.json"), "utf8");
+    const registryData = JSON.parse(registryContent);
+    if (Array.isArray(registryData.migrations)) {
+      registryMap = new Map(registryData.migrations.map((m) => [m.filename, m]));
+    }
+  } catch {
+    // Registry not loaded or absent
+  }
+
   for (const profile of ["dev", "research"]) {
     const directory = join("database", "migrations", profile);
     const names = (await readdir(directory)).filter((name) => name.endsWith(".cql")).sort();
     if (JSON.stringify(names) !== JSON.stringify(expected))
       throw new Error(`${profile} migration set differs from explicit policy`);
+
+    // Verify ordering and duplicate IDs in directory
+    const seenIds = new Set();
+    let previousIdNum = -1;
+    for (const name of names) {
+      if (!canonicalPolicy[name]) {
+        throw new Error(`UNCLASSIFIED_MIGRATION: Migration ${name} is not classified in canonical policy`);
+      }
+      const idStr = name.split("_")[0];
+      if (seenIds.has(idStr)) {
+        throw new Error(`DUPLICATE_MIGRATION_ID: Duplicate migration ID ${idStr} found in ${profile}`);
+      }
+      seenIds.add(idStr);
+      const idNum = parseInt(idStr, 10);
+      if (!Number.isNaN(idNum)) {
+        if (idNum <= previousIdNum) {
+          throw new Error(`OUT_OF_ORDER_MIGRATION: Migration ${name} (${idStr}) is out of order`);
+        }
+        previousIdNum = idNum;
+      }
+    }
+
     inventory[profile] = await Promise.all(
       names.map(async (name) => {
         const body = await readFile(join(directory, name), "utf8");
         const unsafe = findUnsafeStatements(body);
         if (unsafe.length) throw new Error(`${profile}/${name} contains unapproved ${unsafe.join(", ")}`);
+
+        const computedHash = createHash("sha256").update(body).digest("hex");
+
+        // Verify against baseline registry if available
+        if (registryMap) {
+          const regRecord = registryMap.get(name);
+          if (regRecord) {
+            const expectedHash = profile === "dev" ? regRecord.sha256Dev : regRecord.sha256Research;
+            if (expectedHash && computedHash !== expectedHash) {
+              throw new Error(
+                `HISTORICAL_CHECKSUM_MUTATION: Checksum mutation detected for ${profile}/${name}. Expected ${expectedHash}, computed ${computedHash}`,
+              );
+            }
+          }
+        }
+
         return {
           name,
-          sha256: createHash("sha256").update(body).digest("hex"),
+          sha256: computedHash,
           ...canonicalPolicy[name],
           ddlType: /\bALTER\s+TABLE\b/i.test(body)
             ? "ALTER_OR_MIXED"
@@ -225,7 +320,7 @@ export async function runPrecheck({ snapshotPath } = {}) {
     status: "PASS_SOURCE_POLICY",
     networkAccessPerformed: false,
     targetMutationPerformed: false,
-    profiles: { dev: 34, research: 34 },
+    profiles: { dev: inventory.dev.length, research: inventory.research.length },
     filenameParity: true,
     hashParity: inventory.dev.every((item, index) => item.sha256 === inventory.research[index].sha256),
     migrationHistory: "NO_NATIVE_HISTORY_TABLE_INFER_FROM_SCHEMA_OBJECTS",

@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSession, sessionRequest } from "../auth/session";
 import { errorMessage } from "../lib/api";
 import { monthNow, dateLabel, isUuid, type Notices } from "../student/api";
+import { useSSE, type SSEEvent } from "../lib/useSSE";
+
 export default function Notifications() {
   const { profile } = useSession();
   const [month, setMonth] = useState(monthNow()),
@@ -11,7 +13,18 @@ export default function Notifications() {
     [error, setError] = useState(""),
     [pending, setPending] = useState(true),
     [rev, setRev] = useState(0),
-    [busy, setBusy] = useState("");
+    [busy, setBusy] = useState(""),
+    [realtimeAlert, setRealtimeAlert] = useState<string | null>(null);
+
+  useSSE(
+    profile ? "/web-session/sse/notifications" : null,
+    useCallback((event: SSEEvent) => {
+      if (event.type === "notification" || event.type === "update") {
+        setRealtimeAlert("Có thông báo mới vừa được gửi tới tài khoản của bạn!");
+        setRev((v) => v + 1);
+      }
+    }, []),
+  );
   useEffect(() => {
     let active = true;
     setPending(true);
@@ -56,6 +69,13 @@ export default function Notifications() {
           Làm mới
         </button>
       </div>
+      {realtimeAlert && (
+        <div className="dashboard-banner-notice sse-live-banner" role="status">
+          <span className="live-dot" />
+          <span>{realtimeAlert}</span>
+          <button className="button button-subtle button-small" onClick={() => setRealtimeAlert(null)}>✕ Đóng</button>
+        </div>
+      )}
       <label>
         Tháng thông báo (UTC)
         <input

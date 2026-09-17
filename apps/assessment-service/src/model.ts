@@ -387,7 +387,31 @@ export interface AssessmentResult {
   gradingAlgorithmVersion: "objective-v1";
   resultVersion: number;
   createdAt: Date;
+  manualScore?: string;
+  teacherFeedback?: string;
+  gradedBy?: string;
+  gradedAt?: Date;
+  gradingStatus?: "AUTO_GRADED" | "PENDING_MANUAL_GRADING" | "MANUALLY_GRADED";
 }
+
+const manualGradeSchema = z
+  .object({
+    score: z
+      .union([
+        z.number().min(0).max(100),
+        z
+          .string()
+          .regex(/^(?:0|[1-9]\d{0,2})(?:\.\d{1,2})?$/u)
+          .refine((val) => Number(val) >= 0 && Number(val) <= 100, "Score must be >= 0 and <= 100"),
+      ])
+      .transform((val) => (typeof val === "number" ? String(val) : val)),
+    feedback: safeText(0, 4_000).optional(),
+    expectedResultVersion: z.number().int().nonnegative().optional(),
+  })
+  .strict();
+
+export type ManualGradeRequest = z.infer<typeof manualGradeSchema>;
+export const parseManualGrade = (value: unknown) => manualGradeSchema.parse(value);
 
 export function gradeObjectiveV1(
   attempt: Attempt,

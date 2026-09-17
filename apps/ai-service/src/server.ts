@@ -13,6 +13,15 @@ import { AiQuizService } from "./quiz/service.js";
 import { AiTargetClient } from "./quiz/target-client.js";
 import { AiAssessmentClient } from "./quiz/assessment-client.js";
 import { aiQuizRouter } from "./quiz/router.js";
+import {
+  AssistantRepository,
+  AssistantOrchestrator,
+  ToolRunner,
+  HttpAssistantLlmProvider,
+  assistantRouter,
+  type AssistantRole,
+} from "./assistant/index.js";
+import { HttpAssistantDomainClient } from "./assistant/domain-client.js";
 const manifest: ServiceManifest = {
   serviceId: "ai-service",
   ownerDomain: "AI",
@@ -113,6 +122,50 @@ await startService(manifest, {
           kid: config.ACTOR_CONTEXT_KID,
           clockToleranceSeconds: config.JWT_CLOCK_SKEW_SECONDS,
         }),
+      ),
+    );
+    const assistantRepo = new AssistantRepository(context.cassandra);
+    const assistantDomainClient = new HttpAssistantDomainClient({
+      learningUrl: config.LEARNING_SERVICE_URL,
+      assessmentUrl: config.ASSESSMENT_SERVICE_URL,
+      classroomUrl: config.CLASSROOM_SERVICE_URL,
+      key: serviceKey,
+      kid: config.AI_SERVICE_TOKEN_KID,
+      deadlineMs: config.INTERNAL_HTTP_TIMEOUT_MS,
+    });
+    const assistantToolRunner = new ToolRunner(assistantDomainClient);
+    const assistantLlmProvider = new HttpAssistantLlmProvider({
+      endpoint:
+        config.AI_PROVIDER_ENDPOINT ||
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+      apiKey: config.AI_PROVIDER_API_KEY || "synthetic-api-key",
+      model: config.AI_PROVIDER_MODEL || "gemini-1.5-flash",
+      timeoutMs: config.INTERNAL_HTTP_TIMEOUT_MS,
+    });
+    const assistantOrchestrator = new AssistantOrchestrator({
+      repository: assistantRepo,
+      toolRunner: assistantToolRunner,
+      domainClient: assistantDomainClient,
+      llmProvider: assistantLlmProvider,
+    });
+    app.use(
+      assistantRouter(
+        assistantOrchestrator,
+        assistantRepo,
+        async (token) => {
+          const verified = await verifyActorContext(token, actorKey, {
+            issuer: config.ACTOR_CONTEXT_ISSUER,
+            audience: "ai-service",
+            purpose: "ai.document.access",
+            kid: config.ACTOR_CONTEXT_KID,
+            clockToleranceSeconds: config.JWT_CLOCK_SKEW_SECONDS,
+          });
+          return {
+            userId: verified.userId,
+            role: (verified.roles[0] ?? "STUDENT") as AssistantRole,
+          };
+        },
+        context.metrics,
       ),
     );
     app.use((error: unknown, _request: unknown, _response: unknown, next: (error: unknown) => void) => {

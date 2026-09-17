@@ -35,6 +35,34 @@ export function createMetrics(service: string) {
       help: "Oldest READY outbox age",
       registers: [registry],
     }),
+    aiGenerations: new Counter({
+      name: "ailss_ai_generation_total",
+      help: "AI generation terminal outcomes",
+      labelNames: ["outcome"],
+      registers: [registry],
+    }),
+    aiProviderCalls: new Counter({
+      name: "ailss_ai_provider_calls_total",
+      help: "AI provider call outcomes",
+      labelNames: ["outcome", "code"],
+      registers: [registry],
+    }),
+    aiGenerationRetries: new Counter({
+      name: "ailss_ai_generation_retry_total",
+      help: "Bounded AI provider retries",
+      labelNames: ["reason"],
+      registers: [registry],
+    }),
+    aiCircuitRejections: new Counter({
+      name: "ailss_ai_circuit_rejections_total",
+      help: "AI provider calls rejected by an open circuit",
+      registers: [registry],
+    }),
+    aiGenerationDuration: new Histogram({
+      name: "ailss_ai_generation_duration_seconds",
+      help: "AI provider generation duration including bounded retries",
+      registers: [registry],
+    }),
     reconcileDrift: new Counter({
       name: "ailss_reconcile_drift_total",
       help: "Detected projection drift",
@@ -282,3 +310,6 @@ export function createMetrics(service: string) {
     }),
   } as const;
 }
+
+export * from "./finops.js";
+

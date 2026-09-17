@@ -91,12 +91,29 @@ export class SepayRecoveryRepository {
       });
       const row = await this.get(input.transactionId);
       if (!row) throw unavailable();
+      if (row.orderId !== input.orderId || row.amount !== input.amount) {
+        console.warn(
+          JSON.stringify({
+            eventType: "APPSEC_AUDIT_PAYLOAD_COLLISION",
+            severity: "HIGH",
+            transactionId: input.transactionId,
+            existingOrderId: row.orderId,
+            incomingOrderId: input.orderId,
+            existingAmount: row.amount,
+            incomingAmount: input.amount,
+            correlationId: input.correlationId,
+          }),
+        );
+        throw new AppError(
+          "PROVIDER_TRANSACTION_CONFLICT",
+          409,
+          "Payment could not be accepted: payload collision detected for transaction",
+        );
+      }
       if (
-        row.orderId !== input.orderId ||
         row.fingerprint !== input.fingerprint ||
         row.recoveryMac !== input.recoveryMac ||
-        row.paidEventId !== input.paidEventId ||
-        row.amount !== input.amount
+        row.paidEventId !== input.paidEventId
       )
         throw new AppError("PAYMENT_REPLAY_CONFLICT", 409, "Payment could not be accepted");
       return row;

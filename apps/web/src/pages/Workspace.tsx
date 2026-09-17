@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSession, roleLabel } from "../auth/session";
 import { SiteHeader } from "../components/SiteHeader";
@@ -7,10 +7,111 @@ import { sessionRequest } from "../auth/session";
 
 import { errorMessage } from "../lib/api";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import { Icon, type IconName } from "../components/Icon";
+import { useLanguage } from "../lib/i18n";
 const StudentHome = lazy(() => import("../student/Learning").then((m) => ({ default: m.StudentHome })));
 const AdminHome = lazy(() => import("../admin/Admin").then((m) => ({ default: m.AdminHome })));
 const TeachingHome = lazy(() => import("../lecturer/Teaching").then((m) => ({ default: m.TeachingHome })));
+
+interface TabItem {
+  to: string;
+  label: string;
+  icon: IconName;
+  end?: boolean;
+}
+
+function WorkspaceTabBar({ tabs }: { tabs: TabItem[] }) {
+  const navRef = useRef<HTMLElement>(null);
+  const location = useLocation();
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = navRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 6);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 6);
+  }, []);
+
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    checkScroll();
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    window.addEventListener("resize", checkScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [checkScroll]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const active = navRef.current?.querySelector("a.active") as HTMLElement | null;
+      if (active && navRef.current) {
+        active.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+        checkScroll();
+      }
+    }, 60);
+    return () => window.clearTimeout(timer);
+  }, [location.pathname, checkScroll]);
+
+  const handleScroll = (direction: "left" | "right") => {
+    if (!navRef.current) return;
+    const distance = direction === "left" ? -260 : 260;
+    navRef.current.scrollBy({ left: distance, behavior: "smooth" });
+  };
+
+  const { t } = useLanguage();
+  return (
+    <div className="workspace-tabs">
+      <div className="workspace-tabs-container">
+        {canScrollLeft && (
+          <>
+            <div className="workspace-tabs-mask-left" aria-hidden="true" />
+            <button
+              type="button"
+              className="workspace-tabs-scroll-btn left"
+              onClick={() => handleScroll("left")}
+              aria-label={t("action.scrollLeft", "Cuộn sang trái")}
+              title={t("action.scrollLeft", "Cuộn sang trái")}
+            >
+              <Icon name="chevronLeft" size={14} />
+            </button>
+          </>
+        )}
+
+        <nav ref={navRef} aria-label={t("tab.overview", "Không gian làm việc")}>
+          {tabs.map((tab) => (
+            <NavLink key={tab.to} to={tab.to} end={tab.end}>
+              <span className="tab-icon" aria-hidden="true">
+                <Icon name={tab.icon} size={15} />
+              </span>
+              <span>{tab.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        {canScrollRight && (
+          <>
+            <div className="workspace-tabs-mask-right" aria-hidden="true" />
+            <button
+              type="button"
+              className="workspace-tabs-scroll-btn right"
+              onClick={() => handleScroll("right")}
+              aria-label={t("action.scrollRight", "Cuộn sang phải")}
+              title={t("action.scrollRight", "Cuộn sang phải")}
+            >
+              <Icon name="chevronRight" size={14} />
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 export function AppShell() {
+  const { t } = useLanguage();
   const auth = useSession();
   const location = useLocation();
   useEffect(() => {
@@ -23,75 +124,63 @@ export function AppShell() {
         replace
       />
     );
-  if (!auth.profile)
+  if (auth.state === "BOOTSTRAPPING") return <p role="status">{t("status.loadingSession", "Đang tải phiên…")}</p>;
+  if (auth.state === "UNAVAILABLE" || !auth.profile)
     return (
       <>
         <SiteHeader />
-        <main id="main" className="workspace-content">
-          <h1>Đang mở tài khoản</h1>
-          <p role="status">{auth.message || "Đang xác minh phiên đăng nhập…"}</p>
-          {auth.state === "UNAVAILABLE" && (
+        <main id="main" tabIndex={-1} className="workspace-unavailable">
+          <p role="alert">{t("status.serviceUnavailable", "Dịch vụ hiện không khả dụng. Vui lòng thử lại sau.")}</p>
+          {auth.bootstrap && (
             <button className="button" onClick={() => void auth.bootstrap()}>
-              Thử lại
+              {t("action.retry", "Thử lại")}
             </button>
           )}
         </main>
       </>
     );
   const role = auth.profile.role;
-  const tabs: [to: string, label: string, icon: string][] =
+  const tabs: { to: string; label: string; icon: IconName; end?: boolean }[] =
     role === "ADMIN"
       ? [
-          ["/app", "Tổng quan", "⚡"],
-          ["/app/admin/users", "Người dùng", "👥"],
-          ["/app/admin/lecturer-applications", "Giảng viên", "🎓"],
-          ["/app/admin/courses", "Khóa học", "📚"],
-          ["/app/admin/moderation", "Kiểm duyệt", "🛡️"],
-          ["/app/notifications", "Thông báo", "🔔"],
+          { to: "/app", label: t("tab.overview", "Tổng quan"), icon: "home", end: true },
+          { to: "/app/admin/revenue", label: t("tab.revenue", "Doanh thu"), icon: "card" },
+          { to: "/app/admin/stats", label: t("tab.stats", "Thống kê"), icon: "chart" },
+          { to: "/app/admin/logs", label: t("tab.logs", "Nhật ký Logs"), icon: "quiz" },
+          { to: "/app/admin/users", label: t("tab.users", "Người dùng"), icon: "users" },
+          { to: "/app/admin/lecturer-applications", label: t("tab.lecturers", "Giảng viên"), icon: "graduation" },
+          { to: "/app/admin/courses", label: t("tab.courses", "Khóa học"), icon: "book" },
+          { to: "/app/admin/moderation", label: t("tab.moderation", "Kiểm duyệt"), icon: "shield" },
+          { to: "/app/admin/settings", label: t("tab.settings", "Cài đặt"), icon: "settings" },
         ]
       : role === "LECTURER"
         ? [
-            ["/app", "Tổng quan", "⚡"],
-            ["/app/teaching", "Khóa học của tôi", "📚"],
-            ["/app/teaching/classes", "Lớp phụ trách", "👥"],
-            ["/app/teaching/schedule", "Lịch dạy", "📅"],
-            ["/app/teaching/attendance", "Điểm danh", "📋"],
-            ["/app/teaching/offerings", "Đợt mở bán", "🎯"],
-            ["/app/teaching/assessments", "Bài kiểm tra", "📝"],
-            ["/app/teaching/ai", "Trợ lý AI", "🤖"],
-            ["/app/notifications", "Thông báo", "🔔"],
+            { to: "/app", label: t("tab.overview", "Tổng quan"), icon: "home", end: true },
+            { to: "/app/teaching", label: t("tab.courses", "Khóa học"), icon: "book", end: true },
+            { to: "/app/teaching/classes", label: t("tab.classes", "Lớp học"), icon: "users" },
+            { to: "/app/teaching/schedule", label: t("tab.teachingSchedule", "Lịch dạy"), icon: "calendar" },
+            { to: "/app/teaching/attendance", label: t("tab.attendance", "Điểm danh"), icon: "checkCircle" },
+            { to: "/app/teaching/offerings", label: t("tab.offerings", "Đợt mở bán"), icon: "target" },
+            { to: "/app/teaching/assessments", label: t("tab.assessments", "Bài kiểm tra"), icon: "quiz" },
+            { to: "/app/teaching/grades", label: t("tab.grades", "Bảng điểm"), icon: "trophy" },
+            { to: "/app/teaching/ai", label: t("tab.aiStudio", "Trợ lý AI"), icon: "sparkles" },
           ]
         : [
-            ["/app", "Tổng quan", "⚡"],
-            ["/app/learn", "Khóa học của tôi", "📚"],
-            ["/app/classes", "Lớp học", "🏛️"],
-            ["/app/schedule", "Lịch học", "📅"],
-            ["/app/attendance", "Điểm danh", "✅"],
-            ["/app/assessments", "Bài kiểm tra", "📝"],
-            ["/app/progress", "Tiến độ", "📈"],
-            ["/app/notifications", "Thông báo", "🔔"],
+            { to: "/app", label: t("tab.overview", "Tổng quan"), icon: "home", end: true },
+            { to: "/app/learn", label: t("tab.courses", "Khóa học"), icon: "book" },
+            { to: "/app/classes", label: t("tab.classes", "Lớp học"), icon: "class" },
+            { to: "/app/schedule", label: t("tab.schedule", "Lịch học"), icon: "calendar" },
+            { to: "/app/attendance", label: t("tab.attendance", "Điểm danh"), icon: "checkCircle" },
+            { to: "/app/assessments", label: t("tab.assessments", "Bài kiểm tra"), icon: "quiz" },
+            { to: "/app/progress", label: t("tab.progress", "Tiến độ"), icon: "trending" },
           ];
   return (
     <div className="learning-site">
       <SiteHeader />
-      <div className="workspace-tabs">
-        <nav aria-label="Không gian cá nhân">
-          {tabs.map(([to, label, icon]) => (
-            <NavLink key={to} to={to} end={to === "/app" || to === "/app/teaching"}>
-              <span className="tab-icon" aria-hidden="true">{icon}</span>
-              <span>{label}</span>
-            </NavLink>
-          ))}
-
-          <NavLink to="/app/account">
-            <span className="tab-icon" aria-hidden="true">👤</span>
-            <span>Hồ sơ</span>
-          </NavLink>
-        </nav>
-      </div>
+      <WorkspaceTabBar tabs={tabs} />
       <main id="main" tabIndex={-1} className="workspace-content">
         <ErrorBoundary>
-          <Suspense fallback={<p role="status">Đang mở nội dung…</p>}>
+          <Suspense fallback={<p role="status">{t("status.loadingSession", "Đang mở nội dung…")}</p>}>
             <Outlet />
           </Suspense>
         </ErrorBoundary>
@@ -102,12 +191,18 @@ export function AppShell() {
           type="button"
           className="plain-button"
           onClick={() => window.dispatchEvent(new CustomEvent("ailss-play-intro"))}
-          style={{ cursor: "pointer", background: "none", border: "none", font: "inherit", color: "var(--muted)" }}
+          style={{
+            cursor: "pointer",
+            background: "none",
+            border: "none",
+            font: "inherit",
+            color: "var(--muted)",
+          }}
         >
-          🎬 Xem lại giới thiệu
+          {t("action.replayIntro", "🎬 Xem lại giới thiệu")}
         </button>
-        <Link to="/help">Cần hỗ trợ?</Link>
-        <Link to="/courses">Khám phá khóa học</Link>
+        <Link to="/help">{t("nav.needHelp", "Cần hỗ trợ?")}</Link>
+        <Link to={role === "STUDENT" ? "/app/learn" : "/courses"}>{t("nav.exploreCourses", "Khám phá khóa học")}</Link>
       </footer>
     </div>
   );

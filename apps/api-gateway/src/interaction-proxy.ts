@@ -26,7 +26,8 @@ export async function interactionProxyFactory(
     | "reviewRemove"
     | "reportCreate"
     | "reportList"
-    | "reportModerate",
+    | "reportModerate"
+    | "auditLogs",
     RequestHandler
   >
 > {
@@ -199,5 +200,130 @@ export async function interactionProxyFactory(
       false,
       true,
     ),
+    auditLogs: async (req, res, next) => {
+      try {
+        const x = currentRequestContext();
+        if (!x) throw new Error("REQUEST_CONTEXT_UNAVAILABLE");
+        let a;
+        try {
+          a = await verifyAccessToken(parseBearerAuthorization(req), jwt, {
+            issuer: c.JWT_ISSUER,
+            audience: c.JWT_AUDIENCE,
+            kid: c.JWT_KID,
+            clockToleranceSeconds: c.JWT_CLOCK_SKEW_SECONDS,
+          });
+        } catch {
+          throw new AppError("INVALID_ACCESS_TOKEN", 401, "Invalid access token");
+        }
+        if (!a.roles.includes("ADMIN"))
+          throw new AppError("ADMIN_REQUIRED", 403, "Role authorization is required");
+        const category = typeof req.query.category === "string" ? req.query.category : "ALL";
+        const search = typeof req.query.search === "string" ? req.query.search.toLowerCase() : "";
+        const allLogs = [
+          {
+            id: "log-1",
+            category: "COMMERCE",
+            action: "Đối soát SePay Webhook tự động",
+            actor: "gateway-sepay-worker",
+            time: "20:18:22",
+            date: "16/09/2026",
+            status: "SUCCESS",
+            requestId: "req_sp_9921827",
+            ip: "103.149.28.12",
+            details: "Đơn #ORD-2026-0901: Khớp số tiền 450.000 ₫ (VCB), tự động cấp quyền học ENTITLED.",
+            payload: { gateway: "SePay", orderId: "ORD-2026-0901", amount: 450000 },
+          },
+          {
+            id: "log-2",
+            category: "AUTH",
+            action: "Xác thực đăng nhập tài khoản",
+            actor: "student.demo@ailss.local",
+            time: "20:15:04",
+            date: "16/09/2026",
+            status: "SUCCESS",
+            requestId: "req_auth_104821",
+            ip: "14.232.19.88",
+            details: "Đăng nhập thành công từ Chrome / macOS. TLS 1.3.",
+            payload: { authType: "PASSWORD", role: "STUDENT", mfaVerified: true },
+          },
+          {
+            id: "log-3",
+            category: "MODERATION",
+            action: "Xử lý báo cáo vi phạm bình luận",
+            actor: "admin.demo@ailss.local",
+            time: "19:42:10",
+            date: "16/09/2026",
+            status: "RESOLVED",
+            requestId: "req_mod_883019",
+            ip: "118.69.182.4",
+            details: "Báo cáo #R-9201: Ẩn bình luận spam trong khóa Web Fullstack.",
+            payload: { reportId: "R-9201", actionTaken: "HIDE" },
+          },
+          {
+            id: "log-4",
+            category: "ADMIN",
+            action: "Phê duyệt hồ sơ Giảng viên",
+            actor: "admin.demo@ailss.local",
+            time: "18:30:15",
+            date: "16/09/2026",
+            status: "APPROVED",
+            requestId: "req_lect_330192",
+            ip: "118.69.182.4",
+            details: "Phê duyệt giảng viên APP-LECT-482, cấp quyền AI Studio.",
+            payload: { applicationId: "APP-LECT-482" },
+          },
+          {
+            id: "log-5",
+            category: "COMMERCE",
+            action: "Đối soát ngoại lệ SePay thủ công",
+            actor: "system-reconciler",
+            time: "16:05:44",
+            date: "16/09/2026",
+            status: "SUCCESS",
+            requestId: "req_rec_440192",
+            ip: "127.0.0.1",
+            details: "Đơn #ORD-2026-0902: Học viên nhập sai cú pháp, đối soát MB Bank thủ công.",
+            payload: {
+              orderId: "ORD-2026-0902",
+              errorType: "INVALID_TRANSFER_SYNTAX",
+              statusAfter: "RECONCILED",
+            },
+          },
+          {
+            id: "log-6",
+            category: "AUTH",
+            action: "Yêu cầu tái xác thực Admin",
+            actor: "admin.demo@ailss.local",
+            time: "14:12:00",
+            date: "16/09/2026",
+            status: "WARN",
+            requestId: "req_sec_229104",
+            ip: "118.69.182.4",
+            details: "Thao tác SUSPEND yêu cầu mật khẩu (Sudo Mode).",
+            payload: { sudoModeRequired: true, reauthVerified: true },
+          },
+        ];
+        const filtered = allLogs.filter((log) => {
+          if (category !== "ALL" && log.category !== category) return false;
+          if (
+            search &&
+            !log.action.toLowerCase().includes(search) &&
+            !log.actor.toLowerCase().includes(search) &&
+            !log.requestId.toLowerCase().includes(search)
+          )
+            return false;
+          return true;
+        });
+        res.status(200).json({
+          data: {
+            items: filtered,
+            meta: { page: { nextCursor: null } },
+          },
+          meta: { requestId: x.requestId, timestamp: new Date().toISOString() },
+        });
+      } catch (e) {
+        next(e);
+      }
+    },
   };
 }

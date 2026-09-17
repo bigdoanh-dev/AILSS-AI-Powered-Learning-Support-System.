@@ -76,19 +76,27 @@ export function StudentAttendance() {
       </div>
       <div className="attendance-summary-bar">
         <div className="attendance-summary-pill">
-          <span>Tổng số lượt ghi nhận: <strong>{rows.length}</strong></span>
+          <span>
+            Tổng số lượt ghi nhận: <strong>{rows.length}</strong>
+          </span>
         </div>
         <div className="attendance-summary-pill present">
           <span className="dot" aria-hidden="true" />
-          <span>Có mặt: <strong>{count(rows, "PRESENT")}</strong></span>
+          <span>
+            Có mặt: <strong>{count(rows, "PRESENT")}</strong>
+          </span>
         </div>
         <div className="attendance-summary-pill absent">
           <span className="dot" aria-hidden="true" />
-          <span>Vắng không phép: <strong>{count(rows, "ABSENT")}</strong></span>
+          <span>
+            Vắng không phép: <strong>{count(rows, "ABSENT")}</strong>
+          </span>
         </div>
         <div className="attendance-summary-pill excused">
           <span className="dot" aria-hidden="true" />
-          <span>Vắng có phép: <strong>{count(rows, "EXCUSED")}</strong></span>
+          <span>
+            Vắng có phép: <strong>{count(rows, "EXCUSED")}</strong>
+          </span>
         </div>
       </div>
       <div className="calendar-toolbar">

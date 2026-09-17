@@ -288,6 +288,9 @@ export class AiQuizService {
         questionCount: input.body.questionCount,
         questionTypes: input.body.questionTypes,
         difficulty: input.body.difficulty,
+        ...(input.body.cognitiveDistribution
+          ? { cognitiveDistribution: input.body.cognitiveDistribution }
+          : {}),
       },
     };
     await this.repo.prepare(event, job.createdAt);

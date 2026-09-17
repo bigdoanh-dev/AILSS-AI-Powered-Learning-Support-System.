@@ -31,6 +31,7 @@ await startService(manifest, {
         new DocumentWorkerRepository(context.cassandra),
         storage,
         context.logger,
+        config.AI_MAX_EXTRACTED_TEXT_BYTES,
       ),
       url = new URL(config.RABBITMQ_URL);
     url.username = config.RABBITMQ_USERNAME;

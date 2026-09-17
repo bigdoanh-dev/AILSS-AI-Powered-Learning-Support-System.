@@ -243,6 +243,115 @@ describe("P7.12A INT-IDN-02 Admin step-up", () => {
       }),
     ).rejects.toThrow();
   });
+
+  it("authorizes ADMIN_USER_STATUS_CHANGE with resourceType USER and binds to identity-service", async () => {
+    const fixture = await makeFixture();
+    const targetUserId = randomUUID();
+
+    const response = await fixture.service.authorize(fixture.actor, {
+      currentPassword: "correct horse battery staple",
+      action: "ADMIN_USER_STATUS_CHANGE",
+      resourceType: "USER",
+      resourceId: targetUserId,
+    });
+
+    expect(response.authMethod).toBe("PASSWORD_REAUTH");
+    expect(response.expiresIn).toBe(30);
+
+    const verified = await verifyStepUpProof(response.proof, fixture.publicKey, {
+      issuer: "identity-service",
+      audience: "identity-service",
+      kid: "identity-test",
+      action: "ADMIN_USER_STATUS_CHANGE",
+      resourceType: "USER",
+      resourceId: targetUserId,
+      adminUserId: fixture.admin.userId,
+    });
+
+    expect(verified).toMatchObject({
+      action: "ADMIN_USER_STATUS_CHANGE",
+      resourceType: "USER",
+      resourceId: targetUserId,
+      sessionId: fixture.actor.sessionId,
+      tokenVersion: fixture.actor.tokenVersion,
+      authMethod: "PASSWORD_REAUTH",
+    });
+
+    // Mismatched target user ID must be rejected
+    await expect(
+      verifyStepUpProof(response.proof, fixture.publicKey, {
+        issuer: "identity-service",
+        audience: "identity-service",
+        kid: "identity-test",
+        action: "ADMIN_USER_STATUS_CHANGE",
+        resourceType: "USER",
+        resourceId: randomUUID(),
+      }),
+    ).rejects.toThrow();
+
+    // Mismatched action must be rejected
+    await expect(
+      verifyStepUpProof(response.proof, fixture.publicKey, {
+        issuer: "identity-service",
+        audience: "identity-service",
+        kid: "identity-test",
+        action: "ADMIN_LECTURER_VERIFY",
+        resourceType: "USER",
+        resourceId: targetUserId,
+      }),
+    ).rejects.toThrow();
+
+    // Mismatched audience must be rejected
+    await expect(
+      verifyStepUpProof(response.proof, fixture.publicKey, {
+        issuer: "identity-service",
+        audience: "learning-service",
+        kid: "identity-test",
+        action: "ADMIN_USER_STATUS_CHANGE",
+        resourceType: "USER",
+        resourceId: targetUserId,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("authorizes ADMIN_LECTURER_VERIFY and rejects incorrect password", async () => {
+    const fixture = await makeFixture();
+    const targetUserId = randomUUID();
+
+    // Wrong password must be rejected
+    await expect(
+      fixture.service.authorize(fixture.actor, {
+        currentPassword: "wrong password",
+        action: "ADMIN_LECTURER_VERIFY",
+        resourceType: "USER",
+        resourceId: targetUserId,
+      }),
+    ).rejects.toMatchObject({
+      status: 401,
+      code: "ADMIN_STEP_UP_FAILED",
+    });
+
+    // Correct password must issue proof
+    const response = await fixture.service.authorize(fixture.actor, {
+      currentPassword: "correct horse battery staple",
+      action: "ADMIN_LECTURER_VERIFY",
+      resourceType: "USER",
+      resourceId: targetUserId,
+    });
+
+    const verified = await verifyStepUpProof(response.proof, fixture.publicKey, {
+      issuer: "identity-service",
+      audience: "identity-service",
+      kid: "identity-test",
+      action: "ADMIN_LECTURER_VERIFY",
+      resourceType: "USER",
+      resourceId: targetUserId,
+      adminUserId: fixture.admin.userId,
+    });
+
+    expect(verified.action).toBe("ADMIN_LECTURER_VERIFY");
+    expect(verified.resourceType).toBe("USER");
+  });
 });
 
 async function makeFixture() {

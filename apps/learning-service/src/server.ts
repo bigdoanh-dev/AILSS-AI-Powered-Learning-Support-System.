@@ -277,6 +277,7 @@ await startService(manifest, {
         orderCreate: verifier("learning.order.create"),
         orderRead: verifier("learning.order.read"),
         payment: verifier("learning.order.payment"),
+        dashboardRevenue: verifier("learning.admin.dashboard.revenue"),
       }),
     );
     const progress = new LearningProgressService(

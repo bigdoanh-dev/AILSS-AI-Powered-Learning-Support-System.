@@ -38,9 +38,17 @@ export class NotificationWorker {
         type: data.notificationType,
         title: data.title.normalize("NFC"),
         body: data.body.normalize("NFC"),
-        sourceType: "CLASS_ANNOUNCEMENT" as const,
-        sourceId: data.source.announcementId,
-        sourceContextId: data.source.classId,
+        sourceType: typeof data.source.sourceType === "string" ? data.source.sourceType : "CLASS_ANNOUNCEMENT",
+        sourceId: typeof data.source.announcementId === "string"
+          ? data.source.announcementId
+          : typeof data.source.sourceId === "string"
+            ? data.source.sourceId
+            : event.eventId,
+        sourceContextId: typeof data.source.classId === "string"
+          ? data.source.classId
+          : typeof data.source.sourceContextId === "string"
+            ? data.source.sourceContextId
+            : event.eventId,
         createdAt: new Date(String(dedup.created_at)),
       };
       let row = await this.repository.get(

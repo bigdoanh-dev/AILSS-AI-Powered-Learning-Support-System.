@@ -13,12 +13,20 @@ export function lecturerVerifyRouter(
   service: LecturerVerifyService,
   verifier: LecturerVerifyActorContextVerifier,
   metrics: ReturnType<typeof createMetrics>,
+  verifyStepUp?: (token: string, actor: ActorContext, targetId: string) => Promise<void>,
 ): Router {
   const router = Router();
   router.post("/api/v1/admin/lecturers/:userId/verify", async (request, response, next): Promise<void> => {
     try {
       const { actor, requestId } = await verifiedActor(request, verifier, metrics);
       const targetId = parseUuid(request.params.userId);
+      if (verifyStepUp) {
+        try {
+          await verifyStepUp(request.header("x-admin-step-up-proof") ?? "", actor, targetId);
+        } catch {
+          throw new AppError("ADMIN_STEP_UP_FAILED", 401, "Current-password reauthentication required");
+        }
+      }
       let idempotencyKey: string;
       try {
         idempotencyKey = validateIdempotencyKey(request.header("idempotency-key"));

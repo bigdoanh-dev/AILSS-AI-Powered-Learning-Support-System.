@@ -15,7 +15,8 @@ export function use3DTilt<T extends HTMLElement = HTMLDivElement>(options: TiltO
     const el = ref.current;
     if (!el) return;
 
-    const reduced = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)").matches : false;
+    const reduced =
+      typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)").matches : false;
     if (reduced) return;
 
     let frame = 0;

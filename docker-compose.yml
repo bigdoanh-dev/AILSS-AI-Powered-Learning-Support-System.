@@ -460,7 +460,7 @@ services:
         CASSANDRA_KEYSPACE: ai_keyspace,
         CASSANDRA_USERNAME: svc_ai,
         CASSANDRA_PASSWORD: "${CASSANDRA_SVC_AI_PASSWORD}",
-        AI_PROVIDER_MODE: "${AI_PROVIDER_MODE:-deterministic-test}",
+        AI_PROVIDER_MODE: "${AI_PROVIDER_MODE:-production}",
         AI_PROVIDER_ENDPOINT: "${AI_PROVIDER_ENDPOINT:-https://api.openai.com/v1/chat/completions}",
         AI_PROVIDER_MODEL: "${AI_PROVIDER_MODEL:-gpt-5-mini}",
         AI_PROVIDER_API_KEY: "${AI_PROVIDER_API_KEY:-<INJECTED>}",

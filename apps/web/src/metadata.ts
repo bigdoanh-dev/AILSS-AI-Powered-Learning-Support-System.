@@ -58,6 +58,10 @@ export function metadata(path: string) {
   if (path === "/app/attendance") return ["Thông tin điểm danh", "Tổng hợp và chi tiết điểm danh theo lớp."];
   if (path === "/app/teaching/schedule") return ["Lịch dạy", "Theo dõi lịch giảng dạy theo lớp."];
   if (path === "/app/teaching/attendance") return ["Điểm danh lớp học", "Quản lý điểm danh các buổi học."];
+  if (path === "/app/admin/revenue") return ["Doanh thu & SePay", "Báo cáo doanh thu và đối soát thanh toán tự động SePay."];
+  if (path === "/app/admin/stats") return ["Thống kê học tập", "Phân tích cơ cấu người dùng và ma trận nhận thức Bloom."];
+  if (path === "/app/admin/logs") return ["Nhật ký & Kiểm toán", "Theo dõi nhật ký hệ thống và kiểm toán an ninh."];
+  if (path === "/app/admin/settings") return ["Cài đặt hệ thống", "Cấu hình bảo mật phiên làm việc và bảo trì hệ thống."];
   if (path.startsWith("/app/admin")) return ["Quản trị", "Quản lý người dùng, khóa học và nội dung AILSS."];
   if (path.startsWith("/app/teaching")) return ["Giảng dạy", "Khóa học và lớp học của bạn."];
   if (path.startsWith("/app/learn")) return ["Học tập", "Tiếp tục hành trình học tập của bạn."];

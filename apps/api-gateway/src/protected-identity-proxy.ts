@@ -9,6 +9,8 @@ import {
   loadPublicKey,
   signActorContext,
   verifyAccessToken,
+  type StepUpAction,
+  type StepUpResourceType,
 } from "../../../packages/security/src/index.js";
 
 const MAX_AUTHORIZATION_LENGTH = 4_096;
@@ -23,6 +25,90 @@ export interface ProtectedIdentityRoute {
   readonly forwardIdempotencyKey?: boolean;
   readonly timeoutMs?: number;
   readonly onInvalidBearer: () => void;
+}
+
+export interface StepUpTarget {
+  readonly action: StepUpAction;
+  readonly resourceType: StepUpResourceType;
+  readonly resourceId: string;
+  readonly currentPassword: string;
+  readonly forwardedBody?: unknown;
+}
+
+export function requiresStepUp(purpose: string): boolean {
+  return (
+    purpose === "identity.lecturer-application.decision" ||
+    purpose === "identity.admin.user.status.change" ||
+    purpose === "identity.admin.lecturer.verify"
+  );
+}
+
+export function resolveStepUpTarget(route: ProtectedIdentityRoute, request: Request): StepUpTarget | null {
+  if (!requiresStepUp(route.purpose)) return null;
+
+  if (route.purpose === "identity.lecturer-application.decision") {
+    const parsed = publicDecisionSchema.safeParse(request.body);
+    const id = z.string().uuid().safeParse(request.params.applicationId);
+    if (!parsed.success || !id.success || Object.keys(request.query).length) {
+      throw new AppError("APPLICATION_INVALID_REQUEST", 422, "Invalid application decision");
+    }
+    return {
+      action:
+        parsed.data.decision === "APPROVE" ? "LECTURER_APPLICATION_APPROVE" : "LECTURER_APPLICATION_REJECT",
+      resourceType: "LECTURER_APPLICATION",
+      resourceId: id.data,
+      currentPassword: parsed.data.currentPassword,
+      forwardedBody: { decision: parsed.data.decision },
+    };
+  }
+
+  if (route.purpose === "identity.admin.user.status.change") {
+    const id = z.string().uuid().safeParse(request.params.userId);
+    const bodySchema = z
+      .object({
+        status: z.enum(["ACTIVE", "SUSPENDED"]),
+        currentPassword: z.string().min(1).max(128),
+        reason: z.string().trim().min(1).max(200).optional(),
+      })
+      .strict();
+    const parsed = bodySchema.safeParse(request.body);
+    if (!parsed.success || !id.success) {
+      throw new AppError("ADMIN_STATUS_VALIDATION_FAILED", 422, "Invalid status change request");
+    }
+    return {
+      action: "ADMIN_USER_STATUS_CHANGE",
+      resourceType: "USER",
+      resourceId: id.data,
+      currentPassword: parsed.data.currentPassword,
+      forwardedBody: {
+        status: parsed.data.status,
+        reason: parsed.data.reason,
+        currentPassword: parsed.data.currentPassword,
+      },
+    };
+  }
+
+  if (route.purpose === "identity.admin.lecturer.verify") {
+    const id = z.string().uuid().safeParse(request.params.userId);
+    const bodySchema = z
+      .object({
+        currentPassword: z.string().min(1).max(128),
+      })
+      .strict();
+    const parsed = bodySchema.safeParse(request.body);
+    if (!parsed.success || !id.success) {
+      throw new AppError("LECTURER_VERIFY_VALIDATION_FAILED", 422, "Invalid lecturer verify request");
+    }
+    return {
+      action: "ADMIN_LECTURER_VERIFY",
+      resourceType: "USER",
+      resourceId: id.data,
+      currentPassword: parsed.data.currentPassword,
+      forwardedBody: { currentPassword: parsed.data.currentPassword },
+    };
+  }
+
+  return null;
 }
 
 export async function protectedIdentityProxyFactory(
@@ -61,25 +147,19 @@ export async function protectedIdentityProxyFactory(
             route.onInvalidBearer();
             throw invalidAccessToken();
           }
-          let decisionBody: { decision: "APPROVE" | "REJECT" } | undefined;
+          let decisionBody: unknown;
           let stepUpProof: string | undefined;
-          if (route.purpose === "identity.lecturer-application.decision") {
-            const parsed = publicDecisionSchema.safeParse(request.body);
-            const id = z.string().uuid().safeParse(request.params.applicationId);
-            if (!parsed.success || !id.success || Object.keys(request.query).length)
-              throw new AppError("APPLICATION_INVALID_REQUEST", 422, "Invalid application decision");
+          const stepUpTarget = resolveStepUpTarget(route, request);
+          if (stepUpTarget) {
             if (!stepUp) throw new AppError("APPLICATION_UNAVAILABLE", 503, "Reauthentication unavailable");
             try {
               stepUpProof = await stepUp.authorize({
                 actor,
                 correlationId: context.correlationId,
-                currentPassword: parsed.data.currentPassword,
-                action:
-                  parsed.data.decision === "APPROVE"
-                    ? "LECTURER_APPLICATION_APPROVE"
-                    : "LECTURER_APPLICATION_REJECT",
-                resourceType: "LECTURER_APPLICATION",
-                resourceId: id.data,
+                currentPassword: stepUpTarget.currentPassword,
+                action: stepUpTarget.action,
+                resourceType: stepUpTarget.resourceType,
+                resourceId: stepUpTarget.resourceId,
               });
             } catch (error) {
               throw new AppError(
@@ -90,7 +170,9 @@ export async function protectedIdentityProxyFactory(
                 "Application reauthentication failed",
               );
             }
-            decisionBody = { decision: parsed.data.decision };
+            if (stepUpTarget.forwardedBody !== undefined) {
+              decisionBody = stepUpTarget.forwardedBody;
+            }
           }
           const issuedAt = Math.floor(Date.now() / 1_000);
           const actorContext = await signActorContext(

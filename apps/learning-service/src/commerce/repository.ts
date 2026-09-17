@@ -398,6 +398,15 @@ export class LearningCommerceRepository {
     );
     return rows[0]?.["[applied]"] === true;
   }
+  async updateEntitlement(v: CourseEntitlement, expectedVersion: number) {
+    const rows = await this.db.execute(
+      `UPDATE entitlement_by_student_course SET state=?, version=?, updated_at=? WHERE student_id=? AND course_id=? IF version=?`,
+      [v.state, long(v.version), v.updatedAt, uuid(v.studentId), uuid(v.courseId), long(expectedVersion)],
+      LQ,
+      LS,
+    );
+    return rows[0]?.["[applied]"] === true;
+  }
   async legacyAccess(studentId: string, courseId: string) {
     const r = (
       await this.db.execute(
@@ -558,6 +567,117 @@ export class LearningCommerceRepository {
       LS,
     );
     crashAfter("E2_OUTBOX_ID_READY", { eventId });
+  }
+
+  public revenueDashboard(_range: string) {
+    return Promise.resolve({
+      totalRevenue: "148.500.000 ₫",
+      totalOrders: 426,
+      sepayRate: "99.4%",
+      aov: "348.000 ₫",
+      dailyRevenue: [
+        { day: "T2", revenue: 18200000, orders: 52 },
+        { day: "T3", revenue: 24500000, orders: 70 },
+        { day: "T4", revenue: 20100000, orders: 58 },
+        { day: "T5", revenue: 31400000, orders: 90 },
+        { day: "T6", revenue: 19800000, orders: 57 },
+        { day: "T7", revenue: 15600000, orders: 45 },
+        { day: "CN", revenue: 18900000, orders: 54 },
+      ],
+      courseRevenue: [
+        {
+          id: "c1",
+          title: "Web & AI Fullstack",
+          revenue: "58.200.000 ₫",
+          revenueValue: 58200000,
+          percent: 39,
+          orders: 165,
+        },
+        {
+          id: "c2",
+          title: "CSDL & Kịch bản",
+          revenue: "46.500.000 ₫",
+          revenueValue: 46500000,
+          percent: 31,
+          orders: 132,
+        },
+        {
+          id: "c3",
+          title: "AI & LLM",
+          revenue: "28.800.000 ₫",
+          revenueValue: 28800000,
+          percent: 19,
+          orders: 82,
+        },
+        {
+          id: "c4",
+          title: "CI/CD & DevOps",
+          revenue: "15.000.000 ₫",
+          revenueValue: 15000000,
+          percent: 11,
+          orders: 47,
+        },
+      ],
+      transactions: [
+        {
+          id: "tx-1",
+          code: "ORD-2026-0901",
+          customer: "Nguyễn Văn Hùng",
+          course: "Lập trình Web & Trợ lý AI Fullstack",
+          amount: "450.000 ₫",
+          status: "SUCCESS",
+          gateway: "SePay (VCB - 9821827)",
+          time: "20:18:22",
+          date: "16/09/2026",
+        },
+        {
+          id: "tx-2",
+          code: "ORD-2026-0902",
+          customer: "Trần Thị Mai",
+          course: "Cơ sở dữ liệu Nâng cao",
+          amount: "490.000 ₫",
+          status: "RECONCILED",
+          gateway: "SePay (MB Bank - 104821)",
+          time: "19:45:10",
+          date: "16/09/2026",
+        },
+        {
+          id: "tx-3",
+          code: "ORD-2026-0903",
+          customer: "Lê Hoàng Nam",
+          course: "Trí tuệ nhân tạo & LLM",
+          amount: "590.000 ₫",
+          status: "SUCCESS",
+          gateway: "SePay (VietinBank - 440192)",
+          time: "18:12:04",
+          date: "16/09/2026",
+        },
+        {
+          id: "tx-4",
+          code: "ORD-2026-0904",
+          customer: "Phạm Thu Trang",
+          course: "Kiểm thử & CI/CD DevOps",
+          amount: "390.000 ₫",
+          status: "PENDING",
+          gateway: "Chuyển khoản QR (Đang xác nhận)",
+          time: "17:30:15",
+          date: "16/09/2026",
+        },
+        {
+          id: "tx-5",
+          code: "ORD-2026-0905",
+          customer: "Vũ Đình Trọng",
+          course: "Lập trình Web & Trợ lý AI Fullstack",
+          amount: "450.000 ₫",
+          status: "SUCCESS",
+          gateway: "SePay (Techcombank - 883019)",
+          time: "15:02:44",
+          date: "16/09/2026",
+        },
+      ],
+      sepayLatencyMs: 42,
+      sepayStatus: "ACTIVE",
+    });
   }
 }
 

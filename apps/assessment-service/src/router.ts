@@ -5,6 +5,7 @@ import type { createMetrics } from "../../../packages/observability/src/index.js
 import type { ActorContext } from "../../../packages/security/src/index.js";
 import {
   parseAttemptSubmit,
+  parseManualGrade,
   parseQuizCreate,
   parseQuizPatch,
   parseResultListQuery,
@@ -26,7 +27,9 @@ export function assessmentRouter(
     | "attemptDetail"
     | "submit"
     | "result"
-    | "results",
+    | "results"
+    | "gradeAttempt"
+    | "listGrades",
     Verifier
   >,
   metrics: ReturnType<typeof createMetrics>,
@@ -220,6 +223,46 @@ export function assessmentRouter(
           month: query.month,
           limit: query.limit,
           ...(query.cursor ? { cursor: query.cursor } : {}),
+          requestId: context.requestId,
+        }),
+        meta: meta(context.requestId),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  router.post("/api/v1/quizzes/:quizId/grades/:attemptId", async (request, response, next) => {
+    try {
+      const context = requiredContext(),
+        actor = await verified(request, verify.gradeAttempt, context.correlationId),
+        quizId = resourceId(request.params.quizId, "quizId"),
+        attemptId = resourceId(request.params.attemptId, "attemptId"),
+        reqBody = body(() => parseManualGrade(request.body)),
+        result = await service.gradeAttempt({
+          actor,
+          quizId,
+          attemptId,
+          request: reqBody,
+          requestId: context.requestId,
+        });
+      response.status(200).json({ data: result, meta: meta(context.requestId) });
+    } catch (error) {
+      next(error);
+    }
+  });
+  router.get("/api/v1/quizzes/:quizId/grades", async (request, response, next) => {
+    try {
+      const context = requiredContext(),
+        actor = await verified(request, verify.listGrades, context.correlationId),
+        quizId = resourceId(request.params.quizId, "quizId"),
+        month = typeof request.query.month === "string" ? request.query.month : undefined,
+        limit = typeof request.query.limit === "string" ? Number(request.query.limit) : undefined;
+      response.status(200).json({
+        data: await service.listGrades({
+          quizId,
+          ...(month ? { month } : {}),
+          ...(limit !== undefined && !Number.isNaN(limit) ? { limit } : {}),
+          actor,
           requestId: context.requestId,
         }),
         meta: meta(context.requestId),

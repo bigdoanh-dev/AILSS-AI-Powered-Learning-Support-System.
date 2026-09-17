@@ -4,8 +4,11 @@ import { useSession, roleLabel } from "../auth/session";
 import { Logo } from "./Logo";
 import { Dialog } from "./ui";
 import { Avatar, ThemeToggle } from "./Preferences";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useLanguage } from "../lib/i18n";
 
 export function SiteHeader() {
+  const { t } = useLanguage();
   const auth = useSession();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,6 +31,7 @@ export function SiteHeader() {
     };
   }, []);
   const p = auth.profile;
+  const coursesPath = p?.role === "STUDENT" ? "/app/learn" : "/courses";
   useEffect(() => {
     setMenu(false);
     setMobile(false);
@@ -84,50 +88,57 @@ export function SiteHeader() {
             to={`/app/teaching/ai/jobs/${aiNotice.jobId}`}
             onClick={() => setAiNotice(undefined)}
           >
-            Mở công việc
+            {t("action.openJob", "Mở công việc")}
           </Link>
         </aside>
       )}
-      <NavLink to="/courses">Khóa học</NavLink>
+      <NavLink to={coursesPath}>{t("nav.courses", "Khóa học")}</NavLink>
       {p ? (
-        <>
-          <Link className="notification-shortcut" to="/app/notifications" aria-label="Mở thông báo">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              aria-hidden="true"
-            >
-              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
-            </svg>{" "}
-            Thông báo
-          </Link>
-          <NavLink to="/app">
-            {p.role === "ADMIN" ? "Quản trị" : p.role === "LECTURER" ? "Giảng dạy" : "Học tập"}
-          </NavLink>
-        </>
+        <NavLink to="/app">
+          {p.role === "ADMIN" ? t("nav.admin", "Quản trị") : p.role === "LECTURER" ? t("nav.teaching", "Giảng dạy") : t("nav.classroom", "Học tập")}
+        </NavLink>
       ) : (
-        <NavLink to="/lecturers">Dành cho giảng viên</NavLink>
+        <NavLink to="/lecturers">{t("nav.forLecturers", "Dành cho giảng viên")}</NavLink>
       )}
-      <NavLink to="/ai-learning">Học cùng AI</NavLink>
-      <NavLink to="/help">Trợ giúp</NavLink>
+      <NavLink to="/ai-learning">{t("nav.aiLearning", "Học cùng AI")}</NavLink>
+      <NavLink to="/help">{t("nav.help", "Trợ giúp")}</NavLink>
     </>
   );
   return (
     <>
       <a className="skip-link" href="#main">
-        Đến nội dung chính
+        {t("action.skipToContent", "Đến nội dung chính")}
       </a>
       <header className={`site-header ${location.pathname === "/" ? "home-hero-header" : ""}`}>
         <div className="site-header-inner">
           <Logo />
-          <nav className="site-navigation" aria-label="Điều hướng chính">
+          <nav className="site-navigation" aria-label={t("nav.mainNav", "Điều hướng chính")}>
             {links}
           </nav>
           <div className="site-tools">
+            {p && (
+              <NavLink
+                to="/app/notifications"
+                className={({ isActive }) =>
+                  `header-notification-btn ${isActive ? "active" : ""}`
+                }
+                aria-label={t("nav.notifications", "Thông báo")}
+                title={t("nav.notifications", "Thông báo")}
+              >
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  aria-hidden="true"
+                >
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+                </svg>
+              </NavLink>
+            )}
+            <LanguageSwitcher />
             <ThemeToggle />
             {p ? (
               <div
@@ -160,11 +171,12 @@ export function SiteHeader() {
                   <div className="user-menu-panel" id="account-menu">
                     <strong>{p.displayName}</strong>
                     <small>{roleLabel(p)}</small>
-                    <Link to="/app">Tổng quan tài khoản</Link>
-                    <Link to="/app/account">Hồ sơ và ảnh đại diện</Link>
-                    <Link to="/courses">Khám phá khóa học</Link>
+                    <Link to="/app">{t("nav.accountOverview", "Tổng quan tài khoản")}</Link>
+                    <Link to="/app/account">{t("nav.profileAndAvatar", "Hồ sơ và ảnh đại diện")}</Link>
+                    <Link to="/app/notifications">{t("nav.personalNotifications", "Thông báo cá nhân")}</Link>
+                    <Link to={coursesPath}>{t("nav.exploreCourses", "Khám phá khóa học")}</Link>
                     <button disabled={busy} onClick={() => void logout()}>
-                      {busy ? "Đang đăng xuất…" : "Đăng xuất"}
+                      {busy ? t("nav.loggingOut", "Đang đăng xuất…") : t("nav.logout", "Đăng xuất")}
                     </button>
                     {error && <p role="alert">{error}</p>}
                   </div>
@@ -174,15 +186,15 @@ export function SiteHeader() {
               <span className="session-loading" aria-label="Đang kiểm tra tài khoản" />
             ) : (
               <div className="guest-actions">
-                <Link to="/auth/login">Đăng nhập</Link>
+                <Link to="/auth/login">{t("nav.login", "Đăng nhập")}</Link>
                 <Link className="button small" to="/auth/register">
-                  Bắt đầu học
+                  {t("nav.getStarted", "Bắt đầu học")}
                 </Link>
               </div>
             )}
             <button
               className="site-menu-toggle"
-              aria-label="Mở điều hướng"
+              aria-label={t("nav.navigation", "Mở điều hướng")}
               aria-expanded={mobile}
               onClick={() => setMobile(true)}
             >
@@ -201,7 +213,7 @@ export function SiteHeader() {
           </div>
         </div>
       </header>
-      <Dialog open={mobile} onClose={() => setMobile(false)} title="Điều hướng">
+      <Dialog open={mobile} onClose={() => setMobile(false)} title={t("nav.navigation", "Điều hướng")}>
         <nav
           className="mobile-nav"
           onClick={(event) => {
@@ -209,7 +221,8 @@ export function SiteHeader() {
           }}
         >
           {links}
-          {p ? <Link to="/app/account">Hồ sơ của tôi</Link> : <Link to="/auth/login">Đăng nhập</Link>}
+          {p && <NavLink to="/app/notifications">{t("nav.notifications", "Thông báo")}</NavLink>}
+          {p ? <Link to="/app/account">{t("nav.profile", "Hồ sơ của tôi")}</Link> : <Link to="/auth/login">{t("nav.login", "Đăng nhập")}</Link>}
         </nav>
       </Dialog>
     </>

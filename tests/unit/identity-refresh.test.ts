@@ -176,6 +176,56 @@ describe("P7.3 IDN-03 refresh orchestration", () => {
     }
   });
 
+  it("safely advances authVersion and reflects upgraded role without revoking session when admin promotes student", async () => {
+    const fixture = refreshFixture({ authVersion: 1 });
+    const store = new MemoryRefreshStore(fixture.session);
+    // User was promoted from STUDENT to LECTURER by admin: tokenVersion incremented, role updated, but credentialVersion unchanged (1)
+    store.user = {
+      ...store.user,
+      role: "LECTURER",
+      lecturerVerified: true,
+      tokenVersion: 2,
+      credentialVersion: 1,
+    };
+    let signed: RefreshAccessTokenInput | undefined;
+    const service = makeService(store, {
+      signer: async (input) => {
+        signed = input;
+        return `signed.${input.sessionId}`;
+      },
+    });
+    const result = await service.refresh(command(fixture));
+
+    expect(result.session.state).toBe("ACTIVE");
+    expect(result.session.authVersion).toBe(2);
+    expect(result.user.role).toBe("LECTURER");
+    expect(signed).toEqual({
+      subject: fixture.session.userId,
+      roles: ["LECTURER"],
+      sessionId: fixture.session.sessionId,
+      tokenVersion: 2,
+      issuedAtSeconds: Math.floor(now.getTime() / 1_000),
+    });
+    expect(store.session?.state).toBe("ACTIVE");
+    expect(store.session?.authVersion).toBe(2);
+  });
+
+  it("fails closed and revokes family when user credentialVersion advances (password change)", async () => {
+    const fixture = refreshFixture({ authVersion: 1 });
+    const store = new MemoryRefreshStore(fixture.session);
+    // User password changed: both tokenVersion and credentialVersion incremented to 2
+    store.user = {
+      ...store.user,
+      tokenVersion: 2,
+      credentialVersion: 2,
+    };
+    await expect(makeService(store).refresh(command(fixture))).rejects.toMatchObject({
+      code: "INVALID_REFRESH_CREDENTIALS",
+      status: 401,
+    });
+    expect(store.session).toMatchObject({ state: "REVOKED", version: 2, authVersion: 1 });
+  });
+
   it("does not mutate the session when access signing fails", async () => {
     const fixture = refreshFixture();
     const store = new MemoryRefreshStore(fixture.session);
@@ -372,6 +422,7 @@ class MemoryRefreshStore implements IdentityRefreshStore {
   public async rotateSession(input: {
     expected: LoginSession;
     nextRefreshFingerprint: string;
+    nextAuthVersion?: number | null;
   }): Promise<boolean> {
     this.rotateCalls += 1;
     if (this.rotateMode === "throw_before_commit") throw new Error("write timeout");
@@ -389,6 +440,7 @@ class MemoryRefreshStore implements IdentityRefreshStore {
     this.session = {
       ...current,
       refreshFingerprint: input.nextRefreshFingerprint,
+      authVersion: input.nextAuthVersion !== undefined ? input.nextAuthVersion : current.authVersion,
       generation: current.generation + 1,
       version: current.version + 1,
     };

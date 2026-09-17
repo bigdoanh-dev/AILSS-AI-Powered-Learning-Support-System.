@@ -5,7 +5,23 @@ import { Breadcrumbs, EmptyState, StateChip, useUnsavedChanges } from "../compon
 import { lecturerError, lecturerRequest, month, useLecturer } from "./api";
 import { State } from "./ui";
 import { useAiLive } from "./useAiLive";
+import { useAiUsage } from "./useAiUsage";
 import "./ai-studio.css";
+
+const cognitiveLabels = {
+  RECOGNITION: "Nhận biết",
+  UNDERSTANDING: "Thông hiểu",
+  APPLICATION: "Vận dụng",
+  ADVANCED_APPLICATION: "Vận dụng cao",
+} as const;
+type CognitiveLevel = keyof typeof cognitiveLabels;
+const cognitiveHints: Record<CognitiveLevel, string> = {
+  RECOGNITION: "Nhớ khái niệm, định nghĩa và dữ kiện.",
+  UNDERSTANDING: "Giải thích, so sánh và diễn giải kiến thức.",
+  APPLICATION: "Áp dụng kiến thức vào tình huống cụ thể.",
+  ADVANCED_APPLICATION: "Phân tích nhiều bước, kết hợp kiến thức để giải quyết vấn đề.",
+};
+const cognitiveEntries = Object.entries(cognitiveLabels) as [CognitiveLevel, string][];
 
 type DocumentState =
   "UPLOAD_PENDING" | "EXTRACTION_QUEUED" | "EXTRACTING" | "EXTRACTED" | "FAILED" | "QUARANTINED";
@@ -42,6 +58,7 @@ type ObjectiveQuestion = {
   order: number;
   text: string;
   points: string;
+  cognitiveLevel?: CognitiveLevel;
   type: "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
   options?: Option[];
   correctAnswer:
@@ -65,7 +82,6 @@ type Approval = {
   approvedDraftVersion: 2;
   assessment: { quizId: string; quizVersion: 1; status: "DRAFT" };
 };
-type Usage = { day: string; limit: number; reserved: number; consumed: number; remaining: number };
 type Course = { courseId: string; title: string };
 type ClassItem = { classId: string; name: string };
 
@@ -201,8 +217,19 @@ export function AiStudio() {
   const live = useAiLive<Job>(activeJob),
     polled = useJobPolling(activeJob, !live.connected);
   const currentJob = live.connected ? live.job || polled.value : polled.value || live.job;
-  const [count, setCount] = useState(10),
-    [difficulty, setDifficulty] = useState("EASY");
+  const [cognitiveDistribution, setCognitiveDistribution] = useState<Record<CognitiveLevel, number>>({
+    RECOGNITION: 2,
+    UNDERSTANDING: 3,
+    APPLICATION: 3,
+    ADVANCED_APPLICATION: 2,
+  });
+  const count = Object.values(cognitiveDistribution).reduce((sum, value) => sum + value, 0);
+  const validDistribution =
+    Object.values(cognitiveDistribution).every(
+      (value) => Number.isInteger(value) && value >= 0 && value <= 50,
+    ) &&
+    count >= 1 &&
+    count <= 50;
   const working = !!currentJob && !terminal.has(currentJob.state);
   const announced = useRef("");
   useEffect(() => {
@@ -230,7 +257,7 @@ export function AiStudio() {
   const jobs = useLecturer<Job[]>(
       `/ai/jobs?state=${filter}&month=${month()}&limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
     ),
-    usage = useLecturer<Usage>("/ai/usage"),
+    usage = useAiUsage(currentJob?.jobId, currentJob?.state),
     courses = useLecturer<Course[] | { items: Course[] }>("/courses?limit=50"),
     classes = useLecturer<ClassItem[] | { classes: ClassItem[] }>("/me/owned-classes"),
     documentQuery = useDocument(documentId);
@@ -311,6 +338,8 @@ export function AiStudio() {
     if (documentQuery.value?.status !== "EXTRACTED") return setMsg("Tài liệu vẫn đang được xử lý.");
     const f = new FormData(e.currentTarget),
       questionTypes = f.getAll("questionTypes").map(String);
+    if (!validDistribution)
+      return setMsg("Tổng số câu phải từ 1 đến 50; số câu mỗi mức phải là số nguyên không âm.");
     if (!questionTypes.length) return setMsg("Chọn ít nhất một loại câu hỏi.");
     if (Number(f.get("questionCount")) < questionTypes.length)
       return setMsg("Số câu cần ít nhất bằng số loại câu hỏi đã chọn.");
@@ -324,7 +353,8 @@ export function AiStudio() {
         targetId: String(f.get("targetId")),
         questionCount: Number(f.get("questionCount")),
         questionTypes,
-        difficulty: String(f.get("difficulty")),
+        difficulty: "MEDIUM",
+        cognitiveDistribution,
       });
       setMsg("Yêu cầu đã được tạo. AI sẽ chuẩn bị một bản nháp để bạn xem lại.");
       setRequestCopy(
@@ -453,19 +483,42 @@ export function AiStudio() {
                   type="number"
                   min="1"
                   max="50"
-                  value={count}
-                  onChange={(e) => setCount(Number(e.target.value))}
+                  value={Number.isFinite(count) ? count : ""}
+                  readOnly
                   required
                 />
               </label>
-              <label>
-                Mức độ
-                <select name="difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-                  <option value="EASY">Cơ bản</option>
-                  <option value="MEDIUM">Trung bình</option>
-                  <option value="HARD">Nâng cao</option>
-                </select>
-              </label>
+              <fieldset className="cognitive-distribution">
+                <legend>Phân bố mức độ nhận thức</legend>
+                <p>Nhập số câu ở từng mức. Nhập 0 nếu không sử dụng mức đó.</p>
+                {cognitiveEntries.map(([level, label]) => (
+                  <label key={level}>
+                    {label}
+                    <input
+                      type="number"
+                      min="0"
+                      max="50"
+                      step="1"
+                      required
+                      value={Number.isNaN(cognitiveDistribution[level]) ? "" : cognitiveDistribution[level]}
+                      aria-describedby={`hint-${level}`}
+                      onChange={(e) =>
+                        setCognitiveDistribution((current) => ({
+                          ...current,
+                          [level]: e.target.valueAsNumber,
+                        }))
+                      }
+                    />
+                    <small id={`hint-${level}`}>{cognitiveHints[level]}</small>
+                  </label>
+                ))}
+                <p role="status">
+                  {validDistribution
+                    ? `Tổng: ${count} câu hỏi`
+                    : "Tổng phải từ 1 đến 50 câu; mỗi mức là số nguyên không âm."}
+                </p>
+                <small>Đây là mức nhận thức dự kiến. Giảng viên cần kiểm tra nội dung trước khi duyệt.</small>
+              </fieldset>
               <fieldset>
                 <legend>Loại câu hỏi</legend>
                 {[
@@ -482,7 +535,13 @@ export function AiStudio() {
               <p>AI sẽ tạo một bản nháp. Bạn cần kiểm tra nội dung và đáp án trước khi phê duyệt.</p>
               <button
                 className="button"
-                disabled={uploading || generating || working || documentQuery.value?.status !== "EXTRACTED"}
+                disabled={
+                  !validDistribution ||
+                  uploading ||
+                  generating ||
+                  working ||
+                  documentQuery.value?.status !== "EXTRACTED"
+                }
               >
                 {generating ? "Đang tạo yêu cầu…" : "Tạo câu hỏi từ học liệu"}
               </button>
@@ -522,8 +581,12 @@ export function AiStudio() {
                 <button
                   type="button"
                   onClick={() => {
-                    setCount(10);
-                    setDifficulty("EASY");
+                    setCognitiveDistribution({
+                      RECOGNITION: 4,
+                      UNDERSTANDING: 4,
+                      APPLICATION: 2,
+                      ADVANCED_APPLICATION: 0,
+                    });
                   }}
                 >
                   Ôn tập nhanh · 10 câu
@@ -531,8 +594,12 @@ export function AiStudio() {
                 <button
                   type="button"
                   onClick={() => {
-                    setCount(20);
-                    setDifficulty("HARD");
+                    setCognitiveDistribution({
+                      RECOGNITION: 2,
+                      UNDERSTANDING: 4,
+                      APPLICATION: 8,
+                      ADVANCED_APPLICATION: 6,
+                    });
                   }}
                 >
                   Kiểm tra nâng cao · 20 câu
@@ -592,12 +659,21 @@ export function AiStudio() {
           <footer className="assistant-composer">
             <p>
               <strong>{count || 0} câu hỏi</strong> ·{" "}
-              {difficulty === "EASY" ? "Cơ bản" : difficulty === "HARD" ? "Nâng cao" : "Trung bình"}
+              {cognitiveEntries
+                .filter(([level]) => cognitiveDistribution[level] > 0)
+                .map(([level, label]) => `${cognitiveDistribution[level]} ${label.toLowerCase()}`)
+                .join(" · ")}
             </p>
             <button
               className="button"
               form="assistant-generate"
-              disabled={uploading || generating || working || documentQuery.value?.status !== "EXTRACTED"}
+              disabled={
+                !validDistribution ||
+                uploading ||
+                generating ||
+                working ||
+                documentQuery.value?.status !== "EXTRACTED"
+              }
             >
               {working ? "Đang soạn câu hỏi…" : generating ? "Đang gửi…" : "Gửi yêu cầu tạo câu hỏi ↑"}
             </button>
@@ -675,6 +751,7 @@ export function AiStudio() {
             <p>
               {v.consumed} đã dùng · {v.reserved} đang được giữ cho công việc xử lý.
             </p>
+            <p>Hạn mức làm mới lúc 00:00 mỗi ngày (giờ Việt Nam). Số liệu tính theo ngày gửi yêu cầu.</p>
           </section>
         )}
       </State>
@@ -873,6 +950,41 @@ function ReviewEditor({ draft }: { draft: Draft }) {
     }));
     setDirty(true);
   };
+  function removeQuestion(index: number) {
+    if (review.questions.length <= 1) {
+      alert("Bản nháp cần ít nhất 1 câu hỏi.");
+      return;
+    }
+    if (!confirm(`Bạn có chắc muốn xóa Câu ${index + 1}?`)) return;
+    setReview((v) => ({
+      ...v,
+      questions: v.questions.filter((_, i) => i !== index).map((q, i) => ({ ...q, order: i + 1 })),
+    }));
+    setSelected((prev) => (prev >= index ? Math.max(0, prev - 1) : prev));
+    setDirty(true);
+  }
+  function addQuestion() {
+    const newOrder = review.questions.length + 1;
+    const newId = `q-${Date.now()}`;
+    const newQ: ObjectiveQuestion = {
+      id: newId,
+      order: newOrder,
+      text: "",
+      points: "1",
+      type: "SINGLE_CHOICE",
+      options: [
+        { id: "opt-1", text: "" },
+        { id: "opt-2", text: "" },
+      ],
+      correctAnswer: { optionId: "opt-1" },
+    };
+    setReview((v) => ({
+      ...v,
+      questions: [...v.questions, newQ],
+    }));
+    setSelected(review.questions.length);
+    setDirty(true);
+  }
   async function approve() {
     if (errors.length) return setMsg("Hãy sửa các lỗi trước khi phê duyệt.");
     if (
@@ -944,12 +1056,33 @@ function ReviewEditor({ draft }: { draft: Draft }) {
           </select>
           <div className="builder-question-list">
             {review.questions.map((x, i) => (
-              <button key={x.id} className={selected === i ? "active" : ""} onClick={() => setSelected(i)}>
-                Câu {i + 1}
-                <small>{x.text}</small>
-              </button>
+              <div className="builder-question-item" key={x.id || i}>
+                <button
+                  type="button"
+                  className={selected === i ? "active" : ""}
+                  onClick={() => setSelected(i)}
+                >
+                  Câu {i + 1}
+                  <small>{x.text || "Chưa có nội dung"}</small>
+                </button>
+                <button
+                  type="button"
+                  className="question-remove-btn"
+                  aria-label={`Xóa câu ${i + 1}`}
+                  title={`Xóa câu ${i + 1}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeQuestion(i);
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
             ))}
           </div>
+          <button type="button" className="button secondary" onClick={addQuestion}>
+            + Thêm câu hỏi
+          </button>
         </aside>
         <section className="builder-editor" aria-label="Chỉnh sửa câu hỏi">
           <label>
@@ -963,7 +1096,25 @@ function ReviewEditor({ draft }: { draft: Draft }) {
               }}
             />
           </label>
-          {question && <ObjectiveEditor q={question} update={update} />}
+          {question ? (
+            <>
+              <div className="question-editor-topbar">
+                <h3>
+                  Câu {selected + 1} / {review.questions.length}
+                </h3>
+                <button
+                  type="button"
+                  className="button danger small"
+                  onClick={() => removeQuestion(selected)}
+                >
+                  Xóa câu hỏi này
+                </button>
+              </div>
+              <ObjectiveEditor q={question} update={update} />
+            </>
+          ) : (
+            <p>Chưa có câu hỏi nào. Bấm &quot;+ Thêm câu hỏi&quot; để tạo câu hỏi mới.</p>
+          )}
         </section>
         <aside className="builder-summary">
           <h3>Tóm tắt kiểm tra</h3>
@@ -1023,7 +1174,24 @@ function ObjectiveEditor({
     <fieldset className="question-editor">
       <legend>
         Câu hỏi {q.order} · {labelType(q.type)}
+        {q.cognitiveLevel ? ` · ${cognitiveLabels[q.cognitiveLevel]}` : ""}
       </legend>
+      <label>
+        Mức độ nhận thức
+        <select
+          value={q.cognitiveLevel || ""}
+          onChange={(e) =>
+            update({ cognitiveLevel: (e.target.value || undefined) as CognitiveLevel | undefined })
+          }
+        >
+          <option value="">Chưa phân loại</option>
+          {cognitiveEntries.map(([level, label]) => (
+            <option key={level} value={level}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
       <label>
         Nội dung
         <textarea

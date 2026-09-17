@@ -112,7 +112,7 @@ function fromRow(row: Record<string, unknown>): Notification {
     type: String(row.type) as Notification["type"],
     title: String(row.title),
     body: String(row.body),
-    sourceType: String(row.source_type) as Notification["sourceType"],
+    sourceType: String(row.source_type),
     sourceId: String(row.source_id),
     sourceContextId: String(row.source_context_id),
     createdAt: new Date(String(row.created_at)),

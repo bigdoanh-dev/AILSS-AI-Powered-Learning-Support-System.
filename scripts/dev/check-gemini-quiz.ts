@@ -1,7 +1,7 @@
 /** Three bounded live requests using the production quiz provider and validator. */
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import { HttpQuizProvider } from "../../apps/ai-worker/src/provider.js";
+import { HttpQuizProvider, RetryingQuizProvider } from "../../apps/ai-worker/src/provider.js";
 import { validateObjectiveQuiz } from "../../packages/contracts/src/objective-v1.js";
 if (!process.argv.includes("--live")) throw Error("Pass --live for three Gemini API requests.");
 const env = Object.fromEntries(
@@ -19,7 +19,11 @@ const env = Object.fromEntries(
       ];
     }),
 );
-const key = process.env.GEMINI_API_KEY || env.GEMINI_API_KEY;
+const configuredKey = process.env.AI_PROVIDER_API_KEY || env.AI_PROVIDER_API_KEY;
+const key =
+  configuredKey?.replace(/\$\{([A-Z_]+)\}/g, (_, name: string) => process.env[name] || env[name] || "") ||
+  process.env.GEMINI_API_KEY ||
+  env.GEMINI_API_KEY;
 if (!key) throw Error("GEMINI_API_KEY is missing.");
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async (...args) => {
@@ -37,12 +41,16 @@ globalThis.fetch = async (...args) => {
     throw error;
   }
 };
-const provider = new HttpQuizProvider({
-  endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL || "gemini-flash-latest"}:generateContent`,
-  model: process.env.GEMINI_MODEL || "gemini-flash-latest",
-  apiKey: key,
-  timeoutMs: 45000,
-});
+const model =
+  process.env.GEMINI_MODEL || process.env.AI_PROVIDER_MODEL || env.AI_PROVIDER_MODEL || "gemini-flash-latest";
+const provider = new RetryingQuizProvider(
+  new HttpQuizProvider({
+    endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    model,
+    apiKey: key,
+    timeoutMs: 45000,
+  }),
+);
 const cases = [
   {
     name: "python-vi",
@@ -111,10 +119,6 @@ for (const item of cases) {
 }
 await writeFile(
   "tmp/gemini-check/latest.json",
-  JSON.stringify(
-    { checkedAt: new Date().toISOString(), model: process.env.GEMINI_MODEL || "gemini-flash-latest", checks },
-    null,
-    2,
-  ),
+  JSON.stringify({ checkedAt: new Date().toISOString(), model, checks }, null, 2),
 );
 if (failed) process.exitCode = 1;

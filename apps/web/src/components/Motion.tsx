@@ -14,21 +14,31 @@ const GROUP_SELECTOR = [
   ".calendar-list",
   ".card-grid",
   ".check-list",
+  ".class-breakdown-table tbody",
+  ".cognitive-levels-list",
   ".contact-grid",
   ".course-grid",
+  ".course-progress-list",
+  ".dashboard-data-table tbody",
   ".experience-list",
   ".feature-rail",
   ".gallery-grid",
   ".help-grid",
+  ".home-card-list",
+  ".home-section-grid",
   ".instructor-grid",
   ".learning-modes-grid",
   ".media-grid",
   ".notification-list",
   ".readiness-list",
+  ".sepay-status-grid",
   ".service-grid",
+  ".stats-charts-row",
   ".study-grid",
   ".timeline",
+  ".user-stats-grid",
   ".workspace-cards",
+  ".workspace-kpi-grid",
 ].join(",");
 
 const PANEL_SELECTOR = [
@@ -37,8 +47,13 @@ const PANEL_SELECTOR = [
   ".application-panel",
   ".attendance-scroll",
   ".dashboard-heading",
+  ".dashboard-section-card",
   ".form-panel",
+  ".kpi-card",
   ".preview-panel",
+  ".recharts-pie-wrapper",
+  ".recharts-radar-wrapper",
+  ".recharts-wrapper",
   ".schedule-panel",
   ".study-card",
   ".verification-welcome",
@@ -47,7 +62,9 @@ const PANEL_SELECTOR = [
 function visibleBlock(element: HTMLElement) {
   if (
     element.matches("script,style,link,template,.route-loading,.sr-only,[role='dialog']") ||
-    element.closest("[hidden],[aria-hidden='true'],dialog:not([open]),[role='dialog'],.auth-environment,.auth-main,.focused-auth")
+    element.closest(
+      "[hidden],[aria-hidden='true'],dialog:not([open]),[role='dialog'],.auth-environment,.auth-main,.focused-auth",
+    )
   )
     return false;
   const style = getComputedStyle(element);
@@ -64,8 +81,8 @@ function revealKind(element: HTMLElement): RevealKind {
   const requested = element.dataset.reveal;
   if (requested === "depth" || requested === "line" || requested === "mask" || requested === "text")
     return requested;
-  if (element.matches("picture,img,table,.attendance-scroll,.gallery-item,.video-story")) return "mask";
-  if (element.matches("article,.study-card,.form-panel,.application-panel,.preview-panel")) return "depth";
+  if (element.matches("picture,img,table,.attendance-scroll,.gallery-item,.video-story,.recharts-wrapper,.recharts-pie-wrapper,.recharts-radar-wrapper")) return "mask";
+  if (element.matches("article,.study-card,.form-panel,.application-panel,.preview-panel,.dashboard-section-card,.kpi-card,.cognitive-level-card")) return "depth";
   return "text";
 }
 
