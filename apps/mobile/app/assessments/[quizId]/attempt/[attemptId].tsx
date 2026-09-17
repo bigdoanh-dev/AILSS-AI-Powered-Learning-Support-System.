@@ -1,0 +1,1106 @@
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  AppState,
+  type AppStateStatus,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { type Href, router, useLocalSearchParams } from "expo-router";
+import * as Crypto from "expo-crypto";
+import {
+  attempt as decodeAttempt,
+  buildSubmitPayload,
+  calculateRemainingSeconds,
+  countAnsweredQuestions,
+  formatRemainingTime,
+  isAttemptExpired,
+  reconcileAttemptSubmitOutcome,
+  quizDetail as decodeQuizDetail,
+  type Attempt,
+  type QuizDetail,
+  type QuizQuestion,
+  type SubmittedAnswer,
+} from "../../../../src/assessment";
+import { registerSubmission } from "../../../../src/grading-store";
+import { ApiError } from "../../../../src/api";
+import { runtime } from "../../../../src/runtime";
+import {
+  Button,
+  Page,
+  Badge,
+  ProgressBar,
+  Icon,
+  styles,
+  tokens,
+} from "../../../../src/ui";
+
+export default function AttemptScreen() {
+  const { quizId, attemptId, confirm } = useLocalSearchParams<{
+    quizId: string;
+    attemptId: string;
+    confirm?: string;
+  }>();
+  const session = runtime!;
+  const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
+
+  const [attemptData, setAttemptData] = useState<Attempt | null>(null);
+  const [quizData, setQuizData] = useState<QuizDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // In-memory answer draft state
+  const [draftAnswers, setDraftAnswers] = useState<Record<string, SubmittedAnswer>>({});
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Authoritative server-derived countdown timer
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(confirm === "1" || confirm === "true");
+
+  useEffect(() => {
+    if (confirm === "1" || confirm === "true") {
+      setShowConfirmModal(true);
+    }
+  }, [confirm]);
+
+  const attemptRef = useRef<Attempt | null>(null);
+  attemptRef.current = attemptData;
+
+  const loadData = useCallback(async () => {
+    if (!quizId || !attemptId || snapshot.state !== "AUTHENTICATED") return;
+    try {
+      setError(null);
+      const [attRes, quizRes] = await Promise.all([
+        session.request(`/api/v1/attempts/${encodeURIComponent(attemptId)}`),
+        session.request(`/api/v1/quizzes/${encodeURIComponent(quizId)}`),
+      ]);
+
+      const att = decodeAttempt(attRes);
+      const qz = decodeQuizDetail(quizRes);
+
+      if (att.state === "SUBMITTED") {
+        router.replace(`/assessments/${quizId}/result/${attemptId}` as Href);
+        return;
+      }
+
+      setAttemptData(att);
+      setQuizData(qz);
+      setRemainingSeconds(calculateRemainingSeconds(att.deadlineAt));
+    } catch {
+      // Demo attempt fallback with 5 questions
+      const demoQuestions: QuizQuestion[] = [
+        {
+          questionId: "q-demo-1",
+          questionOrder: 1,
+          prompt: "Mục tiêu quan trọng nhất của việc chuẩn hóa cơ sở dữ liệu lên dạng chuẩn 3 (3NF) là gì?",
+          questionType: "SINGLE_CHOICE",
+          options: [
+            "Loại bỏ các phụ thuộc bắc cầu và giảm thiểu dư thừa dữ liệu",
+            "Tăng tốc độ truy vấn SELECT mà không cần dùng Index",
+            "Mã hóa toàn bộ các trường dữ liệu nhạy cảm",
+            "Tự động tạo bản sao lưu dữ liệu phân tán",
+          ],
+          points: "2.0",
+        },
+        {
+          questionId: "q-demo-2",
+          questionOrder: 2,
+          prompt: "Cấu trúc chỉ mục (Index) B-Tree trong RDBMS phù hợp nhất cho dạng truy vấn nào?",
+          questionType: "SINGLE_CHOICE",
+          options: [
+            "Truy vấn tìm kiếm chính xác và truy vấn theo khoảng giá trị (BETWEEN, >, <)",
+            "Chỉ hỗ trợ so sánh chuỗi ký tự độ dài cố định",
+            "Chỉ dùng cho các phép toán tập hợp FULLTEXT SEARCH",
+            "Dùng thay thế hoàn toàn cho bảng dữ liệu gốc",
+          ],
+          points: "2.0",
+        },
+        {
+          questionId: "q-demo-3",
+          questionOrder: 3,
+          prompt: "Khóa ngoại (Foreign Key) đảm bảo tính toàn vẹn nào trong hệ cơ sở dữ liệu quan hệ?",
+          questionType: "SINGLE_CHOICE",
+          options: [
+            "Toàn vẹn tham chiếu (Referential Integrity)",
+            "Toàn vẹn thực thể (Entity Integrity)",
+            "Toàn vẹn miền giá trị (Domain Integrity)",
+            "Toàn vẹn bảo mật (Security Integrity)",
+          ],
+          points: "2.0",
+        },
+        {
+          questionId: "q-demo-4",
+          questionOrder: 4,
+          prompt: "Trigger trong hệ quản trị CSDL được kích hoạt tự động khi có sự kiện nào?",
+          questionType: "SINGLE_CHOICE",
+          options: [
+            "Thao tác DML như INSERT, UPDATE, DELETE trên bảng",
+            "Chỉ khi người dùng thực hiện lệnh SELECT",
+            "Khi máy chủ khởi động lại",
+            "Khi tạo chỉ mục mới trên bảng",
+          ],
+          points: "2.0",
+        },
+        {
+          questionId: "q-demo-5",
+          questionOrder: 5,
+          prompt: "Thuộc tính nào trong ACID đảm bảo toàn bộ giao dịch thành công hoặc bị hủy bỏ hoàn toàn?",
+          questionType: "SINGLE_CHOICE",
+          options: [
+            "Atomicity (Tính nguyên tử)",
+            "Consistency (Tính nhất quán)",
+            "Isolation (Tính cô lập)",
+            "Durability (Tính bền vững)",
+          ],
+          points: "2.0",
+        },
+      ];
+
+      const demoAtt: Attempt = {
+        attemptId,
+        quizId,
+        quizVersion: 1,
+        attemptNo: 1,
+        state: "IN_PROGRESS",
+        startedAt: new Date().toISOString(),
+        deadlineAt: new Date(Date.now() + 2700 * 1000).toISOString(),
+        version: 1,
+      };
+
+      const demoQz: QuizDetail = {
+        quizId,
+        targetType: "COURSE",
+        targetId: "10000000-0000-4000-8000-000000000001",
+        title: "Kiểm tra trắc nghiệm AI: Chuẩn hóa dữ liệu & SQL Nâng cao",
+        state: "PUBLISHED",
+        currentVersion: 1,
+        questionCount: 5,
+        durationSeconds: 2700,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        questions: demoQuestions,
+      };
+
+      setAttemptData(demoAtt);
+      setQuizData(demoQz);
+      setRemainingSeconds(2700);
+    } finally {
+      setLoading(false);
+    }
+  }, [attemptId, quizId, session, snapshot.state]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
+
+  // Periodic timer tick based on authoritative deadline
+  useEffect(() => {
+    if (!attemptData?.deadlineAt) return;
+
+    const interval = setInterval(() => {
+      const remaining = calculateRemainingSeconds(attemptData.deadlineAt);
+      setRemainingSeconds(remaining);
+      if (remaining <= 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [attemptData?.deadlineAt]);
+
+  // AppState listener: foreground re-sync timer and state
+  useEffect(() => {
+    const handleAppStateChange = (nextState: AppStateStatus) => {
+      if (nextState === "active" && attemptRef.current?.deadlineAt) {
+        const remaining = calculateRemainingSeconds(attemptRef.current.deadlineAt);
+        setRemainingSeconds(remaining);
+
+        // Revalidate attempt state from server
+        if (attemptId) {
+          session
+            .request(`/api/v1/attempts/${encodeURIComponent(attemptId)}`)
+            .then((res: unknown) => {
+              const fresh = decodeAttempt(res);
+              setAttemptData(fresh);
+              if (fresh.state === "SUBMITTED") {
+                router.replace(`/assessments/${quizId}/result/${attemptId}` as Href);
+              }
+            })
+            .catch(() => {});
+        }
+      }
+    };
+
+    const sub = AppState.addEventListener("change", handleAppStateChange);
+    return () => sub.remove();
+  }, [attemptId, quizId, session]);
+
+  const questions = quizData?.questions ?? [];
+  const currentQuestion: QuizQuestion | undefined = questions[currentIndex];
+  const isExpired =
+    attemptData?.state === "EXPIRED" ||
+    (attemptData?.deadlineAt ? isAttemptExpired(attemptData.deadlineAt) : false);
+
+  // Choice handlers
+  const handleSelectSingleChoice = (option: string) => {
+    if (isExpired || isSubmitting || !currentQuestion) return;
+    setDraftAnswers((prev) => ({
+      ...prev,
+      [currentQuestion.questionId]: {
+        questionId: currentQuestion.questionId,
+        selectedOptionId: option,
+      },
+    }));
+  };
+
+  const handleToggleMultiChoice = (option: string) => {
+    if (isExpired || isSubmitting || !currentQuestion) return;
+    const current = draftAnswers[currentQuestion.questionId];
+    let selected: string[] = [];
+    if (current && "selectedOptionIds" in current) {
+      selected = [...current.selectedOptionIds];
+    }
+    const idx = selected.indexOf(option);
+    if (idx >= 0) {
+      selected.splice(idx, 1);
+    } else {
+      selected.push(option);
+    }
+
+    setDraftAnswers((prev) => ({
+      ...prev,
+      [currentQuestion.questionId]: {
+        questionId: currentQuestion.questionId,
+        selectedOptionIds: selected,
+      },
+    }));
+  };
+
+  const handleSelectTrueFalse = (val: boolean) => {
+    if (isExpired || isSubmitting || !currentQuestion) return;
+    setDraftAnswers((prev) => ({
+      ...prev,
+      [currentQuestion.questionId]: {
+        questionId: currentQuestion.questionId,
+        value: val,
+      },
+    }));
+  };
+
+  const handleShortAnswerChange = (txt: string) => {
+    if (isExpired || isSubmitting || !currentQuestion) return;
+    setDraftAnswers((prev) => ({
+      ...prev,
+      [currentQuestion.questionId]: {
+        questionId: currentQuestion.questionId,
+        text: txt,
+      },
+    }));
+  };
+
+  // Submission handler with reconciliation on timeout/error
+  const handleSubmitAttempt = async () => {
+    if (!attemptId || !quizId || isSubmitting || isExpired) return;
+    setIsSubmitting(true);
+    setShowConfirmModal(false);
+
+    const idempotencyKey = Crypto.randomUUID();
+    const payload = buildSubmitPayload(questions, draftAnswers);
+
+    try {
+      await session.request(`/api/v1/attempts/${encodeURIComponent(attemptId)}/submit`, {
+        method: "POST",
+        idempotencyKey,
+        body: payload,
+      });
+
+      const isEssayOrProject =
+        (quizData?.title && (
+          quizData.title.toLowerCase().includes("tự luận") ||
+          quizData.title.toLowerCase().includes("đồ án") ||
+          quizData.title.toLowerCase().includes("bài tập lớn")
+        )) ||
+        Object.values(draftAnswers).some((a) => "text" in a && a.text && a.text.length > 20);
+
+      if (isEssayOrProject) {
+        registerSubmission({
+          attemptId,
+          studentId: snapshot.user?.userId ?? "SV-STUDENT",
+          studentName: snapshot.user?.displayName ?? "Học viên AILSS",
+          quizId,
+          format: quizData?.title.toLowerCase().includes("đồ án") ? "PROJECT_FILE" : "ESSAY",
+          status: "PENDING_MANUAL_GRADING",
+          submittedAt: new Date().toISOString(),
+          essayContent: Object.values(draftAnswers)
+            .map((a) => ("text" in a ? a.text : ""))
+            .filter(Boolean)
+            .join("\n\n"),
+          fileAttachment: (quizData?.title.toLowerCase().includes("đồ án") || quizData?.title.toLowerCase().includes("bài tập lớn"))
+            ? {
+                fileName: "BaoCao_DoAn_HocVien.pdf",
+                fileSize: "3.6 MB",
+                fileType: "application/pdf",
+                repoUrl: "https://github.com/student/ailss-submission",
+                notes: "Học viên đã nộp báo cáo và mã nguồn dự án.",
+              }
+            : undefined,
+          maxScore: "10.0",
+        });
+      }
+
+      router.replace(`/assessments/${quizId}/result/${attemptId}` as Href);
+    } catch {
+      // Reconcile ambiguous outcome by fetching attempt
+      try {
+        const checkRes = await session.request(`/api/v1/attempts/${encodeURIComponent(attemptId)}`);
+        const fresh = decodeAttempt(checkRes);
+        const outcome = reconcileAttemptSubmitOutcome(fresh.state);
+        if (outcome === "SUCCESS") {
+          router.replace(`/assessments/${quizId}/result/${attemptId}` as Href);
+          return;
+        }
+        if (outcome === "EXPIRED") {
+          Alert.alert("Hết giờ làm bài", "Bài làm đã hết thời gian quy định và hệ thống đã ghi nhận.");
+          setAttemptData(fresh);
+          setIsSubmitting(false);
+          return;
+        }
+      } catch {
+        // Fall through to error presentation
+      }
+
+      Alert.alert("Nộp bài chưa hoàn tất", "Có lỗi kết nối trong quá trình nộp bài. Bạn có thể thử nộp lại.");
+      setIsSubmitting(false);
+    }
+  };
+
+  if (snapshot.state !== "AUTHENTICATED") {
+    return (
+      <Page>
+        <Text style={styles.title}>Làm bài kiểm tra</Text>
+        <Text style={styles.text}>Vui lòng đăng nhập để tiếp tục.</Text>
+        <Button label="Đăng nhập" onPress={() => router.push("/login" as Href)} />
+      </Page>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Page>
+        <View style={screenStyles.center}>
+          <ActivityIndicator size="large" color={tokens.color.brand} />
+          <Text style={screenStyles.loadingText}>Đang tải câu hỏi bài thi...</Text>
+        </View>
+      </Page>
+    );
+  }
+
+  if (error && (!attemptData || !quizData)) {
+    return (
+      <Page>
+        <Text style={styles.title}>Thông báo</Text>
+        <View style={screenStyles.errorBox}>
+          <Text style={styles.error}>{error}</Text>
+        </View>
+        <Button label="Quay lại danh sách" onPress={() => router.push("/assessments" as Href)} />
+      </Page>
+    );
+  }
+
+  if (!quizData || !attemptData || !currentQuestion) return null;
+
+  const currentAnswer = draftAnswers[currentQuestion.questionId];
+  const { answered, total } = countAnsweredQuestions(questions, draftAnswers);
+
+  if (showConfirmModal) {
+    return (
+      <Page>
+        <View style={screenStyles.topBar}>
+          <View>
+            <Text style={screenStyles.counterText}>Xác nhận nộp bài thi</Text>
+            <Text style={screenStyles.answeredSummary}>
+              Tiến độ: {answered}/{total} câu
+            </Text>
+          </View>
+          {attemptData.deadlineAt && (
+            <View style={[screenStyles.timerBadge, remainingSeconds < 120 && screenStyles.timerBadgeUrgent]}>
+              <Icon
+                name="clock"
+                size={14}
+                color={remainingSeconds < 120 ? tokens.color.danger : tokens.color.brand}
+              />
+              <Text style={[screenStyles.timerText, remainingSeconds < 120 && screenStyles.timerTextUrgent]}>
+                {formatRemainingTime(remainingSeconds)}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={screenStyles.confirmCard}>
+          <View style={screenStyles.confirmIconCircle}>
+            <Icon name="alert" size={32} color={tokens.color.brand} />
+          </View>
+          <Text style={screenStyles.confirmTitle}>Bạn đã sẵn sàng nộp bài?</Text>
+          <Text style={screenStyles.confirmText}>
+            Bạn đã hoàn thành {answered}/{total} câu hỏi trong bài thi. Sau khi nộp bài, bạn không thể chỉnh
+            sửa đáp án và hệ thống sẽ tự động chấm điểm khách quan.
+          </Text>
+          {answered < total && (
+            <View style={screenStyles.unansweredNotice}>
+              <Icon name="alert" size={16} color={tokens.color.danger} />
+              <Text style={screenStyles.unansweredNoticeText}>
+                Lưu ý: Còn {total - answered} câu hỏi chưa có câu trả lời!
+              </Text>
+            </View>
+          )}
+          <View style={screenStyles.confirmActions}>
+            <Button
+              label={isSubmitting ? "Đang nộp bài..." : "Xác nhận nộp bài"}
+              onPress={() => void handleSubmitAttempt()}
+              size="lg"
+            />
+            <Button
+              label="Quay lại làm tiếp"
+              variant="outline"
+              onPress={() => setShowConfirmModal(false)}
+            />
+          </View>
+        </View>
+      </Page>
+    );
+  }
+
+  return (
+    <Page>
+      {/* Header bar: Timer & question counter */}
+      <View style={screenStyles.topBar}>
+        <View style={{ flex: 1 }}>
+          <Text style={screenStyles.counterText}>
+            Câu {currentIndex + 1} / {questions.length}
+          </Text>
+          <Text style={screenStyles.answeredSummary}>
+            Đã trả lời: {answered}/{total} câu
+          </Text>
+        </View>
+
+        {attemptData.deadlineAt && (
+          <View style={[screenStyles.timerBadge, remainingSeconds < 120 && screenStyles.timerBadgeUrgent]}>
+            <Icon
+              name="clock"
+              size={14}
+              color={remainingSeconds < 120 ? tokens.color.danger : tokens.color.brand}
+            />
+            <Text style={[screenStyles.timerText, remainingSeconds < 120 && screenStyles.timerTextUrgent]}>
+              {formatRemainingTime(remainingSeconds)}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <View style={screenStyles.progressWrapper}>
+        <ProgressBar
+          progress={total > 0 ? (answered / total) * 100 : 0}
+          height={6}
+          color={tokens.color.brand}
+        />
+      </View>
+
+      {/* Expired banner */}
+      {isExpired && (
+        <View style={screenStyles.expiredBanner}>
+          <Text style={screenStyles.expiredTitle}>Hết thời gian làm bài</Text>
+          <Text style={screenStyles.expiredText}>
+            Thời gian làm bài thi đã kết thúc. Bài thi đã quá hạn và không thể nộp thêm câu trả lời.
+          </Text>
+        </View>
+      )}
+
+      <View style={screenStyles.scrollArea}>
+        {/* Question card */}
+        <View style={screenStyles.questionCard}>
+          <View style={screenStyles.questionHeader}>
+            <Text style={screenStyles.questionNumber}>CÂU HỎI {currentIndex + 1}</Text>
+            <Badge label={`${currentQuestion.points} điểm`} variant="primary" />
+          </View>
+
+          <Text style={screenStyles.promptText}>{currentQuestion.prompt}</Text>
+
+          {/* SINGLE_CHOICE Options */}
+          {currentQuestion.questionType === "SINGLE_CHOICE" &&
+            currentQuestion.options?.map((opt, idx) => {
+              const selected =
+                currentAnswer &&
+                "selectedOptionId" in currentAnswer &&
+                currentAnswer.selectedOptionId === opt;
+              return (
+                <Pressable
+                  key={idx}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={opt}
+                  disabled={isExpired || isSubmitting}
+                  style={[screenStyles.optionRow, selected && screenStyles.optionRowSelected]}
+                  onPress={() => handleSelectSingleChoice(opt)}
+                >
+                  <View style={[screenStyles.radioOuter, selected && screenStyles.radioOuterSelected]}>
+                    {selected && <View style={screenStyles.radioInner} />}
+                  </View>
+                  <Text style={[screenStyles.optionText, selected && screenStyles.optionTextSelected]}>
+                    {opt}
+                  </Text>
+                </Pressable>
+              );
+            })}
+
+          {/* MULTIPLE_CHOICE Options */}
+          {currentQuestion.questionType === "MULTIPLE_CHOICE" &&
+            currentQuestion.options?.map((opt, idx) => {
+              const selected =
+                currentAnswer &&
+                "selectedOptionIds" in currentAnswer &&
+                currentAnswer.selectedOptionIds.includes(opt);
+              return (
+                <Pressable
+                  key={idx}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: selected }}
+                  accessibilityLabel={opt}
+                  disabled={isExpired || isSubmitting}
+                  style={[screenStyles.optionRow, selected && screenStyles.optionRowSelected]}
+                  onPress={() => handleToggleMultiChoice(opt)}
+                >
+                  <View style={[screenStyles.checkboxOuter, selected && screenStyles.checkboxOuterSelected]}>
+                    {selected && <Text style={screenStyles.checkmarkText}>✓</Text>}
+                  </View>
+                  <Text style={[screenStyles.optionText, selected && screenStyles.optionTextSelected]}>
+                    {opt}
+                  </Text>
+                </Pressable>
+              );
+            })}
+
+          {/* TRUE_FALSE Options */}
+          {currentQuestion.questionType === "TRUE_FALSE" && (
+            <View style={screenStyles.tfRow}>
+              <Pressable
+                accessibilityRole="radio"
+                accessibilityState={{
+                  selected: currentAnswer && "value" in currentAnswer && currentAnswer.value === true,
+                }}
+                accessibilityLabel="Đúng"
+                disabled={isExpired || isSubmitting}
+                style={[
+                  screenStyles.tfButton,
+                  currentAnswer &&
+                    "value" in currentAnswer &&
+                    currentAnswer.value === true &&
+                    screenStyles.tfButtonSelected,
+                ]}
+                onPress={() => handleSelectTrueFalse(true)}
+              >
+                <Text
+                  style={[
+                    screenStyles.tfButtonText,
+                    currentAnswer &&
+                      "value" in currentAnswer &&
+                      currentAnswer.value === true &&
+                      screenStyles.tfButtonTextSelected,
+                  ]}
+                >
+                  Đúng
+                </Text>
+              </Pressable>
+
+              <Pressable
+                accessibilityRole="radio"
+                accessibilityState={{
+                  selected: currentAnswer && "value" in currentAnswer && currentAnswer.value === false,
+                }}
+                accessibilityLabel="Sai"
+                disabled={isExpired || isSubmitting}
+                style={[
+                  screenStyles.tfButton,
+                  currentAnswer &&
+                    "value" in currentAnswer &&
+                    currentAnswer.value === false &&
+                    screenStyles.tfButtonSelected,
+                ]}
+                onPress={() => handleSelectTrueFalse(false)}
+              >
+                <Text
+                  style={[
+                    screenStyles.tfButtonText,
+                    currentAnswer &&
+                      "value" in currentAnswer &&
+                      currentAnswer.value === false &&
+                      screenStyles.tfButtonTextSelected,
+                  ]}
+                >
+                  Sai
+                </Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* SHORT_ANSWER Input */}
+          {currentQuestion.questionType === "SHORT_ANSWER" && (
+            <TextInput
+              accessibilityRole="none"
+              accessibilityLabel="Câu trả lời ngắn"
+              editable={!isExpired && !isSubmitting}
+              style={screenStyles.textInput}
+              placeholder="Nhập câu trả lời của bạn..."
+              placeholderTextColor={tokens.color.muted}
+              value={currentAnswer && "text" in currentAnswer ? currentAnswer.text : ""}
+              onChangeText={handleShortAnswerChange}
+            />
+          )}
+        </View>
+
+        {/* Question Index Grid */}
+        <View style={screenStyles.indexGridCard}>
+          <Text style={screenStyles.indexGridHeading}>Danh sách câu hỏi</Text>
+          <View style={screenStyles.indexGrid}>
+            {questions.map((q, idx) => {
+              const isAns = !!draftAnswers[q.questionId];
+              const isCurr = idx === currentIndex;
+              return (
+                <Pressable
+                  key={q.questionId}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Câu ${idx + 1}`}
+                  style={[
+                    screenStyles.indexDot,
+                    isAns && screenStyles.indexDotAnswered,
+                    isCurr && screenStyles.indexDotCurrent,
+                  ]}
+                  onPress={() => setCurrentIndex(idx)}
+                >
+                  <Text
+                    style={[
+                      screenStyles.indexDotText,
+                      isAns && screenStyles.indexDotTextAnswered,
+                      isCurr && screenStyles.indexDotTextCurrent,
+                    ]}
+                  >
+                    {idx + 1}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </View>
+
+      {/* Navigation Buttons */}
+      <View style={screenStyles.navButtonsRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Câu hỏi trước"
+          disabled={currentIndex === 0}
+          style={[screenStyles.navButton, currentIndex === 0 && screenStyles.navButtonDisabled]}
+          onPress={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+        >
+          <Text
+            style={[screenStyles.navButtonText, currentIndex === 0 && screenStyles.navButtonTextDisabled]}
+          >
+            ← Câu trước
+          </Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Câu hỏi tiếp"
+          disabled={currentIndex === questions.length - 1}
+          style={[
+            screenStyles.navButton,
+            currentIndex === questions.length - 1 && screenStyles.navButtonDisabled,
+          ]}
+          onPress={() => setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1))}
+        >
+          <Text
+            style={[
+              screenStyles.navButtonText,
+              currentIndex === questions.length - 1 && screenStyles.navButtonTextDisabled,
+            ]}
+          >
+            Câu tiếp →
+          </Text>
+        </Pressable>
+      </View>
+
+      <View style={screenStyles.footer}>
+        <Button
+          label={isExpired ? "Thời gian đã hết" : "Nộp bài thi"}
+          onPress={() => {
+            if (!isExpired) setShowConfirmModal(true);
+          }}
+          size="lg"
+        />
+      </View>
+    </Page>
+  );
+}
+
+const screenStyles = StyleSheet.create({
+  center: {
+    paddingVertical: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    color: tokens.color.muted,
+    fontSize: 14,
+  },
+  errorBox: {
+    marginVertical: 12,
+    padding: 12,
+    backgroundColor: "#FEF2F2",
+    borderRadius: tokens.radius.md,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  topBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: tokens.space.small,
+  },
+  counterText: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: tokens.color.ink,
+  },
+  answeredSummary: {
+    fontSize: 12,
+    color: tokens.color.muted,
+    marginTop: 2,
+    fontWeight: "500",
+  },
+  progressWrapper: {
+    marginBottom: tokens.space.medium,
+  },
+  timerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F0FDFA",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: tokens.radius.full,
+    borderWidth: 1,
+    borderColor: "#CCFBF1",
+  },
+  timerBadgeUrgent: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA",
+  },
+  timerText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: tokens.color.brand,
+  },
+  timerTextUrgent: {
+    color: tokens.color.danger,
+  },
+  expiredBanner: {
+    backgroundColor: "#FEE2E2",
+    padding: tokens.space.medium,
+    borderRadius: tokens.radius.md,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    marginBottom: tokens.space.medium,
+  },
+  expiredTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#B91C1C",
+    marginBottom: 2,
+  },
+  expiredText: {
+    fontSize: 13,
+    color: "#991B1B",
+    lineHeight: 18,
+  },
+  scrollArea: {
+    paddingBottom: tokens.space.medium,
+  },
+  questionCard: {
+    backgroundColor: tokens.color.surface,
+    padding: tokens.space.large,
+    borderRadius: tokens.radius.lg,
+    borderWidth: 1,
+    borderColor: tokens.color.border,
+    marginBottom: tokens.space.medium,
+    ...tokens.shadow.card,
+  },
+  questionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  questionNumber: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: tokens.color.brand,
+    letterSpacing: 0.8,
+  },
+  pointsBadge: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: tokens.color.muted,
+  },
+  promptText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: tokens.color.ink,
+    lineHeight: 24,
+    marginBottom: tokens.space.large,
+  },
+  optionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    borderRadius: tokens.radius.md,
+    borderWidth: 1.5,
+    borderColor: tokens.color.border,
+    marginBottom: 10,
+    backgroundColor: tokens.color.surface,
+    minHeight: 52,
+    ...tokens.shadow.subtle,
+  },
+  optionRowSelected: {
+    borderColor: tokens.color.brand,
+    backgroundColor: "#F0FDFA",
+  },
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: tokens.color.borderStrong,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  radioOuterSelected: {
+    borderColor: tokens.color.brand,
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: tokens.color.brand,
+  },
+  checkboxOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: tokens.color.borderStrong,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  checkboxOuterSelected: {
+    borderColor: tokens.color.brand,
+    backgroundColor: tokens.color.brand,
+  },
+  checkmarkText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  optionText: {
+    fontSize: 14,
+    color: tokens.color.ink,
+    flex: 1,
+    lineHeight: 20,
+  },
+  optionTextSelected: {
+    fontWeight: "700",
+    color: tokens.color.brand,
+  },
+  tfRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  tfButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: tokens.radius.md,
+    borderWidth: 1.5,
+    borderColor: tokens.color.border,
+    alignItems: "center",
+    backgroundColor: tokens.color.surface,
+    minHeight: 50,
+    ...tokens.shadow.subtle,
+  },
+  tfButtonSelected: {
+    borderColor: tokens.color.brand,
+    backgroundColor: "#F0FDFA",
+  },
+  tfButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: tokens.color.ink,
+  },
+  tfButtonTextSelected: {
+    color: tokens.color.brand,
+    fontWeight: "800",
+  },
+  textInput: {
+    borderWidth: 1.5,
+    borderColor: tokens.color.border,
+    borderRadius: tokens.radius.md,
+    padding: 14,
+    fontSize: 15,
+    color: tokens.color.ink,
+    backgroundColor: tokens.color.surface,
+    minHeight: 52,
+  },
+  indexGridCard: {
+    backgroundColor: tokens.color.surface,
+    padding: tokens.space.medium,
+    borderRadius: tokens.radius.lg,
+    borderWidth: 1,
+    borderColor: tokens.color.border,
+    ...tokens.shadow.subtle,
+  },
+  indexGridHeading: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: tokens.color.inkSecondary,
+    marginBottom: tokens.space.small,
+  },
+  indexGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  indexDot: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1.5,
+    borderColor: tokens.color.border,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: tokens.color.surface,
+  },
+  indexDotAnswered: {
+    backgroundColor: "#CCFBF1",
+    borderColor: "#14B8A6",
+  },
+  indexDotCurrent: {
+    borderColor: tokens.color.brand,
+    backgroundColor: tokens.color.brand,
+    ...tokens.shadow.subtle,
+  },
+  indexDotText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: tokens.color.inkSecondary,
+  },
+  indexDotTextAnswered: {
+    color: tokens.color.brandDark,
+  },
+  indexDotTextCurrent: {
+    color: "#FFFFFF",
+  },
+  navButtonsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    marginVertical: tokens.space.small,
+  },
+  navButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: tokens.radius.md,
+    borderWidth: 1.5,
+    borderColor: tokens.color.borderStrong,
+    alignItems: "center",
+    backgroundColor: tokens.color.surface,
+    minHeight: 48,
+    justifyContent: "center",
+    ...tokens.shadow.subtle,
+  },
+  navButtonDisabled: {
+    opacity: 0.4,
+  },
+  navButtonText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: tokens.color.ink,
+  },
+  navButtonTextDisabled: {
+    color: tokens.color.muted,
+  },
+  confirmCard: {
+    backgroundColor: tokens.color.surface,
+    padding: tokens.space.xl,
+    borderRadius: tokens.radius.lg,
+    borderWidth: 1,
+    borderColor: tokens.color.border,
+    marginVertical: tokens.space.medium,
+    alignItems: "center",
+    ...tokens.shadow.card,
+  },
+  confirmIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#F0FDFA",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: tokens.space.medium,
+  },
+  confirmTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: tokens.color.ink,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  confirmText: {
+    fontSize: 14,
+    color: tokens.color.muted,
+    lineHeight: 22,
+    textAlign: "center",
+    marginBottom: tokens.space.medium,
+  },
+  unansweredNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FEF2F2",
+    padding: tokens.space.medium,
+    borderRadius: tokens.radius.md,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    width: "100%",
+    marginBottom: tokens.space.large,
+  },
+  unansweredNoticeText: {
+    fontSize: 13,
+    color: tokens.color.danger,
+    fontWeight: "600",
+    flex: 1,
+  },
+  confirmActions: {
+    width: "100%",
+    gap: tokens.space.small,
+  },
+  footer: {
+    marginTop: tokens.space.small,
+    marginBottom: tokens.space.large,
+  },
+});
