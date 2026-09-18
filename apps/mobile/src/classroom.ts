@@ -84,6 +84,7 @@ export interface ClassSession {
   mode: "ONLINE" | "OFFLINE" | string;
   status: "DRAFT" | "SCHEDULED" | "COMPLETED" | "CANCELLED" | string;
   location?: string;
+  roomName?: string;
   meetingProvider?: string;
   meetingUrl?: string;
   inMeetingWindow?: boolean;

@@ -158,6 +158,7 @@ export interface ScimRequest {
   readonly method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   readonly path: string;
   readonly body?: unknown;
+  readonly headers?: Record<string, string | undefined> | undefined;
   readonly query?: {
     readonly startIndex?: string | number | undefined;
     readonly count?: string | number | undefined;
@@ -486,9 +487,13 @@ export class Scim2ServerHandler {
             },
           };
         }
+        const version = user.meta?.version ?? "1";
         return {
           status: 200,
-          headers: { "Content-Type": "application/scim+json" },
+          headers: {
+            "Content-Type": "application/scim+json",
+            "ETag": `W/"${version}"`,
+          },
           body: user,
         };
       }
@@ -510,10 +515,34 @@ export class Scim2ServerHandler {
               },
             };
           }
-          const updated = await this.repo.saveUser({ ...parsed, id: userId });
+
+          // RFC 7644 §3.14: Optimistic Concurrency via If-Match
+          const ifMatch = req.headers?.["if-match"] ?? req.headers?.["If-Match"];
+          if (ifMatch) {
+            const cleanIfMatch = ifMatch.replace(/^W\//u, "").replace(/^"|"$/gu, "").trim();
+            const currentVersion = existing.meta?.version ?? "1";
+            if (cleanIfMatch !== currentVersion) {
+              return {
+                status: 412,
+                headers: { "Content-Type": "application/scim+json" },
+                body: {
+                  schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
+                  status: "412",
+                  scimType: "uniqueness",
+                  detail: `Precondition Failed: Resource ETag ${cleanIfMatch} does not match current version ${currentVersion}`,
+                },
+              };
+            }
+          }
+
+          const updated = await this.repo.saveUser({ ...parsed, id: userId, meta: existing.meta });
+          const version = updated.meta?.version ?? "1";
           return {
             status: 200,
-            headers: { "Content-Type": "application/scim+json" },
+            headers: {
+              "Content-Type": "application/scim+json",
+              "ETag": `W/"${version}"`,
+            },
             body: updated,
           };
         } catch (err) {
@@ -543,6 +572,25 @@ export class Scim2ServerHandler {
               detail: `User ${userId} not found`,
             },
           };
+        }
+
+        // RFC 7644 §3.14: Optimistic Concurrency via If-Match
+        const ifMatch = req.headers?.["if-match"] ?? req.headers?.["If-Match"];
+        if (ifMatch) {
+          const cleanIfMatch = ifMatch.replace(/^W\//u, "").replace(/^"|"$/gu, "").trim();
+          const currentVersion = user.meta?.version ?? "1";
+          if (cleanIfMatch !== currentVersion) {
+            return {
+              status: 412,
+              headers: { "Content-Type": "application/scim+json" },
+              body: {
+                schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
+                status: "412",
+                scimType: "uniqueness",
+                detail: `Precondition Failed: Resource ETag ${cleanIfMatch} does not match current version ${currentVersion}`,
+              },
+            };
+          }
         }
 
         // Apply Patch Operations
@@ -577,9 +625,13 @@ export class Scim2ServerHandler {
         }
 
         const saved = await this.repo.saveUser(updatedUser);
+        const version = saved.meta?.version ?? "1";
         return {
           status: 200,
-          headers: { "Content-Type": "application/scim+json" },
+          headers: {
+            "Content-Type": "application/scim+json",
+            "ETag": `W/"${version}"`,
+          },
           body: saved,
         };
       }

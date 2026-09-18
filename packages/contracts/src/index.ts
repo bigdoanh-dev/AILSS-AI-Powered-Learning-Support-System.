@@ -69,6 +69,7 @@ export * from "./onboarding.js";
 export * from "./scim.js";
 export * from "./oneroster.js";
 export * from "./institutional-pilot.js";
+export * from "./data-retention-policy.js";
 
 
 

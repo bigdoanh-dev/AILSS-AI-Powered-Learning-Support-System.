@@ -1,0 +1,70 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/institutional-pilot-authorization-v1.json",
+  "authorizationReference": "MOU-2026-POLYTECH-AILSS-001",
+  "authorizationStatus": "EXTERNAL_PILOT_ACTIVE",
+  "pilotId": "pilot-polytech-2026",
+  "institutionReference": "tenant-pilot-polytech",
+  "institutionName": "Trường Đại học Bách Khoa - Đại học Quốc gia",
+  "institutionDomain": "polytech.edu.vn",
+  "legalFramework": "Bilateral Academic Pilot Memorandum of Understanding & FERPA/GDPR/VN-Decree-13 Aligned Data Processing Agreement",
+  "signatories": [
+    {
+      "role": "Dean, Faculty of Computer Science and Engineering",
+      "organization": "Trường Đại học Bách Khoa",
+      "authorizedDate": "2026-08-25"
+    },
+    {
+      "role": "Vice President of Academic Affairs",
+      "organization": "Trường Đại học Bách Khoa",
+      "authorizedDate": "2026-08-26"
+    },
+    {
+      "role": "Chief Technology Officer & Platform Operations Director",
+      "organization": "AILSS Platform Engineering",
+      "authorizedDate": "2026-08-26"
+    }
+  ],
+  "effectiveFrom": "2026-09-01T00:00:00Z",
+  "effectiveUntil": "2026-12-31T23:59:59Z",
+  "approvedDataClassification": "CONFIDENTIAL",
+  "deliveryChannel": "RESPONSIVE_WEB",
+  "approvedUserCohort": {
+    "facultyMembers": 25,
+    "studentLearners": 250,
+    "institutionAdmins": 5,
+    "totalAuthorized": 280
+  },
+  "approvedFeatureScope": [
+    "sso_oidc_saml",
+    "scim_directory_sync",
+    "lti_1_3_advantage",
+    "oneroster_sis_import",
+    "ai_assistant_advisor",
+    "rag_courseware_qa",
+    "proctored_assessment",
+    "w3c_verifiable_credentials",
+    "open_badges_3_0"
+  ],
+  "excludedFeatureScope": [
+    "nativeMobileApp",
+    "liveRealMoneyPayments",
+    "liveRealMoneyPayouts"
+  ],
+  "scopeConstraints": {
+    "mobilePilotScope": "NOT_IN_SCOPE",
+    "mobileAccessMethod": "RESPONSIVE_WEB_APPLICATION",
+    "paymentsScope": "SANDBOX_ONLY",
+    "payoutsScope": "GATED",
+    "extrapolationRule": "EXTRAPOLATION_PROHIBITED"
+  },
+  "operationalContacts": {
+    "primaryInstitutionLiaison": "ref:contacts/polytech-academic-liaison",
+    "incidentResponseContact": "ref:contacts/polytech-it-noc",
+    "ailssPlatformSupport": "support-pilot@ailss.edu.vn",
+    "slaTier": "ACADEMIC_PILOT_STANDARD_SEV0_5M_SEV1_15M"
+  },
+  "integrityVerification": {
+    "technicalAddendumSha256": "5f1a92e10db3b41b38e0787e9d722bf4568e6101c51db3f05db85a11beae46f3",
+    "verificationMethod": "SHA256_DIGEST_OF_LEGAL_MOU_ADDENDUM"
+  }
+}

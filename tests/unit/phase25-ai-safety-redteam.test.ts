@@ -17,7 +17,7 @@ import type { SafetyContext } from "../../apps/ai-service/src/safety/policy-type
 function makeContext(message: string, history?: string[]): SafetyContext {
   return {
     userId: "test-user-001",
-    role: "LEARNER",
+    role: "STUDENT",
     mode: "STUDY_BUDDY",
     message,
     hasActiveAssessment: false,

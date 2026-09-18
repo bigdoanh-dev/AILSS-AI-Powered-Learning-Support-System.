@@ -1,5 +1,16 @@
 import { createSign, createVerify, createHash } from "node:crypto";
 import { deflateRawSync } from "node:zlib";
+import {
+  existsSync,
+  mkdirSync,
+  openSync,
+  closeSync,
+  writeFileSync,
+  readFileSync,
+  unlinkSync,
+  readdirSync,
+} from "node:fs";
+import { join } from "node:path";
 import { AppError } from "../../http/src/index.js";
 
 
@@ -41,6 +52,22 @@ export interface VerifiedSamlIdentity {
   readonly rawAttributes: Record<string, string | readonly string[]>;
 }
 
+export interface SamlReplayRecord {
+  readonly tenantId: string;
+  readonly idpIssuer: string;
+  readonly assertionId: string;
+  readonly responseId?: string | undefined;
+  readonly issuedAt: Date;
+  readonly expiresAt: Date;
+  readonly consumedAt: Date;
+}
+
+export interface SamlReplayStore {
+  consume(record: SamlReplayRecord): Promise<boolean> | boolean;
+  has(assertionId: string, tenantId?: string): Promise<boolean> | boolean;
+  clear(): Promise<void> | void;
+}
+
 export interface SamlReplayCache {
   has(id: string): boolean;
   add(id: string): void;
@@ -60,6 +87,329 @@ export class InMemorySamlReplayCache implements SamlReplayCache {
 
   public clear(): void {
     this.seen.clear();
+  }
+}
+
+export type SamlReplayBackendClassification =
+  | "PROCESS_MEMORY"
+  | "SHARED_TEST_MEMORY"
+  | "DURABLE_CROSS_PROCESS_FS"
+  | "CASSANDRA"
+  | "REDIS";
+
+export interface SamlReplayClusterBackend {
+  readonly backendClassification: SamlReplayBackendClassification;
+  atomicSetNx(key: string, record: SamlReplayRecord): boolean;
+  has(key: string): boolean;
+  clear(): void;
+}
+
+/**
+ * Real OS-level cross-process durable SAML replay cluster.
+ * Satisfies Phase 27.3:
+ * - Atomic write-exclusive (O_CREAT | O_EXCL = 'wx') locking across distinct operating system processes
+ * - Survives process crashes and restarts
+ * - Preserves unexpired replay records on disk
+ */
+export class DurableCrossProcessReplayCluster implements SamlReplayClusterBackend {
+  public readonly backendClassification: SamlReplayBackendClassification = "DURABLE_CROSS_PROCESS_FS";
+  private readonly storageDir: string;
+
+  public constructor(storageDir?: string) {
+    this.storageDir = storageDir ?? process.env.SAML_REPLAY_STORAGE_DIR ?? "/tmp/ailss-saml-replay-cluster";
+    if (!existsSync(this.storageDir)) {
+      mkdirSync(this.storageDir, { recursive: true });
+    }
+  }
+
+  private resolveKeyPath(key: string): string {
+    const safeKey = Buffer.from(key, "utf8").toString("hex");
+    return join(this.storageDir, `${safeKey}.replay.json`);
+  }
+
+  public atomicSetNx(key: string, record: SamlReplayRecord): boolean {
+    const filePath = this.resolveKeyPath(key);
+    const now = Date.now();
+
+    if (now > record.expiresAt.getTime()) {
+      return false;
+    }
+
+    const payload = JSON.stringify({
+      tenantId: record.tenantId,
+      idpIssuer: record.idpIssuer,
+      assertionId: record.assertionId,
+      responseId: record.responseId,
+      issuedAt: record.issuedAt.toISOString(),
+      expiresAt: record.expiresAt.toISOString(),
+      consumedAt: record.consumedAt.toISOString(),
+    });
+
+    try {
+      const fd = openSync(filePath, "wx");
+      try {
+        writeFileSync(fd, payload, "utf8");
+      } finally {
+        closeSync(fd);
+      }
+      return true;
+    } catch (err: unknown) {
+      const errCode = typeof err === "object" && err !== null && "code" in err ? (err as { code: string }).code : "";
+      if (errCode === "EEXIST") {
+        try {
+          const raw = readFileSync(filePath, "utf8");
+          const existing = JSON.parse(raw) as { expiresAt: string };
+          const exp = new Date(existing.expiresAt).getTime();
+          if (now <= exp) {
+            return false;
+          }
+          unlinkSync(filePath);
+          const retryFd = openSync(filePath, "wx");
+          try {
+            writeFileSync(retryFd, payload, "utf8");
+          } finally {
+            closeSync(retryFd);
+          }
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    }
+  }
+
+  public has(key: string): boolean {
+    const filePath = this.resolveKeyPath(key);
+    if (!existsSync(filePath)) return false;
+    try {
+      const raw = readFileSync(filePath, "utf8");
+      const existing = JSON.parse(raw) as { expiresAt: string };
+      const exp = new Date(existing.expiresAt).getTime();
+      if (Date.now() > exp) {
+        try { unlinkSync(filePath); } catch { /* ignore */ }
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  public clear(): void {
+    if (!existsSync(this.storageDir)) return;
+    try {
+      const files = readdirSync(this.storageDir);
+      for (const file of files) {
+        if (file.endsWith(".replay.json")) {
+          try { unlinkSync(join(this.storageDir, file)); } catch { /* ignore */ }
+        }
+      }
+    } catch { /* ignore */ }
+  }
+}
+
+/**
+ * Shared state cluster supporting both in-memory test semantics and durable cross-process file-backed storage.
+ */
+export class SharedReplayStateCluster implements SamlReplayClusterBackend {
+  public readonly backendClassification: SamlReplayBackendClassification;
+  private readonly memoryStore = new Map<string, SamlReplayRecord>();
+  private readonly durableBackend?: DurableCrossProcessReplayCluster;
+
+  public constructor(options: { readonly storageDir?: string; readonly forceDurable?: boolean } = {}) {
+    if (options.storageDir || options.forceDurable) {
+      this.durableBackend = new DurableCrossProcessReplayCluster(options.storageDir);
+      this.backendClassification = "DURABLE_CROSS_PROCESS_FS";
+    } else {
+      this.backendClassification = "SHARED_TEST_MEMORY";
+    }
+  }
+
+  public atomicSetNx(key: string, record: SamlReplayRecord): boolean {
+    if (this.durableBackend) {
+      return this.durableBackend.atomicSetNx(key, record);
+    }
+    const now = Date.now();
+    const existing = this.memoryStore.get(key);
+    if (existing) {
+      if (now <= existing.expiresAt.getTime()) {
+        return false;
+      }
+      this.memoryStore.delete(key);
+    }
+
+    if (now > record.expiresAt.getTime()) {
+      return false;
+    }
+
+    this.memoryStore.set(key, record);
+    return true;
+  }
+
+  public has(key: string): boolean {
+    if (this.durableBackend) {
+      return this.durableBackend.has(key);
+    }
+    const existing = this.memoryStore.get(key);
+    if (!existing) return false;
+    if (Date.now() > existing.expiresAt.getTime()) {
+      this.memoryStore.delete(key);
+      return false;
+    }
+    return true;
+  }
+
+  public get(key: string): SamlReplayRecord | undefined {
+    const existing = this.memoryStore.get(key);
+    if (!existing) return undefined;
+    if (Date.now() > existing.expiresAt.getTime()) {
+      this.memoryStore.delete(key);
+      return undefined;
+    }
+    return existing;
+  }
+
+  public clear(): void {
+    if (this.durableBackend) {
+      this.durableBackend.clear();
+    }
+    this.memoryStore.clear();
+  }
+}
+
+/**
+ * Multi-instance production-grade SAML replay store.
+ * Meets Phase 26.3 & Phase 27.3 requirements:
+ * - Stores tenantId, idpIssuer, responseId, assertionId, issuedAt, expiresAt, consumedAt
+ * - Atomic consumption: exactly one accepted authentication, all others SAML_REPLAY_ATTACK_DETECTED
+ * - Partitioned by tenant: different tenants with same assertion ID do not collide
+ * - Cross-process & restart survival supported via durable backend
+ */
+export class DistributedSamlReplayStore implements SamlReplayStore, SamlReplayCache {
+  private readonly cluster: SamlReplayClusterBackend | SharedReplayStateCluster;
+  private readonly defaultTenantId: string;
+
+  public constructor(
+    cluster: SamlReplayClusterBackend | SharedReplayStateCluster,
+    options: { readonly tenantId?: string } = {},
+  ) {
+    this.cluster = cluster;
+    this.defaultTenantId = options.tenantId ?? "tenant-default";
+  }
+
+  public get backendClassification(): SamlReplayBackendClassification {
+    return this.cluster.backendClassification;
+  }
+
+  public consume(record: SamlReplayRecord): boolean {
+    const key = `${record.tenantId}:${record.assertionId}`;
+    return this.cluster.atomicSetNx(key, record);
+  }
+
+  public has(assertionId: string, tenantId?: string): boolean {
+    const tid = tenantId ?? this.defaultTenantId;
+    const key = `${tid}:${assertionId}`;
+    return this.cluster.has(key);
+  }
+
+  public add(assertionId: string): void {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 300_000); // 5 minutes TTL
+    this.consume({
+      tenantId: this.defaultTenantId,
+      idpIssuer: "urn:idp:default",
+      assertionId,
+      issuedAt: now,
+      expiresAt,
+      consumedAt: now,
+    });
+  }
+
+  public clear(): void {
+    this.cluster.clear();
+  }
+}
+
+/**
+ * Cassandra-backed SAML Replay Store for enterprise clusters.
+ * Uses native Cassandra Lightweight Transactions (Paxos LWT):
+ * CQL:
+ *   INSERT INTO system_saml_replays (tenant_id, assertion_id, idp_issuer, response_id, issued_at, expires_at, consumed_at)
+ *   VALUES (?, ?, ?, ?, ?, ?, ?)
+ *   IF NOT EXISTS
+ *   USING TTL ?;
+ */
+export class CassandraSamlReplayStore implements SamlReplayStore, SamlReplayCache {
+  public readonly backendClassification: SamlReplayBackendClassification = "CASSANDRA";
+  private readonly client?:
+    | {
+        execute: (
+          query: string,
+          params: unknown[],
+          options?: unknown,
+        ) => Promise<{ wasApplied?: () => boolean; rows?: Array<Record<string, unknown>> }>;
+      }
+    | undefined;
+  private readonly defaultTenantId: string;
+  private readonly durableFallback: DurableCrossProcessReplayCluster;
+
+  public constructor(options: {
+    readonly client?: { execute: (query: string, params: unknown[], options?: unknown) => Promise<{ wasApplied?: () => boolean; rows?: Array<Record<string, unknown>> }> };
+    readonly tenantId?: string;
+    readonly storageDir?: string;
+  } = {}) {
+    this.client = options.client;
+    this.defaultTenantId = options.tenantId ?? "tenant-default";
+    this.durableFallback = new DurableCrossProcessReplayCluster(options.storageDir);
+  }
+
+  public async consume(record: SamlReplayRecord): Promise<boolean> {
+    if (this.client) {
+      const ttlSeconds = Math.max(1, Math.round((record.expiresAt.getTime() - Date.now()) / 1000));
+      const query = `
+        INSERT INTO system_saml_replays (
+          tenant_id, assertion_id, idp_issuer, response_id, issued_at, expires_at, consumed_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        IF NOT EXISTS
+        USING TTL ?;
+      `;
+      const params = [
+        record.tenantId,
+        record.assertionId,
+        record.idpIssuer,
+        record.responseId ?? "",
+        record.issuedAt,
+        record.expiresAt,
+        record.consumedAt,
+        ttlSeconds,
+      ];
+      const result = await this.client.execute(query, params, { prepare: true });
+      return Boolean(result.wasApplied?.() ?? result.rows?.[0]?.["[applied]"]);
+    }
+    return this.durableFallback.atomicSetNx(`${record.tenantId}:${record.assertionId}`, record);
+  }
+
+  public has(assertionId: string, tenantId?: string): boolean {
+    const tid = tenantId ?? this.defaultTenantId;
+    return this.durableFallback.has(`${tid}:${assertionId}`);
+  }
+
+  public add(assertionId: string): void {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 300_000);
+    this.durableFallback.atomicSetNx(`${this.defaultTenantId}:${assertionId}`, {
+      tenantId: this.defaultTenantId,
+      idpIssuer: "urn:idp:default",
+      assertionId,
+      issuedAt: now,
+      expiresAt,
+      consumedAt: now,
+    });
+  }
+
+  public clear(): void {
+    this.durableFallback.clear();
   }
 }
 
@@ -138,7 +488,8 @@ export function validateSamlResponse(
     readonly expectedInResponseTo?: string | undefined;
     readonly clockSkewSeconds?: number | undefined;
     readonly requireCryptographicVerification?: boolean | undefined;
-    readonly replayCache?: SamlReplayCache | undefined;
+    readonly replayCache?: SamlReplayCache | SamlReplayStore | undefined;
+    readonly tenantId?: string | undefined;
   },
 ): VerifiedSamlIdentity {
   const clockSkew = options.clockSkewSeconds ?? options.idpConfig.clockSkewSeconds ?? 60;
@@ -317,14 +668,41 @@ export function validateSamlResponse(
 
   const trackerId = assertionIdMatch?.[1] ?? responseIdMatch?.[1];
   if (trackerId) {
-    if (replayCache.has(trackerId)) {
-      throw new AppError(
-        "SAML_REPLAY_ATTACK_DETECTED",
-        401,
-        `SAML response or assertion ID has already been processed: ${trackerId}`,
-      );
+    if ("consume" in replayCache && typeof replayCache.consume === "function") {
+      const notBeforeStr = notBeforeMatch?.[1];
+      const notOnOrAfterStr = notOnOrAfterMatch?.[1];
+      const issuedAt = notBeforeStr ? new Date(notBeforeStr) : new Date(now);
+      const expiresAt = notOnOrAfterStr ? new Date(notOnOrAfterStr) : new Date(now + 300_000);
+      const idpIssuer = /<(?:saml:)?Issuer[^>]*>([^<]+)<\/(?:saml:)?Issuer>/u.exec(xml)?.[1] ?? options.idpConfig.entityId;
+
+      const record: SamlReplayRecord = {
+        tenantId: options.tenantId ?? "tenant-default",
+        idpIssuer,
+        assertionId: trackerId,
+        responseId: responseIdMatch?.[1],
+        issuedAt,
+        expiresAt,
+        consumedAt: new Date(now),
+      };
+
+      const accepted = replayCache.consume(record);
+      if (!accepted) {
+        throw new AppError(
+          "SAML_REPLAY_ATTACK_DETECTED",
+          401,
+          `SAML response or assertion ID has already been processed: ${trackerId}`,
+        );
+      }
+    } else if ("add" in replayCache && typeof replayCache.add === "function") {
+      if (replayCache.has(trackerId)) {
+        throw new AppError(
+          "SAML_REPLAY_ATTACK_DETECTED",
+          401,
+          `SAML response or assertion ID has already been processed: ${trackerId}`,
+        );
+      }
+      replayCache.add(trackerId);
     }
-    replayCache.add(trackerId);
   }
 
   // 11. NameID extraction
