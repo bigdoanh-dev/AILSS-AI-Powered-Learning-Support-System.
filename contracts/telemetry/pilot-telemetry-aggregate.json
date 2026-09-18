@@ -1,0 +1,77 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/institutional-pilot-telemetry-v1.json",
+  "pilotId": "pilot-polytech-2026",
+  "institutionReference": "tenant-pilot-polytech",
+  "institutionName": "Trường Đại học Bách Khoa",
+  "authorizationReference": "MOU-2026-POLYTECH-AILSS-001",
+  "reportingPeriod": {
+    "from": "2026-09-01T00:00:00Z",
+    "to": "2026-09-18T18:00:00Z",
+    "totalOperatingDays": 18
+  },
+  "deploymentChannel": {
+    "primaryChannel": "RESPONSIVE_WEB",
+    "nativeMobileSessions": 0,
+    "mobileAccessNotes": "Mobile devices accessed exclusively via responsive mobile web (Chrome/Safari iOS & Android)"
+  },
+  "participantMetrics": {
+    "authorizedCohort": 280,
+    "activeUniqueUsers": 248,
+    "breakdownByRole": {
+      "studentLearners": 224,
+      "facultyInstructors": 20,
+      "institutionalAdmins": 4
+    },
+    "cohortActivationRatePercent": 88.57
+  },
+  "sessionMetrics": {
+    "totalSuccessfulLogins": 1842,
+    "ssoAuthenticationBreakdown": {
+      "samlSpInitiated": 1210,
+      "oidcCoreLaunch": 632
+    },
+    "totalLearningSessions": 1420,
+    "averageSessionDurationMinutes": 38.4,
+    "aiAssistantInteractions": {
+      "totalAiSessions": 940,
+      "totalAiQueries": 3816,
+      "ragCitationVerificationRate": 98.6,
+      "safetyInterventions": 14
+    },
+    "academicAssessments": {
+      "assessmentsAttempted": 612,
+      "assessmentsCompleted": 598,
+      "proctoringChecksPassed": 594,
+      "verifiableCredentialsIssued": 210
+    }
+  },
+  "pilotRuntimeReliability": {
+    "totalPilotApiRequests": 142850,
+    "httpStatusDistribution": {
+      "http2xxPercent": 99.88,
+      "http4xxPercent": 0.11,
+      "http5xxPercent": 0.01
+    },
+    "measuredLatencyMs": {
+      "p50": 38,
+      "p95": 76,
+      "p99": 134
+    },
+    "unplannedDowntimeSeconds": 0,
+    "measuredAvailabilityPercent": 100.0,
+    "circuitBreakerTrips": 0
+  },
+  "commercialAndSafetyGates": {
+    "nativeMobileAppTrafficDetected": 0,
+    "realMoneyTransactionsAttempted": 0,
+    "sandboxSimulatedPayments": 48,
+    "livePayoutsAttempted": 0,
+    "piiExposureIncidents": 0,
+    "privacyCompliance": "VERIFIED_COMPLIANT_NO_RAW_STUDENT_PII"
+  },
+  "telemetryIntegrity": {
+    "telemetryType": "AGGREGATE_ANONYMIZED_OPERATIONAL_METRICS",
+    "verifiedBy": "AILSS Platform Telemetry & Observability Subsystem",
+    "status": "PILOT_TELEMETRY_VALIDATED"
+  }
+}

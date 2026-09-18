@@ -14,7 +14,8 @@ export interface LtiLaunchClaims {
   readonly "https://purl.imsglobal.org/spec/lti/claim/roles": readonly string[];
   readonly "https://purl.imsglobal.org/spec/lti/claim/context"?: {
     readonly id: string;
-    readonly title?: string;
+    readonly label?: string | undefined;
+    readonly title?: string | undefined;
   };
   readonly "https://purl.imsglobal.org/spec/lti/claim/resource_link"?: {
     readonly id: string;
@@ -872,7 +873,7 @@ export function verifyOpenBadge3Credential(
     return { valid: false, error: "INVALID_OB3_TYPE" };
   }
 
-  if (!badge.credentialSubject.achievement?.name) {
+  if (!badge.credentialSubject.achievement.name) {
     return { valid: false, error: "MISSING_ACHIEVEMENT" };
   }
 
@@ -891,5 +892,250 @@ export function verifyOpenBadge3Credential(
 
   return { valid: true };
 }
+
+// ---------------------------------------------------------------------------
+// Phase 27.11 & 27.12: Disaggregated Standards & Provider Matrices
+// ---------------------------------------------------------------------------
+
+export type StandardCategory =
+  | "IDENTITY_FEDERATION"
+  | "DIRECTORY_SYNC"
+  | "LMS_SIS_INTEGRATION"
+  | "LEARNING_ANALYTICS"
+  | "CREDENTIALS";
+
+export interface DisaggregatedStandardEntry {
+  readonly standard: string;
+  readonly category: StandardCategory;
+  readonly implemented: boolean;
+  readonly internalTested: boolean;
+  readonly externalSandboxValidated: boolean;
+  readonly institutionPilotValidated: boolean;
+  readonly certified: boolean;
+  readonly notes: string;
+}
+
+export const DISAGGREGATED_STANDARDS_MATRIX: readonly DisaggregatedStandardEntry[] = [
+  {
+    standard: "OpenID Connect Core 1.0 (OIDC)",
+    category: "IDENTITY_FEDERATION",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    notes: "SP/RP flow validated in Polytech pilot; awaiting formal OpenID Foundation certification mark",
+  },
+  {
+    standard: "SAML 2.0 Web Browser SSO (SP-Initiated)",
+    category: "IDENTITY_FEDERATION",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    notes: "Durable cross-process replay store and IdP XML metadata verified with campus IdP",
+  },
+  {
+    standard: "SCIM 2.0 (RFC 7643 / 7644)",
+    category: "DIRECTORY_SYNC",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    notes: "Optimistic concurrency (ETag) and multi-tenant cross-enrollment verified in pilot",
+  },
+  {
+    standard: "1EdTech OneRoster 1.2 CSV",
+    category: "LMS_SIS_INTEGRATION",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    notes: "Differential sync and cryptographic manifest verification operational with campus SIS",
+  },
+  {
+    standard: "1EdTech LTI 1.3 Core",
+    category: "LMS_SIS_INTEGRATION",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    notes: "OIDC launch flow and deployment security active with institutional LMS",
+  },
+  {
+    standard: "1EdTech LTI Deep Linking 2.0",
+    category: "LMS_SIS_INTEGRATION",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    notes: "Course content item selection verified with campus instructor workflows",
+  },
+  {
+    standard: "1EdTech LTI NRPS 2.0 (Names and Role Provisioning)",
+    category: "LMS_SIS_INTEGRATION",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    notes: "Roster synchronization verified against institutional course rosters",
+  },
+  {
+    standard: "1EdTech LTI AGS 2.0 (Assignment and Grade Services)",
+    category: "LMS_SIS_INTEGRATION",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    notes: "LineItem scoring and grade passback verified in active courses",
+  },
+  {
+    standard: "ADL xAPI (Experience API 1.0.3)",
+    category: "LEARNING_ANALYTICS",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: false,
+    institutionPilotValidated: false,
+    certified: false,
+    notes: "Internal actor-verb-object pipeline active; external LRS export not enabled in pilot scope",
+  },
+  {
+    standard: "SCORM 2004 4th Edition / 1.2",
+    category: "LEARNING_ANALYTICS",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: false,
+    institutionPilotValidated: false,
+    certified: false,
+    notes: "Internal iframe runtime wrapper verified; external SCORM packaging outside pilot scope",
+  },
+  {
+    standard: "W3C Verifiable Credentials 2.0",
+    category: "CREDENTIALS",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    notes: "Ed25519 signatures and did:web issuance operational for pilot course completions",
+  },
+  {
+    standard: "W3C Bitstring Status List v1.0",
+    category: "CREDENTIALS",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    notes: "High-density compressed cryptographic revocation list verified in pilot",
+  },
+  {
+    standard: "1EdTech Open Badges 3.0",
+    category: "CREDENTIALS",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    notes: "Achievement packaging and cryptographic proof verification operational in pilot",
+  },
+];
+
+export type ProviderServiceCategory = "EMAIL" | "PUSH" | "PAYMENT" | "PAYOUT" | "SIS" | "LMS";
+
+export interface DisaggregatedProviderEntry {
+  readonly providerKey: string;
+  readonly serviceCategory: ProviderServiceCategory;
+  readonly providerName: string;
+  readonly implemented: boolean;
+  readonly internalTested: boolean;
+  readonly externalSandboxValidated: boolean;
+  readonly institutionPilotValidated: boolean;
+  readonly certified: boolean;
+  readonly operationalStatus: "SANDBOX_VERIFIED" | "GATED" | "EXTERNAL_PILOT_ACTIVE" | "SIMULATION";
+  readonly notes: string;
+}
+
+export const DISAGGREGATED_PROVIDER_MATRIX: readonly DisaggregatedProviderEntry[] = [
+  {
+    providerKey: "email-smtp-ses",
+    serviceCategory: "EMAIL",
+    providerName: "Transactional Email Service (SMTP / Amazon SES Relay)",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    operationalStatus: "EXTERNAL_PILOT_ACTIVE",
+    notes: "Authenticated institutional SMTP relay with SPF/DKIM validation",
+  },
+  {
+    providerKey: "push-fcm-apns",
+    serviceCategory: "PUSH",
+    providerName: "Mobile Push Notification Gateways (APNs / FCM)",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: false,
+    certified: false,
+    operationalStatus: "SANDBOX_VERIFIED",
+    notes: "Verified on emulator suites; native mobile explicitly NOT_IN_SCOPE for external pilot",
+  },
+  {
+    providerKey: "payment-gateway",
+    serviceCategory: "PAYMENT",
+    providerName: "Payment Aggregator (SePay / VietQR / MoMo / VNPay)",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: false,
+    certified: false,
+    operationalStatus: "SANDBOX_VERIFIED",
+    notes: "Webhook processing verified in sandbox; commercial real-money charges gated in pilot",
+  },
+  {
+    providerKey: "payout-disbursement",
+    serviceCategory: "PAYOUT",
+    providerName: "Automated Bank Disbursement (VietQR / Interbank)",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: false,
+    certified: false,
+    operationalStatus: "GATED",
+    notes: "Double-entry ledger & idempotency verified; actual banking payouts strictly gated",
+  },
+  {
+    providerKey: "sis-oneroster",
+    serviceCategory: "SIS",
+    providerName: "University SIS / OneRoster Roster Gateway",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    operationalStatus: "EXTERNAL_PILOT_ACTIVE",
+    notes: "Differential sync verified with Polytech academic student directory",
+  },
+  {
+    providerKey: "lms-canvas-moodle",
+    serviceCategory: "LMS",
+    providerName: "Institutional LMS (Moodle / Canvas LTI 1.3)",
+    implemented: true,
+    internalTested: true,
+    externalSandboxValidated: true,
+    institutionPilotValidated: true,
+    certified: false,
+    operationalStatus: "EXTERNAL_PILOT_ACTIVE",
+    notes: "LTI Advantage 1.3 core, grade sync, and deep linking verified with campus LMS",
+  },
+];
 
 
