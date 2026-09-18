@@ -1,0 +1,102 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/pilot-telemetry-segmented-v1.json",
+  "pilotId": "pilot-polytech-2026",
+  "institutionReference": "tenant-pilot-polytech",
+  "institutionName": "Trường Đại học Bách Khoa",
+  "authorizationReference": "MOU-2026-POLYTECH-AILSS-001",
+  "totalReportingPeriod": {
+    "from": "2026-09-01T00:00:00Z",
+    "to": "2026-09-18T21:35:00Z",
+    "totalPilotDays": 18
+  },
+  "deployments": [
+    {
+      "deploymentId": "dep-polytech-20260901-v610",
+      "releaseGitSha": "3a20cbc23324e71491a293cca666ebe4d50407c4",
+      "version": "6.1.0",
+      "tag": "v6.1.0",
+      "timeWindow": {
+        "startedAt": "2026-09-01T00:00:00Z",
+        "endedAt": "2026-09-18T13:30:00Z",
+        "durationHours": 421.5,
+        "durationDays": 17.56
+      },
+      "trafficMetrics": {
+        "requestCount": 138420,
+        "uniqueUsers": 245,
+        "successfulLogins": 1780,
+        "failedLogins": 18,
+        "http5xx": 14,
+        "http5xxRate": 0.0101,
+        "latencyMs": {
+          "p50": 39,
+          "p95": 78,
+          "p99": 136
+        }
+      },
+      "reliabilityMetrics": {
+        "observedDowntimeSeconds": 0,
+        "observedAvailability": 100.0,
+        "availabilityClassification": "OBSERVED_AVAILABILITY",
+        "incidents": 0
+      },
+      "serviceBreakdown": {
+        "ssoFailures": 18,
+        "scimFailures": 0,
+        "ltiFailures": 2,
+        "aiAssistantFailures": 3,
+        "notificationFailures": 1,
+        "cassandraHealth": "HEALTHY",
+        "rabbitmqMaxQueueLagMs": 42
+      }
+    },
+    {
+      "deploymentId": "dep-polytech-20260918-v611p1",
+      "releaseGitSha": "ce06367be5c67510b6370585902c2768c42ea5ff",
+      "version": "6.1.1-pilot.1",
+      "tag": "v6.1.1-pilot.1",
+      "timeWindow": {
+        "startedAt": "2026-09-18T13:30:00Z",
+        "endedAt": "2026-09-18T21:35:00Z",
+        "durationHours": 8.08,
+        "durationDays": 0.34
+      },
+      "trafficMetrics": {
+        "requestCount": 4430,
+        "uniqueUsers": 72,
+        "successfulLogins": 62,
+        "failedLogins": 1,
+        "http5xx": 0,
+        "http5xxRate": 0.0,
+        "latencyMs": {
+          "p50": 36,
+          "p95": 71,
+          "p99": 128
+        }
+      },
+      "reliabilityMetrics": {
+        "observedDowntimeSeconds": 0,
+        "observedAvailability": 100.0,
+        "availabilityClassification": "OBSERVED_AVAILABILITY",
+        "incidents": 0
+      },
+      "serviceBreakdown": {
+        "ssoFailures": 1,
+        "scimFailures": 0,
+        "ltiFailures": 0,
+        "aiAssistantFailures": 0,
+        "notificationFailures": 0,
+        "cassandraHealth": "HEALTHY",
+        "rabbitmqMaxQueueLagMs": 14
+      }
+    }
+  ],
+  "aggregatePilotTotal": {
+    "totalRequests": 142850,
+    "uniqueUsersAcrossAllReleases": 248,
+    "totalSuccessfulLogins": 1842,
+    "totalFailedLogins": 19,
+    "cumulativeObservedDowntimeSeconds": 0,
+    "cumulativeObservedAvailabilityPercent": 100.0
+  }
+}

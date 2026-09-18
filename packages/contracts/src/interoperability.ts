@@ -1138,4 +1138,75 @@ export const DISAGGREGATED_PROVIDER_MATRIX: readonly DisaggregatedProviderEntry[
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Phase 28.8 & 28.9: LTI Pilot Reliability, Grade Integrity & 1EdTech Decision
+// ---------------------------------------------------------------------------
+
+export interface LtiPilotOperationMetrics {
+  readonly launchAttempts: number;
+  readonly launchSuccess: number;
+  readonly launchFailure: number;
+  readonly deepLinkingOperations: number;
+  readonly nrpsSyncCalls: number;
+  readonly agsPassbacksAttempted: number;
+  readonly agsPassbacksSuccessful: number;
+  readonly agsFailures: number;
+  readonly p50LatencyMs: number;
+  readonly p95LatencyMs: number;
+  readonly retryCount: number;
+}
+
+export interface LtiGradeIntegritySample {
+  readonly studentSourcedId: string;
+  readonly courseId: string;
+  readonly lineItemId: string;
+  readonly ailssGradeScore: number;
+  readonly lmsReportedScore: number;
+  readonly scoreGivenAt: string;
+  readonly exactMatch: boolean;
+}
+
+export function verifyLtiGradeIntegrity(sample: LtiGradeIntegritySample): {
+  readonly matches: boolean;
+  readonly discrepancy?: number | undefined;
+} {
+  const discrepancy = Math.abs(sample.ailssGradeScore - sample.lmsReportedScore);
+  const matches = discrepancy < 0.0001;
+  return {
+    matches,
+    ...(matches ? {} : { discrepancy }),
+  };
+}
+
+export type CertificationClassification =
+  | "IMPLEMENTED"
+  | "INTERNAL_TESTED"
+  | "EXTERNAL_VALIDATED"
+  | "CERTIFICATION_IN_PROGRESS"
+  | "CERTIFIED";
+
+export interface ConformanceDecision {
+  readonly standardFamily: "LTI_ADVANTAGE" | "OPEN_BADGES_3_0";
+  readonly decision: "CERTIFICATION_NOT_REQUIRED_FOR_PILOT" | "SEEK_CERTIFICATION_COMMERCIAL_GA";
+  readonly rationale: string;
+  readonly currentConformanceState: CertificationClassification;
+}
+
+export const ONE_EDTECH_CONFORMANCE_DECISIONS: readonly ConformanceDecision[] = [
+  {
+    standardFamily: "LTI_ADVANTAGE",
+    decision: "CERTIFICATION_NOT_REQUIRED_FOR_PILOT",
+    rationale:
+      "All 4 LTI Advantage services (Core, Deep Linking, NRPS, AGS) are externally validated with the institutional LMS (Moodle/Canvas). Official 1EdTech certification mark is not required for the bilateral higher-education pilot contract.",
+    currentConformanceState: "EXTERNAL_VALIDATED",
+  },
+  {
+    standardFamily: "OPEN_BADGES_3_0",
+    decision: "CERTIFICATION_NOT_REQUIRED_FOR_PILOT",
+    rationale:
+      "Open Badges 3.0 packaging and cryptographic proof verification (eddsa-rdfc-2022) are validated in pilot. Formal 1EdTech issuer/displayer certification will be pursued prior to open commercial multi-institution GA.",
+    currentConformanceState: "EXTERNAL_VALIDATED",
+  },
+];
+
 
