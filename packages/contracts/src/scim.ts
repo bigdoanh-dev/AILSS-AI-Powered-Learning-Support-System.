@@ -668,3 +668,156 @@ export class Scim2ServerHandler {
     };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Phase 28.6: SCIM Operational Drift Reconciliation Engine
+// ---------------------------------------------------------------------------
+
+export type ScimReconciliationMode = "DRY_RUN" | "REPORT_ONLY" | "APPLY_SAFE_FIXES";
+
+export type ScimDriftType =
+  | "IDP_USER_EXISTS_AILSS_MISSING"
+  | "AILSS_USER_EXISTS_IDP_MISSING"
+  | "ROLE_MISMATCH"
+  | "GROUP_MISMATCH"
+  | "STATUS_MISMATCH"
+  | "DUPLICATE_EXTERNAL_ID"
+  | "ETAG_CONFLICT";
+
+export interface ScimDriftItem {
+  readonly driftType: ScimDriftType;
+  readonly externalId: string;
+  readonly userId?: string | undefined;
+  readonly idpState?: Record<string, unknown> | undefined;
+  readonly ailssState?: Record<string, unknown> | undefined;
+  readonly actionTaken: "NONE" | "REPORTED" | "SAFE_FIX_APPLIED" | "REQUIRES_MANUAL_POLICY_REVIEW";
+  readonly details: string;
+}
+
+export interface ScimReconciliationReport {
+  readonly tenantId: string;
+  readonly mode: ScimReconciliationMode;
+  readonly scannedIdpUsers: number;
+  readonly scannedAilssUsers: number;
+  readonly totalDrifts: number;
+  readonly drifts: readonly ScimDriftItem[];
+  readonly safeFixesApplied: number;
+  readonly requiresManualReview: number;
+  readonly timestamp: string;
+}
+
+export const ScimDriftReconciliationEngine = {
+  reconcile(options: {
+    readonly tenantId: string;
+    readonly mode: ScimReconciliationMode;
+    readonly idpUsers: readonly ScimUser[];
+    readonly ailssAccounts: readonly ProvisionedAccount[];
+  }): ScimReconciliationReport {
+    const { tenantId, mode, idpUsers, ailssAccounts } = options;
+    const drifts: ScimDriftItem[] = [];
+
+    const idpMap = new Map<string, ScimUser>();
+    const seenExternalIds = new Set<string>();
+
+    for (const u of idpUsers) {
+      if (seenExternalIds.has(u.externalId)) {
+        drifts.push({
+          driftType: "DUPLICATE_EXTERNAL_ID",
+          externalId: u.externalId,
+          idpState: { userName: u.userName },
+          actionTaken: mode === "APPLY_SAFE_FIXES" ? "REQUIRES_MANUAL_POLICY_REVIEW" : "REPORTED",
+          details: `Duplicate externalId detected in IdP export: ${u.externalId}`,
+        });
+      } else {
+        seenExternalIds.add(u.externalId);
+        idpMap.set(u.externalId, u);
+      }
+    }
+
+    const ailssMap = new Map<string, ProvisionedAccount>();
+    for (const a of ailssAccounts) {
+      ailssMap.set(a.externalId, a);
+    }
+
+    // 1. Check IdP users against AILSS
+    for (const [extId, idpUser] of idpMap.entries()) {
+      const ailssUser = ailssMap.get(extId);
+      if (!ailssUser) {
+        drifts.push({
+          driftType: "IDP_USER_EXISTS_AILSS_MISSING",
+          externalId: extId,
+          idpState: { userName: idpUser.userName, active: idpUser.active },
+          actionTaken: mode === "APPLY_SAFE_FIXES" ? "SAFE_FIX_APPLIED" : "REPORTED",
+          details: `User exists in IdP but missing in AILSS: ${extId}`,
+        });
+        continue;
+      }
+
+      // Check active/inactive status mismatch
+      if (idpUser.active !== ailssUser.active) {
+        // Safe fix if deactivating
+        const isDeactivation = !idpUser.active && ailssUser.active;
+        drifts.push({
+          driftType: "STATUS_MISMATCH",
+          externalId: extId,
+          userId: ailssUser.userId,
+          idpState: { active: idpUser.active },
+          ailssState: { active: ailssUser.active },
+          actionTaken:
+            mode === "APPLY_SAFE_FIXES"
+              ? isDeactivation
+                ? "SAFE_FIX_APPLIED"
+                : "REQUIRES_MANUAL_POLICY_REVIEW"
+              : "REPORTED",
+          details: `Status mismatch for ${extId}: IdP=${String(idpUser.active)}, AILSS=${String(ailssUser.active)}`,
+        });
+      }
+
+      // Check role mismatch
+      const expectedRole = idpUser.roles?.[0]?.value?.toUpperCase() ?? "STUDENT";
+      const actualRole = ailssUser.role;
+      if (expectedRole !== actualRole) {
+        drifts.push({
+          driftType: "ROLE_MISMATCH",
+          externalId: extId,
+          userId: ailssUser.userId,
+          idpState: { role: expectedRole },
+          ailssState: { role: actualRole },
+          actionTaken: mode === "APPLY_SAFE_FIXES" ? "REQUIRES_MANUAL_POLICY_REVIEW" : "REPORTED",
+          details: `Role mismatch for ${extId}: IdP=${expectedRole}, AILSS=${actualRole}. Privilege changes require manual policy review.`,
+        });
+      }
+    }
+
+    // 2. Check AILSS accounts against IdP (orphans)
+    for (const [extId, ailssUser] of ailssMap.entries()) {
+      if (!idpMap.has(extId)) {
+        drifts.push({
+          driftType: "AILSS_USER_EXISTS_IDP_MISSING",
+          externalId: extId,
+          userId: ailssUser.userId,
+          ailssState: { role: ailssUser.role, active: ailssUser.active },
+          actionTaken: mode === "APPLY_SAFE_FIXES" ? "REQUIRES_MANUAL_POLICY_REVIEW" : "REPORTED",
+          details: `Account exists in AILSS but removed from IdP: ${extId}. Orphan account deactivation requires policy review.`,
+        });
+      }
+    }
+
+    const safeFixesApplied = drifts.filter((d) => d.actionTaken === "SAFE_FIX_APPLIED").length;
+    const requiresManualReview = drifts.filter(
+      (d) => d.actionTaken === "REQUIRES_MANUAL_POLICY_REVIEW",
+    ).length;
+
+    return {
+      tenantId,
+      mode,
+      scannedIdpUsers: idpUsers.length,
+      scannedAilssUsers: ailssAccounts.length,
+      totalDrifts: drifts.length,
+      drifts,
+      safeFixesApplied,
+      requiresManualReview,
+      timestamp: new Date().toISOString(),
+    };
+  },
+} as const;

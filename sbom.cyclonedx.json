@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:4da47bd8-5edb-4a5c-82cb-5ecdae96ebc5",
+  "serialNumber": "urn:uuid:a2ffb823-e17b-4952-900e-1f2f9262c258",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-09-18T14:32:58.847Z",
+    "timestamp": "2026-09-18T15:11:10.095Z",
     "tools": [
       {
         "vendor": "AILSS Supply Chain",
@@ -14,19 +14,19 @@
     ],
     "component": {
       "type": "application",
-      "bom-ref": "pkg:npm/ailss@6.1.1-pilot.1",
+      "bom-ref": "pkg:npm/ailss@6.1.2",
       "name": "ailss",
-      "version": "6.1.1-pilot.1",
+      "version": "6.1.2",
       "description": "AILSS: AI-Powered Learning Support System (Complete Transitive Production Graph)"
     }
   },
   "components": [
     {
       "type": "library",
-      "bom-ref": "pkg:npm/ailss@6.1.1-pilot.1",
+      "bom-ref": "pkg:npm/ailss@6.1.2",
       "name": "ailss",
-      "version": "6.1.1-pilot.1",
-      "purl": "pkg:npm/ailss@6.1.1-pilot.1",
+      "version": "6.1.2",
+      "purl": "pkg:npm/ailss@6.1.2",
       "scope": "required",
       "properties": [
         {
@@ -10426,9 +10426,9 @@
   ],
   "dependencies": [
     {
-      "ref": "pkg:npm/ailss@6.1.1-pilot.1",
+      "ref": "pkg:npm/ailss@6.1.2",
       "dependsOn": [
-        "pkg:npm/ailss@6.1.1-pilot.1",
+        "pkg:npm/ailss@6.1.2",
         "pkg:npm/@ailss/ai-service@6.0.0",
         "pkg:npm/@ailss/ai-worker@6.0.0",
         "pkg:npm/@ailss/api-gateway@6.0.0",

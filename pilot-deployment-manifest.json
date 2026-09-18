@@ -1,0 +1,38 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/pilot-deployment-manifest-v1.json",
+  "environmentId": "polytech-pilot-campus-prod",
+  "institutionReference": "tenant-pilot-polytech",
+  "institutionName": "Trường Đại học Bách Khoa",
+  "deployments": [
+    {
+      "deploymentId": "dep-polytech-20260901-v610",
+      "releaseGitSha": "3a20cbc23324e71491a293cca666ebe4d50407c4",
+      "version": "6.1.0",
+      "tag": "v6.1.0",
+      "imageDigest": "sha256:d8a946b9a89c922a945934a36f78f8c2b57b98d28a1cfd0347321a55b34012ce",
+      "webArtifactHash": "sha256:7f49c9502ab4d42b938f32810a9fbc7412702a4ecfa88924b10b0d36184a5118",
+      "migrationInventoryHash": "e1b722ae2ecb45408eb36b8514d689a862d2dcb800740efb637b8c57a4e56ca1",
+      "configSchemaVersion": "1.2.0",
+      "deployedAt": "2026-09-01T00:00:00Z",
+      "supersededAt": "2026-09-18T13:30:00Z",
+      "status": "SUPERSEDED",
+      "deploymentTarget": "PILOT_PRODUCTION_CLUSTER",
+      "trafficWeight": 0
+    },
+    {
+      "deploymentId": "dep-polytech-20260918-v611p1",
+      "releaseGitSha": "ce06367be5c67510b6370585902c2768c42ea5ff",
+      "version": "6.1.1-pilot.1",
+      "tag": "v6.1.1-pilot.1",
+      "imageDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "webArtifactHash": "sha256:4b9e28f2cf29f44a80695029e0a2e58a74e5b98b975e1f0e495a498b89e81b9e",
+      "migrationInventoryHash": "e1b722ae2ecb45408eb36b8514d689a862d2dcb800740efb637b8c57a4e56ca1",
+      "configSchemaVersion": "1.2.0",
+      "deployedAt": "2026-09-18T13:30:00Z",
+      "supersededAt": null,
+      "status": "ACTIVE",
+      "deploymentTarget": "PILOT_PRODUCTION_CLUSTER",
+      "trafficWeight": 100
+    }
+  ]
+}

@@ -199,3 +199,124 @@ export const DataRetentionPolicyEngine = {
     };
   },
 } as const;
+
+// ---------------------------------------------------------------------------
+// Phase 28.12, 28.13 & 28.14: Policy Versioning & Data Subject Operations
+// ---------------------------------------------------------------------------
+
+export interface InstitutionalDataProcessingPolicy {
+  readonly policyId: string;
+  readonly version: number;
+  readonly tenantId: string;
+  readonly effectiveFrom: string;
+  readonly effectiveUntil: string;
+  readonly approvedByReference: string;
+  readonly retentionRules: Record<DataCategory, number>; // Technical duration in days
+  readonly legalPolicyReferences: Record<DataCategory, string>; // Legal citations
+  readonly AIProcessingEnabled: boolean;
+  readonly analyticsEnabled: boolean;
+  readonly externalProcessors: readonly string[];
+}
+
+export type DataSubjectOperationType =
+  | "EXPORT"
+  | "CORRECTION"
+  | "DEACTIVATION"
+  | "ANONYMIZATION"
+  | "PURGE";
+
+export interface DataSubjectOperationRequest {
+  readonly requestId: string;
+  readonly tenantId: string;
+  readonly userId: string;
+  readonly operation: DataSubjectOperationType;
+  readonly requestedAt: string;
+  readonly targetCategories?: readonly DataCategory[] | undefined;
+  readonly legalHoldActive?: boolean | undefined;
+}
+
+export interface DataSubjectOperationResult {
+  readonly requestId: string;
+  readonly operation: DataSubjectOperationType;
+  readonly executed: boolean;
+  readonly affectedCategories: readonly DataCategory[];
+  readonly protectedCategoriesRetained: readonly DataCategory[];
+  readonly reason: string;
+}
+
+export const DataSubjectOperationProcessor = {
+  process(
+    policy: InstitutionalDataProcessingPolicy,
+    request: DataSubjectOperationRequest,
+  ): DataSubjectOperationResult {
+    if (request.legalHoldActive) {
+      return {
+        requestId: request.requestId,
+        operation: request.operation,
+        executed: false,
+        affectedCategories: [],
+        protectedCategoriesRetained: [
+          "IDENTITY",
+          "ACADEMIC",
+          "AI",
+          "ANALYTICS",
+          "NOTIFICATION",
+          "AUDIT_SECURITY",
+        ],
+        reason:
+          "LEGAL_HOLD_BLOCK: All data operations modifying or purging records are blocked by active legal hold",
+      };
+    }
+
+    if (request.operation === "EXPORT") {
+      const exportable = (
+        request.targetCategories ?? (Object.keys(policy.retentionRules) as DataCategory[])
+      ).filter((cat) => PLATFORM_RETENTION_CONSTRAINTS[cat].exportable);
+      return {
+        requestId: request.requestId,
+        operation: "EXPORT",
+        executed: true,
+        affectedCategories: exportable,
+        protectedCategoriesRetained: [],
+        reason: `Export generated for ${String(exportable.length)} exportable data categories`,
+      };
+    }
+
+    if (request.operation === "PURGE" || request.operation === "ANONYMIZATION") {
+      const targetCats =
+        request.targetCategories ?? (Object.keys(policy.retentionRules) as DataCategory[]);
+      const deletable: DataCategory[] = [];
+      const protectedRetained: DataCategory[] = [];
+
+      for (const cat of targetCats) {
+        // Financial ledgers, security audits, and mandatory academic records cannot be unilaterally deleted
+        if (cat === "ACADEMIC" || cat === "AUDIT_SECURITY") {
+          protectedRetained.push(cat);
+        } else if (PLATFORM_RETENTION_CONSTRAINTS[cat].userDeletable) {
+          deletable.push(cat);
+        } else {
+          protectedRetained.push(cat);
+        }
+      }
+
+      return {
+        requestId: request.requestId,
+        operation: request.operation,
+        executed: deletable.length > 0,
+        affectedCategories: deletable,
+        protectedCategoriesRetained: protectedRetained,
+        reason: `Processed ${request.operation}: ${String(deletable.length)} categories scrubbed, ${String(protectedRetained.length)} categories protected by mandatory regulatory/audit policy`,
+      };
+    }
+
+    // Default for deactivation / correction
+    return {
+      requestId: request.requestId,
+      operation: request.operation,
+      executed: true,
+      affectedCategories: ["IDENTITY"],
+      protectedCategoriesRetained: ["ACADEMIC", "AUDIT_SECURITY"],
+      reason: `Operation ${request.operation} completed successfully`,
+    };
+  },
+} as const;

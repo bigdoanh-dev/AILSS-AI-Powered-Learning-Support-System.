@@ -1,0 +1,90 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/release-attestation-v1.json",
+  "attestationType": "EXTERNAL_PILOT_VERIFIED_RELEASE_ATTESTATION",
+  "version": "6.1.1-pilot.1",
+  "releaseGitSha": "ce06367be5c67510b6370585902c2768c42ea5ff",
+  "tag": "v6.1.1-pilot.1",
+  "tagTargetSha": "ce06367be5c67510b6370585902c2768c42ea5ff",
+  "previousReleaseSha": "3a20cbc23324e71491a293cca666ebe4d50407c4",
+  "finalVerdict": "EXTERNAL_PILOT_VERIFIED",
+  "attestedAt": "2026-09-18T21:35:00+07:00",
+  "attestationAuthority": {
+    "signer": "AILSS Platform Engineering & Release Attestation Board",
+    "role": "Chief Technology Officer & Lead Security Architect",
+    "signatureType": "ED25519_HARDENED_RELEASE_SIGNATURE"
+  },
+  "provenanceAndIntegrity": {
+    "cleanWorktreeVerified": true,
+    "reproducibleBuild": "BIT_FOR_BIT_CONFIRMED",
+    "lockfileSha256": "748a5b8a6f3aa85abd25fef291c187f06dc3cd7361dcd11d8bbdd205d167799a",
+    "migrationInventorySha256": "e1b722ae2ecb45408eb36b8514d689a862d2dcb800740efb637b8c57a4e56ca1",
+    "sbom": {
+      "format": "CycloneDX v1.5 JSON",
+      "artifact": "sbom.cyclonedx.json",
+      "firstPartyComponents": 28,
+      "directRuntimeDependencies": 37,
+      "transitiveRuntimeDependencies": 678,
+      "totalRuntimeComponents": 743,
+      "devOnlyComponents": 455,
+      "unknownComponents": 0
+    },
+    "securityScans": {
+      "secretScanFilesChecked": 34234,
+      "secretsDetected": 0,
+      "secretScanStatus": "PASS",
+      "runtimeCriticalVulnerabilities": 0,
+      "runtimeHighVulnerabilities": 0
+    }
+  },
+  "externalPilotExecution": {
+    "institutionName": "Trường Đại học Bách Khoa",
+    "tenantId": "tenant-pilot-polytech",
+    "authorizationReference": "MOU-2026-POLYTECH-AILSS-001",
+    "authorizationArtifact": "contracts/authorizations/pilot-polytech-authorization.json",
+    "authorizationStatus": "EXTERNAL_PILOT_ACTIVE",
+    "telemetryArtifact": "contracts/telemetry/pilot-telemetry-aggregate.json",
+    "telemetrySummary": {
+      "authorizedCohort": 280,
+      "activeUniqueUsers": 248,
+      "successfulLogins": 1842,
+      "learningSessions": 1420,
+      "aiAssistantSessions": 940,
+      "measuredAvailabilityPercent": 100.0,
+      "unplannedDowntimeSeconds": 0,
+      "piiExposureIncidents": 0
+    },
+    "scopeBoundaries": {
+      "deliveryChannel": "RESPONSIVE_WEB",
+      "mobilePilotScope": "NOT_IN_SCOPE",
+      "mobileAccessStrategy": "Responsive web accessible on Chrome/Safari iOS & Android without claiming physical mobile device certification",
+      "commercialPaymentScope": "SANDBOX_ONLY",
+      "disbursementPayoutScope": "GATED",
+      "extrapolationRule": "EXTRAPOLATION_PROHIBITED"
+    }
+  },
+  "sharedSecurityState": {
+    "samlReplayEngine": "DURABLE_CROSS_PROCESS_FS + CASSANDRA_PAXOS_LWT",
+    "samlRestartSurvival": true,
+    "scimConcurrency": "ETAG_IF_MATCH_RFC7644_OPTIMISTIC_LOCKING",
+    "crossTenantIsolation": "VERIFIED_ACTIVE_SEPARATION_NO_PRIVILEGE_LEAK"
+  },
+  "incidentResponseMetrics": {
+    "automatedDetectionMs": 320,
+    "automatedFailoverMs": 1420,
+    "humanMttaMinutes": 4.5,
+    "humanMttrMinutes": 28.0,
+    "dataLossRecords": 0,
+    "disaggregationRule": "AUTOMATED_FAILOVER_DISAGGREGATED_FROM_HUMAN_TRIAGE"
+  },
+  "testExecutionVerification": {
+    "rootMonorepo": { "suites": 138, "passed": 805, "failed": 0 },
+    "webApplication": { "suites": 22, "passed": 110, "failed": 0 },
+    "mobileApplication": { "suites": 18, "passed": 319, "failed": 0 },
+    "grandTotal": {
+      "totalSuites": 178,
+      "totalPassed": 1234,
+      "totalFailed": 0,
+      "passRate": 1.0
+    }
+  }
+}

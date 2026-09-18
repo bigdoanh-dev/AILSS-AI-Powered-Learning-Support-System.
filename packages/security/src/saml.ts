@@ -23,9 +23,19 @@ export interface SamlSpConfig {
 export interface SamlIdpConfig {
   readonly entityId: string;
   readonly singleSignOnServiceUrl: string;
-  readonly certificate: string; // PEM or Base64 X.509 cert
+  readonly certificate: string; // Primary active PEM or Base64 X.509 cert
+  readonly secondaryCertificates?: readonly string[] | undefined; // Rollover / next / previous certificates during key rotation
   readonly clockSkewSeconds?: number | undefined;
 }
+
+export type DeploymentEnvironment = "LOCAL" | "TEST" | "PILOT" | "PRODUCTION";
+
+export const AUTHORITATIVE_REPLAY_BACKENDS: Record<DeploymentEnvironment, SamlReplayBackendClassification> = {
+  LOCAL: "DURABLE_CROSS_PROCESS_FS",
+  TEST: "DURABLE_CROSS_PROCESS_FS",
+  PILOT: "CASSANDRA",
+  PRODUCTION: "CASSANDRA",
+};
 
 export interface SamlAuthnRequestOptions {
   readonly idpConfig: SamlIdpConfig;
@@ -353,15 +363,26 @@ export class CassandraSamlReplayStore implements SamlReplayStore, SamlReplayCach
     | undefined;
   private readonly defaultTenantId: string;
   private readonly durableFallback: DurableCrossProcessReplayCluster;
+  public readonly serialConsistency: "LOCAL_SERIAL" | "SERIAL";
 
   public constructor(options: {
-    readonly client?: { execute: (query: string, params: unknown[], options?: unknown) => Promise<{ wasApplied?: () => boolean; rows?: Array<Record<string, unknown>> }> };
+    readonly client?:
+      | {
+          execute: (
+            query: string,
+            params: unknown[],
+            options?: unknown,
+          ) => Promise<{ wasApplied?: () => boolean; rows?: Array<Record<string, unknown>> }>;
+        }
+      | undefined;
     readonly tenantId?: string;
     readonly storageDir?: string;
+    readonly serialConsistency?: "LOCAL_SERIAL" | "SERIAL";
   } = {}) {
     this.client = options.client;
     this.defaultTenantId = options.tenantId ?? "tenant-default";
     this.durableFallback = new DurableCrossProcessReplayCluster(options.storageDir);
+    this.serialConsistency = options.serialConsistency ?? "LOCAL_SERIAL";
   }
 
   public async consume(record: SamlReplayRecord): Promise<boolean> {
@@ -384,7 +405,10 @@ export class CassandraSamlReplayStore implements SamlReplayStore, SamlReplayCach
         record.consumedAt,
         ttlSeconds,
       ];
-      const result = await this.client.execute(query, params, { prepare: true });
+      const result = await this.client.execute(query, params, {
+        prepare: true,
+        serialConsistency: this.serialConsistency,
+      });
       return Boolean(result.wasApplied?.() ?? result.rows?.[0]?.["[applied]"]);
     }
     return this.durableFallback.atomicSetNx(`${record.tenantId}:${record.assertionId}`, record);
@@ -578,19 +602,35 @@ export function validateSamlResponse(
       signAlgorithm = "RSA-SHA1";
     }
 
-    // Cryptographically verify the SignedInfo block using IdP public key / certificate
-    try {
-      const verifier = createVerify(signAlgorithm);
-      verifier.update(fullSignedInfo);
-      const pemCert = formatPemCertificate(options.idpConfig.certificate);
-      const isSignatureValid = verifier.verify(pemCert, rawSignature, "base64");
+    // Cryptographically verify the SignedInfo block across candidate certificates (IdP key rotation support)
+    const candidateCerts = [
+      options.idpConfig.certificate,
+      ...(options.idpConfig.secondaryCertificates ?? []),
+    ];
 
-      if (!isSignatureValid) {
-        throw new AppError("SAML_SIGNATURE_INVALID", 401, "SAML cryptographic signature verification failed");
+    let isSignatureValid = false;
+    let lastVerifyError: Error | null = null;
+
+    for (const cert of candidateCerts) {
+      try {
+        const verifier = createVerify(signAlgorithm);
+        verifier.update(fullSignedInfo);
+        const pemCert = formatPemCertificate(cert);
+        if (verifier.verify(pemCert, rawSignature, "base64")) {
+          isSignatureValid = true;
+          break;
+        }
+      } catch (err) {
+        lastVerifyError = err as Error;
       }
-    } catch (err) {
-      if (err instanceof AppError) throw err;
-      throw new AppError("SAML_SIGNATURE_INVALID", 401, `SAML cryptographic verification failed: ${(err as Error).message}`);
+    }
+
+    if (!isSignatureValid) {
+      throw new AppError(
+        "SAML_SIGNATURE_INVALID",
+        401,
+        `SAML cryptographic signature verification failed across ${candidateCerts.length} candidate certificate(s)${lastVerifyError ? `: ${lastVerifyError.message}` : ""}`,
+      );
     }
 
     // Verify Reference URI binds to the Assertion ID (Anti-Reference-Hijacking, Phase 25.8)
@@ -789,6 +829,8 @@ export function mapSamlRoles(rawRoles: readonly string[]): readonly string[] {
 /**
  * Helper to generate a cryptographically valid XML-DSig signature for a SAML assertion or response.
  */
+export const signSamlXml = signSamlElement;
+
 export function signSamlElement(
   xmlContent: string,
   privateKeyPem: string,
@@ -827,4 +869,81 @@ export function signSamlElement(
     `<ds:SignatureValue>${signatureValue}</ds:SignatureValue>`,
     "</ds:Signature>",
   ].join("");
+}
+
+// ---------------------------------------------------------------------------
+// Phase 28.5: SAML IdP Metadata Resolver & Resilient Key Rollover
+// ---------------------------------------------------------------------------
+
+export interface IdpMetadataResolutionResult {
+  readonly entityId: string;
+  readonly singleSignOnServiceUrl: string;
+  readonly signingCertificates: readonly string[];
+  readonly source: "FETCHED" | "CACHE_FALLBACK";
+  readonly resolvedAt: Date;
+}
+
+export class SamlIdpMetadataResolver {
+  private cache: Map<string, { result: IdpMetadataResolutionResult; expiresAt: number }> = new Map();
+
+  public constructor(
+    private readonly fetcher: (url: string) => Promise<string> = async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP_${res.status}_METADATA_FETCH_FAILED`);
+      return res.text();
+    },
+  ) {}
+
+  public async resolve(
+    metadataUrl: string,
+    options: { ttlMs?: number; entityId?: string } = {},
+  ): Promise<IdpMetadataResolutionResult> {
+    const ttlMs = options.ttlMs ?? 3_600_000;
+    const now = Date.now();
+    const cached = this.cache.get(metadataUrl);
+
+    try {
+      const xml = await this.fetcher(metadataUrl);
+      const parsed = this.parseMetadataXml(xml, options.entityId);
+      this.cache.set(metadataUrl, { result: parsed, expiresAt: now + ttlMs });
+      return parsed;
+    } catch (err) {
+      if (cached) {
+        // Safe fallback without authentication outage
+        return {
+          ...cached.result,
+          source: "CACHE_FALLBACK",
+        };
+      }
+      throw new AppError(
+        "SAML_IDP_METADATA_UNAVAILABLE",
+        503,
+        `Failed to resolve IdP metadata from ${metadataUrl}: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  public parseMetadataXml(xml: string, expectedEntityId?: string): IdpMetadataResolutionResult {
+    const entityIdMatch = /entityID="([^"]+)"/u.exec(xml);
+    const entityId = entityIdMatch?.[1] ?? expectedEntityId ?? "unknown-idp";
+
+    const ssoUrlMatch = /Location="([^"]+)"/u.exec(xml);
+    const singleSignOnServiceUrl = ssoUrlMatch?.[1] ?? "";
+
+    const certRegex = /<(?:\w+:)?X509Certificate[^>]*>([^<]+)<\/(?:\w+:)?X509Certificate>/gu;
+    const signingCertificates: string[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = certRegex.exec(xml)) !== null) {
+      const c = match[1]?.replace(/\s+/gu, "");
+      if (c) signingCertificates.push(c);
+    }
+
+    return {
+      entityId,
+      singleSignOnServiceUrl,
+      signingCertificates,
+      source: "FETCHED",
+      resolvedAt: new Date(),
+    };
+  }
 }

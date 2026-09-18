@@ -377,3 +377,155 @@ export const OneRosterCsvParser = {
   },
 } as const;
 
+// ---------------------------------------------------------------------------
+// Phase 28.7: SIS / OneRoster Operational Drift Reconciliation Engine
+// ---------------------------------------------------------------------------
+
+export type OneRosterConflictType =
+  | "ORPHAN_ENROLLMENT"
+  | "STALE_COURSE"
+  | "STALE_CLASS"
+  | "DEACTIVATED_STUDENT"
+  | "LECTURER_ROLE_CHANGE"
+  | "DUPLICATE_SOURCED_ID";
+
+export interface OneRosterReconciliationConflict {
+  readonly conflictType: OneRosterConflictType;
+  readonly sourcedId: string;
+  readonly sourceRecord?: Record<string, unknown> | undefined;
+  readonly ailssRecord?: Record<string, unknown> | undefined;
+  readonly lastSyncedAt?: string | undefined;
+  readonly sourceVersion?: string | undefined;
+  readonly details: string;
+}
+
+export interface OneRosterReconciliationReport {
+  readonly organizationId: string;
+  readonly totalChecked: number;
+  readonly conflictsCount: number;
+  readonly conflicts: readonly OneRosterReconciliationConflict[];
+  readonly scannedAt: string;
+}
+
+export const OneRosterReconciliationEngine = {
+  reconcile(options: {
+    readonly organizationId: string;
+    readonly sisUsers: readonly OneRosterUserInput[];
+    readonly sisClasses: readonly OneRosterClassInput[];
+    readonly sisEnrollments: readonly OneRosterEnrollmentInput[];
+    readonly ailssUsers: readonly { readonly sourcedId: string; readonly role: string; readonly active: boolean }[];
+    readonly ailssClasses: readonly { readonly sourcedId: string; readonly active: boolean }[];
+    readonly ailssEnrollments: readonly {
+      readonly sourcedId: string;
+      readonly userSourcedId: string;
+      readonly classSourcedId: string;
+    }[];
+  }): OneRosterReconciliationReport {
+    const { organizationId, sisUsers, sisClasses, sisEnrollments, ailssUsers, ailssClasses } = options;
+    const conflicts: OneRosterReconciliationConflict[] = [];
+
+    const sisUserMap = new Map<string, OneRosterUserInput>();
+    const seenUserIds = new Set<string>();
+    for (const u of sisUsers) {
+      if (seenUserIds.has(u.sourcedId)) {
+        conflicts.push({
+          conflictType: "DUPLICATE_SOURCED_ID",
+          sourcedId: u.sourcedId,
+          sourceRecord: { username: u.username },
+          details: `Duplicate user sourcedId in SIS feed: ${u.sourcedId}`,
+        });
+      } else {
+        seenUserIds.add(u.sourcedId);
+        sisUserMap.set(u.sourcedId, u);
+      }
+    }
+
+    const sisClassMap = new Map<string, OneRosterClassInput>();
+    for (const c of sisClasses) {
+      sisClassMap.set(c.sourcedId, c);
+    }
+
+    const ailssUserMap = new Map<string, { sourcedId: string; role: string; active: boolean }>();
+    for (const au of ailssUsers) {
+      ailssUserMap.set(au.sourcedId, au);
+    }
+
+    const ailssClassMap = new Map<string, { sourcedId: string; active: boolean }>();
+    for (const ac of ailssClasses) {
+      ailssClassMap.set(ac.sourcedId, ac);
+    }
+
+    // 1. Detect orphan enrollments
+    for (const enr of sisEnrollments) {
+      const userExists = sisUserMap.has(enr.userSourcedId) || ailssUserMap.has(enr.userSourcedId);
+      const classExists = sisClassMap.has(enr.classSourcedId) || ailssClassMap.has(enr.classSourcedId);
+
+      if (!userExists || !classExists) {
+        conflicts.push({
+          conflictType: "ORPHAN_ENROLLMENT",
+          sourcedId: enr.sourcedId,
+          sourceRecord: {
+            userSourcedId: enr.userSourcedId,
+            classSourcedId: enr.classSourcedId,
+          },
+          details: `Orphan enrollment ${enr.sourcedId}: missing ${!userExists ? `user ${enr.userSourcedId}` : `class ${enr.classSourcedId}`}`,
+        });
+      }
+    }
+
+    // 2. Detect deactivated students
+    for (const [sId, sisUser] of sisUserMap.entries()) {
+      const ailssUser = ailssUserMap.get(sId);
+      if (ailssUser) {
+        const sisDeactivated = sisUser.status === "tobedeleted" || sisUser.enabledUser === false;
+        if (sisDeactivated && ailssUser.active) {
+          conflicts.push({
+            conflictType: "DEACTIVATED_STUDENT",
+            sourcedId: sId,
+            sourceRecord: { status: sisUser.status, enabledUser: sisUser.enabledUser },
+            ailssRecord: { active: ailssUser.active },
+            details: `User ${sId} deactivated in SIS but remains active in AILSS`,
+          });
+        }
+
+        // 3. Detect lecturer role changes
+        if (sisUser.role === "teacher" && ailssUser.role !== "teacher" && ailssUser.role !== "LECTURER") {
+          conflicts.push({
+            conflictType: "LECTURER_ROLE_CHANGE",
+            sourcedId: sId,
+            sourceRecord: { role: sisUser.role },
+            ailssRecord: { role: ailssUser.role },
+            details: `Faculty role mismatch for ${sId}: SIS indicates teacher, AILSS has ${ailssUser.role}`,
+          });
+        }
+      }
+    }
+
+    // 4. Detect stale classes
+    for (const [cId, sisClass] of sisClassMap.entries()) {
+      if (sisClass.status === "tobedeleted") {
+        const ailssClass = ailssClassMap.get(cId);
+        if (ailssClass?.active) {
+          conflicts.push({
+            conflictType: "STALE_CLASS",
+            sourcedId: cId,
+            sourceRecord: { status: sisClass.status },
+            ailssRecord: { active: ailssClass.active },
+            details: `Class ${cId} marked tobedeleted in SIS but remains active in AILSS`,
+          });
+        }
+      }
+    }
+
+    const totalChecked = sisUsers.length + sisClasses.length + sisEnrollments.length;
+
+    return {
+      organizationId,
+      totalChecked,
+      conflictsCount: conflicts.length,
+      conflicts,
+      scannedAt: new Date().toISOString(),
+    };
+  },
+} as const;
+
