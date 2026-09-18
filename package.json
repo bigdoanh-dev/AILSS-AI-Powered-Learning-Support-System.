@@ -1,6 +1,6 @@
 {
   "name": "ailss",
-  "version": "6.1.0",
+  "version": "6.1.1-pilot.1",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.19.0",
@@ -26,6 +26,7 @@
     "freeze:rc-candidate": "node scripts/ci/freeze-rc-candidate.mjs",
     "rehearse:production": "node scripts/ci/rehearse-production.mjs",
     "scan:secrets": "node scripts/ci/scan-secrets.mjs",
+    "sbom:generate": "node scripts/ci/generate-sbom.mjs",
     "preflight": "node scripts/dev/preflight.mjs",
     "env:dev-core": "node scripts/dev/environment.mjs up dev-core",
     "env:dev-async": "node scripts/dev/environment.mjs up dev-async",
