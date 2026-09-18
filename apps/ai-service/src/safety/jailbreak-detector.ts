@@ -28,16 +28,41 @@ function extractDecodedVariants(rawText: string): string[] {
   const normalized = normalizeText(rawText);
   const variants = [rawText, normalized];
 
-  // URL decoding
+  // URL decoding (supports single and multi-level / double URL encoding)
   if (rawText.includes("%")) {
     try {
       const decodedUrl = decodeURIComponent(rawText);
       if (decodedUrl !== rawText) {
         variants.push(decodedUrl);
         variants.push(normalizeText(decodedUrl));
+        if (decodedUrl.includes("%")) {
+          try {
+            const doubleDecoded = decodeURIComponent(decodedUrl);
+            if (doubleDecoded !== decodedUrl) {
+              variants.push(doubleDecoded);
+              variants.push(normalizeText(doubleDecoded));
+            }
+          } catch {
+            // ignore
+          }
+        }
       }
     } catch {
       // ignore malformed URL sequences
+    }
+  }
+
+  // Hex escape decoding (\x61\x64...)
+  if (/\\x[0-9a-fA-F]{2}/u.test(rawText)) {
+    try {
+      const hexDecoded = rawText.replace(/\\x([0-9a-fA-F]{2})/gu, (_match: string, hex: string) => {
+        const code = parseInt(hex, 16);
+        return String.fromCharCode(code);
+      });
+      variants.push(hexDecoded);
+      variants.push(normalizeText(hexDecoded));
+    } catch {
+      // ignore
     }
   }
 
@@ -65,6 +90,32 @@ const INJECTION_PATTERNS: ReadonlyArray<{ readonly regex: RegExp; readonly reaso
   {
     regex: /(?:ignore|disregard|forget)\s+(?:all\s+)?(?:previous|prior|above)\s+(?:instructions|prompts|directives|rules)/iu,
     reason: "PROMPT_INJECTION_OVERRIDE",
+  },
+  // Multilingual prompt injection (Vietnamese, Spanish, French, Russian)
+  {
+    regex: /(?:bỏ qua|hãy quên|không tuân theo|bỏ hết)\s+(?:tất cả\s+)?(?:hướng dẫn|chỉ thị|quy tắc|lời nhắc)\s+(?:trước|cũ|ban đầu)/iu,
+    reason: "MULTILINGUAL_INJECTION_OVERRIDE",
+  },
+  {
+    regex: /(?:ignora|olvida|desatiende)\s+(?:todas\s+las\s+)?(?:instrucciones|indicaciones|directivas)/iu,
+    reason: "MULTILINGUAL_INJECTION_OVERRIDE",
+  },
+  {
+    regex: /(?:ignore|oublie)\s+(?:toutes\s+les\s+)?(?:instructions|directives|consignes)/iu,
+    reason: "MULTILINGUAL_INJECTION_OVERRIDE",
+  },
+  {
+    regex: /(?:игнорируй|забудь)\s+(?:все\s+)?(?:предыдущие\s+)?(?:инструкции|команды|правила)/iu,
+    reason: "MULTILINGUAL_INJECTION_OVERRIDE",
+  },
+  // Tool injection & RAG indirect prompt injection poisoning
+  {
+    regex: /(?:\[(?:TOOL_CALL|FUNCTION_CALL|TOOL_INVOKE)|<tool_call>|\{"(?:tool|function|action)":\s*"(?:execute|shell|bash|eval|sql))/iu,
+    reason: "TOOL_INJECTION_ATTEMPT",
+  },
+  {
+    regex: /(?:(?:INSTRUCTION|SYSTEM|DIRECTIVE)\s+(?:OVERRIDE|HIJACK)|INDIRECT_INJECTION):/iu,
+    reason: "RAG_INDIRECT_INJECTION_DETECTED",
   },
   {
     regex: /(?:reveal|show|print|output|display|repeat)\s+(?:your\s+)?(?:system\s+prompt|developer\s+instructions|hidden\s+prompt|initial\s+prompt)/iu,

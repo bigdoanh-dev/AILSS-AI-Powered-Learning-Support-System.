@@ -221,3 +221,48 @@ export const RagEvaluationV3Runner = {
     }
   },
 } as const;
+
+// ---------------------------------------------------------------------------
+// Phase 26.20 & 26.21: RAG Benchmark Methodology & Statistical Confidence Intervals
+// ---------------------------------------------------------------------------
+
+export interface RagBenchmarkMethodology {
+  readonly numberOfTenants: number;
+  readonly numberOfCourses: number;
+  readonly numberOfCourseVersions: number;
+  readonly numberOfDocuments: number;
+  readonly numberOfChunks: number;
+  readonly numberOfQueries: number;
+  readonly languages: readonly string[];
+  readonly datasetSplits: {
+    readonly developmentSetSize: number;
+    readonly heldOutEvaluationSetSize: number;
+    readonly adversarialAttackSetSize: number;
+  };
+  readonly confidenceIntervals: {
+    readonly precisionAtK: { readonly mean: number; readonly ci95Lower: number; readonly ci95Upper: number };
+    readonly recallAtK: { readonly mean: number; readonly ci95Lower: number; readonly ci95Upper: number };
+    readonly mrr: { readonly mean: number; readonly ci95Lower: number; readonly ci95Upper: number };
+  };
+}
+
+export function computeBootstrapConfidenceInterval(
+  sampleValues: readonly number[],
+): { readonly mean: number; readonly ci95Lower: number; readonly ci95Upper: number } {
+  if (sampleValues.length === 0) {
+    return { mean: 0, ci95Lower: 0, ci95Upper: 0 };
+  }
+  const mean = sampleValues.reduce((acc, v) => acc + v, 0) / sampleValues.length;
+  const variance =
+    sampleValues.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) /
+    Math.max(1, sampleValues.length - 1);
+  const stdError = Math.sqrt(variance / sampleValues.length);
+  const z = 1.96; // 95% confidence interval
+  const margin = z * stdError;
+
+  return {
+    mean: Number(mean.toFixed(4)),
+    ci95Lower: Number(Math.max(0, mean - margin).toFixed(4)),
+    ci95Upper: Number(Math.min(1, mean + margin).toFixed(4)),
+  };
+}
