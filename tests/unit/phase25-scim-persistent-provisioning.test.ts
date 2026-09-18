@@ -42,9 +42,10 @@ describe("Phase 25.5: TenantAwareScimRepository — persistent provisioning", ()
       makeScimUser({ externalId: "ext-001", userName: "nguyen@polytech.edu.vn", email: "nguyen@polytech.edu.vn" }),
     );
 
-    expect(user.id).toBeTruthy();
+    const userId = user.id ?? "";
+    expect(userId).toBeTruthy();
 
-    const membership = await tenantRepo.findMembership(user.id!, "tenant-pilot-polytech");
+    const membership = await tenantRepo.findMembership(userId, "tenant-pilot-polytech");
     expect(membership).not.toBeNull();
     expect(membership?.status).toBe("ACTIVE");
     expect(membership?.role).toBe("STUDENT"); // default role when no roles provided
@@ -64,13 +65,14 @@ describe("Phase 25.5: TenantAwareScimRepository — persistent provisioning", ()
       }),
     );
 
-    const membership = await tenantRepo.findMembership(user.id!, "tenant-pilot-polytech");
+    const userId = user.id ?? "";
+    const membership = await tenantRepo.findMembership(userId, "tenant-pilot-polytech");
     expect(membership?.role).toBe("LECTURER");
 
     // Faculty group should contain this user
     const groups = await scimRepo.listGroups();
     const facultyGroup = groups.find((g) => g.id === "group-faculty");
-    expect(facultyGroup?.members?.some((m) => m.value === user.id)).toBe(true);
+    expect(facultyGroup?.members?.some((m) => m.value === userId)).toBe(true);
   });
 
   it("maps SCIM admin role to INSTITUTION_ADMIN in TenantRepository", async () => {
@@ -86,7 +88,8 @@ describe("Phase 25.5: TenantAwareScimRepository — persistent provisioning", ()
       }),
     );
 
-    const membership = await tenantRepo.findMembership(user.id!, "tenant-pilot-polytech");
+    const userId = user.id ?? "";
+    const membership = await tenantRepo.findMembership(userId, "tenant-pilot-polytech");
     expect(membership?.role).toBe("INSTITUTION_ADMIN");
   });
 
@@ -98,16 +101,17 @@ describe("Phase 25.5: TenantAwareScimRepository — persistent provisioning", ()
       makeScimUser({ externalId: "ext-004", userName: "deleted@polytech.edu.vn", email: "deleted@polytech.edu.vn" }),
     );
 
-    expect(user.id).toBeTruthy();
-    const deleted = await scimRepo.deleteUser(user.id!);
+    const userId = user.id ?? "";
+    expect(userId).toBeTruthy();
+    const deleted = await scimRepo.deleteUser(userId);
     expect(deleted).toBe(true);
 
     // Membership should be REVOKED
-    const membership = await tenantRepo.findMembership(user.id!, "tenant-pilot-polytech");
+    const membership = await tenantRepo.findMembership(userId, "tenant-pilot-polytech");
     expect(membership?.status).toBe("REVOKED");
 
     // User no longer in SCIM store
-    const found = await scimRepo.findUserById(user.id!);
+    const found = await scimRepo.findUserById(userId);
     expect(found).toBeNull();
   });
 
