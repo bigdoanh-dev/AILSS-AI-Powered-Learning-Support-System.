@@ -238,6 +238,7 @@ export function ownedClasses(value: unknown): OwnedClass[] {
 // ============================================================================
 
 export interface ClassMember {
+  membershipId?: string;
   userId: string;
   displayName: string;
   role: string;
@@ -247,6 +248,7 @@ export interface ClassMember {
 export function classMember(value: unknown): ClassMember {
   const rec = record(value);
   return {
+    membershipId: optionalString(rec.membershipId),
     userId: string(rec.userId),
     displayName: string(rec.displayName),
     role: optionalString(rec.role) ?? "STUDENT",
@@ -265,7 +267,7 @@ export function classMembers(value: unknown): ClassMember[] {
     } else if (Array.isArray(rec.items)) {
       arr = rec.items;
     } else {
-      throw new ApiError("invalid");
+      return [];
     }
   }
   return (arr as unknown[]).map(classMember);
@@ -295,10 +297,11 @@ export interface ClassSession {
   title: string;
   startAt: string;
   endAt: string;
-  timezone: string;
+  timezone?: string;
   mode: "ONLINE" | "OFFLINE" | string;
   status: "DRAFT" | "SCHEDULED" | "COMPLETED" | "CANCELLED" | string;
   location?: string;
+  roomName?: string;
   meetingProvider?: string;
   meetingUrl?: string;
   inMeetingWindow?: boolean;
