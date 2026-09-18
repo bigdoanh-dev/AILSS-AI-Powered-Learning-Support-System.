@@ -1,0 +1,87 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/production-readiness-attestation-v1.json",
+  "attestationType": "PRODUCTION_READINESS_GATE_ATTESTATION",
+  "version": "6.1.2",
+  "releaseGitSha": "e7bf3ba15eca2a7f34b3611592837c5bbfead04c",
+  "tag": "v6.1.2",
+  "tagTargetSha": "e7bf3ba15eca2a7f34b3611592837c5bbfead04c",
+  "deployedPilotRelease": {
+    "version": "6.1.1-pilot.1",
+    "gitSha": "ce06367be5c67510b6370585902c2768c42ea5ff",
+    "tag": "v6.1.1-pilot.1",
+    "manifestArtifact": "pilot-deployment-manifest.json",
+    "telemetryArtifact": "contracts/telemetry/pilot-telemetry-segmented.json"
+  },
+  "timestamp": "2026-09-18T22:20:00+07:00",
+  "classification": "PRODUCTION_READY_WITH_LIMITATIONS",
+  "evidenceBundleHash": "f01f874ac6968a17ec1c74e63de72d37b7ce47a265c6521457c8cb1f6dacaa02",
+  "evidenceBundleArtifact": "phase28-evidence-bundle.json",
+  "operationalLimitations": [
+    {
+      "boundaryId": "RESPONSIVE_WEB_CERTIFIED_MOBILE_OUT_OF_SCOPE",
+      "status": "KEEP_OUT_OF_SCOPE",
+      "description": "Responsive Web application certified for production across mobile & desktop browsers. Native mobile builds remain emulator-tested only; physical multi-device lab certification is deferred to post-GA mobile rollout."
+    },
+    {
+      "boundaryId": "FINANCIAL_COMMERCE_SANDBOX_ONLY",
+      "status": "NOT_REQUIRED_FOR_INITIAL_PRODUCTION",
+      "description": "Payment workflows operate in strict SANDBOX_ONLY mode. Partner disbursement payouts remain GATED. Real monetary clearing deferred to a dedicated commercial phase."
+    },
+    {
+      "boundaryId": "STANDARDIZED_XAPI_SCORM_EXTERNAL_CONFORMANCE",
+      "status": "NOT_REQUIRED_FOR_INITIAL_PRODUCTION",
+      "description": "Internal xAPI event wrappers and SCORM runtime environments execute reliably. Certification against external third-party LRS endpoints and SCORM Cloud is deferred."
+    },
+    {
+      "boundaryId": "CLUSTER_CAPACITY_HEADROOM_ENVELOPE",
+      "status": "BOUNDED_OPERATING_LIMIT",
+      "description": "Validated safe operating limit is 2,500 concurrent Virtual Users per standard cluster deployment (p95 latency < 200ms). Workloads exceeding 3,000 VUs require horizontal replica scaling."
+    }
+  ],
+  "authoritativeSecurityState": {
+    "samlReplayEngine": "CASSANDRA_LOCAL_SERIAL_PAXOS",
+    "idpKeyRollover": "ZERO_DOWNTIME_DUAL_CERTIFICATE_SUPPORTED",
+    "scimDriftReconciliation": "SUPPORTED_PRIVILEGE_SAFE_GATED",
+    "oneRosterReconciliation": "SUPPORTED_AUTOMATED_ORPHAN_DEACTIVATION_RECONCILIATION",
+    "ltiGradeIntegrity": "HMAC_SHA256_REPLAY_PROTECTED",
+    "dataSubjectRights": "PORTABILITY_RECTIFICATION_DEACTIVATION_LEGAL_HOLD_HONORED"
+  },
+  "testExecutionVerification": {
+    "rootMonorepo": { "suites": 143, "passed": 836, "failed": 0 },
+    "webApplication": { "suites": 22, "passed": 110, "failed": 0 },
+    "mobileApplication": { "suites": 18, "passed": 319, "failed": 0 },
+    "grandTotal": {
+      "totalSuites": 183,
+      "totalPassed": 1265,
+      "totalFailed": 0,
+      "passRate": 1.0
+    }
+  },
+  "signoff": {
+    "platformLead": {
+      "name": "Dr. Le Hoang Nam",
+      "decision": "APPROVED",
+      "comment": "All 183 test suites passed (1,265 tests). Build reproducibility confirmed."
+    },
+    "securityLead": {
+      "name": "Vu Dinh Thang, CISSP",
+      "decision": "APPROVED",
+      "comment": "Authoritative Cassandra SAML Paxos replay active. 0 observed replay or PII breaches in pilot."
+    },
+    "lmsInteroperabilityLead": {
+      "name": "Nguyen Thi Mai",
+      "decision": "APPROVED",
+      "comment": "LTI 1.3 Core, AGS, and NRPS conformant. SCIM and OneRoster drift engines operational."
+    },
+    "siteReliabilityEngineer": {
+      "name": "Tran Quoc Tuan",
+      "decision": "APPROVED",
+      "comment": "Chaos resilience, soak stability (72h equiv), and Game Day V2 criteria met. SLO baselines established."
+    },
+    "academicDataProtectionOfficer": {
+      "name": "Doan Van Binh, CIPP/E",
+      "decision": "APPROVED",
+      "comment": "Institutional data processing policy v2026.1 in force. Mandatory academic and audit purge protections active."
+    }
+  }
+}
