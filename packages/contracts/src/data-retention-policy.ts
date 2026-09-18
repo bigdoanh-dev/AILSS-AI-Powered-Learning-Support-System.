@@ -73,12 +73,27 @@ export const PLATFORM_RETENTION_CONSTRAINTS: Record<DataCategory, CategoryRetent
   },
 };
 
+export interface DataRetentionGovernanceMetadata {
+  readonly effectiveVersion: string;
+  readonly legalPolicyReference?: string;
+  readonly institutionPolicyReference?: string;
+  readonly governanceAuthority: string;
+}
+
+export const DEFAULT_RETENTION_GOVERNANCE_METADATA: DataRetentionGovernanceMetadata = {
+  effectiveVersion: "2026.1",
+  legalPolicyReference: "GOV-DATA-RETENTION-2026-REF-01",
+  institutionPolicyReference: "INST-ACADEMIC-INTEGRITY-RECORD-RETENTION-POLICY",
+  governanceAuthority: "Institutional Academic Registry & Data Protection Office",
+};
+
 export interface InstitutionRetentionSchedule {
   readonly tenantId: string;
   readonly schedules: Record<DataCategory, number>;
   readonly legalHoldActive: boolean;
   readonly legalHoldReason?: string;
   readonly lastModifiedAt: string;
+  readonly governanceMetadata?: DataRetentionGovernanceMetadata;
 }
 
 export interface RetentionValidationResult {
