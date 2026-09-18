@@ -312,4 +312,5 @@ export function createMetrics(service: string) {
 }
 
 export * from "./finops.js";
+export * from "./slo-engine.js";
 

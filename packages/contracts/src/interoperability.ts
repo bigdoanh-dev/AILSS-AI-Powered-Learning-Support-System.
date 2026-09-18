@@ -560,6 +560,8 @@ export interface VcInteropCredential {
 export interface VcInteropVerifyOptions {
   readonly allowedIssuers?: readonly string[] | undefined;
   readonly checkExpiry?: boolean | undefined; // default true
+  readonly allowedCryptosuites?: readonly string[] | undefined;
+  readonly allowLegacyProofs?: boolean | undefined;
 }
 
 export interface VcInteropVerifyResult {
@@ -619,12 +621,12 @@ export function packageVcInteropCredential(options: {
 }
 
 /**
- * Verifies a DID-native VC for Phase 25.16 interoperability scenarios.
+ * Verifies a DID-native VC for Phase 25.16 and Phase 29 interoperability scenarios.
  *
  * Checks performed:
  * 1. Issuer allowlist (UNTRUSTED_ISSUER)
  * 2. Expiry — validUntil in past (EXPIRED)
- * 3. Cryptosuite — must be "eddsa-rdfc-2022" (UNSUPPORTED_CRYPTOSUITE)
+ * 3. Cryptosuite — canonical "eddsa-rdfc-2022", with backward compatibility for legacy suites when permitted (UNSUPPORTED_CRYPTOSUITE)
  * 4. Proof integrity — proof covers issuer + subject + id (SUBJECT_TAMPERED / PROOF_INVALID)
  */
 export function verifyVcInteropCredential(
@@ -647,9 +649,14 @@ export function verifyVcInteropCredential(
     }
   }
 
-  // 3. Cryptosuite check
-  if (vc.proof.cryptosuite !== "eddsa-rdfc-2022") {
-    return { valid: false, error: `UNSUPPORTED_CRYPTOSUITE: expected eddsa-rdfc-2022, got ${vc.proof.cryptosuite}` };
+  // 3. Cryptosuite check (canonical eddsa-rdfc-2022, versioned legacy support)
+  const allowedSuites = options.allowedCryptosuites ?? (
+    options.allowLegacyProofs
+      ? ["eddsa-rdfc-2022", "ed25519-2020", "Ed25519Signature2020"]
+      : ["eddsa-rdfc-2022"]
+  );
+  if (!allowedSuites.includes(vc.proof.cryptosuite)) {
+    return { valid: false, error: `UNSUPPORTED_CRYPTOSUITE: expected ${allowedSuites.join(" or ")}, got ${vc.proof.cryptosuite}` };
   }
 
   // 4. Proof integrity: recompute expected proof value from canonical fields

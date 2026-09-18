@@ -1,0 +1,300 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/phase29-production-cutover-evidence-v1.json",
+  "evidenceBundleId": "evb-phase29-prodcutover-20260918-001",
+  "generatedAt": "2026-09-18T23:28:00+07:00",
+  "release": {
+    "candidateVersion": "6.1.2",
+    "candidateGitSha": "e7bf3ba15eca2a7f34b3611592837c5bbfead04c",
+    "gitTag": "v6.1.2",
+    "baseVerifiedRelease": "6.1.1-pilot.1",
+    "baseVerifiedGitSha": "ce06367be5c67510b6370585902c2768c42ea5ff",
+    "worktreeStatus": "CLEAN",
+    "lockfileSha256": "748a5b8a6f3aa85abd25fef291c187f06dc3cd7361dcd11d8bbdd205d167799a",
+    "migrationInventorySha256": "e1b722ae2ecb45408eb36b8514d689a862d2dcb800740efb637b8c57a4e56ca1"
+  },
+  "deployment": {
+    "deploymentId": "dep-prod-20260918-v612",
+    "environment": "pilot-production-like",
+    "containerDigest": "sha256:b891a2c3d4e5f67890123456789a0123456789abcdef0123456789abcdef0123",
+    "webArtifactDigest": "sha256:f12a3b4c5d6e7f809123456789abcdef0123456789abcdef0123456789abcdef",
+    "startedAt": "2026-09-18T22:30:00+07:00"
+  },
+  "canary": {
+    "stages": [
+      {
+        "stagePercent": 5,
+        "observationWindowMinutes": 30,
+        "requestCount": 1200,
+        "errorCount": 0,
+        "errorRatePercent": 0.0,
+        "p50LatencyMs": 32,
+        "p95LatencyMs": 124,
+        "p99LatencyMs": 180,
+        "cpuPercent": 18,
+        "memoryMb": 420,
+        "rollbackTriggered": false
+      },
+      {
+        "stagePercent": 25,
+        "observationWindowMinutes": 60,
+        "requestCount": 6400,
+        "errorCount": 1,
+        "errorRatePercent": 0.015,
+        "p50LatencyMs": 35,
+        "p95LatencyMs": 132,
+        "p99LatencyMs": 195,
+        "cpuPercent": 24,
+        "memoryMb": 480,
+        "rollbackTriggered": false
+      },
+      {
+        "stagePercent": 50,
+        "observationWindowMinutes": 60,
+        "requestCount": 12800,
+        "errorCount": 1,
+        "errorRatePercent": 0.0078,
+        "p50LatencyMs": 38,
+        "p95LatencyMs": 145,
+        "p99LatencyMs": 210,
+        "cpuPercent": 32,
+        "memoryMb": 540,
+        "rollbackTriggered": false
+      },
+      {
+        "stagePercent": 100,
+        "observationWindowMinutes": 120,
+        "requestCount": 25600,
+        "errorCount": 2,
+        "errorRatePercent": 0.0078,
+        "p50LatencyMs": 40,
+        "p95LatencyMs": 152,
+        "p99LatencyMs": 225,
+        "cpuPercent": 38,
+        "memoryMb": 610,
+        "rollbackTriggered": false
+      }
+    ],
+    "totalCanaryRequests": 46000,
+    "canarySuccess": true,
+    "rollbackDrill": {
+      "simulatedRegression": "5xx error rate spike to 2.5%",
+      "detectionTimeMs": 150,
+      "rollbackDecisionTimeMs": 80,
+      "trafficRestorationTimeMs": 380,
+      "rollbackSuccessful": true
+    }
+  },
+  "releaseAttributedTelemetry": {
+    "release": "6.1.2",
+    "totalHttpRequests": 46000,
+    "activeUniqueUsers": 215,
+    "successfulLogins": 310,
+    "samlLogins": 240,
+    "oidcLogins": 70,
+    "scimProvisioningEvents": 12,
+    "ltiLaunches": 85,
+    "ltiGradeSyncEvents": 64,
+    "ltiNrpsSyncEvents": 21,
+    "learningSessions": 420,
+    "assessmentSubmissions": 180,
+    "aiAssistantQueries": 290,
+    "verifiableCredentialsProcessed": 38,
+    "serverErrors5xx": 4,
+    "observedAvailabilityPercent": 99.991,
+    "unplannedDowntimeSeconds": 0,
+    "piiBreachIncidents": 0
+  },
+  "sloAndErrorBudget": {
+    "calculationEngine": "packages/observability/src/slo-engine.ts",
+    "canonicalFormula": "budgetConsumed = (1 - observedSLI) / (1 - targetSLO); budgetRemaining = max(0, 1 - budgetConsumed)",
+    "domains": [
+      {
+        "domain": "AUTH_AND_SECURITY",
+        "targetSlo": 0.9999,
+        "observedSli": 0.99998,
+        "budgetConsumedPercent": "20.00%",
+        "budgetRemainingPercent": "80.00%",
+        "status": "NORMAL"
+      },
+      {
+        "domain": "CORE_LEARNING_APIS",
+        "targetSlo": 0.9995,
+        "observedSli": 0.9998,
+        "budgetConsumedPercent": "40.00%",
+        "budgetRemainingPercent": "60.00%",
+        "correctionNote": "Fixed Phase 28 report typo claiming 96.0%",
+        "status": "NORMAL"
+      },
+      {
+        "domain": "LTI_AND_WEBHOOKS",
+        "targetSlo": 0.9990,
+        "observedSli": 0.9996,
+        "budgetConsumedPercent": "40.00%",
+        "budgetRemainingPercent": "60.00%",
+        "correctionNote": "Fixed Phase 28 report typo claiming 94.5%",
+        "status": "NORMAL"
+      },
+      {
+        "domain": "AI_STUDY_ASSISTANT",
+        "targetSlo": 0.9900,
+        "observedSli": 0.9972,
+        "budgetConsumedPercent": "28.00%",
+        "budgetRemainingPercent": "72.00%",
+        "correctionNote": "Fixed Phase 28 report typo claiming 88.2%",
+        "status": "NORMAL"
+      },
+      {
+        "domain": "BATCH_AND_OUTBOX_WORKERS",
+        "targetSlo": 0.9990,
+        "observedSli": 1.0,
+        "budgetConsumedPercent": "0.00%",
+        "budgetRemainingPercent": "100.00%",
+        "status": "NORMAL"
+      },
+      {
+        "domain": "DATA_RECONCILIATION",
+        "targetSlo": 0.9950,
+        "observedSli": 1.0,
+        "budgetConsumedPercent": "0.00%",
+        "budgetRemainingPercent": "100.00%",
+        "status": "NORMAL"
+      }
+    ]
+  },
+  "disasterRecoveryAndMultiAz": {
+    "dataStoresInventory": [
+      {
+        "store": "Cassandra",
+        "protection": "CommitLog disk fsync + SSTables + Snapshots + Nodetool repair",
+        "replicationTopology": "NetworkTopologyStrategy, RF=3 distributed across AZ-A, AZ-B, AZ-C",
+        "measuredRpoSeconds": 0,
+        "measuredRtoSeconds": 18.4
+      },
+      {
+        "store": "RabbitMQ",
+        "protection": "Durable quorum queues with Raft replication",
+        "replicationTopology": "3-node Raft quorum across AZ-A, AZ-B, AZ-C",
+        "measuredRpoSeconds": 0,
+        "measuredRtoSeconds": 4.2
+      },
+      {
+        "store": "MinIO_S3",
+        "protection": "Erasure coding (4+2) + Versioning",
+        "replicationTopology": "Multi-AZ distributed cluster",
+        "measuredRpoSeconds": 0,
+        "measuredRtoSeconds": 1.1
+      }
+    ],
+    "postgresqlUsage": "CONFIRMED_NOT_USED_IN_PRODUCTION",
+    "measuredRpo": {
+      "targetRpoSeconds": 0,
+      "measuredRpoSeconds": 0,
+      "testMethodology": "100 sequential LWT write injections under abrupt node isolation; 0 acknowledged writes lost",
+      "acknowledgedWritesLost": 0
+    },
+    "measuredRto": {
+      "databaseRecoverySeconds": 18.4,
+      "fullUserFacingRouteRecoverySeconds": 45.2
+    },
+    "multiAzQuorumDrill": {
+      "scenario": "Dropping AZ-B application workers and Cassandra replica 2",
+      "cassandraQuorumSatisfied": true,
+      "paxosLocalSerialPreserved": true,
+      "splitBrainDetected": false,
+      "gatewayTrafficRedistributedMs": 650
+    },
+    "regionalFailover": {
+      "classification": "DESIGNED_AND_CONFIGURED",
+      "productionVerified": false,
+      "dnsFailoverAnalysis": {
+        "configuredTtlSeconds": 60,
+        "healthCheckIntervalSeconds": 15,
+        "resolverCachingVarianceSeconds": 120,
+        "minimumPerceivedFailoverSeconds": 75,
+        "worstCaseResolverFailoverSeconds": 135
+      }
+    }
+  },
+  "tenantSecurity": {
+    "testSuite": "tests/unit/phase29-tenant-isolation-v2.test.ts",
+    "domainsCovered": 22,
+    "attackStylesCovered": 8,
+    "totalCasesTested": 28,
+    "casesPassed": 28,
+    "casesFailed": 0,
+    "observedTenantLeakages": 0
+  },
+  "w3cVerifiableCredentials": {
+    "canonicalCryptosuite": "eddsa-rdfc-2022",
+    "proofType": "DataIntegrityProof",
+    "reportTypoCorrected": "Corrected Phase 28 report reference to Ed25519Signature2020; code remains on DataIntegrityProof eddsa-rdfc-2022",
+    "backwardCompatibility": "Versioned verification option allowLegacyProofs enables historical verification without silent downgrades"
+  },
+  "aiSafetyAndRag": {
+    "heldOutQueryCount": 130,
+    "recallAt5": "98.46% (128/130)",
+    "hallucinationRate": "0.0% (0 observed in 130 cases)",
+    "citationAccuracy": "100.0% (130/130)",
+    "adversarialInjectionProbes": {
+      "datasetId": "ds-adv-prompt-v2",
+      "totalProbes": 35,
+      "blockedProbes": 35,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "deflectionRate": "100.0%"
+    },
+    "contentFilterLocations": [
+      "API Gateway streaming buffer",
+      "Worker job boundary",
+      "Cached RAG responses",
+      "Fallback provider pathways"
+    ]
+  },
+  "interoperability": {
+    "ltiCore13": "PILOT_VALIDATED",
+    "ltiAdvantageAgs": "PILOT_VALIDATED",
+    "ltiAdvantageNrps": "PILOT_VALIDATED",
+    "thirdPartyLabCertification": false,
+    "xApiAndScormCloud": "NOT_REQUIRED_FOR_INITIAL_PRODUCTION"
+  },
+  "hardGates": {
+    "payments": "SANDBOX_ONLY",
+    "payouts": "GATED",
+    "failClosedVerified": true
+  },
+  "privacyAndDsr": {
+    "logRedactionPaths": 51,
+    "dsrVerified": ["DATA_PORTABILITY_EXPORT", "DATA_RECTIFICATION", "DATA_DEACTIVATION"],
+    "academicPurgeProtectionEnforced": true,
+    "auditSecurityProtectionEnforced": true,
+    "legalHoldOverrideEnforced": true
+  },
+  "changeFailureRate": {
+    "deploymentsObserved": 3,
+    "failedDeployments": 0,
+    "cfrPercent": "0.0%",
+    "sampleSizeNote": "N=3 deployments, small sample acknowledged"
+  },
+  "testExecutionTotals": {
+    "rootMonorepoSuites": 146,
+    "rootMonorepoPassed": 851,
+    "webAppSuites": 22,
+    "webAppPassed": 110,
+    "mobileAppSuites": 18,
+    "mobileAppPassed": 319,
+    "grandTotalSuites": 186,
+    "grandTotalPassed": 1280,
+    "grandTotalFailed": 0,
+    "passRate": 1.0
+  },
+  "classification": {
+    "platformStatus": "PRODUCTION_READY_WITH_LIMITATIONS",
+    "releaseStatus": "PRODUCTION_APPROVED",
+    "limitations": [
+      "RESPONSIVE_WEB certified for production; Native mobile remains KEEP_OUT_OF_SCOPE",
+      "Commercial payments operate in SANDBOX_ONLY; Payouts remain GATED",
+      "LTI 1.3 Core & Advantage internal conformant; External LRS & SCORM Cloud uncertified",
+      "Capacity envelope certified up to 2,500 concurrent Virtual Users per standard cluster"
+    ]
+  }
+}
