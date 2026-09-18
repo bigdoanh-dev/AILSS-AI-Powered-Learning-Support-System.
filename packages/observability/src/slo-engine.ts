@@ -47,9 +47,84 @@ export interface SloEvaluationResult {
 }
 
 export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
+  // --- Phase 30.5 Independent 8-Domain Reliability Policies ---
+  AUTHENTICATION: {
+    domain: "AUTHENTICATION",
+    targetSlo: 0.9999, // 99.99%
+    windowDays: 30,
+    description: "SAML SSO, OIDC login, token validation, and session termination availability",
+    goodEventCriteria: "HTTP 2xx/3xx on auth routes with latency < 500ms and valid token issued",
+    badEventCriteria: "HTTP 5xx, unhandled auth crashes, timeout > 1000ms",
+    excludedEventCriteria: "HTTP 401/403 due to invalid client credentials or bad password",
+  },
+  LEARNING: {
+    domain: "LEARNING",
+    targetSlo: 0.9995, // 99.95%
+    windowDays: 30,
+    description: "Course browsing, lesson loading, content streaming, student progress tracking",
+    goodEventCriteria: "HTTP 2xx on learning routes with latency < 1000ms",
+    badEventCriteria: "HTTP 5xx, gateway timeout > 2000ms, database read failures",
+    excludedEventCriteria: "Client aborts, malformed client queries (400)",
+  },
+  ASSESSMENT: {
+    domain: "ASSESSMENT",
+    targetSlo: 0.9995, // 99.95%
+    windowDays: 30,
+    description: "Quiz authoring, active examination session, submission and grading pipelines",
+    goodEventCriteria: "Exam submission acknowledged within 1500ms and stored durably",
+    badEventCriteria: "5xx on submission, exam timeout, grade loss",
+    excludedEventCriteria: "Late submissions blocked by active exam countdown policy",
+  },
+  LTI: {
+    domain: "LTI",
+    targetSlo: 0.9990, // 99.90%
+    windowDays: 30,
+    description: "LTI 1.3 launches, Assignment and Grade Services (AGS), Names & Role (NRPS)",
+    goodEventCriteria: "LTI launch succeeds, grades posted to LMS within 5000ms or outbox queued",
+    badEventCriteria: "LTI launch 5xx, unhandled signature error, grade dropped without outbox record",
+    excludedEventCriteria: "LMS endpoint unreachable returning 502/503 from external LMS server",
+  },
+  SCIM: {
+    domain: "SCIM",
+    targetSlo: 0.9950, // 99.50%
+    windowDays: 30,
+    description: "SCIM Enterprise directory provisioning, user/group CRUD, and drift reconciliation",
+    goodEventCriteria: "SCIM request processed within 2000ms with RFC7644 compliance",
+    badEventCriteria: "Unhandled 500, state corruption during optimistic locking update",
+    excludedEventCriteria: "Client 409 conflict during concurrent ETag modification",
+  },
+  AI_RAG: {
+    domain: "AI_RAG",
+    targetSlo: 0.9900, // 99.00%
+    windowDays: 30,
+    description: "AI conversational tutoring, lesson explanation, RAG document search",
+    goodEventCriteria: "Streaming response started within 2000ms, grounded non-hallucinated response",
+    badEventCriteria: "HTTP 500, unhandled timeout > 10000ms, circuit breaker fallback exhausted",
+    excludedEventCriteria: "Client side disconnect, quota-limit 429 when tenant budget is exhausted",
+  },
+  CREDENTIAL_VERIFICATION: {
+    domain: "CREDENTIAL_VERIFICATION",
+    targetSlo: 0.9990, // 99.90%
+    windowDays: 30,
+    description: "W3C VC v2.0 and Open Badges v3.0 verification, status list lookups",
+    goodEventCriteria: "Proof cryptosuite verified or rejected with valid status under 300ms",
+    badEventCriteria: "Internal cryptographic verification crash, status list fetch timeout",
+    excludedEventCriteria: "Expired or tampered credential rejection",
+  },
+  NOTIFICATION: {
+    domain: "NOTIFICATION",
+    targetSlo: 0.9990, // 99.90%
+    windowDays: 30,
+    description: "In-app notifications, transactional email dispatch, webhook alerts",
+    goodEventCriteria: "Notification delivered or queued to transactional outbox",
+    badEventCriteria: "Notification dropped silently, unhandled worker exception",
+    excludedEventCriteria: "Recipient email bounce due to invalid address",
+  },
+
+  // --- Phase 29 Legacy Aliases for Seamless Backward Compatibility ---
   AUTH_AND_SECURITY: {
     domain: "AUTH_AND_SECURITY",
-    targetSlo: 0.9999, // 99.99%
+    targetSlo: 0.9999,
     windowDays: 30,
     description: "SAML SSO, OIDC login, token validation, and session termination availability",
     goodEventCriteria: "HTTP 2xx/3xx on auth routes with latency < 500ms and valid token issued",
@@ -58,7 +133,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   CORE_LEARNING_APIS: {
     domain: "CORE_LEARNING_APIS",
-    targetSlo: 0.9995, // 99.95%
+    targetSlo: 0.9995,
     windowDays: 30,
     description: "Course browsing, lesson loading, content streaming, student progress tracking",
     goodEventCriteria: "HTTP 2xx on learning routes with latency < 1000ms",
@@ -67,7 +142,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   LTI_AND_WEBHOOKS: {
     domain: "LTI_AND_WEBHOOKS",
-    targetSlo: 0.9990, // 99.90%
+    targetSlo: 0.9990,
     windowDays: 30,
     description: "LTI 1.3 launches, Assignment and Grade Services, Names & Role sync",
     goodEventCriteria: "LTI launch succeeds, grades posted to LMS within 5000ms or outbox queued",
@@ -76,7 +151,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   AI_STUDY_ASSISTANT: {
     domain: "AI_STUDY_ASSISTANT",
-    targetSlo: 0.9900, // 99.00%
+    targetSlo: 0.9900,
     windowDays: 30,
     description: "AI conversational tutoring, lesson explanation, RAG document search",
     goodEventCriteria: "Streaming response started within 2000ms, grounded non-hallucinated response",
@@ -85,7 +160,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   BATCH_AND_OUTBOX_WORKERS: {
     domain: "BATCH_AND_OUTBOX_WORKERS",
-    targetSlo: 0.9990, // 99.90%
+    targetSlo: 0.9990,
     windowDays: 30,
     description: "Transactional outbox event delivery to RabbitMQ, audit trail persistence",
     goodEventCriteria: "Message acknowledged by broker within retry limit",
@@ -94,7 +169,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   DATA_RECONCILIATION: {
     domain: "DATA_RECONCILIATION",
-    targetSlo: 0.9950, // 99.50%
+    targetSlo: 0.9950,
     windowDays: 30,
     description: "SCIM directory synchronization and OneRoster SIS drift reconciliation jobs",
     goodEventCriteria: "Scheduled reconciliation batch completes successfully without corruption",
@@ -257,3 +332,52 @@ export function calculateWindowBurnRate(options: {
     requiresTicketAlert,
   };
 }
+
+export type RollingWindowKey = "1h" | "6h" | "24h" | "7d";
+
+export interface RollingWindowMetrics {
+  readonly windowKey: RollingWindowKey;
+  readonly windowHours: number;
+  readonly evaluation: SloEvaluationResult;
+  readonly windowBurnRate: {
+    readonly burnRate: number;
+    readonly budgetConsumedInWindow: number;
+    readonly requiresPageAlert: boolean;
+    readonly requiresTicketAlert: boolean;
+  };
+}
+
+export function evaluateRollingWindows(
+  slo: SloDefinition,
+  windowData: Record<RollingWindowKey, SloEvaluationInput>,
+): Record<RollingWindowKey, RollingWindowMetrics> {
+  const windowHourMap: Record<RollingWindowKey, number> = {
+    "1h": 1,
+    "6h": 6,
+    "24h": 24,
+    "7d": 168,
+  };
+
+  const results = {} as Record<RollingWindowKey, RollingWindowMetrics>;
+
+  for (const [key, input] of Object.entries(windowData) as [RollingWindowKey, SloEvaluationInput][]) {
+    const hours = windowHourMap[key];
+    const evaluation = evaluateSloFromEvents(slo, input);
+    const windowBurn = calculateWindowBurnRate({
+      targetSlo: slo.targetSlo,
+      windowHours: hours,
+      totalWindowEvents: input.goodEvents + input.badEvents,
+      badWindowEvents: input.badEvents,
+    });
+
+    results[key] = {
+      windowKey: key,
+      windowHours: hours,
+      evaluation,
+      windowBurnRate: windowBurn,
+    };
+  }
+
+  return results;
+}
+
