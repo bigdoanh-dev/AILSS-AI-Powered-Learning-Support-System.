@@ -8,8 +8,8 @@
     "externalIngressRoutes": 43,
     "systemObservabilityRoutes": 3,
     "reconciliation": {
-      "covered": 38,
-      "partial": 5,
+      "covered": 43,
+      "partial": 0,
       "publicIntentional": 3,
       "untested": 0
     }

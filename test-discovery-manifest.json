@@ -3,15 +3,15 @@
   "generatedAt": "2026-09-19T22:06:00+07:00",
   "canonicalCommand": "pnpm test:all",
   "summary": {
-    "totalSuites": 191,
-    "rootMonorepoSuites": 151,
-    "rootMonorepoTests": 879,
+    "totalSuites": 192,
+    "rootMonorepoSuites": 152,
+    "rootMonorepoTests": 894,
     "webAppSuites": 22,
     "webAppTests": 110,
     "mobileAppSuites": 18,
     "mobileAppTests": 319,
-    "grandTotalSuites": 191,
-    "grandTotalTests": 1308,
+    "grandTotalSuites": 192,
+    "grandTotalTests": 1323,
     "passRate": 1
   },
   "reconciliationHistory": {
