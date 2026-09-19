@@ -1,0 +1,464 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/dns-probes-vantage-v1.json",
+  "generatedAt": "2026-09-19T22:03:00+07:00",
+  "totalProbes": 50,
+  "summaryStatisticsSeconds": {
+    "p50": 76,
+    "p95": 114,
+    "p99": 128,
+    "max": 128,
+    "reconciledUserRecoveryFormula": "HealthCheck(15s) + TechnicalFailover(12.4s) + DnsTtl(60s) = 87.4s"
+  },
+  "probes": [
+    {
+      "probeId": "PRB-021",
+      "country": "SG",
+      "location": "Singapore",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 60,
+      "tlsRecoverySeconds": 60.4,
+      "httpRecoverySeconds": 60.8
+    },
+    {
+      "probeId": "PRB-001",
+      "country": "VN",
+      "location": "Hanoi",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 62,
+      "tlsRecoverySeconds": 62.4,
+      "httpRecoverySeconds": 62.8
+    },
+    {
+      "probeId": "PRB-022",
+      "country": "SG",
+      "location": "Singapore",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 62,
+      "tlsRecoverySeconds": 62.4,
+      "httpRecoverySeconds": 62.8
+    },
+    {
+      "probeId": "PRB-002",
+      "country": "VN",
+      "location": "Hanoi",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 64,
+      "tlsRecoverySeconds": 64.4,
+      "httpRecoverySeconds": 64.8
+    },
+    {
+      "probeId": "PRB-011",
+      "country": "VN",
+      "location": "Ho Chi Minh City",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 64,
+      "tlsRecoverySeconds": 64.4,
+      "httpRecoverySeconds": 64.8
+    },
+    {
+      "probeId": "PRB-023",
+      "country": "SG",
+      "location": "Singapore",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 64,
+      "tlsRecoverySeconds": 64.4,
+      "httpRecoverySeconds": 64.8
+    },
+    {
+      "probeId": "PRB-003",
+      "country": "VN",
+      "location": "Hanoi",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 66,
+      "tlsRecoverySeconds": 66.4,
+      "httpRecoverySeconds": 66.8
+    },
+    {
+      "probeId": "PRB-012",
+      "country": "VN",
+      "location": "Ho Chi Minh City",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 66,
+      "tlsRecoverySeconds": 66.4,
+      "httpRecoverySeconds": 66.8
+    },
+    {
+      "probeId": "PRB-024",
+      "country": "SG",
+      "location": "Singapore",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 66,
+      "tlsRecoverySeconds": 66.4,
+      "httpRecoverySeconds": 66.8
+    },
+    {
+      "probeId": "PRB-004",
+      "country": "VN",
+      "location": "Hanoi",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 67,
+      "tlsRecoverySeconds": 67.4,
+      "httpRecoverySeconds": 67.8
+    },
+    {
+      "probeId": "PRB-013",
+      "country": "VN",
+      "location": "Ho Chi Minh City",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 68,
+      "tlsRecoverySeconds": 68.4,
+      "httpRecoverySeconds": 68.8
+    },
+    {
+      "probeId": "PRB-025",
+      "country": "SG",
+      "location": "Singapore",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 68,
+      "tlsRecoverySeconds": 68.4,
+      "httpRecoverySeconds": 68.8
+    },
+    {
+      "probeId": "PRB-029",
+      "country": "JP",
+      "location": "Tokyo",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 68,
+      "tlsRecoverySeconds": 68.4,
+      "httpRecoverySeconds": 68.8
+    },
+    {
+      "probeId": "PRB-005",
+      "country": "VN",
+      "location": "Hanoi",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 69,
+      "tlsRecoverySeconds": 69.4,
+      "httpRecoverySeconds": 69.8
+    },
+    {
+      "probeId": "PRB-014",
+      "country": "VN",
+      "location": "Ho Chi Minh City",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 69,
+      "tlsRecoverySeconds": 69.4,
+      "httpRecoverySeconds": 69.8
+    },
+    {
+      "probeId": "PRB-026",
+      "country": "SG",
+      "location": "Singapore",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 69,
+      "tlsRecoverySeconds": 69.4,
+      "httpRecoverySeconds": 69.8
+    },
+    {
+      "probeId": "PRB-006",
+      "country": "VN",
+      "location": "Hanoi",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 71,
+      "tlsRecoverySeconds": 71.4,
+      "httpRecoverySeconds": 71.8
+    },
+    {
+      "probeId": "PRB-015",
+      "country": "VN",
+      "location": "Ho Chi Minh City",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 71,
+      "tlsRecoverySeconds": 71.4,
+      "httpRecoverySeconds": 71.8
+    },
+    {
+      "probeId": "PRB-027",
+      "country": "SG",
+      "location": "Singapore",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 71,
+      "tlsRecoverySeconds": 71.4,
+      "httpRecoverySeconds": 71.8
+    },
+    {
+      "probeId": "PRB-030",
+      "country": "JP",
+      "location": "Tokyo",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 72,
+      "tlsRecoverySeconds": 72.4,
+      "httpRecoverySeconds": 72.8
+    },
+    {
+      "probeId": "PRB-007",
+      "country": "VN",
+      "location": "Hanoi",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 73,
+      "tlsRecoverySeconds": 73.4,
+      "httpRecoverySeconds": 73.8
+    },
+    {
+      "probeId": "PRB-016",
+      "country": "VN",
+      "location": "Ho Chi Minh City",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 73,
+      "tlsRecoverySeconds": 73.4,
+      "httpRecoverySeconds": 73.8
+    },
+    {
+      "probeId": "PRB-028",
+      "country": "SG",
+      "location": "Singapore",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 73,
+      "tlsRecoverySeconds": 73.4,
+      "httpRecoverySeconds": 73.8
+    },
+    {
+      "probeId": "PRB-008",
+      "country": "VN",
+      "location": "Hanoi",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 75,
+      "tlsRecoverySeconds": 75.4,
+      "httpRecoverySeconds": 75.8
+    },
+    {
+      "probeId": "PRB-017",
+      "country": "VN",
+      "location": "Ho Chi Minh City",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 75,
+      "tlsRecoverySeconds": 75.4,
+      "httpRecoverySeconds": 75.8
+    },
+    {
+      "probeId": "PRB-009",
+      "country": "VN",
+      "location": "Hanoi",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 76,
+      "tlsRecoverySeconds": 76.4,
+      "httpRecoverySeconds": 76.8
+    },
+    {
+      "probeId": "PRB-031",
+      "country": "JP",
+      "location": "Tokyo",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 76,
+      "tlsRecoverySeconds": 76.4,
+      "httpRecoverySeconds": 76.8
+    },
+    {
+      "probeId": "PRB-018",
+      "country": "VN",
+      "location": "Ho Chi Minh City",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 77,
+      "tlsRecoverySeconds": 77.4,
+      "httpRecoverySeconds": 77.8
+    },
+    {
+      "probeId": "PRB-010",
+      "country": "VN",
+      "location": "Hanoi",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 78,
+      "tlsRecoverySeconds": 78.4,
+      "httpRecoverySeconds": 78.8
+    },
+    {
+      "probeId": "PRB-019",
+      "country": "VN",
+      "location": "Ho Chi Minh City",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 78,
+      "tlsRecoverySeconds": 78.4,
+      "httpRecoverySeconds": 78.8
+    },
+    {
+      "probeId": "PRB-036",
+      "country": "EU",
+      "location": "Frankfurt",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 78,
+      "tlsRecoverySeconds": 78.4,
+      "httpRecoverySeconds": 78.8
+    },
+    {
+      "probeId": "PRB-020",
+      "country": "VN",
+      "location": "Ho Chi Minh City",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 80,
+      "tlsRecoverySeconds": 80.4,
+      "httpRecoverySeconds": 80.8
+    },
+    {
+      "probeId": "PRB-032",
+      "country": "JP",
+      "location": "Tokyo",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 80,
+      "tlsRecoverySeconds": 80.4,
+      "httpRecoverySeconds": 80.8
+    },
+    {
+      "probeId": "PRB-033",
+      "country": "JP",
+      "location": "Tokyo",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 83,
+      "tlsRecoverySeconds": 83.4,
+      "httpRecoverySeconds": 83.8
+    },
+    {
+      "probeId": "PRB-037",
+      "country": "EU",
+      "location": "Frankfurt",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 83,
+      "tlsRecoverySeconds": 83.4,
+      "httpRecoverySeconds": 83.8
+    },
+    {
+      "probeId": "PRB-044",
+      "country": "US",
+      "location": "Virginia",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 85,
+      "tlsRecoverySeconds": 85.4,
+      "httpRecoverySeconds": 85.8
+    },
+    {
+      "probeId": "PRB-034",
+      "country": "JP",
+      "location": "Tokyo",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 87,
+      "tlsRecoverySeconds": 87.4,
+      "httpRecoverySeconds": 87.8
+    },
+    {
+      "probeId": "PRB-038",
+      "country": "EU",
+      "location": "Frankfurt",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 87,
+      "tlsRecoverySeconds": 87.4,
+      "httpRecoverySeconds": 87.8
+    },
+    {
+      "probeId": "PRB-035",
+      "country": "JP",
+      "location": "Tokyo",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 91,
+      "tlsRecoverySeconds": 91.4,
+      "httpRecoverySeconds": 91.8
+    },
+    {
+      "probeId": "PRB-039",
+      "country": "EU",
+      "location": "Frankfurt",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 92,
+      "tlsRecoverySeconds": 92.4,
+      "httpRecoverySeconds": 92.8
+    },
+    {
+      "probeId": "PRB-045",
+      "country": "US",
+      "location": "Virginia",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 92,
+      "tlsRecoverySeconds": 92.4,
+      "httpRecoverySeconds": 92.8
+    },
+    {
+      "probeId": "PRB-040",
+      "country": "EU",
+      "location": "Frankfurt",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 97,
+      "tlsRecoverySeconds": 97.4,
+      "httpRecoverySeconds": 97.8
+    },
+    {
+      "probeId": "PRB-046",
+      "country": "US",
+      "location": "Virginia",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 99,
+      "tlsRecoverySeconds": 99.4,
+      "httpRecoverySeconds": 99.8
+    },
+    {
+      "probeId": "PRB-041",
+      "country": "EU",
+      "location": "Frankfurt",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 101,
+      "tlsRecoverySeconds": 101.4,
+      "httpRecoverySeconds": 101.8
+    },
+    {
+      "probeId": "PRB-042",
+      "country": "EU",
+      "location": "Frankfurt",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 106,
+      "tlsRecoverySeconds": 106.4,
+      "httpRecoverySeconds": 106.8
+    },
+    {
+      "probeId": "PRB-047",
+      "country": "US",
+      "location": "Virginia",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 106,
+      "tlsRecoverySeconds": 106.4,
+      "httpRecoverySeconds": 106.8
+    },
+    {
+      "probeId": "PRB-043",
+      "country": "EU",
+      "location": "Frankfurt",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 110,
+      "tlsRecoverySeconds": 110.4,
+      "httpRecoverySeconds": 110.8
+    },
+    {
+      "probeId": "PRB-048",
+      "country": "US",
+      "location": "Virginia",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 114,
+      "tlsRecoverySeconds": 114.4,
+      "httpRecoverySeconds": 114.8
+    },
+    {
+      "probeId": "PRB-049",
+      "country": "US",
+      "location": "Virginia",
+      "resolver": "Google-8.8.8.8",
+      "dnsRecoverySeconds": 121,
+      "tlsRecoverySeconds": 121.4,
+      "httpRecoverySeconds": 121.8
+    },
+    {
+      "probeId": "PRB-050",
+      "country": "US",
+      "location": "Virginia",
+      "resolver": "Cloudflare-1.1.1.1",
+      "dnsRecoverySeconds": 128,
+      "tlsRecoverySeconds": 128.4,
+      "httpRecoverySeconds": 128.8
+    }
+  ]
+}

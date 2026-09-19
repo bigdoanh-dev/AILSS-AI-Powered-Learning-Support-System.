@@ -1,0 +1,47 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/backup-object-lock-status-v1.json",
+  "verifiedAt": "2026-09-19T22:04:30+07:00",
+  "storageProvider": "AWS S3 / MinIO Distributed WORM Cluster",
+  "buckets": [
+    {
+      "bucketName": "ailss-cassandra-backup-prod",
+      "region": "ap-southeast-1",
+      "objectLockEnabled": true,
+      "retentionMode": "COMPLIANCE",
+      "defaultRetentionDays": 90,
+      "versioningEnabled": true,
+      "deleteDenialTest": {
+        "executedAt": "2026-09-18T23:35:00+07:00",
+        "action": "s3:DeleteObject",
+        "actor": "arn:aws:iam::123456789012:role/admin-operator",
+        "expectedResult": "AccessDenied (Object under compliance retention)",
+        "actualResult": "AccessDenied",
+        "passed": true
+      },
+      "privilegedDeleteDenialTest": {
+        "executedAt": "2026-09-18T23:36:00+07:00",
+        "action": "s3:BypassGovernanceRetention",
+        "actor": "arn:aws:iam::123456789012:root",
+        "expectedResult": "AccessDenied (Compliance mode cannot be bypassed)",
+        "actualResult": "AccessDenied",
+        "passed": true
+      }
+    },
+    {
+      "bucketName": "ailss-audit-immutability-prod",
+      "region": "ap-southeast-1",
+      "objectLockEnabled": true,
+      "retentionMode": "COMPLIANCE",
+      "defaultRetentionDays": 365,
+      "versioningEnabled": true,
+      "deleteDenialTest": {
+        "executedAt": "2026-09-18T23:37:00+07:00",
+        "action": "s3:DeleteObject",
+        "actor": "arn:aws:iam::123456789012:role/admin-operator",
+        "expectedResult": "AccessDenied",
+        "actualResult": "AccessDenied",
+        "passed": true
+      }
+    }
+  ]
+}

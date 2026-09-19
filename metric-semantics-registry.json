@@ -1,0 +1,102 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/metric-semantics-registry-v1.json",
+  "generatedAt": "2026-09-19T22:01:00+07:00",
+  "registryVersion": "1.0.0",
+  "governanceRules": [
+    "A session is not a user. IDENTIFIED_SESSIONS cannot be substituted for ACTIVE_UNIQUE_USERS.",
+    "An operation is not a resource. SCIM_OPERATIONS cannot be substituted for SCIM_RESOURCES.",
+    "A request is not a unique user. HTTP_REQUESTS cannot be substituted for ACTIVE_UNIQUE_USERS."
+  ],
+  "metrics": [
+    {
+      "metricId": "ACTIVE_UNIQUE_USERS",
+      "definition": "Distinct human individuals who authenticated and performed at least one authorized action within the measurement window.",
+      "unit": "users",
+      "source": "Identity Service & Token Introspection Store",
+      "aggregation": "COUNT(DISTINCT user_id)",
+      "deduplicationRule": "Deduplicated globally across organizations by normalized user UUID.",
+      "dimensions": ["tenant_id", "institution_id", "primary_role"],
+      "piiClassification": "NON_PII_AGGREGATE"
+    },
+    {
+      "metricId": "IDENTIFIED_SESSIONS",
+      "definition": "Distinct login sessions established through OIDC, SAML, or Password authentication backed by a valid refresh token.",
+      "unit": "sessions",
+      "source": "Identity Service Session Store & Token Issuer",
+      "aggregation": "COUNT(session_id)",
+      "deduplicationRule": "Deduplicated by session UUID within TTL window.",
+      "dimensions": ["tenant_id", "idp_type", "client_platform"],
+      "piiClassification": "NON_PII_AGGREGATE"
+    },
+    {
+      "metricId": "SUCCESSFUL_LOGINS",
+      "definition": "Authentication events culminating in successful token issuance.",
+      "unit": "events",
+      "source": "API Gateway /auth/login, /auth/oidc/callback, /auth/saml/callback",
+      "aggregation": "SUM(login_success_count)",
+      "deduplicationRule": "No deduplication; represents raw event throughput.",
+      "dimensions": ["tenant_id", "protocol", "auth_method"],
+      "piiClassification": "NON_PII_AGGREGATE"
+    },
+    {
+      "metricId": "SCIM_OPERATIONS",
+      "definition": "Provisioning transactions received from external IdPs via SCIM 2.0 protocol (POST, PUT, PATCH, DELETE).",
+      "unit": "transactions",
+      "source": "Identity Service SCIM Controller",
+      "aggregation": "SUM(scim_requests_received)",
+      "deduplicationRule": "No deduplication; transaction count reflects idempotency handling.",
+      "dimensions": ["tenant_id", "operation_type", "resource_endpoint"],
+      "piiClassification": "NON_PII_AGGREGATE"
+    },
+    {
+      "metricId": "SCIM_RESOURCES",
+      "definition": "Persistent entities managed via SCIM in the tenant directory (Users and Groups).",
+      "unit": "entities",
+      "source": "TenantAwareScimRepository in Cassandra keyspace",
+      "aggregation": "COUNT(DISTINCT scim_resource_id)",
+      "deduplicationRule": "Exact database entity count matching primary key (tenant_id, scim_id).",
+      "dimensions": ["tenant_id", "resource_type", "status"],
+      "piiClassification": "NON_PII_AGGREGATE"
+    },
+    {
+      "metricId": "LTI_LAUNCHES",
+      "definition": "LTI 1.3 Advantage launch messages successfully verified and negotiated with an external Tool Consumer.",
+      "unit": "launches",
+      "source": "LTI Integration Service",
+      "aggregation": "COUNT(lti_launch_id)",
+      "deduplicationRule": "Deduplicated by message state and launch nonce.",
+      "dimensions": ["tenant_id", "platform_issuer", "client_id", "deployment_id"],
+      "piiClassification": "NON_PII_AGGREGATE"
+    },
+    {
+      "metricId": "HTTP_REQUESTS",
+      "definition": "Total incoming HTTP requests processed at the API Gateway ingress boundary.",
+      "unit": "requests",
+      "source": "Envoy Ingress & Express API Gateway Metrics (http_requests_total)",
+      "aggregation": "SUM(http_requests_total)",
+      "deduplicationRule": "No deduplication; raw ingress request volume.",
+      "dimensions": ["method", "route", "status_code", "tenant_id"],
+      "piiClassification": "NON_PII_AGGREGATE"
+    },
+    {
+      "metricId": "AI_QUERIES",
+      "definition": "User queries processed by the RAG Study Assistant and Question Generator.",
+      "unit": "queries",
+      "source": "AI Service Gateway Controller",
+      "aggregation": "SUM(ai_assistant_queries_total)",
+      "deduplicationRule": "Aggregated by query request ID.",
+      "dimensions": ["tenant_id", "model_tier", "quarantine_status"],
+      "piiClassification": "NON_PII_AGGREGATE"
+    },
+    {
+      "metricId": "ASSESSMENT_SUBMISSIONS",
+      "definition": "Completed assessment attempt submissions persisted into durable outbox queue.",
+      "unit": "submissions",
+      "source": "Assessment Service Outbox",
+      "aggregation": "COUNT(submission_id)",
+      "deduplicationRule": "Deduplicated by attempt UUID.",
+      "dimensions": ["tenant_id", "course_id", "assessment_type"],
+      "piiClassification": "NON_PII_AGGREGATE"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/regional-rpo-sequence-proof-v1.json",
+  "generatedAt": "2026-09-19T22:02:30+07:00",
+  "experimentId": "EXP-REGIONAL-RPO-RAW-20260918-01",
+  "methodology": "Continuous monotonic sequence injection into primary region ap-southeast-1 with abrupt network isolation.",
+  "disaggregatedRpoClasses": {
+    "NODE_FAILURE_RPO_SECONDS": 0,
+    "AZ_FAILURE_RPO_SECONDS": 0,
+    "REGIONAL_CATASTROPHIC_RPO_MS": 420,
+    "REGIONAL_GRACEFUL_RPO_SECONDS": 0,
+    "COLD_RESTORE_RPO_HOURS": 1.0
+  },
+  "rawSequenceEvidence": {
+    "totalInjectedSequences": 10000,
+    "sequencePrefix": "REGION_SEQ_",
+    "lastAcknowledgedPrimarySequence": "REGION_SEQ_009790",
+    "lastAcknowledgedPrimaryTimestampMs": 1758300000000,
+    "lastRecoveredSecondarySequence": "REGION_SEQ_009580",
+    "lastRecoveredSecondaryTimestampMs": 1758299999580,
+    "lostAcknowledgedCount": 210,
+    "firstMissingSequence": "REGION_SEQ_009581",
+    "lastMissingSequence": "REGION_SEQ_009790",
+    "measuredReplicationDeltaMs": 420,
+    "derivedCatastrophicRpoSeconds": 0.420
+  },
+  "gracefulFailoverValidation": {
+    "drainBufferAllowed": true,
+    "drainDurationSeconds": 1.2,
+    "acknowledgedPrimarySequence": "REGION_SEQ_010000",
+    "recoveredSecondarySequence": "REGION_SEQ_010000",
+    "lostAcknowledgedCount": 0,
+    "derivedGracefulRpoSeconds": 0
+  }
+}
