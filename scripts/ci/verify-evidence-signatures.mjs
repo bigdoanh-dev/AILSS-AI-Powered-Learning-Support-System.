@@ -27,11 +27,15 @@ export function verifySignature(hashHex, signatureBase64, pubKey = publicKeyPem)
 
 async function runVerification() {
   const targetFiles = [
+    "package.json",
     "sbom.cyclonedx.json",
     "test-discovery-manifest.json",
     "api-route-inventory.json",
     "regional-rpo-sequence-proof.json",
     "phase32-evidence-timeline.json",
+    "dns-probes-vantage-50.json",
+    "metric-semantics-registry.json",
+    "payment-pci-scope-assessment.json",
   ];
 
   console.log(`[CI] Verifying cryptographic evidence signatures for release...`);

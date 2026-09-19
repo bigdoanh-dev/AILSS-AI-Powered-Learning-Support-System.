@@ -1,18 +1,18 @@
 {
   "$schema": "https://ailss.edu.vn/schemas/test-discovery-manifest-v1.json",
-  "generatedAt": "2026-09-19T22:06:00+07:00",
+  "generatedAt": "2026-09-19T22:33:00+07:00",
   "canonicalCommand": "pnpm test:all",
   "summary": {
-    "totalSuites": 192,
-    "rootMonorepoSuites": 152,
-    "rootMonorepoTests": 894,
+    "totalSuites": 194,
+    "rootMonorepoSuites": 154,
+    "rootMonorepoTests": 909,
     "webAppSuites": 22,
     "webAppTests": 110,
     "mobileAppSuites": 18,
     "mobileAppTests": 319,
-    "grandTotalSuites": 192,
-    "grandTotalTests": 1323,
-    "passRate": 1
+    "grandTotalSuites": 194,
+    "grandTotalTests": 1338,
+    "passRate": 1.0
   },
   "reconciliationHistory": {
     "phase29": {
@@ -35,6 +35,18 @@
       "tests": 1308,
       "deltaFromPhase31": "+1 root suite (+8 tests: tests/security/phase32-blackbox-security-v2.test.ts [8 tests])",
       "explanation": "Added Phase 32 Black-Box Security V2 and Payment Redirect Security test suite."
+    },
+    "phase33": {
+      "suites": 192,
+      "tests": 1323,
+      "deltaFromPhase32": "+1 root suite (+15 tests: tests/security/phase33-blackbox-security-v3.test.ts [15 tests])",
+      "explanation": "Added Phase 33 Black-Box Security V3 suite."
+    },
+    "phase34": {
+      "suites": 194,
+      "tests": 1338,
+      "deltaFromPhase33": "+2 root suites (+15 tests: phase34-critical-write-durability.test.ts [6 tests], phase34-external-validation-and-payment.test.ts [9 tests])",
+      "explanation": "Added Critical-Write Durability proof and External Validation & Payment tests."
     }
   },
   "suites": [
