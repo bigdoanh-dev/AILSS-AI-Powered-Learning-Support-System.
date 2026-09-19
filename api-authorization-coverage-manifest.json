@@ -1,0 +1,168 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/api-authorization-coverage-manifest-v1.json",
+  "generatedAt": "2026-09-19T21:33:30+07:00",
+  "system": "AILSS API Gateway & Microservices",
+  "version": "6.1.3",
+  "coverageSummary": {
+    "totalRoutes": 13,
+    "authenticatedRoutes": 13,
+    "unprotectedRoutes": 0,
+    "roleProtectedRoutes": 13,
+    "tenantConstrainedRoutes": 13,
+    "coveredByTests": 13,
+    "coveragePercent": 100.0
+  },
+  "routes": [
+    {
+      "route": "/api/v1/auth/logout",
+      "method": "POST",
+      "authentication": "Bearer JWT",
+      "requiredScope": "identity.logout",
+      "requiredRole": ["STUDENT", "LECTURER", "INSTITUTION_ADMIN", "PLATFORM_ADMIN"],
+      "tenantEnforcementLocation": "ActorContext & RevocationStore",
+      "testsCoveringRoute": [
+        "tests/security/jwt.test.ts",
+        "tests/security/http.test.ts"
+      ]
+    },
+    {
+      "route": "/api/v1/me",
+      "method": "GET",
+      "authentication": "Bearer JWT",
+      "requiredScope": "identity.profile.read",
+      "requiredRole": ["STUDENT", "LECTURER", "INSTITUTION_ADMIN", "PLATFORM_ADMIN"],
+      "tenantEnforcementLocation": "ActorContext.userId lookup",
+      "testsCoveringRoute": [
+        "tests/security/http.test.ts"
+      ]
+    },
+    {
+      "route": "/api/v1/me",
+      "method": "PATCH",
+      "authentication": "Bearer JWT",
+      "requiredScope": "identity.profile.update",
+      "requiredRole": ["STUDENT", "LECTURER", "INSTITUTION_ADMIN", "PLATFORM_ADMIN"],
+      "tenantEnforcementLocation": "ActorContext.userId lookup",
+      "testsCoveringRoute": [
+        "tests/security/http.test.ts"
+      ]
+    },
+    {
+      "route": "/api/v1/me/password",
+      "method": "POST",
+      "authentication": "Bearer JWT",
+      "requiredScope": "identity.password.change",
+      "requiredRole": ["STUDENT", "LECTURER", "INSTITUTION_ADMIN", "PLATFORM_ADMIN"],
+      "tenantEnforcementLocation": "ActorContext.userId lookup",
+      "testsCoveringRoute": [
+        "tests/security/http.test.ts"
+      ]
+    },
+    {
+      "route": "/api/v1/admin/users",
+      "method": "GET",
+      "authentication": "Bearer JWT",
+      "requiredScope": "identity.admin.users.search",
+      "requiredRole": ["PLATFORM_ADMIN", "INSTITUTION_ADMIN"],
+      "tenantEnforcementLocation": "Gateway RoleScoping & Institution Scoped Query",
+      "testsCoveringRoute": [
+        "tests/security/phase31-blackbox-tenant-penetration.test.ts",
+        "tests/unit/phase20-multi-tenancy.test.ts"
+      ]
+    },
+    {
+      "route": "/api/v1/courses/:id",
+      "method": "GET",
+      "authentication": "Bearer JWT",
+      "requiredScope": "learning.course.read",
+      "requiredRole": ["STUDENT", "LECTURER", "INSTITUTION_ADMIN", "PLATFORM_ADMIN"],
+      "tenantEnforcementLocation": "CourseRepository.tenant_id match Token.tenant_id",
+      "testsCoveringRoute": [
+        "tests/security/phase31-blackbox-tenant-penetration.test.ts",
+        "tests/unit/phase29-tenant-isolation-v2.test.ts"
+      ]
+    },
+    {
+      "route": "/api/v1/storage/files/:id",
+      "method": "GET",
+      "authentication": "Bearer JWT",
+      "requiredScope": "storage.file.read",
+      "requiredRole": ["STUDENT", "LECTURER", "INSTITUTION_ADMIN", "PLATFORM_ADMIN"],
+      "tenantEnforcementLocation": "S3 Object Prefix / Tenant Key Isolation",
+      "testsCoveringRoute": [
+        "tests/security/phase31-blackbox-tenant-penetration.test.ts"
+      ]
+    },
+    {
+      "route": "/api/v1/ai/query",
+      "method": "POST",
+      "authentication": "Bearer JWT",
+      "requiredScope": "ai.assistant.query",
+      "requiredRole": ["STUDENT", "LECTURER"],
+      "tenantEnforcementLocation": "Vector Namespace Filter: tenant-${tenantId}",
+      "testsCoveringRoute": [
+        "tests/security/phase31-blackbox-tenant-penetration.test.ts",
+        "tests/unit/phase28-rag-v4-and-ai-safety.test.ts"
+      ]
+    },
+    {
+      "route": "/api/v1/commerce/checkout",
+      "method": "POST",
+      "authentication": "Bearer JWT",
+      "requiredScope": "commerce.checkout",
+      "requiredRole": ["STUDENT"],
+      "tenantEnforcementLocation": "CommercialGate: SANDBOX_ONLY Fail-Closed Enforcement",
+      "testsCoveringRoute": [
+        "tests/security/phase31-blackbox-tenant-penetration.test.ts",
+        "packages/contracts/src/commercial-gate.ts"
+      ]
+    },
+    {
+      "route": "/api/v1/commerce/payout",
+      "method": "POST",
+      "authentication": "Bearer JWT",
+      "requiredScope": "commerce.payout",
+      "requiredRole": ["LECTURER"],
+      "tenantEnforcementLocation": "CommercialGate: GATED Fail-Closed Enforcement",
+      "testsCoveringRoute": [
+        "tests/security/phase31-blackbox-tenant-penetration.test.ts"
+      ]
+    },
+    {
+      "route": "/api/v1/scim/v2/Users",
+      "method": "GET",
+      "authentication": "Bearer SCIM Token",
+      "requiredScope": "scim.users.read",
+      "requiredRole": ["SCIM_CLIENT"],
+      "tenantEnforcementLocation": "TenantAwareScimRepository tenant keyspace binding",
+      "testsCoveringRoute": [
+        "tests/unit/phase25-scim-persistent-provisioning.test.ts",
+        "tests/unit/phase26-scim-concurrency.test.ts"
+      ]
+    },
+    {
+      "route": "/api/v1/lti/launch",
+      "method": "POST",
+      "authentication": "LTI 1.3 State / OIDC ID Token",
+      "requiredScope": "lti.launch",
+      "requiredRole": ["LTI_USER"],
+      "tenantEnforcementLocation": "LtiDeploymentRepository deploymentId-to-tenant mapping",
+      "testsCoveringRoute": [
+        "tests/unit/phase25-lti-external-advantage.test.ts",
+        "tests/unit/phase28-lti-reliability-and-data-governance.test.ts"
+      ]
+    },
+    {
+      "route": "/api/v1/assessments/:id/submit",
+      "method": "POST",
+      "authentication": "Bearer JWT",
+      "requiredScope": "assessment.attempt.submit",
+      "requiredRole": ["STUDENT"],
+      "tenantEnforcementLocation": "AssessmentRepository & Outbox tenant partition binding",
+      "testsCoveringRoute": [
+        "tests/unit/phase29-tenant-isolation-v2.test.ts",
+        "tests/unit/phase30-property-authorization-and-dr.test.ts"
+      ]
+    }
+  ]
+}

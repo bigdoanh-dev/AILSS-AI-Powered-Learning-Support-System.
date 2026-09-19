@@ -1,0 +1,1748 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/test-discovery-manifest-v1.json",
+  "generatedAt": "2026-09-19T21:34:00+07:00",
+  "canonicalCommand": "pnpm test:all",
+  "summary": {
+    "totalSuites": 190,
+    "rootMonorepoSuites": 150,
+    "rootMonorepoTests": 871,
+    "webAppSuites": 22,
+    "webAppTests": 110,
+    "mobileAppSuites": 18,
+    "mobileAppTests": 319,
+    "grandTotalSuites": 190,
+    "grandTotalTests": 1300,
+    "passRate": 1
+  },
+  "reconciliationHistory": {
+    "phase29": {
+      "suites": 186,
+      "tests": 1280,
+      "release": "6.1.2 (baseline)"
+    },
+    "phase30": {
+      "suites": 188,
+      "tests": 1288,
+      "deltaFromPhase29": "+2 root suites (+8 tests: tests/unit/phase30-property-authorization-and-dr.test.ts [3 tests] & tests/unit/phase30-regional-dr-and-operational-maturity.test.ts [5 tests])",
+      "explanation": "Added 2 new root test suites for Phase 30 operational maturity."
+    },
+    "phase31": {
+      "suites": 190,
+      "tests": 1300,
+      "deltaFromPhase30": "+2 root suites (+12 tests: tests/security/phase31-blackbox-tenant-penetration.test.ts [6 tests] & tests/unit/phase31-evidence-integrity-and-regional-dr.test.ts [6 tests])",
+      "explanation": "Added black-box HTTP tenant penetration suite and regional DR / AI safety v4 suite for Phase 31."
+    }
+  },
+  "suites": [
+    {
+      "path": "tests/contract/contracts.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/contract/p10-3-contract.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/contract/p11-notification-remediation.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/contract/p12-4-preflight.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/security/http.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/security/jwt.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/security/phase22-adversarial-tenancy.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/security/phase31-blackbox-tenant-penetration.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/security/presence.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/ai-approval.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/ai-cognitive-distribution.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/ai-document-extraction.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/ai-event-relay.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/ai-observability.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/ai-provider-retry.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/ai-quiz-generation.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/ai-usage-day.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/ai-worker-projection.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/assessment.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/assistant-active-quiz-safety.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/assistant-course-advisor.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/assistant-orchestrator.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/assistant-tool-authorization.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/classroom-ai-context.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/classroom-presence.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/classroom-schedule.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/classroom-sessions.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/classroom.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/gateway-step-up-policy.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-admin-step-up.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-admin.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-application-worker.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-avatar.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-lecturer-application.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-lecturer-verification.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-login.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-logout.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-password.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-profile.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-public-profile.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-refresh.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-registration.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/identity-social-auth.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/interaction-completion.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/interaction-moderation.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/interaction-reviews.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/learning-authoring.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/learning-catalog.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/learning-commerce.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/learning-lessons.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/learning-lifecycle.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/learning-offerings.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/learning-progress.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/logger.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/notification.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/oidc-security-conformance.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/outbox.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase18-finance-ledger.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase18-learner-protection.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase18-product-intelligence.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase18-production-assurance.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase19-adaptive-mastery.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase19-course-versioning.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase19-finance-hardening.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase19-lecturer-friction-experimentation.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase19-payout-reconciliation.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase20-credentials-interoperability.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase20-multi-tenancy.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase20-notification-worker-governance.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase20-reconciliation.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-course-concurrency.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-credentials-privacy.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-data-retention.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-enterprise-analytics.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-governed-rag.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-integration-registry.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-lti-security.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-multi-tenant-search.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-notification-delivery.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-payout-chaos.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-scorm-security.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-tenant-authorization.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase21-w3c-credentials.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase22-e2e-journeys.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase22-finance-failure-injection.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase22-finops-onboarding.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase22-retention-production-safety.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase22-search-rag-evaluation.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase22-worker-chaos.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase23-e2e-browser-mobile-matrix.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase23-educational-interop.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase23-email-provider.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase23-indirect-injection-rag.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase23-institutional-pilot.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase23-oneroster-sync.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase23-payment-payout-sandbox.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase23-push-notification.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase23-saml-federation.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase23-scim-provisioning.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase23-sms-governance.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase24-email-governance.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase24-oneroster-csv.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase24-rag-evaluation-v3.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase24-saml-security.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase24-scim-endpoints.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase24-w3c-vc3-modernization.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase25-ai-safety-redteam.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase25-incident-gameday.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase25-lti-external-advantage.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase25-oneroster-sis-pilot.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase25-open-badges-role.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase25-rag-sliced-benchmark.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase25-saml-federation-lifecycle.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase25-scim-persistent-provisioning.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase25-scim-protocol-hardening.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase25-vc-interoperability.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase26-ai-safety-redteam-v2.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase26-backup-restore-and-privacy.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase26-capacity-ramp.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase26-gameday-measured-resilience.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase26-idp-and-multitenant-scim.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase26-pilot-governance.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase26-saml-shared-replay.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase26-scim-concurrency.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase27-pilot-governance-and-telemetry.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase27-saml-crossprocess-replay.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase27-soak-and-incident-metrics.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase28-authoritative-saml-and-idp-rotation.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase28-chaos-soak-headroom-and-game-day.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase28-lti-reliability-and-data-governance.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase28-rag-v4-and-ai-safety.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase28-scim-oneroster-reconciliation.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase29-canary-and-release-telemetry.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase29-multiaz-and-dr-recovery.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase29-tenant-isolation-v2.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase30-property-authorization-and-dr.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase30-regional-dr-and-operational-maturity.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/phase31-evidence-integrity-and-regional-dr.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/populated-migration-precheck.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/production-config.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/production-secret-guard.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/rabbitmq.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/rc-candidate-freeze.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/reconciliation.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/sepay-crash-injection.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/sepay-payload-collision.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/sepay-recovery.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/sepay-repository.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/sepay.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "tests/unit/storage-public-upload.test.ts",
+      "runner": "vitest",
+      "workspace": "root",
+      "discoveredBy": "vitest.config.ts (root)",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched root test pattern (tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/web/tests/admin-dashboards.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/ai-distribution.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/ai-usage.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/attendance.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/dark-mode.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/i18n.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/motion-auth.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/navigation-theme.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/planning.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/product.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/public.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/session-hydration.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/session.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/student-marketplace.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/student-progress.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/tests/student.test.tsx",
+      "runner": "vitest",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/vite.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/web vitest pattern (apps/web/tests/**/*.test.ts(x))"
+    },
+    {
+      "path": "apps/web/server/admin.test.mjs",
+      "runner": "node:test",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/package.json (test script node --test)",
+      "included": true,
+      "excluded": false,
+      "reason": "Explicitly listed in apps/web test script"
+    },
+    {
+      "path": "apps/web/server/lecturer.test.mjs",
+      "runner": "node:test",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/package.json (test script node --test)",
+      "included": true,
+      "excluded": false,
+      "reason": "Explicitly listed in apps/web test script"
+    },
+    {
+      "path": "apps/web/server/local-library.test.mjs",
+      "runner": "node:test",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/package.json (test script node --test)",
+      "included": true,
+      "excluded": false,
+      "reason": "Explicitly listed in apps/web test script"
+    },
+    {
+      "path": "apps/web/server/realtime.test.mjs",
+      "runner": "node:test",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/package.json (test script node --test)",
+      "included": true,
+      "excluded": false,
+      "reason": "Explicitly listed in apps/web test script"
+    },
+    {
+      "path": "apps/web/server/session.test.mjs",
+      "runner": "node:test",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/package.json (test script node --test)",
+      "included": true,
+      "excluded": false,
+      "reason": "Explicitly listed in apps/web test script"
+    },
+    {
+      "path": "apps/web/server/student-commerce.test.mjs",
+      "runner": "node:test",
+      "workspace": "@ailss/web",
+      "discoveredBy": "apps/web/package.json (test script node --test)",
+      "included": true,
+      "excluded": false,
+      "reason": "Explicitly listed in apps/web test script"
+    },
+    {
+      "path": "apps/mobile/tests/account.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/admin-p14-4.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/ai-authoring.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/assessment-authoring.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/assessment.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/classroom.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/commercial-features.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/config.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/foundation.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/grading-store.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/i18n.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/interaction.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/learning.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/lecturer-p14-3d.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/notifications.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/offline-sync.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/secure-store.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    },
+    {
+      "path": "apps/mobile/tests/teaching.test.ts",
+      "runner": "vitest",
+      "workspace": "@ailss/mobile",
+      "discoveredBy": "apps/mobile/vitest.config.ts",
+      "included": true,
+      "excluded": false,
+      "reason": "Matched apps/mobile vitest pattern (apps/mobile/tests/**/*.test.ts)"
+    }
+  ]
+}
