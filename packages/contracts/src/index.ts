@@ -71,3 +71,4 @@ export * from "./oneroster.js";
 export * from "./institutional-pilot.js";
 export * from "./data-retention-policy.js";
 export * from "./commercial-gate.js";
+export * from "./critical-durability.js";
