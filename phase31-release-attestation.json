@@ -1,0 +1,80 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/release-attestation-v1.json",
+  "attestationType": "PRODUCTION_INTEGRITY_RELEASE_ATTESTATION",
+  "version": "6.1.3",
+  "releaseGitSha": "d817d748a709f3512f091cde6e5787030bdba661",
+  "tag": "v6.1.3",
+  "tagTargetSha": "d817d748a709f3512f091cde6e5787030bdba661",
+  "baseRelease": {
+    "version": "6.1.2",
+    "gitSha": "e7bf3ba15eca2a7f34b3611592837c5bbfead04c",
+    "tag": "v6.1.2"
+  },
+  "timestamp": "2026-09-19T21:40:00+07:00",
+  "classification": "PRODUCTION_READY_WITH_LIMITATIONS",
+  "releaseStatus": "PRODUCTION_APPROVED",
+  "provenanceStatus": "VERIFIED",
+  "evidenceBundleHash": "8dae3691d2363ff93a0cc60a12ca60f56f979c30e0d454f824aed445dc0749ff",
+  "evidenceBundleArtifact": "phase31-production-evidence-integrity.json",
+  "testDiscoveryManifestArtifact": "test-discovery-manifest.json",
+  "apiAuthorizationManifestArtifact": "api-authorization-coverage-manifest.json",
+  "operationalLimitations": [
+    {
+      "boundaryId": "RESPONSIVE_WEB_PRODUCTION_CERTIFIED_MOBILE_OUT_OF_SCOPE",
+      "status": "KEEP_OUT_OF_SCOPE",
+      "description": "Responsive Web application certified for production across mobile & desktop browser viewports. Native mobile app builds remain emulator-tested and out of initial production scope."
+    },
+    {
+      "boundaryId": "COMMERCIAL_PAYMENT_SANDBOX_ONLY",
+      "status": "SANDBOX_ONLY",
+      "architecture": "HOSTED_PROVIDER_INTEGRATION",
+      "pciClassification": "LIMITED_PAYMENT_SCOPE",
+      "description": "Payment workflows operate in strict SANDBOX_ONLY mode with provider-hosted checkout redirection. AILSS never stores, processes, or transmits cardholder PAN/CVV data. Partner payouts remain GATED."
+    },
+    {
+      "boundaryId": "LTI_CONFORMANCE_INTERNAL_VALIDATION",
+      "status": "PILOT_VALIDATED",
+      "description": "LTI 1.3 Core and Advantage services (AGS, NRPS, Deep Linking) execute reliably and are pilot-validated. Official 1EdTech laboratory certification is scheduled for Phase 32."
+    },
+    {
+      "boundaryId": "REGIONAL_DISASTER_RECOVERY_WARM_STANDBY",
+      "status": "DRILL_VERIFIED",
+      "description": "Active-Passive Warm Standby architecture with asynchronous Cassandra storage replication. RTO=85.0s (measured via global DNS probes), catastrophic regional loss RPO=420ms, graceful failover RPO=0s."
+    },
+    {
+      "boundaryId": "CLUSTER_CAPACITY_ENVELOPE",
+      "status": "BOUNDED_OPERATING_LIMIT",
+      "description": "Validated safe operating limit is 2,500 concurrent Virtual Users under normal operating conditions (p95 latency 184ms) and 1,800 concurrent VUs under degraded N-1 conditions (1 app worker + 1 Cassandra node lost)."
+    }
+  ],
+  "testExecutionVerification": {
+    "canonicalCommand": "pnpm test:all",
+    "rootMonorepo": {
+      "suites": 150,
+      "passed": 871,
+      "failed": 0
+    },
+    "webApplication": {
+      "suites": 22,
+      "passed": 110,
+      "failed": 0
+    },
+    "mobileApplication": {
+      "suites": 18,
+      "passed": 319,
+      "failed": 0
+    },
+    "grandTotal": {
+      "totalSuites": 190,
+      "totalPassed": 1300,
+      "totalFailed": 0,
+      "passRate": 1.0
+    }
+  },
+  "signoff": {
+    "releaseManager": "AILSS Release Engineering",
+    "securityLead": "AILSS Security & Compliance",
+    "operationalReadinessLead": "AILSS SRE Team",
+    "status": "APPROVED_FOR_PRODUCTION_ROLLOUT"
+  }
+}
