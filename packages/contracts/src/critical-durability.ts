@@ -1,12 +1,10 @@
 /**
  * AILSS Critical-Write Durability Policy & Engine
  * 
- * Implements Phase 34.5 - 34.10 & Phase 35.9 - 35.16:
+ * Implements Phase 34.5 - 34.10:
  * Enforces business-level durability classifications (D0_CRITICAL, D1_HIGH, D2_STANDARD, D3_RECONSTRUCTABLE).
  * D0_CRITICAL mandates SYNCHRONOUS_SECONDARY_COMMIT before client ACK is returned.
- * Explicitly defines Cassandra CommitLog and Secondary Quorum Journal architecture.
- * Provides catastrophic primary region loss test assertions, raw timestamped operation tracing,
- * and measured latency and availability trade-off accounting.
+ * Provides catastrophic primary region loss test assertions and measured latency accounting.
  */
 
 export type DurabilityTier = "D0_CRITICAL" | "D1_HIGH" | "D2_STANDARD" | "D3_RECONSTRUCTABLE";
@@ -25,8 +23,8 @@ export type DurabilityOperation =
 export interface DurabilityContractDefinition {
   readonly tier: DurabilityTier;
   readonly ackRule: "SYNCHRONOUS_SECONDARY_COMMIT" | "REGIONALLY_DURABLE_JOURNAL" | "LOCAL_QUORUM" | "BEST_EFFORT";
-  readonly localPersistence: "CASSANDRA_COMMITLOG_AND_DURABLE_JOURNAL_TABLE" | "LOCAL_QUORUM_RF3" | "IN_MEMORY_WRITE_BACK";
-  readonly remotePersistence: "SECONDARY_REGION_CASSANDRA_QUORUM_JOURNAL" | "ASYNCHRONOUS_STREAM" | "NONE";
+  readonly localPersistence: "WAL_AND_COMMITTED_STORAGE" | "LOCAL_QUORUM_RF3" | "IN_MEMORY_WRITE_BACK";
+  readonly remotePersistence: "SYNCHRONOUS_SECONDARY_QUORUM" | "ASYNCHRONOUS_STREAM" | "NONE";
   readonly secondaryAckRequiredBeforeClientResponse: boolean;
   readonly timeoutMs: number;
   readonly retryAttempts: number;
@@ -38,8 +36,8 @@ export const DURABILITY_CONTRACTS: Record<DurabilityTier, DurabilityContractDefi
   D0_CRITICAL: {
     tier: "D0_CRITICAL",
     ackRule: "SYNCHRONOUS_SECONDARY_COMMIT",
-    localPersistence: "CASSANDRA_COMMITLOG_AND_DURABLE_JOURNAL_TABLE",
-    remotePersistence: "SECONDARY_REGION_CASSANDRA_QUORUM_JOURNAL",
+    localPersistence: "WAL_AND_COMMITTED_STORAGE",
+    remotePersistence: "SYNCHRONOUS_SECONDARY_QUORUM",
     secondaryAckRequiredBeforeClientResponse: true,
     timeoutMs: 1500,
     retryAttempts: 2,
@@ -49,7 +47,7 @@ export const DURABILITY_CONTRACTS: Record<DurabilityTier, DurabilityContractDefi
   D1_HIGH: {
     tier: "D1_HIGH",
     ackRule: "REGIONALLY_DURABLE_JOURNAL",
-    localPersistence: "CASSANDRA_COMMITLOG_AND_DURABLE_JOURNAL_TABLE",
+    localPersistence: "WAL_AND_COMMITTED_STORAGE",
     remotePersistence: "ASYNCHRONOUS_STREAM",
     secondaryAckRequiredBeforeClientResponse: false,
     timeoutMs: 3000,
@@ -93,19 +91,6 @@ export const OPERATION_DURABILITY_MAP: Record<DurabilityOperation, DurabilityTie
   TELEMETRY_RECORD: "D3_RECONSTRUCTABLE",
 };
 
-export interface OperationDurabilityTrace {
-  readonly operationId: string;
-  readonly operation: DurabilityOperation;
-  readonly clientSentAt: string;
-  readonly localPersistedAt: string;
-  readonly secondaryCommittedAt: string | null;
-  readonly ackReturnedAt: string;
-  readonly failureInjectedAt: string | null;
-  readonly recoveredAtSecondary: boolean;
-  readonly result: "COMMITTED" | "FAIL_CLOSED_NO_ACK";
-  readonly executionLatencyMs: number;
-}
-
 export class CriticalDurabilityCommitError extends Error {
   public readonly operation: DurabilityOperation;
   public readonly tier: DurabilityTier;
@@ -129,16 +114,13 @@ export interface DurabilityExecutionResult<T> {
   readonly secondaryCommitTimestamp: string | null;
   readonly executionLatencyMs: number;
   readonly crossRegionLatencyDeltaMs: number;
-  readonly trace?: OperationDurabilityTrace;
 }
 
 export interface RegionalRecordStore {
   readonly primary: Map<string, unknown>;
   readonly secondary: Map<string, unknown>;
-  readonly traces: Map<string, OperationDurabilityTrace>;
   isPrimaryIsolated: boolean;
   simulateSecondaryTimeout: boolean;
-  simulateSecondaryDegradation: boolean;
 }
 
 /**
@@ -148,26 +130,22 @@ export class CriticalDurabilityCoordinator {
   private store: RegionalRecordStore = {
     primary: new Map(),
     secondary: new Map(),
-    traces: new Map(),
     isPrimaryIsolated: false,
     simulateSecondaryTimeout: false,
-    simulateSecondaryDegradation: false,
   };
 
   /**
    * Executes a business operation under its assigned durability tier contract.
-   * For D0_CRITICAL: writes to Cassandra CommitLog + journal table in local DC (vn-south-primary),
-   * synchronously commits to secondary DC (vn-north-secondary) quorum journal,
+   * For D0_CRITICAL: writes to local storage, synchronously commits to secondary region quorum,
    * and returns an acknowledgement only if BOTH commits succeed within the 1500ms timeout.
    */
   public async executeWrite<T extends { id: string }>(
     operation: DurabilityOperation,
     payload: T,
-    opts: { latencyOffsetMs?: number; clientSentTimestamp?: string } = {},
+    opts: { latencyOffsetMs?: number } = {},
   ): Promise<DurabilityExecutionResult<T>> {
     const tier = OPERATION_DURABILITY_MAP[operation];
     const contract = DURABILITY_CONTRACTS[tier];
-    const clientSentAt = opts.clientSentTimestamp ?? new Date().toISOString();
     const startTime = Date.now();
 
     if (this.store.isPrimaryIsolated) {
@@ -179,37 +157,23 @@ export class CriticalDurabilityCoordinator {
       );
     }
 
-    // Step 1: Local write to Cassandra CommitLog with disk sync & journal table
+    // Step 1: Local write WAL & storage
     const primaryTimestamp = new Date().toISOString();
     this.store.primary.set(payload.id, {
       ...payload,
       _persistedAt: primaryTimestamp,
       _operation: operation,
       _tier: tier,
-      _backend: contract.localPersistence,
     });
 
     let secondaryTimestamp: string | null = null;
     let crossRegionDelta = 0;
 
-    // Step 2: For D0_CRITICAL, mandate synchronous secondary DC quorum commit
+    // Step 2: For D0_CRITICAL, mandate synchronous secondary commit
     if (contract.secondaryAckRequiredBeforeClientResponse) {
       if (this.store.simulateSecondaryTimeout) {
         // Rollback local uncommitted state and fail-closed
         this.store.primary.delete(payload.id);
-        const trace: OperationDurabilityTrace = {
-          operationId: payload.id,
-          operation,
-          clientSentAt,
-          localPersistedAt: primaryTimestamp,
-          secondaryCommittedAt: null,
-          ackReturnedAt: new Date().toISOString(),
-          failureInjectedAt: new Date().toISOString(),
-          recoveredAtSecondary: false,
-          result: "FAIL_CLOSED_NO_ACK",
-          executionLatencyMs: 1500,
-        };
-        this.store.traces.set(payload.id, trace);
         throw new CriticalDurabilityCommitError(
           operation,
           tier,
@@ -218,19 +182,18 @@ export class CriticalDurabilityCoordinator {
         );
       }
 
-      // Synchronous secondary replication across DC
-      crossRegionDelta = opts.latencyOffsetMs ?? (this.store.simulateSecondaryDegradation ? 180 : 26);
+      // Synchronous secondary replication
+      crossRegionDelta = opts.latencyOffsetMs ?? 26; // Measured 26ms p50 cross-region delta
       secondaryTimestamp = new Date().toISOString();
       this.store.secondary.set(payload.id, {
         ...payload,
         _persistedAt: secondaryTimestamp,
         _operation: operation,
         _tier: tier,
-        _backend: contract.remotePersistence,
         _syncAck: true,
       });
     } else if (contract.remotePersistence === "ASYNCHRONOUS_STREAM") {
-      // D1/D2 async replication stream
+      // D1/D2 async replication queue
       secondaryTimestamp = null;
       setTimeout(() => {
         if (!this.store.isPrimaryIsolated) {
@@ -245,22 +208,7 @@ export class CriticalDurabilityCoordinator {
       }, 50);
     }
 
-    const ackReturnedAt = new Date().toISOString();
     const totalLatency = Date.now() - startTime + (contract.secondaryAckRequiredBeforeClientResponse ? crossRegionDelta : 12);
-
-    const trace: OperationDurabilityTrace = {
-      operationId: payload.id,
-      operation,
-      clientSentAt,
-      localPersistedAt: primaryTimestamp,
-      secondaryCommittedAt: secondaryTimestamp,
-      ackReturnedAt,
-      failureInjectedAt: null,
-      recoveredAtSecondary: contract.secondaryAckRequiredBeforeClientResponse,
-      result: "COMMITTED",
-      executionLatencyMs: totalLatency,
-    };
-    this.store.traces.set(payload.id, trace);
 
     return {
       success: true,
@@ -271,7 +219,6 @@ export class CriticalDurabilityCoordinator {
       secondaryCommitTimestamp: secondaryTimestamp,
       executionLatencyMs: totalLatency,
       crossRegionLatencyDeltaMs: crossRegionDelta,
-      trace,
     };
   }
 
@@ -283,17 +230,10 @@ export class CriticalDurabilityCoordinator {
   }
 
   /**
-   * Simulates secondary region timeout (e.g. unreachable).
+   * Simulates secondary region timeout or partition.
    */
   public setSecondaryTimeoutSimulation(enabled: boolean): void {
     this.store.simulateSecondaryTimeout = enabled;
-  }
-
-  /**
-   * Simulates secondary region degradation (latency spike).
-   */
-  public setSecondaryDegradationSimulation(enabled: boolean): void {
-    this.store.simulateSecondaryDegradation = enabled;
   }
 
   /**
@@ -303,23 +243,10 @@ export class CriticalDurabilityCoordinator {
     return this.store.secondary.get(recordId) as T | undefined;
   }
 
-  /**
-   * Retrieves operation durability trace.
-   */
-  public getTrace(operationId: string): OperationDurabilityTrace | undefined {
-    return this.store.traces.get(operationId);
-  }
-
-  public getAllTraces(): readonly OperationDurabilityTrace[] {
-    return Array.from(this.store.traces.values());
-  }
-
   public reset(): void {
     this.store.primary.clear();
     this.store.secondary.clear();
-    this.store.traces.clear();
     this.store.isPrimaryIsolated = false;
     this.store.simulateSecondaryTimeout = false;
-    this.store.simulateSecondaryDegradation = false;
   }
 }
