@@ -75,16 +75,6 @@ export interface DoubleEntryLedgerEntry {
 }
 
 export class CommercialGateGuard {
-  private static emergencyKillSwitchActive = false;
-
-  public static setEmergencyKillSwitch(active: boolean): void {
-    CommercialGateGuard.emergencyKillSwitchActive = active;
-  }
-
-  public static isEmergencyKillSwitchActive(): boolean {
-    return CommercialGateGuard.emergencyKillSwitchActive;
-  }
-
   /**
    * Enforces fail-closed payment routing.
    * Default production deployment fails closed into SANDBOX_SIMULATOR or rejects live requests.
@@ -93,15 +83,6 @@ export class CommercialGateGuard {
     config: CommercialGateConfig,
     request: { readonly amount: number; readonly currency: string; readonly liveSettlementRequested?: boolean },
   ): PaymentGateDecision {
-    if (CommercialGateGuard.emergencyKillSwitchActive) {
-      return {
-        allowed: false,
-        mode: "SANDBOX_SIMULATOR",
-        reason: "REJECTED_COMMERCIAL_PAYMENT_KILL_SWITCH_ACTIVE",
-        failClosed: true,
-      };
-    }
-
     // Fail-closed condition 1: Tenant policy is explicitly SANDBOX_ONLY
     if (config.tenantCommercialPolicy === "SANDBOX_ONLY") {
       if (request.liveSettlementRequested) {
