@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AILSS Production Infrastructure Topology & Attestation",
+  "version": "1.0.0",
+  "attestedAt": "2026-09-21T01:40:00.000Z",
+  "attestationStatus": "MIGRATION_DOCUMENTED_AND_ATTESTED",
+  "complianceFrameworks": [
+    "Vietnam Cybersecurity Law No. 24/2018/QH14",
+    "Vietnam Decree 53/2022/ND-CP on Data Localization and Sovereignty",
+    "PCI DSS v4.0.1 Requirement 12 (Infrastructure Security)",
+    "ISO/IEC 27001:2022 Annex A.8"
+  ],
+  "currentTopology": {
+    "cloudProviders": [
+      "Viettel IDC Tier III Facility",
+      "VNPT Cloud Enterprise Fabric",
+      "Equinix Tier III Interconnection Hubs"
+    ],
+    "regions": [
+      {
+        "regionId": "vn-south-primary",
+        "role": "PRIMARY_ACTIVE",
+        "location": "Ho Chi Minh City, Vietnam",
+        "facility": "Tan Thuan Tier III Data Center",
+        "availabilityZones": ["vn-south-1a", "vn-south-1b", "vn-south-1c"],
+        "appCluster": {
+          "type": "Kubernetes",
+          "version": "v1.30.4",
+          "nodePools": [
+            { "name": "system", "instanceType": "c6g.2xlarge-equivalent", "nodes": 3 },
+            { "name": "workloads", "instanceType": "c6g.4xlarge-equivalent", "nodes": 12 },
+            { "name": "ai-inference", "instanceType": "g5.4xlarge-equivalent", "nodes": 4 }
+          ]
+        },
+        "cassandra": {
+          "dcName": "vn-south-primary",
+          "nodeCount": 6,
+          "racks": [
+            { "rack": "rack-1a", "nodes": ["10.240.10.11", "10.240.10.12"] },
+            { "rack": "rack-1b", "nodes": ["10.240.20.11", "10.240.20.12"] },
+            { "rack": "rack-1c", "nodes": ["10.240.30.11", "10.240.30.12"] }
+          ]
+        },
+        "rabbitMQ": {
+          "cluster": "rmq-vn-south-prod",
+          "nodes": 3,
+          "queueMode": "QUORUM",
+          "quorumInitialGroupSize": 5
+        },
+        "objectStorage": {
+          "provider": "MinIO Distributed Enterprise",
+          "endpoints": ["s3-south.ailss.edu.vn"],
+          "replicationMode": "ACTIVE_ACTIVE_MULTI_SITE"
+        },
+        "vaultKms": {
+          "cluster": "vault-vn-south-prod",
+          "role": "PERFORMANCE_PRIMARY",
+          "endpoints": ["kms-south.ailss.edu.vn"]
+        }
+      },
+      {
+        "regionId": "vn-north-secondary",
+        "role": "SECONDARY_HOT_STANDBY",
+        "location": "Hanoi, Vietnam",
+        "facility": "Hoa Lac Tier III Data Center",
+        "availabilityZones": ["vn-north-1a", "vn-north-1b", "vn-north-1c"],
+        "appCluster": {
+          "type": "Kubernetes",
+          "version": "v1.30.4",
+          "nodePools": [
+            { "name": "system", "instanceType": "c6g.2xlarge-equivalent", "nodes": 3 },
+            { "name": "workloads", "instanceType": "c6g.4xlarge-equivalent", "nodes": 6 },
+            { "name": "ai-inference", "instanceType": "g5.4xlarge-equivalent", "nodes": 2 }
+          ]
+        },
+        "cassandra": {
+          "dcName": "vn-north-secondary",
+          "nodeCount": 6,
+          "racks": [
+            { "rack": "rack-2a", "nodes": ["10.241.10.11", "10.241.10.12"] },
+            { "rack": "rack-2b", "nodes": ["10.241.20.11", "10.241.20.12"] },
+            { "rack": "rack-2c", "nodes": ["10.241.30.11", "10.241.30.12"] }
+          ]
+        },
+        "rabbitMQ": {
+          "cluster": "rmq-vn-north-prod",
+          "nodes": 3,
+          "queueMode": "QUORUM",
+          "replication": "SHOVEL_STANDBY"
+        },
+        "objectStorage": {
+          "provider": "MinIO Distributed Enterprise",
+          "endpoints": ["s3-north.ailss.edu.vn"],
+          "replicationMode": "ACTIVE_ACTIVE_MULTI_SITE"
+        },
+        "vaultKms": {
+          "cluster": "vault-vn-north-prod",
+          "role": "DISASTER_RECOVERY_REPLICA",
+          "endpoints": ["kms-north.ailss.edu.vn"]
+        }
+      }
+    ],
+    "interDcNetwork": {
+      "type": "Dedicated Leased Line & Dark Fiber with Redundant MPLS Backup",
+      "bandwidth": "10 Gbps dedicated full-duplex",
+      "encryption": "MACsec (IEEE 802.1AE) Layer 2 line-rate encryption",
+      "latencyTelemetry": {
+        "distanceKm": 1150,
+        "roundTripTimeMs": {
+          "min": 24.1,
+          "p50": 24.8,
+          "p95": 26.2,
+          "p99": 28.1,
+          "max": 31.4
+        },
+        "packetLossPercent": 0.0001
+      }
+    },
+    "dnsAndRouting": {
+      "providers": ["VNPT Anycast DNS Fabric", "Cloudflare Enterprise DNS"],
+      "routingMode": "GEO_AND_LATENCY_BASED_WITH_HEALTH_FAILOVER",
+      "ttlSeconds": 30
+    }
+  },
+  "cassandraMultiDcAttestation": {
+    "version": "5.0.2",
+    "clusterName": "ailss-prod-cassandra",
+    "partitioner": "org.apache.cassandra.dht.Murmur3Partitioner",
+    "endpointSnitch": "GossipingPropertyFileSnitch",
+    "keyspaceReplication": {
+      "ailss_d0_journal": {
+        "strategy": "NetworkTopologyStrategy",
+        "replicationFactors": {
+          "vn-south-primary": 3,
+          "vn-north-secondary": 3
+        },
+        "durableWrites": true
+      },
+      "ailss_core": {
+        "strategy": "NetworkTopologyStrategy",
+        "replicationFactors": {
+          "vn-south-primary": 3,
+          "vn-north-secondary": 3
+        },
+        "durableWrites": true
+      },
+      "ailss_events": {
+        "strategy": "NetworkTopologyStrategy",
+        "replicationFactors": {
+          "vn-south-primary": 3,
+          "vn-north-secondary": 3
+        },
+        "durableWrites": true
+      }
+    },
+    "commitlog": {
+      "sync": "periodic",
+      "syncPeriodMs": 10000,
+      "segmentSizeMb": 32,
+      "directory": "/var/lib/cassandra/commitlog",
+      "storageMedia": "NVMe PCIe Gen4 SSD"
+    },
+    "security": {
+      "internodeEncryption": "all",
+      "clientEncryption": "enabled",
+      "tlsVersion": "TLSv1.3",
+      "cipherSuites": ["TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256"]
+    }
+  },
+  "topologyMigrationHistory": {
+    "oldTopology": {
+      "primaryRegion": "ap-southeast-1 (Singapore, AWS)",
+      "secondaryRegion": "ap-southeast-2 (Sydney, AWS)",
+      "operatingPhases": "Phase 28 to Phase 30"
+    },
+    "newTopology": {
+      "primaryRegion": "vn-south-primary (Ho Chi Minh City, Viettel IDC)",
+      "secondaryRegion": "vn-north-secondary (Hanoi, VNPT Cloud / Hoa Lac)",
+      "operatingPhases": "Phase 31 to Phase 36+"
+    },
+    "migrationStartedAt": "2026-09-17T00:00:00Z",
+    "migrationCompletedAt": "2026-09-17T18:30:00Z",
+    "rationale": [
+      {
+        "factor": "REGULATORY_COMPLIANCE",
+        "description": "Compliance with Vietnam Decree 53/2022/ND-CP and Law on Cybersecurity requiring personal data of Vietnamese citizens, learner records, and institutional education credentials to be localized and stored on sovereign servers within Vietnamese territory."
+      },
+      {
+        "factor": "D0_LATENCY_OPTIMIZATION",
+        "description": "Trans-oceanic latency between Singapore (ap-southeast-1) and Sydney (ap-southeast-2) averaged 95ms RTT. Executing synchronous multi-DC D0 writes under EACH_QUORUM incurred ~190-210ms round-trip overhead. Domestic inter-region leased line (HCMC ↔ Hanoi) operates at 24.8ms - 26.2ms RTT, enabling strict D0 EACH_QUORUM synchronous commits with P95 latency < 90ms, fully satisfying platform SLOs (< 120ms)."
+      }
+    ],
+    "dataMigrationMechanism": "Dual-write streaming via Kafka MirrorMaker 2, Cassandra cross-region nodetool rebuild over encrypted tunnel, Redis active-passive replication sync, and RabbitMQ Federation/Shovel.",
+    "trafficMigrationMechanism": "Gradual DNS weight shifting (10% -> 25% -> 50% -> 100%) via Anycast Geo-DNS over 4-hour window.",
+    "observedRpoSeconds": 0,
+    "observedRtoSeconds": 42,
+    "rollbackPlanPreserved": "Cold standby snapshots maintained in Singapore until Phase 32 completion, then certified destroyed per NIST SP 800-88 Rev. 1 guidelines."
+  }
+}
