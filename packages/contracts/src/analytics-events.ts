@@ -38,6 +38,18 @@ export const PRODUCT_EVENT_NAMES = [
   // Retention
   "learner_returned",
   "course_resumed",
+  // Phase 39 Product Expansion
+  "STUDY_PLAN_CREATED",
+  "STUDY_PLAN_ACTION_COMPLETED",
+  "MASTERY_UPDATED",
+  "RECOMMENDATION_SHOWN",
+  "RECOMMENDATION_ACCEPTED",
+  "AI_TUTOR_SESSION",
+  "AI_TUTOR_TOOL_CALL",
+  "COPILOT_DRAFT_CREATED",
+  "COPILOT_DRAFT_APPROVED",
+  "INTERVENTION_CREATED",
+  "INTERVENTION_RESOLVED",
 ] as const;
 
 export type ProductEventName = (typeof PRODUCT_EVENT_NAMES)[number];
