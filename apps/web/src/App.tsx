@@ -82,6 +82,15 @@ const TeacherCopilotPage = lazy(() =>
 const InstitutionWizardPage = lazy(() =>
   import("./admin/InstitutionWizard").then((m) => ({ default: m.InstitutionWizardPage })),
 );
+const UnifiedStudentWorkspacePage = lazy(() =>
+  import("./student/UnifiedStudentWorkspace").then((m) => ({ default: m.UnifiedStudentWorkspace })),
+);
+const CourseAuthoringStudioPage = lazy(() =>
+  import("./lecturer/CourseAuthoringStudio").then((m) => ({ default: m.CourseAuthoringStudio })),
+);
+const FleetOperationsCenterPage = lazy(() =>
+  import("./admin/FleetOperationsCenter").then((m) => ({ default: m.FleetOperationsCenter })),
+);
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Moderation = lazy(() => import("./admin/Moderation"));
 const admin = (name: keyof typeof import("./admin/Admin")) =>
@@ -188,6 +197,7 @@ export default function App() {
                       <Route path="classes/:classId" element={<ClassDetail />} />
                       <Route path="study-plan" element={<StudyPlanPage />} />
                       <Route path="ai-tutor" element={<AiTutorPage />} />
+                      <Route path="workspace" element={<UnifiedStudentWorkspacePage />} />
 
                       <Route path="assessments" element={<Assessments />} />
                       <Route path="assessments/:quizId" element={<QuizDetail />} />
@@ -222,6 +232,7 @@ export default function App() {
                       <Route path="teaching/ai" element={<AiStudio />} />
                       <Route path="teaching/ai/jobs/:jobId" element={<AiJob />} />
                       <Route path="teaching/copilot" element={<TeacherCopilotPage />} />
+                      <Route path="teaching/course-authoring" element={<CourseAuthoringStudioPage />} />
                       <Route
                         path="teaching/discussion/:resourceType/:resourceId"
                         element={<LecturerComments />}
@@ -240,6 +251,7 @@ export default function App() {
                       <Route path="admin/settings" element={<AdminSettings />} />
                       <Route path="admin/onboarding" element={<InstitutionWizardPage />} />
                       <Route path="admin/integrations" element={<InstitutionWizardPage />} />
+                      <Route path="admin/fleet-operations" element={<FleetOperationsCenterPage />} />
                     </Route>
                   </Route>
                   <Route element={<Layout />}>
