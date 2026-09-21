@@ -271,37 +271,30 @@ describe("Phase 40 Corrective Closure: Wave 1 Security Paths & Wave 2 Feature E2
         authorId: "lecturer-01",
       });
 
-      // Top 27 (totalExamScore 80-100): all 27 correct
-      for (let i = 0; i < 27; i++) {
-        qb.recordAttempt(qEasyHighDisc.questionId, {
-          studentId: `s-top-${String(i)}`,
-          selectedOption: "A",
-          isCorrect: true,
-          totalExamScore: 85 + (i % 15),
-        });
-      }
-      // Middle 46 (totalExamScore 60-79): 40 correct, 6 wrong (distributed among B, C, D)
-      for (let i = 0; i < 46; i++) {
-        const correct = i < 40;
-        const opt = correct ? "A" : i % 3 === 0 ? "B" : i % 3 === 1 ? "C" : "D";
-        qb.recordAttempt(qEasyHighDisc.questionId, {
-          studentId: `s-mid-${String(i)}`,
-          selectedOption: opt,
-          isCorrect: correct,
-          totalExamScore: 60 + (i % 20),
-        });
-      }
-      // Bottom 27 (totalExamScore 20-55): 10 correct, 17 wrong
-      for (let i = 0; i < 27; i++) {
-        const correct = i < 10;
-        const opt = correct ? "A" : i % 3 === 0 ? "B" : i % 3 === 1 ? "C" : "D";
-        qb.recordAttempt(qEasyHighDisc.questionId, {
-          studentId: `s-bot-${String(i)}`,
-          selectedOption: opt,
-          isCorrect: correct,
-          totalExamScore: 20 + (i % 35),
-        });
-      }
+      // Helper to generate synthetic test attempts concisely without bloating test file
+      const recordBatchAttempts = (
+        qId: string,
+        prefix: string,
+        count: number,
+        correctCount: number,
+        baseScore: number,
+        options: { correct: string; incorrect: string },
+      ) => {
+        for (let i = 0; i < count; i++) {
+          const isCorrect = i < correctCount;
+          qb.recordAttempt(qId, {
+            studentId: `${prefix}-${String(i)}`,
+            selectedOption: isCorrect ? options.correct : options.incorrect,
+            isCorrect,
+            totalExamScore: baseScore + (i % 20),
+          });
+        }
+      };
+
+      // Top 27 (all correct, high scores), Middle 46 (40 correct), Bottom 27 (10 correct, low scores)
+      recordBatchAttempts(qEasyHighDisc.questionId, "s-top", 27, 27, 85, { correct: "A", incorrect: "B" });
+      recordBatchAttempts(qEasyHighDisc.questionId, "s-mid", 46, 40, 60, { correct: "A", incorrect: "B" });
+      recordBatchAttempts(qEasyHighDisc.questionId, "s-bot", 27, 10, 20, { correct: "A", incorrect: "B" });
 
       const resEasy = qb.computeItemAnalysis(qEasyHighDisc.questionId);
       expect(resEasy.status).toBe("CALCULATED");
@@ -328,24 +321,9 @@ describe("Phase 40 Corrective Closure: Wave 1 Security Paths & Wave 2 Feature E2
         authorId: "lecturer-01",
       });
 
-      // Top 27: only 5 correct, 22 wrong
-      for (let i = 0; i < 27; i++) {
-        qb.recordAttempt(qNegativeDisc.questionId, {
-          studentId: `s-top-${String(i)}`,
-          selectedOption: i < 5 ? "A" : "B",
-          isCorrect: i < 5,
-          totalExamScore: 85 + (i % 15),
-        });
-      }
-      // Bottom 27: 18 correct (guessed right), 9 wrong
-      for (let i = 0; i < 27; i++) {
-        qb.recordAttempt(qNegativeDisc.questionId, {
-          studentId: `s-bot-${String(i)}`,
-          selectedOption: i < 18 ? "A" : "B",
-          isCorrect: i < 18,
-          totalExamScore: 20 + (i % 35),
-        });
-      }
+      // Top 27: only 5 correct, Bottom 27: 18 correct
+      recordBatchAttempts(qNegativeDisc.questionId, "s-top", 27, 5, 85, { correct: "A", incorrect: "B" });
+      recordBatchAttempts(qNegativeDisc.questionId, "s-bot", 27, 18, 20, { correct: "A", incorrect: "B" });
 
       const resNeg = qb.computeItemAnalysis(qNegativeDisc.questionId, 54);
       expect(resNeg.upperLowerDiscriminationD?.dValue).toBeLessThan(0);
@@ -367,14 +345,7 @@ describe("Phase 40 Corrective Closure: Wave 1 Security Paths & Wave 2 Feature E2
         tags: ["math"],
         authorId: "lecturer-01",
       });
-      for (let i = 0; i < 40; i++) {
-        qb.recordAttempt(qAllCorrect.questionId, {
-          studentId: `s-${String(i)}`,
-          selectedOption: "A",
-          isCorrect: true,
-          totalExamScore: 50 + i,
-        });
-      }
+      recordBatchAttempts(qAllCorrect.questionId, "s", 40, 40, 50, { correct: "A", incorrect: "B" });
       const resAllCorrect = qb.computeItemAnalysis(qAllCorrect.questionId, 30);
       expect(resAllCorrect.itemDifficultyP).toBe(1.0);
       expect(resAllCorrect.upperLowerDiscriminationD?.dValue).toBe(0.0);
