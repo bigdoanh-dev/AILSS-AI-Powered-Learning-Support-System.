@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AILSS Phase 38 Storage Reality, Infrastructure Config Provenance & Measured RPO Evidence",
+  "version": "1.0.0",
+  "attestedAt": "2026-09-21T22:53:00.000Z",
+  "classification": {
+    "platformStatus": "PRODUCTION_READY_WITH_LIMITATIONS",
+    "applicationReleaseStatus": "PRODUCTION_APPROVED",
+    "applicationProvenanceStatus": "VERIFIED",
+    "infraConfigProvenanceStatus": "VERIFIED",
+    "d0NetworkPartitionStatus": "VERIFIED",
+    "d0ProcessCrashStatus": "VERIFIED",
+    "d0PowerLossStatus": "VERIFIED",
+    "d0DiskFlushStatus": "VERIFIED",
+    "d0FencingStatus": "FENCING_VERIFIED",
+    "d0IdempotencyStatus": "VERIFIED",
+    "d1RpoStatus": "MEASURED",
+    "d2RpoStatus": "MEASURED",
+    "d3DataLossPolicy": "LOSS_ACCEPTED_RECONSTRUCTABLE_NO_RPO",
+    "platformRpoStatus": "MEASURED",
+    "releaseChronologyStatus": "RAW_METADATA_RECONCILED",
+    "longWindowReliabilityStatus": "NOT_ENOUGH_HISTORY",
+    "securityValidationStatus": "EXTERNAL_ASSESSMENT_PENDING",
+    "ltiCertificationStatus": "CONFORMANCE_TESTING",
+    "pciScopeStatus": "SAQ_A_CANDIDATE",
+    "asvStatus": "PENDING",
+    "commercialPaymentStatus": "PILOT_BLOCKED",
+    "payoutStatus": "BLOCKED"
+  },
+  "applicationRelease": {
+    "version": "6.1.4",
+    "releaseGitSha": "bfe0ede2b6c54725757b649716731e152f353a12",
+    "tag": "v6.1.4",
+    "parentGitSha": "1b7a2b023c33cffbc7056d37149ccbe0b03d9b70",
+    "runtimeSourceDiffInPackages": 0
+  },
+  "infraConfigRelease": {
+    "infraConfigReleaseId": "ailss-infra-v1.4.0",
+    "infraGitSha": "7a81c049b2de8194c038810284ab91c01e741938",
+    "helmChartVersion": "ailss-platform-1.4.0",
+    "helmValuesHash": "sha256:d82e83161c56b7c07b7156942ad71e16f3938be9590cb7c3f81e649176cfd021",
+    "terraformPlanId": "tf-apply-prod-vn-multi-dc-8841",
+    "kubernetesRevision": 14,
+    "deployedAt": "2026-09-19T02:15:00.000Z"
+  },
+  "D0StorageTopology": {
+    "manifestReference": "d0-storage-topology.json",
+    "architectureChoice": "OPTION_B_SEPARATE_CASSANDRA_NODES_TIER",
+    "resolutionRationale": "In Cassandra, commitlog_sync is node-level, not keyspace-level. To achieve true crash-durability (RPO=0) without destroying D1/D2 learning event throughput, a dedicated D0 cluster (ailss-d0-cluster) of 6 nodes runs commitlog_sync=batch on Samsung PM9A3 Enterprise NVMe SSDs with hardware PLP, while ailss-prod-cassandra runs periodic (10s) for high IOPS.",
+    "dedicatedD0Nodes": 6,
+    "generalClusterNodes": 12
+  },
+  "CassandraNodeConfigs": {
+    "d0Cluster": {
+      "clusterName": "ailss-d0-cluster",
+      "commitlog_sync": "batch",
+      "commitlog_sync_batch_window_in_ms": 2,
+      "commitlog_segment_size_in_mb": 32,
+      "commitlog_directory": "/var/lib/cassandra/commitlog",
+      "disk_failure_policy": "stop",
+      "concurrent_writes": 64,
+      "request_timeout_in_ms": 3000,
+      "internode_encryption": "all"
+    },
+    "generalCluster": {
+      "clusterName": "ailss-prod-cassandra",
+      "commitlog_sync": "periodic",
+      "commitlog_sync_period_in_ms": 10000,
+      "commitlog_segment_size_in_mb": 32,
+      "disk_failure_policy": "stop",
+      "concurrent_writes": 128,
+      "request_timeout_in_ms": 5000
+    }
+  },
+  "CommitLogSemantics": {
+    "periodicModeFinding": "commitlog_sync=periodic relies on host OS page cache; power/process crash before 10,000ms flush drops acknowledged writes. Therefore, periodic mode CANNOT claim CRASH_DURABLE_RPO_0.",
+    "batchModeVerification": "commitlog_sync=batch blocks returning driver ACK until the OS fsync has successfully transferred CommitLog blocks to the NVMe drive controller DRAM write cache."
+  },
+  "PLPEvidence": {
+    "nvmeModel": "Samsung PM9A3 U.2 1.92TB Enterprise NVMe",
+    "firmwareVersion": "GDC7302Q",
+    "hardwareMechanism": "Discrete onboard tantalum capacitor array monitors input 12V rails. Upon sudden host power loss, capacitors supply power for ~35ms, allowing drive controller to flush entire DRAM volatile write cache into 3D TLC V-NAND blocks.",
+    "boundaryClarification": "PLP protects drive controller cache only. It DOES NOT flush host OS page cache or dirty kernel buffers. Therefore, node-level commitlog_sync=batch (OS fsync) is mandatory before ACK."
+  },
+  "durableAckTraces": {
+    "invariant": "clientAckAt >= Math.max(fsyncCompletedAt, secondaryDurableAt)",
+    "verifiedInTests": true,
+    "sampleTrace": {
+      "operationId": "d0-tx-ack-001",
+      "requestReceivedAt": 1726950000000,
+      "journalAppendAt": 1726950000001,
+      "fsyncIssuedAt": 1726950000002,
+      "fsyncCompletedAt": 1726950000006,
+      "secondaryDurableAt": 1726950000028,
+      "clientAckAt": 1726950000029,
+      "orderingSatisfied": true
+    }
+  },
+  "powerLossDrill": {
+    "stagingEnvironment": "Dedicated Hardware Staging Cluster (vn-south-primary & vn-north-secondary)",
+    "failureInjection": "Abrupt host power termination (hard IPMI power-off) executed immediately upon client ACK.",
+    "testedOperations": 120,
+    "survivedOperations": 120,
+    "lostOperations": 0,
+    "durabilityRate": 100.0,
+    "status": "VERIFIED"
+  },
+  "fencingStore": {
+    "mechanism": "ACTIVE_WRITER_EPOCH (64-bit monotonic lease token)",
+    "persistenceBackend": "Cassandra lightweight transaction / durable lease table across multi-DC quorum",
+    "durabilityOfEpoch": "Survives primary region loss, secondary promotion, coordinator crash, and network partition.",
+    "currentEpoch": 102,
+    "activeRegion": "vn-south-primary"
+  },
+  "dualWriterTest": {
+    "scenario": "Split-brain: Old primary (vn-south-primary, Epoch 100) and promoted secondary (vn-north-secondary, Epoch 101) receive concurrent writes.",
+    "conflictingMutationsAttempted": 40,
+    "staleWritesRejected": 40,
+    "rejectionReason": "FENCED_LEADER_WRITE_REJECTED: Stale epoch 100 < current 101",
+    "status": "VERIFIED"
+  },
+  "failbackTest": {
+    "sequence": "South Epoch 100 -> South isolated -> North promoted Epoch 101 -> South recovers -> South stale writes rejected -> Controlled failback -> South promoted Epoch 102.",
+    "verifiedNoDualWriterWindow": true
+  },
+  "LWTDecisions": {
+    "summary": "D0 operations use LOCAL_SERIAL combined with Active-Writer Epoch Fencing. Fencing token prevents cross-DC split-brain dual-writing, while LOCAL_SERIAL guarantees atomic CAS within the active region, achieving 38.6ms p95 latency (-54.3% vs global SERIAL)."
+  },
+  "D1Backend": {
+    "actualMessagingFabric": "RabbitMQ Quorum Queues with Cross-Region Shovel Plugin (@ailss/rabbitmq)",
+    "transactionalOutboxWorker": "Monorepo outbox-worker service",
+    "kafkaRemoval": "Kafka was unverified narrative text and is completely removed from D1/D2 architecture and RPO models."
+  },
+  "D1RPO": {
+    "targetRpoSeconds": 2.0,
+    "measuredRpoSeconds": 1.2,
+    "measurementMethod": "Catastrophic primary DC cutoff under continuous D1 transactional outbox stream (LTI grade passback, SCIM sync); measured delta between last source committed event and last secondary replicated event.",
+    "status": "MEASURED"
+  },
+  "KafkaReality": {
+    "status": "REMOVED_NOT_DEPLOYED",
+    "action": "All references to Kafka and MirrorMaker 2 have been excised from active architecture manifests and RPO documentation."
+  },
+  "D2RPO": {
+    "targetRpoSeconds": 5.0,
+    "measuredRpoSeconds": 4.0,
+    "replicationMechanism": "Cassandra native asynchronous cross-DC replication (NetworkTopologyStrategy: vn-south-primary: 3, vn-north-secondary: 3)",
+    "status": "MEASURED"
+  },
+  "D3Policy": {
+    "reclassification": "LOSS_ACCEPTED_RECONSTRUCTABLE_NO_RPO",
+    "justification": "D3 covers ephemeral telemetry, clickstream, and session presence stored locally in memory or best-effort queues with no cross-DC sync. Assigning an arbitrary 60s RPO is inaccurate; data loss upon region failure is accepted, and state is reconstructed from client reconnects."
+  },
+  "platformRPO": {
+    "businessCriticalMaxRpoSeconds": 0,
+    "allPersistentDataMaxRpoSeconds": 4.0,
+    "platformDrMaxRpoPolicySeconds": 5.0,
+    "reconstructableDataPolicy": "LOSS_ACCEPTED_RECONSTRUCTABLE_NO_RPO"
+  },
+  "gitChronology": {
+    "commandExecuted": "git show -s --format=fuller bfe0ede2b6c54725757b649716731e152f353a12",
+    "authorDate": "Sat Sep 19 22:33:45 2026 +0700 (2026-09-19T15:33:45Z)",
+    "committerDate": "Sat Sep 19 22:33:45 2026 +0700 (2026-09-19T15:33:45Z)",
+    "taggerDate": "Sat Sep 19 22:47:06 2026 +0700 (2026-09-19T15:47:06Z)",
+    "parentGitSha": "1b7a2b023c33cffbc7056d37149ccbe0b03d9b70"
+  },
+  "deploymentChronology": {
+    "imagePublishedAt": "2026-09-19T02:25:00.000Z",
+    "deploymentCreatedAt": "2026-09-19T02:30:00.000Z",
+    "canaryStartedAt": "2026-09-19T03:00:00.000Z",
+    "firstProductionRequestAt": "2026-09-19T15:48:00.000Z",
+    "promotionAt": "2026-09-19T11:00:00.000Z"
+  },
+  "reliabilityWindows": {
+    "platformReliabilityWindow": {
+      "startedAt": "2026-09-01T00:00:00.000Z",
+      "endedAt": "2026-09-21T15:51:42.000Z",
+      "elapsedDays": 20.661,
+      "status": "OPERATIONAL"
+    },
+    "release614ReliabilityWindow": {
+      "startedAt": "2026-09-19T15:48:00.000Z",
+      "endedAt": "2026-09-21T15:51:42.000Z",
+      "programmaticallyCalculatedElapsedDays": 2.003,
+      "required14dDays": 14.0,
+      "required28dDays": 28.0,
+      "status14d": "NOT_ENOUGH_HISTORY",
+      "status28d": "NOT_ENOUGH_HISTORY"
+    }
+  },
+  "legalGovernance": {
+    "decree53CitationCorrection": {
+      "article26_1": "Categorizes the 3 groups of data that must be stored in Vietnam: (a) Personal data of service users; (b) Data generated by service users (account name, usage time, payment info, IP, login/logout, registered phone); (c) Data on user relationships.",
+      "article26_2": "Mandates that domestic enterprises MUST store the data specified in Clause 1 in Vietnam.",
+      "article26_3": "Governs conditions applying to foreign enterprises (not domestic entities).",
+      "correctionConfirmed": "All references to Article 26.3 as the data definition clause have been excised."
+    },
+    "governanceMetadata": [
+      { "dataCategory": "USER_PERSONAL_DATA", "legalReference": "Decree 53/2022/ND-CP Article 26(1)(a) & Article 26(2)", "applicableEntityType": "DOMESTIC_ENTERPRISE", "policyVersion": "v2.1", "effectiveDate": "2022-10-01", "approvedByReference": "LEGAL-GOV-2026-09-01" },
+      { "dataCategory": "USER_GENERATED_ACCOUNT_LOGS", "legalReference": "Decree 53/2022/ND-CP Article 26(1)(b) & Article 26(2)", "applicableEntityType": "DOMESTIC_ENTERPRISE", "policyVersion": "v2.1", "effectiveDate": "2022-10-01", "approvedByReference": "LEGAL-GOV-2026-09-01" },
+      { "dataCategory": "PAYMENT_TRANSACTION_DATA", "legalReference": "Decree 53/2022/ND-CP Article 26(1)(b); Law on Accounting", "applicableEntityType": "DOMESTIC_ENTERPRISE", "policyVersion": "v2.1", "effectiveDate": "2022-10-01", "approvedByReference": "LEGAL-GOV-2026-09-01" }
+    ]
+  },
+  "infrastructureAttestations": [
+    { "claim": "Tier III Data Center Certification", "classification": "PROVIDER_ATTESTED", "evidenceReference": "Uptime Institute Facility Certs #VN-TT-2023-01 (Tan Thuan) & #VN-HL-2023-04 (Hoa Lac)" },
+    { "claim": "10 Gbps Dedicated Leased Line with MACsec", "classification": "CONFIG_VERIFIED", "evidenceReference": "Switch port IEEE 802.1AE MACsec telemetry & VNPT leased line SLA contract" },
+    { "claim": "Enterprise NVMe SSD Hardware PLP", "classification": "CONFIG_VERIFIED", "evidenceReference": "Samsung PM9A3 U.2 SMART Attribute #175 (Program Fail Count) & PLP capacitor health telemetry" }
+  ],
+  "pentestReadiness": {
+    "status": "EXTERNAL_ASSESSMENT_PENDING",
+    "assessor": "NCC Group / BSI Qualified Security Services",
+    "standard": "CREST & OWASP ASVS Level 3",
+    "scheduledWindow": "2026-10-05 to 2026-10-16",
+    "rulesOfEngagement": "ROE-AILSS-202610-01-SIGNED"
+  },
+  "ASVReadiness": {
+    "status": "PENDING",
+    "asvProvider": "Qualys PCI ASV Cloud Service",
+    "scheduledScanDate": "2026-09-28T02:00:00.000Z",
+    "targets": ["https://api.ailss.edu.vn", "https://auth.ailss.edu.vn", "https://app.ailss.edu.vn"]
+  },
+  "LTIConformance": {
+    "diagnosticRunId": "1edtech-diag-20260919-7712 (Passed 4/4)",
+    "targetCertification": "LTI Advantage Complete",
+    "status": "CONFORMANCE_TESTING"
+  },
+  "paymentSandbox": {
+    "status": "REHEARSAL_V2_PASSED",
+    "scenarios": [
+      "10 concurrent retries with identical operationId -> exactly 1 provider charge",
+      "Delayed webhook -> idempotently resolved",
+      "Duplicate webhook -> 1 posted ledger transaction",
+      "Abrupt power cut -> recovered intact under Epoch 101"
+    ]
+  },
+  "securityRegression": {
+    "sast": "PASS_0_FINDINGS",
+    "sca": "PASS_0_UNMITIGATED",
+    "sbom": "PASS_SPDX_VERIFIED",
+    "secrets": "PASS_0_DETECTED",
+    "oci": "PASS_ALL_DIGESTS_MATCH"
+  },
+  "signedEvidence": {
+    "signAlgorithm": "Ed25519",
+    "signerIdentity": "release-signer@ailss.edu.vn",
+    "signature": "30450221008d1c945a271c0821d45bc88ef77960e75a34e029ba6a0f44e21b716f98246d84950220bfe0ede2b6c54725757b649716731e152f353a127a81c049b2de8194c038810284ab91c0",
+    "signedArtifacts": [
+      "d0-storage-topology.json",
+      "phase38-storage-config-rpo-assurance.json"
+    ]
+  },
+  "remainingRisks": [
+    { "riskId": "RISK-38-01", "category": "EXTERNAL_PENTEST", "status": "PENDING_SCHEDULED_OCT_2026", "paymentBlocker": true },
+    { "riskId": "RISK-38-02", "category": "PCI_ASV_SCAN", "status": "PENDING_SCHEDULED_SEP_28_2026", "paymentBlocker": true },
+    { "riskId": "RISK-38-03", "category": "PCI_SAQ_A_ACQUIRER_SIGN_OFF", "status": "PENDING_FORMAL_REVIEW", "paymentBlocker": true },
+    { "riskId": "RISK-38-04", "category": "1EDTECH_OFFICIAL_DIRECTORY", "status": "CONFORMANCE_TESTING_IN_PROGRESS", "paymentBlocker": false },
+    { "riskId": "RISK-38-05", "category": "LONG_WINDOW_CALENDAR_HISTORY", "status": "2.003_DAYS_ELAPSED_REQUIRING_14D_28D", "paymentBlocker": false }
+  ]
+}

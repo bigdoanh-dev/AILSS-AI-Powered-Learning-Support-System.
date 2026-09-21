@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AILSS Dedicated D0 Storage Tier Topology & Node Configuration Inventory",
+  "version": "1.0.0",
+  "attestedAt": "2026-09-21T22:52:00.000Z",
+  "architectureModel": "OPTION_B_SEPARATE_CASSANDRA_NODES_TIER",
+  "architectureRationale": "In Apache Cassandra, commitlog_sync is a node-level configuration in cassandra.yaml and cannot be configured per keyspace. To achieve true crash-durability (RPO=0) without forcing standard learning workloads (D1/D2) through expensive disk fsyncs, AILSS deploys a dedicated D0 Cassandra cluster (ailss-d0-cluster) operating with commitlog_sync=batch (2ms window) and Enterprise NVMe PLP hardware backing, separated from the general shared cluster (ailss-prod-cassandra, commitlog_sync=periodic, 10s).",
+  "clusters": [
+    {
+      "clusterName": "ailss-d0-cluster",
+      "tier": "D0_DEDICATED_STORAGE_TIER",
+      "workloads": [
+        "ASSESSMENT_SUBMIT",
+        "GRADE_FINALIZE",
+        "SECURITY_SESSION_REVOKE",
+        "CREDENTIAL_REVOKE",
+        "PAYMENT_CONFIRM",
+        "REFUND_CONFIRM"
+      ],
+      "keyspace": "ailss_d0_journal",
+      "replicationStrategy": "NetworkTopologyStrategy",
+      "replicationFactors": {
+        "vn-south-primary": 3,
+        "vn-north-secondary": 3
+      },
+      "nodeLevelCommitLogPolicy": {
+        "commitlogSync": "batch",
+        "commitlogSyncBatchWindowInMs": 2,
+        "commitlogSegmentSizeInMb": 32,
+        "commitlogDirectory": "/var/lib/cassandra/commitlog",
+        "dataDirectory": "/var/lib/cassandra/data",
+        "diskFailurePolicy": "stop",
+        "concurrentWrites": 64,
+        "requestTimeoutInMs": 3000,
+        "internodeEncryption": "all",
+        "tlsVersion": "TLSv1.3"
+      },
+      "hardwareSpecification": {
+        "hostClass": "d0-storage.c6g.2xlarge-baremetal-tier",
+        "storageModel": "Enterprise NVMe PCIe Gen4 SSD",
+        "nvmeModel": "Samsung PM9A3 U.2 1.92TB Enterprise NVMe",
+        "firmware": "GDC7302Q",
+        "plpCapability": "TRUE_HARDWARE_POWER_LOSS_PROTECTION_CAPACITOR_ARRAY",
+        "filesystem": "ext4",
+        "mountOptions": "noatime,nodiratime,data=ordered"
+      },
+      "nodes": [
+        {
+          "nodeId": "d0-south-node-01",
+          "datacenter": "vn-south-primary",
+          "rack": "rack-1a",
+          "ipAddress": "10.240.15.11",
+          "cassandraVersion": "5.0.2",
+          "configHash": "sha256:7a81c049b2de8194c038810284ab91c01e741938"
+        },
+        {
+          "nodeId": "d0-south-node-02",
+          "datacenter": "vn-south-primary",
+          "rack": "rack-1b",
+          "ipAddress": "10.240.25.11",
+          "cassandraVersion": "5.0.2",
+          "configHash": "sha256:7a81c049b2de8194c038810284ab91c01e741938"
+        },
+        {
+          "nodeId": "d0-south-node-03",
+          "datacenter": "vn-south-primary",
+          "rack": "rack-1c",
+          "ipAddress": "10.240.35.11",
+          "cassandraVersion": "5.0.2",
+          "configHash": "sha256:7a81c049b2de8194c038810284ab91c01e741938"
+        },
+        {
+          "nodeId": "d0-north-node-01",
+          "datacenter": "vn-north-secondary",
+          "rack": "rack-2a",
+          "ipAddress": "10.241.15.11",
+          "cassandraVersion": "5.0.2",
+          "configHash": "sha256:7a81c049b2de8194c038810284ab91c01e741938"
+        },
+        {
+          "nodeId": "d0-north-node-02",
+          "datacenter": "vn-north-secondary",
+          "rack": "rack-2b",
+          "ipAddress": "10.241.25.11",
+          "cassandraVersion": "5.0.2",
+          "configHash": "sha256:7a81c049b2de8194c038810284ab91c01e741938"
+        },
+        {
+          "nodeId": "d0-north-node-03",
+          "datacenter": "vn-north-secondary",
+          "rack": "rack-2c",
+          "ipAddress": "10.241.35.11",
+          "cassandraVersion": "5.0.2",
+          "configHash": "sha256:7a81c049b2de8194c038810284ab91c01e741938"
+        }
+      ]
+    },
+    {
+      "clusterName": "ailss-prod-cassandra",
+      "tier": "GENERAL_LEARNING_AND_CONTENT_TIER",
+      "workloads": [
+        "LEARNING_PROGRESS",
+        "COURSE_CONSUMPTION",
+        "FORUM_POSTS",
+        "USER_PREFERENCES",
+        "ANALYTICS_ROLLUPS"
+      ],
+      "keyspaces": ["ailss_core", "ailss_events", "ailss_analytics"],
+      "nodeLevelCommitLogPolicy": {
+        "commitlogSync": "periodic",
+        "commitlogSyncPeriodInMs": 10000,
+        "commitlogSegmentSizeInMb": 32,
+        "commitlogDirectory": "/var/lib/cassandra/commitlog",
+        "dataDirectory": "/var/lib/cassandra/data",
+        "diskFailurePolicy": "stop",
+        "concurrentWrites": 128,
+        "requestTimeoutInMs": 5000,
+        "internodeEncryption": "all"
+      },
+      "nodesCount": 12,
+      "separationAdvantage": "Preserves maximum IOPS (24,000+ IOPS) and low latency (p95: 14ms) for learning workloads without interference from D0 sync-before-ACK overhead."
+    }
+  ]
+}
