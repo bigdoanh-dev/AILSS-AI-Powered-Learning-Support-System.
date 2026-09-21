@@ -31,7 +31,7 @@ describe("Phase 40 Final Corrective Closure: Differential Privacy Semantics & De
     expect(mech.compositionRule).toBe("BASIC_SEQUENTIAL_COMPOSITION");
     expect(mech.totalBudgetPerResearcher).toBe(10.0);
     expect(mech.budgetScope).toBe("RESEARCHER_TENANT_SCOPE");
-    expect(mech.budgetResetPolicy).toBe("EXPLICIT_ADMIN_RESET_OR_30_DAY_EXPIRATION");
+    expect(mech.budgetResetPolicy).toBe("EXPLICIT_IRB_OR_DPO_APPROVAL_ONLY");
   });
 
   it("40.F10 — mathematically derives sensitivity across different cohort sizes", () => {
@@ -163,5 +163,100 @@ describe("Phase 40 Final Corrective Closure: Differential Privacy Semantics & De
     expect(large?.sensitivity).toBe(0.5);
     expect(large?.institutionalUsabilityVerdict).toBe("ACCEPTABLE");
     expect(large?.measuredMeanAbsoluteError).toBeLessThan(small!.measuredMeanAbsoluteError);
+  });
+
+  it("40.G8 - 40.G10: enforces user-level contribution bounding on multi-submission and extreme records", () => {
+    // Student 1 has 5 submissions on different assessments, Student 2 has duplicates, Student 3 has extreme scores
+    const rawRecords = [
+      { userId: "u1", score: 80, assessmentId: "a1" },
+      { userId: "u1", score: 90, assessmentId: "a2" },
+      { userId: "u1", score: 70, assessmentId: "a3" },
+      // u2 has duplicate submissions on a1 (re-attempts)
+      { userId: "u2", score: 40, assessmentId: "a1", timestamp: "2026-09-20T10:00:00Z" },
+      { userId: "u2", score: 85, assessmentId: "a1", timestamp: "2026-09-20T11:00:00Z" }, // latest re-attempt
+      // u3 has extreme values outside [0, 100]
+      { userId: "u3", score: 150, assessmentId: "a1" },
+      // u4 and u5 are normal students
+      { userId: "u4", score: 60, assessmentId: "a1" },
+      { userId: "u5", score: 75, assessmentId: "a1" },
+    ];
+
+    const boundResult = DifferentialPrivacyService.aggregateAndBoundUserContributions(rawRecords, {
+      maxRowsPerUser: 10,
+      duplicateHandling: "LATEST_SUBMISSION",
+    });
+
+    expect(boundResult.userCount).toBe(5);
+    expect(boundResult.boundedUserScores).toHaveLength(5);
+    expect(boundResult.duplicateRowsCollapsed).toBeGreaterThan(0);
+    expect(boundResult.clampedCount).toBe(1); // u3 clamped from 150 to 100
+
+    // u1 score: mean of (80, 90, 70) = 80
+    expect(boundResult.boundedUserScores[0]).toBe(80);
+    // u2 score: deduplicated to latest 85
+    expect(boundResult.boundedUserScores[1]).toBe(85);
+    // u3 score: clamped to 100
+    expect(boundResult.boundedUserScores[2]).toBe(100);
+
+    // Run DP evaluation using userRecords
+    const dpRes = DifferentialPrivacyService.evaluateDPAggregate({
+      researcherId: "researcher-01",
+      tenantId: "tenant-polytech",
+      userRecords: rawRecords,
+      queryType: "MEAN_SCORE",
+      epsilonRequested: 1.0,
+    });
+
+    expect(dpRes.rawCount).toBe(5); // exactly 5 distinct users, NOT 8 raw rows!
+    expect(dpRes.isBudgetExhausted).toBe(false);
+    expect(dpRes.suppressionApplied).toBe(false);
+    expect(dpRes.mechanism.globalSensitivity).toBe(100 / 5); // 20.0
+  });
+
+  it("40.G12 & 40.G13: guarantees join safety (no user contribution amplification) and validates explicit budget policy", () => {
+    // Simulate relational multi-table join (student x course x assessment x submission)
+    // u1 has 20 joined rows across 3 courses!
+    const joinedRows = [];
+    for (let c = 1; c <= 3; c++) {
+      for (let a = 1; a <= 7; a++) {
+        joinedRows.push({
+          userId: "u-active",
+          courseId: `course-${c}`,
+          assessmentId: `c${c}-a${a}`,
+          score: 80 + (a % 10),
+        });
+      }
+    }
+    // Add 9 other students with 1 row each
+    for (let i = 1; i <= 9; i++) {
+      joinedRows.push({
+        userId: `u-other-${i}`,
+        courseId: "course-1",
+        assessmentId: "c1-a1",
+        score: 70,
+      });
+    }
+
+    // Evaluate DP aggregate over joined rows
+    const dpRes = DifferentialPrivacyService.evaluateDPAggregate({
+      researcherId: "researcher-01",
+      tenantId: "tenant-polytech",
+      userRecords: joinedRows,
+      queryType: "MEAN_SCORE",
+      epsilonRequested: 1.0,
+    });
+
+    // Total distinct users must be 10 (1 u-active + 9 others), NOT 30 rows!
+    expect(dpRes.rawCount).toBe(10);
+    expect(dpRes.mechanism.globalSensitivity).toBe(10.0); // 100 / 10
+
+    // Validate 40.G13 budget policy rationale
+    const policy = dpRes.mechanism.privacyBudgetPolicy;
+    expect(policy.epsilonPerQuery).toBe(1.0);
+    expect(policy.budgetPerResearcher).toBe(10.0);
+    expect(policy.budgetPerTenant).toBe(50.0);
+    expect(policy.budgetPeriodDays).toBe(30);
+    expect(policy.resetPolicy).toBe("EXPLICIT_IRB_OR_DPO_APPROVAL_ONLY");
+    expect(policy.governanceNote).toContain("institutional policy threshold");
   });
 });

@@ -305,8 +305,11 @@ describe("Phase 40 Corrective Closure: Wave 1 Security Paths & Wave 2 Feature E2
       expect(resEasy.upperLowerDiscriminationD?.pLower).toBe(0.37); // 10/27
       expect(resEasy.upperLowerDiscriminationD?.dValue).toBe(0.63); // 1.0 - 0.37
       expect(resEasy.pointBiserialRpb).not.toBeNull();
-      expect(resEasy.pointBiserialRpb?.rPb).toBeGreaterThan(0.40); // Strong positive point-biserial
-      expect(resEasy.pointBiserialRpb?.methodVersion).toBe("CORRECTED_ITEM_TOTAL_PEARSON");
+      expect(resEasy.pointBiserialRpb?.rPb).toBeGreaterThan(0.40); // Strong positive item-rest correlation
+      expect(resEasy.pointBiserialRpb?.scoreDefinition).toBe("CORRECTED_TOTAL_EXCLUDING_ITEM");
+      expect(resEasy.pointBiserialRpb?.methodVersion).toBe("CORRECTED_ITEM_REST_PEARSON");
+      expect(resEasy.correctedItemRestPointBiserial?.rPb).toBe(resEasy.pointBiserialRpb?.rPb);
+      expect(resEasy.itemRestPointBiserial?.rPb).toBe(resEasy.pointBiserialRpb?.rPb);
 
       // 2. Negative Discrimination Item (Tricky distractor misleading top students)
       const qNegativeDisc = qb.createQuestion({
@@ -327,13 +330,13 @@ describe("Phase 40 Corrective Closure: Wave 1 Security Paths & Wave 2 Feature E2
 
       const resNeg = qb.computeItemAnalysis(qNegativeDisc.questionId, 54);
       expect(resNeg.upperLowerDiscriminationD?.dValue).toBeLessThan(0);
-      expect(resNeg.pointBiserialRpb?.rPb).toBeLessThan(0);
+      expect(resNeg.correctedItemRestPointBiserial?.rPb).toBeLessThan(0);
       expect(resNeg.advisoryFlags).toContain("NEGATIVE_DISCRIMINATION");
       expect(resNeg.reviewVerdict).toBe("REVIEW_RECOMMENDED");
       // Advisory invariant: Question is NEVER auto-deleted or invalidated
       expect(qb.getQuestion(qNegativeDisc.questionId)).toBeDefined();
 
-      // 3. All-Correct and All-Incorrect boundary cases
+      // 3. All-Correct and All-Incorrect boundary cases (40.G20)
       const qAllCorrect = qb.createQuestion({
         questionId: "q-all-correct",
         tenantId,
@@ -345,12 +348,105 @@ describe("Phase 40 Corrective Closure: Wave 1 Security Paths & Wave 2 Feature E2
         tags: ["math"],
         authorId: "lecturer-01",
       });
-      recordBatchAttempts(qAllCorrect.questionId, "s", 40, 40, 50, { correct: "A", incorrect: "B" });
+      recordBatchAttempts(qAllCorrect.questionId, "s-ac", 40, 40, 50, { correct: "A", incorrect: "B" });
       const resAllCorrect = qb.computeItemAnalysis(qAllCorrect.questionId, 30);
       expect(resAllCorrect.itemDifficultyP).toBe(1.0);
       expect(resAllCorrect.upperLowerDiscriminationD?.dValue).toBe(0.0);
-      expect(resAllCorrect.pointBiserialRpb?.rPb).toBe(0.0);
+      expect(resAllCorrect.correctedItemRestPointBiserial?.rPb).toBe(0.0);
       expect(resAllCorrect.advisoryFlags).toContain("EXTREME_DIFFICULTY");
+
+      const qAllIncorrect = qb.createQuestion({
+        questionId: "q-all-incorrect",
+        tenantId,
+        learningOutcomeIds: ["LO-CS-03B"],
+        prompt: "Impossible question",
+        questionType: "MULTIPLE_CHOICE",
+        difficulty: 0.99,
+        bloomTaxonomyLevel: "ANALYZE",
+        tags: ["hard"],
+        authorId: "lecturer-01",
+      });
+      recordBatchAttempts(qAllIncorrect.questionId, "s-ai", 40, 0, 30, { correct: "A", incorrect: "B" });
+      const resAllIncorrect = qb.computeItemAnalysis(qAllIncorrect.questionId, 30);
+      expect(resAllIncorrect.itemDifficultyP).toBe(0.0);
+      expect(resAllIncorrect.correctedItemRestPointBiserial?.rPb).toBe(0.0);
+      expect(resAllIncorrect.advisoryFlags).toContain("EXTREME_DIFFICULTY");
+
+      // 4. Near-Zero Correlation (40.G20)
+      const qNearZero = qb.createQuestion({
+        questionId: "q-near-zero",
+        tenantId,
+        learningOutcomeIds: ["LO-CS-04"],
+        prompt: "Uncorrelated item",
+        questionType: "MULTIPLE_CHOICE",
+        difficulty: 0.5,
+        bloomTaxonomyLevel: "UNDERSTAND",
+        tags: ["random"],
+        authorId: "lecturer-01",
+      });
+      for (let i = 0; i < 40; i++) {
+        const isCorrect = i % 2 === 0;
+        qb.recordAttempt(qNearZero.questionId, {
+          studentId: `s-nz-${i}`,
+          selectedOption: isCorrect ? "A" : "B",
+          isCorrect,
+          totalExamScore: 50 + (i % 5) * 5, // uncorrelated scores
+        });
+      }
+      const resNearZero = qb.computeItemAnalysis(qNearZero.questionId, 30);
+      expect(Math.abs(resNearZero.correctedItemRestPointBiserial?.rPb ?? 1)).toBeLessThan(0.2);
+
+      // 5. One-Item Assessment (40.G20: rest score X' = y - y = 0 => Var(X') = 0 => 0.0, no NaN)
+      const qOneItem = qb.createQuestion({
+        questionId: "q-one-item",
+        tenantId,
+        learningOutcomeIds: ["LO-CS-05"],
+        prompt: "Single item quiz",
+        questionType: "MULTIPLE_CHOICE",
+        difficulty: 0.5,
+        bloomTaxonomyLevel: "REMEMBER",
+        tags: ["single"],
+        authorId: "lecturer-01",
+      });
+      for (let i = 0; i < 30; i++) {
+        const isCorrect = i < 15;
+        qb.recordAttempt(qOneItem.questionId, {
+          studentId: `s-single-${i}`,
+          selectedOption: isCorrect ? "A" : "B",
+          isCorrect,
+          totalExamScore: isCorrect ? 1 : 0, // totalExamScore is solely this item
+        });
+      }
+      const resOneItem = qb.computeItemAnalysis(qOneItem.questionId, 30);
+      expect(resOneItem.correctedItemRestPointBiserial?.rPb).toBe(0.0);
+      expect(Number.isNaN(resOneItem.correctedItemRestPointBiserial?.rPb)).toBe(false);
+
+      // 6. Two-Item Assessment (40.G20: total score in {0, 1, 2}, rest score is the other item)
+      const qTwoItem = qb.createQuestion({
+        questionId: "q-two-item",
+        tenantId,
+        learningOutcomeIds: ["LO-CS-06"],
+        prompt: "Two-item test question 1",
+        questionType: "MULTIPLE_CHOICE",
+        difficulty: 0.6,
+        bloomTaxonomyLevel: "UNDERSTAND",
+        tags: ["two-item"],
+        authorId: "lecturer-01",
+      });
+      for (let i = 0; i < 30; i++) {
+        // High ability students (first 18) get both items right (total=2, y=1 => rest=1)
+        // Low ability students (remaining 12) get both wrong (total=0, y=0 => rest=0)
+        const isCorrect = i < 18;
+        qb.recordAttempt(qTwoItem.questionId, {
+          studentId: `s-two-${i}`,
+          selectedOption: isCorrect ? "A" : "B",
+          isCorrect,
+          totalExamScore: isCorrect ? 2 : 0,
+        });
+      }
+      const resTwoItem = qb.computeItemAnalysis(qTwoItem.questionId, 30);
+      expect(resTwoItem.correctedItemRestPointBiserial?.rPb).toBeGreaterThan(0.9);
+      expect(Number.isNaN(resTwoItem.correctedItemRestPointBiserial?.rPb)).toBe(false);
     });
   });
 
