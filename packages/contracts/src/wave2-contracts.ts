@@ -199,12 +199,53 @@ export interface BlueprintValidationReport {
   discrepancyNotices: string[];
 }
 
+export interface UpperLowerDiscriminationDetail {
+  upperGroupDefinition: string; // e.g. "TOP_27_PERCENT"
+  lowerGroupDefinition: string; // e.g. "BOTTOM_27_PERCENT"
+  sampleSize: number;
+  pUpper: number;
+  pLower: number;
+  dValue: number; // P_upper - P_lower (-1.0 to 1.0)
+}
+
+export interface PointBiserialDetail {
+  rPb: number; // Point-biserial correlation (-1.0 to 1.0)
+  sampleSize: number;
+  methodVersion: "CORRECTED_ITEM_TOTAL_PEARSON";
+}
+
+export interface DistractorEfficiencyDetail {
+  option: string;
+  selectionCount: number;
+  selectionRatePercent: number;
+  isCorrect: boolean;
+  isFunctioning: boolean; // chosen by >= 5% of students
+}
+
 export interface ItemAnalysisMetrics {
   questionId: string;
   totalAttempts: number;
-  difficultyIndex: number; // P-value (proportion of examinees answering correctly, 0.0 - 1.0)
-  discriminationIndex: number; // D-value (P_upper - P_lower, -1.0 to 1.0)
-  optionSelectionDistribution: Record<string, number>; // { A: 12, B: 45, C: 2, D: 1 }
+  minSampleSizeRequired: number;
+  status: "CALCULATED" | "INSUFFICIENT_SAMPLE";
+  // 1. Difficulty P = correct / total
+  itemDifficultyP: number;
+  difficultyIndex: number; // backward-compatibility alias to itemDifficultyP
+  // 2. Upper/Lower Discrimination D = P_upper - P_lower
+  upperLowerDiscriminationD: UpperLowerDiscriminationDetail | null;
+  discriminationIndex: number; // backward-compatibility alias to D
+  // 3. Point-biserial correlation r_pb
+  pointBiserialRpb: PointBiserialDetail | null;
+  // 4. Distractor analysis
+  distractorEfficiency: DistractorEfficiencyDetail[];
+  optionSelectionDistribution: Record<string, number>;
+  // Advisory review rules (advisory only, never auto-delete)
+  advisoryFlags: (
+    | "LOW_DISCRIMINATION"
+    | "NEGATIVE_DISCRIMINATION"
+    | "EXTREME_DIFFICULTY"
+    | "NON_FUNCTIONING_DISTRACTOR"
+  )[];
+  reviewVerdict: "NORMAL" | "REVIEW_RECOMMENDED" | "INSUFFICIENT_SAMPLE";
   commonMisconceptionsDetected: string[];
 }
 

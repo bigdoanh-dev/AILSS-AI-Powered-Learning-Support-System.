@@ -238,10 +238,148 @@ describe("Phase 40 Corrective Closure: Wave 1 Security Paths & Wave 2 Feature E2
         totalExamScore: 40,
       });
 
-      const analysis = qb.computeItemAnalysis(question.questionId);
-      expect(analysis.totalAttempts).toBe(3);
-      expect(analysis.difficultyIndex).toBe(0.67); // 2/3
-      expect(analysis.discriminationIndex).toBeDefined();
+      // 3. Small-sample guard (N=3 < 30) -> INSUFFICIENT_SAMPLE
+      const analysisSmall = qb.computeItemAnalysis(question.questionId);
+      expect(analysisSmall.totalAttempts).toBe(3);
+      expect(analysisSmall.status).toBe("INSUFFICIENT_SAMPLE");
+      expect(analysisSmall.itemDifficultyP).toBe(0.67);
+      expect(analysisSmall.upperLowerDiscriminationD).toBeNull();
+      expect(analysisSmall.pointBiserialRpb).toBeNull();
+      expect(analysisSmall.reviewVerdict).toBe("INSUFFICIENT_SAMPLE");
+    });
+
+    it("40.F14 - 40.F19: computes separated P, D, r_pb, distractor efficiency, and advisory review flags across synthetic distributions", () => {
+      const qb = new QuestionBankV2Service();
+      const tenantId = "tenant-polytech";
+
+      // 1. Easy / High-Discrimination Item (N = 100)
+      const qEasyHighDisc = qb.createQuestion({
+        questionId: "q-easy-high-disc",
+        tenantId,
+        learningOutcomeIds: ["LO-CS-01"],
+        prompt: "Cú pháp khai báo biến trong TypeScript",
+        questionType: "MULTIPLE_CHOICE",
+        options: [
+          { id: "A", text: "let x: number = 5;", isCorrect: true },
+          { id: "B", text: "dim x as integer", isCorrect: false },
+          { id: "C", text: "val x := 5", isCorrect: false },
+          { id: "D", text: "var int x = 5", isCorrect: false },
+        ],
+        difficulty: 0.3,
+        bloomTaxonomyLevel: "REMEMBER",
+        tags: ["ts", "variables"],
+        authorId: "lecturer-01",
+      });
+
+      // Top 27 (totalExamScore 80-100): all 27 correct
+      for (let i = 0; i < 27; i++) {
+        qb.recordAttempt(qEasyHighDisc.questionId, {
+          studentId: `s-top-${String(i)}`,
+          selectedOption: "A",
+          isCorrect: true,
+          totalExamScore: 85 + (i % 15),
+        });
+      }
+      // Middle 46 (totalExamScore 60-79): 40 correct, 6 wrong (distributed among B, C, D)
+      for (let i = 0; i < 46; i++) {
+        const correct = i < 40;
+        const opt = correct ? "A" : i % 3 === 0 ? "B" : i % 3 === 1 ? "C" : "D";
+        qb.recordAttempt(qEasyHighDisc.questionId, {
+          studentId: `s-mid-${String(i)}`,
+          selectedOption: opt,
+          isCorrect: correct,
+          totalExamScore: 60 + (i % 20),
+        });
+      }
+      // Bottom 27 (totalExamScore 20-55): 10 correct, 17 wrong
+      for (let i = 0; i < 27; i++) {
+        const correct = i < 10;
+        const opt = correct ? "A" : i % 3 === 0 ? "B" : i % 3 === 1 ? "C" : "D";
+        qb.recordAttempt(qEasyHighDisc.questionId, {
+          studentId: `s-bot-${String(i)}`,
+          selectedOption: opt,
+          isCorrect: correct,
+          totalExamScore: 20 + (i % 35),
+        });
+      }
+
+      const resEasy = qb.computeItemAnalysis(qEasyHighDisc.questionId);
+      expect(resEasy.status).toBe("CALCULATED");
+      expect(resEasy.totalAttempts).toBe(100);
+      expect(resEasy.itemDifficultyP).toBe(0.77); // (27 + 40 + 10) / 100
+      expect(resEasy.upperLowerDiscriminationD).not.toBeNull();
+      expect(resEasy.upperLowerDiscriminationD?.pUpper).toBe(1.0); // 27/27
+      expect(resEasy.upperLowerDiscriminationD?.pLower).toBe(0.37); // 10/27
+      expect(resEasy.upperLowerDiscriminationD?.dValue).toBe(0.63); // 1.0 - 0.37
+      expect(resEasy.pointBiserialRpb).not.toBeNull();
+      expect(resEasy.pointBiserialRpb?.rPb).toBeGreaterThan(0.40); // Strong positive point-biserial
+      expect(resEasy.pointBiserialRpb?.methodVersion).toBe("CORRECTED_ITEM_TOTAL_PEARSON");
+
+      // 2. Negative Discrimination Item (Tricky distractor misleading top students)
+      const qNegativeDisc = qb.createQuestion({
+        questionId: "q-neg-disc",
+        tenantId,
+        learningOutcomeIds: ["LO-CS-02"],
+        prompt: "Trick question where top students pick misleading distractor",
+        questionType: "MULTIPLE_CHOICE",
+        difficulty: 0.8,
+        bloomTaxonomyLevel: "ANALYZE",
+        tags: ["trick"],
+        authorId: "lecturer-01",
+      });
+
+      // Top 27: only 5 correct, 22 wrong
+      for (let i = 0; i < 27; i++) {
+        qb.recordAttempt(qNegativeDisc.questionId, {
+          studentId: `s-top-${String(i)}`,
+          selectedOption: i < 5 ? "A" : "B",
+          isCorrect: i < 5,
+          totalExamScore: 85 + (i % 15),
+        });
+      }
+      // Bottom 27: 18 correct (guessed right), 9 wrong
+      for (let i = 0; i < 27; i++) {
+        qb.recordAttempt(qNegativeDisc.questionId, {
+          studentId: `s-bot-${String(i)}`,
+          selectedOption: i < 18 ? "A" : "B",
+          isCorrect: i < 18,
+          totalExamScore: 20 + (i % 35),
+        });
+      }
+
+      const resNeg = qb.computeItemAnalysis(qNegativeDisc.questionId, 54);
+      expect(resNeg.upperLowerDiscriminationD?.dValue).toBeLessThan(0);
+      expect(resNeg.pointBiserialRpb?.rPb).toBeLessThan(0);
+      expect(resNeg.advisoryFlags).toContain("NEGATIVE_DISCRIMINATION");
+      expect(resNeg.reviewVerdict).toBe("REVIEW_RECOMMENDED");
+      // Advisory invariant: Question is NEVER auto-deleted or invalidated
+      expect(qb.getQuestion(qNegativeDisc.questionId)).toBeDefined();
+
+      // 3. All-Correct and All-Incorrect boundary cases
+      const qAllCorrect = qb.createQuestion({
+        questionId: "q-all-correct",
+        tenantId,
+        learningOutcomeIds: ["LO-CS-03"],
+        prompt: "1 + 1 = ?",
+        questionType: "MULTIPLE_CHOICE",
+        difficulty: 0.1,
+        bloomTaxonomyLevel: "REMEMBER",
+        tags: ["math"],
+        authorId: "lecturer-01",
+      });
+      for (let i = 0; i < 40; i++) {
+        qb.recordAttempt(qAllCorrect.questionId, {
+          studentId: `s-${String(i)}`,
+          selectedOption: "A",
+          isCorrect: true,
+          totalExamScore: 50 + i,
+        });
+      }
+      const resAllCorrect = qb.computeItemAnalysis(qAllCorrect.questionId, 30);
+      expect(resAllCorrect.itemDifficultyP).toBe(1.0);
+      expect(resAllCorrect.upperLowerDiscriminationD?.dValue).toBe(0.0);
+      expect(resAllCorrect.pointBiserialRpb?.rPb).toBe(0.0);
+      expect(resAllCorrect.advisoryFlags).toContain("EXTREME_DIFFICULTY");
     });
   });
 

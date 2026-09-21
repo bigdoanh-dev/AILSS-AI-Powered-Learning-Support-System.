@@ -4,6 +4,8 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { UnifiedStudentWorkspace } from "../src/student/UnifiedStudentWorkspace";
 import { CourseAuthoringStudio } from "../src/lecturer/CourseAuthoringStudio";
 import { FleetOperationsCenter } from "../src/admin/FleetOperationsCenter";
+import { TeacherCopilotPage } from "../src/lecturer/TeacherCopilot";
+import { InstitutionWizardPage } from "../src/admin/InstitutionWizard";
 
 beforeEach(() => {
   globalThis.alert = () => {};
@@ -127,6 +129,59 @@ describe("Phase 40 Track 1 & 2: Browser E2E User Journeys & WCAG 2.2 AA", () => 
 
       expect(screen.queryByRole("dialog")).toBeNull();
       expect(screen.getByText(/cập nhật chính sách thành công/)).toBeTruthy();
+    });
+  });
+
+  describe("40.F20 & 40.F21: Pilot Route Accessibility & Journeys (Teacher Copilot & Interventions)", () => {
+    it("renders Teacher Copilot with human approval gate and executes question review workflow", () => {
+      render(<TeacherCopilotPage />);
+
+      // Verify human approval gate notice
+      expect(screen.getByText(/Cổng phê duyệt Giảng viên/)).toBeTruthy();
+
+      // Verify question draft approval
+      const approveButtons = screen.getAllByRole("button", { name: /Phê duyệt câu hỏi/i });
+      expect(approveButtons.length).toBeGreaterThan(0);
+      fireEvent.click(approveButtons[0]!);
+
+      // Verify draft state updated
+      expect(screen.getByText(/ĐÃ DUYỆT/i)).toBeTruthy();
+    });
+
+    it("navigates to Interventions tab and executes instructor intervention on at-risk student", () => {
+      render(<TeacherCopilotPage />);
+
+      // Click on Interventions tab
+      const interventionsTab = screen.getByRole("button", { name: /Cảnh báo sớm & Can thiệp/i });
+      fireEvent.click(interventionsTab);
+
+      // Verify risk signal rendered
+      expect(screen.getByText(/Điểm thành thạo giảm từ 82% xuống 58%/i)).toBeTruthy();
+
+      // Instructor executes intervention action
+      const resolveBtns = screen.getAllByRole("button", { name: /Đánh dấu đã can thiệp/i });
+      expect(resolveBtns.length).toBeGreaterThan(0);
+      fireEvent.click(resolveBtns[0]!);
+      expect(screen.getByText(/Đã giải quyết/i)).toBeTruthy();
+    });
+  });
+
+  describe("40.F20 & 40.F21: Pilot Route Accessibility & Journeys (Institution Wizard & Integrations)", () => {
+    it("renders Institution Wizard with multi-step progression and integration test center", () => {
+      render(<InstitutionWizardPage />);
+
+      // Verify wizard header and initial step
+      expect(screen.getByDisplayValue("Trường Đại học Bách Khoa")).toBeTruthy();
+      expect(screen.getByText(/Quản trị Cơ sở Đào tạo/i)).toBeTruthy();
+
+      // Switch to Test Center tab
+      const testCenterTab = screen.getByRole("button", { name: /Trung tâm Kiểm thử kết nối/i });
+      fireEvent.click(testCenterTab);
+
+      // Verify integration status cards
+      expect(screen.getByText(/OpenID Connect/i)).toBeTruthy();
+      expect(screen.getByText(/SCIM 2.0 User & Group Provisioning/i)).toBeTruthy();
+      expect(screen.getByText(/42 ms/i)).toBeTruthy();
     });
   });
 });
