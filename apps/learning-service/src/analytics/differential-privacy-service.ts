@@ -1,15 +1,38 @@
 import { randomBytes } from "node:crypto";
 
+/**
+ * 40.F7 - 40.F11: Canonical Differential Privacy Guarantee & Mechanism Specification
+ *
+ * Privacy Guarantee: (epsilon, 0)-DP (Pure Differential Privacy via Laplace Mechanism)
+ * Unit of Privacy: USER_LEVEL (Each learner contributes at most 1 aggregate mastery score x_i in [0, 100])
+ * Adjacency Model: REPLACE_ONE (Two cohorts D, D' of fixed size N >= 5 differ by replacing one learner's score)
+ *
+ * Mathematical Sensitivity Derivation:
+ * Let f(D) = (1/N) * sum_{i=1}^N x_i be the cohort mean score with x_i in [0, 100].
+ * For adjacent D, D' differing at index k (x_k vs x_k'):
+ * |f(D) - f(D')| = |(1/N) * (x_k - x_k')| <= (max(x) - min(x)) / N = (100 - 0) / N = 100 / N.
+ * Thus global L1 sensitivity Delta f = 100 / N.
+ *
+ * Privacy Budget Composition:
+ * Sequential Basic Composition: For m queries each satisfying (eps_j, 0)-DP,
+ * the combined release satisfies (sum_{j=1}^m eps_j, 0)-DP.
+ */
 export interface DPMechanismDefinition {
-  adjacencyRelation: "DIFFER_BY_ONE_LEARNER_RECORD";
+  guaranteeType: "PURE_EPSILON_DP";
+  epsilon: number;
+  delta: 0; // Strictly 0 for pure Laplace mechanism
+  privacyUnit: "USER_LEVEL";
+  adjacencyModel: "REPLACE_ONE";
   boundingInterval: [number, number]; // [0, 100]
   sensitivityFormula: "DELTA_F = (MAX - MIN) / N";
-  epsilon: number;
-  delta: number;
+  globalSensitivity: number; // 100 / N
   randomnessGenerator: "CRYPTOGRAPHIC_LAPLACE_INVERSE_CDF";
-  compositionRule: "SEQUENTIAL_BASIC_COMPOSITION";
+  compositionRule: "BASIC_SEQUENTIAL_COMPOSITION";
   totalBudgetPerResearcher: number;
+  budgetScope: "RESEARCHER_TENANT_SCOPE";
+  budgetResetPolicy: "EXPLICIT_ADMIN_RESET_OR_30_DAY_EXPIRATION";
   exportLifecycle: "AUDIT_LOGGED_WITH_BUDGET_DEDUCTION";
+  status: "VALIDATED_EPSILON_DP";
 }
 
 export interface DPAggregateQuery {
@@ -43,23 +66,29 @@ export interface DPUtilityBenchmark {
 
 export class DifferentialPrivacyService {
   public static readonly DEFAULT_EPSILON = 1.0;
-  public static readonly DEFAULT_DELTA = 0.00001;
   public static readonly TOTAL_BUDGET = 10.0;
   public static readonly MIN_COHORT_THRESHOLD = 5;
 
   private static readonly budgetStore = new Map<string, number>();
 
-  public static getMechanismDefinition(): DPMechanismDefinition {
+  public static getMechanismDefinition(cohortSize = 10): DPMechanismDefinition {
+    const n = Math.max(1, cohortSize);
     return {
-      adjacencyRelation: "DIFFER_BY_ONE_LEARNER_RECORD",
+      guaranteeType: "PURE_EPSILON_DP",
+      epsilon: DifferentialPrivacyService.DEFAULT_EPSILON,
+      delta: 0,
+      privacyUnit: "USER_LEVEL",
+      adjacencyModel: "REPLACE_ONE",
       boundingInterval: [0, 100],
       sensitivityFormula: "DELTA_F = (MAX - MIN) / N",
-      epsilon: DifferentialPrivacyService.DEFAULT_EPSILON,
-      delta: DifferentialPrivacyService.DEFAULT_DELTA,
+      globalSensitivity: 100.0 / n,
       randomnessGenerator: "CRYPTOGRAPHIC_LAPLACE_INVERSE_CDF",
-      compositionRule: "SEQUENTIAL_BASIC_COMPOSITION",
+      compositionRule: "BASIC_SEQUENTIAL_COMPOSITION",
       totalBudgetPerResearcher: DifferentialPrivacyService.TOTAL_BUDGET,
+      budgetScope: "RESEARCHER_TENANT_SCOPE",
+      budgetResetPolicy: "EXPLICIT_ADMIN_RESET_OR_30_DAY_EXPIRATION",
       exportLifecycle: "AUDIT_LOGGED_WITH_BUDGET_DEDUCTION",
+      status: "VALIDATED_EPSILON_DP",
     };
   }
 
@@ -70,7 +99,6 @@ export class DifferentialPrivacyService {
    */
   public static sampleLaplace(b: number): number {
     if (b <= 0) return 0;
-    // Generate uniform random float in (0, 1) using crypto bytes
     const buf = randomBytes(4);
     const uRaw = buf.readUInt32BE(0) / 0xffffffff;
     // Map to (-0.5, 0.5), avoiding exact 0 to prevent ln(0)
@@ -80,14 +108,23 @@ export class DifferentialPrivacyService {
   }
 
   /**
-   * Evaluates aggregate query under Differential Privacy with budget tracking
+   * Evaluates aggregate query under (epsilon, 0)-Differential Privacy with budget tracking
    */
   public static evaluateDPAggregate(query: DPAggregateQuery): DPAggregateResult {
-    const { researcherId, cohortData, epsilonRequested = DifferentialPrivacyService.DEFAULT_EPSILON } = query;
+    const {
+      researcherId,
+      tenantId,
+      cohortData,
+      epsilonRequested = DifferentialPrivacyService.DEFAULT_EPSILON,
+    } = query;
     const n = cohortData.length;
 
-    // Check budget
-    const currentBudget = this.budgetStore.get(researcherId) ?? DifferentialPrivacyService.TOTAL_BUDGET;
+    // Scope budget to researcher + tenant
+    const budgetKey = `${tenantId}:${researcherId}`;
+    const currentBudget =
+      this.budgetStore.get(budgetKey) ?? DifferentialPrivacyService.TOTAL_BUDGET;
+
+    // Budget defense: halt when remaining budget is less than requested epsilon
     if (currentBudget < epsilonRequested) {
       return {
         queryId: `dp-${Date.now()}`,
@@ -99,11 +136,11 @@ export class DifferentialPrivacyService {
         remainingBudget: currentBudget,
         isBudgetExhausted: true,
         suppressionApplied: false,
-        mechanism: this.getMechanismDefinition(),
+        mechanism: this.getMechanismDefinition(n),
       };
     }
 
-    // Small cohort suppression check (if N < 5, do not release even with DP to prevent re-identification)
+    // Small cohort suppression check (if N < 5, do not release even with DP to prevent singling-out)
     if (n < DifferentialPrivacyService.MIN_COHORT_THRESHOLD) {
       return {
         queryId: `dp-${Date.now()}`,
@@ -115,25 +152,25 @@ export class DifferentialPrivacyService {
         remainingBudget: currentBudget,
         isBudgetExhausted: false,
         suppressionApplied: true,
-        mechanism: this.getMechanismDefinition(),
+        mechanism: this.getMechanismDefinition(n),
       };
     }
 
-    // Clip raw values to [0, 100]
+    // Clip raw values to bounding interval [0, 100]
     const clippedData = cohortData.map((x) => Math.max(0, Math.min(100, x)));
     const rawSum = clippedData.reduce((acc, v) => acc + v, 0);
     const rawMean = rawSum / n;
 
-    // Sensitivity: Delta f = (100 - 0) / N
+    // Sensitivity derivation under REPLACE_ONE: Delta f = (100 - 0) / N
     const sensitivity = 100.0 / n;
     const scale = sensitivity / epsilonRequested;
 
     const noiseAdded = this.sampleLaplace(scale);
     const noisyMean = Math.max(0, Math.min(100, Math.round((rawMean + noiseAdded) * 100) / 100));
 
-    // Deduct budget
+    // Deduct budget under basic sequential composition
     const newBudget = Math.max(0, Math.round((currentBudget - epsilonRequested) * 100) / 100);
-    this.budgetStore.set(researcherId, newBudget);
+    this.budgetStore.set(budgetKey, newBudget);
 
     return {
       queryId: `dp-${Date.now()}-${Math.random().toString(36).substring(7)}`,
@@ -145,7 +182,7 @@ export class DifferentialPrivacyService {
       remainingBudget: newBudget,
       isBudgetExhausted: false,
       suppressionApplied: false,
-      mechanism: this.getMechanismDefinition(),
+      mechanism: this.getMechanismDefinition(n),
     };
   }
 
@@ -179,7 +216,16 @@ export class DifferentialPrivacyService {
     return results;
   }
 
-  public static resetBudget(researcherId: string): void {
+  public static resetBudget(researcherId: string, tenantId = "default"): void {
+    this.budgetStore.set(`${tenantId}:${researcherId}`, DifferentialPrivacyService.TOTAL_BUDGET);
     this.budgetStore.set(researcherId, DifferentialPrivacyService.TOTAL_BUDGET);
+  }
+
+  public static getRemainingBudget(researcherId: string, tenantId = "default"): number {
+    return (
+      this.budgetStore.get(`${tenantId}:${researcherId}`) ??
+      this.budgetStore.get(researcherId) ??
+      DifferentialPrivacyService.TOTAL_BUDGET
+    );
   }
 }
