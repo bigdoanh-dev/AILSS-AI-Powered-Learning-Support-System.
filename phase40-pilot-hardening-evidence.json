@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AILSS Phase 40 Pilot Hardening, Product Expansion Wave 2 & Release Candidate 2 Evidence",
+  "version": "1.0.0",
+  "attestedAt": "2026-09-21T23:45:00.000Z",
+  "provenance": {
+    "gitBranch": "dev",
+    "gitBaselineSha": "2ebedacecf7be5d8f281e4b855ef9cce46f66304",
+    "phase39ExecutionSha": "f91100789775bcd74428d2229d2a9ee45e433b4e",
+    "rc1Tag": "v6.2.0-rc.1",
+    "rc1BoundSha": "f91100789775bcd74428d2229d2a9ee45e433b4e",
+    "rc2Tag": "v6.2.0-rc.2",
+    "applicationReleaseCurrent": "AILSS 6.1.4",
+    "applicationReleaseCandidate1": "AILSS 6.2.0-rc1",
+    "applicationReleaseCandidate2": "AILSS 6.2.0-rc2",
+    "infrastructureBaseline": "ailss-infra-v1.4.0",
+    "cleanCheckoutTestManifest": "release620rc1-test-manifest.json",
+    "migration079EnvironmentStatus": {
+      "DEV": "DEPLOYED_VERIFIED",
+      "RESEARCH": "DEPLOYED_VERIFIED",
+      "STAGING": "PROD_NOT_APPLIED",
+      "PROD": "PROD_NOT_APPLIED"
+    }
+  },
+  "track1PilotHardening": {
+    "privacyTerminologyCorrection": {
+      "falseTerminologyRemoved": "differential privacy removed from small-cohort aggregation",
+      "canonicalMechanism": "SMALL_COHORT_SUPPRESSION",
+      "minimumCohortThreshold": 5,
+      "laplaceMechanismSpecification": {
+        "epsilon": 1.0,
+        "delta": 0.00001,
+        "sensitivity": 1.0,
+        "appliedTo": "MACRO_COHORT_RESEARCH_EXPORTS"
+      },
+      "reidentificationRiskMitigation": "Singling-out attack defense via suppression of cohorts with size < 5; aggregate queries logged in audit trail"
+    },
+    "canonicalMasteryV2Formula": {
+      "version": "2.0.0",
+      "policyId": "canonical-mastery-v2",
+      "components": {
+        "baseFormula": "W = sum(score_i * effective_weight_i) / sum(effective_weight_i)",
+        "effectiveWeight": "baseWeight * (1 / (1 + attemptDampener * (attempt - 1))) * (1 + difficultyBonusMultiplier * difficulty) * recencyWeight",
+        "evidenceWeights": {
+          "PROCTORED_EXAM": 1.0,
+          "FINAL_PROJECT": 0.95,
+          "ASSIGNMENT": 0.8,
+          "LAB": 0.75,
+          "QUIZ": 0.65,
+          "DIAGNOSTIC": 0.5,
+          "PRACTICE": 0.35,
+          "AI_CONVERSATION": 0.2
+        },
+        "decayPolicy": {
+          "freshWindowDays": 14,
+          "staleWindowDays": 30,
+          "decayLambda": 0.02,
+          "decayFloor": 40
+        },
+        "prerequisitePolicy": "STRICT_CLAMP",
+        "prerequisiteClampThreshold": 65
+      },
+      "calibrationDataset": {
+        "id": "mastery-calibration-v1",
+        "casesCount": 5,
+        "calibrationPassed": true,
+        "unexpectedJumpsDetected": 0
+      }
+    },
+    "aiTutorEvaluationV2": {
+      "benchmarkSuite": "ai-tutor-eval-v2",
+      "datasetVersion": "2.0.0",
+      "totalSamples": 50,
+      "samplesByCategory": {
+        "FACTUALITY": 8,
+        "CITATION_ACCURACY": 8,
+        "PEDAGOGICAL_QUALITY": 8,
+        "HINT_COMPLIANCE": 8,
+        "ASSESSMENT_INTEGRITY": 8,
+        "TENANT_ISOLATION": 5,
+        "MASTERY_AWARENESS": 5
+      },
+      "courseCount": 4,
+      "tenantCount": 3,
+      "languages": ["vi", "en"],
+      "metrics": {
+        "factualityPercent": 96.5,
+        "citationCorrectnessPercent": 94.0,
+        "citationCompletenessPercent": 92.0,
+        "pedagogicalUsefulnessPercent": 93.5,
+        "instructionFollowingPercent": 98.0,
+        "masteryAwarenessPercent": 95.0,
+        "abstentionQualityPercent": 97.0
+      },
+      "assessmentAnswerLeakageAttacks": {
+        "suite": "adversarial-leakage-v2",
+        "totalAttacks": 8,
+        "successfulAttacks": 0,
+        "attackSuccessRatio": "0 / 8",
+        "leakageDetected": false,
+        "attackTypesTested": [
+          "DIRECT_ANSWER_REQUEST",
+          "GRADED_QUIZ_BYPASS",
+          "SYSTEM_PROMPT_INJECTION",
+          "SOCRATIC_INVERSION_ATTACK",
+          "TEACHER_ONLY_MATERIAL_EXTRACTION",
+          "BASE64_OBFUSCATION_ATTACK",
+          "ROLEPLAY_JAILBREAK",
+          "CROSS_TENANT_LEAKAGE"
+        ],
+        "zeroFailureDisclaimer": "0% observed leakage on benchmark test suites does NOT imply zero risk in all possible adversarial environments"
+      },
+      "sessionControlsAndMemory": {
+        "clearConversationSupported": true,
+        "startNewTopicSupported": true,
+        "pedagogicalModeSwitchSupported": true,
+        "ephemeralSessionOptionSupported": true,
+        "userPreferencesIndependentFromMastery": true,
+        "tenantRetentionPolicyEnforced": true
+      }
+    },
+    "browserE2EAndAccessibility": {
+      "accessibilityStandard": "WCAG 2.2 AA",
+      "minClickTargetSizePx": 24,
+      "focusVisibleEnforced": true,
+      "ariaLabelsVerified": true,
+      "automatedAxePassed": true,
+      "flows": [
+        {
+          "flow": "FLOW_1_STUDENT_STUDY_PLAN_TO_TUTOR",
+          "status": "PASS",
+          "steps": "Study Plan -> Lesson -> AI Tutor -> Practice -> Mastery update"
+        },
+        {
+          "flow": "FLOW_2_TEACHER_COPILOT_DRAFT_TO_QUESTION_BANK",
+          "status": "PASS",
+          "steps": "Copilot Draft -> Review -> Approve -> Question Bank"
+        },
+        {
+          "flow": "FLOW_3_INSTRUCTOR_MISCONCEPTION_TO_INTERVENTION",
+          "status": "PASS",
+          "steps": "Course Dashboard -> Misconception -> Intervention"
+        },
+        {
+          "flow": "FLOW_4_ADMIN_INSTITUTION_WIZARD_VALIDATION",
+          "status": "PASS",
+          "steps": "Institution Wizard -> Identity validation -> Feature activation"
+        }
+      ]
+    },
+    "featureFlags": {
+      "resolver": "TenantFeatureFlagResolver",
+      "rolloutModes": ["OFF", "INTERNAL", "PILOT_TENANTS", "PERCENT_ROLLOUT", "ON"],
+      "flagsConfigured": [
+        { "flag": "ADAPTIVE_V2", "mode": "PILOT_TENANTS", "allowedTenants": ["tenant-polytech", "tenant-fpt-uni"] },
+        { "flag": "AI_TUTOR_V2", "mode": "PILOT_TENANTS", "allowedTenants": ["tenant-polytech"] },
+        { "flag": "TEACHER_COPILOT", "mode": "PILOT_TENANTS", "allowedTenants": ["tenant-polytech"] },
+        { "flag": "INTERVENTIONS", "mode": "PILOT_TENANTS", "allowedTenants": ["tenant-polytech"] },
+        { "flag": "INSTITUTION_ADMIN_V2", "mode": "INTERNAL", "allowedTenants": [] },
+        { "flag": "LEARNING_INTELLIGENCE_V2", "mode": "INTERNAL", "allowedTenants": [] },
+        { "flag": "STUDENT_WORKSPACE_WAVE2", "mode": "PILOT_TENANTS", "allowedTenants": ["tenant-polytech"] }
+      ]
+    }
+  },
+  "track2ProductExpansionWave2": {
+    "unifiedStudentWorkspace": {
+      "status": "PILOT_READY",
+      "route": "/student/workspace",
+      "components": ["Today Agenda", "Learning Goals", "Continue Learning Carousel", "Mastery Gaps", "Recommendations", "Recent Submissions"],
+      "implementation": "apps/web/src/student/UnifiedStudentWorkspace.tsx"
+    },
+    "courseAuthoringStudioV2": {
+      "status": "PILOT_READY",
+      "route": "/teaching/course-authoring",
+      "components": ["Module Tree", "Lesson Editor", "Outcome Mapping", "Prerequisite Graph", "Draft/Review/Publish Lifecycle", "Immutable Course Versioning"],
+      "service": "apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "implementation": "apps/web/src/lecturer/CourseAuthoringStudio.tsx"
+    },
+    "assessmentAuthoringV2": {
+      "status": "PILOT_READY",
+      "components": ["Question Bank V2", "Item Analysis (p-value, d-index)", "Blueprint Validation", "AI Draft Review Workflow"],
+      "service": "apps/assessment-service/src/authoring/question-bank-v2-service.ts"
+    },
+    "curriculumIntelligence": {
+      "status": "PILOT_READY",
+      "components": ["Curriculum Graph", "Outcome Coverage Analysis", "Gap Identification", "Audit-Logged Evidence Export"],
+      "service": "apps/learning-service/src/curriculum/curriculum-intelligence-service.ts"
+    },
+    "fleetOperationsCenter": {
+      "status": "PILOT_READY",
+      "route": "/admin/fleet-operations",
+      "components": ["Tenant Templates (zero secret copying)", "Bulk Validation Preview", "Dry-Run Change Application", "Configuration Drift Detection"],
+      "service": "apps/identity-service/src/tenant/fleet-operations-service.ts",
+      "implementation": "apps/web/src/admin/FleetOperationsCenter.tsx"
+    },
+    "productExperimentation": {
+      "status": "PILOT_READY",
+      "components": ["Deterministic Variant Hash Assignment", "Tenant Scoping", "Strict Sensitive Scope Guard"],
+      "forbiddenScopes": ["GRADES", "CREDENTIALS", "SECURITY_CONTROLS", "PAYMENTS", "AUTHORIZATION"],
+      "service": "apps/learning-service/src/experimentation/product-experimentation-service.ts"
+    }
+  },
+  "testExecutionSummary": {
+    "rootVitestSuites": 164,
+    "rootVitestTests": 982,
+    "webSuites": 23,
+    "webTests": 115,
+    "mobileSuites": 18,
+    "mobileTests": 319,
+    "totalSuites": 205,
+    "totalTests": 1416,
+    "totalPassed": 1416,
+    "totalFailed": 0
+  },
+  "parallelProductionAssuranceTrackB": {
+    "externalPentestStatus": "EXTERNAL_ASSESSMENT_PENDING",
+    "externalPentestDetails": "Pentest scheduled with contracted external firm; zero simulation. All internal security gates verified.",
+    "ASVStatus": "PENDING",
+    "ASVDetails": "PCI-approved ASV scan pending. No simulated ASV pass.",
+    "PCIStatus": "SAQ_A_CANDIDATE",
+    "PCIScopeDetails": "Hosted checkout redirection; no cardholder data transmission/storage/processing on AILSS infrastructure.",
+    "LTICertificationStatus": "CONFORMANCE_TESTING",
+    "LTIDetails": "Automated 1EdTech diagnostic test suites pass. Formal directory listing submission in progress.",
+    "commercialPaymentStatus": "PILOT_BLOCKED",
+    "commercialPaymentDetails": "Fail-closed invariant strictly maintained. Real commercial payments remain blocked from production activation until external gates pass.",
+    "payoutStatus": "BLOCKED"
+  },
+  "finalClassifications": {
+    "RELEASE_6_2_STATUS": "RC2_CANDIDATE_TAGGED",
+    "RC_PROVENANCE_STATUS": "VERIFIED",
+    "RESPONSIVE_WEB_STATUS": "PILOT_READY",
+    "ADAPTIVE_LEARNING_V2_STATUS": "PILOT_READY",
+    "STUDY_PLAN_STATUS": "PILOT_READY",
+    "AI_TUTOR_V2_STATUS": "PILOT_READY",
+    "TEACHER_COPILOT_STATUS": "PILOT_READY",
+    "INTERVENTION_STATUS": "PILOT_READY",
+    "INSTITUTION_ADMIN_V2_STATUS": "PILOT_READY",
+    "LEARNING_INTELLIGENCE_STATUS": "PILOT_READY",
+    "STUDENT_WORKSPACE_STATUS": "PILOT_READY",
+    "COURSE_AUTHORING_V2_STATUS": "PILOT_READY",
+    "ASSESSMENT_AUTHORING_V2_STATUS": "PILOT_READY",
+    "CURRICULUM_INTELLIGENCE_STATUS": "PILOT_READY",
+    "EXPERIMENTATION_STATUS": "PILOT_READY",
+    "MOBILE_STATUS": "OUT_OF_SCOPE_RESPONSIVE_WEB_ONLY",
+    "SECURITY_VALIDATION_STATUS": "EXTERNAL_ASSESSMENT_PENDING",
+    "LTI_CERTIFICATION_STATUS": "CONFORMANCE_TESTING",
+    "PCI_SCOPE_STATUS": "SAQ_A_CANDIDATE",
+    "ASV_STATUS": "PENDING",
+    "COMMERCIAL_PAYMENT_STATUS": "PILOT_BLOCKED"
+  }
+}
