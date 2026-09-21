@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // ============================================================================
-// 39.A1: Canonical Learning-Outcome Graph & Mastery States
+// 39.A1 & 40.15 - 40.17: Canonical Learning-Outcome Graph & Mastery Policy V2
 // ============================================================================
 export const MasteryStateEnum = z.enum([
   "NOT_OBSERVED",
@@ -43,6 +43,47 @@ export interface MultiFactorEvidence {
   recencyWeight: number; // calculated exponential decay factor
 }
 
+export interface MasteryPolicyConfig {
+  policyId: string;
+  version: string;
+  tenantId?: string | undefined;
+  evidenceWeights: Record<string, number>;
+  attemptDampenerFactor: number;
+  difficultyBonusMultiplier: number;
+  freshWindowDays: number;
+  staleWindowDays: number;
+  decayLambda: number;
+  decayFloor: number;
+  developingThreshold: number;
+  proficientThreshold: number;
+  masteredThreshold: number;
+  prerequisiteClampThreshold: number;
+  prerequisitePolicy: "STRICT_CLAMP" | "WARN_ONLY";
+}
+
+export const CANONICAL_MASTERY_POLICY_V2: MasteryPolicyConfig = {
+  policyId: "ailss-canonical-mastery-v2",
+  version: "2.0.0",
+  evidenceWeights: {
+    QUIZ: 0.35,
+    MANUAL_ASSESSMENT: 0.35,
+    TEACHER_OBSERVATION: 0.20,
+    LESSON_COMPLETION: 0.10,
+    PRACTICE_ATTEMPT: 0.15,
+  },
+  attemptDampenerFactor: 0.15,
+  difficultyBonusMultiplier: 0.20,
+  freshWindowDays: 14,
+  staleWindowDays: 21,
+  decayLambda: 0.015,
+  decayFloor: 25,
+  developingThreshold: 40,
+  proficientThreshold: 75,
+  masteredThreshold: 90,
+  prerequisiteClampThreshold: 74,
+  prerequisitePolicy: "STRICT_CLAMP",
+};
+
 export interface MasteryRecordV2 {
   studentId: string;
   tenantId: string;
@@ -56,6 +97,9 @@ export interface MasteryRecordV2 {
   evidenceCount: number;
   evidenceIds: string[];
   algorithmVersion: string; // e.g. "v2.0.0"
+  masteryPolicyId?: string | undefined;
+  masteryPolicyVersion?: string | undefined;
+  effectiveAt?: string | undefined;
   calculatedAt: string;
   lastDecayEvaluationAt: string;
   explanation: {
@@ -68,6 +112,28 @@ export interface MasteryRecordV2 {
       prerequisiteFoundationMet: boolean;
     };
   };
+}
+
+export interface MasteryHistoryRecord {
+  historyId: string;
+  studentId: string;
+  tenantId: string;
+  courseId: string;
+  conceptId: string;
+  learningOutcomeId: string;
+  currentScore: number;
+  currentState: MasteryState;
+  previousScore: number;
+  previousState: MasteryState;
+  changeReason: string;
+  contributingFactors: {
+    assessmentPerformance: number;
+    attemptCount: number;
+    recencyStatus: "FRESH" | "STALE" | "DECAYING";
+    prerequisiteFoundationMet: boolean;
+  };
+  recommendedNextActions: string[];
+  changedAt: string;
 }
 
 // ============================================================================
