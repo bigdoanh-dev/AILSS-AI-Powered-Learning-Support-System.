@@ -40,17 +40,33 @@ export function computeUpperLowerDiscrimination(
 }
 
 /**
- * Point-biserial correlation r_pb (corrected item-total Pearson correlation)
+ * Point-biserial correlation r_pb (Corrected Item-Rest Pearson Correlation)
+ *
+ * For each item j, the learner's comparison score is the item-rest score:
+ *   X'_i = totalExamScore_i - itemScore_i (excluding the item itself).
+ * Point-biserial is computed as the Pearson product-moment correlation between
+ * the binary item score y_i in {0, 1} and the item-rest score X'_i.
+ * If var(y) == 0 (all correct / all incorrect) or var(X') == 0 (one-item assessment),
+ * returns 0.0 safely without NaN leakage.
  */
 export function computePointBiserial(
   records: StudentAttemptRecord[],
   total: number,
 ) {
+  if (total <= 1) {
+    return {
+      rPb: 0.0,
+      sampleSize: total,
+      scoreDefinition: "CORRECTED_TOTAL_EXCLUDING_ITEM" as const,
+      methodVersion: "CORRECTED_ITEM_REST_PEARSON" as const,
+    };
+  }
+
   let sumY = 0;
   let sumXp = 0;
   for (const r of records) {
     const y = r.isCorrect ? 1 : 0;
-    const xp = r.totalExamScore - y;
+    const xp = r.totalExamScore - y; // item-rest score
     sumY += y;
     sumXp += xp;
   }
@@ -70,16 +86,18 @@ export function computePointBiserial(
     varXp += diffXp * diffXp;
   }
 
-  let rPb = 0;
+  let rPb = 0.0;
   if (varY > 0 && varXp > 0) {
-    rPb = cov / Math.sqrt(varY * varXp);
+    const denom = Math.sqrt(varY * varXp);
+    rPb = denom > 0 ? cov / denom : 0.0;
   }
-  const roundedRpb = Math.round(rPb * 100) / 100;
+  const roundedRpb = isNaN(rPb) ? 0.0 : Math.round(rPb * 100) / 100;
 
   return {
     rPb: roundedRpb,
     sampleSize: total,
-    methodVersion: "CORRECTED_ITEM_TOTAL_PEARSON" as const,
+    scoreDefinition: "CORRECTED_TOTAL_EXCLUDING_ITEM" as const,
+    methodVersion: "CORRECTED_ITEM_REST_PEARSON" as const,
   };
 }
 
@@ -169,6 +187,8 @@ export function calculatePsychometrics(
       difficultyIndex: difficulty,
       upperLowerDiscriminationD: null,
       discriminationIndex: 0,
+      correctedItemRestPointBiserial: null,
+      itemRestPointBiserial: null,
       pointBiserialRpb: null,
       distractorEfficiency: [],
       optionSelectionDistribution: optionDist,
@@ -207,6 +227,8 @@ export function calculatePsychometrics(
     difficultyIndex: difficulty,
     upperLowerDiscriminationD: upperLowerD,
     discriminationIndex: upperLowerD.dValue,
+    correctedItemRestPointBiserial: pointBiserial,
+    itemRestPointBiserial: pointBiserial,
     pointBiserialRpb: pointBiserial,
     distractorEfficiency: distractors,
     optionSelectionDistribution: optionDist,
