@@ -22,7 +22,7 @@ In accordance with core release engineering immutability standards, **once publi
 |---|---|---|---|---|
 | **RC1** | `refs/tags/v6.2.0-rc.1` | `f91100789775bcd74428d2229d2a9ee45e433b4e` | `2026-09-21T21:40:00+07:00` | `PRESERVED_IMMUTABLE` |
 | **RC2** | `refs/tags/v6.2.0-rc.2` | `190b426a520eb99811ba3cb846a35edc6b1773f1` | `2026-09-21T23:45:39+07:00` | `PRESERVED_IMMUTABLE` |
-| **RC3** | `refs/tags/v6.2.0-rc.3` | `be5782e7665a542ecff8b5b746cbae3e3e21a259` | `2026-09-22T00:23:00+07:00` | `CANDIDATE_TAGGED` |
+| **RC3** | `refs/tags/v6.2.0-rc.3` | `781abe722901ffebfdf5c5f51b4cbaf8d225ae6d` | `2026-09-22T00:23:00+07:00` | `CANDIDATE_TAGGED` |
 
 ### 1.2 Canonical Test Suite Reconciliation Across Candidates (40.F3 – 40.F6)
 

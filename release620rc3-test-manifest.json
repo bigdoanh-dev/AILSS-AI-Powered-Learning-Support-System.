@@ -1,9 +1,9 @@
 {
   "$schema": "https://ailss.edu.vn/schemas/release620rc3-test-manifest-v1.json",
   "releaseCandidate": "AILSS 6.2.0-rc3",
-  "releaseGitSha": "be5782e7665a542ecff8b5b746cbae3e3e21a259",
+  "releaseGitSha": "781abe722901ffebfdf5c5f51b4cbaf8d225ae6d",
   "releaseTag": "v6.2.0-rc.3",
-  "generatedAt": "2026-09-21T17:22:38.151Z",
+  "generatedAt": "2026-09-21T17:22:55.053Z",
   "reconciliation": {
     "baselineGitSha": "2ebedacecf7be5d8f281e4b855ef9cce46f66304",
     "executionGitSha": "f91100789775bcd74428d2229d2a9ee45e433b4e",
@@ -12,7 +12,7 @@
     "rc2Tag": "v6.2.0-rc.2",
     "rc2GitSha": "190b426a520eb99811ba3cb846a35edc6b1773f1",
     "rc3Tag": "v6.2.0-rc.3",
-    "rc3GitSha": "be5782e7665a542ecff8b5b746cbae3e3e21a259",
+    "rc3GitSha": "781abe722901ffebfdf5c5f51b4cbaf8d225ae6d",
     "rc1Summary": {
       "totalSuites": 202,
       "totalTests": 1387,
