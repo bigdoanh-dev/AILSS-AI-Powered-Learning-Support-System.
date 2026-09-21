@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "totalMigrations": 44,
+  "totalMigrations": 45,
   "canonicalKeyspaces": [
     "identity_keyspace",
     "learning_keyspace",
@@ -493,6 +493,17 @@
       "classification": "SAFE_ADDITIVE",
       "status": "DEPLOYED_VERIFIED",
       "predecessor": "077",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "079",
+      "filename": "079_adaptive_learning_v2_and_institution.cql",
+      "sha256Dev": "a3676988b91ef682804642fb958a3ed2fcb075722da719a99c7a38b689dc1f11",
+      "sha256Research": "a3676988b91ef682804642fb958a3ed2fcb075722da719a99c7a38b689dc1f11",
+      "keyspace": "learning_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "DEPLOYED_VERIFIED",
+      "predecessor": "078",
       "environmentParity": "IDENTICAL"
     }
   ]
