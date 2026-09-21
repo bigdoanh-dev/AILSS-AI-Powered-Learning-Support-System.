@@ -35,12 +35,24 @@ export interface PrerequisiteEdgeV2 {
 
 export interface MultiFactorEvidence {
   evidenceId: string;
-  evidenceSource: "QUIZ" | "MANUAL_ASSESSMENT" | "LESSON_COMPLETION" | "TEACHER_OBSERVATION" | "PRACTICE_ATTEMPT";
+  evidenceSource:
+    | "QUIZ"
+    | "MANUAL_ASSESSMENT"
+    | "LESSON_COMPLETION"
+    | "TEACHER_OBSERVATION"
+    | "PRACTICE_ATTEMPT"
+    | "PROCTORED_EXAM"
+    | "FINAL_PROJECT"
+    | "LAB"
+    | "ASSIGNMENT"
+    | "DIAGNOSTIC"
+    | "PRACTICE"
+    | "AI_CONVERSATION";
   questionDifficulty?: number | undefined; // 0.0 - 1.0
   rawScorePercent: number; // 0 - 100
   attemptNumber: number;
   timestamp: string;
-  recencyWeight: number; // calculated exponential decay factor
+  recencyWeight?: number | undefined; // calculated exponential decay factor
 }
 
 export interface MasteryPolicyConfig {

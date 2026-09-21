@@ -119,6 +119,10 @@ export const canonicalPolicy = {
     "SAFE_ADDITIVE",
     "Verify learning keyspace, adaptive learning v2, copilot drafts, and institution tables.",
   ),
+  "080_wave2_course_authoring_and_experimentation.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify learning, assessment and identity keyspaces for Wave 2 tables.",
+  ),
 };
 
 export function findUnsafeStatements(body) {

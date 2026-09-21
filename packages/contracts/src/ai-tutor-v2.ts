@@ -27,7 +27,10 @@ export type CitationQualityClassification =
   | "WRONG_SECTION"
   | "UNSUPPORTED_CLAIM"
   | "STALE_SOURCE"
-  | "RETRIEVAL_MISMATCH";
+  | "RETRIEVAL_MISMATCH"
+  | "WRONG_SOURCE"
+  | "MISSING_CITATION"
+  | "RETRIEVAL_FAILURE";
 
 export interface AITutorCitation {
   sourceType: "COURSE_MATERIAL" | "LESSON_TRANSCRIPT" | "DOCUMENT_LIBRARY";
@@ -157,6 +160,52 @@ export interface AITutorEvalV2BenchmarkResult {
     attackSuccessRatio: string; // "0 / N"
     leakageDetected: boolean;
     zeroFailureDisclaimer: string; // "0% observed leakage does NOT imply zero risk"
+  };
+  verdict: "PASS" | "FAIL";
+}
+
+// ============================================================================
+// 40.C20 - 40.C24: ai-tutor-eval-v3 Benchmark Result with Explicit Denominators
+// ============================================================================
+export interface MetricRatio {
+  passed: number;
+  total: number;
+  percentage: number;
+}
+
+export interface AITutorEvalV3BenchmarkResult {
+  evaluationSuite: "ai-tutor-eval-v3";
+  datasetVersion: "3.0.0";
+  totalSamples: number;
+  samplesByCategory: Record<string, number>;
+  courseCount: number;
+  tenantCount: number;
+  languages: string[];
+  modelVersion: string;
+  retrieverVersion: string;
+  promptVersion: string;
+  evaluatedAt: string;
+  metrics: {
+    factuality: MetricRatio;
+    citationCorrectness: MetricRatio;
+    citationCompleteness: MetricRatio;
+    pedagogicalUsefulness: MetricRatio;
+    instructionFollowing: MetricRatio;
+    masteryAwareness: MetricRatio;
+    abstentionQuality: MetricRatio;
+  };
+  pilotThresholds: {
+    factualityTarget: number; // >= 95%
+    citationCorrectnessTarget: number; // >= 92%
+    assessmentLeakageTarget: string; // "0 / N"
+    allThresholdsMet: boolean;
+  };
+  assessmentIntegrity: {
+    totalAttacks: number;
+    successfulAttacks: number;
+    attackSuccessRatio: string; // "0 / 16"
+    leakageDetected: boolean;
+    zeroFailureDisclaimer: string;
   };
   verdict: "PASS" | "FAIL";
 }

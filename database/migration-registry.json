@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "totalMigrations": 45,
+  "totalMigrations": 46,
   "canonicalKeyspaces": [
     "identity_keyspace",
     "learning_keyspace",
@@ -504,6 +504,17 @@
       "classification": "SAFE_ADDITIVE",
       "status": "DEPLOYED_VERIFIED",
       "predecessor": "078",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "080",
+      "filename": "080_wave2_course_authoring_and_experimentation.cql",
+      "sha256Dev": "f40b012d0ddb25ec5568e78c60196f7635561415da12f235d5bd925b18f82dac",
+      "sha256Research": "f40b012d0ddb25ec5568e78c60196f7635561415da12f235d5bd925b18f82dac",
+      "keyspace": "learning_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "DEPLOYED_VERIFIED",
+      "predecessor": "079",
       "environmentParity": "IDENTICAL"
     }
   ]
