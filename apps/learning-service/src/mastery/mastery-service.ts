@@ -252,3 +252,277 @@ export class LearnerMasteryService {
     return distribution;
   }
 }
+
+// ============================================================================
+// 39.A1 - 39.A4: Mastery Engine V2 & Prerequisite DAG Validator
+// ============================================================================
+import type {
+  MasteryRecordV2,
+  MasteryState,
+  MultiFactorEvidence,
+  PrerequisiteEdgeV2,
+  DAGValidationResult,
+} from "../../../../packages/contracts/src/index.js";
+
+export class PrerequisiteDAGValidator {
+  public static validate(
+    edges: PrerequisiteEdgeV2[],
+    knownConcepts: string[],
+    expectedTenantId: string,
+  ): DAGValidationResult {
+    const cyclesDetected: string[][] = [];
+    const invalidCrossTenantEdges: string[] = [];
+    const missingPrerequisites: string[] = [];
+    const orphanConcepts: string[] = [];
+
+    const knownSet = new Set(knownConcepts);
+    const connectedConcepts = new Set<string>();
+
+    // Build adjacency list: source -> targets
+    const adj = new Map<string, string[]>();
+    for (const edge of edges) {
+      if (edge.tenantId !== expectedTenantId) {
+        invalidCrossTenantEdges.push(`${edge.sourceConceptId}->${edge.targetConceptId}`);
+      }
+      if (!knownSet.has(edge.sourceConceptId)) {
+        missingPrerequisites.push(edge.sourceConceptId);
+      }
+      if (!knownSet.has(edge.targetConceptId)) {
+        missingPrerequisites.push(edge.targetConceptId);
+      }
+
+      connectedConcepts.add(edge.sourceConceptId);
+      connectedConcepts.add(edge.targetConceptId);
+
+      const targets = adj.get(edge.sourceConceptId) ?? [];
+      targets.push(edge.targetConceptId);
+      adj.set(edge.sourceConceptId, targets);
+    }
+
+    // Check for orphans among known concepts
+    for (const concept of knownConcepts) {
+      if (!connectedConcepts.has(concept) && knownConcepts.length > 1) {
+        orphanConcepts.push(concept);
+      }
+    }
+
+    // Cycle detection via DFS with 3 states: 0=unvisited, 1=visiting, 2=visited
+    const state = new Map<string, number>();
+    const parentMap = new Map<string, string>();
+
+    const dfs = (node: string, path: string[]): void => {
+      state.set(node, 1); // visiting
+      path.push(node);
+
+      const neighbors = adj.get(node) ?? [];
+      for (const neighbor of neighbors) {
+        const neighborState = state.get(neighbor) ?? 0;
+        if (neighborState === 1) {
+          // Cycle found!
+          const cycleStartIdx = path.indexOf(neighbor);
+          const cycle = [...path.slice(cycleStartIdx), neighbor];
+          cyclesDetected.push(cycle);
+        } else if (neighborState === 0) {
+          parentMap.set(neighbor, node);
+          dfs(neighbor, [...path]);
+        }
+      }
+
+      state.set(node, 2); // visited
+    };
+
+    for (const node of connectedConcepts) {
+      if ((state.get(node) ?? 0) === 0) {
+        dfs(node, []);
+      }
+    }
+
+    return {
+      isValid:
+        cyclesDetected.length === 0 &&
+        invalidCrossTenantEdges.length === 0 &&
+        missingPrerequisites.length === 0,
+      cyclesDetected,
+      orphanConcepts,
+      missingPrerequisites: [...new Set(missingPrerequisites)],
+      invalidCrossTenantEdges,
+    };
+  }
+}
+
+export class LearnerMasteryServiceV2 {
+  public static readonly ALGORITHM_VERSION = "v2.0.0";
+
+  public calculateMasteryV2(input: {
+    studentId: string;
+    tenantId: string;
+    courseId: string;
+    conceptId: string;
+    learningOutcomeId: string;
+    evidences: MultiFactorEvidence[];
+    hasMetPrerequisites: boolean;
+    daysSinceLastActivity: number;
+    previousState?: MasteryState | undefined;
+    recalculationReason?: string | undefined;
+  }): MasteryRecordV2 {
+    const {
+      studentId,
+      tenantId,
+      courseId,
+      conceptId,
+      learningOutcomeId,
+      evidences,
+      hasMetPrerequisites,
+      daysSinceLastActivity,
+      previousState,
+    } = input;
+
+    if (evidences.length === 0) {
+      return {
+        studentId,
+        tenantId,
+        learningOutcomeId,
+        conceptId,
+        courseId,
+        masteryScore: 0,
+        masteryState: "NOT_OBSERVED",
+        confidenceScore: 0,
+        evidenceCount: 0,
+        evidenceIds: [],
+        algorithmVersion: LearnerMasteryServiceV2.ALGORITHM_VERSION,
+        calculatedAt: new Date().toISOString(),
+        lastDecayEvaluationAt: new Date().toISOString(),
+        explanation: {
+          whyState: "No learning activity or assessment evidence has been recorded for this outcome yet.",
+          nextSteps: "Start with the introductory lesson and foundational knowledge checks.",
+          contributingFactors: {
+            assessmentPerformance: 0,
+            attemptCount: 0,
+            recencyStatus: "FRESH",
+            prerequisiteFoundationMet: hasMetPrerequisites,
+          },
+        },
+      };
+    }
+
+    // Weights by source
+    const weights: Record<string, number> = {
+      QUIZ: 0.35,
+      MANUAL_ASSESSMENT: 0.35,
+      TEACHER_OBSERVATION: 0.20,
+      LESSON_COMPLETION: 0.10,
+      PRACTICE_ATTEMPT: 0.15,
+    };
+
+    let totalWeight = 0;
+    let weightedScoreSum = 0;
+
+    for (const ev of evidences) {
+      const baseWeight = weights[ev.evidenceSource] ?? 0.2;
+      // Diminishing returns on multiple retries
+      const attemptDampener = 1 / (1 + 0.15 * Math.max(0, ev.attemptNumber - 1));
+      // Difficulty factor: questions with difficulty > 0.7 reward higher weight
+      const difficultyBonus = 1 + (ev.questionDifficulty ?? 0.5) * 0.2;
+
+      const effectiveWeight = baseWeight * attemptDampener * difficultyBonus * (ev.recencyWeight || 1);
+      weightedScoreSum += ev.rawScorePercent * effectiveWeight;
+      totalWeight += effectiveWeight;
+    }
+
+    let calculatedScore = totalWeight > 0 ? Math.round(weightedScoreSum / totalWeight) : 0;
+
+    // Recency evaluation
+    let recencyStatus: "FRESH" | "STALE" | "DECAYING" = "FRESH";
+    if (daysSinceLastActivity > 21) {
+      recencyStatus = "DECAYING";
+      // Apply gradual score decay
+      const decayFactor = Math.exp(-0.015 * (daysSinceLastActivity - 21));
+      calculatedScore = Math.max(25, Math.round(calculatedScore * decayFactor));
+    } else if (daysSinceLastActivity > 14) {
+      recencyStatus = "STALE";
+    }
+
+    // Confidence increases with evidence count up to 100
+    const confidenceScore = Math.min(100, Math.round(evidences.length * 20 + (hasMetPrerequisites ? 20 : 0)));
+
+    // Determine state
+    let masteryState: MasteryState;
+    if (recencyStatus === "DECAYING" && (previousState === "PROFICIENT" || previousState === "MASTERED")) {
+      masteryState = "DECAY_RISK";
+    } else if (calculatedScore < 40) {
+      masteryState = "INTRODUCED";
+    } else if (calculatedScore < 75) {
+      masteryState = "DEVELOPING";
+    } else if (calculatedScore < 90) {
+      masteryState = "PROFICIENT";
+    } else {
+      masteryState = "MASTERED";
+    }
+
+    // If prerequisites are NOT met, clamp mastery state to DEVELOPING max
+    if (!hasMetPrerequisites && (masteryState === "PROFICIENT" || masteryState === "MASTERED")) {
+      masteryState = "DEVELOPING";
+      calculatedScore = Math.min(74, calculatedScore);
+    }
+
+    // Generate explainability
+    let whyState: string;
+    let nextSteps: string;
+
+    switch (masteryState) {
+      case "MASTERED":
+        whyState = `Demonstrated superior mastery (${calculatedScore}%) across ${evidences.length} verified assessments.`;
+        nextSteps = "Help peers in the course discussion or explore advanced enrichment topics.";
+        break;
+      case "PROFICIENT":
+        whyState = `Strong grasp of foundational and applied concepts (${calculatedScore}%). Prerequisites verified.`;
+        nextSteps = "Complete the final comprehensive assessment to lock in full mastery.";
+        break;
+      case "DEVELOPING":
+        if (!hasMetPrerequisites) {
+          whyState = `Score is ${calculatedScore}%, but prerequisite foundations require completion before advancing.`;
+          nextSteps = "Review prerequisite concepts and complete prerequisite diagnostic checks.";
+        } else {
+          whyState = `Working understanding demonstrated (${calculatedScore}%), but requires more consistent practice.`;
+          nextSteps = "Take practice questions and ask AI Tutor for Socratic review on tricky problems.";
+        }
+        break;
+      case "DECAY_RISK":
+        whyState = `Previously achieved proficiency, but inactive for ${daysSinceLastActivity} days. Knowledge decay detected.`;
+        nextSteps = "Complete a quick 5-minute refresher practice session to restore active mastery status.";
+        break;
+      case "INTRODUCED":
+      default:
+        whyState = `Initial exposure completed (${calculatedScore}%), but core competencies are not yet solid.`;
+        nextSteps = "Review the core lesson materials and attempt guided practice exercises.";
+        break;
+    }
+
+    return {
+      studentId,
+      tenantId,
+      learningOutcomeId,
+      conceptId,
+      courseId,
+      masteryScore: Math.max(0, Math.min(100, calculatedScore)),
+      masteryState,
+      previousMasteryState: previousState,
+      confidenceScore,
+      evidenceCount: evidences.length,
+      evidenceIds: evidences.map((e) => e.evidenceId),
+      algorithmVersion: LearnerMasteryServiceV2.ALGORITHM_VERSION,
+      calculatedAt: new Date().toISOString(),
+      lastDecayEvaluationAt: new Date().toISOString(),
+      explanation: {
+        whyState,
+        nextSteps,
+        contributingFactors: {
+          assessmentPerformance: calculatedScore,
+          attemptCount: evidences.length,
+          recencyStatus,
+          prerequisiteFoundationMet: hasMetPrerequisites,
+        },
+      },
+    };
+  }
+}
