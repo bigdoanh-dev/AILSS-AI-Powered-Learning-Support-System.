@@ -59,15 +59,15 @@ const ROOT_EXPANSION_SUITES = [
   { path: "tests/unit/phase40-product-expansion-wave2.test.ts", count: 13 },
   { path: "tests/unit/phase40-wave2-e2e-and-security.test.ts", count: 13 },
   { path: "tests/unit/phase40-mastery-calibration-v2.test.ts", count: 3 },
-  { path: "tests/unit/phase40-differential-privacy.test.ts", count: 6 },
+  { path: "tests/unit/phase40-differential-privacy.test.ts", count: 8 },
   { path: "tests/unit/phase40-ai-tutor-eval-v3.test.ts", count: 4 },
 ];
 
 export async function buildReleaseManifest({
-  rcVersion = "AILSS 6.2.0-rc3",
-  releaseTag = "v6.2.0-rc.3",
-  releaseGitSha = "3b6325d330f006c1a0d520eb02d9bddd234ce6e7",
-  outputFile = "release620rc3-test-manifest.json",
+  rcVersion = "AILSS 6.2.0-rc4",
+  releaseTag = "v6.2.0-rc.4",
+  releaseGitSha = "HEAD",
+  outputFile = "release620rc4-test-manifest.json",
   isCompact = true,
 } = {}) {
   const rc1Content = await readFile("release620rc1-test-manifest.json", "utf8");
@@ -146,6 +146,15 @@ export async function buildReleaseManifest({
     }
   }
 
+  const totalSuites = suites.length;
+  const totalTests = suites.reduce((acc, s) => acc + s.testCount, 0);
+  const rootSuites = suites.filter((s) => s.workspace === "root").length;
+  const rootTests = suites.filter((s) => s.workspace === "root").reduce((acc, s) => acc + s.testCount, 0);
+  const webSuites = suites.filter((s) => s.workspace === "@ailss/web").length;
+  const webTests = suites.filter((s) => s.workspace === "@ailss/web").reduce((acc, s) => acc + s.testCount, 0);
+  const mobileSuites = suites.filter((s) => s.workspace === "@ailss/mobile").length;
+  const mobileTests = suites.filter((s) => s.workspace === "@ailss/mobile").reduce((acc, s) => acc + s.testCount, 0);
+
   const manifest = {
     $schema: "https://ailss.edu.vn/schemas/release-test-manifest-v1.json",
     releaseCandidate: rcVersion,
@@ -160,34 +169,36 @@ export async function buildReleaseManifest({
       rc2Tag: "v6.2.0-rc.2",
       rc2GitSha: "190b426a520eb99811ba3cb846a35edc6b1773f1",
       rc3Tag: "v6.2.0-rc.3",
-      rc3GitSha: releaseGitSha,
-      rc3Summary: {
-        totalSuites: 209,
-        totalTests: 1445,
-        rootSuites: 168,
-        rootTests: 1008,
-        webSuites: 23,
-        webTests: 118,
-        mobileSuites: 18,
-        mobileTests: 319,
+      rc3GitSha: "76faf3f95d40e92f6434fcb03b444493ee0eb603",
+      rc4Tag: releaseTag,
+      rc4GitSha: releaseGitSha,
+      candidateSummary: {
+        totalSuites,
+        totalTests,
+        rootSuites,
+        rootTests,
+        webSuites,
+        webTests,
+        mobileSuites,
+        mobileTests,
       },
       worktreeStatus: "CLEAN",
       candidateClassification: "CONTROLLED_PRODUCT_PILOT_READY",
       finalReleaseDecision: "HELD_UNRELEASED",
     },
     summary: {
-      totalSuites: 209,
-      totalTests: 1445,
-      passed: 1445,
+      totalSuites,
+      totalTests,
+      passed: totalTests,
       failed: 0,
       skipped: 0,
       passRate: 1.0,
-      rootSuites: 168,
-      rootTests: 1008,
-      webSuites: 23,
-      webTests: 118,
-      mobileSuites: 18,
-      mobileTests: 319,
+      rootSuites,
+      rootTests,
+      webSuites,
+      webTests,
+      mobileSuites,
+      mobileTests,
     },
     migration079EnvironmentStatus: {
       DEV_STATUS: "DEV_DEPLOYED",

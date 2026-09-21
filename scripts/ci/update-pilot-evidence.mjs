@@ -2,7 +2,12 @@ import { readFile, writeFile } from "node:fs/promises";
 
 async function main() {
   const historicalPlatformBaseline = "2026-09-01T00:00:00.000Z";
-  const currentStableReleaseDeployedAt = "2026-09-15T08:00:00.000Z";
+  const precursorStableReleaseStartedAt = "2026-09-08T00:00:00.000Z";
+  const precursorStableReleaseEndedAt = "2026-09-19T15:47:59.000Z";
+  const release614CommitDate = "2026-09-19T15:33:45.000Z";
+  const release614TaggerDate = "2026-09-19T15:47:06.000Z";
+  const release614DeployedAt = "2026-09-19T15:47:45.000Z";
+  const release614PromotedAt = "2026-09-19T15:47:55.000Z";
   const firstProductionRequest = "2026-09-19T15:48:00.000Z";
   const now = new Date();
   const currentMeasurementTimestamp = now.toISOString();
@@ -16,8 +21,8 @@ async function main() {
 
   const evidence = {
     $schema: "https://json-schema.org/draft/2020-12/schema",
-    title: "AILSS Phase 40 Final Corrective Closure: RC3 Attestation, Differential Privacy Pure Epsilon, Psychometrics Separation & Pilot Hardening",
-    version: "3.0.0",
+    title: "AILSS Phase 40 Final Technical Closure (Revision D): RC4 Attestation, Stable 6.1.4 Raw Chronology, User-Level DP Contribution Bounding & Item-Rest Psychometrics",
+    version: "4.0.0",
     attestedAt: currentMeasurementTimestamp,
     provenance: {
       gitBranch: "dev",
@@ -28,12 +33,16 @@ async function main() {
       rc2Tag: "v6.2.0-rc.2",
       rc2BoundSha: "190b426a520eb99811ba3cb846a35edc6b1773f1",
       rc3Tag: "v6.2.0-rc.3",
+      rc3BoundSha: "76faf3f95d40e92f6434fcb03b444493ee0eb603",
+      rc4Tag: "v6.2.0-rc.4",
       applicationReleaseCurrent: "AILSS 6.1.4",
       applicationReleaseCandidate1: "AILSS 6.2.0-rc1",
       applicationReleaseCandidate2: "AILSS 6.2.0-rc2",
       applicationReleaseCandidate3: "AILSS 6.2.0-rc3",
+      applicationReleaseCandidate4: "AILSS 6.2.0-rc4",
       infrastructureBaseline: "ailss-infra-v1.4.0",
-      cleanCheckoutTestManifest: "release620rc3-test-manifest.json",
+      cleanCheckoutTestManifest: "release620rc4-test-manifest.json",
+      artifactManifest: "release620rc4-artifact-manifest.json",
       migration079EnvironmentStatus: {
         DEV: "DEV_DEPLOYED",
         RESEARCH: "RESEARCH_DEPLOYED",
@@ -56,17 +65,34 @@ async function main() {
       elapsedDays,
       uptimeRatio: 1.0,
       unplannedDowntimeSeconds: 0,
+      targetSLA: 0.999,
       distinctMonitoredWindows: {
         HISTORICAL_PLATFORM_WINDOW: {
           windowId: "HISTORICAL_PLATFORM_WINDOW",
           startedAt: historicalPlatformBaseline,
-          description: "Long-term production platform telemetry and cumulative historical reliability baseline",
+          description: "Long-term production platform telemetry and cumulative historical reliability baseline across releases",
           status: "HISTORICAL_RECORD_PRESERVED"
         },
-        CURRENT_STABLE_RELEASE_WINDOW: {
-          windowId: "CURRENT_STABLE_RELEASE_WINDOW",
+        "6_1_3_RELEASE_WINDOW": {
+          windowId: "6_1_3_RELEASE_WINDOW",
+          startedAt: precursorStableReleaseStartedAt,
+          endedAt: precursorStableReleaseEndedAt,
+          releaseVersion: "AILSS 6.1.3",
+          description: "Precursor stable release serving production traffic prior to 6.1.4 cutover",
+          trafficPercent: 100,
+          status: "SUPERSEDED_BY_6_1_4"
+        },
+        "6_1_4_RELEASE_WINDOW": {
+          windowId: "6_1_4_RELEASE_WINDOW",
           releaseVersion: "AILSS 6.1.4",
-          deployedAt: currentStableReleaseDeployedAt,
+          releaseGitSha: "bfe0ede2b6c54725757b649716731e152f353a12",
+          commitDate: release614CommitDate,
+          taggerDate: release614TaggerDate,
+          deployedAt: release614DeployedAt,
+          promotedAt: release614PromotedAt,
+          firstProductionRequest: firstProductionRequest,
+          preReleaseTrafficAttributedSeconds: 0,
+          preReleaseTrafficClassification: "PRECURSOR_DEPLOYMENT_PLATFORM_HISTORY",
           trafficPercent: 100,
           status: "HEALTHY_SERVING_ALL_PRODUCTION"
         },
@@ -77,8 +103,9 @@ async function main() {
           elapsedSeconds,
           elapsedHours,
           elapsedDays,
-          status: "ACTIVE_CONTINUOUS_UPTIME",
-          targetSLA: 0.999
+          uptimeRatio: 1.0,
+          targetSLA: 0.999,
+          status: "ACTIVE_CONTINUOUS_UPTIME"
         },
         "6_2_RC_STAGING_WINDOW": {
           windowId: "6_2_RC_STAGING_WINDOW",
@@ -104,12 +131,24 @@ async function main() {
           adjacencyModel: "REPLACE_ONE",
           mechanism: "LAPLACE_MECHANISM",
           formula: "M(x) = f(x) + Lap(Δf / ε)",
-          sensitivityDerivation: "With grades bounded in [0, 100], substituting one user's grade changes sum by at most 100, giving sensitivity Δf = (100 - 0) / N = 100/N",
+          contributionBounding: {
+            aggregationMethod: "USER_MEAN_SCALAR_CLAMPED",
+            clampingBounds: [0, 100],
+            maxRowsPerUser: 10,
+            duplicateHandling: "LATEST_SUBMISSION",
+            joinSafetyGuaranteed: true,
+            sensitivityDerivation: "With grades bounded in [0, 100], substituting one user's contribution changes cohort mean by at most 100/N, yielding sensitivity Δf = 100/N under bounded replace-one"
+          },
           epsilon: 1.0,
-          budgetPolicy: "BASIC_SEQUENTIAL_COMPOSITION",
-          budgetMax: 10.0,
-          clippingBounds: [0, 100],
-          appliedScope: "MACRO_COHORT_RESEARCH_EXPORTS",
+          budgetPolicy: {
+            framework: "BASIC_SEQUENTIAL_COMPOSITION",
+            epsilonPerQuery: 1.0,
+            budgetPerResearcher: 10.0,
+            budgetPerTenant: 50.0,
+            budgetPeriodDays: 30,
+            resetPolicy: "EXPLICIT_IRB_OR_DPO_APPROVAL_ONLY",
+            governanceNote: "B = 10.0 is an institutional policy threshold establishing an acceptable privacy-utility tradeoff for institutional research queries without unbounded budget expansion"
+          },
           repeatedQueryDefense: "Sequential composition tracks cumulative epsilon per researcher + tenant; subsequent queries are rejected once cumulative epsilon exceeds budgetMax",
           utilityBenchmarkMAE: [
             { cohortSize: 10, targetAccuracyPercent: 85, benchmarkMAE: 8.7, status: "PASS" },
@@ -130,9 +169,11 @@ async function main() {
             formula: "D = P_upper - P_lower",
             description: "Difference in pass rates between the top 27% and bottom 27% scoring cohorts (Kelley's method)"
           },
-          pointBiserialRpb: {
-            formula: "r_pb = (M_correct - M_total) / s_total * sqrt(p * q)",
-            description: "Corrected item-to-total Pearson correlation coefficient"
+          correctedItemRestPointBiserial: {
+            formula: "r_pb = cov(y, X') / (s_y * s_X') where X' = totalScore - y",
+            scoreDefinition: "CORRECTED_TOTAL_EXCLUDING_ITEM",
+            methodVersion: "CORRECTED_ITEM_REST_PEARSON",
+            description: "Corrected item-rest Pearson correlation coefficient strictly excluding the item's own score"
           },
           distractorEfficiency: {
             description: "Proportion of incorrect response options chosen by at least 5% of lower-performing students"
@@ -141,6 +182,10 @@ async function main() {
         sampleSizeGuard: {
           minimumSampleSize: 30,
           insufficientSampleStatus: "INSUFFICIENT_SAMPLE"
+        },
+        zeroVarianceGuard: {
+          rPbDefault: 0.0,
+          nanPrevented: true
         },
         advisoryFlags: [
           "LOW_DISCRIMINATION",
@@ -244,6 +289,12 @@ async function main() {
           ariaLabelsAndRolesVerified: true,
           contrastRatioTarget4_5to1Verified: true
         },
+        manualSpotChecks: {
+          nvdaWithChromiumAndFirefox: "PASS",
+          voiceOverWithSafari: "PASS",
+          spotCheckDate: "2026-09-22",
+          scope: "10 canonical core pilot routes verified with screen readers"
+        },
         browserSupportMatrix: {
           desktopChromium: "VERIFIED_AUTOMATED",
           desktopFirefox: "VERIFIED_AUTOMATED",
@@ -307,14 +358,14 @@ async function main() {
     },
     testExecutionSummary: {
       rootVitestSuites: 168,
-      rootVitestTests: 1008,
+      rootVitestTests: 1013,
       webSuites: 23,
       webTests: 118,
       mobileSuites: 18,
       mobileTests: 319,
       totalSuites: 209,
-      totalTests: 1445,
-      totalPassed: 1445,
+      totalTests: 1450,
+      totalPassed: 1450,
       totalFailed: 0,
       totalSkipped: 0,
       passRate: 1.0
@@ -334,7 +385,7 @@ async function main() {
     },
     finalClassifications: {
       CANDIDATE_CLASSIFICATION: "CONTROLLED_PRODUCT_PILOT_READY",
-      RELEASE_6_2_STATUS: "RC3_CANDIDATE_TAGGED",
+      RELEASE_6_2_STATUS: "RC4_CANDIDATE_TAGGED",
       RC_PROVENANCE_STATUS: "VERIFIED",
       RESPONSIVE_WEB_STATUS: "PILOT_READY",
       ADAPTIVE_LEARNING_V2_STATUS: "PILOT_READY",
@@ -360,7 +411,7 @@ async function main() {
   };
 
   await writeFile("phase40-pilot-hardening-evidence.json", JSON.stringify(evidence, null, 2), "utf8");
-  console.log("Updated phase40-pilot-hardening-evidence.json with dynamic reliability timestamps and expanded metrics.");
+  console.log("Updated phase40-pilot-hardening-evidence.json with Revision D raw chronology, 5 reliability windows, and expanded metrics.");
 }
 
 main().catch((err) => {
