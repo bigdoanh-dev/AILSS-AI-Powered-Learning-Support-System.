@@ -22,8 +22,8 @@ const safeSnapshot = {
 };
 
 describe("populated migration precheck", () => {
-  it("has an exact explicit 44-file policy covering both profiles", async () => {
-    expect(Object.keys(canonicalPolicy)).toHaveLength(44);
+  it("has an exact explicit 45-file policy covering both profiles", async () => {
+    expect(Object.keys(canonicalPolicy)).toHaveLength(45);
     const result = (await runPrecheck()) as {
       status: string;
       networkAccessPerformed: boolean;
@@ -35,7 +35,7 @@ describe("populated migration precheck", () => {
       status: "PASS_SOURCE_POLICY",
       networkAccessPerformed: false,
       targetMutationPerformed: false,
-      profiles: { dev: 44, research: 44 },
+      profiles: { dev: 45, research: 45 },
       targetQualification: { status: "BLOCKED_EXTERNAL" },
     });
   });
@@ -133,12 +133,12 @@ describe("populated migration precheck", () => {
     }
     const registry = JSON.parse(registryContent) as MigrationRegistry;
 
-    expect(registry.totalMigrations).toBe(44);
-    expect(registry.migrations).toHaveLength(44);
+    expect(registry.totalMigrations).toBe(45);
+    expect(registry.migrations).toHaveLength(45);
 
     const ids = registry.migrations.map((m: MigrationEntry) => m.id);
     const uniqueIds = new Set(ids);
-    expect(uniqueIds.size).toBe(44); // No duplicates
+    expect(uniqueIds.size).toBe(45); // No duplicates
 
     // Verify ordering
     for (let i = 1; i < registry.migrations.length; i++) {

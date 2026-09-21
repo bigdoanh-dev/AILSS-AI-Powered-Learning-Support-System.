@@ -72,3 +72,8 @@ export * from "./institutional-pilot.js";
 export * from "./data-retention-policy.js";
 export * from "./commercial-gate.js";
 export * from "./critical-durability.js";
+export * from "./adaptive-learning-v2.js";
+export * from "./ai-tutor-v2.js";
+export * from "./teacher-copilot.js";
+export * from "./institution-v2.js";
+export * from "./learning-intelligence.js";

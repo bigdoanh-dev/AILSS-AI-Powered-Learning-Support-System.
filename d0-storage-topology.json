@@ -25,7 +25,9 @@
       },
       "nodeLevelCommitLogPolicy": {
         "commitlogSync": "batch",
-        "commitlogSyncBatchWindowInMs": 2,
+        "commitlogSyncBatchWindowInMs": null,
+        "commitlogSyncGroupWindowInMs": null,
+        "syncModeSemantics": "IMMEDIATE_FSYNC_BEFORE_ACK_ZERO_WINDOW",
         "commitlogSegmentSizeInMb": 32,
         "commitlogDirectory": "/var/lib/cassandra/commitlog",
         "dataDirectory": "/var/lib/cassandra/data",

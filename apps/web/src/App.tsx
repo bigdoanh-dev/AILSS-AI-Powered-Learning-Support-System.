@@ -70,6 +70,18 @@ const TeachingSchedule = lazy(() =>
 const TeachingAttendance = lazy(() =>
   import("./lecturer/Planning").then((m) => ({ default: m.TeachingAttendance })),
 );
+const StudyPlanPage = lazy(() =>
+  import("./student/StudyPlan").then((m) => ({ default: m.StudyPlanPage })),
+);
+const AiTutorPage = lazy(() =>
+  import("./student/AiTutor").then((m) => ({ default: m.AiTutorPage })),
+);
+const TeacherCopilotPage = lazy(() =>
+  import("./lecturer/TeacherCopilot").then((m) => ({ default: m.TeacherCopilotPage })),
+);
+const InstitutionWizardPage = lazy(() =>
+  import("./admin/InstitutionWizard").then((m) => ({ default: m.InstitutionWizardPage })),
+);
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Moderation = lazy(() => import("./admin/Moderation"));
 const admin = (name: keyof typeof import("./admin/Admin")) =>
@@ -174,6 +186,8 @@ export default function App() {
                       <Route path="schedule" element={<StudentSchedule />} />
                       <Route path="attendance" element={<StudentAttendance />} />
                       <Route path="classes/:classId" element={<ClassDetail />} />
+                      <Route path="study-plan" element={<StudyPlanPage />} />
+                      <Route path="ai-tutor" element={<AiTutorPage />} />
 
                       <Route path="assessments" element={<Assessments />} />
                       <Route path="assessments/:quizId" element={<QuizDetail />} />
@@ -207,6 +221,7 @@ export default function App() {
                       <Route path="teaching/assessments/:quizId/results" element={<TeachingResults />} />
                       <Route path="teaching/ai" element={<AiStudio />} />
                       <Route path="teaching/ai/jobs/:jobId" element={<AiJob />} />
+                      <Route path="teaching/copilot" element={<TeacherCopilotPage />} />
                       <Route
                         path="teaching/discussion/:resourceType/:resourceId"
                         element={<LecturerComments />}
@@ -223,6 +238,8 @@ export default function App() {
                       <Route path="admin/lecturer-applications" element={<AdminLecturerApplications />} />
                       <Route path="admin/moderation" element={<Moderation />} />
                       <Route path="admin/settings" element={<AdminSettings />} />
+                      <Route path="admin/onboarding" element={<InstitutionWizardPage />} />
+                      <Route path="admin/integrations" element={<InstitutionWizardPage />} />
                     </Route>
                   </Route>
                   <Route element={<Layout />}>

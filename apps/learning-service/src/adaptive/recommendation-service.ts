@@ -252,3 +252,117 @@ export class CourseRecommendationService {
     return feedback;
   }
 }
+
+// ============================================================================
+// 39.A7 & 39.A8: Adaptive Next-Action Engine & Loop Prevention
+// ============================================================================
+import type {
+  NextActionRecommendation,
+  MasteryRecordV2,
+  StudyPlanItemAction,
+} from "../../../../packages/contracts/src/index.js";
+
+export interface NextActionCandidateInput {
+  studentId: string;
+  courseId: string;
+  masteryRecords: MasteryRecordV2[];
+  prerequisiteGaps: { conceptId: string; missingPrereqId: string }[];
+  upcomingAssessments: { assessmentId: string; title: string; dueDays: number }[];
+  recentRecommendationHashes?: string[] | undefined;
+}
+
+export class AdaptiveNextActionEngine {
+  public generateNextActions(input: NextActionCandidateInput): NextActionRecommendation[] {
+    const candidates: NextActionRecommendation[] = [];
+    const recentHashes = new Set(input.recentRecommendationHashes ?? []);
+
+    const makeHash = (studentId: string, action: string, targetId: string): string => {
+      return `${studentId}:${action}:${targetId}`;
+    };
+
+    // 1. Check prerequisite gaps (Foundation priority)
+    for (const gap of input.prerequisiteGaps) {
+      const hash = makeHash(input.studentId, "REVIEW_CONCEPT", gap.missingPrereqId);
+      if (!recentHashes.has(hash)) {
+        candidates.push({
+          recommendationId: randomUUID(),
+          studentId: input.studentId,
+          courseId: input.courseId,
+          action: "REVIEW_CONCEPT",
+          targetId: gap.missingPrereqId,
+          title: `Master Prerequisite: ${gap.missingPrereqId}`,
+          reasonCode: "PREREQUISITE_GAP",
+          reasonDescription: `Required foundation for ${gap.conceptId} is currently missing.`,
+          urgencyScore: 95,
+          loopPreventionHash: hash,
+        });
+      }
+    }
+
+    // 2. Check upcoming assessments within 3 days
+    for (const ass of input.upcomingAssessments) {
+      if (ass.dueDays <= 3) {
+        const hash = makeHash(input.studentId, "TAKE_DIAGNOSTIC", ass.assessmentId);
+        if (!recentHashes.has(hash)) {
+          candidates.push({
+            recommendationId: randomUUID(),
+            studentId: input.studentId,
+            courseId: input.courseId,
+            action: "TAKE_DIAGNOSTIC",
+            targetId: ass.assessmentId,
+            title: `Readiness Check: ${ass.title}`,
+            reasonCode: "UPCOMING_ASSESSMENT",
+            reasonDescription: `Assessment due in ${ass.dueDays} day(s). Test readiness now.`,
+            urgencyScore: 90,
+            loopPreventionHash: hash,
+          });
+        }
+      }
+    }
+
+    // 3. Check decay risks
+    const decayItems = input.masteryRecords.filter((m) => m.masteryState === "DECAY_RISK");
+    for (const d of decayItems) {
+      const hash = makeHash(input.studentId, "ASK_AI_TUTOR", d.conceptId);
+      if (!recentHashes.has(hash)) {
+        candidates.push({
+          recommendationId: randomUUID(),
+          studentId: input.studentId,
+          courseId: input.courseId,
+          action: "ASK_AI_TUTOR",
+          targetId: d.conceptId,
+          title: `Refresher with AI Tutor: ${d.conceptId}`,
+          reasonCode: "RECENCY_DECAY",
+          reasonDescription: "Review decay risk concept with interactive Socratic dialogue.",
+          urgencyScore: 80,
+          loopPreventionHash: hash,
+        });
+      }
+    }
+
+    // 4. Developing concepts
+    const devItems = input.masteryRecords.filter((m) => m.masteryState === "DEVELOPING");
+    for (const dev of devItems) {
+      const hash = makeHash(input.studentId, "PRACTICE_QUESTIONS", dev.conceptId);
+      if (!recentHashes.has(hash)) {
+        candidates.push({
+          recommendationId: randomUUID(),
+          studentId: input.studentId,
+          courseId: input.courseId,
+          action: "PRACTICE_QUESTIONS",
+          targetId: dev.conceptId,
+          title: `Targeted Practice: ${dev.conceptId}`,
+          reasonCode: "LOW_MASTERY",
+          reasonDescription: `Current mastery is ${String(dev.masteryScore)}%. Target is 80%.`,
+          urgencyScore: 70,
+          loopPreventionHash: hash,
+        });
+      }
+    }
+
+    // Sort descending by urgency
+    candidates.sort((a, b) => b.urgencyScore - a.urgencyScore);
+    return candidates.slice(0, 5);
+  }
+}
+
