@@ -14,7 +14,16 @@ export class ProductExperimentationService {
     const nameUpper = experiment.name.toUpperCase();
     const hypothesisUpper = experiment.hypothesis.toUpperCase();
 
-    for (const forbidden of FORBIDDEN_EXPERIMENT_DOMAINS) {
+    const prohibited = [
+      ...FORBIDDEN_EXPERIMENT_DOMAINS,
+      "PAYMENT_AMOUNT",
+      "PAYMENT",
+      "CREDENTIAL",
+      "SECURITY",
+      "GRADE",
+    ];
+
+    for (const forbidden of prohibited) {
       if (nameUpper.includes(forbidden) || hypothesisUpper.includes(forbidden)) {
         throw new Error(
           `Security & Integrity Violation: Experimentation on ${forbidden} is strictly prohibited by platform policy!`,
