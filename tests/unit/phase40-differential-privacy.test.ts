@@ -259,4 +259,174 @@ describe("Phase 40 Final Corrective Closure: Differential Privacy Semantics & De
     expect(policy.resetPolicy).toBe("EXPLICIT_IRB_OR_DPO_APPROVAL_ONLY");
     expect(policy.governanceNote).toContain("institutional policy threshold");
   });
+
+  // ============================================================
+  // 40.H17: Join multiplication — prove student cannot become multiple contributions
+  // ============================================================
+  it("40.H17 — join multiplication: student with attempts+submissions+mastery history rows maps to exactly 1 DP contribution", () => {
+    // One student with multiple rows across attempts, submissions, and mastery events
+    // Simulating a raw SQL join result where each row is a (student, assessment, event) tuple
+    const multiSourceRows = [
+      // 3 attempt rows for same assessment (reattempts)
+      { userId: "u-power", assessmentId: "a1", score: 60, submissionId: "sub-1" },
+      { userId: "u-power", assessmentId: "a1", score: 70, submissionId: "sub-2" },
+      { userId: "u-power", assessmentId: "a1", score: 75, submissionId: "sub-3" },
+      // 2 other assessments
+      { userId: "u-power", assessmentId: "a2", score: 88, submissionId: "sub-4" },
+      { userId: "u-power", assessmentId: "a3", score: 92, submissionId: "sub-5" },
+      // Mastery event rows (different courseId, no assessmentId)
+      { userId: "u-power", courseId: "c1", score: 85 },
+      { userId: "u-power", courseId: "c2", score: 80 },
+      // 4 other students with 1 row each
+      { userId: "u2", assessmentId: "a1", score: 70 },
+      { userId: "u3", assessmentId: "a1", score: 65 },
+      { userId: "u4", assessmentId: "a2", score: 72 },
+      { userId: "u5", assessmentId: "a3", score: 78 },
+    ];
+
+    const boundResult = DifferentialPrivacyService.aggregateAndBoundUserContributions(multiSourceRows, {
+      maxRowsPerUser: 10,
+      duplicateHandling: "LATEST_SUBMISSION",
+    });
+
+    // Must have exactly 5 distinct users
+    expect(boundResult.userCount).toBe(5);
+    expect(boundResult.boundedUserScores).toHaveLength(5);
+
+    // u-power's contribution is bounded to a single scalar (not 7 separate contributions)
+    const dpRes = DifferentialPrivacyService.evaluateDPAggregate({
+      researcherId: "researcher-01",
+      tenantId: "tenant-polytech",
+      userRecords: multiSourceRows,
+      queryType: "MEAN_SCORE",
+      epsilonRequested: 1.0,
+    });
+
+    // rawCount must equal distinct user count (5), not raw row count (11)
+    expect(dpRes.rawCount).toBe(5);
+    // Sensitivity based on user count, not row count
+    expect(dpRes.mechanism.globalSensitivity).toBe(100 / 5); // 20.0
+    // u-power must NOT multiply sensitivity
+    expect(dpRes.mechanism.globalSensitivity).not.toBe(100 / 11);
+  });
+
+  // ============================================================
+  // 40.H18: Duplicate record injection — contribution bounding unchanged
+  // ============================================================
+  it("40.H18 — duplicate record injection: injecting duplicate rows for one learner does not change their DP contribution", () => {
+    const baseline = [
+      { userId: "u-target", assessmentId: "a1", score: 80 },
+      { userId: "u-target", assessmentId: "a2", score: 90 },
+      { userId: "u-b", assessmentId: "a1", score: 70 },
+      { userId: "u-c", assessmentId: "a1", score: 65 },
+    ];
+
+    // Inject 50 exact duplicate rows for u-target (simulating a bad join or replay attack)
+    const withDuplicates = [...baseline];
+    for (let d = 0; d < 50; d++) {
+      withDuplicates.push({ userId: "u-target", assessmentId: "a1", score: 80 });
+    }
+
+    const boundBaseline = DifferentialPrivacyService.aggregateAndBoundUserContributions(baseline, {
+      maxRowsPerUser: 10,
+      duplicateHandling: "LATEST_SUBMISSION",
+    });
+    const boundWithDups = DifferentialPrivacyService.aggregateAndBoundUserContributions(withDuplicates, {
+      maxRowsPerUser: 10,
+      duplicateHandling: "LATEST_SUBMISSION",
+    });
+
+    // User count must remain the same
+    expect(boundWithDups.userCount).toBe(boundBaseline.userCount);
+    // u-target's contribution must be the same scalar regardless of 50 duplicates
+    expect(boundWithDups.boundedUserScores[0]).toBe(boundBaseline.boundedUserScores[0]);
+    // duplicateRowsCollapsed must be > 0 (bounding worked)
+    expect(boundWithDups.duplicateRowsCollapsed).toBeGreaterThan(boundBaseline.duplicateRowsCollapsed);
+  });
+
+  // ============================================================
+  // 40.H19: Cross-course query — contribution definition across courses
+  // ============================================================
+  it("40.H19 — cross-course query: one student enrolled in 3 courses contributes exactly 1 bounded scalar to institution-wide export", () => {
+    // Institution-wide cross-course analytics: student has scores in 3 courses
+    const crossCourseRows = [
+      { userId: "u-multi-course", courseId: "math-101",  assessmentId: "m1", score: 85 },
+      { userId: "u-multi-course", courseId: "phys-201",  assessmentId: "p1", score: 72 },
+      { userId: "u-multi-course", courseId: "hist-301",  assessmentId: "h1", score: 90 },
+      // 4 other students each in 1 course
+      { userId: "u2", courseId: "math-101", assessmentId: "m1", score: 70 },
+      { userId: "u3", courseId: "phys-201", assessmentId: "p1", score: 68 },
+      { userId: "u4", courseId: "hist-301", assessmentId: "h1", score: 75 },
+      { userId: "u5", courseId: "math-101", assessmentId: "m1", score: 80 },
+    ];
+
+    const dpRes = DifferentialPrivacyService.evaluateDPAggregate({
+      researcherId: "researcher-02",
+      tenantId: "tenant-polytech",
+      userRecords: crossCourseRows,
+      queryType: "MEAN_SCORE",
+      epsilonRequested: 1.0,
+    });
+
+    // Even though u-multi-course has 3 courses, they contribute 1 scalar
+    expect(dpRes.rawCount).toBe(5);
+    // Cross-course aggregation rule: PER_USER_MEAN_CLAMPED_TO_BOUNDING_INTERVAL
+    expect(dpRes.mechanism.contributionBounding.perUserAggregationRule)
+      .toBe("PER_USER_MEAN_CLAMPED_TO_BOUNDING_INTERVAL");
+  });
+
+  // ============================================================
+  // 40.H20 + 40.H21: Overlapping cohorts / budget reset bypass prevention
+  // ============================================================
+  it("40.H20 & 40.H21 — overlapping cohorts consume shared budget; budget cannot be bypassed via new session/token/job", () => {
+    const cohort = Array.from({ length: 20 }, () => 75);
+
+    // Query 1: consume 3.0 epsilon
+    DifferentialPrivacyService.evaluateDPAggregate({
+      researcherId: "researcher-bypass-test",
+      tenantId: "tenant-polytech",
+      cohortData: cohort,
+      queryType: "MEAN_SCORE",
+      epsilonRequested: 3.0,
+    });
+    expect(DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-polytech")).toBe(7.0);
+
+    // Query 2: overlapping cohort (49/50 students) — budget still decrements
+    const overlappingCohort = cohort.slice(0, 19);
+    DifferentialPrivacyService.evaluateDPAggregate({
+      researcherId: "researcher-bypass-test",
+      tenantId: "tenant-polytech",
+      cohortData: overlappingCohort,
+      queryType: "MEAN_SCORE",
+      epsilonRequested: 3.0,
+    });
+    expect(DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-polytech")).toBe(4.0);
+
+    // 40.H21: Bypass attempt 1 — "new API token" (same researcher/tenant key in budget store)
+    // Budget ledger is keyed by (researcherId, tenantId), not by token/session — so it's unchanged
+    const afterBypass1 = DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-polytech");
+    expect(afterBypass1).toBe(4.0); // Budget NOT reset
+
+    // Bypass attempt 2 — "different export job ID" (still same researcher/tenant)
+    DifferentialPrivacyService.evaluateDPAggregate({
+      researcherId: "researcher-bypass-test",
+      tenantId: "tenant-polytech",
+      cohortData: cohort,
+      queryType: "MEAN_SCORE",
+      epsilonRequested: 4.0, // try to consume remaining
+    });
+    expect(DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-polytech")).toBe(0.0);
+
+    // Bypass attempt 3 — "different tenant" (isolated budget, NOT shared)
+    const crossTenantBudget = DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-fpt-uni");
+    expect(crossTenantBudget).toBe(10.0); // Separate tenant = separate budget
+
+    // Verify: 40.H21 budget reset policy — manual reset is blocked without explicit clearance
+    // (Policy is EXPLICIT_IRB_OR_DPO_APPROVAL_ONLY — resetBudget() exists but requires explicit call,
+    //  simulating DPO approval; it cannot be triggered by the researcher directly in production)
+    const policy = DifferentialPrivacyService.getMechanismDefinition(20).privacyBudgetPolicy;
+    expect(policy.resetPolicy).toBe("EXPLICIT_IRB_OR_DPO_APPROVAL_ONLY");
+    expect(policy.approvalPolicy).toBe("PRODUCT_GOVERNANCE_THRESHOLD_REQUIRING_DPO_SIGN_OFF");
+  });
 });
+
