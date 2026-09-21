@@ -209,9 +209,10 @@ export interface UpperLowerDiscriminationDetail {
 }
 
 export interface PointBiserialDetail {
-  rPb: number; // Point-biserial correlation (-1.0 to 1.0)
+  rPb: number; // Corrected item-rest point-biserial correlation (-1.0 to 1.0)
   sampleSize: number;
-  methodVersion: "CORRECTED_ITEM_TOTAL_PEARSON";
+  scoreDefinition: "CORRECTED_TOTAL_EXCLUDING_ITEM";
+  methodVersion: "CORRECTED_ITEM_REST_PEARSON";
 }
 
 export interface DistractorEfficiencyDetail {
@@ -233,7 +234,9 @@ export interface ItemAnalysisMetrics {
   // 2. Upper/Lower Discrimination D = P_upper - P_lower
   upperLowerDiscriminationD: UpperLowerDiscriminationDetail | null;
   discriminationIndex: number; // backward-compatibility alias to D
-  // 3. Point-biserial correlation r_pb
+  // 3. Point-biserial correlation r_pb (item-rest correlation)
+  correctedItemRestPointBiserial: PointBiserialDetail | null;
+  itemRestPointBiserial: PointBiserialDetail | null;
   pointBiserialRpb: PointBiserialDetail | null;
   // 4. Distractor analysis
   distractorEfficiency: DistractorEfficiencyDetail[];
