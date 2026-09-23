@@ -1,22 +1,22 @@
 {
   "inventoryVersion": "1.0.0",
-  "generatedAt": "2026-09-17T22:45:00.000Z",
+  "generatedAt": "2026-09-22T11:30:00.000Z",
   "provenanceCommit": "50b11a1248f06ffe8179c448d158938054075ddb",
   "releaseTag": "v6.0.0-GA",
   "summary": {
-    "CANONICAL_LOGICAL_MIGRATIONS": 45,
-    "DEV_FILES": 45,
-    "RESEARCH_FILES": 45,
-    "TOTAL_CQL_FILES": 90,
-    "PAIRED_FILES": 45,
-    "IDENTICAL_PAIRS": 39,
+    "CANONICAL_LOGICAL_MIGRATIONS": 50,
+    "DEV_FILES": 50,
+    "RESEARCH_FILES": 50,
+    "TOTAL_CQL_FILES": 100,
+    "PAIRED_FILES": 50,
+    "IDENTICAL_PAIRS": 44,
     "ENVIRONMENT_SPECIFIC_PAIRS": 1,
     "SEMANTIC_EQUIVALENT_PAIRS": 5,
     "INVALID_DRIFT": 0
   },
-  "highestMigrationIndex": "079",
-  "highestMigrationFile": "079_adaptive_learning_v2_and_institution.cql",
-  "reconciliationRationale": "Historical references citing '78 migrations' confused the highest lexicographical prefix '078' with the cardinal migration file count. The migrations use subsystem prefix ranges (001: system keyspaces, 01x: identity, 02x: learning, 03x: classroom, 04x: assessment, 05x: interaction, 06x: AI, 07x: audit/notification/analytics/credentials). There are exactly 44 distinct migration files in dev/ and 44 in research/ for a total of 88 CQL files.",
+  "highestMigrationIndex": "084",
+  "highestMigrationFile": "084_mastery_evidence_ingestion.cql",
+  "reconciliationRationale": "Migration inventory is derived from the paired dev/research directories. There are exactly 50 logical migrations in each profile and 100 CQL files in total.",
   "driftAnalysis": {
     "001_keyspaces.cql": {
       "classification": "ENVIRONMENT_SPECIFIC",

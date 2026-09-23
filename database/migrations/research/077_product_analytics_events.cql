@@ -1,5 +1,5 @@
 -- Phase 18C Product Intelligence & Funnel Analytics Events
-CREATE TABLE IF NOT EXISTS audit_keyspace.product_analytics_events_by_bucket (
+CREATE TABLE IF NOT EXISTS audit_support_keyspace.product_analytics_events_by_bucket (
   event_family text,
   bucket date,
   shard tinyint,
