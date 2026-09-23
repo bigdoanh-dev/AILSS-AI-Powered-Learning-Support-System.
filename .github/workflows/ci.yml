@@ -15,6 +15,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm lint:no-regression
+      - run: pnpm audit:source-tracking
       - run: pnpm test
       - run: pnpm validate:contracts
       - run: pnpm validate:migration-bootstrap
