@@ -72,6 +72,7 @@ phase*-evidence-bundle.json
 
 # Local pre-tag acceptance output. RC5 attestation is regenerated from its tag.
 artifacts/release-evidence/rc5-test-discovery.json
+artifacts/release-evidence/rc6-test-discovery.json
 artifacts/release-evidence/revision-l/
 artifacts/runtime-audit/*.json
 artifacts/load-evidence/*-local-*.json

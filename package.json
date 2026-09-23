@@ -30,6 +30,7 @@
     "precheck:populated-migrations": "node scripts/ci/precheck-populated-migrations.mjs",
     "freeze:rc-candidate": "node scripts/ci/freeze-rc-candidate.mjs",
     "test:rc5:canonical": "node scripts/ci/run-rc5-canonical-tests.mjs",
+    "test:rc6:canonical": "node scripts/ci/run-rc5-canonical-tests.mjs --rc6",
     "rehearse:production": "node scripts/ci/rehearse-production.mjs",
     "scan:secrets": "node scripts/ci/scan-secrets.mjs",
     "audit:dead-code": "node scripts/ci/audit-dead-code.mjs",

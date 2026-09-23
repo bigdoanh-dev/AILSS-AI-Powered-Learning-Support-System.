@@ -5,6 +5,7 @@ import { join, relative, resolve } from "node:path";
 import { spawn } from "node:child_process";
 
 const root = process.cwd();
+const releaseLabel = process.argv.includes("--rc6") ? "rc6" : "rc5";
 const temp = await mkdtemp(join(tmpdir(), "ailss-rc5-tests-"));
 const groups = [];
 
@@ -50,7 +51,7 @@ try {
     suites,
   };
   await mkdir(join(root, "artifacts/release-evidence"), { recursive: true });
-  await writeFile(join(root, "artifacts/release-evidence/rc5-test-discovery.json"), `${JSON.stringify(output, null, 2)}\n`);
+  await writeFile(join(root, `artifacts/release-evidence/${releaseLabel}-test-discovery.json`), `${JSON.stringify(output, null, 2)}\n`);
   process.stdout.write(`${JSON.stringify(output.summary)}\n`);
   if (totals.failed > 0) process.exitCode = 1;
 } finally {
