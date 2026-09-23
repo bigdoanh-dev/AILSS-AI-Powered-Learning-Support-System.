@@ -11,6 +11,7 @@ import { AssessmentService } from "./service.js";
 import { AssessmentOutboxRelay } from "./relay.js";
 import { assessmentAiImportRouter } from "./ai-import-router.js";
 import type { AppConfig } from "../../../packages/config/src/index.js";
+import { assessmentScheduleInternalRouter } from "./schedule-internal-router.js";
 const manifest: ServiceManifest = {
   serviceId: "assessment-service",
   ownerDomain: "Assessment",
@@ -26,17 +27,19 @@ await startService(manifest, {
   configure: async (app, config, context) => {
     if (!context.cassandra) throw new Error("Assessment requires Cassandra");
     if (!config.PASSWORD_IDEMPOTENCY_HMAC_KEY) throw new Error("Assessment requires an idempotency HMAC key");
-    if (!config.ACTOR_CONTEXT_PUBLIC_KEY_PATH || !config.AI_SERVICE_TOKEN_PUBLIC_KEY_PATH)
+    if (!config.ACTOR_CONTEXT_PUBLIC_KEY_PATH || !config.AI_SERVICE_TOKEN_PUBLIC_KEY_PATH || !config.LEARNING_SERVICE_TOKEN_PUBLIC_KEY_PATH)
       throw new Error("Assessment requires Gateway actor-context public key");
-    const [actorKey, aiServiceKey] = await Promise.all([
+    const [actorKey, aiServiceKey, learningServiceKey] = await Promise.all([
         loadPublicKey(config.ACTOR_CONTEXT_PUBLIC_KEY_PATH),
         loadPublicKey(config.AI_SERVICE_TOKEN_PUBLIC_KEY_PATH),
+        loadPublicKey(config.LEARNING_SERVICE_TOKEN_PUBLIC_KEY_PATH),
       ]),
       repository = new AssessmentRepository(context.cassandra),
       service = new AssessmentService(
         repository,
         await createAssessmentClients(config),
         config.PASSWORD_IDEMPOTENCY_HMAC_KEY,
+        config.PLATFORM_TENANT_ID,
       ),
       verifier = (purpose: string) => (token: string) =>
         verifyActorContext(token, actorKey, {
@@ -85,6 +88,14 @@ await startService(manifest, {
           : undefined,
       ),
     );
+    app.use(assessmentScheduleInternalRouter(repository, (token) =>
+      verifyServiceToken(token, learningServiceKey, {
+        issuer: config.SERVICE_TOKEN_ISSUER,
+        audience: "assessment-service",
+        purpose: "assessment.schedule.read",
+        kid: config.LEARNING_SERVICE_TOKEN_KID,
+      }),
+    ));
     const relay = config.ENABLE_RABBITMQ
       ? new AssessmentOutboxRelay(repository, authenticatedRabbitUrl(config), context.logger)
       : undefined;

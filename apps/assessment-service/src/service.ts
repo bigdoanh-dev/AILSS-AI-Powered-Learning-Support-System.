@@ -94,6 +94,7 @@ export class AssessmentService {
     private readonly repository: AssessmentStore,
     private readonly clients: Pick<AssessmentClients, "eligibleLecturer" | "target" | "studentTarget">,
     private readonly secret: string,
+    private readonly platformTenantId = "00000000-0000-4000-8000-000000000001",
   ) {}
 
   async importAiDraft(input: {
@@ -773,6 +774,7 @@ export class AssessmentService {
     let attempt = await this.repository.attempt(input.attemptId);
     if (!attempt || attempt.studentId !== input.actor.userId)
       throw new AppError("ATTEMPT_NOT_FOUND", 404, "Attempt not found");
+    const masteryQuiz = await this.requiredQuiz(attempt.quizId);
     const scope = `ASM-08:${input.actor.userId}:${input.attemptId}`,
       hash = keyHash(this.secret, input.idempotencyKey),
       fp = fingerprint(this.secret, {
@@ -876,6 +878,7 @@ export class AssessmentService {
       result,
       occurredAt: now,
       correlationId: input.actor.correlationId,
+      ...(masteryQuiz.targetType === "COURSE" ? { mastery: { tenantId: this.platformTenantId, courseId: masteryQuiz.targetId, learningOutcomeId: `quiz:${masteryQuiz.quizId}`, conceptId: `quiz:${masteryQuiz.quizId}`, sourceType: "QUIZ" as const } } : {}),
     });
     await this.repository.writeResultItems(attempt.attemptId, graded.items);
     await this.repository.createResult(result);
@@ -1128,6 +1131,7 @@ export class AssessmentService {
         occurredAt: now,
         correlationId: input.actor.correlationId,
         actorId: input.actor.userId,
+        ...(quiz.targetType === "COURSE" ? { mastery: { tenantId: this.platformTenantId, courseId: quiz.targetId, learningOutcomeId: `quiz:${quiz.quizId}`, conceptId: `quiz:${quiz.quizId}`, sourceType: "MANUAL_ASSESSMENT" as const } } : {}),
       });
       await this.repository.readySubmittedEvent(eventId, now);
     } catch {
