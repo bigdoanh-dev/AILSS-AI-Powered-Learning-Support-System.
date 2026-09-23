@@ -173,6 +173,7 @@ export function AppShell() {
             { to: "/app/attendance", label: t("tab.attendance", "Điểm danh"), icon: "checkCircle" },
             { to: "/app/assessments", label: t("tab.assessments", "Bài kiểm tra"), icon: "quiz" },
             { to: "/app/progress", label: t("tab.progress", "Tiến độ"), icon: "trending" },
+            { to: "/app/ai-tutor", label: t("tab.aiTutor", "Gia sư AI"), icon: "ai" },
           ];
   return (
     <div className="learning-site">
