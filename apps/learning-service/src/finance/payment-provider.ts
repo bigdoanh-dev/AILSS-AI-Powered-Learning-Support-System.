@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 import { AppError } from "../../../../packages/http/src/index.js";
 
 export interface PaymentIntent {
@@ -104,7 +104,7 @@ export class SimulationPaymentProvider implements PaymentProvider {
     });
   }
 
-  public initiateRefund(ref: {
+  public async initiateRefund(ref: {
     transactionId: string;
     orderId: string;
     amount: number;
@@ -229,21 +229,32 @@ export class SepayPaymentProvider implements PaymentProvider {
     });
   }
 
-  public initiateRefund(ref: {
+  public async initiateRefund(ref: {
     transactionId: string;
     orderId: string;
     amount: number;
     currency: string;
     reason?: string;
   }): Promise<{ success: boolean; refundTransactionId: string }> {
-    // In production, invokes SePay refund API.
-    const hmac = createHmac("sha256", this.#secret);
-    hmac.update(`refund:${ref.transactionId}:${String(ref.amount)}`);
-    const refundRef = `sepay-ref-${hmac.digest("hex").slice(0, 16)}`;
-    return Promise.resolve({
-      success: true,
-      refundTransactionId: refundRef,
+    const endpoint = process.env.SEPAY_REFUND_API_URL;
+    if (!endpoint)
+      throw new AppError("REFUND_PROVIDER_NOT_CONFIGURED", 503, "Automated refund provider is not configured", true);
+    const url = new URL(endpoint);
+    if (process.env.NODE_ENV === "production" && url.protocol !== "https:")
+      throw new AppError("REFUND_PROVIDER_INSECURE", 500, "Refund provider must use HTTPS");
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { authorization: `Apikey ${this.#secret}`, "content-type": "application/json" },
+      body: JSON.stringify(ref),
+      signal: AbortSignal.timeout(10_000),
     });
+    if (!response.ok)
+      throw new AppError("REFUND_PROVIDER_UNAVAILABLE", 503, "Refund provider rejected the request", true);
+    const payload = (await response.json()) as { transactionId?: unknown; refundId?: unknown };
+    const providerId = payload.transactionId ?? payload.refundId;
+    if (typeof providerId !== "string" || !providerId)
+      throw new AppError("REFUND_PROVIDER_INVALID_RESPONSE", 502, "Refund provider returned an invalid response", true);
+    return { success: true, refundTransactionId: providerId };
   }
 }
 
@@ -264,4 +275,3 @@ export function resolvePaymentProvider(env: NodeJS.ProcessEnv = process.env): Pa
   }
   throw new AppError("UNSUPPORTED_PAYMENT_PROVIDER", 500, `Unsupported payment provider: ${mode}`);
 }
-

@@ -251,6 +251,7 @@ export class LearningProgressRepository {
     percent: number,
     occurredAt: Date,
     correlationId: string,
+    mastery?: { tenantId: string; lessonId: string; completed: boolean },
   ) {
     const envelope: EventEnvelope = {
       specVersion: "1.0",
@@ -260,7 +261,18 @@ export class LearningProgressRepository {
       producer: "learning-service",
       correlationId,
       aggregate: { type: "COURSE_PROGRESS", id: courseId, version },
-      data: { studentId, courseId, percent, version },
+      data: {
+        studentId, courseId, percent, version,
+        ...(mastery?.completed ? {
+          tenantId: mastery.tenantId,
+          learningOutcomeId: `lesson:${mastery.lessonId}`,
+          conceptId: `lesson:${mastery.lessonId}`,
+          sourceType: "LESSON_COMPLETION",
+          sourceId: mastery.lessonId,
+          rawScorePercent: 100,
+          schemaVersion: "1.0",
+        } : {}),
+      },
     };
     const s = shard(eventId);
     await this.db.execute(

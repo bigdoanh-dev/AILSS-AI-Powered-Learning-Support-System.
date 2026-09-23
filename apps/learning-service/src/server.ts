@@ -6,6 +6,7 @@ import { learningCatalogRouter } from "./catalog/router.js";
 import { LearningCatalogService } from "./catalog/service.js";
 import {
   loadPublicKey,
+  loadPrivateKey,
   verifyActorContext,
   verifyServiceToken,
 } from "../../../packages/security/src/index.js";
@@ -42,6 +43,14 @@ import { LearningProgressRepository } from "./progress/repository.js";
 import { LearningProgressService } from "./progress/service.js";
 import { learningProgressRouter } from "./progress/router.js";
 import { learningAiContextRouter } from "./ai-context-router.js";
+import { CassandraFinanceRepository, LearningFinanceService, learningFinanceRouter, resolvePaymentProvider } from "./finance/index.js";
+import { AdaptiveRuntimeRepository } from "./adaptive/runtime-repository.js";
+import { adaptiveRuntimeRouter } from "./adaptive/runtime-router.js";
+import { MasteryIngestionRepository } from "./adaptive/mastery-ingestion-repository.js";
+import { MasteryRecalculationConsumer } from "./adaptive/mastery-consumer.js";
+import { adaptiveInternalRouter } from "./adaptive/internal-router.js";
+import { learningMaterialsInternalRouter } from "./materials/internal-router.js";
+import { AuthoritativePlanContextProvider } from "./adaptive/plan-context.js";
 
 const manifest: ServiceManifest = {
   serviceId: "learning-service",
@@ -60,7 +69,7 @@ const manifest: ServiceManifest = {
     "system.projection.reconcile.v1",
     "system.audit.requested.v1",
   ],
-  consumedQueues: ["learning.entitlement.fulfill.q"],
+  consumedQueues: ["learning.entitlement.fulfill.q", "assessment.quiz.submitted.mastery.q", "assessment.quiz.graded.mastery.q", "learning.lesson.completed.mastery.q"],
 };
 await startService(manifest, {
   configure: async (app, config, context) => {
@@ -263,7 +272,7 @@ await startService(manifest, {
     );
     const paymentRecovery = new SepayRecoveryRepository(context.cassandra);
     const commerce = new LearningCommerceService(
-      new LearningCommerceRepository(context.cassandra),
+      commerceRepository,
       await createCommerceClassroomClient(config),
       classroomContext,
       config.LEARNING_CURSOR_HMAC_KEY,
@@ -280,15 +289,64 @@ await startService(manifest, {
         dashboardRevenue: verifier("learning.admin.dashboard.revenue"),
       }),
     );
+    const finance = new LearningFinanceService({
+      repository: commerceRepository,
+      paymentProvider: resolvePaymentProvider(process.env),
+      persistence: new CassandraFinanceRepository(context.cassandra),
+    });
+    app.use(learningFinanceRouter(finance, verifier("learning.refund.create")));
     const progress = new LearningProgressService(
       new LearningProgressRepository(context.cassandra),
       config.LEARNING_CURSOR_HMAC_KEY,
+      config.PLATFORM_TENANT_ID,
     );
     app.use(
       learningProgressRouter(progress, {
         read: verifier("learning.progress.read"),
         complete: verifier("learning.progress.complete"),
       }),
+    );
+    const adaptiveRepository = new AdaptiveRuntimeRepository(context.cassandra);
+    if (!config.SERVICE_TOKEN_PRIVATE_KEY_PATH)
+      throw new Error("Learning adaptive plan requires its service private key");
+    const planContext = new AuthoritativePlanContextProvider(
+      new LearningLessonRepository(context.cassandra),
+      config.ASSESSMENT_SERVICE_URL,
+      await loadPrivateKey(config.SERVICE_TOKEN_PRIVATE_KEY_PATH),
+      config.SERVICE_TOKEN_ISSUER,
+      config.SERVICE_TOKEN_KID,
+      config.INTERNAL_HTTP_TIMEOUT_MS,
+    );
+    app.use(
+      adaptiveRuntimeRouter(
+        adaptiveRepository,
+        verifier("learning.adaptive.student"),
+        planContext,
+      ),
+    );
+    app.use(
+      adaptiveInternalRouter(adaptiveRepository, (token) =>
+        verifyServiceToken(token, aiServiceKey, {
+          issuer: config.SERVICE_TOKEN_ISSUER,
+          audience: "learning-service",
+          purpose: "learning.adaptive.ai.read",
+          kid: config.AI_SERVICE_TOKEN_KID,
+        }), async (studentId, courseId) => (await commerceRepository.entitlement(studentId, courseId))?.state === "ACTIVE",
+      ),
+    );
+    app.use(
+      learningMaterialsInternalRouter(
+        new LearningLessonRepository(context.cassandra),
+        objectStorage,
+        (token) => verifyServiceToken(token, aiServiceKey, {
+          issuer: config.SERVICE_TOKEN_ISSUER,
+          audience: "learning-service",
+          purpose: "learning.materials.read",
+          kid: config.AI_SERVICE_TOKEN_KID,
+        }),
+        async (studentId, courseId) =>
+          (await commerceRepository.entitlement(studentId, courseId))?.state === "ACTIVE",
+      ),
     );
     const cleanup = new ArchivedCourseProjectionCleanup(context.cassandra);
     const runner = new LearningReconciliationRunner(reconciliationRepository, async (item) => {
@@ -314,10 +372,15 @@ await startService(manifest, {
       ? new EntitlementFulfillmentConsumer(authenticatedRabbitUrl(config), reconciliationRepository)
       : undefined;
     await fulfillment?.start();
+    const masteryConsumer = config.ENABLE_RABBITMQ
+      ? new MasteryRecalculationConsumer(authenticatedRabbitUrl(config), new MasteryIngestionRepository(context.cassandra), new AdaptiveRuntimeRepository(context.cassandra), context.logger, context.metrics, planContext)
+      : undefined;
+    await masteryConsumer?.start();
     return async () => {
       clearInterval(reconcileTimer);
       if (paymentTimer) clearInterval(paymentTimer);
       await fulfillment?.close();
+      await masteryConsumer?.close();
       await relay?.close();
     };
   },

@@ -8,6 +8,7 @@ export class LearningProgressService {
   constructor(
     private repo: LearningProgressRepository,
     private secret: string,
+    private platformTenantId = "00000000-0000-4000-8000-000000000001",
   ) {}
 
   async read(courseId: string, actor: ActorContext) {
@@ -173,6 +174,7 @@ export class LearningProgressService {
         canonical.percent,
         now,
         input.correlationId,
+        { tenantId: this.platformTenantId, lessonId: input.lessonId, completed: input.request.completed },
       );
       await this.repo.readyEvent(receipt.eventId, now);
       const response = progressDto(canonical);

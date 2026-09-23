@@ -35,6 +35,8 @@ export class LearningCommerceService {
   async revenueDashboard(actor: ActorContext, range: string) {
     if (!actor.roles.includes("ADMIN"))
       throw new AppError("ADMIN_REQUIRED", 403, "Admin authorization is required");
+    if (range !== "today" && range !== "7d" && range !== "30d")
+      throw new AppError("INVALID_REVENUE_RANGE", 422, "Revenue range must be today, 7d, or 30d");
     return this.repo.revenueDashboard(range);
   }
 
@@ -408,6 +410,7 @@ export class LearningCommerceService {
       order = await this.repo.order(orderId);
       if (!order || !["PAID_PENDING_ENTITLEMENT", "ENTITLED"].includes(order.state)) throw unavailable();
     }
+    await this.repo.ensureRevenuePaymentFact(order, candidate.transactionId, occurredAt);
     await this.repo.readyEvent(order.paidEventId, occurredAt);
     crashAfter("F_READY_BEFORE_PUBLISH", {
       transactionId: candidate.transactionId,
