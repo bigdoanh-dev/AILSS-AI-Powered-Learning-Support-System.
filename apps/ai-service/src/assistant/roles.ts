@@ -3,8 +3,8 @@ import type { AssistantMode, AssistantRole } from "./model.js";
 export const ROLE_ALLOWED_MODES: Record<AssistantRole, readonly AssistantMode[]> = {
   PUBLIC: ["STUDENT_ADVISOR"],
   STUDENT: ["STUDENT_ADVISOR", "STUDY_BUDDY"],
-  LECTURER: ["STUDENT_ADVISOR", "STUDY_BUDDY", "LECTURER_COPILOT"],
-  ADMIN: ["STUDENT_ADVISOR", "STUDY_BUDDY", "LECTURER_COPILOT", "ADMIN_SUPPORT"],
+  LECTURER: ["STUDENT_ADVISOR", "STUDY_BUDDY"],
+  ADMIN: ["STUDENT_ADVISOR", "STUDY_BUDDY", "ADMIN_SUPPORT"],
 };
 
 export const ROLE_ALLOWED_TOOLS: Record<AssistantRole, readonly string[]> = {

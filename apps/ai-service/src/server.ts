@@ -140,7 +140,7 @@ await startService(manifest, {
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
       apiKey: config.AI_PROVIDER_API_KEY || "synthetic-api-key",
       model: config.AI_PROVIDER_MODEL || "gemini-1.5-flash",
-      timeoutMs: config.INTERNAL_HTTP_TIMEOUT_MS,
+      timeoutMs: config.AI_PROVIDER_TIMEOUT_MS,
     });
     const assistantOrchestrator = new AssistantOrchestrator({
       repository: assistantRepo,

@@ -17,6 +17,7 @@ import type { AssistantRepository } from "./repository.js";
 import { isModeAllowedForRole, ROLE_ALLOWED_TOOLS } from "./roles.js";
 import { ASSISTANT_TOOLS } from "./tool-registry.js";
 import type { ToolRunner, AssistantDomainClient } from "./tool-runner.js";
+import { enforceCitationAllowlist } from "./citation-policy.js";
 
 import { LearnerSafetyPolicyEngine } from "../safety/index.js";
 
@@ -144,13 +145,27 @@ export class AssistantOrchestrator {
 
     // 7. Conversational Intent & Tool Execution
     // Check if user prompt requires course catalog, knowledge gap or materials lookup
-    const { toolCalls, citations } = await this.#inspectIntentAndExecuteTools(
+    const { toolCalls, toolResults, citations } = await this.#inspectIntentAndExecuteTools(
       request.message,
       user,
       request.courseId,
       conversationId,
       allowedToolNames,
     );
+
+    const materialResult = toolResults.find((result) =>
+      typeof result === "object" && result !== null && (result as { name?: unknown }).name === "search_course_materials",
+    ) as { result?: unknown; error?: string } | undefined;
+    if (materialResult?.error || (materialResult && Array.isArray(materialResult.result) && materialResult.result.length === 0)) {
+      const content = materialResult.error === "RAG_TOOL_FORBIDDEN"
+        ? "RAG_TOOL_FORBIDDEN: Bạn không có quyền truy cập tài liệu của khóa học này."
+        : materialResult.error
+          ? `${materialResult.error}: Tài liệu khóa học hiện không khả dụng; tôi không thể coi đây là kết quả không tìm thấy.`
+          : "INSUFFICIENT_EVIDENCE: Không tìm thấy đoạn tài liệu phù hợp, nên tôi chưa thể trả lời câu hỏi này như một kết luận đã được kiểm chứng.";
+      const messageId = randomUUID();
+      await this.#repo.appendMessage({ messageId, conversationId, sender: "ASSISTANT", content, ...(toolCalls.length ? { toolCalls } : {}), now: this.#now() });
+      return { conversationId, messageId, content, toolInvocations: toolCalls, citations: [], mode: request.mode, safetyBlocked: false };
+    }
 
     // 8. Prepare Messages for LLM
     const llmMessages: LlmMessage[] = recentHistory.map((m) => ({
@@ -159,10 +174,10 @@ export class AssistantOrchestrator {
     }));
 
     // If tools were executed, add tool context to conversation
-    if (toolCalls.length > 0) {
+    if (toolResults.length > 0) {
       llmMessages.push({
         role: "system",
-        content: `Tool Execution Results for Grounding:\n${JSON.stringify(toolCalls)}`,
+        content: `Authoritative tool results for grounding. If a result is empty or failed, state that evidence is insufficient and do not invent data:\n${JSON.stringify(toolResults)}`,
       });
     }
 
@@ -176,6 +191,8 @@ export class AssistantOrchestrator {
 
     const completion = await this.#llmProvider.generate(completionReq);
     const assistantContent = completion.content || "Tôi đã nhận được yêu cầu của bạn và đã tra cứu thông tin.";
+    const materialRecords = materialResult && Array.isArray(materialResult.result) ? materialResult.result : [];
+    const acceptedCitations = enforceCitationAllowlist(citations, materialRecords);
 
     // 9. Persist Assistant Response
     const assistantMsgId = randomUUID();
@@ -185,7 +202,7 @@ export class AssistantOrchestrator {
       sender: "ASSISTANT",
       content: assistantContent,
       ...(toolCalls.length > 0 ? { toolCalls } : {}),
-      ...(citations.length > 0 ? { citations } : {}),
+      ...(acceptedCitations.length > 0 ? { citations: acceptedCitations } : {}),
       now: this.#now(),
     });
 
@@ -194,7 +211,7 @@ export class AssistantOrchestrator {
       messageId: assistantMsgId,
       content: assistantContent,
       toolInvocations: toolCalls,
-      citations,
+      citations: acceptedCitations,
       mode: request.mode,
       safetyBlocked: false,
     };
@@ -206,10 +223,33 @@ export class AssistantOrchestrator {
     courseId: string | undefined,
     conversationId: string,
     allowedTools: readonly string[],
-  ): Promise<{ toolCalls: ToolCall[]; citations: Citation[] }> {
+  ): Promise<{ toolCalls: ToolCall[]; toolResults: unknown[]; citations: Citation[] }> {
     const toolCalls: ToolCall[] = [];
+    const toolResults: unknown[] = [];
     const citations: Citation[] = [];
     const lower = prompt.toLowerCase();
+    const execute = async (toolName: string, args: Record<string, unknown>) => {
+      const callId = randomUUID();
+      const start = Date.now();
+      const result = await this.#toolRunner.executeTool(callId, toolName, args, user);
+      toolCalls.push({ id: callId, name: toolName, arguments: args });
+      toolResults.push(result);
+      await this.#repo.logToolInvocation({
+        conversationId, invocationId: callId, userId: user.userId, toolName,
+        status: result.error ? "FAILED" : "SUCCESS", executionTimeMs: Date.now() - start,
+        ...(result.error ? { errorCode: result.error } : {}), now: this.#now(),
+      });
+    };
+
+    if (allowedTools.includes("get_student_mastery") && courseId &&
+      (lower.includes("mastery") || lower.includes("mức độ thành thạo") || lower.includes("đang yếu"))) {
+      await execute("get_student_mastery", { courseId });
+    }
+
+    if (allowedTools.includes("get_recommended_learning_path") && courseId &&
+      (lower.includes("study plan") || lower.includes("kế hoạch học") || lower.includes("học gì tiếp"))) {
+      await execute("get_recommended_learning_path", { courseId });
+    }
 
     // Catalog search intent
     if (
@@ -225,6 +265,7 @@ export class AssistantOrchestrator {
         user,
       );
       toolCalls.push({ id: callId, name: "search_courses", arguments: { query: prompt.slice(0, 50) } });
+      toolResults.push(result);
       await this.#repo.logToolInvocation({
         conversationId,
         invocationId: callId,
@@ -251,6 +292,7 @@ export class AssistantOrchestrator {
         user,
       );
       toolCalls.push({ id: callId, name: "get_knowledge_gaps", arguments: courseId ? { courseId } : {} });
+      toolResults.push(result);
       await this.#repo.logToolInvocation({
         conversationId,
         invocationId: callId,
@@ -278,6 +320,7 @@ export class AssistantOrchestrator {
         user,
       );
       toolCalls.push({ id: callId, name: "search_course_materials", arguments: { courseId, topic: prompt.slice(0, 40) } });
+      toolResults.push(result);
       await this.#repo.logToolInvocation({
         conversationId,
         invocationId: callId,
@@ -290,19 +333,24 @@ export class AssistantOrchestrator {
       });
 
       if (Array.isArray(result.result)) {
-        for (const item of result.result as Array<{ lessonId: string; title: string; contentSnippet: string }>) {
+        for (const item of result.result as Array<{ lessonId: string; title: string; contentSnippet: string; sourceObjectId: string; retrievalScore: number; courseId?: string; courseVersion?: number; lessonVersion?: number }>) {
+          if (item.courseId && item.courseId !== courseId) continue;
           citations.push({
             sourceId: item.lessonId,
             title: item.title,
             lessonId: item.lessonId,
             courseId,
+            ...(item.courseVersion ? { courseVersion: item.courseVersion } : {}),
+            ...(item.lessonVersion ? { lessonVersion: item.lessonVersion } : {}),
+            sourceObjectId: item.sourceObjectId,
+            retrievalScore: item.retrievalScore,
             snippet: item.contentSnippet,
           });
         }
       }
     }
 
-    return { toolCalls, citations };
+    return { toolCalls, toolResults, citations };
   }
 
   #buildSystemPrompt(mode: AssistantMode, role: AssistantRole): string {

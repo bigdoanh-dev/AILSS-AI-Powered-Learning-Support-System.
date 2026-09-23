@@ -21,9 +21,16 @@ export interface StudentKnowledgeGap {
 }
 
 export interface CourseMaterialSnippet {
+  readonly courseId?: string;
   readonly lessonId: string;
+  readonly lessonVersion?: number;
+  readonly courseVersion?: number;
   readonly title: string;
+  readonly sectionTitle?: string;
   readonly contentSnippet: string;
+  readonly sourceObjectId: string;
+  readonly retrievalScore: number;
+  readonly sourceType: "LESSON_OBJECT";
 }
 
 export interface AssistantDomainClient {
@@ -184,17 +191,15 @@ export class ToolRunner {
 
         case "get_student_mastery": {
           const courseId = String(args.courseId);
-          const mastery = this.domainClient.getStudentMastery
-            ? await this.domainClient.getStudentMastery(user.userId, courseId)
-            : [];
+          if (!this.domainClient.getStudentMastery) throw new Error("MASTERY_TOOL_NOT_CONFIGURED");
+          const mastery = await this.domainClient.getStudentMastery(user.userId, courseId);
           return { toolCallId, name: toolName, result: mastery };
         }
 
         case "get_recommended_learning_path": {
           const courseId = String(args.courseId);
-          const path = this.domainClient.getRecommendedLearningPath
-            ? await this.domainClient.getRecommendedLearningPath(user.userId, courseId)
-            : { studentId: user.userId, courseId, items: [] };
+          if (!this.domainClient.getRecommendedLearningPath) throw new Error("STUDY_PLAN_TOOL_NOT_CONFIGURED");
+          const path = await this.domainClient.getRecommendedLearningPath(user.userId, courseId);
           return { toolCallId, name: toolName, result: path };
         }
 
