@@ -14,9 +14,10 @@ jobs:
         with: { node-version: 24.20.0, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
-      - run: pnpm lint
+      - run: pnpm lint:no-regression
       - run: pnpm test
       - run: pnpm validate:contracts
+      - run: pnpm validate:migration-bootstrap
       - run: pnpm scan:secrets
       - run: pnpm build
       - run: pnpm format:check
