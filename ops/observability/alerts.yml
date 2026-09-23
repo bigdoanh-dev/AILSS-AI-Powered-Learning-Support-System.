@@ -1,0 +1,35 @@
+groups:
+  - name: ailss-production
+    rules:
+      - alert: AilssServiceDown
+        expr: up{job=~"ailss-.*"} == 0
+        for: 2m
+        labels: { severity: page }
+        annotations:
+          summary: "AILSS service is unavailable"
+          description: "{{ $labels.job }} has not been scrapeable for two minutes."
+      - alert: AilssHighServerErrorRate
+        expr: sum(rate(ailss_http_requests_total{status=~"5.."}[5m])) by (job) / clamp_min(sum(rate(ailss_http_requests_total[5m])) by (job), 0.001) > 0.02
+        for: 10m
+        labels: { severity: page }
+        annotations:
+          summary: "AILSS 5xx rate exceeds 2%"
+          description: "{{ $labels.job }} is breaching the production error budget."
+      - alert: AilssP95LatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(ailss_http_duration_seconds_bucket[5m])) by (le, job)) > 1
+        for: 10m
+        labels: { severity: ticket }
+        annotations:
+          summary: "AILSS p95 latency exceeds one second"
+      - alert: FinanceProjectionUnavailable
+        expr: increase(ailss_http_requests_total{route="/api/v1/admin/dashboard/revenue",status="503"}[15m]) > 3
+        for: 5m
+        labels: { severity: ticket }
+        annotations:
+          summary: "Authoritative finance projection remains unavailable"
+      - alert: OutboxRecoveryBacklog
+        expr: ailss_outbox_ready_age_seconds > 600
+        for: 10m
+        labels: { severity: page }
+        annotations:
+          summary: "Transactional outbox backlog is not draining"
