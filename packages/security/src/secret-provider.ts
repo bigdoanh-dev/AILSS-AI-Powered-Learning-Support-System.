@@ -1,4 +1,5 @@
 import { AppError } from "../../http/src/index.js";
+import { readFile } from "node:fs/promises";
 
 export interface SecretProvider {
   readonly name: string;
@@ -118,7 +119,8 @@ export class VaultSecretProvider implements SecretProvider {
     }
 
     try {
-      const url = `${this.#endpoint}/v1/${this.#mountPath}/data/${encodeURIComponent(key)}`;
+      const encodedPath = key.split("/").map(encodeURIComponent).join("/");
+      const url = `${this.#endpoint}/v1/${this.#mountPath}/data/${encodedPath}`;
       const headers: Record<string, string> = {
         "X-Vault-Token": this.#token,
       };
@@ -173,6 +175,126 @@ export class VaultSecretProvider implements SecretProvider {
     const val = await this.getSecret(key);
     return val !== undefined && val.trim().length > 0;
   }
+}
+
+const RUNTIME_SECRET_KEYS = [
+  "CASSANDRA_PASSWORD",
+  "RABBITMQ_PASSWORD",
+  "PASSWORD_IDEMPOTENCY_HMAC_KEY",
+  "ADMIN_CURSOR_HMAC_KEY",
+  "LEARNING_CURSOR_HMAC_KEY",
+  "AI_CURSOR_HMAC_KEY",
+  "NOTIFICATION_TOKEN_SECRET",
+  "OBJECT_STORAGE_ACCESS_KEY",
+  "OBJECT_STORAGE_SECRET_KEY",
+  "AI_PROVIDER_API_KEY",
+  "SEPAY_WEBHOOK_API_KEY",
+] as const;
+
+/** Loads service secrets before configuration validation. Production never falls back to .env. */
+export async function hydrateRuntimeSecrets(
+  serviceId: string,
+  environment: NodeJS.ProcessEnv = process.env,
+): Promise<NodeJS.ProcessEnv> {
+  const providerName = environment.SECRET_PROVIDER ?? "ENVIRONMENT";
+  if (providerName !== "VAULT") {
+    if (environment.NODE_ENV === "production")
+      throw new AppError("CENTRAL_SECRET_PROVIDER_REQUIRED", 500, "Production requires SECRET_PROVIDER=VAULT");
+    return { ...environment };
+  }
+  const endpoint = environment.VAULT_ADDR;
+  if (!endpoint) throw new AppError("VAULT_CONFIGURATION_MISSING", 500, "VAULT_ADDR is required");
+  const authentication = await vaultWorkloadToken(endpoint, environment);
+  if (authentication.renewable && authentication.leaseDurationSeconds > 0) {
+    startVaultTokenRenewal(endpoint, authentication.token, environment, authentication.leaseDurationSeconds);
+  }
+  const provider = new VaultSecretProvider({
+    endpoint,
+    token: authentication.token,
+    mountPath: environment.VAULT_KV_MOUNT ?? "secret",
+    ...(environment.VAULT_NAMESPACE ? { namespace: environment.VAULT_NAMESPACE } : {}),
+  });
+  const hydrated = { ...environment };
+  await Promise.all(
+    RUNTIME_SECRET_KEYS.map(async (key) => {
+      if (hydrated[key]) return;
+      const value = await provider.getSecret(`${serviceId}/${key}`);
+      if (value !== undefined) hydrated[key] = value;
+    }),
+  );
+  return hydrated;
+}
+
+interface VaultAuthentication {
+  readonly token: string;
+  readonly renewable: boolean;
+  readonly leaseDurationSeconds: number;
+}
+
+async function vaultWorkloadToken(endpoint: string, environment: NodeJS.ProcessEnv): Promise<VaultAuthentication> {
+  if (environment.VAULT_TOKEN) {
+    return { token: environment.VAULT_TOKEN, renewable: false, leaseDurationSeconds: 0 };
+  }
+  const namespaceHeaders = environment.VAULT_NAMESPACE ? { "X-Vault-Namespace": environment.VAULT_NAMESPACE } : {};
+  let path: string, body: Record<string, string>;
+  if (environment.VAULT_KUBERNETES_ROLE) {
+    const jwtPath = environment.VAULT_KUBERNETES_JWT_PATH ?? "/var/run/secrets/kubernetes.io/serviceaccount/token";
+    path = `/v1/auth/${encodeURIComponent(environment.VAULT_KUBERNETES_MOUNT ?? "kubernetes")}/login`;
+    body = { role: environment.VAULT_KUBERNETES_ROLE, jwt: (await readFile(jwtPath, "utf8")).trim() };
+  } else if (environment.VAULT_APPROLE_ROLE_ID) {
+    const secretId = environment.VAULT_APPROLE_SECRET_ID ?? (environment.VAULT_APPROLE_SECRET_ID_PATH
+      ? (await readFile(environment.VAULT_APPROLE_SECRET_ID_PATH, "utf8")).trim() : undefined);
+    if (!secretId) throw new AppError("VAULT_CONFIGURATION_MISSING", 500, "AppRole secret ID is required");
+    path = `/v1/auth/${encodeURIComponent(environment.VAULT_APPROLE_MOUNT ?? "approle")}/login`;
+    body = { role_id: environment.VAULT_APPROLE_ROLE_ID, secret_id: secretId };
+  } else {
+    throw new AppError("VAULT_WORKLOAD_IDENTITY_REQUIRED", 500, "Vault token, Kubernetes auth, or AppRole auth is required");
+  }
+  const response = await fetch(`${endpoint.replace(/\/+$/u, "")}${path}`, {
+    method: "POST", headers: { "content-type": "application/json", ...namespaceHeaders }, body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new AppError("VAULT_AUTHENTICATION_FAILED", 503, `Vault workload authentication failed with HTTP ${String(response.status)}`);
+  const result = await response.json() as {
+    auth?: { client_token?: string; renewable?: boolean; lease_duration?: number };
+  };
+  if (!result.auth?.client_token) throw new AppError("VAULT_AUTHENTICATION_FAILED", 503, "Vault did not return a client token");
+  return {
+    token: result.auth.client_token,
+    renewable: result.auth.renewable === true,
+    leaseDurationSeconds: Math.max(0, result.auth.lease_duration ?? 0),
+  };
+}
+
+function startVaultTokenRenewal(
+  endpoint: string,
+  token: string,
+  environment: NodeJS.ProcessEnv,
+  leaseDurationSeconds: number,
+): void {
+  const renewalIntervalMs = Math.max(30_000, Math.floor(leaseDurationSeconds * 500));
+  const namespaceHeaders = environment.VAULT_NAMESPACE
+    ? { "X-Vault-Namespace": environment.VAULT_NAMESPACE }
+    : {};
+  const timer = setInterval(() => {
+    void fetch(`${endpoint.replace(/\/+$/u, "")}/v1/auth/token/renew-self`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "X-Vault-Token": token,
+        ...namespaceHeaders,
+      },
+      body: JSON.stringify({ increment: `${String(leaseDurationSeconds)}s` }),
+    }).then((response) => {
+      if (!response.ok) {
+        process.emitWarning(`Vault token renewal failed with HTTP ${String(response.status)}`, {
+          code: "VAULT_TOKEN_RENEWAL_FAILED",
+        });
+      }
+    }).catch(() => {
+      process.emitWarning("Vault token renewal request failed", { code: "VAULT_TOKEN_RENEWAL_FAILED" });
+    });
+  }, renewalIntervalMs);
+  timer.unref();
 }
 
 /**

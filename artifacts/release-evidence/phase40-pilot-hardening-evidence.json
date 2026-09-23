@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "AILSS Phase 40 Final Technical Closure (Revision D): RC4 Attestation, Stable 6.1.4 Raw Chronology, User-Level DP Contribution Bounding & Item-Rest Psychometrics",
+  "title": "AILSS Phase 40 Runtime Connectivity Recovery (Revision F): pilot classification revoked pending runtime and staging evidence",
   "version": "4.0.0",
-  "attestedAt": "2026-09-21T17:41:55.082Z",
+  "attestedAt": "2026-09-22T08:34:27.018Z",
   "provenance": {
     "gitBranch": "dev",
     "gitBaselineSha": "2ebedacecf7be5d8f281e4b855ef9cce46f66304",
@@ -20,8 +20,8 @@
     "applicationReleaseCandidate3": "AILSS 6.2.0-rc3",
     "applicationReleaseCandidate4": "AILSS 6.2.0-rc4",
     "infrastructureBaseline": "ailss-infra-v1.4.0",
-    "cleanCheckoutTestManifest": "release620rc4-test-manifest.json",
-    "artifactManifest": "release620rc4-artifact-manifest.json",
+    "cleanCheckoutTestManifest": "artifacts/release-evidence/release620rc4-test-manifest.json",
+    "artifactManifest": "artifacts/release-evidence/release620rc4-artifact-manifest.json",
     "migration079EnvironmentStatus": {
       "DEV": "DEV_DEPLOYED",
       "RESEARCH": "RESEARCH_DEPLOYED",
@@ -37,11 +37,11 @@
   },
   "reliabilityHistory": {
     "firstProductionRequest": "2026-09-19T15:48:00.000Z",
-    "currentMeasurementTimestamp": "2026-09-21T17:41:55.082Z",
+    "currentMeasurementTimestamp": "2026-09-22T08:34:27.018Z",
     "calculationFormula": "elapsedSeconds = floor((currentMeasurementTimestamp - firstProductionRequest) / 1000)",
-    "elapsedSeconds": 179635,
-    "elapsedHours": 49.9,
-    "elapsedDays": 2.079,
+    "elapsedSeconds": 233187,
+    "elapsedHours": 64.77,
+    "elapsedDays": 2.699,
     "uptimeRatio": 1,
     "unplannedDowntimeSeconds": 0,
     "targetSLA": 0.999,
@@ -78,10 +78,10 @@
       "CURRENT_ATTESTATION_MEASUREMENT_WINDOW": {
         "windowId": "CURRENT_ATTESTATION_MEASUREMENT_WINDOW",
         "startedAt": "2026-09-19T15:48:00.000Z",
-        "measuredAt": "2026-09-21T17:41:55.082Z",
-        "elapsedSeconds": 179635,
-        "elapsedHours": 49.9,
-        "elapsedDays": 2.079,
+        "measuredAt": "2026-09-22T08:34:27.018Z",
+        "elapsedSeconds": 233187,
+        "elapsedHours": 64.77,
+        "elapsedDays": 2.699,
         "uptimeRatio": 1,
         "targetSLA": 0.999,
         "status": "ACTIVE_CONTINUOUS_UPTIME"
@@ -318,56 +318,45 @@
       "flagsConfigured": [
         {
           "flag": "ADAPTIVE_V2",
-          "mode": "PILOT_TENANTS",
-          "allowedTenants": [
-            "tenant-polytech",
-            "tenant-fpt-uni"
-          ]
+          "mode": "OFF",
+          "allowedTenants": []
         },
         {
           "flag": "AI_TUTOR_V2",
-          "mode": "PILOT_TENANTS",
-          "allowedTenants": [
-            "tenant-polytech"
-          ]
+          "mode": "OFF",
+          "allowedTenants": []
         },
         {
           "flag": "TEACHER_COPILOT",
-          "mode": "PILOT_TENANTS",
-          "allowedTenants": [
-            "tenant-polytech"
-          ]
+          "mode": "OFF",
+          "allowedTenants": []
         },
         {
           "flag": "INTERVENTIONS",
-          "mode": "PILOT_TENANTS",
-          "allowedTenants": [
-            "tenant-polytech"
-          ]
+          "mode": "OFF",
+          "allowedTenants": []
         },
         {
           "flag": "INSTITUTION_ADMIN_V2",
-          "mode": "INTERNAL",
+          "mode": "OFF",
           "allowedTenants": []
         },
         {
           "flag": "LEARNING_INTELLIGENCE_V2",
-          "mode": "INTERNAL",
+          "mode": "OFF",
           "allowedTenants": []
         },
         {
           "flag": "STUDENT_WORKSPACE_WAVE2",
-          "mode": "PILOT_TENANTS",
-          "allowedTenants": [
-            "tenant-polytech"
-          ]
+          "mode": "OFF",
+          "allowedTenants": []
         }
       ]
     }
   },
   "track2ProductExpansionWave2": {
     "unifiedStudentWorkspace": {
-      "status": "PILOT_READY",
+      "status": "DEFERRED_UNSHIPPED",
       "route": "/student/workspace",
       "components": [
         "Today Agenda",
@@ -380,7 +369,7 @@
       "implementation": "apps/web/src/student/UnifiedStudentWorkspace.tsx"
     },
     "courseAuthoringStudioV2": {
-      "status": "PILOT_READY",
+      "status": "DEFERRED_UNSHIPPED",
       "route": "/teaching/course-authoring",
       "components": [
         "Module Tree",
@@ -394,7 +383,7 @@
       "implementation": "apps/web/src/lecturer/CourseAuthoringStudio.tsx"
     },
     "assessmentAuthoringV2": {
-      "status": "PILOT_READY",
+      "status": "DEFERRED_UNSHIPPED",
       "components": [
         "Question Bank V2",
         "Item Analysis (p-value, d-index, r_pb)",
@@ -404,7 +393,7 @@
       "service": "apps/assessment-service/src/authoring/question-bank-v2-service.ts"
     },
     "curriculumIntelligence": {
-      "status": "PILOT_READY",
+      "status": "DEFERRED_UNSHIPPED",
       "components": [
         "Curriculum Graph",
         "Outcome Coverage Analysis",
@@ -414,7 +403,7 @@
       "service": "apps/learning-service/src/curriculum/curriculum-intelligence-service.ts"
     },
     "fleetOperationsCenter": {
-      "status": "PILOT_READY",
+      "status": "DEFERRED_UNSHIPPED",
       "route": "/admin/fleet-operations",
       "components": [
         "Tenant Templates (zero secret copying)",
@@ -426,7 +415,7 @@
       "implementation": "apps/web/src/admin/FleetOperationsCenter.tsx"
     },
     "productExperimentation": {
-      "status": "PILOT_READY",
+      "status": "DEFERRED_UNSHIPPED",
       "components": [
         "Deterministic Variant Hash Assignment",
         "Tenant Scoping",
@@ -470,22 +459,22 @@
     "payoutStatus": "BLOCKED"
   },
   "finalClassifications": {
-    "CANDIDATE_CLASSIFICATION": "CONTROLLED_PRODUCT_PILOT_READY",
+    "CANDIDATE_CLASSIFICATION": "RUNTIME_INTEGRATION_INCOMPLETE",
     "RELEASE_6_2_STATUS": "RC4_CANDIDATE_TAGGED",
     "RC_PROVENANCE_STATUS": "VERIFIED",
     "RESPONSIVE_WEB_STATUS": "PILOT_READY",
-    "ADAPTIVE_LEARNING_V2_STATUS": "PILOT_READY",
-    "STUDY_PLAN_STATUS": "PILOT_READY",
-    "AI_TUTOR_V2_STATUS": "PILOT_READY",
-    "TEACHER_COPILOT_STATUS": "PILOT_READY",
-    "INTERVENTION_STATUS": "PILOT_READY",
-    "INSTITUTION_ADMIN_V2_STATUS": "PILOT_READY",
-    "LEARNING_INTELLIGENCE_STATUS": "PILOT_READY",
-    "STUDENT_WORKSPACE_STATUS": "PILOT_READY",
-    "COURSE_AUTHORING_V2_STATUS": "PILOT_READY",
-    "ASSESSMENT_AUTHORING_V2_STATUS": "PILOT_READY",
-    "CURRICULUM_INTELLIGENCE_STATUS": "PILOT_READY",
-    "EXPERIMENTATION_STATUS": "PILOT_READY",
+    "ADAPTIVE_LEARNING_V2_STATUS": "DEFERRED_UNSHIPPED",
+    "STUDY_PLAN_STATUS": "DEFERRED_UNSHIPPED",
+    "AI_TUTOR_V2_STATUS": "PARTIALLY_CONNECTED",
+    "TEACHER_COPILOT_STATUS": "DEFERRED_UNSHIPPED",
+    "INTERVENTION_STATUS": "DEFERRED_UNSHIPPED",
+    "INSTITUTION_ADMIN_V2_STATUS": "DEFERRED_UNSHIPPED",
+    "LEARNING_INTELLIGENCE_STATUS": "DEFERRED_UNSHIPPED",
+    "STUDENT_WORKSPACE_STATUS": "PARTIALLY_CONNECTED",
+    "COURSE_AUTHORING_V2_STATUS": "DEFERRED_UNSHIPPED",
+    "ASSESSMENT_AUTHORING_V2_STATUS": "DEFERRED_UNSHIPPED",
+    "CURRICULUM_INTELLIGENCE_STATUS": "DEFERRED_UNSHIPPED",
+    "EXPERIMENTATION_STATUS": "DEFERRED_UNSHIPPED",
     "MOBILE_STATUS": "OUT_OF_SCOPE_RESPONSIVE_WEB_ONLY",
     "SECURITY_VALIDATION_STATUS": "EXTERNAL_ASSESSMENT_PENDING",
     "LTI_CERTIFICATION_STATUS": "CONFORMANCE_TESTING",

@@ -1,0 +1,14 @@
+{
+  "title": "AILSS Platform Overview",
+  "uid": "ailss-platform",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {"type":"stat","title":"Services Up","id":1,"targets":[{"expr":"sum(up{job=~\"ailss-.*\"})","refId":"A"}],"gridPos":{"h":8,"w":6,"x":0,"y":0}},
+    {"type":"timeseries","title":"Request Rate","id":2,"targets":[{"expr":"sum(rate(ailss_http_requests_total[5m])) by (job)","refId":"A"}],"gridPos":{"h":8,"w":9,"x":6,"y":0}},
+    {"type":"timeseries","title":"5xx Rate","id":3,"targets":[{"expr":"sum(rate(ailss_http_requests_total{status=~\"5..\"}[5m])) by (job)","refId":"A"}],"gridPos":{"h":8,"w":9,"x":15,"y":0}},
+    {"type":"timeseries","title":"p95 Latency","id":4,"targets":[{"expr":"histogram_quantile(0.95, sum(rate(ailss_http_duration_seconds_bucket[5m])) by (le, job))","refId":"A"}],"gridPos":{"h":8,"w":12,"x":0,"y":8}},
+    {"type":"timeseries","title":"Outbox Ready Age","id":5,"targets":[{"expr":"ailss_outbox_ready_age_seconds","refId":"A"}],"gridPos":{"h":8,"w":12,"x":12,"y":8}}
+  ]
+}

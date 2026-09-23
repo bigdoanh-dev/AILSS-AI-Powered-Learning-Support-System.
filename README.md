@@ -7,9 +7,9 @@
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-4.1-ff6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-AILSS là nền tảng học tập Web theo kiến trúc microservices, contract-first và event-driven. Hệ thống quản lý tài khoản, khóa học, lớp học, tiến độ, bài kiểm tra, tương tác, thông báo và quy trình dùng AI để tạo bản nháp câu hỏi có giảng viên duyệt.
+AILSS là nền tảng học tập đa nền tảng theo kiến trúc microservices, contract-first và event-driven. Hệ thống quản lý danh tính, khóa học, lớp học, tiến độ, đánh giá, tương tác, thông báo, thương mại và các quy trình AI có con người kiểm soát.
 
-> Phiên bản hiện tại tập trung vào Web desktop/responsive. Ứng dụng mobile chưa nằm trong phạm vi chạy của repository này.
+> Web responsive là bề mặt pilot chính. Repository có thêm ứng dụng Expo/React Native cho Student, Lecturer và Admin; việc phát hành native production vẫn ngoài phạm vi hiện tại.
 
 > **Triết lý thiết kế:** Contract-First, Service Ownership, Query-Driven Cassandra, Event-Driven Processing và Human-in-the-loop AI.
 
@@ -57,23 +57,28 @@ AILSS là nền tảng học tập Web theo kiến trúc microservices, contract
 AILSS được xây dựng để nghiên cứu và triển khai một hệ thống học tập phân tán có thể:
 
 - quản lý vòng đời tài khoản Student, Lecturer và Admin;
+- hỗ trợ tenant/institution, external authentication và identity federation;
 - xây dựng, duyệt và phân phối Course qua Offering;
 - quản lý Class, lịch học, session và attendance;
 - theo dõi Lesson completion và Learning progress;
 - tổ chức Quiz, Attempt, chấm điểm objective và trả kết quả an toàn;
 - hỗ trợ Comment, Review, Report, Moderation và Notification;
 - xử lý tài liệu riêng tư và sinh AI draft có Lecturer review;
+- cung cấp Study Plan, Mastery V2 và AI Tutor theo feature flag của tenant;
+- theo dõi doanh thu, payment projection, refund bền vững và product analytics;
 - vận hành nhất quán trên Cassandra, RabbitMQ và MinIO;
-- cung cấp trải nghiệm Web responsive, accessible và có reduced motion.
+- cung cấp trải nghiệm Web responsive và mobile, có accessibility/reduced-motion controls.
 
 ## Trạng thái hiện tại
 
 - 4 actor: `GUEST`, `STUDENT`, `LECTURER`, `ADMIN`.
-- 6 business services: Identity, Learning, Classroom, Assessment, Interaction và AI.
-- 102 public APIs, 15 internal APIs, 75 Query IDs và 22 Event Types.
+- Phiên bản package hiện tại: `6.1.4`; nhánh phát triển chứa công việc hướng tới 6.2.
+- 6 business services: Identity, Learning, Classroom, Assessment, Interaction và AI; phía trước là API Gateway.
+- Contract registry hiện khai báo 101 public APIs, 15 internal APIs, 78 Query IDs và 22 Event Types.
 - Cassandra 5 cho dữ liệu theo domain, RabbitMQ cho xử lý bất đồng bộ và MinIO cho tài liệu riêng tư.
 - Redis không được sử dụng.
-- Web production build có 30 public routes, trang 404 và workspace theo vai trò.
+- Web có workspace theo vai trò; mobile dùng Expo Router và SecureStore cho dữ liệu phiên nhạy cảm.
+- Trạng thái Phase 40 Revision H là `RUNTIME_INTEGRATION_INCOMPLETE`; controlled pilot đang `REVOKED` cho đến khi các acceptance gate còn thiếu được đóng.
 
 ## Tính năng chính
 
@@ -82,6 +87,7 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 - Trang giới thiệu, khám phá khóa học, AI learning, trợ giúp, liên hệ và pháp lý.
 - Đăng ký tạo tài khoản `STUDENT / ACTIVE`; không có role picker để tự tạo Lecturer.
 - Đăng nhập, refresh, logout, hồ sơ và đổi mật khẩu qua cookie phiên HttpOnly cùng origin.
+- External authentication/federation có runtime repository, tenant policy và các migration riêng; rollout vẫn phụ thuộc cấu hình và acceptance theo môi trường.
 - Student muốn trở thành Lecturer phải nộp đơn, được Admin phê duyệt, đăng nhập lại, rồi được Admin xác minh riêng.
 
 ### 2. Student Learning
@@ -91,6 +97,7 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 - Tham gia Class, xem lịch, session, announcement và attendance của chính mình.
 - Quiz/Attempt có thao tác bắt đầu và nộp bài rõ ràng; đáp án đúng không lộ trước policy.
 - Comment, reply một cấp, review, report và notification với cursor opaque.
+- Study Plan, mastery projection và AI Tutor đã có đường runtime từ assessment evidence; các nguồn evidence khác và full-stack acceptance chưa hoàn tất.
 
 ### 3. Lecturer Teaching
 
@@ -106,6 +113,7 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 - Xử lý đơn và xác minh Lecturer.
 - Publish/archive Course bằng UUID trực tiếp.
 - Xử lý report và moderation theo version/idempotency.
+- Dashboard thống kê, doanh thu, audit log và export; observability stack có Prometheus, Alertmanager và Grafana.
 - Không có vai trò `MODERATOR` riêng và chưa có Admin Course review queue.
 
 ### 5. Course và Offering
@@ -115,6 +123,7 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 - Course publication thuộc quyền Admin; Offering authoring/publishing tuân theo owner và trạng thái Course.
 - Free enrollment giữ legacy default-Offering behavior; paid access dùng Order và payment simulation.
 - Entitlement hội tụ qua at-least-once event delivery, idempotency và reconciliation.
+- Finance runtime có projection/backfill, durable refund và recovery cho SePay; thanh toán thương mại production vẫn fail-closed.
 
 ### 6. Classroom và Attendance
 
@@ -157,36 +166,71 @@ Upload intent → Direct private upload → Confirm → Extraction
 ### Sơ đồ tổng quan
 
 ```text
-Browser → Web same-origin adapter → API Gateway
-                                  ├── Identity    → identity_keyspace
-                                  ├── Learning    → learning_keyspace
-                                  ├── Classroom   → classroom_keyspace
-                                  ├── Assessment  → assessment_keyspace
-                                  ├── Interaction → interaction_keyspace
-                                  └── AI          → ai_keyspace + private MinIO
-                                                       │
-                                                    RabbitMQ
-                                                       ├── AI Worker
-                                                       ├── Document Worker
-                                                       ├── Notification Worker
-                                                       ├── Audit Worker
-                                                       └── Reconciliation Worker
+Browser → React Web → same-origin adapter ─┐  cookie HttpOnly
+                                             ├→ API Gateway :8080
+Expo app → API client + SecureStore ──────┘  bearer/refresh
+                                                │
+                         auth • rate limit • security headers
+                         Actor Context • routing • metrics
+                                                │
+       ┌───────────────────────┼───────────────────────┐
+       ▼                       ▼                       ▼
+Identity :8101            Learning :8102            Classroom :8103
+users/session/tenant      course/commerce/mastery   class/schedule/presence
+       ▼                       ▼                       ▼
+Assessment :8104          Interaction :8105         AI :8106
+quiz/attempt/grading      comment/review/moderation document/quiz/assistant
+       └───────────────────────┴───────────────────────┘
+              Internal HTTP • Service JWS • signed Actor Context
+                                                │
+       ┌───────────────────────┼───────────────────────┐
+       ▼                       ▼                       ▼
+Cassandra 5              RabbitMQ 4.1              Private MinIO
+keyspace per service     exchange/retry/DLQ        document/provider data
+                               │
+          ┌───────────────┼───────────────┐
+          ▼               ▼               ▼
+    Domain relays    Async workers    Reconciliation worker
+    outbox+confirm   AI/Document/     repair interrupted work
+                     Notification/Audit
+
+All runtimes → structured logs + Prometheus metrics → Alertmanager / Grafana
 ```
 
-Mỗi service chỉ sở hữu keyspace của mình. Giao tiếp đồng bộ giữa service dùng internal HTTP có Service JWS; xử lý bất đồng bộ dùng event envelope, outbox, idempotency và reconciliation. Delivery là at-least-once, không tuyên bố distributed exactly-once.
+Kiến trúc có ba đường giao tiếp chính:
+
+| Đường giao tiếp           | Cơ chế                                                                                | Bảo đảm                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Client → Gateway          | HTTPS/JSON; Web dùng cookie HttpOnly cùng origin, mobile dùng token trong SecureStore | Rate limit theo nhóm route, security headers, request context và public contract |
+| Gateway/service → service | Internal HTTP, Ed25519 Service JWS và signed Actor Context                            | Xác thực service, truyền actor/tenant/purpose; không đọc chéo keyspace           |
+| Service → worker/service  | RabbitMQ event envelope qua transactional outbox                                      | Publisher confirm, manual ACK, bounded retry, DLQ, idempotency và reconciliation |
+
+Luồng ghi quan trọng không dựa vào distributed transaction. Service ghi canonical state và outbox trong domain của mình; relay claim event bằng lease/fence, publish có confirm, sau đó consumer hội tụ projection bằng operation/event ID ổn định. Mastery consumer là một ví dụ: nhận assessment event, lưu evidence bền vững, tính lại Mastery V2 và sinh Study Plan retry-safe. Delivery là at-least-once, không tuyên bố distributed exactly-once.
 
 ### Service Ownership
 
-| Service             | Keyspace sở hữu        |
-| ------------------- | ---------------------- |
-| Identity Service    | `identity_keyspace`    |
-| Learning Service    | `learning_keyspace`    |
-| Classroom Service   | `classroom_keyspace`   |
-| Assessment Service  | `assessment_keyspace`  |
-| Interaction Service | `interaction_keyspace` |
-| AI Service          | `ai_keyspace`          |
+Repository có **14 application package**: 2 client, 1 gateway, 6 business service và 5 worker. Cassandra, RabbitMQ, MinIO, Prometheus, Alertmanager và Grafana là dependency hạ tầng, không được tính là business service.
 
-Runtime role không được tạo/sửa schema và không được đọc trực tiếp keyspace của service khác. Cross-domain read phải đi qua registered internal API hoặc projection đã có authority rõ ràng.
+| Nhóm             | Package/runtime                |      Cổng local | Trách nhiệm chính                                                                                                                | Dữ liệu sở hữu/phụ thuộc                                |
+| ---------------- | ------------------------------ | --------------: | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Client           | `@ailss/web`                   |   `5173`/`5177` | React Web cho Guest, Student, Lecturer, Admin; same-origin server adapter chuyển cookie session sang public API                  | Không sở hữu business data; browser không persist token |
+| Client           | `@ailss/mobile`                | Expo dev server | Expo/React Native cho Student, Lecturer, Admin; public API client, SecureStore và offline progress sync                          | SecureStore trên thiết bị; canonical data vẫn ở backend |
+| Edge             | `@ailss/api-gateway`           |          `8080` | Public entry point, auth boundary, rate limit, security headers, route proxy, Actor Context và metrics                           | Không sở hữu business data                              |
+| Business service | `@ailss/identity-service`      |          `8101` | Account, credential, session, profile/avatar, tenant, lecturer onboarding, social login, SAML/LTI federation và admin identity   | `identity_keyspace`, private avatar objects             |
+| Business service | `@ailss/learning-service`      |          `8102` | Course, Lesson, Offering, enrollment/entitlement, progress, commerce/SePay, finance, Mastery V2, Study Plan và product analytics | `learning_keyspace`                                     |
+| Business service | `@ailss/classroom-service`     |          `8103` | Class, roster, join code, schedule, session, announcement, WebSocket presence và attendance                                      | `classroom_keyspace`                                    |
+| Business service | `@ailss/assessment-service`    |          `8104` | Quiz/question authoring, publish, attempt, submission, objective/manual grading và result projection                             | `assessment_keyspace`                                   |
+| Business service | `@ailss/interaction-service`   |          `8105` | Comment/reply, review/rating, report và moderation queue                                                                         | `interaction_keyspace`                                  |
+| Business service | `@ailss/ai-service`            |          `8106` | Upload intent, document/extraction state, AI quiz job/draft/approval và AI Assistant conversation/tool orchestration             | `ai_keyspace`, private MinIO objects                    |
+| Worker           | `@ailss/ai-worker`             |          `8201` | Nhận quiz-generation event, gọi AI provider, validate `objective-v1`, ghi kết quả/draft xác định                                 | AI-owned repository, private MinIO, RabbitMQ            |
+| Worker           | `@ailss/document-worker`       |          `8202` | Tải object riêng tư, kiểm tra checksum/MIME/magic bytes, trích xuất nội dung có giới hạn                                         | AI-owned repository, private MinIO, RabbitMQ            |
+| Worker           | `@ailss/notification-worker`   |          `8203` | Chuyển domain event thành notification projection theo user/tháng                                                                | `notification_keyspace`, RabbitMQ                       |
+| Worker           | `@ailss/audit-worker`          |          `8204` | Ghi audit event tách khỏi synchronous request path                                                                               | `audit_support_keyspace`, RabbitMQ                      |
+| Worker           | `@ailss/reconciliation-worker` |          `8205` | Quét và repair operation/projection bị gián đoạn; hội tụ entitlement và các eventual workflow                                    | Không tạo business authority mới                        |
+
+Runtime role không được tạo/sửa schema và không được đọc trực tiếp keyspace của service khác. Cross-domain read phải đi qua registered internal API hoặc projection có authority rõ ràng. Binary tài liệu và provider artifact nằm trong private MinIO thay vì Cassandra; Redis không thuộc kiến trúc.
+
+Các luồng tham chiếu chi tiết cho registration/outbox, SePay/entitlement, AI quiz generation và failure recovery nằm trong [architecture-sequences.md](./docs/architecture/architecture-sequences.md); bản đồ workflow thực tế nằm trong [SYSTEM_WORKFLOWS.md](./docs/architecture/SYSTEM_WORKFLOWS.md).
 
 ## Công nghệ sử dụng
 
@@ -194,10 +238,12 @@ Runtime role không được tạo/sửa schema và không được đọc trự
 | ------------------- | ---------------------------------------------- |
 | Runtime             | Node.js 24, TypeScript 5.9, pnpm 11            |
 | Web                 | React 19, React Router 7, Vite 7, Three.js     |
+| Mobile              | Expo 57, React Native 0.86, Expo Router        |
 | HTTP                | Express 5                                      |
 | Database            | Apache Cassandra 5.0.9                         |
 | Messaging           | RabbitMQ 4.1                                   |
 | Object storage      | MinIO S3-compatible                            |
+| Observability       | Prometheus, Alertmanager, Grafana, Pino        |
 | Test/QA             | Vitest, Node test runner, Playwright, axe-core |
 | Local orchestration | Docker Compose                                 |
 
@@ -233,6 +279,7 @@ Runtime role không được tạo/sửa schema và không được đọc trự
 - Keyboard/focus, dialog, labels, aria feedback và axe checks có browser regression.
 - Public Home có Three.js lazy-load; authenticated workspace không chạy scene 3D liên tục.
 - Route/scroll/workspace animation tôn trọng `prefers-reduced-motion` và không scroll-jacking.
+- Expo app có các luồng Student, Lecturer và Admin cho account, course, class, assessment, notification, teaching và governance; release native production chưa được tuyên bố.
 
 ---
 
@@ -261,6 +308,14 @@ pnpm dev:web
 Mở địa chỉ Vite hiển thị trong terminal, mặc định `http://127.0.0.1:5173`.
 
 `env:dev-async` khởi tạo Cassandra roles/migrations, RabbitMQ topology, MinIO, Gateway, business services và workers. Hướng dẫn chi tiết cho Web nằm tại [WEB_DEVELOPMENT_GUIDE.md](./WEB_DEVELOPMENT_GUIDE.md).
+
+Để chạy mobile sau khi cài dependency:
+
+```bash
+pnpm --filter @ailss/mobile start
+# hoặc: pnpm --filter @ailss/mobile android
+# hoặc: pnpm --filter @ailss/mobile ios
+```
 
 Để bootstrap sạch và xóa toàn bộ dữ liệu local hiện tại:
 
@@ -297,6 +352,10 @@ pnpm typecheck:web
 pnpm lint:web
 pnpm test:web
 pnpm build:web
+
+pnpm --filter @ailss/mobile typecheck
+pnpm --filter @ailss/mobile test
+pnpm --filter @ailss/mobile validate:config
 ```
 
 Acceptance thực phải chạy khi profile `dev-async` đã sẵn sàng. Ví dụ:
@@ -312,12 +371,15 @@ pnpm acceptance:p11     # Notification
 ## Cấu trúc repository
 
 ```text
-apps/                    Gateway, services, workers và React Web
+apps/                    Gateway, services, workers, React Web và Expo mobile
 contracts/               OpenAPI, API/query/event registries và schemas
 database/migrations/     Cassandra migrations theo profile
 packages/                Thư viện runtime dùng chung
-scripts/                 Bootstrap, CI, acceptance và research tooling
-tests/                   Unit, contract, security và smoke tests
+ops/                     Prometheus, Alertmanager, Grafana và Vault policy
+scripts/                 Bootstrap, CI, acceptance, operations và research tooling
+tests/                   Unit, contract, security, load và smoke tests
+docs/                    ADR, hướng dẫn, audit và báo cáo theo phase
+artifacts/, evidence/     Bằng chứng runtime/release sinh bởi tooling
 ```
 
 ## Quy tắc phát triển
@@ -332,6 +394,8 @@ tests/                   Unit, contract, security và smoke tests
 8. AI output phải được validate và Lecturer review trước khi import; publish luôn là thao tác riêng.
 9. Web không persist token, answer draft, AI reviewed draft, notification locator hay Admin proof.
 10. Code thay đổi phải qua typecheck, lint, test, contract validation và secret scan phù hợp.
+11. Feature chỉ được tuyên bố pilot-ready khi có API, repository bền vững, authorization và acceptance evidence tương ứng.
+12. Grades, credentials, authorization, security parameters và payment không được đưa vào experimentation scope.
 
 ## Trạng thái phát triển
 
@@ -342,11 +406,16 @@ tests/                   Unit, contract, security và smoke tests
 - [x] Interaction, moderation và Notification
 - [x] Secure Document processing và AI Quiz Generation
 - [x] Web Guest/Student/Lecturer/Admin responsive
+- [x] Expo mobile app cho các luồng Student/Lecturer/Admin cốt lõi
 - [x] Local clean bootstrap và event consumer recovery
-- [ ] Mobile application
-- [ ] Production deployment và provider telemetry
+- [x] Assessment evidence → durable Mastery V2 → Study Plan feedback path
+- [x] Finance projection/backfill, durable refund và observability stack
+- [ ] Hoàn tất các authoritative mastery evidence producer còn lại
+- [ ] AI Tutor tool registry và Mastery/Study Plan tools đầy đủ
+- [ ] Full-stack Student/Teacher/Admin/failure E2E cho Phase 40 Revision H
+- [ ] Native mobile production release, production deployment và provider telemetry
 
-Repository hiện đạt trạng thái Web release-ready trong môi trường local đã kiểm thử. Điều này không đồng nghĩa production deployment đã được thực hiện.
+Theo báo cáo mới nhất trong repository, `PHASE_40_STATUS = RUNTIME_INTEGRATION_INCOMPLETE` và `CONTROLLED_PRODUCT_PILOT_STATUS = REVOKED`. Local typecheck, các test tập trung và migration checks đã pass, nhưng điều này không đồng nghĩa production deployment hay external assurance đã hoàn tất.
 
 ## Phạm vi và giới hạn của AI
 
@@ -370,11 +439,14 @@ AI không được:
 
 ## Giới hạn hiện tại
 
-- Chưa có authoritative owned-Course index, Admin Course review queue hoặc Student order-history list.
-- Chưa có answer autosave, global quiz history hay global notification unread total.
-- Chưa có searchable all-Document index hoặc AI review server autosave.
-- Chưa có provider cost/quality telemetry.
-- Chưa có ứng dụng mobile trong phạm vi hiện tại.
+- Practice completion, lesson completion và approved-instructor evidence chưa được nối đầy đủ vào Mastery V2.
+- Course requirement, deadline, assessment schedule và teacher-priority adapter cho Study Plan còn thiếu.
+- AI Tutor authorized tool registry và các Mastery/Study Plan tool thật chưa hoàn tất.
+- Teacher Copilot, Question Bank V2, Institution Onboarding, Curriculum Intelligence, Fleet Operations và Advanced Experimentation đang `DEFERRED_UNSHIPPED`; không nên xem route/UI thử nghiệm là runtime production-ready.
+- Full failure-injection retry/DLQ và full-stack Student/Teacher/Admin/failure E2E chưa có bằng chứng hoàn tất cho revision hiện tại.
+- Chưa tuyên bố external SAML, LTI, Vault, staging, load acceptance, penetration test hay ASV đã hoàn tất.
+- Thanh toán thương mại production và payout vẫn bị chặn theo cơ chế fail-closed.
+- Mobile có trong repository và có test, nhưng phát hành native production chưa nằm trong phạm vi đã xác nhận.
 
 ## Tác giả, bản quyền và giấy phép
 

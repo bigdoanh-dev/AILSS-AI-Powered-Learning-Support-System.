@@ -34,7 +34,6 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
       : "";
   const screen =
     screenKey || local.screen || global.screen || (rawPath && rawPath !== "[screen]" ? rawPath : undefined);
-  const roleParam = local.role || global.role;
   const destination =
     destinations(snapshot.user?.role).find((item) => item.key === screen) ||
     (screen === "login"
@@ -63,20 +62,6 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
         : undefined
       : destination?.path;
 
-  useEffect(() => {
-    if (screen === "login") {
-      if (roleParam === "admin") {
-        setEmail("admin.demo@ailss.local");
-        setPassword("AilssAdmin!2026");
-      } else if (roleParam === "lecturer") {
-        setEmail("lecturer.demo@ailss.local");
-        setPassword("AilssLecturer!2026");
-      } else if (roleParam === "student") {
-        setEmail("student.demo@ailss.local");
-        setPassword("AilssDemo!2026");
-      }
-    }
-  }, [screen, roleParam]);
   useEffect(() => {
     setAvatar(null);
     setAvatarStatus("loading");
@@ -180,40 +165,6 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
       });
     } finally {
       setPassword("");
-      setBusy(false);
-    }
-  }
-
-  async function quickLogin(targetEmail: string, targetPass: string) {
-    setBusy(true);
-    setEmail(targetEmail);
-    setPassword(targetPass);
-    try {
-      await session.login(targetEmail, targetPass);
-      if (session.snapshot.state === "AUTHENTICATED") {
-        const user = session.snapshot.user;
-        const target =
-          user?.role === "ADMIN"
-            ? "/admin"
-            : user?.role === "LECTURER"
-              ? "/teaching"
-              : "/";
-        goToResult("login-success", {
-          role: user?.role,
-          name: user?.displayName,
-          email: user?.emailMasked,
-          target,
-        });
-      } else {
-        goToResult("login-failure", {
-          message: session.snapshot.error ?? "Không thể xác thực tài khoản.",
-        });
-      }
-    } catch (e: unknown) {
-      goToResult("login-failure", {
-        message: e instanceof ApiError ? e.message : "Đăng nhập thất bại.",
-      });
-    } finally {
       setBusy(false);
     }
   }
@@ -567,53 +518,6 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
               />
             </View>
 
-            {/* Quick Fill & 1-Tap Login */}
-            {screen === "login" && (
-              <View
-                style={{
-                  gap: 10,
-                  marginTop: 12,
-                  padding: 14,
-                  backgroundColor: tokens.color.surfaceSubtle,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: tokens.color.border,
-                }}
-              >
-                <Text style={{ fontSize: 11, fontWeight: "800", color: tokens.color.muted, letterSpacing: 0.5 }}>
-                  1-CHẠM ĐĂNG NHẬP NHANH (ROLE SWITCHER):
-                </Text>
-                <View style={{ gap: 8 }}>
-                  <Button
-                    label="🛡️ Quản trị viên (Admin Demo)"
-                    size="sm"
-                    variant="primary"
-                    disabled={busy}
-                    onPress={() => void quickLogin("admin.demo@ailss.local", "AilssAdmin!2026")}
-                  />
-                  <View style={{ flexDirection: "row", gap: 8 }}>
-                    <View style={{ flex: 1 }}>
-                      <Button
-                        label="👨‍🏫 Giảng viên"
-                        size="sm"
-                        variant="secondary"
-                        disabled={busy}
-                        onPress={() => void quickLogin("lecturer.demo@ailss.local", "AilssLecturer!2026")}
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Button
-                        label="🎓 Học viên"
-                        size="sm"
-                        variant="secondary"
-                        disabled={busy}
-                        onPress={() => void quickLogin("student.demo@ailss.local", "AilssDemo!2026")}
-                      />
-                    </View>
-                  </View>
-                </View>
-              </View>
-            )}
           </View>
 
           {/* Security badge */}

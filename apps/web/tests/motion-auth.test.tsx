@@ -61,12 +61,12 @@ describe("premium auth and motion", () => {
     expect(s.velocity).toBeCloseTo(0);
     expect(advanceScroll(s, 0, 16, 1000).direction).toBe(-1);
   });
-  it("login screen offers Google and Apple SSO buttons along with demo chips", () => {
+  it("login screen offers SSO without reusable demo credentials", () => {
     show("/auth/login");
     expect(screen.getByRole("button", { name: "Đăng nhập với Google" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Đăng nhập với Apple" })).toBeTruthy();
     expect(screen.getByText("hoặc tiếp tục với email")).toBeTruthy();
-    expect(screen.getByText(/Tài khoản thử nghiệm nhanh/)).toBeTruthy();
+    expect(screen.queryByText(/Tài khoản thử nghiệm nhanh/)).toBeNull();
   });
   it("password field provides eye icon toggle for visibility with symmetric accessibility", async () => {
     const { fireEvent } = await import("@testing-library/react");
@@ -94,4 +94,3 @@ describe("premium auth and motion", () => {
     expect(screen.getByText("Bản mô tả video")).toBeTruthy();
   });
 });
-

@@ -91,104 +91,12 @@ export default function AttemptScreen() {
       setAttemptData(att);
       setQuizData(qz);
       setRemainingSeconds(calculateRemainingSeconds(att.deadlineAt));
-    } catch {
-      // Demo attempt fallback with 5 questions
-      const demoQuestions: QuizQuestion[] = [
-        {
-          questionId: "q-demo-1",
-          questionOrder: 1,
-          prompt: "Mục tiêu quan trọng nhất của việc chuẩn hóa cơ sở dữ liệu lên dạng chuẩn 3 (3NF) là gì?",
-          questionType: "SINGLE_CHOICE",
-          options: [
-            "Loại bỏ các phụ thuộc bắc cầu và giảm thiểu dư thừa dữ liệu",
-            "Tăng tốc độ truy vấn SELECT mà không cần dùng Index",
-            "Mã hóa toàn bộ các trường dữ liệu nhạy cảm",
-            "Tự động tạo bản sao lưu dữ liệu phân tán",
-          ],
-          points: "2.0",
-        },
-        {
-          questionId: "q-demo-2",
-          questionOrder: 2,
-          prompt: "Cấu trúc chỉ mục (Index) B-Tree trong RDBMS phù hợp nhất cho dạng truy vấn nào?",
-          questionType: "SINGLE_CHOICE",
-          options: [
-            "Truy vấn tìm kiếm chính xác và truy vấn theo khoảng giá trị (BETWEEN, >, <)",
-            "Chỉ hỗ trợ so sánh chuỗi ký tự độ dài cố định",
-            "Chỉ dùng cho các phép toán tập hợp FULLTEXT SEARCH",
-            "Dùng thay thế hoàn toàn cho bảng dữ liệu gốc",
-          ],
-          points: "2.0",
-        },
-        {
-          questionId: "q-demo-3",
-          questionOrder: 3,
-          prompt: "Khóa ngoại (Foreign Key) đảm bảo tính toàn vẹn nào trong hệ cơ sở dữ liệu quan hệ?",
-          questionType: "SINGLE_CHOICE",
-          options: [
-            "Toàn vẹn tham chiếu (Referential Integrity)",
-            "Toàn vẹn thực thể (Entity Integrity)",
-            "Toàn vẹn miền giá trị (Domain Integrity)",
-            "Toàn vẹn bảo mật (Security Integrity)",
-          ],
-          points: "2.0",
-        },
-        {
-          questionId: "q-demo-4",
-          questionOrder: 4,
-          prompt: "Trigger trong hệ quản trị CSDL được kích hoạt tự động khi có sự kiện nào?",
-          questionType: "SINGLE_CHOICE",
-          options: [
-            "Thao tác DML như INSERT, UPDATE, DELETE trên bảng",
-            "Chỉ khi người dùng thực hiện lệnh SELECT",
-            "Khi máy chủ khởi động lại",
-            "Khi tạo chỉ mục mới trên bảng",
-          ],
-          points: "2.0",
-        },
-        {
-          questionId: "q-demo-5",
-          questionOrder: 5,
-          prompt: "Thuộc tính nào trong ACID đảm bảo toàn bộ giao dịch thành công hoặc bị hủy bỏ hoàn toàn?",
-          questionType: "SINGLE_CHOICE",
-          options: [
-            "Atomicity (Tính nguyên tử)",
-            "Consistency (Tính nhất quán)",
-            "Isolation (Tính cô lập)",
-            "Durability (Tính bền vững)",
-          ],
-          points: "2.0",
-        },
-      ];
-
-      const demoAtt: Attempt = {
-        attemptId,
-        quizId,
-        quizVersion: 1,
-        attemptNo: 1,
-        state: "IN_PROGRESS",
-        startedAt: new Date().toISOString(),
-        deadlineAt: new Date(Date.now() + 2700 * 1000).toISOString(),
-        version: 1,
-      };
-
-      const demoQz: QuizDetail = {
-        quizId,
-        targetType: "COURSE",
-        targetId: "10000000-0000-4000-8000-000000000001",
-        title: "Kiểm tra trắc nghiệm AI: Chuẩn hóa dữ liệu & SQL Nâng cao",
-        state: "PUBLISHED",
-        currentVersion: 1,
-        questionCount: 5,
-        durationSeconds: 2700,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        questions: demoQuestions,
-      };
-
-      setAttemptData(demoAtt);
-      setQuizData(demoQz);
-      setRemainingSeconds(2700);
+    } catch (cause) {
+      setAttemptData(null);
+      setQuizData(null);
+      setError(cause instanceof ApiError
+        ? cause.message
+        : "Không thể tải bài làm. Vui lòng kiểm tra kết nối và thử lại.");
     } finally {
       setLoading(false);
     }

@@ -6,6 +6,7 @@ import { FinancialLedger, type LedgerEntry } from "./ledger.js";
 import type { PaymentProvider, PaymentWebhookResult } from "./payment-provider.js";
 import type { PayoutProvider, PayoutStatus } from "./payout-provider.js";
 import { CourseRefundPolicyEngine, type FinancePolicyConfig } from "./refund-policy.js";
+import type { DurableFinanceStore } from "./repository.js";
 
 export interface RefundRequestInput {
   readonly actor: ActorContext;
@@ -59,6 +60,7 @@ export class LearningFinanceService {
   readonly #ledger: FinancialLedger;
   readonly #refundPolicy: CourseRefundPolicyEngine;
   readonly #paymentProvider: PaymentProvider;
+  readonly #persistence: DurableFinanceStore | undefined;
   readonly #ledgerEntriesStore: Map<string, LedgerEntry[]> = new Map();
   readonly #refundsStore: Map<string, RefundRecord> = new Map();
   readonly #orderRefundStore: Map<string, string> = new Map(); // orderId -> refundId
@@ -69,11 +71,13 @@ export class LearningFinanceService {
     paymentProvider: PaymentProvider;
     ledger?: FinancialLedger;
     refundPolicy?: CourseRefundPolicyEngine;
+    persistence?: DurableFinanceStore;
   }) {
     this.#repo = options.repository;
     this.#paymentProvider = options.paymentProvider;
     this.#ledger = options.ledger ?? new FinancialLedger();
     this.#refundPolicy = options.refundPolicy ?? new CourseRefundPolicyEngine();
+    this.#persistence = options.persistence;
   }
 
   public get ledger(): FinancialLedger {
@@ -103,7 +107,9 @@ export class LearningFinanceService {
 
     // Check existing refund
     const existingRefundId = this.#orderRefundStore.get(order.orderId);
-    const existingRefund = existingRefundId ? this.#refundsStore.get(existingRefundId) : undefined;
+    const existingRefund = this.#persistence
+      ? await this.#persistence.refundByOrder(order.orderId)
+      : existingRefundId ? this.#refundsStore.get(existingRefundId) : undefined;
 
     // Look up learning progress for this student and course
     const course = await this.#repo.course(order.courseId);
@@ -111,8 +117,9 @@ export class LearningFinanceService {
       throw new AppError("COURSE_NOT_FOUND", 404, "Course not found");
     }
 
-    // Default progress to 0 unless course progress tracked
-    const progressPercent = 0.0;
+    const progressPercent = this.#persistence
+      ? await this.#persistence.progressPercent(order.studentId, order.courseId)
+      : 0;
 
     const evaluation = this.#refundPolicy.evaluate({
       orderState: order.state,
@@ -125,9 +132,12 @@ export class LearningFinanceService {
       throw new AppError("REFUND_NOT_ELIGIBLE", 422, evaluation.userSafeExplanation);
     }
 
-    const refundId = randomUUID();
+    let refundId: string = randomUUID();
     const now = new Date();
     const amountMinor = Number(order.price);
+    if (this.#persistence) refundId = await this.#persistence.claimRefund(order.orderId, refundId, now);
+    const claimed = this.#persistence ? await this.#persistence.refundByOrder(order.orderId) : undefined;
+    if (claimed) return claimed;
 
     // 1. Process refund with payment provider
     const refundProviderResult = await this.#paymentProvider.initiateRefund({
@@ -137,6 +147,18 @@ export class LearningFinanceService {
       currency: order.currency,
       reason: input.reason,
     });
+    if (!refundProviderResult.success) {
+      const rejected: RefundRecord = {
+        refundId, orderId: order.orderId, studentId: order.studentId, courseId: order.courseId,
+        amount: amountMinor, currency: order.currency, reason: input.reason, status: "REJECTED",
+        progressPercentAtRequest: progressPercent, requestedAt: now, processedAt: now,
+        failureReason: "PAYMENT_PROVIDER_REJECTED_REFUND",
+      };
+      await this.#persistence?.persistRefund(rejected, refundProviderResult.refundTransactionId, []);
+      this.#refundsStore.set(refundId, rejected);
+      this.#orderRefundStore.set(order.orderId, refundId);
+      return rejected;
+    }
 
     // 2. Revoke Entitlement safely
     const entitlement = await this.#repo.entitlement(order.studentId, order.courseId);
@@ -181,7 +203,7 @@ export class LearningFinanceService {
       amount: amountMinor,
       currency: order.currency,
       reason: input.reason,
-      status: refundProviderResult.success ? "PROCESSED" : "REJECTED",
+      status: "PROCESSED",
       progressPercentAtRequest: progressPercent,
       requestedAt: now,
       processedAt: now,
@@ -189,6 +211,11 @@ export class LearningFinanceService {
 
     this.#refundsStore.set(refundId, record);
     this.#orderRefundStore.set(order.orderId, refundId);
+    await this.#persistence?.persistRefund(
+      record,
+      refundProviderResult.refundTransactionId,
+      tx.entries,
+    );
 
     return record;
   }
@@ -590,4 +617,3 @@ export class LearningFinanceService {
     return result;
   }
 }
-

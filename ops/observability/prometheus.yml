@@ -1,0 +1,41 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  - job_name: ailss-api-gateway
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api-gateway:8100"]
+  - job_name: ailss-identity
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["identity-service:8101"]
+  - job_name: ailss-learning
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["learning-service:8102"]
+  - job_name: ailss-classroom
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["classroom-service:8103"]
+  - job_name: ailss-assessment
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["assessment-service:8104"]
+  - job_name: ailss-interaction
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["interaction-service:8105"]
+  - job_name: ailss-ai
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["ai-service:8106"]
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]

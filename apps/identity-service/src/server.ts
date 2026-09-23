@@ -4,6 +4,7 @@ import { ApplicationService } from "./lecturer-application/service.js";
 import { applicationRouter } from "./lecturer-application/router.js";
 import { startApplicationRepair } from "./lecturer-application/worker.js";
 import { randomBytes } from "node:crypto";
+import express from "express";
 import type { AppConfig } from "../../../packages/config/src/index.js";
 import {
   loadPrivateKey,
@@ -49,6 +50,9 @@ import { adminStepUpRouter } from "./step-up/router.js";
 import { IdentityExternalAuthRepository } from "./external-auth/repository.js";
 import { IdentityExternalAuthService } from "./external-auth/service.js";
 import { externalAuthRouter } from "./external-auth/router.js";
+import { FederationRepository } from "./federation/repository.js";
+import { FederationService } from "./federation/service.js";
+import { federationRouter } from "./federation/router.js";
 
 const manifest: ServiceManifest = {
   serviceId: "identity-service",
@@ -172,6 +176,17 @@ await startService(manifest, {
         context.metrics,
       ),
     );
+    const federation = new FederationService({
+      repository: new FederationRepository(context.cassandra),
+      publicBaseUrl: config.IDENTITY_PUBLIC_URL.replace(/\/+$/u, ""),
+      production: config.NODE_ENV === "production",
+      accessTokenTtlSeconds: config.ACCESS_TOKEN_TTL_SECONDS,
+      refreshTokenTtlSeconds: config.REFRESH_TOKEN_TTL_SECONDS,
+      accessTokenSigner,
+    });
+    app.use("/api/v1/auth/saml", express.urlencoded({ extended: false, limit: "2mb" }));
+    app.use("/api/v1/auth/lti/launch", express.urlencoded({ extended: false, limit: "64kb" }));
+    app.use(federationRouter(federation));
     const logout = new LogoutService({
       store: loginRepository,
       logger: context.logger,

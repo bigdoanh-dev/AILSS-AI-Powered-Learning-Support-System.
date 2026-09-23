@@ -1,7 +1,8 @@
 export function disposition(path, { dirty = false } = {}) {
   if (path === ".env" || path.startsWith("credentials/") || /\.(?:pem|key|p12|jks)$/.test(path))
     return "EXCLUDE_SECRET_NEVER_COMMIT";
-  if (path.startsWith("evidence/")) return "EXCLUDE_EVIDENCE";
+  if (path.startsWith("evidence/") || path.includes("/evidence/")) return "EXCLUDE_EVIDENCE";
+  if (path.startsWith("artifacts/")) return "EXCLUDE_GENERATED_RUNTIME";
   if (/^(?:dist|build|tmp|temp|logs|screenshots|output|coverage)(?:\/|$)/.test(path))
     return "EXCLUDE_GENERATED_RUNTIME";
   if (/^(?:infrastructure\/(?:storage|cassandra)\/data)(?:\/|$)/.test(path))

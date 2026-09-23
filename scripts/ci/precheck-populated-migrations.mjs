@@ -123,6 +123,22 @@ export const canonicalPolicy = {
     "SAFE_ADDITIVE",
     "Verify learning, assessment and identity keyspaces for Wave 2 tables.",
   ),
+  "081_finance_projection_and_durable_refunds.cql": P(
+    "BACKFILL_OR_RECONCILIATION_REVIEW",
+    "Reconcile every historical paid order and refund before marking the finance projection READY.",
+  ),
+  "082_identity_federation_runtime.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify Identity federation transaction, replay, LTI deployment, and federated subject tables.",
+  ),
+  "083_adaptive_runtime_completion.cql": P(
+    "SAFE_ADDITIVE",
+    "Apply required policy/version and durable Study Plan item lifecycle fields before enabling Revision G routes.",
+  ),
+  "084_mastery_evidence_ingestion.cql": P(
+    "SAFE_ADDITIVE",
+    "Create idempotent authoritative mastery evidence and ingestion recovery tables before starting the recalculation consumer.",
+  ),
 };
 
 export function findUnsafeStatements(body) {

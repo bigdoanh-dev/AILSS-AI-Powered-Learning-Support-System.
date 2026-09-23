@@ -5,8 +5,8 @@ import { InMemoryTenantRepository } from "../../apps/identity-service/src/tenant
 import { TenantService } from "../../apps/identity-service/src/tenant/service.js";
 
 describe("OIDC Security Conformance & SAML Reality (P1)", () => {
-  describe("SAML Reality Classification", () => {
-    it("explicitly rejects SAML configuration as NOT_IMPLEMENTED", async () => {
+  describe("SAML legacy API isolation", () => {
+    it("routes SAML configuration through the federation API", async () => {
       const repo = new InMemoryTenantRepository();
       const service = new TenantService(repo);
 
@@ -25,12 +25,12 @@ describe("OIDC Security Conformance & SAML Reality (P1)", () => {
           allowedDomains: ["test.edu"],
         }),
       ).rejects.toMatchObject({
-        code: "SAML_NOT_IMPLEMENTED",
-        status: 501,
+        code: "SAML_CONFIGURATION_REQUIRES_FEDERATION_API",
+        status: 422,
       });
     });
 
-    it("rejects SAML assertion callback as NOT_IMPLEMENTED", async () => {
+    it("rejects the legacy assertion callback in favor of the signed ACS route", async () => {
       const repo = new InMemoryTenantRepository();
       const service = new TenantService(repo);
 
@@ -57,8 +57,8 @@ describe("OIDC Security Conformance & SAML Reality (P1)", () => {
           name: "Student One",
         }),
       ).rejects.toMatchObject({
-        code: "SAML_NOT_IMPLEMENTED",
-        status: 501,
+        code: "LEGACY_SAML_CALLBACK_REJECTED",
+        status: 400,
       });
     });
   });

@@ -15,6 +15,10 @@ export interface Citation {
   readonly title: string;
   readonly lessonId?: string;
   readonly courseId?: string;
+  readonly courseVersion?: number;
+  readonly lessonVersion?: number;
+  readonly sourceObjectId?: string;
+  readonly retrievalScore?: number;
   readonly snippet?: string;
 }
 

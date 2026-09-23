@@ -55,83 +55,10 @@ interface GradingQueueItem {
   status: "PENDING" | "GRADED";
 }
 
-const INITIAL_GRADING_QUEUE: GradingQueueItem[] = [
-  {
-    id: "q-1",
-    studentName: "Lê Văn Đức",
-    studentId: "SV-202601",
-    email: "duc.le@student.ailss.edu.vn",
-    className: "CSDL Nâng cao - Nhóm 01",
-    taskTitle: "Bài tập lớn: Thiết kế CSDL quan hệ chuẩn hóa 3NF",
-    submittedTime: "35 phút trước",
-    submittedAtIso: "16/09/2026 20:45",
-    attachments: [
-      { name: "bai-tap-lon-csdl-3nf-le-van-duc.pdf", size: "2.4 MB" },
-      { name: "schema-erd-ddl.sql", size: "18 KB" },
-    ],
-    studentNote: "Em đã hoàn thành thiết kế mô hình quan hệ ERD, chuẩn hóa đạt chuẩn 3NF và viết script tạo bảng DDL có thiết lập khóa ngoại liên kết toàn vẹn và Index.",
-    rubric: [
-      { criterion: "Chuẩn hóa 3NF & Loại bỏ phụ thuộc", maxScore: 4.0, suggestedScore: 3.8 },
-      { criterion: "Tối ưu hóa B-Tree Index & Khóa ngoại", maxScore: 3.0, suggestedScore: 2.7 },
-      { criterion: "Chất lượng tài liệu & Code SQL", maxScore: 3.0, suggestedScore: 2.5 },
-    ],
-    score: null,
-    maxScore: 10,
-    feedback: "Mô hình ERD và các bảng đã đạt chuẩn 3NF tốt. Cần bổ sung thêm Composite Index trên bảng OrderDetails.",
-    status: "PENDING",
-  },
-  {
-    id: "q-2",
-    studentName: "Nguyễn Mai Phương",
-    studentId: "SV-202602",
-    email: "phuong.nguyen@student.ailss.edu.vn",
-    className: "Lập trình Web & AI - Nhóm 02",
-    taskTitle: "Lab 03: Xây dựng REST API & Vector DB",
-    submittedTime: "2 giờ trước",
-    submittedAtIso: "16/09/2026 19:20",
-    attachments: [
-      { name: "app-fastapi-pgvector.zip", size: "4.1 MB" },
-      { name: "api-spec-swagger.json", size: "32 KB" },
-    ],
-    studentNote: "Đã triển khai hoàn chỉnh endpoint tìm kiếm tài liệu tương đồng vector cosine similarity kết hợp authentication JWT.",
-    rubric: [
-      { criterion: "Kiến trúc API & Chuẩn RESTful", maxScore: 4.0, suggestedScore: 4.0 },
-      { criterion: "Tích hợp pgvector & Embedding", maxScore: 4.0, suggestedScore: 3.8 },
-      { criterion: "Unit tests & Xử lý lỗi", maxScore: 2.0, suggestedScore: 1.7 },
-    ],
-    score: null,
-    maxScore: 10,
-    feedback: "API chuẩn RESTful, tích hợp pgvector rất chuẩn xác!",
-    status: "PENDING",
-  },
-  {
-    id: "q-3",
-    studentName: "Vũ Minh Quân",
-    studentId: "SV-202606",
-    email: "quan.vu@student.ailss.edu.vn",
-    className: "CSDL Nâng cao - Nhóm 01",
-    taskTitle: "Báo cáo thực hành: Phân tích Query Plan & Index",
-    submittedTime: "Hôm qua",
-    submittedAtIso: "15/09/2026 16:30",
-    attachments: [
-      { name: "query-plan-benchmark.pdf", size: "1.2 MB" },
-    ],
-    studentNote: "Đã phân tích chi tiết thời gian thực thi giữa Seq Scan và Index Scan với dataset 500,000 bản ghi.",
-    rubric: [
-      { criterion: "Độ chính xác phép đo EXPLAIN ANALYZE", maxScore: 5.0, suggestedScore: 4.5 },
-      { criterion: "Biện luận kết quả & Tối ưu", maxScore: 5.0, suggestedScore: 4.0 },
-    ],
-    score: null,
-    maxScore: 10,
-    feedback: "Báo cáo rõ ràng, chỉ ra được khác biệt chi phí truy vấn Cost giữa Seq Scan và Index Scan.",
-    status: "PENDING",
-  },
-];
-
 export function TeachingHome() {
-  const [queueItems, setQueueItems] = useState<GradingQueueItem[]>(INITIAL_GRADING_QUEUE);
+  const [queueItems] = useState<GradingQueueItem[]>([]);
   const [gradingItem, setGradingItem] = useState<GradingQueueItem | null>(null);
-  const [gradeScore, setGradeScore] = useState("9.0");
+  const [gradeScore, setGradeScore] = useState("");
   const [gradeFeedback, setGradeFeedback] = useState("");
   const [gradeNotice, setGradeNotice] = useState<string | null>(null);
   const [submissionTab, setSubmissionTab] = useState<"note" | "files" | "rubric">("note");
@@ -146,24 +73,7 @@ export function TeachingHome() {
   const [previewPage, setPreviewPage] = useState(1);
 
   const handleDownloadFile = (fileName: string) => {
-    let content = `--- AILSS AI-Powered Learning Support System ---\n`;
-    content += `Tên tệp: ${fileName}\n`;
-    content += `Thời gian tải: ${new Date().toLocaleString("vi-VN")}\n\n`;
-    if (fileName.endsWith(".sql")) {
-      content += `-- Script DDL: Thiet ke CSDL quan he 3NF\nCREATE TABLE customers (\n  customer_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  full_name VARCHAR(120) NOT NULL,\n  email VARCHAR(255) UNIQUE NOT NULL\n);\n\nCREATE TABLE orders (\n  order_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  customer_id UUID REFERENCES customers(customer_id),\n  total_amount NUMERIC(15, 2) NOT NULL\n);\n\nCREATE INDEX idx_orders_customer ON orders(customer_id);\n`;
-    } else if (fileName.endsWith(".json")) {
-      content += JSON.stringify({ name: fileName, apiVersion: "v1.0", endpoints: ["/api/v1/search", "/api/v1/auth"], status: "VALID" }, null, 2);
-    } else {
-      content += `Báo cáo tài liệu bài tập lớn chính thức của sinh viên trên hệ thống AILSS.\nNội dung học phần: Cơ sở dữ liệu Nâng cao & Ngôn ngữ kịch bản.\nTrạng thái: Đã kiểm tra tính toàn vẹn.\n`;
-    }
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
-    setGradeNotice(`✓ Đã tải xuống tệp ${fileName} thành công!`);
+    setGradeNotice(`Không thể tải ${fileName}: bản ghi nộp bài chưa có URL tệp được xác thực.`);
     setTimeout(() => setGradeNotice(null), 3500);
   };
 
@@ -204,7 +114,7 @@ export function TeachingHome() {
             </span>
             <span className="kpi-tag accent">3 lớp học phần</span>
           </div>
-          <div className="kpi-value">186 SV</div>
+          <div className="kpi-value">—</div>
           <div className="kpi-label">Tổng học viên phụ trách</div>
           <p className="kpi-subtext">Sĩ số trung bình 48-50 SV / lớp</p>
         </div>
@@ -215,7 +125,7 @@ export function TeachingHome() {
             </span>
             <span className="kpi-tag accent">Điểm danh</span>
           </div>
-          <div className="kpi-value">96.4%</div>
+          <div className="kpi-value">—</div>
           <div className="kpi-label">Tỷ lệ chuyên cần học kỳ</div>
           <p className="kpi-subtext">Đạt chuẩn quy chế đào tạo</p>
         </div>
@@ -226,7 +136,7 @@ export function TeachingHome() {
             </span>
             <span className="kpi-tag" style={{ color: "var(--danger, #DC2626)", fontWeight: 700 }}>Cần xử lý</span>
           </div>
-          <div className="kpi-value">14 bài nộp</div>
+          <div className="kpi-value">{queueItems.filter((item) => item.status === "PENDING").length} bài nộp</div>
           <div className="kpi-label">Hàng đợi chấm bài tập</div>
           <p className="kpi-subtext">10 bài CSDL, 4 bài Web AI</p>
         </div>
@@ -237,7 +147,7 @@ export function TeachingHome() {
             </span>
             <span className="kpi-tag accent">142 nhận xét</span>
           </div>
-          <div className="kpi-value">4.9 ★</div>
+          <div className="kpi-value">—</div>
           <div className="kpi-label">Đánh giá từ sinh viên</div>
           <p className="kpi-subtext">98% phản hồi rất tích cực</p>
         </div>
@@ -400,7 +310,7 @@ export function TeachingHome() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span className="kpi-tag" style={{ color: "var(--danger, #DC2626)", fontWeight: 700 }}>● Cần chấm điểm</span>
-              <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>14 bài nộp mới chưa có điểm</span>
+              <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>{queueItems.filter((item) => item.status === "PENDING").length} bài nộp chưa có điểm</span>
             </div>
             <h2 style={{ margin: 0, fontSize: "1.15rem" }}>Hàng Đợi Chấm Bài Tập &amp; Đánh Giá</h2>
             <p className="subtext">Bài nộp gần nhất từ sinh viên các lớp bạn đang trực tiếp phụ trách.</p>
@@ -430,6 +340,9 @@ export function TeachingHome() {
               </tr>
             </thead>
             <tbody>
+              {queueItems.length === 0 && (
+                <tr><td colSpan={6}>Chưa có dữ liệu bài nộp từ Assessment Service.</td></tr>
+              )}
               {queueItems.map((item) => (
                 <tr key={item.id}>
                   <td>
@@ -812,22 +725,7 @@ export function TeachingHome() {
                   type="button"
                   className="button"
                   onClick={() => {
-                    const numScore = parseFloat(gradeScore);
-                    setQueueItems((prev) =>
-                      prev.map((q) =>
-                        q.id === gradingItem.id
-                          ? {
-                              ...q,
-                              score: isNaN(numScore) ? 9.0 : numScore,
-                              feedback: gradeFeedback,
-                              status: "GRADED",
-                            }
-                          : q,
-                      ),
-                    );
-                    setGradeNotice(
-                      `✓ Đã lưu điểm ${isNaN(numScore) ? "9.0" : numScore}/${gradingItem.maxScore} và gửi phản hồi thành công cho SV ${gradingItem.studentName}!`,
-                    );
+                    setGradeNotice("Không thể lưu: bản ghi nộp bài chưa được liên kết với Assessment Service.");
                     setGradingItem(null);
                     setTimeout(() => setGradeNotice(null), 4000);
                   }}
@@ -1493,9 +1391,9 @@ export function TeachingCourses() {
             <Icon name="card" size={20} />
           </div>
           <div className="curriculum-stat-content">
-            <div className="curriculum-stat-value">148.5M ₫</div>
+            <div className="curriculum-stat-value">—</div>
             <div className="curriculum-stat-label">Doanh thu tích lũy</div>
-            <div className="curriculum-stat-sub">Các đợt mở bán &amp; tuyển sinh</div>
+            <div className="curriculum-stat-sub">Chờ dữ liệu tài chính đã đối soát</div>
           </div>
         </div>
       </div>
@@ -3124,7 +3022,7 @@ export function Offerings() {
             </span>
             <span className="kpi-tag accent">Đang quản lý</span>
           </div>
-          <div className="kpi-value">{offeringsList.length || 2} Đợt</div>
+          <div className="kpi-value">{offeringsList.length} Đợt</div>
           <div className="kpi-label">Tổng số đợt mở bán</div>
           <p className="kpi-subtext">Học kỳ 1 - 2026</p>
         </div>
@@ -3135,9 +3033,9 @@ export function Offerings() {
             </span>
             <span className="kpi-tag accent">Doanh thu</span>
           </div>
-          <div className="kpi-value">148.5M ₫</div>
+          <div className="kpi-value">—</div>
           <div className="kpi-label">Dòng tiền đối soát</div>
-          <p className="kpi-subtext">Thanh toán qua SePay &amp; QR</p>
+          <p className="kpi-subtext">Chờ projection thanh toán và hoàn tiền</p>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">
@@ -3146,9 +3044,9 @@ export function Offerings() {
             </span>
             <span className="kpi-tag accent">Tuyển sinh</span>
           </div>
-          <div className="kpi-value">186 Học viên</div>
+          <div className="kpi-value">—</div>
           <div className="kpi-label">Đã thanh toán &amp; kích hoạt</div>
-          <p className="kpi-subtext">Quyền học tập tự động cấp</p>
+          <p className="kpi-subtext">Chờ dữ liệu tuyển sinh có thẩm quyền</p>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">

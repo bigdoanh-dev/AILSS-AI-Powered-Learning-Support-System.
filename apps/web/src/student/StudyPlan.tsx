@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heading } from "./ui";
+import { studentError, studentRequest, useStudent, type LearningCourse } from "./api";
 
 export interface WebStudyPlanItem {
   id: string;
@@ -12,7 +13,7 @@ export interface WebStudyPlanItem {
   priority: number;
   reasonCode: string;
   rationale: string;
-  status: "PENDING" | "COMPLETED" | "SKIPPED" | "RESCHEDULED";
+  status: "PROPOSED" | "PENDING" | "ACCEPTED" | "COMPLETED" | "SKIPPED" | "RESCHEDULED" | "ALTERNATIVE_REQUESTED" | "REPLACED";
 }
 
 export interface WebMasteryGap {
@@ -37,78 +38,26 @@ export function StudyPlanPage() {
     "OVERVIEW" | "THIS_WEEK" | "GAPS" | "RECOMMENDED" | "UPCOMING" | "COMPLETED"
   >("THIS_WEEK");
 
-  const [items, setItems] = useState<WebStudyPlanItem[]>([
-    {
-      id: "item-1",
-      title: "Binary Search Trees Invariant Review",
-      concept: "binary_search_trees",
-      action: "REVIEW_CONCEPT",
-      scheduledDate: "2026-09-22",
-      estimatedMinutes: 25,
-      priority: 1,
-      reasonCode: "RECENCY_DECAY",
-      rationale: "Achieved proficiency 3 weeks ago; quick refresher will maintain mastery state.",
-      status: "PENDING",
-    },
-    {
-      id: "item-2",
-      title: "Targeted Socratic Practice: Tree Rotations",
-      concept: "tree_rotations",
-      action: "PRACTICE_QUESTIONS",
-      scheduledDate: "2026-09-23",
-      estimatedMinutes: 35,
-      priority: 2,
-      reasonCode: "LOW_MASTERY",
-      rationale: "Mastery is currently at 64% (Developing). Practice questions will elevate to Proficient.",
-      status: "PENDING",
-    },
-    {
-      id: "item-3",
-      title: "Midterm Diagnostic Readiness Simulation",
-      concept: "algorithms_midterm_prep",
-      action: "TAKE_DIAGNOSTIC",
-      scheduledDate: "2026-09-25",
-      estimatedMinutes: 45,
-      priority: 1,
-      reasonCode: "UPCOMING_ASSESSMENT",
-      rationale: "CS101 Midterm Examination is scheduled for Sept 28.",
-      status: "PENDING",
-    },
-  ]);
-
-  const [gaps] = useState<WebMasteryGap[]>([
-    {
-      conceptId: "c-tree-rotations",
-      conceptName: "AVL Tree Rotations & Balancing",
-      currentScore: 64,
-      targetScore: 80,
-      state: "DEVELOPING",
-      whyDeveloping: "Recent quiz attempt scored 64%. Prerequisite binary tree properties verified.",
-    },
-    {
-      conceptId: "c-graph-dijkstra",
-      conceptName: "Dijkstra Shortest Path Complexity",
-      currentScore: 78,
-      targetScore: 85,
-      state: "DECAY_RISK",
-      whyDeveloping: "Inactive for 22 days since initial completion. Requires 1 refresher session.",
-    },
-  ]);
-
-  const [upcoming] = useState<WebUpcomingAssessment[]>([
-    {
-      id: "midterm-01",
-      title: "CS101 Algorithms & Data Structures Midterm",
-      dueDate: "2026-09-28",
-      daysRemaining: 6,
-      weightPercent: 30,
-    },
-  ]);
-
-  const handleStatusChange = (itemId: string, newStatus: "COMPLETED" | "SKIPPED" | "RESCHEDULED") => {
-    setItems((prev) =>
-      prev.map((i) => (i.id === itemId ? { ...i, status: newStatus } : i)),
-    );
+  const courses = useStudent<LearningCourse[]>("/me/courses");
+  const [courseId, setCourseId] = useState("");
+  useEffect(() => { if (!courseId && courses.data?.[0]) setCourseId(courses.data[0].courseId); }, [courseId, courses.data]);
+  type RuntimePlan = { items: Array<{ itemId: string; title: string; conceptId: string; action: WebStudyPlanItem["action"]; scheduledDate: string; estimatedMinutes: number; priority: number; reasonCode: string; rationale: string; status: WebStudyPlanItem["status"] }>; masteryGaps: Array<{ conceptId: string; conceptName: string; currentScore: number; targetScore: number }>; upcomingAssessments: Array<{ assessmentId: string; title: string; dueDate: string }> };
+  const plan = useStudent<RuntimePlan>(courseId ? `/study-plan/current?courseId=${encodeURIComponent(courseId)}` : null);
+  const [items, setItems] = useState<WebStudyPlanItem[]>([]);
+  useEffect(() => setItems((plan.data?.items ?? []).map((item) => ({ id: item.itemId, title: item.title, concept: item.conceptId, action: item.action, scheduledDate: item.scheduledDate, estimatedMinutes: item.estimatedMinutes, priority: item.priority, reasonCode: item.reasonCode, rationale: item.rationale, status: item.status }))), [plan.data]);
+  const gaps = useMemo<WebMasteryGap[]>(() => (plan.data?.masteryGaps ?? []).map((gap) => ({ ...gap, state: gap.currentScore < 40 ? "INTRODUCED" : gap.currentScore < 75 ? "DEVELOPING" : "DECAY_RISK", whyDeveloping: `Điểm thành thạo hiện tại là ${gap.currentScore}%; mục tiêu là ${gap.targetScore}%.` })), [plan.data]);
+  const upcoming = useMemo<WebUpcomingAssessment[]>(() => (plan.data?.upcomingAssessments ?? []).map((assessment) => ({ id: assessment.assessmentId, title: assessment.title, dueDate: assessment.dueDate, daysRemaining: Math.max(0, Math.ceil((Date.parse(assessment.dueDate) - Date.now()) / 86400000)), weightPercent: 0 })), [plan.data]);
+  const [mutationError, setMutationError] = useState("");
+  const generatePlan = async () => {
+    if (!courseId) return;
+    try { await studentRequest<RuntimePlan>("/study-plan/generate", new AbortController().signal, "POST", { courseId, availableHoursPerWeek: 7 }); setMutationError(""); plan.retry(); }
+    catch (error) { setMutationError(studentError(error)); }
+  };
+  const handleStatusChange = async (itemId: string, newStatus: "COMPLETED" | "SKIPPED" | "RESCHEDULED") => {
+    if (!courseId) return;
+    const controller = new AbortController();
+    try { const response = await studentRequest<WebStudyPlanItem>(`/study-plan/items/${itemId}`, controller.signal, "PATCH", { courseId, status: newStatus }); setItems((previous) => previous.map((item) => item.id === itemId ? { ...item, status: response.data.status } : item)); setMutationError(""); }
+    catch (error) { setMutationError(studentError(error)); }
   };
 
   const completedItems = items.filter((i) => i.status === "COMPLETED");
@@ -119,6 +68,14 @@ export function StudyPlanPage() {
       <Heading title="Kế hoạch học tập cá nhân hóa (Adaptive Study Plan V2)">
         Lộ trình tối ưu hóa dựa trên điểm thành thạo thực tế, khoảng trống kiến thức tiên quyết và kỳ thi sắp tới.
       </Heading>
+      <label style={{ display: "block", marginBottom: "var(--space-4)" }}>Khóa học:{" "}
+        <select value={courseId} onChange={(event) => setCourseId(event.target.value)}>
+          {(courses.data ?? []).map((course) => <option key={course.courseId} value={course.courseId}>{course.title}</option>)}
+        </select>
+      </label>
+      <button type="button" disabled={!courseId} onClick={() => void generatePlan()} style={{ marginBottom: "var(--space-4)" }}>Tạo lại kế hoạch từ dữ liệu thành thạo</button>
+      {(courses.pending || plan.pending) && <p>Đang tải dữ liệu kế hoạch học tập…</p>}
+      {(courses.error || plan.error || mutationError) && <p role="alert" style={{ color: "var(--danger, #b42318)" }}>{mutationError || studentError(courses.error ?? plan.error)}</p>}
 
       {/* Tab Navigation */}
       <div
@@ -172,7 +129,7 @@ export function StudyPlanPage() {
               Các hoạt động được đề xuất tuần này
             </h2>
             <span style={{ fontSize: "0.9rem", color: "var(--muted)" }}>
-              Tổng thời lượng dự kiến: {items.reduce((s, i) => s + (i.status === "PENDING" ? i.estimatedMinutes : 0), 0)} phút
+              Tổng thời lượng dự kiến: {items.reduce((s, i) => s + (["PROPOSED", "PENDING", "ACCEPTED", "RESCHEDULED"].includes(i.status) ? i.estimatedMinutes : 0), 0)} phút
             </span>
           </div>
 
@@ -256,7 +213,7 @@ export function StudyPlanPage() {
           <h2 id="recommended-heading" style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}>
             Hành động được cá nhân hóa ưu tiên cao nhất
           </h2>
-          <div
+          {items[0] ? <div
             style={{
               padding: "var(--space-5)",
               background: "linear-gradient(135deg, #1760ef10, #77dfff15)",
@@ -268,14 +225,14 @@ export function StudyPlanPage() {
               ⚡ HÀNH ĐỘNG KHUYÊN DÙNG NGAY (Next-Action Engine)
             </span>
             <h3 style={{ margin: "var(--space-2) 0", fontSize: "1.3rem" }}>
-              Luyện tập Socratic cùng AI Tutor: Cân bằng cây AVL
+              {items[0].title}
             </h3>
             <p style={{ color: "var(--ink)", fontSize: "1rem", lineHeight: 1.5 }}>
-              Lý do: Điểm thành thạo hiện tại của bạn là 64% (Developing). Vượt qua 3 câu hỏi thực hành giải thích bước quay LL và RR sẽ đưa khái niệm lên mức Proficient (≥ 75%).
+              Lý do: {items[0].rationale}
             </p>
             <div style={{ marginTop: "var(--space-4)", display: "flex", gap: "var(--space-3)" }}>
               <Link
-                to="/app/ai-tutor?concept=tree_rotations&mode=SOCRATIC"
+                to={`/app/ai-tutor?concept=${encodeURIComponent(items[0].concept)}&mode=SOCRATIC`}
                 style={{
                   padding: "10px 20px",
                   background: "var(--blue)",
@@ -288,7 +245,7 @@ export function StudyPlanPage() {
                 Bắt đầu học với AI Tutor ngay →
               </Link>
             </div>
-          </div>
+          </div> : <p>Chưa có hành động khuyên dùng. Hãy tạo kế hoạch sau khi hệ thống ghi nhận bằng chứng học tập.</p>}
         </section>
       )}
 

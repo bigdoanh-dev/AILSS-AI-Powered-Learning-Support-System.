@@ -21,48 +21,6 @@ interface ClassCardMeta {
   pendingGrades: number;
 }
 
-const FALLBACK_CLASSES: ClassCardMeta[] = [
-  {
-    classId: "10000000-0000-4000-8000-000000000001",
-    name: "Cơ sở dữ liệu Nâng cao & Tối ưu hóa - Nhóm 01",
-    code: "CSDL-01",
-    classKind: "LỚP TRỰC TIẾP",
-    schedule: "Thứ Ba, Thứ Năm · 07:30 - 09:30",
-    room: "Phòng P.302 (Tòa H1)",
-    studentCount: 62,
-    completedSessions: 12,
-    totalSessions: 15,
-    attendanceRate: "96.4%",
-    pendingGrades: 8,
-  },
-  {
-    classId: "10000000-0000-4000-8000-000000000002",
-    name: "Lập trình Web & Trợ lý AI Fullstack - Nhóm 02",
-    code: "WEBAI-02",
-    classKind: "LIVE CLASSROOM",
-    schedule: "Thứ Tư, Thứ Sáu · 13:30 - 15:30",
-    room: "Live Classroom (Trực tuyến)",
-    studentCount: 58,
-    completedSessions: 10,
-    totalSessions: 16,
-    attendanceRate: "97.2%",
-    pendingGrades: 6,
-  },
-  {
-    classId: "10000000-0000-4000-8000-000000000003",
-    name: "DevOps CI/CD Pipeline & Kubernetes - Nhóm 03",
-    code: "DEVOPS-03",
-    classKind: "HYBRID",
-    schedule: "Thứ Bảy · 08:00 - 11:30",
-    room: "Phòng Lab 405 (Tòa C2)",
-    studentCount: 66,
-    completedSessions: 8,
-    totalSessions: 14,
-    attendanceRate: "95.8%",
-    pendingGrades: 0,
-  },
-];
-
 export default function OwnedClassesList() {
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -114,26 +72,19 @@ export default function OwnedClassesList() {
     );
   }
 
-  // Merge server data with fallback metadata
-  const displayClasses: ClassCardMeta[] =
-    items && items.length > 0
-      ? items.map((cls, idx) => {
-          const fallback = FALLBACK_CLASSES[idx % FALLBACK_CLASSES.length];
-          return {
-            classId: cls.classId,
-            name: cls.name,
-            code: fallback.code,
-            classKind: cls.classKind === "LIVE_COHORT" ? "LIVE CLASSROOM" : "LỚP CHÍNH KHÓA",
-            schedule: fallback.schedule,
-            room: fallback.room,
-            studentCount: cls.maxMembers || fallback.studentCount,
-            completedSessions: fallback.completedSessions,
-            totalSessions: fallback.totalSessions,
-            attendanceRate: fallback.attendanceRate,
-            pendingGrades: fallback.pendingGrades,
-          };
-        })
-      : FALLBACK_CLASSES;
+  const displayClasses: ClassCardMeta[] = (items ?? []).map((cls) => ({
+    classId: cls.classId,
+    name: cls.name,
+    code: cls.joinCode ?? "—",
+    classKind: cls.classKind,
+    schedule: "Chưa có lịch được tải",
+    room: "—",
+    studentCount: cls.maxMembers ?? 0,
+    completedSessions: 0,
+    totalSessions: 0,
+    attendanceRate: "—",
+    pendingGrades: 0,
+  }));
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
@@ -152,22 +103,22 @@ export default function OwnedClassesList() {
           {/* Quick Stats Strip */}
           <View style={cs.statsStrip}>
             <View style={cs.statItem}>
-              <Text style={cs.statNum}>186</Text>
+              <Text style={cs.statNum}>{displayClasses.reduce((sum, item) => sum + item.studentCount, 0)}</Text>
               <Text style={cs.statLabel}>Tổng SV</Text>
             </View>
             <View style={cs.statDivider} />
             <View style={cs.statItem}>
-              <Text style={[cs.statNum, { color: "#0284C7" }]}>3</Text>
+              <Text style={[cs.statNum, { color: "#0284C7" }]}>{displayClasses.length}</Text>
               <Text style={cs.statLabel}>Lớp phụ trách</Text>
             </View>
             <View style={cs.statDivider} />
             <View style={cs.statItem}>
-              <Text style={[cs.statNum, { color: "#16A34A" }]}>96.4%</Text>
+              <Text style={[cs.statNum, { color: "#16A34A" }]}>—</Text>
               <Text style={cs.statLabel}>Chuyên cần</Text>
             </View>
             <View style={cs.statDivider} />
             <View style={cs.statItem}>
-              <Text style={[cs.statNum, { color: "#DC2626" }]}>14</Text>
+              <Text style={[cs.statNum, { color: "#DC2626" }]}>0</Text>
               <Text style={cs.statLabel}>Chờ chấm</Text>
             </View>
           </View>

@@ -282,6 +282,47 @@ export class LearningCommerceRepository {
     );
     return rows[0]?.["[applied]"] === true;
   }
+  async ensureRevenuePaymentFact(
+    order: LearningOrder,
+    providerTransactionId: string,
+    occurredAt: Date,
+  ): Promise<void> {
+    const day = occurredAt.toISOString().slice(0, 10),
+      shard = eventShard(order.paidEventId);
+    await this.db.execute(
+      `INSERT INTO revenue_payment_fact_by_event (payment_event_id,bucket_day,shard,occurred_at,order_id) VALUES (?,?,?,?,?) IF NOT EXISTS`,
+      [uuid(order.paidEventId), localDate(day), shard, occurredAt, uuid(order.orderId)],
+      LQ,
+      LS,
+    );
+    const guard = (
+      await this.db.execute(
+        `SELECT bucket_day,shard,occurred_at,order_id FROM revenue_payment_fact_by_event WHERE payment_event_id=?`,
+        [uuid(order.paidEventId)],
+        LQ,
+      )
+    )[0];
+    if (!guard || String(guard.order_id) !== order.orderId)
+      throw new AppError("FINANCE_PROJECTION_CONFLICT", 409, "Payment projection requires review");
+    await this.db.execute(
+      `INSERT INTO revenue_payment_facts_by_day_shard (bucket_day,shard,occurred_at,order_id,payment_event_id,provider_transaction_id,student_id,course_id,offering_id,gross_minor,currency) VALUES (?,?,?,?,?,?,?,?,?,?,?) IF NOT EXISTS`,
+      [
+        localDate(day),
+        shard,
+        occurredAt,
+        uuid(order.orderId),
+        uuid(order.paidEventId),
+        providerTransactionId,
+        uuid(order.studentId),
+        uuid(order.courseId),
+        uuid(order.offeringId),
+        long(moneyMinor(order.price)),
+        order.currency,
+      ],
+      LQ,
+      LS,
+    );
+  }
   async markFulfillment(order: LearningOrder, state: "IN_PROGRESS" | "PENDING", now: Date) {
     const rows = await this.db.execute(
       `UPDATE order_by_id SET fulfillment_state=?,updated_at=? WHERE order_id=? IF state='PAID_PENDING_ENTITLEMENT' AND version=?`,
@@ -569,116 +610,115 @@ export class LearningCommerceRepository {
     crashAfter("E2_OUTBOX_ID_READY", { eventId });
   }
 
-  public revenueDashboard(_range: string) {
-    return Promise.resolve({
-      totalRevenue: "148.500.000 ₫",
-      totalOrders: 426,
-      sepayRate: "99.4%",
-      aov: "348.000 ₫",
-      dailyRevenue: [
-        { day: "T2", revenue: 18200000, orders: 52 },
-        { day: "T3", revenue: 24500000, orders: 70 },
-        { day: "T4", revenue: 20100000, orders: 58 },
-        { day: "T5", revenue: 31400000, orders: 90 },
-        { day: "T6", revenue: 19800000, orders: 57 },
-        { day: "T7", revenue: 15600000, orders: 45 },
-        { day: "CN", revenue: 18900000, orders: 54 },
-      ],
-      courseRevenue: [
-        {
-          id: "c1",
-          title: "Web & AI Fullstack",
-          revenue: "58.200.000 ₫",
-          revenueValue: 58200000,
-          percent: 39,
-          orders: 165,
-        },
-        {
-          id: "c2",
-          title: "CSDL & Kịch bản",
-          revenue: "46.500.000 ₫",
-          revenueValue: 46500000,
-          percent: 31,
-          orders: 132,
-        },
-        {
-          id: "c3",
-          title: "AI & LLM",
-          revenue: "28.800.000 ₫",
-          revenueValue: 28800000,
-          percent: 19,
-          orders: 82,
-        },
-        {
-          id: "c4",
-          title: "CI/CD & DevOps",
-          revenue: "15.000.000 ₫",
-          revenueValue: 15000000,
-          percent: 11,
-          orders: 47,
-        },
-      ],
-      transactions: [
-        {
-          id: "tx-1",
-          code: "ORD-2026-0901",
-          customer: "Nguyễn Văn Hùng",
-          course: "Lập trình Web & Trợ lý AI Fullstack",
-          amount: "450.000 ₫",
-          status: "SUCCESS",
-          gateway: "SePay (VCB - 9821827)",
-          time: "20:18:22",
-          date: "16/09/2026",
-        },
-        {
-          id: "tx-2",
-          code: "ORD-2026-0902",
-          customer: "Trần Thị Mai",
-          course: "Cơ sở dữ liệu Nâng cao",
-          amount: "490.000 ₫",
-          status: "RECONCILED",
-          gateway: "SePay (MB Bank - 104821)",
-          time: "19:45:10",
-          date: "16/09/2026",
-        },
-        {
-          id: "tx-3",
-          code: "ORD-2026-0903",
-          customer: "Lê Hoàng Nam",
-          course: "Trí tuệ nhân tạo & LLM",
-          amount: "590.000 ₫",
-          status: "SUCCESS",
-          gateway: "SePay (VietinBank - 440192)",
-          time: "18:12:04",
-          date: "16/09/2026",
-        },
-        {
-          id: "tx-4",
-          code: "ORD-2026-0904",
-          customer: "Phạm Thu Trang",
-          course: "Kiểm thử & CI/CD DevOps",
-          amount: "390.000 ₫",
-          status: "PENDING",
-          gateway: "Chuyển khoản QR (Đang xác nhận)",
-          time: "17:30:15",
-          date: "16/09/2026",
-        },
-        {
-          id: "tx-5",
-          code: "ORD-2026-0905",
-          customer: "Vũ Đình Trọng",
-          course: "Lập trình Web & Trợ lý AI Fullstack",
-          amount: "450.000 ₫",
-          status: "SUCCESS",
-          gateway: "SePay (Techcombank - 883019)",
-          time: "15:02:44",
-          date: "16/09/2026",
-        },
-      ],
-      sepayLatencyMs: 42,
-      sepayStatus: "ACTIVE",
-    });
+  public async revenueDashboard(range: "today" | "7d" | "30d", now = new Date()) {
+    const days = range === "today" ? 1 : range === "7d" ? 7 : 30,
+      end = startUtcDay(now),
+      start = new Date(end.getTime() - (days - 1) * 86_400_000),
+      control = (
+        await this.db.execute(
+          `SELECT status,backfill_through,last_reconciled_at,checksum FROM finance_projection_control WHERE projection_name=?`,
+          ["REVENUE_V1"],
+          LQ,
+        )
+      )[0],
+      backfillThrough = control?.backfill_through ? date(control.backfill_through) : undefined;
+    if (control?.status !== "READY" || !backfillThrough || backfillThrough.getTime() < end.getTime())
+      throw new AppError(
+        "REVENUE_PROJECTION_NOT_READY",
+        503,
+        "Revenue reporting is unavailable until payment and refund backfill is reconciled",
+        true,
+      );
+
+    let grossMinor = 0n,
+      refundMinor = 0n,
+      orderCount = 0,
+      refundCount = 0;
+    const dailyRevenue: Array<{ day: string; grossMinor: string; refundMinor: string; netMinor: string; orders: number }> = [];
+    for (let cursor = new Date(start); cursor <= end; cursor = new Date(cursor.getTime() + 86_400_000)) {
+      const day = cursor.toISOString().slice(0, 10),
+        partitions = await Promise.all(
+          Array.from({ length: 16 }, (_, shard) =>
+            Promise.all([
+              this.db.execute(
+                `SELECT gross_minor,currency FROM revenue_payment_facts_by_day_shard WHERE bucket_day=? AND shard=?`,
+                [localDate(day), shard],
+                LQ,
+              ),
+              this.db.execute(
+                `SELECT amount_minor,currency,status FROM revenue_refund_facts_by_day_shard WHERE bucket_day=? AND shard=?`,
+                [localDate(day), shard],
+                LQ,
+              ),
+            ]),
+          ),
+        );
+      let dayGross = 0n,
+        dayRefund = 0n,
+        dayOrders = 0;
+      for (const [payments, refunds] of partitions) {
+        for (const payment of payments) {
+          if (payment.currency !== "VND") throw new AppError("FINANCE_CURRENCY_MISMATCH", 503, "Revenue projection currency mismatch", true);
+          dayGross += big(payment.gross_minor);
+          dayOrders += 1;
+        }
+        for (const refund of refunds) {
+          if (refund.status !== "PROCESSED") continue;
+          if (refund.currency !== "VND") throw new AppError("FINANCE_CURRENCY_MISMATCH", 503, "Revenue projection currency mismatch", true);
+          dayRefund += big(refund.amount_minor);
+          refundCount += 1;
+        }
+      }
+      grossMinor += dayGross;
+      refundMinor += dayRefund;
+      orderCount += dayOrders;
+      dailyRevenue.push({
+        day,
+        grossMinor: dayGross.toString(),
+        refundMinor: dayRefund.toString(),
+        netMinor: (dayGross - dayRefund).toString(),
+        orders: dayOrders,
+      });
+    }
+    return {
+      dataSource: "AUTHORITATIVE_PAYMENT_REFUND_PROJECTION" as const,
+      range,
+      currency: "VND",
+      grossMinor: grossMinor.toString(),
+      refundMinor: refundMinor.toString(),
+      netMinor: (grossMinor - refundMinor).toString(),
+      orderCount,
+      refundCount,
+      dailyRevenue,
+      completeness: {
+        status: "READY" as const,
+        backfillThrough: backfillThrough.toISOString(),
+        lastReconciledAt: control.last_reconciled_at
+          ? date(control.last_reconciled_at).toISOString()
+          : null,
+        checksum: String(control.checksum ?? ""),
+      },
+    };
   }
+}
+
+function startUtcDay(value: Date): Date {
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+}
+function moneyMinor(value: string): number {
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 0)
+    throw new AppError("INVALID_MONEY", 500, "Order amount is not a safe integer minor-unit value");
+  return parsed;
+}
+function big(value: unknown): bigint {
+  if (typeof value === "bigint") return value;
+  if (typeof value === "string" || typeof value === "number") return BigInt(value);
+  if (value && typeof value === "object" && "toString" in value) {
+    const stringifiable = value as { toString(): string };
+    return BigInt(stringifiable.toString());
+  }
+  return 0n;
 }
 
 function orderRow(r: types.Row): LearningOrder {

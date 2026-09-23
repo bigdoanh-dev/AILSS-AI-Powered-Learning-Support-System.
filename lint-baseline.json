@@ -1,0 +1,586 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-09-22T16:35:38.455Z",
+  "baselineCommit": "3c319edc89b50eaa5cdda3513fa81128a50bb232",
+  "scope": [
+    "apps",
+    "packages"
+  ],
+  "existingIssueCount": 82,
+  "issues": [
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/ai-tutor-eval-v1.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 149,
+      "column": 11
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/ai-tutor-eval-v1.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 155,
+      "column": 11
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/ai-tutor-eval-v1.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 156,
+      "column": 11
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/ai-tutor-eval-v1.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 162,
+      "column": 11
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/ai-tutor-eval-v1.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 163,
+      "column": 11
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/ai-tutor-eval-v1.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 169,
+      "column": 11
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/ai-tutor-eval-v2.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 3,
+      "column": 3
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/ai-tutor-eval-v2.ts",
+      "rule": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 27,
+      "column": 14
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/ai-tutor-eval-v3.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 3,
+      "column": 3
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/ai-tutor-eval-v3.ts",
+      "rule": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 29,
+      "column": 14
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/assessment-integrity-attacks.ts",
+      "rule": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 305,
+      "column": 14
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/assessment-integrity-attacks.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 382,
+      "column": 27
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/assessment-integrity-attacks.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 382,
+      "column": 41
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/teacher-copilot-service.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 8,
+      "column": 3
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/teacher-copilot-service.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 9,
+      "column": 3
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/teacher-copilot-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 226,
+      "column": 99
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/teacher-copilot-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 244,
+      "column": 65
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/teacher-copilot-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 244,
+      "column": 99
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/ai-service/src/assistant/teacher-copilot-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 262,
+      "column": 54
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/identity-service/src/tenant/fleet-operations-service.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 136,
+      "column": 20
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 1,
+      "column": 10
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 5,
+      "column": 3
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 91,
+      "column": 34
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 92,
+      "column": 37
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 94,
+      "column": 35
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 132,
+      "column": 28
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 133,
+      "column": 31
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 135,
+      "column": 29
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 182,
+      "column": 36
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/adaptive/recommendation-service.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 262,
+      "column": 3
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/adaptive/recommendation-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 315,
+      "column": 53
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/adaptive/runtime-repository.ts",
+      "rule": "@typescript-eslint/no-base-to-string",
+      "severity": "error",
+      "line": 119,
+      "column": 51
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/analytics/differential-privacy-service.ts",
+      "rule": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 107,
+      "column": 14
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/analytics/differential-privacy-service.ts",
+      "rule": "@typescript-eslint/no-non-null-assertion",
+      "severity": "error",
+      "line": 153,
+      "column": 28
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/analytics/differential-privacy-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 278,
+      "column": 24
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/analytics/differential-privacy-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 295,
+      "column": 24
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/analytics/differential-privacy-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 323,
+      "column": 22
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/analytics/learning-intelligence-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 183,
+      "column": 30
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/analytics/learning-intelligence-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 183,
+      "column": 44
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/analytics/learning-intelligence-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 191,
+      "column": 76
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 56,
+      "column": 24
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 56,
+      "column": 38
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 79,
+      "column": 24
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 79,
+      "column": 38
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 154,
+      "column": 30
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 154,
+      "column": 44
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/curriculum/curriculum-intelligence-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 84,
+      "column": 33
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/curriculum/curriculum-intelligence-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 84,
+      "column": 47
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/mastery/mastery-calibration-v1.ts",
+      "rule": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 254,
+      "column": 14
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/mastery/mastery-calibration-v2.ts",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 3,
+      "column": 8
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/apps/learning-service/src/mastery/mastery-service.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 535,
+      "column": 52
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/commercial-gate.ts",
+      "rule": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 77,
+      "column": 14
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/commercial-gate.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 222,
+      "column": 101
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/commercial-gate.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 233,
+      "column": 90
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/commercial-gate.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 233,
+      "column": 138
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/commercial-gate.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 260,
+      "column": 96
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/commercial-gate.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 307,
+      "column": 52
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/commercial-gate.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 307,
+      "column": 90
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/critical-durability.ts",
+      "rule": "@typescript-eslint/require-await",
+      "severity": "error",
+      "line": 142,
+      "column": 3
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/critical-durability.ts",
+      "rule": "@typescript-eslint/no-unnecessary-type-parameters",
+      "severity": "error",
+      "line": 242,
+      "column": 33
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/data-retention-policy.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 121,
+      "column": 11
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/data-retention-policy.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 121,
+      "column": 26
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/data-retention-policy.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 162,
+      "column": 68
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/data-retention-policy.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 162,
+      "column": 115
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/data-retention-policy.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 162,
+      "column": 139
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/data-retention-policy.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 201,
+      "column": 27
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/data-retention-policy.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 207,
+      "column": 48
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/data-retention-policy.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 207,
+      "column": 96
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/data-retention-policy.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 213,
+      "column": 45
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/data-retention-policy.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 213,
+      "column": 105
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/feature-flags.ts",
+      "rule": "@typescript-eslint/no-unnecessary-type-conversion",
+      "severity": "error",
+      "line": 91,
+      "column": 16
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/institutional-pilot.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 313,
+      "column": 9
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/institutional-pilot.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 314,
+      "column": 81
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/institutional-pilot.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 317,
+      "column": 9
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/institutional-pilot.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 318,
+      "column": 66
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/institutional-pilot.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 321,
+      "column": 9
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/institutional-pilot.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 322,
+      "column": 58
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/institutional-pilot.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 326,
+      "column": 84
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/learning-intelligence.ts",
+      "rule": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 67,
+      "column": 14
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/contracts/src/scim.ts",
+      "rule": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 777,
+      "column": 53
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/security/src/saml.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 640,
+      "column": 68
+    },
+    {
+      "file": "../../cơ sở dữ liệu nâng cao & ngôn ngữ kịch bản/ailss/packages/security/src/saml.ts",
+      "rule": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 897,
+      "column": 44
+    }
+  ]
+}

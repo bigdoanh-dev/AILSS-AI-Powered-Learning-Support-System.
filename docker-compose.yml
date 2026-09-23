@@ -168,8 +168,10 @@ services:
       ENABLE_CASSANDRA: "false"
       PORT: 8080
       RATE_LIMIT_READ_PER_MINUTE: ${RATE_LIMIT_READ_PER_MINUTE:-300}
+      RATE_LIMIT_GLOBAL_PER_MINUTE: ${RATE_LIMIT_GLOBAL_PER_MINUTE:-1200}
       RATE_LIMIT_WRITE_PER_MINUTE: ${RATE_LIMIT_WRITE_PER_MINUTE:-60}
       PASSWORD_CHANGE_HTTP_TIMEOUT_MS: ${PASSWORD_CHANGE_HTTP_TIMEOUT_MS:-20000}
+      AI_PROVIDER_TIMEOUT_MS: ${AI_PROVIDER_TIMEOUT_MS:-45000}
       IDENTITY_SERVICE_URL: http://identity-service:8101
       LEARNING_SERVICE_URL: http://learning-service:8102
       CLASSROOM_SERVICE_URL: http://classroom-service:8103
@@ -256,6 +258,7 @@ services:
         CASSANDRA_USERNAME: svc_learning,
         CASSANDRA_PASSWORD: "${CASSANDRA_SVC_LEARNING_PASSWORD}",
         IDENTITY_SERVICE_URL: "http://identity-service:8101",
+        ASSESSMENT_SERVICE_URL: "http://assessment-service:8104",
         SERVICE_TOKEN_PRIVATE_KEY_PATH: "/run/ailss/services/learning-private.pem",
         CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/classroom-public.pem",
         CLASSROOM_SERVICE_TOKEN_KID: "dev-classroom-2026-01",
@@ -265,6 +268,8 @@ services:
         INTERACTION_SERVICE_TOKEN_KID: "dev-interaction-2026-01",
         AI_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/ai-public.pem",
         AI_SERVICE_TOKEN_KID: "dev-ai-2026-01",
+        LEARNING_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/learning-public.pem",
+        LEARNING_SERVICE_TOKEN_KID: "dev-learning-2026-01",
         SERVICE_TOKEN_ISSUER: "${SERVICE_TOKEN_ISSUER:-ailss-internal}",
         SERVICE_TOKEN_AUDIENCE: "identity-service",
         SERVICE_TOKEN_PURPOSE: "${SERVICE_TOKEN_PURPOSE:-identity.public-profile.read}",
@@ -297,6 +302,7 @@ services:
       - ./infrastructure/tls/generated/services/assessment-public.pem:/run/ailss/services/assessment-public.pem:ro
       - ./infrastructure/tls/generated/services/interaction-public.pem:/run/ailss/services/interaction-public.pem:ro
       - ./infrastructure/tls/generated/services/ai-public.pem:/run/ailss/services/ai-public.pem:ro
+      - ./infrastructure/tls/generated/services/learning-public.pem:/run/ailss/services/learning-public.pem:ro
       - ./infrastructure/tls/generated/services/gateway-public.pem:/run/ailss/services/gateway-public.pem:ro
       - ./infrastructure/tls/generated/identity/user-jwt-public.pem:/run/ailss/identity/user-jwt-public.pem:ro
 
@@ -366,6 +372,8 @@ services:
         ASSESSMENT_SERVICE_TOKEN_KID: "dev-assessment-2026-01",
         AI_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/ai-public.pem",
         AI_SERVICE_TOKEN_KID: "dev-ai-2026-01",
+        LEARNING_SERVICE_TOKEN_PUBLIC_KEY_PATH: "/run/ailss/services/learning-public.pem",
+        LEARNING_SERVICE_TOKEN_KID: "dev-learning-2026-01",
         ASSESSMENT_ACCEPTANCE_DELAY_AFTER_IMPORT_DRAFT_ID: "${ASSESSMENT_ACCEPTANCE_DELAY_AFTER_IMPORT_DRAFT_ID:-}",
         ACTOR_CONTEXT_PUBLIC_KEY_PATH: "/run/ailss/services/gateway-public.pem",
         PASSWORD_IDEMPOTENCY_HMAC_KEY: "${PASSWORD_IDEMPOTENCY_HMAC_KEY}",
@@ -377,6 +385,7 @@ services:
       - ./infrastructure/tls/generated/services/assessment-private.pem:/run/ailss/services/assessment-private.pem:ro
       - ./infrastructure/tls/generated/services/gateway-public.pem:/run/ailss/services/gateway-public.pem:ro
       - ./infrastructure/tls/generated/services/ai-public.pem:/run/ailss/services/ai-public.pem:ro
+      - ./infrastructure/tls/generated/services/learning-public.pem:/run/ailss/services/learning-public.pem:ro
 
   interaction-service:
     <<: *app-common
@@ -422,6 +431,10 @@ services:
         LEARNING_SERVICE_URL: "http://learning-service:8102",
         CLASSROOM_SERVICE_URL: "http://classroom-service:8103",
         ASSESSMENT_SERVICE_URL: "http://assessment-service:8104",
+        AI_PROVIDER_ENDPOINT: "${AI_PROVIDER_ENDPOINT:-https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent}",
+        AI_PROVIDER_API_KEY: "${AI_PROVIDER_API_KEY:-${GEMINI_API_KEY:-}}",
+        AI_PROVIDER_MODEL: "${AI_PROVIDER_MODEL:-gemini-2.5-flash}",
+        AI_PROVIDER_TIMEOUT_MS: "${AI_PROVIDER_TIMEOUT_MS:-45000}",
         ACTOR_CONTEXT_PUBLIC_KEY_PATH: "/run/ailss/services/gateway-public.pem",
         SERVICE_TOKEN_PRIVATE_KEY_PATH: "/run/ailss/services/ai-private.pem",
         AI_SERVICE_TOKEN_KID: "dev-ai-2026-01",
@@ -441,6 +454,7 @@ services:
         OBJECT_STORAGE_SECRET_KEY: "${OBJECT_STORAGE_SECRET_KEY}",
       }
     ports: ["127.0.0.1:8106:8106"]
+    networks: [service_net, data_net, ai_egress]
     mem_limit: 512m
     cpus: 0.50
     volumes:

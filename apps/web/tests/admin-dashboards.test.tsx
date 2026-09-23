@@ -14,51 +14,22 @@ afterEach(() => {
 
 describe("Admin Dedicated Dashboards on Web", () => {
   describe("RevenueDashboard", () => {
-    it("renders financial KPIs, SePay status, and handles actions", () => {
+    it("fails closed instead of presenting fabricated financial data", () => {
       render(
         <MemoryRouter>
           <RevenueDashboard />
         </MemoryRouter>,
       );
 
-      // Verify title & KPIs
       expect(screen.getByText("Dashboard Doanh Thu & Đối Soát SePay")).toBeTruthy();
-      expect(screen.getByText("148.500.000 ₫")).toBeTruthy();
-      expect(screen.getByText("426 đơn")).toBeTruthy();
-      expect(screen.getByText("99.4%")).toBeTruthy();
+      expect(screen.getByText("Chưa có báo cáo doanh thu có thẩm quyền")).toBeTruthy();
+      expect(screen.getByText(/không dùng KPI, giao dịch hoặc số liệu dự phòng giả/)).toBeTruthy();
+      expect(screen.queryByText("148.500.000 ₫")).toBeNull();
 
-      // Test time range switcher
       const todayBtn = screen.getByRole("button", { name: "Hôm nay" });
       fireEvent.click(todayBtn);
       expect(todayBtn.className).toContain("active");
-
-      // Test export CSV
-      const exportBtn = screen.getByRole("button", { name: /Xuất báo cáo CSV/ });
-      fireEvent.click(exportBtn);
-      expect(screen.getByText(/Đã xuất báo cáo đối soát doanh thu/)).toBeTruthy();
-
-      // Test webhook test button
-      const testWebhookBtn = screen.getByRole("button", { name: /Kiểm tra kết nối Webhook/ });
-      fireEvent.click(testWebhookBtn);
-      expect(screen.getByText(/Phản hồi 200 OK/)).toBeTruthy();
-
-      // Test transaction search
-      const searchInput = screen.getByLabelText("Tìm kiếm giao dịch");
-      fireEvent.change(searchInput, { target: { value: "Trần Thị Mai" } });
-      expect(screen.getByText("Trần Thị Mai")).toBeTruthy();
-      expect(screen.queryByText("Nguyễn Văn Hùng")).toBeNull();
-
-      // Test Payout Reconciliation Queue & Action
-      expect(screen.getByText("Hàng Đợi Quyết Toán & Đối Soát Giảng Viên (Payout Reconciliation)")).toBeTruthy();
-      expect(screen.getByText("po-101")).toBeTruthy();
-      const reconcileBtn = screen.getByRole("button", { name: "Khớp lệnh đối soát" });
-      fireEvent.click(reconcileBtn);
-      expect(screen.getByText(/Đã hoàn tất đối soát lệnh quyết toán po-101/)).toBeTruthy();
-
-      // Test Finance Policy Panel (Vietnamese 7-day / <20% completion rule)
-      expect(screen.getByText("Chính Sách Hoàn Tiền & An Toàn Tài Chính (Finance Policy)")).toBeTruthy();
-      expect(screen.getByText("7 ngày kể từ ngày mua")).toBeTruthy();
-      expect(screen.getByText("Dưới 20% khóa học")).toBeTruthy();
+      expect(screen.getByRole("button", { name: /Đang kiểm tra|Kiểm tra lại/ })).toBeTruthy();
     });
   });
 
@@ -89,41 +60,18 @@ describe("Admin Dedicated Dashboards on Web", () => {
   });
 
   describe("LogsDashboard", () => {
-    it("renders audit logs, filters by category, and expands JSON payload", () => {
+    it("does not present or export fabricated audit evidence", () => {
       render(
         <MemoryRouter>
           <LogsDashboard />
         </MemoryRouter>,
       );
 
-      // Verify header
       expect(screen.getByText(/Nhật Ký Hệ Thống & Kiểm Toán An Ninh/)).toBeTruthy();
-
-      // Verify initial log entries
-      expect(screen.getByText("req_sp_9921827")).toBeTruthy();
-      expect(screen.getByText("req_auth_104821")).toBeTruthy();
-
-      // Filter by category: "Thương mại & SePay"
-      const commerceBtn = screen.getByRole("button", { name: "Thương mại & SePay" });
-      fireEvent.click(commerceBtn);
-      expect(screen.getByText("req_sp_9921827")).toBeTruthy();
-      expect(screen.queryByText("req_auth_104821")).toBeNull();
-
-      // Search by keyword
-      const searchInput = screen.getByLabelText("Tìm kiếm nhật ký");
-      fireEvent.change(searchInput, { target: { value: "ORD-2026-0902" } });
-      expect(screen.getByText("req_rec_440192")).toBeTruthy();
-
-      // Expand details
-      const detailBtn = screen.getByLabelText("Xem chi tiết req_rec_440192");
-      fireEvent.click(detailBtn);
-      expect(screen.getByText(/Cấu Trúc Dữ Liệu Payload/)).toBeTruthy();
-      expect(screen.getByText(/INVALID_TRANSFER_SYNTAX/)).toBeTruthy();
-
-      // Close details
-      const closeBtn = screen.getByRole("button", { name: "✕ Đóng" });
-      fireEvent.click(closeBtn);
-      expect(screen.queryByText(/Cấu Trúc Dữ Liệu Payload/)).toBeNull();
+      expect(screen.getByText("Không có bản ghi phù hợp.")).toBeTruthy();
+      expect(screen.queryByText("req_sp_9921827")).toBeNull();
+      expect(screen.queryByText("ISO 27001")).toBeNull();
+      expect(screen.getByText("Chưa xác minh")).toBeTruthy();
     });
   });
 

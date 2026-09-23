@@ -104,7 +104,7 @@ export default function SettingsDashboard() {
               Quy tắc quản lý trạng thái đăng nhập, xác thực lại và thời gian nhàn rỗi tài khoản.
             </p>
           </div>
-          <span className="kpi-tag accent">ISO 27001 Ready</span>
+          <span className="kpi-tag">Chưa xác minh ISO 27001</span>
         </div>
 
         <div className="settings-list">

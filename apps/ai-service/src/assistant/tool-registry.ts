@@ -5,6 +5,11 @@ export interface AssistantToolDefinition {
   readonly description: string;
   readonly schema: z.ZodTypeAny;
   readonly parameters: Record<string, unknown>;
+  readonly allowedRoles?: readonly ("PUBLIC" | "STUDENT" | "LECTURER" | "ADMIN")[];
+  readonly tenantScope?: "PUBLIC" | "ACTOR_TENANT";
+  readonly courseScope?: "NONE" | "ENTITLED_COURSE";
+  readonly outputSchema?: z.ZodTypeAny;
+  readonly timeoutBehavior?: "RETURN_TEMPORARILY_UNAVAILABLE";
 }
 
 export const searchCoursesSchema = z.object({
@@ -94,6 +99,11 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
         maxPrice: { type: "number", description: "Maximum price filter in VND" },
       },
     },
+    allowedRoles: ["PUBLIC", "STUDENT", "LECTURER", "ADMIN"],
+    tenantScope: "PUBLIC",
+    courseScope: "NONE",
+    outputSchema: z.array(z.object({ courseId: z.string().uuid(), title: z.string() }).passthrough()),
+    timeoutBehavior: "RETURN_TEMPORARILY_UNAVAILABLE",
   },
   get_course_details: {
     name: "get_course_details",
@@ -142,6 +152,11 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
       },
       required: ["courseId", "topic"],
     },
+    allowedRoles: ["STUDENT", "LECTURER", "ADMIN"],
+    tenantScope: "ACTOR_TENANT",
+    courseScope: "ENTITLED_COURSE",
+    outputSchema: z.array(z.object({ lessonId: z.string(), title: z.string(), contentSnippet: z.string() })),
+    timeoutBehavior: "RETURN_TEMPORARILY_UNAVAILABLE",
   },
   explain_concept: {
     name: "explain_concept",
@@ -210,6 +225,11 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
       },
       required: ["courseId"],
     },
+    allowedRoles: ["STUDENT", "LECTURER", "ADMIN"],
+    tenantScope: "ACTOR_TENANT",
+    courseScope: "ENTITLED_COURSE",
+    outputSchema: z.array(z.object({ courseId: z.string().uuid(), masteryScore: z.number() }).passthrough()),
+    timeoutBehavior: "RETURN_TEMPORARILY_UNAVAILABLE",
   },
   get_recommended_learning_path: {
     name: "get_recommended_learning_path",
@@ -222,6 +242,11 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
       },
       required: ["courseId"],
     },
+    allowedRoles: ["STUDENT", "LECTURER", "ADMIN"],
+    tenantScope: "ACTOR_TENANT",
+    courseScope: "ENTITLED_COURSE",
+    outputSchema: z.object({ planId: z.string().uuid(), courseId: z.string().uuid(), items: z.array(z.unknown()) }).passthrough().nullable(),
+    timeoutBehavior: "RETURN_TEMPORARILY_UNAVAILABLE",
   },
   get_prerequisite_gaps: {
     name: "get_prerequisite_gaps",

@@ -175,12 +175,14 @@ export const StudyPlanItemActionEnum = z.enum([
 export type StudyPlanItemAction = z.infer<typeof StudyPlanItemActionEnum>;
 
 export const StudyPlanItemStatusEnum = z.enum([
+  "PROPOSED",
   "PENDING",
   "ACCEPTED",
   "SKIPPED",
   "RESCHEDULED",
   "COMPLETED",
   "ALTERNATIVE_REQUESTED",
+  "REPLACED",
 ]);
 export type StudyPlanItemStatus = z.infer<typeof StudyPlanItemStatusEnum>;
 
@@ -199,6 +201,14 @@ export interface StudyPlanItem {
   priority: number; // 1 (highest) to 5
   reasonCode: "LOW_MASTERY" | "PREREQUISITE_GAP" | "RECENCY_DECAY" | "UPCOMING_ASSESSMENT" | "TEACHER_PRIORITY";
   rationale: string;
+  /** Mandatory on the Phase 40 runtime path; optional here for historical payload compatibility. */
+  sourceType?: "MASTERY_PROJECTION" | "COURSE_REQUIREMENT" | "ASSESSMENT";
+  sourceId?: string;
+  sourceVersion?: number;
+  dueAt?: string;
+  learningOutcomeId?: string;
+  masteryPolicyVersion?: string;
+  generatedAt?: string;
 }
 
 export interface StudyPlanV2 {

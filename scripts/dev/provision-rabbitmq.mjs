@@ -23,7 +23,7 @@ const users = [
     "mq_learning",
     "RABBITMQ_MQ_LEARNING_PASSWORD",
     "^ailss\\.(domain\\.events|system\\.jobs|dlx)$",
-    "^learning\\.entitlement\\.fulfill\\..*$",
+    "^(learning\\.entitlement\\.fulfill|assessment\\.quiz\\.(submitted|graded)\\.mastery|learning\\.lesson\\.completed\\.mastery)\\..*$",
   ],
   ["mq_classroom", "RABBITMQ_MQ_CLASSROOM_PASSWORD", "^ailss\\.(domain\\.events|notifications)$", "^$"],
   ["mq_assessment", "RABBITMQ_MQ_ASSESSMENT_PASSWORD", "^ailss\\.(domain\\.events|notifications)$", "^$"],
@@ -120,6 +120,18 @@ const queues = [
     retry: [5_000, 30_000, 120_000],
   },
   {
+    queue: "assessment.quiz.submitted.mastery.q",
+    exchange: "ailss.domain.events",
+    key: "assessment.quiz.submitted.v1",
+    retry: [5_000, 30_000, 120_000],
+  },
+  {
+    queue: "assessment.quiz.graded.mastery.q",
+    exchange: "ailss.domain.events",
+    key: "assessment.quiz.graded.v1",
+    retry: [5_000, 30_000, 120_000],
+  },
+  {
     queue: "ai.quiz.generate.q",
     exchange: "ailss.ai.jobs",
     key: "ai.quiz.generate.v1",
@@ -163,6 +175,12 @@ const queues = [
   },
   {
     queue: "learning.progress.updated.q",
+    exchange: "ailss.domain.events",
+    key: "learning.progress.updated.v1",
+    retry: [5_000, 30_000, 120_000],
+  },
+  {
+    queue: "learning.lesson.completed.mastery.q",
     exchange: "ailss.domain.events",
     key: "learning.progress.updated.v1",
     retry: [5_000, 30_000, 120_000],
@@ -242,7 +260,7 @@ await api(
 
 const topicPermissions = {
   mq_identity: "^(identity\\..*|system\\.audit\\.requested\\.v1)$",
-  mq_learning: "^(learning\\..*|system\\.audit\\.requested\\.v1)$",
+  mq_learning: "^(learning\\..*|assessment\\.quiz\\.(submitted|graded)\\.v1\\.retry\\.[1-3]|system\\.audit\\.requested\\.v1)$",
   mq_classroom: "^(classroom\\..*|system\\.(audit|notification)\\.requested\\.v1)$",
   mq_assessment: "^(assessment\\..*|system\\.(audit|notification)\\.requested\\.v1)$",
   mq_interaction: "^(interaction\\..*|system\\.audit\\.requested\\.v1)$",

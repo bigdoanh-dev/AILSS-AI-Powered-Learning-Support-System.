@@ -7,48 +7,6 @@ import { runtime } from "../../../../src/runtime";
 import { ownedClass, classMembers, type OwnedClass, type ClassMember } from "../../../../src/teaching";
 import { Page, Button, ScreenHeader, NonVirtualizedList, styles, tokens } from "../../../../src/ui";
 
-const FALLBACK_CLASSES: Record<string, OwnedClass> = {
-  "10000000-0000-4000-8000-000000000001": {
-    classId: "10000000-0000-4000-8000-000000000001",
-    name: "Cơ sở dữ liệu Nâng cao & Tối ưu hóa - Nhóm 01",
-    classKind: "ACADEMIC",
-    state: "ACTIVE",
-    maxMembers: 70,
-    joinCode: "CSDL-2026",
-    scheduleState: "PUBLISHED",
-    linkedCourseId: "c-csdl-adv",
-  },
-  "10000000-0000-4000-8000-000000000002": {
-    classId: "10000000-0000-4000-8000-000000000002",
-    name: "Lập trình Web & Trợ lý AI Fullstack - Nhóm 02",
-    classKind: "SKILL",
-    state: "ACTIVE",
-    maxMembers: 60,
-    joinCode: "WEBAI-2026",
-    scheduleState: "PUBLISHED",
-    linkedCourseId: "c-webai-adv",
-  },
-  "10000000-0000-4000-8000-000000000003": {
-    classId: "10000000-0000-4000-8000-000000000003",
-    name: "DevOps CI/CD Pipeline & Kubernetes - Nhóm 03",
-    classKind: "PROJECT",
-    state: "ACTIVE",
-    maxMembers: 65,
-    joinCode: "DEVOPS-2026",
-    scheduleState: "PUBLISHED",
-    linkedCourseId: "c-devops-adv",
-  },
-};
-
-const FALLBACK_MEMBERS: ClassMember[] = [
-  { membershipId: "m1", userId: "u1", displayName: "Nguyễn Văn An (MSSV: 2210101)", role: "STUDENT" },
-  { membershipId: "m2", userId: "u2", displayName: "Trần Thị Bích (MSSV: 2210102)", role: "STUDENT" },
-  { membershipId: "m3", userId: "u3", displayName: "Lê Hoàng Nam (MSSV: 2210103)", role: "STUDENT" },
-  { membershipId: "m4", userId: "u4", displayName: "Phạm Minh Đức (MSSV: 2210104)", role: "STUDENT" },
-  { membershipId: "m5", userId: "u5", displayName: "Đỗ Quỳnh Trang (MSSV: 2210105)", role: "STUDENT" },
-  { membershipId: "m6", userId: "u6", displayName: "Vũ Hải Đăng (MSSV: 2210106)", role: "STUDENT" },
-];
-
 export default function ClassDetail() {
   const { classId } = useLocalSearchParams<{ classId: string }>();
   const session = runtime!;
@@ -71,20 +29,10 @@ export default function ClassDetail() {
       .then((value) => {
         if (!abort.signal.aborted) setCls(ownedClass(value));
       })
-      .catch((_e: unknown) => {
+      .catch((e: unknown) => {
         if (!abort.signal.aborted) {
-          // Fallback to demo class data if API is offline or demo ID
-          const fallback =
-            FALLBACK_CLASSES[classId] ?? {
-              classId,
-              name: "Lớp học chuyên ngành AILSS",
-              classKind: "ACADEMIC",
-              state: "ACTIVE",
-              scheduleState: "PUBLISHED",
-              maxMembers: 60,
-              joinCode: "AILSS-2026",
-            };
-          setCls(fallback);
+          setCls(null);
+          setError(e instanceof ApiError ? e.message : "Không thể tải thông tin lớp.");
         }
       });
 
@@ -94,8 +42,11 @@ export default function ClassDetail() {
       .then((value) => {
         if (!abort.signal.aborted) setMembers(classMembers(value));
       })
-      .catch(() => {
-        if (!abort.signal.aborted) setMembers(FALLBACK_MEMBERS);
+      .catch((e: unknown) => {
+        if (!abort.signal.aborted) {
+          setMembers(null);
+          setError(e instanceof ApiError ? e.message : "Không thể tải danh sách thành viên.");
+        }
       });
 
     return () => abort.abort();

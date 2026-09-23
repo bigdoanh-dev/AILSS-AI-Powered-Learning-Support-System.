@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { readEnv, required } from "./env.mjs";
 
@@ -51,47 +51,21 @@ for (const name of roleSecrets)
 cql(roles);
 
 const migrationDir = new URL(`../../database/migrations/${migrationProfile}/`, import.meta.url);
-const files = [
-  "001_keyspaces.cql",
-  "010_identity_schema.cql",
-  "011_identity_security_versions.cql",
-  "012_lecturer_applications.cql",
-  "013_profile_avatar.cql",
-  "020_learning_schema.cql",
-  "021_learning_course_published_at.cql",
-  "022_learning_lesson_authoring.cql",
-  "023_learning_course_offerings.cql",
-  "024_learning_entitlement_commerce.cql",
-  "025_learning_progress.cql",
-  "026_learning_sepay.cql",
-  "030_classroom_schema.cql",
-  "031_classroom_class_model.cql",
-  "032_classroom_sessions.cql",
-  "033_classroom_student_schedule.cql",
-  "034_classroom_attendance_presence.cql",
-  "035_classroom_manual_attendance.cql",
-  "040_assessment_schema.cql",
-  "041_assessment_quiz_authoring.cql",
-  "042_assessment_attempt_guard.cql",
-  "043_assessment_submit.cql",
-  "044_assessment_ai_import.cql",
-  "050_interaction_schema.cql",
-  "051_interaction_comments.cql",
-  "052_interaction_reviews.cql",
-  "053_interaction_moderation.cql",
-  "060_ai_schema.cql",
-  "061_ai_document_extraction.cql",
-  "062_ai_quiz_generation.cql",
-  "063_ai_human_approval.cql",
-  "070_notification_schema.cql",
-  "075_audit_support_schema.cql",
-  "076_learning_sepay_recovery.cql",
-];
+const registry = JSON.parse(await readFile(new URL("../../database/migration-registry.json", import.meta.url), "utf8"));
+const inventory = JSON.parse(await readFile(new URL("../../database/migration-inventory.json", import.meta.url), "utf8"));
+const files = registry.migrations.map((entry) => entry.filename);
+const diskFiles = (await readdir(migrationDir)).filter((name) => name.endsWith(".cql")).sort();
+if (files.length !== inventory.summary.CANONICAL_LOGICAL_MIGRATIONS || files.length !== diskFiles.length || files.some((name, index) => name !== diskFiles[index])) {
+  throw new Error(`MIGRATION_BOOTSTRAP_PARITY_FAILED registry=${files.length} inventory=${inventory.summary.CANONICAL_LOGICAL_MIGRATIONS} disk=${diskFiles.length}`);
+}
 const checksums = [];
-for (const file of files) {
+for (const [index, file] of files.entries()) {
   const text = await readFile(new URL(file, migrationDir), "utf8");
+  const digest = createHash("sha256").update(text).digest("hex");
+  const expected = registry.migrations[index][migrationProfile === "research" ? "sha256Research" : "sha256Dev"];
+  if (digest !== expected) throw new Error(`MIGRATION_HASH_MISMATCH ${file}`);
   cql(text);
-  checksums.push({ file, sha256: createHash("sha256").update(text).digest("hex") });
+  checksums.push({ file, sha256: digest });
 }
 
 const runId = process.env.AILSS_RUN_ID ?? new Date().toISOString().replace(/[:.]/g, "-");

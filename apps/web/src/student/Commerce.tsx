@@ -90,29 +90,7 @@ export default function Purchase() {
     level: "Tiêu chuẩn",
   };
 
-  const rawAvailable = offeringsOf(offerings.data).filter((o) => o.state === "PUBLISHED");
-  const available: Offering[] = rawAvailable.length > 0
-    ? rawAvailable
-    : [
-        {
-          offeringId: `std-${courseId}`,
-          courseId,
-          title: `${courseMeta.title} - Gói Tiêu Chuẩn (Self-paced & Trợ lý AI)`,
-          offeringType: "SELF_PACED",
-          price: String(courseMeta.price > 0 ? courseMeta.price : 490000),
-          currency: "VND",
-          state: "PUBLISHED",
-        },
-        {
-          offeringId: `pro-${courseId}`,
-          courseId,
-          title: `${courseMeta.title} - Gói Chuyên Nghiệp (Live Mentoring & Đồ án thực chiến)`,
-          offeringType: "LIVE_COHORT",
-          price: String((courseMeta.price > 0 ? courseMeta.price : 490000) + 260000),
-          currency: "VND",
-          state: "PUBLISHED",
-        },
-      ];
+  const available: Offering[] = offeringsOf(offerings.data).filter((o) => o.state === "PUBLISHED");
 
   const [order, setOrder] = useState<Order | null>(null);
   const [selectedOfferingId, setSelectedOfferingId] = useState<string>(available[0]?.offeringId || "");
@@ -153,30 +131,11 @@ export default function Purchase() {
         setMessage("");
       })
       .catch(() => {
-        // Fallback demo order if backend order not found in mock mode
-        const cleanPrice = String(courseMeta.price || 490000);
-        const transferCode = `AILSS ${savedOrderId.replace("ORD-", "")}`;
-        setOrder({
-          orderId: savedOrderId,
-          courseId,
-          offeringId: `std-${courseId}`,
-          offeringType: "SELF_PACED",
-          state: "PENDING",
-          fulfillmentState: "PENDING",
-          price: Number(cleanPrice).toLocaleString("vi-VN"),
-          currency: "₫",
-          paymentMode: "sepay",
-          payment: {
-            bank: "MB Bank (Ngân hàng Quân Đội)",
-            accountName: "NGUYEN VAN DOANH",
-            accountNumber: "0982182701",
-            content: transferCode,
-            qrUrl: `https://qr.sepay.vn/img?bank=MBBank&acc=0982182701&template=compact&amount=${cleanPrice}&des=${encodeURIComponent(transferCode)}`,
-          },
-        });
+        setOrder(null);
+        setMessage("Không thể xác minh đơn hàng. Không thực hiện chuyển khoản khi chưa có đơn hợp lệ từ máy chủ.");
       });
     return () => controller.abort();
-  }, [savedOrderId, courseId, courseMeta.price]);
+  }, [savedOrderId]);
 
   // Polling check for order status
   useEffect(() => {
@@ -197,7 +156,7 @@ export default function Purchase() {
         setOrder(r.data);
         setMessage("");
       } catch {
-        // Silent ignore for mock orders
+        setMessage("Mất kết nối khi xác minh đơn hàng. Vui lòng không chuyển khoản cho đến khi kết nối được khôi phục.");
       } finally {
         polling = false;
       }
@@ -242,30 +201,8 @@ export default function Purchase() {
       setOrder(r.data);
       setParams({ order: r.data.orderId }, { replace: true });
     } catch {
-      // Backend error or mock offering: create graceful fallback working order
-      const mockId = `ORD-${Date.now().toString().slice(-6)}`;
-      const cleanPrice = selectedOffering?.price.replace(/[^\d]/g, "") || "490000";
-      const transferCode = `AILSS ${mockId.replace("ORD-", "")}`;
-      const newOrder: Order = {
-        orderId: mockId,
-        courseId,
-        offeringId: targetOfferingId,
-        offeringType: selectedOffering?.offeringType || "SELF_PACED",
-        state: "PENDING",
-        fulfillmentState: "PENDING",
-        price: Number(cleanPrice).toLocaleString("vi-VN"),
-        currency: "₫",
-        paymentMode: "sepay",
-        payment: {
-          bank: "MB Bank (Ngân hàng Quân Đội)",
-          accountName: "NGUYEN VAN DOANH",
-          accountNumber: "0982182701",
-          content: transferCode,
-          qrUrl: `https://qr.sepay.vn/img?bank=MBBank&acc=0982182701&template=compact&amount=${cleanPrice}&des=${encodeURIComponent(transferCode)}`,
-        },
-      };
-      setOrder(newOrder);
-      setParams({ order: mockId }, { replace: true });
+      setOrder(null);
+      setMessage("Không thể tạo đơn hàng có thẩm quyền. Hệ thống chưa phát sinh mã chuyển khoản hoặc yêu cầu thanh toán.");
     } finally {
       setBusy(false);
     }
@@ -276,23 +213,14 @@ export default function Purchase() {
     try {
       if (order) {
         // Try calling real API simulation endpoint if order was created on server
-        await studentRequest<Order>(`/orders/${order.orderId}/simulate-payment`, abort.current.signal, "POST", { outcome: "SUCCESS" }).catch(() => {});
-        setOrder({
-          ...order,
-          state: "ENTITLED",
-          fulfillmentState: "ENTITLED",
-        });
+        const response = await studentRequest<Order>(`/orders/${order.orderId}/simulate-payment`, abort.current.signal, "POST", { outcome: "SUCCESS" });
+        setOrder(response.data);
       }
+    } catch {
+      setMessage("Máy chủ chưa xác nhận thanh toán; quyền học không được kích hoạt.");
     } finally {
       setBusy(false);
     }
-  }
-
-  function handleFillTestCard() {
-    setCardNumber("9704 1827 0109 8218");
-    setCardExpiry("12/28");
-    setCardCvc("888");
-    setCardHolder("NGUYEN VAN DOANH");
   }
 
   const minutes = Math.floor(countdownSeconds / 60);
@@ -300,13 +228,11 @@ export default function Purchase() {
   const timeFormatted = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 
   const currentOffering = available.find((o) => o.offeringId === selectedOfferingId) || available[0];
-  const cleanNumericPrice = currentOffering?.price.replace(/[^\d]/g, "") || "490000";
+  const cleanNumericPrice = order?.price.replace(/[^\d]/g, "") || "";
   const formattedDisplayPrice = Number(cleanNumericPrice).toLocaleString("vi-VN") + " ₫";
-  const paymentContent = order?.payment?.content || `AILSS ${(order?.orderId || "PAY").replace("ORD-", "")}`;
-  const vietQrOfficialUrl = `https://img.vietqr.io/image/970422-0982182701-compact2.png?amount=${cleanNumericPrice}&addInfo=${encodeURIComponent(paymentContent)}&accountName=NGUYEN%20VAN%20DOANH`;
-  const sepayQrUrl =
-    order?.payment?.qrUrl ||
-    `https://qr.sepay.vn/img?bank=MBBank&acc=0982182701&template=compact&amount=${cleanNumericPrice}&des=${encodeURIComponent(paymentContent)}`;
+  const paymentContent = order?.payment?.content || "";
+  const vietQrOfficialUrl = order?.payment?.qrUrl || "";
+  const sepayQrUrl = order?.payment?.qrUrl || "";
   const [qrSrc, setQrSrc] = useState<string>("");
 
   useEffect(() => {
@@ -410,7 +336,7 @@ export default function Purchase() {
               <button
                 type="button"
                 className={`payment-tab-btn ${method === "MOMO" ? "active" : ""}`}
-                onClick={() => setMethod("MOMO")}
+                disabled
               >
                 <Icon name="card" size={16} />
                 <span>Ví MoMo</span>
@@ -418,7 +344,7 @@ export default function Purchase() {
               <button
                 type="button"
                 className={`payment-tab-btn ${method === "CARD" ? "active" : ""}`}
-                onClick={() => setMethod("CARD")}
+                disabled
               >
                 <Icon name="lock" size={16} />
                 <span>Thẻ Quốc Tế</span>
@@ -426,7 +352,7 @@ export default function Purchase() {
               <button
                 type="button"
                 className={`payment-tab-btn ${method === "VNPAY" ? "active" : ""}`}
-                onClick={() => setMethod("VNPAY")}
+                disabled
               >
                 <Icon name="shield" size={16} />
                 <span>Cổng VNPAY</span>
@@ -442,7 +368,7 @@ export default function Purchase() {
                       <strong style={{ color: "#0284c7", fontSize: 13, letterSpacing: 0.5 }}>VIETQR</strong>
                       <span style={{ background: "#eff6ff", color: "#1d4ed8", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, border: "1px solid #bfdbfe" }}>NAPAS 24/7</span>
                     </div>
-                    <span style={{ background: "#002b49", color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4 }}>MB BANK</span>
+                    <span style={{ background: "#002b49", color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4 }}>{order.payment?.bank}</span>
                   </div>
                   <img
                     className="sepay-qr-img"
@@ -487,11 +413,11 @@ export default function Purchase() {
                     <div className="bank-copy-row">
                       <span className="bank-copy-label">Ngân hàng thụ hưởng</span>
                       <div className="bank-copy-value-wrap">
-                        <span className="bank-copy-value">MB Bank (Quân Đội)</span>
+                        <span className="bank-copy-value">{order.payment?.bank}</span>
                         <button
                           type="button"
                           className={`copy-btn-mini ${copiedField === "bank" ? "copied" : ""}`}
-                          onClick={() => copyToClipboard("MB Bank", "bank")}
+                          onClick={() => copyToClipboard(order.payment?.bank || "", "bank")}
                         >
                           {copiedField === "bank" ? "✓ Đã chép" : "Sao chép"}
                         </button>
@@ -500,11 +426,11 @@ export default function Purchase() {
                     <div className="bank-copy-row">
                       <span className="bank-copy-label">Số tài khoản</span>
                       <div className="bank-copy-value-wrap">
-                        <span className="bank-copy-value" style={{ color: "var(--blue)" }}>0982182701</span>
+                        <span className="bank-copy-value" style={{ color: "var(--blue)" }}>{order.payment?.accountNumber}</span>
                         <button
                           type="button"
                           className={`copy-btn-mini ${copiedField === "stk" ? "copied" : ""}`}
-                          onClick={() => copyToClipboard("0982182701", "stk")}
+                          onClick={() => copyToClipboard(order.payment?.accountNumber || "", "stk")}
                         >
                           {copiedField === "stk" ? "✓ Đã chép" : "Sao chép"}
                         </button>
@@ -513,11 +439,11 @@ export default function Purchase() {
                     <div className="bank-copy-row">
                       <span className="bank-copy-label">Chủ tài khoản</span>
                       <div className="bank-copy-value-wrap">
-                        <span className="bank-copy-value">NGUYEN VAN DOANH</span>
+                        <span className="bank-copy-value">{order.payment?.accountName}</span>
                         <button
                           type="button"
                           className={`copy-btn-mini ${copiedField === "name" ? "copied" : ""}`}
-                          onClick={() => copyToClipboard("NGUYEN VAN DOANH", "name")}
+                          onClick={() => copyToClipboard(order.payment?.accountName || "", "name")}
                         >
                           {copiedField === "name" ? "✓ Đã chép" : "Sao chép"}
                         </button>
@@ -558,7 +484,7 @@ export default function Purchase() {
                     className="button button-subtle button-small"
                     style={{ width: "100%", justifyContent: "center", marginBottom: 16 }}
                     onClick={() => {
-                      const allInfo = `Ngân hàng: MB Bank (Quân Đội)\nSố tài khoản: 0982182701\nChủ tài khoản: NGUYEN VAN DOANH\nSố tiền: ${order.price} ${order.currency}\nNội dung chuyển khoản: ${paymentContent}`;
+                      const allInfo = `Ngân hàng: ${order.payment?.bank || ""}\nSố tài khoản: ${order.payment?.accountNumber || ""}\nChủ tài khoản: ${order.payment?.accountName || ""}\nSố tiền: ${order.price} ${order.currency}\nNội dung chuyển khoản: ${paymentContent}`;
                       copyToClipboard(allInfo, "all");
                     }}
                   >
@@ -600,7 +526,7 @@ export default function Purchase() {
                 <ol style={{ lineHeight: 1.8, paddingLeft: 20, color: "var(--muted)", margin: "14px 0" }}>
                   <li>Mở ứng dụng ngân hàng của bạn trên điện thoại.</li>
                   <li>Chọn <strong>Chuyển tiền nhanh 24/7 (Naphas)</strong>.</li>
-                  <li>Nhập STK <strong>0982182701</strong> tại ngân hàng <strong>MB Bank</strong>.</li>
+                  <li>Nhập STK <strong>{order.payment?.accountNumber}</strong> tại ngân hàng <strong>{order.payment?.bank}</strong>.</li>
                   <li>Nhập chính xác số tiền: <strong>{order.price} {order.currency}</strong></li>
                   <li>Điền đúng nội dung: <strong style={{ color: "var(--blue)" }}>{paymentContent}</strong></li>
                 </ol>
@@ -627,7 +553,7 @@ export default function Purchase() {
                   <div className="sepay-qr-card" style={{ borderColor: "#f0abfc" }}>
                     <img
                       className="sepay-qr-img"
-                      src={`https://qr.sepay.vn/img?bank=MBBank&acc=0982182701&template=compact&amount=${cleanNumericPrice}&des=${encodeURIComponent(paymentContent)}`}
+                      src={order.payment?.qrUrl || ""}
                       alt="MoMo QR"
                       width="200"
                       height="200"
@@ -637,11 +563,11 @@ export default function Purchase() {
                   <div style={{ display: "grid", gap: 10, flex: 1, minWidth: 260 }}>
                     <div className="bank-copy-row">
                       <span className="bank-copy-label">Số điện thoại MoMo</span>
-                      <span className="bank-copy-value">0982182701</span>
+                      <span className="bank-copy-value">{order.payment?.accountNumber}</span>
                     </div>
                     <div className="bank-copy-row">
                       <span className="bank-copy-label">Người nhận</span>
-                      <span className="bank-copy-value">NGUYEN VAN DOANH</span>
+                      <span className="bank-copy-value">{order.payment?.accountName}</span>
                     </div>
                     <div className="bank-copy-row">
                       <span className="bank-copy-label">Số tiền</span>
@@ -667,9 +593,6 @@ export default function Purchase() {
                     <p className="eyebrow">THẺ TÍN DỤNG / GHI NỢ</p>
                     <h3>Thanh Toán Qua Thẻ Visa / Mastercard</h3>
                   </div>
-                  <button type="button" className="button button-subtle button-small" onClick={handleFillTestCard}>
-                    Điền thẻ thử nghiệm
-                  </button>
                 </div>
 
                 <div className="payment-card-form">
@@ -736,7 +659,7 @@ export default function Purchase() {
                 <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
                   <img
                     className="sepay-qr-img"
-                    src={`https://qr.sepay.vn/img?bank=MBBank&acc=0982182701&template=compact&amount=${cleanNumericPrice}&des=${encodeURIComponent(paymentContent)}`}
+                    src={order.payment?.qrUrl || ""}
                     alt="VNPAY QR"
                     width="180"
                     height="180"

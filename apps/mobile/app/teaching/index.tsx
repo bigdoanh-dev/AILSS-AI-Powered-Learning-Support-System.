@@ -60,14 +60,7 @@ export default function TeachingDashboard() {
       <Page>
         <ScreenHeader title="Giảng dạy" onBack={() => router.replace("/")} />
         <Text style={styles.error}>Chức năng này chỉ dành cho Giảng viên.</Text>
-        {typeof __DEV__ !== "undefined" && __DEV__ && (
-          <Button
-            label="Đăng nhập tài khoản Giảng viên (DEV)"
-            onPress={() => {
-              void session.login("lecturer.demo@ailss.local", "AilssLecturer!2026").catch(() => {});
-            }}
-          />
-        )}
+        <Button label="Đăng nhập bằng tài khoản Giảng viên" onPress={() => router.push("/login?role=lecturer" as Href)} />
         <Button label="Về trang chủ" onPress={() => router.replace("/")} />
       </Page>
     );

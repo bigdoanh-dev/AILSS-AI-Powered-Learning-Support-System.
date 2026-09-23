@@ -60,11 +60,38 @@ describe("Phase 16B — Assistant Tool Authorization & Role Boundaries", () => {
       expect(isModeAllowedForRole("STUDENT", "STUDY_BUDDY")).toBe(true);
       expect(isModeAllowedForRole("STUDENT", "LECTURER_COPILOT")).toBe(false);
 
-      expect(isModeAllowedForRole("LECTURER", "LECTURER_COPILOT")).toBe(true);
+      expect(isModeAllowedForRole("LECTURER", "LECTURER_COPILOT")).toBe(false);
     });
   });
 
   describe("Tool Execution Security Guard", () => {
+    it("fails before downstream invocation for a forbidden student capability", async () => {
+      let invoked = false;
+      const guarded = new ToolRunner({
+        ...dummyDomainClient,
+        generateQuizDraft: () => { invoked = true; return Promise.resolve({}); },
+      });
+      const result = await guarded.executeTool(
+        "call-pre-auth",
+        "generate_quiz_draft",
+        { topic: "Calculus", difficulty: "BEGINNER", questionCount: 5 },
+        { userId: "student-1", role: "STUDENT" },
+      );
+      expect(result.error).toContain("FORBIDDEN");
+      expect(invoked).toBe(false);
+    });
+
+    it("does not synthesize a Study Plan when the production adapter is absent", async () => {
+      const result = await runner.executeTool(
+        "call-plan",
+        "get_recommended_learning_path",
+        { courseId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" },
+        { userId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", role: "STUDENT" },
+      );
+      expect(result.error).toBe("STUDY_PLAN_TOOL_NOT_CONFIGURED");
+      expect(result.result).toBeNull();
+    });
+
     it("returns a FORBIDDEN error when student attempts to execute generate_quiz_draft", async () => {
       const result = await runner.executeTool(
         "call-1",

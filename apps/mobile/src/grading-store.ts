@@ -33,7 +33,7 @@ export interface StudentSubmissionData {
   gradedBy?: string;
 }
 
-// In-memory persistent grading state for demo/hybrid backend synchronization
+// Read-through UI cache. The Assessment API remains the source of truth.
 const submissionsStore = new Map<string, StudentSubmissionData>();
 const listeners = new Set<() => void>();
 
@@ -61,25 +61,7 @@ export function gradeSubmission(
   lecturerName = "Giảng viên AILSS"
 ): StudentSubmissionData | null {
   const existing = submissionsStore.get(attemptId);
-  if (!existing) {
-    const created: StudentSubmissionData = {
-      attemptId,
-      studentId: "SV-CURRENT",
-      studentName: "Học viên AILSS",
-      quizId: "",
-      format: "ESSAY",
-      status: "MANUALLY_GRADED",
-      submittedAt: new Date().toISOString(),
-      manualScore: score,
-      maxScore: "10.0",
-      lecturerFeedback: feedback,
-      gradedAt: new Date().toISOString(),
-      gradedBy: lecturerName,
-    };
-    submissionsStore.set(attemptId, created);
-    notify();
-    return created;
-  }
+  if (!existing) return null;
 
   const updated: StudentSubmissionData = {
     ...existing,

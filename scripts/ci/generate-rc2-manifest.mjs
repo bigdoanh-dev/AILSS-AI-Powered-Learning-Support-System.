@@ -10,7 +10,7 @@ async function computeSha256(filePath) {
 
 async function main() {
   // Load RC1 manifest for reconciliation baseline
-  const rc1Content = await readFile("release620rc1-test-manifest.json", "utf8");
+  const rc1Content = await readFile("artifacts/release-evidence/release620rc1-test-manifest.json", "utf8");
   const rc1Manifest = JSON.parse(rc1Content);
 
   // Count tests in test suites
@@ -246,8 +246,8 @@ async function main() {
     suites,
   };
 
-  await writeFile("release620rc2-test-manifest.json", JSON.stringify(manifest, null, 2), "utf8");
-  console.log(`Generated release620rc2-test-manifest.json with ${suites.length} suites.`);
+  await writeFile("artifacts/release-evidence/release620rc2-test-manifest.json", JSON.stringify(manifest, null, 2), "utf8");
+  console.log(`Generated artifacts/release-evidence/release620rc2-test-manifest.json with ${suites.length} suites.`);
 }
 
 main().catch((err) => {

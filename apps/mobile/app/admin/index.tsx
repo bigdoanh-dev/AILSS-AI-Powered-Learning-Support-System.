@@ -64,23 +64,6 @@ export default function AdminDashboard() {
     void loadData();
   }, [loadData]);
 
-  const handleAdminQuickLogin = async () => {
-    try {
-      await session.login("admin.demo@ailss.local", "AilssAdmin!2026");
-      if (session.snapshot.state === "AUTHENTICATED" && session.snapshot.user?.role === "ADMIN") {
-        const name = encodeURIComponent(session.snapshot.user.displayName || "Admin");
-        const email = encodeURIComponent(session.snapshot.user.emailMasked || "");
-        router.replace(`/result?type=login-success&role=ADMIN&name=${name}&email=${email}&target=/admin` as Href);
-      } else {
-        const msg = encodeURIComponent(session.snapshot.error || "Không thể xác thực quyền Quản trị viên.");
-        router.replace(`/result?type=login-failure&message=${msg}` as Href);
-      }
-    } catch (e: unknown) {
-      const msg = encodeURIComponent(e instanceof ApiError ? e.message : "Đăng nhập thất bại.");
-      router.replace(`/result?type=login-failure&message=${msg}` as Href);
-    }
-  };
-
   if (snapshot.user?.role !== "ADMIN") {
     return (
       <Page>
@@ -107,10 +90,10 @@ export default function AdminDashboard() {
 
           <View style={{ width: "100%", gap: 10, marginTop: 12 }}>
             <Button
-              label="🛡️ Đăng nhập Quản trị viên (Admin Demo)"
+              label="Đăng nhập bằng tài khoản quản trị"
               variant="primary"
               size="lg"
-              onPress={() => void handleAdminQuickLogin()}
+              onPress={() => router.push("/login?role=admin" as Href)}
             />
             <Button
               label="Nhập tài khoản khác tại trang đăng nhập"

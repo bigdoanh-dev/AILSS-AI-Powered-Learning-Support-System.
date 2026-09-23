@@ -55,6 +55,37 @@ for (const path of [
   "/orders/:id",
 ])
   rule("GET", path);
+rule("GET", "/mastery/me", z.object({ courseId: z.string().uuid() }).strict());
+rule("GET", "/mastery/courses/:id");
+rule("GET", "/mastery/outcomes/[^/]+", z.object({ courseId: z.string().uuid() }).strict());
+rule("GET", "/study-plan/current", z.object({ courseId: z.string().uuid() }).strict());
+rule(
+  "POST",
+  "/study-plan/generate",
+  empty,
+  z.object({ courseId: z.string().uuid(), availableHoursPerWeek: z.number().min(1).max(80) }).strict(),
+);
+rule(
+  "POST",
+  "/assistant/chat",
+  empty,
+  z.object({
+    conversationId: z.string().uuid().optional(),
+    mode: z.enum(["STUDENT_ADVISOR", "STUDY_BUDDY"]),
+    courseId: z.string().uuid().optional(),
+    message: z.string().trim().min(1).max(4000),
+  }).strict(),
+);
+rule(
+  "PATCH",
+  "/study-plan/items/:id",
+  empty,
+  z.object({
+    courseId: z.string().uuid(),
+    status: z.enum(["ACCEPTED", "SKIPPED", "RESCHEDULED", "COMPLETED", "REPLACED"]),
+    scheduledDate: date.optional(),
+  }).strict().refine((value) => value.status !== "RESCHEDULED" || !!value.scheduledDate),
+);
 rule("POST", "/orders", empty, z.object({ offeringId: z.string().uuid() }).strict(), "key");
 rule(
   "POST",

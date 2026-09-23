@@ -51,6 +51,7 @@ function setup() {
       return (receipt ??= { transactionId: txn, receivedAt: new Date() });
     }),
     prepareEvent: vi.fn(async () => {}),
+    ensureRevenuePaymentFact: vi.fn(async () => {}),
     transitionPayment: vi.fn(async (_: unknown, _success: boolean, at: Date) => {
       order.state = "PAID_PENDING_ENTITLEMENT";
       order.paidAt = at;
@@ -314,6 +315,63 @@ it("HTTP webhook rejects unauthenticated or malformed input and acknowledges val
     const response = await post(transaction, `Apikey ${"a".repeat(32)}`);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true, processed: true });
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+});
+
+it("HTTP revenue dashboard propagates the retryable fail-closed response", async () => {
+  const correlationId = "00000000-0000-4000-8000-000000000002";
+  const revenueDashboard = vi.fn(async () => {
+    throw new AppError(
+      "REVENUE_PROJECTION_NOT_READY",
+      503,
+      "Revenue reporting is unavailable until the authoritative payment and refund projection is ready",
+      true,
+    );
+  });
+  const verify = async () => ({
+    userId: id,
+    roles: ["ADMIN"],
+    sessionId: id,
+    tokenVersion: 1,
+    correlationId,
+    issuedAt: 1,
+    expiresAt: 2,
+  });
+  const app = express();
+  app.use(requestContextMiddleware(), express.json({ limit: "16kb" }));
+  app.use(
+    learningCommerceRouter(
+      { revenueDashboard } as unknown as LearningCommerceService,
+      {
+        enroll: verify,
+        myCourses: verify,
+        roster: verify,
+        orderCreate: verify,
+        orderRead: verify,
+        payment: verify,
+        dashboardRevenue: verify,
+      },
+    ),
+  );
+  app.use(errorMiddleware);
+  const server = app.listen(0, "127.0.0.1");
+  await new Promise<void>((resolve) => server.once("listening", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("missing listener");
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:${String(address.port)}/api/v1/admin/dashboard/revenue?range=30d`,
+      { headers: { "x-actor-context": "signed", "x-correlation-id": correlationId } },
+    );
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      error: { code: "REVENUE_PROJECTION_NOT_READY", retryable: true },
+    });
+    expect(revenueDashboard).toHaveBeenCalledTimes(1);
   } finally {
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),

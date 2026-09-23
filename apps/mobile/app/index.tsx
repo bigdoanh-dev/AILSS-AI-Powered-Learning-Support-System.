@@ -704,7 +704,7 @@ export default function Home() {
                       <Icon name="trending" size={16} color="#15803D" />
                     </View>
                     <View>
-                      <Text style={[hStyles.academicMetricValue, { color: "#15803D" }]}>148.5M ₫</Text>
+                      <Text style={[hStyles.academicMetricValue, { color: tokens.color.muted }]}>—</Text>
                       <Text style={hStyles.academicMetricLabel}>Doanh thu</Text>
                     </View>
                   </View>
@@ -1073,64 +1073,23 @@ export default function Home() {
                   <View style={hStyles.sectionHeader}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                       <Text style={hStyles.sectionTitle}>Giao dịch Thanh toán tự động</Text>
-                      <Badge label="ĐỐI SOÁT 24/7" variant="ai" />
+                      <Badge label="CHỜ DỮ LIỆU" variant="neutral" />
                     </View>
                     <ScalePressable scaleTo={0.92} onPress={() => router.push("/admin/commerce" as Href)}>
                       <Text style={hStyles.sectionLink}>Xem đối soát &gt;</Text>
                     </ScalePressable>
                   </View>
 
-                  <View style={{ gap: 10 }}>
-                    <ScalePressable
-                      style={hStyles.compactCard}
-                      scaleTo={0.97}
-                      onPress={() => router.push("/admin/commerce" as Href)}
-                    >
-                      <View style={hStyles.cardBadgeRow}>
-                        <Text style={{ fontSize: 12, fontWeight: "700", color: "#0284C7" }}>ORD-2026-0901</Text>
-                        <View style={hStyles.completedBadge}>
-                          <Icon name="check" size={11} color="#16A34A" />
-                          <Text style={hStyles.completedBadgeText}>Đã đối soát QR</Text>
-                        </View>
-                      </View>
-                      <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                        Nguyễn Văn Hùng — Lập trình Web & Trợ lý AI Fullstack
-                      </Text>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                        <Text style={[styles.small, { color: "#15803D", fontWeight: "700", flex: 1 }]} numberOfLines={1}>
-                          450.000 ₫ · VietQR (VCB - 9821827)
-                        </Text>
-                        <View style={[hStyles.actionMiniBtn, { backgroundColor: "#15803D" }]}>
-                          <Text style={hStyles.actionMiniBtnText}>Chi tiết</Text>
-                        </View>
-                      </View>
-                    </ScalePressable>
-
-                    <ScalePressable
-                      style={hStyles.compactCard}
-                      scaleTo={0.97}
-                      onPress={() => router.push("/admin/commerce" as Href)}
-                    >
-                      <View style={hStyles.cardBadgeRow}>
-                        <Text style={{ fontSize: 12, fontWeight: "700", color: "#0284C7" }}>ORD-2026-0902</Text>
-                        <View style={hStyles.completedBadge}>
-                          <Icon name="check" size={11} color="#16A34A" />
-                          <Text style={hStyles.completedBadgeText}>Đã đối soát QR</Text>
-                        </View>
-                      </View>
-                      <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                        Trần Thị Mai — Cơ sở dữ liệu Nâng cao & Kịch bản
-                      </Text>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                        <Text style={[styles.small, { color: "#15803D", fontWeight: "700", flex: 1 }]} numberOfLines={1}>
-                          490.000 ₫ · VietQR (MB Bank - 104821)
-                        </Text>
-                        <View style={[hStyles.actionMiniBtn, { backgroundColor: "#15803D" }]}>
-                          <Text style={hStyles.actionMiniBtnText}>Chi tiết</Text>
-                        </View>
-                      </View>
-                    </ScalePressable>
-                  </View>
+                  <ScalePressable
+                    style={hStyles.compactCard}
+                    scaleTo={0.97}
+                    onPress={() => router.push("/admin/revenue" as Href)}
+                  >
+                    <Text style={hStyles.compactCardTitle}>Chưa có giao dịch đã đối soát để hiển thị</Text>
+                    <Text style={styles.small}>
+                      Không sử dụng giao dịch mẫu. Mở dashboard để kiểm tra trạng thái projection tài chính.
+                    </Text>
+                  </ScalePressable>
                 </View>
               </FadeSlideIn>
 
@@ -1140,7 +1099,7 @@ export default function Home() {
                   <View style={hStyles.sectionHeader}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                       <Text style={hStyles.sectionTitle}>Hạ tầng & Dịch vụ AILSS</Text>
-                      <Badge label="UPTIME 99.98%" variant="neutral" />
+                      <Badge label="CHƯA XÁC MINH" variant="neutral" />
                     </View>
                     <ScalePressable scaleTo={0.92} onPress={() => router.push("/admin" as Href)}>
                       <Text style={hStyles.sectionLink}>Trung tâm Admin &gt;</Text>
@@ -1154,8 +1113,8 @@ export default function Home() {
                       onPress={() => router.push("/admin" as Href)}
                     >
                       <View style={hStyles.cardBadgeRow}>
-                        <Badge label="WEBHOOK 24/7" variant="success" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>Độ trễ: 42ms</Text>
+                        <Badge label="CHỜ TELEMETRY" variant="neutral" />
+                        <Text style={{ fontSize: 11, fontWeight: "700", color: tokens.color.muted }}>Độ trễ: —</Text>
                       </View>
                       <Text style={hStyles.compactCardTitle} numberOfLines={1}>
                         Cổng Webhook Đối Soát Tự Động
@@ -1456,84 +1415,6 @@ export default function Home() {
               </View>
             </FadeSlideIn>
           </>
-        )}
-
-        {/* Development Quick Role Switcher */}
-        {typeof __DEV__ !== "undefined" && __DEV__ && (
-          <View style={hStyles.devBanner}>
-            <Text style={hStyles.devBannerTitle}>CHUYỂN ĐỔI TÀI KHOẢN MẪU (DEV FAST-SWITCH)</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              <Button
-                label="Học viên"
-                size="sm"
-                variant={snapshot.user?.role === "STUDENT" ? "primary" : "secondary"}
-                onPress={async () => {
-                  try {
-                    await session.login("student.demo@ailss.local", "AilssDemo!2026");
-                    if (session.snapshot.state === "AUTHENTICATED") {
-                      const name = encodeURIComponent(session.snapshot.user?.displayName || "");
-                      const email = encodeURIComponent(session.snapshot.user?.emailMasked || "");
-                      router.push(`/result?type=login-success&role=STUDENT&name=${name}&email=${email}&target=/` as Href);
-                    }
-                  } catch {
-                    // Session feedback is rendered by the shared error banner below.
-                  }
-                }}
-              />
-              <Button
-                label="Giảng viên"
-                size="sm"
-                variant={snapshot.user?.role === "LECTURER" ? "primary" : "secondary"}
-                onPress={async () => {
-                  try {
-                    await session.login("lecturer.demo@ailss.local", "AilssLecturer!2026");
-                    if (session.snapshot.state === "AUTHENTICATED") {
-                      const name = encodeURIComponent(session.snapshot.user?.displayName || "");
-                      const email = encodeURIComponent(session.snapshot.user?.emailMasked || "");
-                      router.push(`/result?type=login-success&role=LECTURER&name=${name}&email=${email}&target=/teaching` as Href);
-                    }
-                  } catch {
-                    // Session feedback is rendered by the shared error banner below.
-                  }
-                }}
-              />
-              <Button
-                label="Quản trị"
-                size="sm"
-                variant={snapshot.user?.role === "ADMIN" ? "primary" : "secondary"}
-                onPress={async () => {
-                  try {
-                    await session.login("admin.demo@ailss.local", "AilssAdmin!2026");
-                    if (session.snapshot.state === "AUTHENTICATED") {
-                      const name = encodeURIComponent(session.snapshot.user?.displayName || "");
-                      const email = encodeURIComponent(session.snapshot.user?.emailMasked || "");
-                      router.push(`/result?type=login-success&role=ADMIN&name=${name}&email=${email}&target=/admin` as Href);
-                    } else {
-                      const msg = encodeURIComponent(session.snapshot.error || "Không thể xác thực quyền Quản trị viên.");
-                      router.push(`/result?type=login-failure&message=${msg}` as Href);
-                    }
-                  } catch (err: unknown) {
-                    const msg = encodeURIComponent(err instanceof Error ? err.message : "Đăng nhập thất bại.");
-                    router.push(`/result?type=login-failure&message=${msg}` as Href);
-                  }
-                }}
-              />
-              {snapshot.state === "AUTHENTICATED" && (
-                <Button
-                  label="Đăng xuất"
-                  size="sm"
-                  variant="outline"
-                  onPress={async () => {
-                    try {
-                      await session.logout();
-                    } finally {
-                      router.push("/result?type=logout-success" as Href);
-                    }
-                  }}
-                />
-              )}
-            </View>
-          </View>
         )}
 
         {/* Errors / Warnings Banner */}

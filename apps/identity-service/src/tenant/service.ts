@@ -248,9 +248,9 @@ export class TenantService {
 
     if (input.providerType === "SAML") {
       throw new AppError(
-        "SAML_NOT_IMPLEMENTED",
-        501,
-        "SAML 2.0 WebSSO profile is not implemented. Use OIDC (OpenID Connect) for institutional federation.",
+        "SAML_CONFIGURATION_REQUIRES_FEDERATION_API",
+        422,
+        "Configure SAML through the federation configuration store; login uses the metadata, AuthnRequest, and ACS endpoints.",
       );
     }
 
@@ -312,9 +312,9 @@ export class TenantService {
 
     if (ssoConfig.providerType === "SAML") {
       throw new AppError(
-        "SAML_NOT_IMPLEMENTED",
-        501,
-        "SAML 2.0 WebSSO profile is not implemented. Use OIDC (OpenID Connect) for institutional federation.",
+        "LEGACY_SAML_CALLBACK_REJECTED",
+        400,
+        "SAML assertions must be submitted to the signed ACS endpoint and cannot use the legacy pre-validated claims callback.",
       );
     }
 

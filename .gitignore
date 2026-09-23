@@ -20,6 +20,13 @@ docs/*
 !docs/REVIEW_REMEDIATION.md
 !docs/architecture-sequences.md
 !docs/product-roadmap.md
+!docs/PHASE_40_REVISION_F_IMPLEMENTATION.md
+!docs/PHASE_40_REVISION_G_PROGRESS.md
+!docs/PHASE_40_REVISION_H_PROGRESS.md
+!docs/PHASE_40_REVISION_I_PROGRESS.md
+!docs/PHASE_40_REVISION_J_PROGRESS.md
+!docs/PHASE_40_REVISION_L_PROGRESS.md
+!docs/PHASE_40_REVISION_M_RELEASE.md
 evidence/
 logs/
 screenshots/
@@ -62,3 +69,9 @@ BAO_CAO_*
 RELEASE_MANIFEST.json
 phase*-evidence-bundle.json
 doc/
+
+# Local pre-tag acceptance output. RC5 attestation is regenerated from its tag.
+artifacts/release-evidence/rc5-test-discovery.json
+artifacts/release-evidence/revision-l/
+artifacts/runtime-audit/*.json
+artifacts/load-evidence/*-local-*.json

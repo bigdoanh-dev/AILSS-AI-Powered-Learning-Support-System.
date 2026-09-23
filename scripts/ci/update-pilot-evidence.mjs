@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 
 async function main() {
   const historicalPlatformBaseline = "2026-09-01T00:00:00.000Z";
@@ -21,7 +21,7 @@ async function main() {
 
   const evidence = {
     $schema: "https://json-schema.org/draft/2020-12/schema",
-    title: "AILSS Phase 40 Final Technical Closure (Revision D): RC4 Attestation, Stable 6.1.4 Raw Chronology, User-Level DP Contribution Bounding & Item-Rest Psychometrics",
+    title: "AILSS Phase 40 Runtime Connectivity Recovery (Revision F): pilot classification revoked pending runtime and staging evidence",
     version: "4.0.0",
     attestedAt: currentMeasurementTimestamp,
     provenance: {
@@ -41,8 +41,8 @@ async function main() {
       applicationReleaseCandidate3: "AILSS 6.2.0-rc3",
       applicationReleaseCandidate4: "AILSS 6.2.0-rc4",
       infrastructureBaseline: "ailss-infra-v1.4.0",
-      cleanCheckoutTestManifest: "release620rc4-test-manifest.json",
-      artifactManifest: "release620rc4-artifact-manifest.json",
+      cleanCheckoutTestManifest: "artifacts/release-evidence/release620rc4-test-manifest.json",
+      artifactManifest: "artifacts/release-evidence/release620rc4-artifact-manifest.json",
       migration079EnvironmentStatus: {
         DEV: "DEV_DEPLOYED",
         RESEARCH: "RESEARCH_DEPLOYED",
@@ -308,49 +308,49 @@ async function main() {
         resolver: "TenantFeatureFlagResolver",
         rolloutModes: ["OFF", "INTERNAL", "PILOT_TENANTS", "PERCENT_ROLLOUT", "ON"],
         flagsConfigured: [
-          { flag: "ADAPTIVE_V2", mode: "PILOT_TENANTS", allowedTenants: ["tenant-polytech", "tenant-fpt-uni"] },
-          { flag: "AI_TUTOR_V2", mode: "PILOT_TENANTS", allowedTenants: ["tenant-polytech"] },
-          { flag: "TEACHER_COPILOT", mode: "PILOT_TENANTS", allowedTenants: ["tenant-polytech"] },
-          { flag: "INTERVENTIONS", mode: "PILOT_TENANTS", allowedTenants: ["tenant-polytech"] },
-          { flag: "INSTITUTION_ADMIN_V2", mode: "INTERNAL", allowedTenants: [] },
-          { flag: "LEARNING_INTELLIGENCE_V2", mode: "INTERNAL", allowedTenants: [] },
-          { flag: "STUDENT_WORKSPACE_WAVE2", mode: "PILOT_TENANTS", allowedTenants: ["tenant-polytech"] }
+          { flag: "ADAPTIVE_V2", mode: "OFF", allowedTenants: [] },
+          { flag: "AI_TUTOR_V2", mode: "OFF", allowedTenants: [] },
+          { flag: "TEACHER_COPILOT", mode: "OFF", allowedTenants: [] },
+          { flag: "INTERVENTIONS", mode: "OFF", allowedTenants: [] },
+          { flag: "INSTITUTION_ADMIN_V2", mode: "OFF", allowedTenants: [] },
+          { flag: "LEARNING_INTELLIGENCE_V2", mode: "OFF", allowedTenants: [] },
+          { flag: "STUDENT_WORKSPACE_WAVE2", mode: "OFF", allowedTenants: [] }
         ]
       }
     },
     track2ProductExpansionWave2: {
       unifiedStudentWorkspace: {
-        status: "PILOT_READY",
+        status: "DEFERRED_UNSHIPPED",
         route: "/student/workspace",
         components: ["Today Agenda", "Learning Goals", "Continue Learning Carousel", "Mastery Gaps", "Recommendations", "Recent Submissions"],
         implementation: "apps/web/src/student/UnifiedStudentWorkspace.tsx"
       },
       courseAuthoringStudioV2: {
-        status: "PILOT_READY",
+        status: "DEFERRED_UNSHIPPED",
         route: "/teaching/course-authoring",
         components: ["Module Tree", "Lesson Editor", "Outcome Mapping", "Prerequisite Graph", "Draft/Review/Publish Lifecycle", "Immutable Course Versioning"],
         service: "apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
         implementation: "apps/web/src/lecturer/CourseAuthoringStudio.tsx"
       },
       assessmentAuthoringV2: {
-        status: "PILOT_READY",
+        status: "DEFERRED_UNSHIPPED",
         components: ["Question Bank V2", "Item Analysis (p-value, d-index, r_pb)", "Blueprint Validation", "AI Draft Review Workflow"],
         service: "apps/assessment-service/src/authoring/question-bank-v2-service.ts"
       },
       curriculumIntelligence: {
-        status: "PILOT_READY",
+        status: "DEFERRED_UNSHIPPED",
         components: ["Curriculum Graph", "Outcome Coverage Analysis", "Gap Identification", "Audit-Logged Evidence Export"],
         service: "apps/learning-service/src/curriculum/curriculum-intelligence-service.ts"
       },
       fleetOperationsCenter: {
-        status: "PILOT_READY",
+        status: "DEFERRED_UNSHIPPED",
         route: "/admin/fleet-operations",
         components: ["Tenant Templates (zero secret copying)", "Bulk Validation Preview", "Dry-Run Change Application", "Configuration Drift Detection"],
         service: "apps/identity-service/src/tenant/fleet-operations-service.ts",
         implementation: "apps/web/src/admin/FleetOperationsCenter.tsx"
       },
       productExperimentation: {
-        status: "PILOT_READY",
+        status: "DEFERRED_UNSHIPPED",
         components: ["Deterministic Variant Hash Assignment", "Tenant Scoping", "Strict Sensitive Scope Guard"],
         forbiddenScopes: ["GRADES", "CREDENTIALS", "SECURITY_CONTROLS", "PAYMENTS", "AUTHORIZATION"],
         service: "apps/learning-service/src/experimentation/product-experimentation-service.ts"
@@ -384,22 +384,22 @@ async function main() {
       payoutStatus: "BLOCKED"
     },
     finalClassifications: {
-      CANDIDATE_CLASSIFICATION: "CONTROLLED_PRODUCT_PILOT_READY",
+      CANDIDATE_CLASSIFICATION: "RUNTIME_INTEGRATION_INCOMPLETE",
       RELEASE_6_2_STATUS: "RC4_CANDIDATE_TAGGED",
       RC_PROVENANCE_STATUS: "VERIFIED",
       RESPONSIVE_WEB_STATUS: "PILOT_READY",
-      ADAPTIVE_LEARNING_V2_STATUS: "PILOT_READY",
-      STUDY_PLAN_STATUS: "PILOT_READY",
-      AI_TUTOR_V2_STATUS: "PILOT_READY",
-      TEACHER_COPILOT_STATUS: "PILOT_READY",
-      INTERVENTION_STATUS: "PILOT_READY",
-      INSTITUTION_ADMIN_V2_STATUS: "PILOT_READY",
-      LEARNING_INTELLIGENCE_STATUS: "PILOT_READY",
-      STUDENT_WORKSPACE_STATUS: "PILOT_READY",
-      COURSE_AUTHORING_V2_STATUS: "PILOT_READY",
-      ASSESSMENT_AUTHORING_V2_STATUS: "PILOT_READY",
-      CURRICULUM_INTELLIGENCE_STATUS: "PILOT_READY",
-      EXPERIMENTATION_STATUS: "PILOT_READY",
+      ADAPTIVE_LEARNING_V2_STATUS: "DEFERRED_UNSHIPPED",
+      STUDY_PLAN_STATUS: "DEFERRED_UNSHIPPED",
+      AI_TUTOR_V2_STATUS: "PARTIALLY_CONNECTED",
+      TEACHER_COPILOT_STATUS: "DEFERRED_UNSHIPPED",
+      INTERVENTION_STATUS: "DEFERRED_UNSHIPPED",
+      INSTITUTION_ADMIN_V2_STATUS: "DEFERRED_UNSHIPPED",
+      LEARNING_INTELLIGENCE_STATUS: "DEFERRED_UNSHIPPED",
+      STUDENT_WORKSPACE_STATUS: "PARTIALLY_CONNECTED",
+      COURSE_AUTHORING_V2_STATUS: "DEFERRED_UNSHIPPED",
+      ASSESSMENT_AUTHORING_V2_STATUS: "DEFERRED_UNSHIPPED",
+      CURRICULUM_INTELLIGENCE_STATUS: "DEFERRED_UNSHIPPED",
+      EXPERIMENTATION_STATUS: "DEFERRED_UNSHIPPED",
       MOBILE_STATUS: "OUT_OF_SCOPE_RESPONSIVE_WEB_ONLY",
       SECURITY_VALIDATION_STATUS: "EXTERNAL_ASSESSMENT_PENDING",
       LTI_CERTIFICATION_STATUS: "CONFORMANCE_TESTING",
@@ -410,8 +410,8 @@ async function main() {
     }
   };
 
-  await writeFile("phase40-pilot-hardening-evidence.json", JSON.stringify(evidence, null, 2), "utf8");
-  console.log("Updated phase40-pilot-hardening-evidence.json with Revision D raw chronology, 5 reliability windows, and expanded metrics.");
+  await writeFile("artifacts/release-evidence/phase40-pilot-hardening-evidence.json", JSON.stringify(evidence, null, 2), "utf8");
+  console.log("Updated Phase 40 evidence with Revision F runtime classifications; unconnected features are not pilot-ready.");
 }
 
 main().catch((err) => {

@@ -1,13 +1,14 @@
 {
   "schemaVersion": "1.0.0",
-  "totalMigrations": 46,
+  "totalMigrations": 50,
   "canonicalKeyspaces": [
     "identity_keyspace",
     "learning_keyspace",
     "assessment_keyspace",
     "classroom_keyspace",
     "ai_keyspace",
-    "audit_keyspace",
+    "audit_support_keyspace",
+    "interaction_keyspace",
     "notification_keyspace"
   ],
   "migrations": [
@@ -476,11 +477,11 @@
     {
       "id": "077",
       "filename": "077_product_analytics_events.cql",
-      "sha256Dev": "0ba3409304eb84abb1dd3bc198449092cd1d1c6c2dac3f6aed7f94553e7a3d0f",
-      "sha256Research": "0ba3409304eb84abb1dd3bc198449092cd1d1c6c2dac3f6aed7f94553e7a3d0f",
-      "keyspace": "audit_keyspace",
+      "sha256Dev": "4bc30313514b518af2ec9703392d9425625ade4c9958116c375ae78646a54862",
+      "sha256Research": "4bc30313514b518af2ec9703392d9425625ade4c9958116c375ae78646a54862",
+      "keyspace": "audit_support_keyspace",
       "classification": "SAFE_ADDITIVE",
-      "status": "DEPLOYED_VERIFIED",
+      "status": "PENDING_REAPPLY_AFTER_KEYSPACE_CORRECTION",
       "predecessor": "076",
       "environmentParity": "IDENTICAL"
     },
@@ -515,6 +516,50 @@
       "classification": "SAFE_ADDITIVE",
       "status": "DEPLOYED_VERIFIED",
       "predecessor": "079",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "081",
+      "filename": "081_finance_projection_and_durable_refunds.cql",
+      "sha256Dev": "0a3e8208a2d374741e8ab5b341e8566d5e27b7bf67d1c02a37e0d19d69a9bc49",
+      "sha256Research": "0a3e8208a2d374741e8ab5b341e8566d5e27b7bf67d1c02a37e0d19d69a9bc49",
+      "keyspace": "learning_keyspace",
+      "classification": "BACKFILL_OR_RECONCILIATION_REVIEW",
+      "status": "LOCAL_DEPLOYED_VERIFIED_EXTERNAL_PENDING",
+      "predecessor": "080",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "082",
+      "filename": "082_identity_federation_runtime.cql",
+      "sha256Dev": "662a0161bcb0975219f1046ae77dd7ad35000ef028e4055eb4a3de35cf21f15e",
+      "sha256Research": "662a0161bcb0975219f1046ae77dd7ad35000ef028e4055eb4a3de35cf21f15e",
+      "keyspace": "identity_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "LOCAL_DEPLOYED_VERIFIED_EXTERNAL_PENDING",
+      "predecessor": "081",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "083",
+      "filename": "083_adaptive_runtime_completion.cql",
+      "sha256Dev": "9137582974f0b934a10d52b506d57898a6010e54a48852faadfdef998e0742b5",
+      "sha256Research": "9137582974f0b934a10d52b506d57898a6010e54a48852faadfdef998e0742b5",
+      "keyspace": "learning_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "LOCAL_DEPLOYED_VERIFIED_EXTERNAL_PENDING",
+      "predecessor": "082",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "084",
+      "filename": "084_mastery_evidence_ingestion.cql",
+      "sha256Dev": "3a34836e7c95be7fb8978b278ad42569d13ecb5631dab893f0fe0370e0e98925",
+      "sha256Research": "3a34836e7c95be7fb8978b278ad42569d13ecb5631dab893f0fe0370e0e98925",
+      "keyspace": "learning_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "LOCAL_DEPLOYED_VERIFIED_EXTERNAL_PENDING",
+      "predecessor": "083",
       "environmentParity": "IDENTICAL"
     }
   ]
