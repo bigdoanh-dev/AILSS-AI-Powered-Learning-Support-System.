@@ -15,6 +15,7 @@
     "lint": "eslint .",
     "lint:baseline:update": "node scripts/ci/lint-no-regression.mjs --update",
     "lint:no-regression": "node scripts/ci/lint-no-regression.mjs",
+    "audit:source-tracking": "node scripts/ci/audit-source-tracking.mjs",
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:all": "pnpm test && pnpm test:web && pnpm --filter @ailss/mobile test",
