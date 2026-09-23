@@ -1,6 +1,7 @@
 import React from "react";
 import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { UnifiedStudentWorkspace } from "../src/student/UnifiedStudentWorkspace";
 import { CourseAuthoringStudio } from "../src/lecturer/CourseAuthoringStudio";
 import { FleetOperationsCenter } from "../src/admin/FleetOperationsCenter";
@@ -19,11 +20,13 @@ describe("Phase 40 Track 1 & 2: Browser E2E User Journeys & WCAG 2.2 AA", () => 
   describe("40.8 & 40.26: Student Journey & Workspace (Today View, Goals, AI Tutor)", () => {
     it("renders the Unified Student Workspace with Today view, continue learning, and goals", () => {
       render(
-        <UnifiedStudentWorkspace
-          studentName="Nguyễn Văn An"
-          studentId="stu-2026-001"
-          tenantId="tenant-polytech-hcm"
-        />,
+        <MemoryRouter>
+          <UnifiedStudentWorkspace
+            studentName="Nguyễn Văn An"
+            studentId="stu-2026-001"
+            tenantId="tenant-polytech-hcm"
+          />
+        </MemoryRouter>,
       );
 
       // Verify header & student context
@@ -53,20 +56,13 @@ describe("Phase 40 Track 1 & 2: Browser E2E User Journeys & WCAG 2.2 AA", () => 
         screen.queryByText("Luyện tập: Phép xoay kép LR/RL trên Cây AVL"),
       ).toBeNull();
 
-      // Open AI Tutor drawer
-      const openTutorBtn = screen.getByRole("button", { name: "Hỏi AI Tutor bài này" });
-      fireEvent.click(openTutorBtn);
-      expect(screen.getByRole("dialog")).toBeTruthy();
-      expect(screen.getByText(/AI Tutor - Chế độ Socratic/)).toBeTruthy();
-
-      // Close AI Tutor
-      const closeTutorBtn = screen.getByRole("button", { name: "Đóng AI Tutor" });
-      fireEvent.click(closeTutorBtn);
+      const tutorLink = screen.getByRole("link", { name: "Hỏi AI Tutor bài này" });
+      expect(tutorLink.getAttribute("href")).toBe("/app/ai-tutor?mode=STUDY_BUDDY");
       expect(screen.queryByRole("dialog")).toBeNull();
     });
 
     it("allows learner to create a new Learning Goal", () => {
-      render(<UnifiedStudentWorkspace />);
+      render(<MemoryRouter><UnifiedStudentWorkspace /></MemoryRouter>);
       const addGoalBtn = screen.getByRole("button", { name: "+ Đặt mục tiêu học tập mới" });
       fireEvent.click(addGoalBtn);
       expect(screen.getByText("Luyện tập thêm 30 phút")).toBeTruthy();

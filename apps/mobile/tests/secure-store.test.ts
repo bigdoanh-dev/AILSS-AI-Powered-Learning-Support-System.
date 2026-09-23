@@ -6,6 +6,17 @@ const storage = vi.hoisted(() => ({
   WHEN_UNLOCKED_THIS_DEVICE_ONLY: 4,
 }));
 vi.mock("expo-secure-store", () => storage);
+vi.mock("expo-crypto", () => ({ getRandomBytes: (size: number) => new Uint8Array(size).fill(7) }));
+vi.mock("expo-sqlite", () => ({
+  deleteDatabaseAsync: async () => {},
+  openDatabaseAsync: async () => ({
+    execAsync: async () => {},
+    runAsync: async () => ({}),
+    getFirstAsync: async (sql: string) =>
+      sql.includes("cipher_version") ? { cipher_version: "4.7.0" } : sql.includes("user_version") ? { user_version: 1 } : null,
+    getAllAsync: async () => [],
+  }),
+}));
 import { createRuntime } from "../src/runtime";
 it("uses device-only OS vault for refresh material, scoped to explicit target", async () => {
   vi.stubEnv("EXPO_PUBLIC_AILSS_ENV", "research");
@@ -24,7 +35,7 @@ it("uses device-only OS vault for refresh material, scoped to explicit target", 
   );
   await session.login("test", "test");
   const [key, value, options] = storage.setItemAsync.mock.calls[0]!;
-  expect(key).toContain("ailss.session.research.");
+  expect(key).toContain("ailss.session.research_");
   expect(value).not.toContain("access-memory-only");
   expect(options).toEqual({ keychainAccessible: 4 });
   await session.logout();

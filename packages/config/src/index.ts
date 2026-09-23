@@ -70,6 +70,8 @@ const baseSchema = z.object({
   AI_PROVIDER_MODEL: z.string().min(1).max(200).default("gpt-5-mini"),
   AI_PROVIDER_API_KEY: optionalInjected,
   AI_PROVIDER_MODE: z.enum(["production", "deterministic-test"]).default("production"),
+  AI_ASSISTANT_PROVIDER_MODE: z.enum(["external", "integration-only"]).default("external"),
+  AI_ASSISTANT_INTEGRATION_ENABLED: bool,
   AI_PROVIDER_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(120_000).default(30_000),
   AI_CIRCUIT_BREAKER_FAILURE_THRESHOLD: z.coerce.number().int().min(1).max(100).default(5),
   AI_CIRCUIT_BREAKER_COOLDOWN_MS: z.coerce.number().int().min(1_000).max(300_000).default(30_000),
@@ -145,6 +147,35 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   }
   if (result.data.NODE_ENV === "production" && result.data.AI_PROVIDER_MODE !== "production") {
     throw new ConfigurationError(["Deterministic AI provider is disabled in production"]);
+  }
+  const productionLike =
+    result.data.NODE_ENV === "production" ||
+    source.AILSS_PROFILE?.trim().toLowerCase() === "production" ||
+    source.DEPLOYMENT_ENV?.trim().toLowerCase() === "production";
+  if (
+    productionLike &&
+    (result.data.AI_ASSISTANT_PROVIDER_MODE !== "external" || result.data.AI_ASSISTANT_INTEGRATION_ENABLED)
+  ) {
+    throw new ConfigurationError([
+      "Integration-only assistant model adapter is disabled in production-like profiles",
+    ]);
+  }
+  if (
+    result.data.AI_ASSISTANT_PROVIDER_MODE === "integration-only" &&
+    (!result.data.AI_ASSISTANT_INTEGRATION_ENABLED ||
+      !["development", "research"].includes(result.data.NODE_ENV))
+  ) {
+    throw new ConfigurationError([
+      "Integration-only assistant model adapter requires explicit enablement in development or research",
+    ]);
+  }
+  if (
+    result.data.AI_ASSISTANT_INTEGRATION_ENABLED &&
+    result.data.AI_ASSISTANT_PROVIDER_MODE !== "integration-only"
+  ) {
+    throw new ConfigurationError([
+      "Assistant integration adapter enablement requires integration-only provider mode",
+    ]);
   }
   if (
     result.data.NODE_ENV === "production" &&

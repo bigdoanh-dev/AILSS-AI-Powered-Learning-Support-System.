@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { type Href, router, useLocalSearchParams } from "expo-router";
 import * as Crypto from "expo-crypto";
@@ -29,6 +29,7 @@ export default function QuizDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const startOperationId = useRef<string | null>(null);
 
   const loadDetail = useCallback(async () => {
     if (!quizId || snapshot.state !== "AUTHENTICATED") return;
@@ -59,13 +60,14 @@ export default function QuizDetailScreen() {
     setError(null);
 
     try {
-      const idempotencyKey = Crypto.randomUUID();
+      startOperationId.current ??= Crypto.randomUUID();
       const res = await session.request(`/api/v1/quizzes/${encodeURIComponent(quizId)}/attempts`, {
         method: "POST",
-        idempotencyKey,
+        idempotencyKey: startOperationId.current,
       });
 
       const parsed = decodeAttemptWithQuestions(res);
+      startOperationId.current = null;
       router.push(`/assessments/${quizId}/attempt/${parsed.attempt.attemptId}` as Href);
     } catch (err: unknown) {
       setError(err instanceof ApiError ? err.message : "Máy chủ chưa tạo lượt làm bài; vui lòng thử lại.");
@@ -137,13 +139,6 @@ export default function QuizDetailScreen() {
             variant="primary"
           />
           <Badge label="ĐÃ XUẤT BẢN" variant="success" />
-          {quiz.title.toLowerCase().includes("tự luận") ||
-          quiz.title.toLowerCase().includes("đồ án") ||
-          quiz.title.toLowerCase().includes("bài tập lớn") ? (
-            <Badge label="✍️ GIẢNG VIÊN CHẤM THỦ CÔNG" variant="ai" />
-          ) : (
-            <Badge label="⚡ HỆ THỐNG CHẤM TỰ ĐỘNG" variant="warning" />
-          )}
         </View>
 
         <Text style={screenStyles.examTitle}>{quiz.title}</Text>
@@ -151,12 +146,7 @@ export default function QuizDetailScreen() {
         <View style={screenStyles.examTypeRow}>
           <Icon name="academic" size={16} color={tokens.color.brand} />
           <Text style={screenStyles.examTypeText}>
-            {quiz.title.toLowerCase().includes("đồ án") ||
-            quiz.title.toLowerCase().includes("bài tập lớn")
-              ? "Hình thức: Nộp file đồ án / Báo cáo (Giảng viên chấm thủ công)"
-              : quiz.title.toLowerCase().includes("tự luận")
-              ? "Hình thức: Tự luận chuyên sâu (Giảng viên chấm thủ công)"
-              : "Hình thức: Trắc nghiệm khách quan (Hệ thống chấm tự động ngay)"}
+            Xem hướng dẫn và câu hỏi được cấu hình cho bài kiểm tra này trước khi bắt đầu.
           </Text>
         </View>
       </View>

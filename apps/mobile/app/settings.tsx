@@ -1,7 +1,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { Text, View, Switch, StyleSheet, ScrollView } from "react-native";
 import { router, type Href } from "expo-router";
-import { runtime } from "../src/runtime";
+import { runtime, setRequireLoginOnColdStart } from "../src/runtime";
 import {
   getSystemSettings,
   updateSystemSettings,
@@ -13,20 +13,29 @@ export default function SettingsScreen() {
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const settings = useSyncExternalStore(subscribeSystemSettings, getSystemSettings);
+  const configuredApiOrigin = process.env.EXPO_PUBLIC_AILSS_API_BASE_URL;
+  const configuredEnvironment = process.env.EXPO_PUBLIC_AILSS_ENV?.toLowerCase();
+  const connectionSecurity = configuredApiOrigin?.startsWith("https://")
+    ? "HTTPS (theo cấu hình môi trường)"
+    : configuredApiOrigin?.startsWith("http://") && configuredEnvironment !== "production"
+      ? "HTTP (chỉ môi trường development)"
+      : "Chưa xác định";
 
   const [cacheMessage, setCacheMessage] = useState("");
   const [busyLogout, setBusyLogout] = useState(false);
+  const [savingColdStartPreference, setSavingColdStartPreference] = useState(false);
+  const [coldStartPreferenceError, setColdStartPreferenceError] = useState("");
 
-  const handleToggleLoginOnColdStart = (val: boolean) => {
-    updateSystemSettings({ requireLoginOnColdStart: val });
-  };
-
-  const handleTogglePush = (val: boolean) => {
-    updateSystemSettings({ pushNotifications: val });
-  };
-
-  const handleToggleReminders = (val: boolean) => {
-    updateSystemSettings({ learningReminders: val });
+  const handleToggleLoginOnColdStart = async (val: boolean) => {
+    setSavingColdStartPreference(true);
+    setColdStartPreferenceError("");
+    try {
+      await setRequireLoginOnColdStart(val);
+    } catch {
+      setColdStartPreferenceError("Không thể lưu lựa chọn bảo mật trên thiết bị. Vui lòng thử lại.");
+    } finally {
+      setSavingColdStartPreference(false);
+    }
   };
 
   const handleToggleContrast = (val: boolean) => {
@@ -73,26 +82,37 @@ export default function SettingsScreen() {
                 <View style={{ flex: 1, paddingRight: 12 }}>
                   <Text style={s.rowLabel}>Đăng nhập lại khi thoát app</Text>
                   <Text style={s.rowSub}>
-                    Yêu cầu đăng nhập lại mỗi khi mở ứng dụng từ cold start để đảm bảo bảo mật.
+                    {settings.requireLoginOnColdStart
+                      ? "Yêu cầu đăng nhập lại khi mở ứng dụng. Hàng đợi ngoại tuyến sẽ chỉ đồng bộ sau khi đăng nhập."
+                      : "Khôi phục phiên đã mã hóa khi mở ứng dụng; nếu mất mạng, dữ liệu đã đồng bộ và hàng đợi học tập có thể tiếp tục ngoại tuyến."}
                   </Text>
                 </View>
                 <Switch
                   value={settings.requireLoginOnColdStart}
                   onValueChange={handleToggleLoginOnColdStart}
+                  disabled={savingColdStartPreference}
                   trackColor={{ false: "#CBD5E1", true: tokens.color.brand }}
                   thumbColor="#FFFFFF"
                   accessibilityLabel="Yêu cầu đăng nhập lại khi thoát app"
                 />
               </View>
 
+              {coldStartPreferenceError ? (
+                <Text accessibilityRole="alert" style={{ color: "#B42318", fontSize: 13, marginTop: 8 }}>
+                  {coldStartPreferenceError}
+                </Text>
+              ) : null}
+
               <View style={s.divider} />
 
               <View style={s.rowBetween}>
                 <View style={{ flex: 1 }}>
                   <Text style={s.rowLabel}>Cơ chế xác thực</Text>
-                  <Text style={s.rowSub}>Mã hóa token phần cứng AES-GCM (iOS Keychain / Android Keystore)</Text>
-                </View>
-                <Badge label="AN TOÀN" variant="success" icon="check" />
+                <Text style={s.rowSub}>
+                  Token được lưu bằng SecureStore của hệ điều hành; bản này chưa xác minh phần cứng lưu khóa.
+                </Text>
+              </View>
+              <Badge label="SECURESTORE" variant="success" icon="check" />
               </View>
 
               {snapshot.state === "AUTHENTICATED" && (
@@ -119,32 +139,12 @@ export default function SettingsScreen() {
             <View style={s.card}>
               <View style={s.rowBetween}>
                 <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={s.rowLabel}>Thông báo đẩy hệ thống</Text>
-                  <Text style={s.rowSub}>Cập nhật điểm danh, kết quả thi và thông báo từ giảng viên</Text>
+                  <Text style={s.rowLabel}>Thông báo trong ứng dụng</Text>
+                  <Text style={s.rowSub}>
+                    Danh sách thông báo được đồng bộ khi mở ứng dụng. Push và nhắc lịch chưa khả dụng trong bản này.
+                  </Text>
                 </View>
-                <Switch
-                  value={settings.pushNotifications}
-                  onValueChange={handleTogglePush}
-                  trackColor={{ false: "#CBD5E1", true: tokens.color.brand }}
-                  thumbColor="#FFFFFF"
-                  accessibilityLabel="Thông báo đẩy hệ thống"
-                />
-              </View>
-
-              <View style={s.divider} />
-
-              <View style={s.rowBetween}>
-                <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={s.rowLabel}>Nhắc lịch học & Điểm danh</Text>
-                  <Text style={s.rowSub}>Tự động nhắc nhở trước 15 phút trước giờ vào lớp</Text>
-                </View>
-                <Switch
-                  value={settings.learningReminders}
-                  onValueChange={handleToggleReminders}
-                  trackColor={{ false: "#CBD5E1", true: tokens.color.brand }}
-                  thumbColor="#FFFFFF"
-                  accessibilityLabel="Nhắc lịch học và điểm danh"
-                />
+                <Badge label="IN-APP ONLY" variant="neutral" />
               </View>
             </View>
           </View>
@@ -211,7 +211,7 @@ export default function SettingsScreen() {
             <View style={s.card}>
               <View style={s.infoRow}>
                 <Text style={s.infoKey}>Phiên bản:</Text>
-                <Text style={s.infoVal}>v2.4.0 Commercial Release</Text>
+                <Text style={s.infoVal}>v14.1.0 · Phase 41</Text>
               </View>
               <View style={s.infoRow}>
                 <Text style={s.infoKey}>Môi trường:</Text>
@@ -222,8 +222,8 @@ export default function SettingsScreen() {
                 </Text>
               </View>
               <View style={s.infoRow}>
-                <Text style={s.infoKey}>Giao thức:</Text>
-                <Text style={s.infoVal}>TLS 1.3 / HTTP2 / VietQR Ready</Text>
+                <Text style={s.infoKey}>Kết nối API:</Text>
+                <Text style={s.infoVal}>{connectionSecurity}</Text>
               </View>
               <View style={s.infoRow}>
                 <Text style={s.infoKey}>Trạng thái tài khoản:</Text>

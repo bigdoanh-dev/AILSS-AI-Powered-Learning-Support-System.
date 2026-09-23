@@ -30,14 +30,24 @@ export type RequestOptions = {
   token?: string;
   signal?: AbortSignal;
   idempotencyKey?: string;
+  timeoutMs?: number;
   headers?: Record<string, string>;
 };
 export type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
+function createCorrelationId(): string {
+  if (typeof globalThis.crypto?.randomUUID === "function") return globalThis.crypto.randomUUID();
+  // Correlation IDs are identifiers, not credentials; UUID format lets the Gateway trust them.
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/gu, (character) => {
+    const value = Math.floor(Math.random() * 16);
+    return (character === "x" ? value : (value & 0x3) | 0x8).toString(16);
+  });
+}
 export class Transport {
   constructor(
     readonly origin: string,
     private fetcher: Fetcher = fetch,
     private timeout = 12000,
+    private readonly requestId: () => string = createCorrelationId,
   ) {}
   async request(path: string, options: RequestOptions = {}): Promise<unknown> {
     if (!path.startsWith("/api/v1/") || path.includes("://") || path.includes(".."))
@@ -50,7 +60,7 @@ export class Transport {
     const timer = setTimeout(() => {
       timedOut = true;
       controller.abort();
-    }, this.timeout);
+    }, options.timeoutMs ?? this.timeout);
     try {
       const response = await this.fetcher(this.origin + path, {
         method: options.method ?? "GET",
@@ -58,6 +68,7 @@ export class Transport {
         signal: controller.signal,
         headers: {
           Accept: "application/json",
+          "X-Correlation-Id": this.requestId(),
           ...(options.body === undefined ? {} : { "Content-Type": "application/json" }),
           ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
           ...(options.idempotencyKey ? { "Idempotency-Key": options.idempotencyKey } : {}),

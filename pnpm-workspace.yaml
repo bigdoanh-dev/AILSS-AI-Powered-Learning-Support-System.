@@ -10,6 +10,8 @@ onlyBuiltDependencies:
   - esbuild
 
 patchedDependencies:
+  expo-constants@57.0.18: patches/expo-constants@57.0.18.patch
+  expo-modules-core@57.0.18: patches/expo-modules-core@57.0.18.patch
   expo-modules-jsi@57.1.0: patches/expo-modules-jsi@57.1.0.patch
 
 overrides:

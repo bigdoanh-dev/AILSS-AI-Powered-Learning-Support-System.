@@ -8,7 +8,8 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "dev.ailss.mobile"
+      "bundleIdentifier": "dev.ailss.mobile",
+      "buildNumber": "14100"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,12 +19,13 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "dev.ailss.mobile"
+      "package": "dev.ailss.mobile",
+      "versionCode": 14100
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "scheme": "ailss-mobile",
-    "plugins": ["expo-router", "expo-secure-store"]
+    "plugins": ["expo-router", "expo-secure-store", "expo-splash-screen"]
   }
 }

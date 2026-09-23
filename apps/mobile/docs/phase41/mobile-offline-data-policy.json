@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "status": "SQLCIPHER_CACHE_AND_PERSISTENT_COMPLETION_QUEUE_IMPLEMENTED",
+  "localDatabase": {
+    "engine": "expo-sqlite with SQLCipher",
+    "schemaVersion": 1,
+    "migrations": [
+      1
+    ],
+    "cacheRetentionDays": 30,
+    "encryption": "SQLCipher key is generated randomly and stored in device-only SecureStore; key is applied before any database read",
+    "sensitiveColumns": "No passwords, access tokens, refresh tokens, session secrets, assessment answers or lesson bodies"
+  },
+  "conflictRules": {
+    "mastery": "Server projection always wins; never calculate locally",
+    "studyPlan": "Server wins; reload on 409 before showing updated plan",
+    "lessonCompletion": "Queueing is PENDING_SYNC only; server acknowledgement is required before authoritative completion",
+    "assessmentSubmission": "ONLINE_ONLY; server attempt/version and idempotency rules win"
+  },
+  "datasets": [
+    {
+      "name": "published course metadata",
+      "classification": "CACHEABLE_READ",
+      "currentState": "Cached per authenticated user after successful /me/courses response",
+      "requirement": "Authoritative Learning Service entitlement is checked before cache population"
+    },
+    {
+      "name": "published lesson content and approved media references",
+      "classification": "ONLINE_ONLY",
+      "currentState": "Never persisted in local database",
+      "requirement": "Content remains online-only until an appropriate authorization-aware secure content design exists"
+    },
+    {
+      "name": "last-synced Study Plan",
+      "classification": "CACHEABLE_READ",
+      "currentState": "Cached per authenticated user and course after successful live response",
+      "requirement": "Display LIVE or OFFLINE_CACHE and LAST_SYNCED; successful live response always wins"
+    },
+    {
+      "name": "last-synced Mastery",
+      "classification": "CACHEABLE_READ",
+      "currentState": "Cached per authenticated user and course after successful live response",
+      "requirement": "Display LAST_SYNCED; never recalculate from offline activity"
+    },
+    {
+      "name": "notification metadata",
+      "classification": "CACHEABLE_READ",
+      "currentState": "No offline cache",
+      "requirement": "Avoid private lesson/assessment details in lock-screen payload"
+    },
+    {
+      "name": "lesson completion operation",
+      "classification": "QUEUEABLE_WRITE",
+      "currentState": "Persisted in SQLCipher; retry on reconnect with the same idempotency key",
+      "requiredFields": [
+        "operationId",
+        "resourceId",
+        "idempotencyKey",
+        "createdAt",
+        "attemptCount",
+        "state"
+      ],
+      "syncStates": [
+        "PENDING",
+        "SYNCING",
+        "SYNCED",
+        "FAILED_RETRYABLE",
+        "FAILED_FINAL",
+        "CONFLICT"
+      ],
+      "conflictPolicy": "Server completion/version wins; re-read progress before retry"
+    },
+    {
+      "name": "assessment answers and final submission",
+      "classification": "ONLINE_ONLY",
+      "currentState": "No offline persistence"
+    },
+    {
+      "name": "refresh credential and session secret",
+      "classification": "SECURE_STORAGE_ONLY",
+      "currentState": "Device-only Keychain/Android Keystore SecureStore; never copied into SQLCipher or logs"
+    },
+    {
+      "name": "access token",
+      "classification": "MEMORY_ONLY",
+      "currentState": "Process memory only; not persisted"
+    },
+    {
+      "name": "password",
+      "classification": "NEVER_PERSIST",
+      "currentState": "Used only for the login request; never written to storage, logs or analytics"
+    },
+    {
+      "name": "plaintext credentials and session secrets",
+      "classification": "NEVER_PERSIST_PLAINTEXT",
+      "currentState": "Never written to AsyncStorage, ordinary SQLite, logs, analytics, URL parameters or clipboard"
+    },
+    {
+      "name": "final grading, payment, credential issuance and security administration",
+      "classification": "ONLINE_ONLY",
+      "currentState": "Never queued from mobile"
+    }
+  ]
+}

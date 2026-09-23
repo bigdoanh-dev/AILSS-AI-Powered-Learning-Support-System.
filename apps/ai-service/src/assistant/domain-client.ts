@@ -18,6 +18,60 @@ const materialResponseSchema = z.object({
   meta: z.object({ retrievalState: z.enum(["MATCHES", "NO_MATCH"]), courseVersion: z.number().int().positive() }),
 });
 
+const catalogResponseSchema = z.object({
+  data: z.array(z.object({
+    courseId: z.string().uuid(),
+    title: z.string().min(1),
+    price: z.union([z.string(), z.number()]),
+    currency: z.string().min(1),
+  })),
+});
+
+const CATALOG_STOP_WORDS = new Set([
+  "anh", "ban", "bat", "biet", "can", "cao", "cho", "chon", "chua", "coi", "con", "cua", "dang",
+  "chao", "chut", "danh", "dau", "dinh", "duoc", "duoi", "em", "gia", "gio", "giup", "goi", "hay",
+  "hoc", "hop", "khoa", "khoe", "khong", "kinh", "lam", "linh", "minh", "moi", "mot", "muc", "muon",
+  "nam", "nang", "nao", "ngan", "ngay", "nghiem", "nghin", "nguoi", "nhieu", "noi",
+  "phu", "sach", "sau", "the", "thang", "thich", "tien", "tim", "toi", "tren", "trieu",
+  "trinh", "truoc", "tuan", "tung", "vnd", "voi", "xem", "xin", "yeu",
+  "about", "and", "beginner", "budget", "can", "choose", "course", "courses", "find", "for",
+  "evening", "experience", "good", "have", "hello", "help", "hour", "hours", "know", "learn",
+  "learning", "like", "morning", "need", "please", "recommend", "some", "study", "thank", "thanks",
+  "the", "there", "this", "want", "week", "which", "with", "would",
+]);
+
+// Answers to an advisor's qualification questions should preserve the earlier
+// course subject. These words describe availability, budget, or prior level;
+// their presence alone is not a new catalog query.
+const ADVISOR_QUALIFICATION_WORDS = new Set([
+  "affordable", "already", "available", "basic", "buoi", "cheap", "chieu", "chi", "cost", "cuoi",
+  "days", "dong", "evenings", "familiar", "free", "gian", "khoang", "level", "max", "million",
+  "morning", "nen", "novice", "phu", "phi", "price", "ranh", "sang", "tang", "thap",
+  "thoi", "thousand", "tieng", "under", "years", "weekend", "weekday",
+]);
+
+/** The public Learning search index accepts title-word prefixes, not full sentences. */
+export function extractCatalogSearchTokens(query: string): readonly string[] {
+  const normalized = query.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "").replace(/đ/gu, "d");
+  return [...new Set((normalized.match(/[a-z0-9]+/gu) ?? [])
+    .filter((word) => word.length >= 3 && !/^\d+$/u.test(word) && !CATALOG_STOP_WORDS.has(word) && !ADVISOR_QUALIFICATION_WORDS.has(word))
+    .map((word) => word.slice(0, 20)))].slice(0, 3);
+}
+
+function catalogItem(course: z.infer<typeof catalogResponseSchema>["data"][number]): CourseCatalogItem {
+  const priceAmount = Number(course.price);
+  if (!Number.isFinite(priceAmount) || priceAmount < 0) throw new Error("CATALOG_INVALID_PRICE");
+  return {
+    courseId: course.courseId,
+    title: course.title,
+    description: "",
+    priceAmount,
+    priceCurrency: course.currency,
+    // The public catalog currently has no authoritative level field.
+    level: "UNSPECIFIED",
+  };
+}
+
 export interface HttpAssistantDomainClientOptions {
   readonly learningUrl: string;
   readonly assessmentUrl: string;
@@ -41,45 +95,33 @@ export class HttpAssistantDomainClient implements AssistantDomainClient {
     });
   }
 
-  public async searchCourses(query?: string, level?: string, maxPrice?: number): Promise<readonly CourseCatalogItem[]> {
+  public async searchCourses(query?: string, _level?: string, maxPrice?: number): Promise<readonly CourseCatalogItem[]> {
+    const tokens = extractCatalogSearchTokens(query ?? "");
+    if (tokens.length === 0) return [];
     try {
-      if (!query) return [];
-      const token = query
-        .normalize("NFKD")
-        .replace(/\p{M}/gu, "")
-        .toLowerCase()
-        .match(/[a-z0-9]{3,20}/u)?.[0];
-      if (!token) return [];
-      const url = new URL("/api/v1/courses/search", this.options.learningUrl);
-      url.searchParams.set("q", token);
-
-      const res = await fetch(url.toString(), {
-        headers: { "content-type": "application/json" },
-        signal: AbortSignal.timeout(this.options.deadlineMs ?? 5000),
-      });
-
-      if (!res.ok) return [];
-
-      const body = (await res.json()) as {
-        data?: ReadonlyArray<{
-          courseId: string; title: string; price: string; currency: string;
-          categoryId: string; lecturerId: string;
-        }>;
-      };
-      let items: readonly CourseCatalogItem[] = (body.data ?? []).map((course) => ({
-        courseId: course.courseId,
-        title: course.title,
-        description: "",
-        priceAmount: Number(course.price),
-        priceCurrency: course.currency,
-        level: level ?? "UNSPECIFIED",
+      const pages = await Promise.all(tokens.map(async (token) => {
+        const url = new URL("/api/v1/courses/search", this.options.learningUrl);
+        url.searchParams.set("q", token);
+        url.searchParams.set("limit", "20");
+        const response = await fetch(url.toString(), {
+          signal: AbortSignal.timeout(this.options.deadlineMs ?? 5000),
+        });
+        if (!response.ok) throw new Error("CATALOG_UNAVAILABLE");
+        return catalogResponseSchema.parse(await response.json()).data.map(catalogItem);
       }));
-      if (maxPrice !== undefined) {
-        items = items.filter((c) => c.priceAmount <= maxPrice);
+      const unique = new Map<string, CourseCatalogItem>();
+      for (const page of pages) for (const course of page) {
+        if (maxPrice !== undefined && course.priceAmount > maxPrice) continue;
+        unique.set(course.courseId, course);
       }
-      return items;
+      const normalizedTitle = (title: string) => title.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "").replace(/đ/gu, "d");
+      const relevance = (course: CourseCatalogItem) => {
+        const words = normalizedTitle(course.title).match(/[a-z0-9]+/gu) ?? [];
+        return tokens.filter((token) => words.some((word) => word.startsWith(token))).length;
+      };
+      return [...unique.values()].sort((left, right) => relevance(right) - relevance(left)).slice(0, 20);
     } catch {
-      return [];
+      throw new Error("CATALOG_UNAVAILABLE");
     }
   }
 
@@ -89,11 +131,12 @@ export class HttpAssistantDomainClient implements AssistantDomainClient {
       const res = await fetch(url.toString(), {
         signal: AbortSignal.timeout(this.options.deadlineMs ?? 5000),
       });
-      if (!res.ok) return null;
-      const body = (await res.json()) as { data?: CourseCatalogItem };
-      return body.data ?? null;
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("CATALOG_UNAVAILABLE");
+      const body = z.object({ data: catalogResponseSchema.shape.data.element }).parse(await res.json());
+      return catalogItem(body.data);
     } catch {
-      return null;
+      throw new Error("CATALOG_UNAVAILABLE");
     }
   }
 

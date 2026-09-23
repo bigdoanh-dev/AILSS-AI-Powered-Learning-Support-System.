@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
   AssistantOrchestrator,
+  IntegrationOnlyAssistantLlmProvider,
   type AssistantDomainClient,
   type AssistantLlmProvider,
   type AssistantRepository,
@@ -96,7 +97,8 @@ describe("Phase 16B & 17 — Assistant Orchestrator (Study Buddy & Lecturer Copi
     diagnoseCohortGaps: () => Promise.resolve({}),
     hasActiveAssessmentAttempt: () => Promise.resolve(false),
     getStudentMastery: (_studentId, cid) => Promise.resolve([{ courseId: cid, masteryScore: 45 }]),
-    getRecommendedLearningPath: (studentId, cid) => Promise.resolve({ planId: randomUUID(), studentId, courseId: cid, items: [] }),
+    getRecommendedLearningPath: (studentId, cid) =>
+      Promise.resolve({ planId: randomUUID(), studentId, courseId: cid, items: [] }),
   };
 
   it("Study Buddy executes search_course_materials and returns verified lesson citations", async () => {
@@ -106,6 +108,9 @@ describe("Phase 16B & 17 — Assistant Orchestrator (Study Buddy & Lecturer Copi
     const mockLlm: AssistantLlmProvider = {
       generate: (req) => {
         expect(req.systemPrompt).toContain("Socratic tutor");
+        expect(req.systemPrompt).toContain("under 150 words");
+        expect(req.systemPrompt).toContain("Return only the final message addressed to the learner");
+        expect(req.maxTokens).toBe(768);
         return Promise.resolve({
           content:
             "Theo bài học 'Quorum and Tunable Consistency', LOCAL_QUORUM yêu cầu R + W > N để đảm bảo tính nhất quán.",
@@ -134,6 +139,37 @@ describe("Phase 16B & 17 — Assistant Orchestrator (Study Buddy & Lecturer Copi
     expect(res.citations[0]?.snippet).toContain("LOCAL_QUORUM ensures strong consistency");
     expect(res.toolInvocations).toHaveLength(1);
     expect(res.toolInvocations[0]?.name).toBe("search_course_materials");
+  });
+
+  it("integration-only provider consumes real tool output and leaves citations to the normal allowlist", async () => {
+    const mockRepo = createMockRepo();
+    const orchestrator = new AssistantOrchestrator({
+      repository: mockRepo.repo,
+      toolRunner: new ToolRunner(domainClient),
+      domainClient,
+      llmProvider: new IntegrationOnlyAssistantLlmProvider(),
+    });
+
+    const response = await orchestrator.chat(
+      { userId: randomUUID(), role: "STUDENT" },
+      {
+        mode: "STUDY_BUDDY",
+        courseId,
+        message: "Mastery của tôi thế nào, kế hoạch học gì tiếp và giải thích phần tài liệu quorum?",
+      },
+    );
+
+    expect(response.toolInvocations.map((tool) => tool.name)).toEqual([
+      "get_student_mastery",
+      "get_recommended_learning_path",
+      "search_course_materials",
+    ]);
+    expect(response.content).toContain("Kiểm thử tích hợp");
+    expect(response.content).toContain("LOCAL_QUORUM ensures strong consistency");
+    expect(response.content).toContain("score 45");
+    expect(response.citations).toHaveLength(1);
+    expect(response.citations[0]?.sourceObjectId).toBe("a".repeat(64));
+    expect(mockRepo.messages.get(response.conversationId)?.at(-1)?.citations).toEqual(response.citations);
   });
 
   it("Study Buddy detects knowledge gap inquiries and runs get_knowledge_gaps", async () => {
@@ -170,12 +206,152 @@ describe("Phase 16B & 17 — Assistant Orchestrator (Study Buddy & Lecturer Copi
 
   it("Study Buddy retrieves persisted mastery and Study Plan through registered tools", async () => {
     const mockRepo = createMockRepo();
-    const orchestrator = new AssistantOrchestrator({ repository: mockRepo.repo, toolRunner: new ToolRunner(domainClient), domainClient, llmProvider: { generate: () => Promise.resolve({ content: "Grounded response" }) } });
+    let groundingContext = "";
+    const boundedDomainClient: AssistantDomainClient = {
+      ...domainClient,
+      getStudentMastery: () =>
+        Promise.resolve(
+          Array.from({ length: 14 }, (_, index) => ({
+            studentId: "private-student-id",
+            tenantId: "private-tenant-id",
+            conceptId: `concept-${String(index)}`,
+            learningOutcomeId: `outcome-${String(index)}`,
+            masteryScore: 50 + index,
+            masteryState: "DEVELOPING",
+            confidenceScore: 70,
+            evidenceCount: 2,
+            evidenceIds: ["private-evidence-id"],
+            explanation: { whyState: "Two recent evidence items", nextSteps: "Review the topic" },
+          })),
+        ),
+      getRecommendedLearningPath: () =>
+        Promise.resolve({
+          planId: "private-plan-id",
+          studentId: "private-student-id",
+          tenantId: "private-tenant-id",
+          courseId,
+          overallMasteryPercent: 62,
+          weekStartDate: "2026-09-21",
+          items: Array.from({ length: 10 }, (_, index) => ({
+            itemId: `private-item-${String(index)}`,
+            title: `Review topic ${String(index)}`,
+            description: "Practice one concept",
+            action: "REVIEW_CONCEPT",
+            status: "PENDING",
+            scheduledDate: "2026-09-24",
+            estimatedMinutes: 15,
+            priority: 2,
+            rationale: "The current mastery record shows room to improve",
+          })),
+          masteryGaps: [],
+          upcomingAssessments: [],
+        }),
+    };
+    const orchestrator = new AssistantOrchestrator({
+      repository: mockRepo.repo,
+      toolRunner: new ToolRunner(boundedDomainClient),
+      domainClient: boundedDomainClient,
+      llmProvider: {
+        generate: (request) => {
+          groundingContext =
+            request.messages.find(
+              (message) =>
+                message.role === "system" && message.content.startsWith("Authoritative tool results"),
+            )?.content ?? "";
+          return Promise.resolve({ content: "Grounded response" });
+        },
+      },
+    });
     const res = await orchestrator.chat(
       { userId: randomUUID(), role: "STUDENT" },
       { mode: "STUDY_BUDDY", courseId, message: "Mastery của tôi thế nào và kế hoạch học gì tiếp?" },
     );
-    expect(res.toolInvocations.map((call) => call.name)).toEqual(["get_student_mastery", "get_recommended_learning_path"]);
+    expect(res.toolInvocations.map((call) => call.name)).toEqual([
+      "get_student_mastery",
+      "get_recommended_learning_path",
+    ]);
+    expect(groundingContext).toContain('"omittedRecords":2');
+    expect(groundingContext).toContain('"omittedItems":2');
+    expect(groundingContext).not.toContain("private-student-id");
+    expect(groundingContext).not.toContain("private-tenant-id");
+    expect(groundingContext).not.toContain("private-evidence-id");
+    expect(groundingContext).not.toContain("private-plan-id");
+  });
+
+  it("keeps the larger non-Student output budget for non-Study Buddy modes", async () => {
+    const mockRepo = createMockRepo();
+    const llmRequests: number[] = [];
+    const advisorDomainClient: AssistantDomainClient = {
+      ...domainClient,
+      searchCourses: () =>
+        Promise.resolve([
+          {
+            courseId,
+            title: "Cassandra for Data Engineers",
+            description: "",
+            priceAmount: 0,
+            priceCurrency: "VND",
+            level: "UNSPECIFIED",
+          },
+        ]),
+    };
+    const orchestrator = new AssistantOrchestrator({
+      repository: mockRepo.repo,
+      toolRunner: new ToolRunner(advisorDomainClient),
+      domainClient: advisorDomainClient,
+      llmProvider: {
+        generate: (request) => {
+          llmRequests.push(request.maxTokens ?? 0);
+          return Promise.resolve({ content: "Advisor response" });
+        },
+      },
+    });
+    await orchestrator.chat(
+      { userId: randomUUID(), role: "STUDENT" },
+      { mode: "STUDENT_ADVISOR", message: "Tôi đang tìm khóa học về Cassandra." },
+    );
+    expect(llmRequests).toEqual([2048]);
+  });
+
+  it("fails closed when Study Buddy returns model self-evaluation instead of a learner answer", async () => {
+    const mockRepo = createMockRepo();
+    const orchestrator = new AssistantOrchestrator({
+      repository: mockRepo.repo,
+      toolRunner: new ToolRunner(domainClient),
+      domainClient,
+      llmProvider: {
+        generate: () =>
+          Promise.resolve({
+            content:
+              "The draft is around 140 words. Perfect. Concise, encouraging, has a clear citation, and one actionable next step",
+          }),
+      },
+    });
+    await expect(
+      orchestrator.chat(
+        { userId: randomUUID(), role: "STUDENT" },
+        { mode: "STUDY_BUDDY", courseId, message: "Giải thích một khái niệm trong bài học" },
+      ),
+    ).rejects.toMatchObject({ code: "ASSISTANT_RESPONSE_NOT_STUDENT_FACING", status: 503 });
+  });
+
+  it("does not synthesize a student-facing reply when the model returns empty content", async () => {
+    const mockRepo = createMockRepo();
+    const orchestrator = new AssistantOrchestrator({
+      repository: mockRepo.repo,
+      toolRunner: new ToolRunner(domainClient),
+      domainClient,
+      llmProvider: { generate: () => Promise.resolve({ content: "  \n " }) },
+    });
+    await expect(
+      orchestrator.chat(
+        { userId: randomUUID(), role: "STUDENT" },
+        { mode: "STUDY_BUDDY", courseId, message: "Giải thích một khái niệm trong bài học" },
+      ),
+    ).rejects.toMatchObject({ code: "ASSISTANT_RESPONSE_EMPTY", status: 503, retryable: true });
+    expect([...mockRepo.messages.values()].flat().some((message) => message.sender === "ASSISTANT")).toBe(
+      false,
+    );
   });
 
   it("keeps deferred Lecturer Copilot inaccessible", async () => {
@@ -188,10 +364,12 @@ describe("Phase 16B & 17 — Assistant Orchestrator (Study Buddy & Lecturer Copi
       domainClient,
       llmProvider: { generate: () => Promise.resolve({ content: "must not execute" }) },
     });
-    await expect(orchestrator.chat(
-      { userId: lecturerId, role: "LECTURER" },
-      { mode: "LECTURER_COPILOT", message: "Hãy giúp tôi thiết kế khung chương trình" },
-    )).rejects.toMatchObject({ code: "ASSISTANT_MODE_NOT_ALLOWED", status: 403 });
+    await expect(
+      orchestrator.chat(
+        { userId: lecturerId, role: "LECTURER" },
+        { mode: "LECTURER_COPILOT", message: "Hãy giúp tôi thiết kế khung chương trình" },
+      ),
+    ).rejects.toMatchObject({ code: "ASSISTANT_MODE_NOT_ALLOWED", status: 403 });
   });
 
   it("rejects unauthorized mode for role with 403 AppError", async () => {

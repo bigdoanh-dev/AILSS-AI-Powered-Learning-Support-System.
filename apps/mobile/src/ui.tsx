@@ -437,7 +437,7 @@ export function Button({
     switch (size) {
       case "sm":
         return {
-          button: { minHeight: 38, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
+          button: { minHeight: 44, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
           text: { fontSize: 13 },
         };
       case "lg":
@@ -1243,4 +1243,3 @@ export function RefundRequestModal({
     </View>
   );
 }
-

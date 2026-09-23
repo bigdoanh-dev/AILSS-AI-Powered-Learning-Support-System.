@@ -169,36 +169,6 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
     }
   }
 
-  async function ssoLogin(provider: "Google" | "Apple") {
-    setBusy(true);
-    try {
-      await session.socialLogin(
-        provider.toLowerCase() as "google" | "apple",
-        `native_${provider.toLowerCase()}_token`,
-      );
-      if (session.snapshot.state === "AUTHENTICATED") {
-        const user = session.snapshot.user;
-        goToResult("login-success", {
-          role: user?.role,
-          name: user?.displayName,
-          email: user?.emailMasked,
-          target: "/",
-          message: `Xác thực ${provider} SSO thành công!`,
-        });
-      } else {
-        goToResult("login-failure", {
-          message: session.snapshot.error ?? `Không thể đăng nhập bằng ${provider}.`,
-        });
-      }
-    } catch (e: unknown) {
-      goToResult("login-failure", {
-        message: e instanceof ApiError ? e.message : `Đăng nhập ${provider} thất bại.`,
-      });
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function handleLogout() {
     try {
       await session.logout();
@@ -371,76 +341,10 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
               </View>
             )}
 
-            {/* Google & Apple SSO Buttons */}
             {screen === "login" && (
-              <View style={{ gap: 10, marginBottom: 6 }}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Đăng nhập với Google"
-                  disabled={busy}
-                  onPress={() => void ssoLogin("Google")}
-                  style={({ pressed }) => ({
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 10,
-                    backgroundColor: "#FFFFFF",
-                    paddingVertical: 12,
-                    paddingHorizontal: 16,
-                    borderRadius: 12,
-                    borderWidth: 1.5,
-                    borderColor: "#E2E8F0",
-                    opacity: pressed || busy ? 0.75 : 1,
-                    transform: [{ scale: pressed ? 0.98 : 1 }],
-                    ...tokens.shadow.subtle,
-                  })}
-                >
-                  <Icon name="logoGoogle" size={20} color="#4285F4" />
-                  <Text style={{ fontSize: 14, fontWeight: "700", color: "#1E293B" }}>
-                    Tiếp tục với Google
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Đăng nhập với Apple"
-                  disabled={busy}
-                  onPress={() => void ssoLogin("Apple")}
-                  style={({ pressed }) => ({
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 10,
-                    backgroundColor: "#000000",
-                    paddingVertical: 12,
-                    paddingHorizontal: 16,
-                    borderRadius: 12,
-                    opacity: pressed || busy ? 0.75 : 1,
-                    transform: [{ scale: pressed ? 0.98 : 1 }],
-                    ...tokens.shadow.subtle,
-                  })}
-                >
-                  <Icon name="logoApple" size={20} color="#FFFFFF" />
-                  <Text style={{ fontSize: 14, fontWeight: "700", color: "#FFFFFF" }}>
-                    Tiếp tục với Apple
-                  </Text>
-                </Pressable>
-
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginVertical: 4,
-                    gap: 10,
-                  }}
-                >
-                  <View style={{ flex: 1, height: 1, backgroundColor: tokens.color.border }} />
-                  <Text style={{ fontSize: 12, color: tokens.color.muted, fontWeight: "600" }}>
-                    hoặc tiếp tục với email
-                  </Text>
-                  <View style={{ flex: 1, height: 1, backgroundColor: tokens.color.border }} />
-                </View>
-              </View>
+              <Text style={styles.small}>
+                Đăng nhập bằng Google và Apple đang chờ cấu hình OIDC cho ứng dụng.
+              </Text>
             )}
 
             {screen === "register" && (

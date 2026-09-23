@@ -435,6 +435,8 @@ services:
         AI_PROVIDER_API_KEY: "${AI_PROVIDER_API_KEY:-${GEMINI_API_KEY:-}}",
         AI_PROVIDER_MODEL: "${AI_PROVIDER_MODEL:-gemini-2.5-flash}",
         AI_PROVIDER_TIMEOUT_MS: "${AI_PROVIDER_TIMEOUT_MS:-45000}",
+        AI_ASSISTANT_PROVIDER_MODE: "${AI_ASSISTANT_PROVIDER_MODE:-external}",
+        AI_ASSISTANT_INTEGRATION_ENABLED: "${AI_ASSISTANT_INTEGRATION_ENABLED:-false}",
         ACTOR_CONTEXT_PUBLIC_KEY_PATH: "/run/ailss/services/gateway-public.pem",
         SERVICE_TOKEN_PRIVATE_KEY_PATH: "/run/ailss/services/ai-private.pem",
         AI_SERVICE_TOKEN_KID: "dev-ai-2026-01",

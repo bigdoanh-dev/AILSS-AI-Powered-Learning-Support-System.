@@ -529,6 +529,12 @@ export function StudentHome() {
           </span>
           <span>{first ? "Tiếp tục bài học gần nhất" : "Khám phá khóa học"}</span>
         </Link>
+        <Link className="quick-action-chip" to="/app/ai-tutor?mode=STUDENT_ADVISOR">
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="sparkles" size={16} />
+          </span>
+          <span>Trò chuyện với Gia sư AI</span>
+        </Link>
         <Link className="quick-action-chip" to="/app/classes">
           <span className="chip-icon" aria-hidden="true">
             <Icon name="calendar" size={16} />

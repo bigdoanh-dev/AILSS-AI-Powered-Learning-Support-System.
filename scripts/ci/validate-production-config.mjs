@@ -64,6 +64,8 @@ export function validateProductionConfig(values, mode = "fixture") {
   exact("AILSS_PROFILE", "production");
   exact("PAYMENT_MODE", "sepay");
   exact("AI_PROVIDER_MODE", "production");
+  exact("AI_ASSISTANT_PROVIDER_MODE", "external");
+  exact("AI_ASSISTANT_INTEGRATION_ENABLED", "false");
   exact("CASSANDRA_TLS_ENABLED", "true");
   exact("RABBITMQ_TLS_ENABLED", "true");
   exact("OBJECT_STORAGE_USE_SSL", "true");

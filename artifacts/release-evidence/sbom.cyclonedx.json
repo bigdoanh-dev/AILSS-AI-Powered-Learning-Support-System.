@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:d0bcd7f7-4ad0-4fbe-92a9-a414199a1b3a",
+  "serialNumber": "urn:uuid:f362152d-d7de-4046-bdc8-0a20c1ee27dd",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-09-21T17:02:50.028Z",
+    "timestamp": "2026-09-23T08:03:21.326Z",
     "tools": [
       {
         "vendor": "AILSS Supply Chain",

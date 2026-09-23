@@ -22,15 +22,16 @@ export default function AssessmentListScreen() {
   const loadAssessments = useCallback(async () => {
     if (snapshot.state !== "AUTHENTICATED") return;
     try {
+      setLoading(true);
       setError(null);
 
-      const [coursesRes, classesRes] = await Promise.allSettled([
+      const [coursesRes, classesRes] = await Promise.all([
         session.request("/api/v1/me/courses"),
         session.request("/api/v1/classes"),
       ]);
 
-      const courseList = coursesRes.status === "fulfilled" ? decodeCourses(coursesRes.value) : [];
-      const classList = classesRes.status === "fulfilled" ? decodeStudentClasses(classesRes.value) : [];
+      const courseList = decodeCourses(coursesRes);
+      const classList = decodeStudentClasses(classesRes);
 
       const targetMap = new Map<string, string>();
       for (const c of courseList) targetMap.set(c.courseId, c.title);
@@ -41,16 +42,14 @@ export default function AssessmentListScreen() {
         quizPromises.push(
           session
             .request(`/api/v1/targets/COURSE/${c.courseId}/quizzes`)
-            .then((data: unknown) => ({ targetId: c.courseId, data }))
-            .catch(() => ({ targetId: c.courseId, data: [] })),
+            .then((data: unknown) => ({ targetId: c.courseId, data })),
         );
       }
       for (const cl of classList) {
         quizPromises.push(
           session
             .request(`/api/v1/targets/CLASS/${cl.classId}/quizzes`)
-            .then((data: unknown) => ({ targetId: cl.classId, data }))
-            .catch(() => ({ targetId: cl.classId, data: [] })),
+            .then((data: unknown) => ({ targetId: cl.classId, data })),
         );
       }
 
@@ -59,19 +58,15 @@ export default function AssessmentListScreen() {
       const seenIds = new Set<string>();
 
       for (const res of results) {
-        try {
-          const parsed = quizSummaries(res.data);
-          for (const q of parsed) {
-            if (!seenIds.has(q.quizId) && q.state === "PUBLISHED") {
-              seenIds.add(q.quizId);
-              allQuizzes.push({
-                ...q,
-                targetName: targetMap.get(q.targetId) || undefined,
-              });
-            }
+        const parsed = quizSummaries(res.data);
+        for (const q of parsed) {
+          if (!seenIds.has(q.quizId) && q.state === "PUBLISHED") {
+            seenIds.add(q.quizId);
+            allQuizzes.push({
+              ...q,
+              targetName: targetMap.get(q.targetId) || undefined,
+            });
           }
-        } catch {
-          // Ignore individual target decoding failures
         }
       }
 
@@ -128,6 +123,16 @@ export default function AssessmentListScreen() {
           </View>
         )}
 
+        {!loading && !error && quizzes.some((quiz) => {
+          const now = Date.now();
+          return (quiz.opensAt && Date.parse(quiz.opensAt) > now) || (quiz.closesAt && Date.parse(quiz.closesAt) <= now);
+        }) && (
+          <View style={[styles.card, { gap: 6 }]}>
+            <Text style={styles.title}>Thời gian mở bài</Text>
+            <Text style={styles.small}>Một số bài đã phát hành nhưng chưa mở hoặc đã đóng; thời gian chính thức được máy chủ xác minh khi bắt đầu làm bài.</Text>
+          </View>
+        )}
+
         {!loading && !error && quizzes.length === 0 && (
           <EmptyState
             icon="sparkles"
@@ -157,6 +162,8 @@ export default function AssessmentListScreen() {
                 </View>
 
                 <Text style={screenStyles.cardTitle}>{item.title}</Text>
+                {!!item.opensAt && <Text style={screenStyles.targetNameText}>Mở lúc: {new Date(item.opensAt).toLocaleString()}</Text>}
+                {!!item.closesAt && <Text style={screenStyles.targetNameText}>Đóng lúc: {new Date(item.closesAt).toLocaleString()}</Text>}
                 {item.targetName && (
                   <Text style={screenStyles.targetNameText} numberOfLines={1}>
                     {item.targetName}

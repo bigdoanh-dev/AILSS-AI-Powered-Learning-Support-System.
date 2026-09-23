@@ -1,4 +1,5 @@
 diff --git a/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift b/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
+index 3d796eea39a39f6b20a9ebb83b70d7eb2c8b6104..b14ecb02171cce4293b5d784a5d9096e474615a7 100644
 --- a/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
 +++ b/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
 @@ -185,10 +185,11 @@ open class JavaScriptRuntime: Equatable, Identifiable, @unchecked Sendable {
@@ -68,3 +69,13 @@ diff --git a/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift b/appl
            let thisValue = JavaScriptUnownedValue(runtime.pointee, thisPtr)
            try context.call(thisValue, consume arguments).writeJSIValue(to: resultPtr)
          }
+diff --git a/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h b/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h
+index 6115e87a6e430f55570fbf759283dca0cca1ee80..957527c85379285d9ee5fc7974ad01e94ee12bc5 100644
+--- a/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h
++++ b/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h
+@@ -53 +53 @@ public:
+-  SWIFT_RETURNS_RETAINED RuntimeScheduler(void *scheduler, ScheduleFn fn) noexcept
++  RuntimeScheduler(void *scheduler, ScheduleFn fn) noexcept
+@@ -61 +61 @@ public:
+-  SWIFT_RETURNS_RETAINED RuntimeScheduler() {}
++  RuntimeScheduler() {}

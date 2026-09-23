@@ -18,6 +18,7 @@ import {
   AssistantOrchestrator,
   ToolRunner,
   HttpAssistantLlmProvider,
+  IntegrationOnlyAssistantLlmProvider,
   assistantRouter,
   type AssistantRole,
 } from "./assistant/index.js";
@@ -134,14 +135,17 @@ await startService(manifest, {
       deadlineMs: config.INTERNAL_HTTP_TIMEOUT_MS,
     });
     const assistantToolRunner = new ToolRunner(assistantDomainClient);
-    const assistantLlmProvider = new HttpAssistantLlmProvider({
-      endpoint:
-        config.AI_PROVIDER_ENDPOINT ||
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-      apiKey: config.AI_PROVIDER_API_KEY || "synthetic-api-key",
-      model: config.AI_PROVIDER_MODEL || "gemini-1.5-flash",
-      timeoutMs: config.AI_PROVIDER_TIMEOUT_MS,
-    });
+    const assistantLlmProvider =
+      config.AI_ASSISTANT_PROVIDER_MODE === "integration-only"
+        ? new IntegrationOnlyAssistantLlmProvider()
+        : new HttpAssistantLlmProvider({
+            endpoint:
+              config.AI_PROVIDER_ENDPOINT ||
+              "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+            apiKey: config.AI_PROVIDER_API_KEY || "synthetic-api-key",
+            model: config.AI_PROVIDER_MODEL || "gemini-1.5-flash",
+            timeoutMs: config.AI_PROVIDER_TIMEOUT_MS,
+          });
     const assistantOrchestrator = new AssistantOrchestrator({
       repository: assistantRepo,
       toolRunner: assistantToolRunner,

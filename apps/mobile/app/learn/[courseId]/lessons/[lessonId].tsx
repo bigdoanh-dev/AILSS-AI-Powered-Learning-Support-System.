@@ -2,7 +2,9 @@ import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
 import { Text, View, ActivityIndicator, StyleSheet, Linking, Pressable } from "react-native";
 import { type Href, router, useLocalSearchParams } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { runtime } from "../../../../src/runtime";
+import { offlineStore, runtime } from "../../../../src/runtime";
+import { notifyLessonCompletionChanged, subscribeLessonSync } from "../../../../src/lesson-sync";
+import type { CompletionState } from "../../../../src/offline-store";
 import {
   lessonDetail,
   progress as decodeProgress,
@@ -32,8 +34,11 @@ export default function LessonConsumptionScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [completionKnown, setCompletionKnown] = useState(false);
   const [mutationLoading, setMutationLoading] = useState(false);
   const [mutationMessage, setMutationMessage] = useState<string | null>(null);
+  const [mutationSucceeded, setMutationSucceeded] = useState<boolean | null>(null);
+  const [pendingSyncState, setPendingSyncState] = useState<CompletionState | null>(null);
 
   // Stable idempotency key per logical action
   const [completeKey, setCompleteKey] = useState(() => Crypto.randomUUID());
@@ -58,6 +63,10 @@ export default function LessonConsumptionScreen() {
       const parsedProgress = decodeProgress(pData);
       setLesson(parsedLesson);
       setCourseProgress(parsedProgress);
+      if (snapshot.user?.userId && offlineStore) {
+        const queued = await offlineStore.lessonCompletionState(snapshot.user.userId, lessonId);
+        setPendingSyncState(queued && queued.state !== "SYNCED" ? queued.state : null);
+      }
     } catch (e: unknown) {
       if (e instanceof ApiError) {
         if (e.status === 403) setError("Bạn không có quyền truy cập bài học này.");
@@ -69,20 +78,38 @@ export default function LessonConsumptionScreen() {
     } finally {
       setLoading(false);
     }
-  }, [courseId, lessonId, snapshot.state, session]);
+  }, [courseId, lessonId, snapshot.state, snapshot.user?.userId, session]);
 
   useEffect(() => {
     void fetchLesson();
   }, [fetchLesson]);
 
+  useEffect(
+    () =>
+      subscribeLessonSync(async (userId, syncedCourseId) => {
+        if (userId !== snapshot.user?.userId || syncedCourseId !== courseId || !lessonId || !offlineStore) return;
+        const operation = await offlineStore.lessonCompletionState(userId, lessonId);
+        if (operation?.state === "SYNCED") {
+          setPendingSyncState(null);
+          setIsCompleted(true);
+          setCompletionKnown(true);
+          setMutationMessage("Máy chủ đã xác nhận hoàn thành bài học.");
+          setMutationSucceeded(true);
+          void fetchLesson();
+        } else if (operation) {
+          setPendingSyncState(operation.state);
+        }
+      }),
+    [courseId, fetchLesson, lessonId, snapshot.user?.userId],
+  );
+
   const toggleCompletion = async (targetCompleted: boolean) => {
     if (mutationLoading || !lessonId || !courseId) return;
-    const previousState = isCompleted;
-
-    // Optimistic update
-    setIsCompleted(targetCompleted);
     setMutationLoading(true);
     setMutationMessage(null);
+    setMutationSucceeded(null);
+
+    let saved = false;
 
     try {
       const key = targetCompleted ? completeKey : uncompleteKey;
@@ -92,6 +119,9 @@ export default function LessonConsumptionScreen() {
         body: { completed: targetCompleted },
         idempotencyKey: key,
       });
+      saved = true;
+      setIsCompleted(targetCompleted);
+      setCompletionKnown(true);
 
       // On success, reset the key for the opposing action
       if (targetCompleted) {
@@ -101,18 +131,50 @@ export default function LessonConsumptionScreen() {
       }
 
       setMutationMessage(targetCompleted ? "Đã ghi nhận hoàn thành bài học!" : "Đã hủy ghi nhận hoàn thành.");
-
-      // Re-fetch progress to update the overall course progress bar
-      const pData = await session.request(`/api/v1/courses/${courseId}/progress`);
-      setCourseProgress(decodeProgress(pData));
+      setMutationSucceeded(true);
+      if (snapshot.user?.userId) notifyLessonCompletionChanged(snapshot.user.userId, courseId);
     } catch (e: unknown) {
-      // Rollback on failure
-      setIsCompleted(previousState);
+      if (
+        targetCompleted &&
+        snapshot.user?.userId &&
+        offlineStore &&
+        e instanceof ApiError &&
+        ["network", "timeout", "server", "429"].includes(e.kind)
+      ) {
+        try {
+          await offlineStore.enqueueLessonCompletion({
+            operationId: Crypto.randomUUID(),
+            userId: snapshot.user.userId,
+            courseId,
+            resourceId: lessonId,
+            idempotencyKey: completeKey,
+            createdAt: new Date().toISOString(),
+          });
+          setPendingSyncState("PENDING");
+          setMutationMessage(
+            "PENDING_SYNC · thao tác sẽ được gửi lại cùng idempotency key khi có mạng; máy chủ chưa xác nhận hoàn thành.",
+          );
+          setMutationSucceeded(false);
+          return;
+        } catch {
+          // If encrypted queue persistence fails, report the write as unsuccessful.
+        }
+      }
       setMutationMessage(
         e instanceof ApiError ? e.message : "Không thể cập nhật tiến độ hoàn thành. Vui lòng thử lại.",
       );
+      setMutationSucceeded(false);
     } finally {
       setMutationLoading(false);
+    }
+
+    if (!saved) return;
+    try {
+      const pData = await session.request(`/api/v1/courses/${courseId}/progress`);
+      setCourseProgress(decodeProgress(pData));
+      if (snapshot.user?.userId) notifyLessonCompletionChanged(snapshot.user.userId, courseId);
+    } catch {
+      setMutationMessage("Thay đổi đã được xác nhận, nhưng chưa thể tải lại tổng tiến độ khóa học.");
     }
   };
 
@@ -253,12 +315,22 @@ export default function LessonConsumptionScreen() {
             </View>
             <View>
               <Text style={localStyles.completionTitle}>
-                {isCompleted ? "Đã hoàn thành bài học" : "Chưa hoàn thành"}
+                {pendingSyncState === "PENDING" || pendingSyncState === "SYNCING" || pendingSyncState === "FAILED_RETRYABLE"
+                  ? `PENDING_SYNC · ${pendingSyncState}`
+                  : pendingSyncState === "CONFLICT"
+                    ? "CONFLICT · cần xác minh trạng thái máy chủ"
+                    : pendingSyncState === "FAILED_FINAL"
+                      ? "Không thể đồng bộ hoàn thành bài học"
+                      : completionKnown
+                        ? isCompleted ? "Đã hoàn thành bài học" : "Chưa hoàn thành"
+                        : "Chưa xác minh trạng thái riêng cho bài này"}
               </Text>
               <Text style={localStyles.completionSub}>
-                {isCompleted
-                  ? "Hệ thống đã lưu lại kết quả học tập của bạn"
-                  : "Đánh dấu sau khi đã nghe giảng và hiểu bài"}
+                {pendingSyncState && pendingSyncState !== "SYNCED"
+                  ? "Trạng thái trong hàng đợi không phải xác nhận hoàn thành từ máy chủ."
+                  : completionKnown && isCompleted
+                  ? "Máy chủ đã xác nhận kết quả học tập của bạn"
+                  : "Trạng thái khóa học chỉ được cập nhật sau khi máy chủ xác nhận"}
               </Text>
             </View>
           </View>
@@ -268,12 +340,12 @@ export default function LessonConsumptionScreen() {
           <View
             style={[
               localStyles.mutationBox,
-              isCompleted ? localStyles.mutationBoxSuccess : localStyles.mutationBoxError,
+              mutationSucceeded ? localStyles.mutationBoxSuccess : localStyles.mutationBoxError,
             ]}
           >
             <Text
               accessibilityRole="alert"
-              style={isCompleted ? localStyles.successText : localStyles.errorAlertText}
+              style={mutationSucceeded ? localStyles.successText : localStyles.errorAlertText}
             >
               {mutationMessage}
             </Text>
@@ -281,7 +353,11 @@ export default function LessonConsumptionScreen() {
         )}
 
         <View style={localStyles.actionRow}>
-          {isCompleted ? (
+          {pendingSyncState === "PENDING" || pendingSyncState === "SYNCING" || pendingSyncState === "FAILED_RETRYABLE" ? (
+            <Button label="Đang chờ đồng bộ" variant="outline" onPress={() => {}} disabled />
+          ) : pendingSyncState === "CONFLICT" ? (
+            <Button label="Đọc lại tiến độ máy chủ" variant="outline" onPress={() => void fetchLesson()} />
+          ) : isCompleted ? (
             <Button
               label={mutationLoading ? "Đang cập nhật…" : "Đánh dấu chưa hoàn thành"}
               variant="outline"
@@ -542,4 +618,3 @@ const localStyles = StyleSheet.create({
     marginBottom: tokens.space.large,
   },
 });
-

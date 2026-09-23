@@ -1,4 +1,40 @@
-import type { ToolCall } from "./model.js";
+import type { AssistantMode, ToolCall, ToolResult } from "./model.js";
+import { AppError } from "../../../../packages/http/src/index.js";
+
+async function requestProvider(endpoint: string, init: RequestInit): Promise<Response> {
+  let response: Response;
+  try {
+    response = await fetch(endpoint, init);
+  } catch {
+    throw new AppError(
+      "AI_PROVIDER_UNAVAILABLE",
+      503,
+      "The assistant service is temporarily unavailable",
+      true,
+    );
+  }
+  if (!response.ok)
+    throw new AppError(
+      "AI_PROVIDER_UNAVAILABLE",
+      503,
+      "The assistant service is temporarily unavailable",
+      true,
+    );
+  return response;
+}
+
+async function readProviderJson<T>(response: Response): Promise<T> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new AppError(
+      "AI_PROVIDER_INVALID_RESPONSE",
+      503,
+      "The assistant service is temporarily unavailable",
+      true,
+    );
+  }
+}
 
 export interface LlmMessage {
   readonly role: "system" | "user" | "assistant" | "tool";
@@ -17,6 +53,11 @@ export interface LlmCompletionRequest {
   }[];
   readonly temperature?: number;
   readonly maxTokens?: number;
+  /** In-process-only data for the explicitly enabled integration acceptance adapter. */
+  readonly integrationContext?: {
+    readonly mode: AssistantMode;
+    readonly toolResults: readonly ToolResult[];
+  };
 }
 
 export interface LlmCompletionResponse {
@@ -30,6 +71,114 @@ export interface LlmCompletionResponse {
 
 export interface AssistantLlmProvider {
   generate(request: LlmCompletionRequest): Promise<LlmCompletionResponse>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function integrationFailure(): AppError {
+  return new AppError(
+    "AI_INTEGRATION_GROUNDING_UNAVAILABLE",
+    503,
+    "The integration assistant requires successful authorized tool results",
+    true,
+  );
+}
+
+/**
+ * Deterministic, grounded model-boundary adapter for local integration acceptance only.
+ * It cannot execute tools or supply citations; the orchestrator still validates citations
+ * against the material results returned by the real authorized tools.
+ */
+export class IntegrationOnlyAssistantLlmProvider implements AssistantLlmProvider {
+  public generate(request: LlmCompletionRequest): Promise<LlmCompletionResponse> {
+    return Promise.resolve().then(() => this.generateGrounded(request));
+  }
+
+  private generateGrounded(request: LlmCompletionRequest): LlmCompletionResponse {
+    const context = request.integrationContext;
+    if (!context) throw integrationFailure();
+    const resultFor = (name: string) => context.toolResults.find((result) => result.name === name);
+    const sections: string[] = [];
+
+    if (context.mode === "STUDY_BUDDY") {
+      const materialTool = resultFor("search_course_materials");
+      if (!materialTool || materialTool.error || !Array.isArray(materialTool.result))
+        throw integrationFailure();
+      const materials = materialTool.result.filter(isRecord);
+      for (const material of materials.slice(0, 3)) {
+        if (typeof material.title !== "string" || typeof material.contentSnippet !== "string") continue;
+        const excerpt = material.contentSnippet.trim().replace(/\s+/gu, " ").slice(0, 700);
+        if (!excerpt) continue;
+        const section = typeof material.sectionTitle === "string" ? ` · ${material.sectionTitle}` : "";
+        sections.push(`Tài liệu “${material.title}${section}” ghi: “${excerpt}”`);
+      }
+
+      const masteryTool = resultFor("get_student_mastery");
+      if (masteryTool) {
+        if (masteryTool.error || !Array.isArray(masteryTool.result)) throw integrationFailure();
+        const masteryRows = masteryTool.result.filter(isRecord).slice(0, 4);
+        const facts = masteryRows
+          .map((row) => {
+            const name = [row.conceptName, row.learningOutcomeId, row.conceptId].find(
+              (value): value is string => typeof value === "string" && value.length > 0,
+            );
+            const state = typeof row.masteryState === "string" ? row.masteryState : undefined;
+            const score =
+              typeof row.masteryScore === "number" && Number.isFinite(row.masteryScore)
+                ? `score ${String(row.masteryScore)}`
+                : undefined;
+            return [name, state, score].filter(Boolean).join(" — ");
+          })
+          .filter(Boolean);
+        if (facts.length) sections.push(`Kết quả mastery hiện có: ${facts.join("; ")}`);
+      }
+
+      const planTool = resultFor("get_recommended_learning_path");
+      if (planTool) {
+        if (planTool.error || !isRecord(planTool.result)) throw integrationFailure();
+        const items = Array.isArray(planTool.result.items)
+          ? planTool.result.items.filter(isRecord).slice(0, 4)
+          : [];
+        const nextSteps = items
+          .map((item) => {
+            const title = typeof item.title === "string" ? item.title : undefined;
+            const action = typeof item.action === "string" ? item.action : undefined;
+            const date = typeof item.scheduledDate === "string" ? item.scheduledDate : undefined;
+            return [title, action, date].filter(Boolean).join(" — ");
+          })
+          .filter(Boolean);
+        if (nextSteps.length) sections.push(`Mục trong Study Plan hiện tại: ${nextSteps.join("; ")}`);
+      }
+    } else if (context.mode === "STUDENT_ADVISOR") {
+      const catalogTool = resultFor("search_courses");
+      if (!catalogTool || catalogTool.error || !Array.isArray(catalogTool.result)) throw integrationFailure();
+      const courses = catalogTool.result
+        .filter(isRecord)
+        .slice(0, 3)
+        .flatMap((course) => {
+          if (
+            typeof course.title !== "string" ||
+            typeof course.priceAmount !== "number" ||
+            typeof course.priceCurrency !== "string"
+          )
+            return [];
+          return [
+            `${course.title} — ${course.priceAmount === 0 ? "miễn phí" : `${String(course.priceAmount)} ${course.priceCurrency}`}`,
+          ];
+        });
+      if (!courses.length) throw integrationFailure();
+      sections.push(`Kết quả thực tế từ danh mục khóa học: ${courses.join("; ")}`);
+    } else {
+      throw integrationFailure();
+    }
+
+    if (!sections.length) throw integrationFailure();
+    return {
+      content: `[Kiểm thử tích hợp — phản hồi xác định, không phải mô hình production]\n${sections.join("\n")}`,
+    };
+  }
 }
 
 export class HttpAssistantLlmProvider implements AssistantLlmProvider {
@@ -56,7 +205,7 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
           parts: [{ text: m.content }],
         }));
 
-      const res = await fetch(this.options.endpoint, {
+      const res = await requestProvider(this.options.endpoint, {
         method: "POST",
         headers: {
           "x-goog-api-key": this.options.apiKey,
@@ -73,14 +222,10 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
         signal: AbortSignal.timeout(this.options.timeoutMs ?? 15000),
       });
 
-      if (!res.ok) {
-        throw new Error(`LLM provider error: ${String(res.status)} ${res.statusText}`);
-      }
-
-      const json = (await res.json()) as {
+      const json = await readProviderJson<{
         candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
         usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
-      };
+      }>(res);
 
       const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
       return {
@@ -101,7 +246,7 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
       })),
     ];
 
-    const res = await fetch(this.options.endpoint, {
+    const res = await requestProvider(this.options.endpoint, {
       method: "POST",
       headers: {
         authorization: `Bearer ${this.options.apiKey}`,
@@ -116,14 +261,10 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
       signal: AbortSignal.timeout(this.options.timeoutMs ?? 15000),
     });
 
-    if (!res.ok) {
-      throw new Error(`LLM provider error: ${String(res.status)} ${res.statusText}`);
-    }
-
-    const json = (await res.json()) as {
+    const json = await readProviderJson<{
       choices?: Array<{ message?: { content?: string } }>;
       usage?: { prompt_tokens?: number; completion_tokens?: number };
-    };
+    }>(res);
 
     const text = json.choices?.[0]?.message?.content ?? "";
     return {

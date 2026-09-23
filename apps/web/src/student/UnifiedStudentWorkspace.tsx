@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 export interface StudentWorkspaceProps {
   studentName?: string;
@@ -36,7 +37,6 @@ export function UnifiedStudentWorkspace({
   ]);
 
   const [dismissedRecs, setDismissedRecs] = useState<string[]>([]);
-  const [tutorOpen, setTutorOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"today" | "study-plan" | "mastery" | "goals">("today");
 
   const recommendation = {
@@ -183,9 +183,11 @@ export function UnifiedStudentWorkspace({
               >
                 Vào bài học ngay
               </button>
-              <button
-                onClick={() => setTutorOpen(true)}
+              <Link
+                to="/app/ai-tutor?mode=STUDY_BUDDY"
                 style={{
+                  display: "inline-flex",
+                  alignItems: "center",
                   minHeight: "40px",
                   padding: "8px 16px",
                   backgroundColor: "#f1f5f9",
@@ -193,11 +195,10 @@ export function UnifiedStudentWorkspace({
                   borderRadius: "6px",
                   border: "1px solid #cbd5e1",
                   fontWeight: 600,
-                  cursor: "pointer",
                 }}
               >
                 Hỏi AI Tutor bài này
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -319,55 +320,6 @@ export function UnifiedStudentWorkspace({
         </aside>
       </div>
 
-      {/* Embedded AI Tutor Modal / Drawer */}
-      {tutorOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="tutor-dialog-title"
-          style={{
-            position: "fixed",
-            bottom: "20px",
-            right: "20px",
-            width: "400px",
-            height: "500px",
-            backgroundColor: "#ffffff",
-            boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-            borderRadius: "12px",
-            border: "1px solid #cbd5e1",
-            display: "flex",
-            flexDirection: "column",
-            zIndex: 1000,
-          }}
-        >
-          <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 id="tutor-dialog-title" style={{ margin: 0, fontSize: "16px", color: "#0f172a" }}>AI Tutor - Chế độ Socratic</h3>
-            <button
-              onClick={() => setTutorOpen(false)}
-              aria-label="Đóng AI Tutor"
-              style={{ border: "none", background: "transparent", fontSize: "18px", cursor: "pointer" }}
-            >
-              ✕
-            </button>
-          </div>
-          <div style={{ flex: 1, padding: "16px", overflowY: "auto", fontSize: "14px", color: "#334155" }}>
-            <p><strong>AI Tutor:</strong> Chào bạn! Bạn muốn tìm hiểu hoặc cần gợi ý về bước nào trong phép xoay cây AVL?</p>
-          </div>
-          <div style={{ padding: "12px", borderTop: "1px solid #e2e8f0", display: "flex", gap: "8px" }}>
-            <input
-              type="text"
-              placeholder="Nhập câu hỏi của bạn..."
-              aria-label="Nhập câu hỏi cho AI Tutor"
-              style={{ flex: 1, padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-            />
-            <button
-              style={{ minHeight: "36px", padding: "0 16px", backgroundColor: "#2563eb", color: "#ffffff", border: "none", borderRadius: "6px", fontWeight: 600 }}
-            >
-              Gửi
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

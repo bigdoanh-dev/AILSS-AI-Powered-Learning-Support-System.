@@ -8,7 +8,6 @@ import {
   type QuizDetail,
 } from "../../../../src/assessment";
 import { formatDate, formatTime, parseTimestamp } from "../../../../src/classroom";
-import { getSubmissionByAttemptId, subscribeGradingStore } from "../../../../src/grading-store";
 import { ApiError } from "../../../../src/api";
 import { runtime } from "../../../../src/runtime";
 import {
@@ -102,11 +101,10 @@ export default function QuizResultScreen() {
 
   if (!result) return null;
 
-  const subData = getSubmissionByAttemptId(resultId);
-  const isPendingManual = subData?.status === "PENDING_MANUAL_GRADING";
-  const isManuallyGraded = subData?.status === "MANUALLY_GRADED";
-  const finalScore = isManuallyGraded && subData?.manualScore ? subData.manualScore : result.score;
-  const finalMaxScore = isManuallyGraded && subData?.maxScore ? subData.maxScore : result.maxScore;
+  const isPendingManual = result.gradingStatus === "PENDING_MANUAL_GRADING";
+  const isManuallyGraded = result.gradingStatus === "MANUALLY_GRADED";
+  const finalScore = result.manualScore ?? result.score;
+  const finalMaxScore = result.maxScore;
 
   const scoreNum = Number(finalScore);
   const maxScoreNum = Number(finalMaxScore);
@@ -155,13 +153,6 @@ export default function QuizResultScreen() {
             <Text style={{ fontSize: 14, color: "#475569", textAlign: "center", paddingHorizontal: 12, lineHeight: 20 }}>
               Bài thi Tự luận / Đồ án đã được nộp thành công. Giảng viên sẽ trực tiếp đánh giá và phản hồi điểm số kèm nhận xét chi tiết.
             </Text>
-            {subData?.fileAttachment && (
-              <View style={{ marginTop: 8, padding: 8, backgroundColor: "#FEF3C7", borderRadius: 8 }}>
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#B45309" }}>
-                  📁 Đồ án đã nộp: {subData.fileAttachment.fileName} ({subData.fileAttachment.fileSize})
-                </Text>
-              </View>
-            )}
           </View>
         ) : (
           <>
@@ -187,13 +178,13 @@ export default function QuizResultScreen() {
           </>
         )}
 
-        {isManuallyGraded && subData?.lecturerFeedback && (
+        {isManuallyGraded && result.teacherFeedback && (
           <View style={{ marginTop: 12, padding: 12, backgroundColor: "#F0FDF4", borderRadius: 10, borderWidth: 1, borderColor: "#BBF7D0", width: "100%" }}>
             <Text style={{ fontSize: 13, fontWeight: "700", color: "#166534", marginBottom: 3 }}>
               💬 Lời phê & Nhận xét của Giảng viên:
             </Text>
             <Text style={{ fontSize: 13, color: "#15803D", fontStyle: "italic", lineHeight: 18 }}>
-              "{subData.lecturerFeedback}"
+              "{result.teacherFeedback}"
             </Text>
           </View>
         )}

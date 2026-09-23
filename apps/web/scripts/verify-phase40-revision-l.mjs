@@ -22,7 +22,31 @@ try {
   const planSelect = page.locator("select").first(), planOption = planSelect.locator("option", { hasText: "Cassandra" }).first(); await planSelect.selectOption(await planOption.getAttribute("value"));
   await expect(page.getByText(/Required lesson:|Exam Prep:/).first()).toBeVisible(); await page.getByRole("button", { name: /Khoảng trống kỹ năng/ }).click(); await expect(page.getByText(/mục tiêu là/).first()).toBeVisible(); await page.screenshot({ path: `${out}/study-plan-positive.png`, fullPage: true });
   await page.goto(`${base}/app/ai-tutor`); const tutorSelect = page.getByLabel("Khóa học cho AI Tutor"); await tutorSelect.selectOption(await tutorSelect.locator("option", { hasText: "Cassandra" }).first().getAttribute("value"));
-  await page.getByLabel("Nhập câu hỏi cho AI Tutor").fill("Giải thích phần tài liệu về khóa phân vùng Cassandra, mastery và kế hoạch học gì tiếp"); await page.getByRole("button", { name: "Gửi", exact: true }).click();
+  const tutorQuestion = page.getByLabel("Nhập câu hỏi cho AI Tutor");
+  const tutorSend = page.getByRole("button", { name: "Gửi", exact: true });
+  const toolResponsePromise = page.waitForResponse((response) =>
+    new URL(response.url()).pathname === "/web-session/student/assistant/chat" &&
+    response.request().method() === "POST" &&
+    response.request().postData()?.includes("kế hoạch học gì tiếp"),
+  );
+  await tutorQuestion.fill("Mastery của tôi thế nào và kế hoạch học gì tiếp?"); await tutorSend.click();
+  const toolResponse = await toolResponsePromise;
+  if (!toolResponse.ok()) throw new Error(`TUTOR_ADAPTIVE_TOOLS_HTTP_${toolResponse.status()}`);
+  const toolPayload = await toolResponse.json();
+  const executedTools = (toolPayload.data?.toolInvocations ?? []).map((call) => call.name);
+  if (!executedTools.includes("get_student_mastery") || !executedTools.includes("get_recommended_learning_path"))
+    throw new Error(`TUTOR_ADAPTIVE_TOOLS_MISSING:${executedTools.join(",")}`);
+  await expect(page.locator('[data-sender="TUTOR"]')).toHaveCount(1, { timeout: 70_000 });
+  const materialResponsePromise = page.waitForResponse((response) =>
+    new URL(response.url()).pathname === "/web-session/student/assistant/chat" &&
+    response.request().method() === "POST" &&
+    response.request().postData()?.includes("khóa phân vùng Cassandra"),
+  );
+  await tutorQuestion.fill("Giải thích phần tài liệu về khóa phân vùng Cassandra"); await tutorSend.click();
+  const materialResponse = await materialResponsePromise;
+  if (!materialResponse.ok()) throw new Error(`TUTOR_MATERIAL_SEARCH_HTTP_${materialResponse.status()}`);
+  const materialPayload = await materialResponse.json();
+  if (!materialPayload.data?.citations?.length) throw new Error("TUTOR_VERIFIED_CITATION_MISSING");
   await expect(page.getByText(/Nguồn:/).first()).toBeVisible({ timeout: 70_000 }); await expect(page.getByText(/Course v\d+ · Lesson v\d+/).first()).toBeVisible(); await page.screenshot({ path: `${out}/ai-tutor-grounded.png`, fullPage: true });
   const seed = JSON.parse(await readFile("../../artifacts/release-evidence/revision-l/seed-journal.json", "utf8"));
   const lecturerLogin = await fetch("http://127.0.0.1:8080/api/v1/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: "lecturer.demo@ailss.local", password: process.env.AILSS_DEMO_LECTURER_PASSWORD || "AilssLecturer!2026" }) });
@@ -75,7 +99,13 @@ try {
   await writeFile(`${out}/feedback-loop.json`, `${JSON.stringify({ submittedAttemptId, quizId: quiz.quizId, courseId: seed.courseId, beforePlanId: beforePlan?.planId, afterPlanId: afterPlan?.planId, beforeUpdatedAt: beforePlan?.updatedAt, afterUpdatedAt: afterPlan?.updatedAt, beforeItems: beforePlan?.items?.length, afterItems: afterPlan?.items?.length, planChanged }, null, 2)}\n`);
   await page.screenshot({ path: `${out}/study-plan-after-submission.png`, fullPage: true });
   docker("stop", "ailss-learning-service"); await page.goto(`${base}/app/study-plan`); await expect(page.getByRole("alert")).toBeVisible(); await page.screenshot({ path: `${out}/learning-down.png`, fullPage: true }); docker("start", "ailss-learning-service"); await new Promise((resolve) => setTimeout(resolve, 5_000));
-  docker("stop", "ailss-ai-service"); await page.goto(`${base}/app/ai-tutor`); await page.getByLabel("Nhập câu hỏi cho AI Tutor").fill("Giải thích tài liệu Cassandra"); await page.getByRole("button", { name: "Gửi", exact: true }).click(); await expect(page.getByRole("alert")).toBeVisible(); await page.screenshot({ path: `${out}/ai-down.png`, fullPage: true }); docker("start", "ailss-ai-service");
+  docker("stop", "ailss-ai-service"); await page.goto(`${base}/app/ai-tutor`);
+  const outageTutorSelect = page.getByLabel("Khóa học cho AI Tutor");
+  const outageTutorCourse = outageTutorSelect.locator("option", { hasText: "Cassandra" }).first();
+  await expect(outageTutorCourse).toHaveCount(1, { timeout: 20_000 });
+  await outageTutorSelect.selectOption(await outageTutorCourse.getAttribute("value"));
+  await page.getByLabel("Nhập câu hỏi cho AI Tutor").fill("Giải thích tài liệu Cassandra");
+  await page.getByRole("button", { name: "Gửi", exact: true }).click(); await expect(page.getByRole("alert")).toBeVisible(); await page.screenshot({ path: `${out}/ai-down.png`, fullPage: true }); docker("start", "ailss-ai-service");
   const required = ["/web-session/login", "/web-session/student/me/courses", "/web-session/student/study-plan/current", "/web-session/student/assistant/chat"]; for (const path of required) if (!network.some((entry) => entry.path.startsWith(path) && entry.status < 500)) throw new Error(`NETWORK_PROOF_MISSING:${path}`);
   await writeFile(`${out}/network-proof.json`, `${JSON.stringify({ generatedAt: new Date().toISOString(), origin: base, gateway: "http://127.0.0.1:8080", mockedRoutes: [], bffForwarding: "/web-session/student/* -> Gateway /api/v1/*", requests: network }, null, 2)}\n`); process.stdout.write(`${JSON.stringify({ browserGoldenPath: "PASS", feedbackLoop: "PASS", durableBeforeAfter: "PASS", degradedLearning: "PASS", degradedAi: "PASS", networkRequests: network.length })}\n`);
 } finally { for (const name of servicesStopped) spawnSync("docker", ["start", name]); await context.close().catch(() => undefined); await browser.close().catch(() => undefined); server.kill("SIGTERM"); }

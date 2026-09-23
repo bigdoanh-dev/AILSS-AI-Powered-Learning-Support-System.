@@ -1,0 +1,300 @@
+{
+  "generatedAt": "2026-09-23T18:28:18.463Z",
+  "backend": "local HTTP error-injection fixture; no production or staging endpoint",
+  "clientCoverage": [
+    "Web request/error mapping",
+    "Mobile Transport"
+  ],
+  "caseCount": 32,
+  "allSemanticParity": true,
+  "cases": [
+    {
+      "feature": "Mastery",
+      "scenario": "401 authentication required",
+      "backendStatus": 401,
+      "webInterpretation": "Email hoặc mật khẩu không đúng.",
+      "mobileInterpretation": "Phiên đăng nhập đã hết hạn.",
+      "semanticParity": true,
+      "semanticCategory": "AUTHENTICATION_FAILURE"
+    },
+    {
+      "feature": "Mastery",
+      "scenario": "403 forbidden",
+      "backendStatus": 403,
+      "webInterpretation": "Tài khoản chưa được phép thực hiện thao tác này.",
+      "mobileInterpretation": "Bạn không có quyền thực hiện.",
+      "semanticParity": true,
+      "semanticCategory": "FORBIDDEN"
+    },
+    {
+      "feature": "Mastery",
+      "scenario": "404 resource missing",
+      "backendStatus": 404,
+      "webInterpretation": "Không tìm thấy nội dung công khai này.",
+      "mobileInterpretation": "Không tìm thấy dữ liệu.",
+      "semanticParity": true,
+      "semanticCategory": "NOT_FOUND"
+    },
+    {
+      "feature": "Mastery",
+      "scenario": "409 domain conflict",
+      "backendStatus": 409,
+      "webInterpretation": "Thông tin đã tồn tại hoặc yêu cầu bị xung đột. Vui lòng kiểm tra lại.",
+      "mobileInterpretation": "Dữ liệu đã thay đổi. Vui lòng thử lại.",
+      "semanticParity": true,
+      "semanticCategory": "CONFLICT"
+    },
+    {
+      "feature": "Mastery",
+      "scenario": "429 rate limited",
+      "backendStatus": 429,
+      "webInterpretation": "Có quá nhiều yêu cầu. Vui lòng chờ rồi thử lại.",
+      "mobileInterpretation": "Quá nhiều yêu cầu. Vui lòng đợi.",
+      "semanticParity": true,
+      "semanticCategory": "RATE_LIMITED"
+    },
+    {
+      "feature": "Mastery",
+      "scenario": "500 service failure",
+      "backendStatus": 500,
+      "webInterpretation": "Dịch vụ đang tạm thời không khả dụng. Vui lòng thử lại sau.",
+      "mobileInterpretation": "Dịch vụ tạm thời không khả dụng.",
+      "semanticParity": true,
+      "semanticCategory": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "feature": "Mastery",
+      "scenario": "client/upstream timeout",
+      "backendStatus": 504,
+      "webInterpretation": "Không thể kết nối dịch vụ. Kiểm tra kết nối và thử lại.",
+      "mobileInterpretation": "Kết nối quá thời gian. Vui lòng thử lại.",
+      "semanticParity": true,
+      "semanticCategory": "TRANSIENT_TIMEOUT"
+    },
+    {
+      "feature": "Mastery",
+      "scenario": "request cancellation",
+      "backendStatus": null,
+      "webInterpretation": "Không thể kết nối dịch vụ. Kiểm tra kết nối và thử lại.",
+      "mobileInterpretation": "Yêu cầu đã hủy.",
+      "semanticParity": true,
+      "semanticCategory": "CANCELLED"
+    },
+    {
+      "feature": "Study Plan",
+      "scenario": "401 authentication required",
+      "backendStatus": 401,
+      "webInterpretation": "Email hoặc mật khẩu không đúng.",
+      "mobileInterpretation": "Phiên đăng nhập đã hết hạn.",
+      "semanticParity": true,
+      "semanticCategory": "AUTHENTICATION_FAILURE"
+    },
+    {
+      "feature": "Study Plan",
+      "scenario": "403 forbidden",
+      "backendStatus": 403,
+      "webInterpretation": "Tài khoản chưa được phép thực hiện thao tác này.",
+      "mobileInterpretation": "Bạn không có quyền thực hiện.",
+      "semanticParity": true,
+      "semanticCategory": "FORBIDDEN"
+    },
+    {
+      "feature": "Study Plan",
+      "scenario": "404 resource missing",
+      "backendStatus": 404,
+      "webInterpretation": "Không tìm thấy nội dung công khai này.",
+      "mobileInterpretation": "Không tìm thấy dữ liệu.",
+      "semanticParity": true,
+      "semanticCategory": "NOT_FOUND"
+    },
+    {
+      "feature": "Study Plan",
+      "scenario": "409 domain conflict",
+      "backendStatus": 409,
+      "webInterpretation": "Thông tin đã tồn tại hoặc yêu cầu bị xung đột. Vui lòng kiểm tra lại.",
+      "mobileInterpretation": "Dữ liệu đã thay đổi. Vui lòng thử lại.",
+      "semanticParity": true,
+      "semanticCategory": "CONFLICT"
+    },
+    {
+      "feature": "Study Plan",
+      "scenario": "429 rate limited",
+      "backendStatus": 429,
+      "webInterpretation": "Có quá nhiều yêu cầu. Vui lòng chờ rồi thử lại.",
+      "mobileInterpretation": "Quá nhiều yêu cầu. Vui lòng đợi.",
+      "semanticParity": true,
+      "semanticCategory": "RATE_LIMITED"
+    },
+    {
+      "feature": "Study Plan",
+      "scenario": "500 service failure",
+      "backendStatus": 500,
+      "webInterpretation": "Dịch vụ đang tạm thời không khả dụng. Vui lòng thử lại sau.",
+      "mobileInterpretation": "Dịch vụ tạm thời không khả dụng.",
+      "semanticParity": true,
+      "semanticCategory": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "feature": "Study Plan",
+      "scenario": "client/upstream timeout",
+      "backendStatus": 504,
+      "webInterpretation": "Không thể kết nối dịch vụ. Kiểm tra kết nối và thử lại.",
+      "mobileInterpretation": "Kết nối quá thời gian. Vui lòng thử lại.",
+      "semanticParity": true,
+      "semanticCategory": "TRANSIENT_TIMEOUT"
+    },
+    {
+      "feature": "Study Plan",
+      "scenario": "request cancellation",
+      "backendStatus": null,
+      "webInterpretation": "Không thể kết nối dịch vụ. Kiểm tra kết nối và thử lại.",
+      "mobileInterpretation": "Yêu cầu đã hủy.",
+      "semanticParity": true,
+      "semanticCategory": "CANCELLED"
+    },
+    {
+      "feature": "Assessment",
+      "scenario": "401 authentication required",
+      "backendStatus": 401,
+      "webInterpretation": "Email hoặc mật khẩu không đúng.",
+      "mobileInterpretation": "Phiên đăng nhập đã hết hạn.",
+      "semanticParity": true,
+      "semanticCategory": "AUTHENTICATION_FAILURE"
+    },
+    {
+      "feature": "Assessment",
+      "scenario": "403 forbidden",
+      "backendStatus": 403,
+      "webInterpretation": "Tài khoản chưa được phép thực hiện thao tác này.",
+      "mobileInterpretation": "Bạn không có quyền thực hiện.",
+      "semanticParity": true,
+      "semanticCategory": "FORBIDDEN"
+    },
+    {
+      "feature": "Assessment",
+      "scenario": "404 resource missing",
+      "backendStatus": 404,
+      "webInterpretation": "Không tìm thấy nội dung công khai này.",
+      "mobileInterpretation": "Không tìm thấy dữ liệu.",
+      "semanticParity": true,
+      "semanticCategory": "NOT_FOUND"
+    },
+    {
+      "feature": "Assessment",
+      "scenario": "409 domain conflict",
+      "backendStatus": 409,
+      "webInterpretation": "Thông tin đã tồn tại hoặc yêu cầu bị xung đột. Vui lòng kiểm tra lại.",
+      "mobileInterpretation": "Dữ liệu đã thay đổi. Vui lòng thử lại.",
+      "semanticParity": true,
+      "semanticCategory": "CONFLICT"
+    },
+    {
+      "feature": "Assessment",
+      "scenario": "429 rate limited",
+      "backendStatus": 429,
+      "webInterpretation": "Có quá nhiều yêu cầu. Vui lòng chờ rồi thử lại.",
+      "mobileInterpretation": "Quá nhiều yêu cầu. Vui lòng đợi.",
+      "semanticParity": true,
+      "semanticCategory": "RATE_LIMITED"
+    },
+    {
+      "feature": "Assessment",
+      "scenario": "500 service failure",
+      "backendStatus": 500,
+      "webInterpretation": "Dịch vụ đang tạm thời không khả dụng. Vui lòng thử lại sau.",
+      "mobileInterpretation": "Dịch vụ tạm thời không khả dụng.",
+      "semanticParity": true,
+      "semanticCategory": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "feature": "Assessment",
+      "scenario": "client/upstream timeout",
+      "backendStatus": 504,
+      "webInterpretation": "Không thể kết nối dịch vụ. Kiểm tra kết nối và thử lại.",
+      "mobileInterpretation": "Kết nối quá thời gian. Vui lòng thử lại.",
+      "semanticParity": true,
+      "semanticCategory": "TRANSIENT_TIMEOUT"
+    },
+    {
+      "feature": "Assessment",
+      "scenario": "request cancellation",
+      "backendStatus": null,
+      "webInterpretation": "Không thể kết nối dịch vụ. Kiểm tra kết nối và thử lại.",
+      "mobileInterpretation": "Yêu cầu đã hủy.",
+      "semanticParity": true,
+      "semanticCategory": "CANCELLED"
+    },
+    {
+      "feature": "Tutor",
+      "scenario": "401 authentication required",
+      "backendStatus": 401,
+      "webInterpretation": "Email hoặc mật khẩu không đúng.",
+      "mobileInterpretation": "Phiên đăng nhập đã hết hạn.",
+      "semanticParity": true,
+      "semanticCategory": "AUTHENTICATION_FAILURE"
+    },
+    {
+      "feature": "Tutor",
+      "scenario": "403 forbidden",
+      "backendStatus": 403,
+      "webInterpretation": "Tài khoản chưa được phép thực hiện thao tác này.",
+      "mobileInterpretation": "Bạn không có quyền thực hiện.",
+      "semanticParity": true,
+      "semanticCategory": "FORBIDDEN"
+    },
+    {
+      "feature": "Tutor",
+      "scenario": "404 resource missing",
+      "backendStatus": 404,
+      "webInterpretation": "Không tìm thấy nội dung công khai này.",
+      "mobileInterpretation": "Không tìm thấy dữ liệu.",
+      "semanticParity": true,
+      "semanticCategory": "NOT_FOUND"
+    },
+    {
+      "feature": "Tutor",
+      "scenario": "409 domain conflict",
+      "backendStatus": 409,
+      "webInterpretation": "Thông tin đã tồn tại hoặc yêu cầu bị xung đột. Vui lòng kiểm tra lại.",
+      "mobileInterpretation": "Dữ liệu đã thay đổi. Vui lòng thử lại.",
+      "semanticParity": true,
+      "semanticCategory": "CONFLICT"
+    },
+    {
+      "feature": "Tutor",
+      "scenario": "429 rate limited",
+      "backendStatus": 429,
+      "webInterpretation": "Có quá nhiều yêu cầu. Vui lòng chờ rồi thử lại.",
+      "mobileInterpretation": "Quá nhiều yêu cầu. Vui lòng đợi.",
+      "semanticParity": true,
+      "semanticCategory": "RATE_LIMITED"
+    },
+    {
+      "feature": "Tutor",
+      "scenario": "500 service failure",
+      "backendStatus": 500,
+      "webInterpretation": "Dịch vụ đang tạm thời không khả dụng. Vui lòng thử lại sau.",
+      "mobileInterpretation": "Dịch vụ tạm thời không khả dụng.",
+      "semanticParity": true,
+      "semanticCategory": "SERVICE_UNAVAILABLE"
+    },
+    {
+      "feature": "Tutor",
+      "scenario": "client/upstream timeout",
+      "backendStatus": 504,
+      "webInterpretation": "Không thể kết nối dịch vụ. Kiểm tra kết nối và thử lại.",
+      "mobileInterpretation": "Kết nối quá thời gian. Vui lòng thử lại.",
+      "semanticParity": true,
+      "semanticCategory": "TRANSIENT_TIMEOUT"
+    },
+    {
+      "feature": "Tutor",
+      "scenario": "request cancellation",
+      "backendStatus": null,
+      "webInterpretation": "Không thể kết nối dịch vụ. Kiểm tra kết nối và thử lại.",
+      "mobileInterpretation": "Yêu cầu đã hủy.",
+      "semanticParity": true,
+      "semanticCategory": "CANCELLED"
+    }
+  ]
+}

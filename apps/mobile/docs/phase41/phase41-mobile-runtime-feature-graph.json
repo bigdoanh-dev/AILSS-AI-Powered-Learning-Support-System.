@@ -1,0 +1,809 @@
+{
+  "baseline": {
+    "tag": "v6.2.0-rc.6",
+    "sourceGitSha": "c435de9468d39527f46aac83aae22ffa4af2efdf"
+  },
+  "status": "PHASE_41_IN_PROGRESS",
+  "features": [
+    {
+      "id": "native-auth-password",
+      "status": "SHIP",
+      "nativeRoute": "/login",
+      "screen": "app/[screen].tsx",
+      "apiPath": "/api/v1/auth/login → /api/v1/me → /api/v1/auth/refresh",
+      "gatewayPath": "API Gateway identity proxy",
+      "backendService": "identity-service",
+      "repository": "Identity session repository",
+      "tableStore": "Cassandra session tables",
+      "featureFlag": null,
+      "authorization": "Public login; protected APIs validate bearer session; role comes from /me",
+      "offlineBehavior": "Authentication and refresh require network; refresh token only in Keychain/Android secure storage"
+    },
+    {
+      "id": "native-social-oidc",
+      "status": "DEFERRED_PROVIDER_CONFIGURATION_AND_PKCE_FLOW",
+      "nativeRoute": "/login",
+      "screen": "app/[screen].tsx",
+      "apiPath": "/api/v1/auth/social/:provider (ID-token endpoint exists; native OIDC callback not configured)",
+      "gatewayPath": "API Gateway identity proxy",
+      "backendService": "identity-service",
+      "repository": "Identity session repository",
+      "tableStore": "Cassandra session tables",
+      "featureFlag": null,
+      "authorization": "No Google or Apple token is requested or accepted by the current Mobile UI",
+      "offlineBehavior": "Online-only; provider client IDs and redirect URIs are not configured"
+    },
+    {
+      "id": "student-workspace",
+      "status": "SHIP",
+      "nativeRoute": "/student",
+      "screen": "app/student/index.tsx",
+      "apiPath": "/api/v1/me/courses; /api/v1/mastery/courses/:courseId; /api/v1/study-plan/current?courseId=...",
+      "gatewayPath": "Learning commerce and Adaptive Learning proxies",
+      "backendService": "learning-service",
+      "repository": "Learning commerce repository; AdaptiveRuntimeRepository",
+      "tableStore": "Cassandra enrollment, mastery_v2_by_student_concept, study_plans_v2",
+      "featureFlag": null,
+      "authorization": "Authenticated STUDENT; actor and user derived by Gateway",
+      "offlineBehavior": "Per-user SQLCipher cache for enrolled courses, last-synced Mastery and Study Plan; offline screens are labeled and cannot mutate plans"
+    },
+    {
+      "id": "course-lessons",
+      "status": "SHIP",
+      "nativeRoute": "/learn and /learn/:courseId/lessons/:lessonId",
+      "screen": "app/learn",
+      "apiPath": "/api/v1/me/courses; /api/v1/courses/:courseId/lessons; /api/v1/targets/COURSE/:courseId/quizzes; /api/v1/lessons/:lessonId; /api/v1/lessons/:lessonId/completion",
+      "gatewayPath": "Learning catalog, lessons and progress proxies",
+      "backendService": "learning-service",
+      "repository": "Catalog, LessonRepository, LearningProgressRepository",
+      "tableStore": "Cassandra course, lesson, progress and completion tables; approved object storage",
+      "featureFlag": null,
+      "authorization": "Enrollment/preview entitlement enforced by Learning Service",
+      "offlineBehavior": "Course metadata and progress projections may use labeled encrypted cache; lesson bodies remain online-only; completion is queued and not authoritative until server acknowledgement"
+    },
+    {
+      "id": "mastery-v2",
+      "status": "SHIP",
+      "nativeRoute": "/student/mastery and legacy /progress redirect",
+      "screen": "app/student/mastery.tsx",
+      "apiPath": "/api/v1/mastery/courses/:courseId",
+      "gatewayPath": "Adaptive Learning proxy",
+      "backendService": "learning-service",
+      "repository": "AdaptiveRuntimeRepository",
+      "tableStore": "Cassandra mastery_v2_by_student_concept",
+      "featureFlag": null,
+      "authorization": "Authenticated STUDENT; backend derives actor",
+      "offlineBehavior": "Last-synced projection may be read from a user-scoped SQLCipher cache with LAST_SYNCED; no local mastery calculation"
+    },
+    {
+      "id": "study-plan-v2",
+      "status": "SHIP",
+      "nativeRoute": "/student/study-plan",
+      "screen": "app/student/study-plan.tsx",
+      "apiPath": "/api/v1/study-plan/current; /generate; /items/:itemId/{accept,complete,skip}",
+      "gatewayPath": "Adaptive Learning proxy",
+      "backendService": "learning-service",
+      "repository": "AdaptiveRuntimeRepository and StudyPlanService",
+      "tableStore": "Cassandra study_plans_v2 and study_plan_items_status",
+      "featureFlag": null,
+      "authorization": "Authenticated STUDENT; ownership and transition validated server-side",
+      "offlineBehavior": "Last-synced read is available from SQLCipher cache; plan mutations remain online-only and 409 reloads server state"
+    },
+    {
+      "id": "ai-tutor-v2",
+      "status": "SHIP",
+      "nativeRoute": "/student/tutor",
+      "screen": "app/student/tutor.tsx",
+      "apiPath": "/api/v1/assistant/chat",
+      "gatewayPath": "Assistant proxy",
+      "backendService": "ai-service plus authorized Learning material search",
+      "repository": "AssistantRepository and material retrieval repository",
+      "tableStore": "Cassandra conversation/message tables and configured vector index",
+      "featureFlag": null,
+      "authorization": "Authenticated actor, course entitlement and citation allowlist checked by services",
+      "offlineBehavior": "Online-only; timeout/cancel is shown as failure and never fabricates an answer"
+    },
+    {
+      "id": "assessments",
+      "status": "SHIP_ONLINE_ONLY",
+      "nativeRoute": "/assessments",
+      "screen": "app/assessments",
+      "apiPath": "/api/v1/targets/:targetType/:targetId/quizzes; /api/v1/attempts; /submit",
+      "gatewayPath": "Assessment proxy",
+      "backendService": "assessment-service",
+      "repository": "AssessmentRepository",
+      "tableStore": "Cassandra quiz, attempt, answer and result tables",
+      "featureFlag": null,
+      "authorization": "Authenticated student; attempt/visibility rules from Assessment Service",
+      "offlineBehavior": "Online-only; answers remain in memory; stable submit idempotency key and same-payload retry while attempt screen remains mounted; no resume after process restart"
+    },
+    {
+      "id": "notifications",
+      "status": "SHIP_IN_APP_ONLY",
+      "nativeRoute": "/notifications",
+      "screen": "app/notifications.tsx",
+      "apiPath": "/api/v1/notifications; /api/v1/notifications/:id/read",
+      "gatewayPath": "Notifications proxy",
+      "backendService": "notification-service",
+      "repository": "NotificationRepository",
+      "tableStore": "Cassandra notification tables",
+      "featureFlag": null,
+      "authorization": "Authenticated user; server scopes by actor",
+      "offlineBehavior": "In-app list/read only; push installation binding remains unavailable until trusted tenant/session contract ships"
+    },
+    {
+      "id": "account-registration",
+      "status": "SHIP",
+      "nativeRoute": "/register",
+      "screen": "app/register.tsx → app/[screen].tsx",
+      "apiPath": "/api/v1/auth/register",
+      "gatewayPath": "API Gateway identity proxy",
+      "backendService": "identity-service",
+      "repository": "Identity user repository",
+      "tableStore": "Cassandra identity tables",
+      "featureFlag": null,
+      "authorization": "Public registration; resulting identity is server-issued",
+      "offlineBehavior": "Online-only"
+    },
+    {
+      "id": "account-settings",
+      "status": "SHIP",
+      "nativeRoute": "/account and /settings",
+      "screen": "app/account.tsx; app/settings.tsx",
+      "apiPath": "/api/v1/me; /api/v1/me/avatar; /api/v1/me/password; /api/v1/auth/logout",
+      "gatewayPath": "API Gateway identity proxy",
+      "backendService": "identity-service",
+      "repository": "Identity session and profile repositories",
+      "tableStore": "Cassandra identity tables",
+      "featureFlag": null,
+      "authorization": "Authenticated account; account data and logout are server-backed",
+      "offlineBehavior": "Account mutation requires network; local logout always clears local credentials and cache"
+    },
+    {
+      "id": "public-course-catalog",
+      "status": "SHIP",
+      "nativeRoute": "/courses and /courses/:courseId",
+      "screen": "app/courses and app/courses/[courseId].tsx",
+      "apiPath": "/api/v1/courses; /api/v1/courses/search; /api/v1/courses/:courseId; /api/v1/courses/:courseId/offerings; review APIs",
+      "gatewayPath": "Learning catalog and Interaction proxies",
+      "backendService": "learning-service plus interaction-service",
+      "repository": "LearningCatalogRepository, OfferingRepository, InteractionRepository",
+      "tableStore": "Cassandra published catalog, offering and review projections",
+      "featureFlag": null,
+      "authorization": "Published catalog is public; enrollment/review mutations remain server-authorized",
+      "offlineBehavior": "Online-only; catalog results are never fabricated or replaced with fallback records"
+    },
+    {
+      "id": "student-classroom-schedule",
+      "status": "SHIP_READ_ONLY",
+      "nativeRoute": "/classes and /classes/:classId and /classes/:classId/sessions/:sessionId",
+      "screen": "app/classes",
+      "apiPath": "/api/v1/me/classes; /api/v1/me/schedule; /api/v1/me/attendance; /api/v1/classes/:classId; /api/v1/classes/:classId/sessions; /api/v1/class-sessions/:sessionId",
+      "gatewayPath": "Classroom proxy",
+      "backendService": "classroom-service",
+      "repository": "ClassroomRepository",
+      "tableStore": "Cassandra classroom and attendance tables",
+      "featureFlag": null,
+      "authorization": "Student membership is verified by Classroom Service; detail screens are read-only",
+      "offlineBehavior": "Online-only; no assignment, roster or document fixture fallback"
+    },
+    {
+      "id": "push-registration",
+      "status": "DEFERRED_SECURITY_ARCHITECTURE",
+      "nativeRoute": "/notifications",
+      "screen": "No device-registration UI or client hook",
+      "apiPath": "No Mobile push token registration endpoint wired",
+      "gatewayPath": "No Mobile Gateway route used",
+      "backendService": "notification-service (in-app APIs only from Mobile)",
+      "repository": "Not applicable",
+      "tableStore": "Not applicable",
+      "featureFlag": null,
+      "authorization": "No authoritative tenant-installation binding contract exists; do not register or retain a private notification token",
+      "offlineBehavior": "IN_APP_ONLY; push registration and delivery are not Phase 41 product claims"
+    }
+  ],
+  "routeMappings": [
+    {
+      "featureId": "native-auth-password",
+      "routes": [
+        "/login"
+      ],
+      "apiPatterns": [
+        "/api/v1/auth/login"
+      ]
+    },
+    {
+      "featureId": "account-registration",
+      "routes": [
+        "/register"
+      ],
+      "apiPatterns": [
+        "/api/v1/auth/register"
+      ]
+    },
+    {
+      "featureId": "student-workspace",
+      "routes": [
+        "/student"
+      ],
+      "apiPatterns": [
+        "/api/v1/me/courses",
+        "/api/v1/mastery/courses/:courseId",
+        "/api/v1/study-plan/current"
+      ]
+    },
+    {
+      "featureId": "course-lessons",
+      "routes": [
+        "/learn",
+        "/learn/:courseId",
+        "/learn/:courseId/lessons/:lessonId"
+      ],
+      "apiPatterns": [
+        "/api/v1/me/courses",
+        "/api/v1/courses/:courseId/lessons",
+        "/api/v1/targets/COURSE/:courseId/quizzes",
+        "/api/v1/lessons/:lessonId",
+        "/api/v1/lessons/:lessonId/completion",
+        "/api/v1/courses/:courseId/progress"
+      ]
+    },
+    {
+      "featureId": "mastery-v2",
+      "routes": [
+        "/student/mastery",
+        "/progress"
+      ],
+      "apiPatterns": [
+        "/api/v1/mastery/courses/:courseId"
+      ]
+    },
+    {
+      "featureId": "study-plan-v2",
+      "routes": [
+        "/student/study-plan"
+      ],
+      "apiPatterns": [
+        "/api/v1/study-plan/current",
+        "/api/v1/study-plan/generate",
+        "/api/v1/study-plan/items/:itemId/:action"
+      ]
+    },
+    {
+      "featureId": "ai-tutor-v2",
+      "routes": [
+        "/student/tutor"
+      ],
+      "apiPatterns": [
+        "/api/v1/assistant/chat"
+      ]
+    },
+    {
+      "featureId": "assessments",
+      "routes": [
+        "/assessments",
+        "/assessments/:quizId",
+        "/assessments/:quizId/attempt/:attemptId",
+        "/assessments/:quizId/result/:resultId"
+      ],
+      "apiPatterns": [
+        "/api/v1/me/courses",
+        "/api/v1/classes",
+        "/api/v1/targets/COURSE/:targetId/quizzes",
+        "/api/v1/targets/CLASS/:targetId/quizzes",
+        "/api/v1/quizzes/:quizId",
+        "/api/v1/quizzes/:quizId/attempts",
+        "/api/v1/attempts/:attemptId",
+        "/api/v1/attempts/:attemptId/result",
+        "/api/v1/attempts/:attemptId/submit"
+      ]
+    },
+    {
+      "featureId": "notifications",
+      "routes": [
+        "/notifications"
+      ],
+      "apiPatterns": [
+        "/api/v1/notifications",
+        "/api/v1/notifications/:notificationId/read"
+      ]
+    },
+    {
+      "featureId": "account-settings",
+      "routes": [
+        "/account",
+        "/settings"
+      ],
+      "apiPatterns": [
+        "/api/v1/me/avatar",
+        "/api/v1/me/password"
+      ]
+    },
+    {
+      "featureId": "public-course-catalog",
+      "routes": [
+        "/courses",
+        "/courses/:courseId"
+      ],
+      "apiPatterns": [
+        "/api/v1/courses",
+        "/api/v1/courses/search",
+        "/api/v1/courses/:courseId",
+        "/api/v1/courses/:courseId/offerings",
+        "/api/v1/courses/:courseId/reviews",
+        "/api/v1/courses/:courseId/enrollments",
+        "/api/v1/reviews/:reviewId"
+      ]
+    },
+    {
+      "featureId": "student-classroom-schedule",
+      "routes": [
+        "/classes",
+        "/classes/:classId",
+        "/classes/:classId/sessions/:sessionId"
+      ],
+      "apiPatterns": [
+        "/api/v1/me/classes",
+        "/api/v1/me/schedule",
+        "/api/v1/me/attendance",
+        "/api/v1/classes/:classId",
+        "/api/v1/classes/:classId/sessions",
+        "/api/v1/class-sessions/:sessionId"
+      ]
+    }
+  ],
+  "sharedApiDependencies": [
+    "/api/v1/auth/login",
+    "/api/v1/auth/logout",
+    "/api/v1/auth/refresh",
+    "/api/v1/auth/social/:param",
+    "/api/v1/me"
+  ],
+  "apiInventory": [
+    {
+      "apiPath": "/api/v1/assistant/chat",
+      "routes": [
+        "/student",
+        "/student/mastery",
+        "/student/study-plan",
+        "/student/tutor"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/attempts/:param",
+      "routes": [
+        "/assessments/[quizId]/attempt/[attemptId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/attempts/:param/result",
+      "routes": [
+        "/assessments/[quizId]/result/[resultId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/attempts/:param/submit",
+      "routes": [
+        "/assessments/[quizId]/attempt/[attemptId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/auth/register",
+      "routes": [
+        "/login",
+        "/register"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/class-sessions/:param",
+      "routes": [
+        "/classes/[classId]/sessions/[sessionId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/classes",
+      "routes": [
+        "/assessments"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/classes/:param",
+      "routes": [
+        "/classes/[classId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/classes/:param/sessions",
+      "routes": [
+        "/classes/[classId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/courses",
+      "routes": [
+        "/courses"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/courses/:param",
+      "routes": [
+        "/courses/[courseId]",
+        "/learn/[courseId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/courses/:param/enrollments",
+      "routes": [
+        "/courses/[courseId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/courses/:param/lessons",
+      "routes": [
+        "/learn/[courseId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/courses/:param/offerings",
+      "routes": [
+        "/courses/[courseId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/courses/:param/progress",
+      "routes": [
+        "/courses/[courseId]",
+        "/learn",
+        "/learn/[courseId]",
+        "/learn/[courseId]/lessons/[lessonId]",
+        "/student",
+        "/student/mastery",
+        "/student/study-plan",
+        "/student/tutor"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/courses/:param/reviews",
+      "routes": [
+        "/courses/[courseId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/courses/search",
+      "routes": [
+        "/courses",
+        "/login",
+        "/register"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/lessons/:param",
+      "routes": [
+        "/learn/[courseId]/lessons/[lessonId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/lessons/:param/completion",
+      "routes": [
+        "/learn/[courseId]/lessons/[lessonId]",
+        "/student",
+        "/student/mastery",
+        "/student/study-plan",
+        "/student/tutor"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/mastery/courses/:param",
+      "routes": [
+        "/student",
+        "/student/mastery",
+        "/student/study-plan",
+        "/student/tutor"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/me",
+      "routes": [
+        "/account"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/me/attendance",
+      "routes": [
+        "/classes",
+        "/classes/[classId]/sessions/[sessionId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/me/avatar",
+      "routes": [
+        "/account",
+        "/login",
+        "/register"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/me/classes",
+      "routes": [
+        "/classes"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/me/courses",
+      "routes": [
+        "/assessments",
+        "/learn",
+        "/student",
+        "/student/mastery",
+        "/student/study-plan",
+        "/student/tutor"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/me/password",
+      "routes": [
+        "/account"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/me/schedule",
+      "routes": [
+        "/classes"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/notifications",
+      "routes": [
+        "/notifications"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/notifications/:param/read",
+      "routes": [
+        "/notifications"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/quizzes/:param",
+      "routes": [
+        "/assessments/[quizId]",
+        "/assessments/[quizId]/attempt/[attemptId]",
+        "/assessments/[quizId]/result/[resultId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/quizzes/:param/attempts",
+      "routes": [
+        "/assessments/[quizId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/reviews/:param",
+      "routes": [
+        "/courses/[courseId]"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/study-plan/current",
+      "routes": [
+        "/student",
+        "/student/mastery",
+        "/student/study-plan",
+        "/student/tutor"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/study-plan/generate",
+      "routes": [
+        "/student/study-plan"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/study-plan/items/:param/:param",
+      "routes": [
+        "/student/study-plan"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/targets/CLASS/:param/quizzes",
+      "routes": [
+        "/assessments"
+      ]
+    },
+    {
+      "apiPath": "/api/v1/targets/COURSE/:param/quizzes",
+      "routes": [
+        "/assessments",
+        "/learn/[courseId]"
+      ]
+    }
+  ],
+  "routeDependencySnapshot": [
+    {
+      "route": "/account",
+      "apiDependencies": [
+        "/api/v1/me",
+        "/api/v1/me/avatar",
+        "/api/v1/me/password"
+      ]
+    },
+    {
+      "route": "/assessments",
+      "apiDependencies": [
+        "/api/v1/classes",
+        "/api/v1/me/courses",
+        "/api/v1/targets/CLASS/:param/quizzes",
+        "/api/v1/targets/COURSE/:param/quizzes"
+      ]
+    },
+    {
+      "route": "/assessments/[quizId]",
+      "apiDependencies": [
+        "/api/v1/quizzes/:param",
+        "/api/v1/quizzes/:param/attempts"
+      ]
+    },
+    {
+      "route": "/assessments/[quizId]/attempt/[attemptId]",
+      "apiDependencies": [
+        "/api/v1/attempts/:param",
+        "/api/v1/attempts/:param/submit",
+        "/api/v1/quizzes/:param"
+      ]
+    },
+    {
+      "route": "/assessments/[quizId]/result/[resultId]",
+      "apiDependencies": [
+        "/api/v1/attempts/:param/result",
+        "/api/v1/quizzes/:param"
+      ]
+    },
+    {
+      "route": "/classes",
+      "apiDependencies": [
+        "/api/v1/me/attendance",
+        "/api/v1/me/classes",
+        "/api/v1/me/schedule"
+      ]
+    },
+    {
+      "route": "/classes/[classId]",
+      "apiDependencies": [
+        "/api/v1/classes/:param",
+        "/api/v1/classes/:param/sessions"
+      ]
+    },
+    {
+      "route": "/classes/[classId]/sessions/[sessionId]",
+      "apiDependencies": [
+        "/api/v1/class-sessions/:param",
+        "/api/v1/me/attendance"
+      ]
+    },
+    {
+      "route": "/courses",
+      "apiDependencies": [
+        "/api/v1/courses",
+        "/api/v1/courses/search"
+      ]
+    },
+    {
+      "route": "/courses/[courseId]",
+      "apiDependencies": [
+        "/api/v1/courses/:param",
+        "/api/v1/courses/:param/enrollments",
+        "/api/v1/courses/:param/offerings",
+        "/api/v1/courses/:param/progress",
+        "/api/v1/courses/:param/reviews",
+        "/api/v1/reviews/:param"
+      ]
+    },
+    {
+      "route": "/learn",
+      "apiDependencies": [
+        "/api/v1/courses/:param/progress",
+        "/api/v1/me/courses"
+      ]
+    },
+    {
+      "route": "/learn/[courseId]",
+      "apiDependencies": [
+        "/api/v1/courses/:param",
+        "/api/v1/courses/:param/lessons",
+        "/api/v1/courses/:param/progress",
+        "/api/v1/targets/COURSE/:param/quizzes"
+      ]
+    },
+    {
+      "route": "/learn/[courseId]/lessons/[lessonId]",
+      "apiDependencies": [
+        "/api/v1/courses/:param/progress",
+        "/api/v1/lessons/:param",
+        "/api/v1/lessons/:param/completion"
+      ]
+    },
+    {
+      "route": "/login",
+      "apiDependencies": [
+        "/api/v1/auth/register",
+        "/api/v1/courses/search",
+        "/api/v1/me/avatar"
+      ]
+    },
+    {
+      "route": "/notifications",
+      "apiDependencies": [
+        "/api/v1/notifications",
+        "/api/v1/notifications/:param/read"
+      ]
+    },
+    {
+      "route": "/progress",
+      "apiDependencies": []
+    },
+    {
+      "route": "/register",
+      "apiDependencies": [
+        "/api/v1/auth/register",
+        "/api/v1/courses/search",
+        "/api/v1/me/avatar"
+      ]
+    },
+    {
+      "route": "/settings",
+      "apiDependencies": []
+    },
+    {
+      "route": "/student",
+      "apiDependencies": [
+        "/api/v1/assistant/chat",
+        "/api/v1/courses/:param/progress",
+        "/api/v1/lessons/:param/completion",
+        "/api/v1/mastery/courses/:param",
+        "/api/v1/me/courses",
+        "/api/v1/study-plan/current"
+      ]
+    },
+    {
+      "route": "/student/mastery",
+      "apiDependencies": [
+        "/api/v1/assistant/chat",
+        "/api/v1/courses/:param/progress",
+        "/api/v1/lessons/:param/completion",
+        "/api/v1/mastery/courses/:param",
+        "/api/v1/me/courses",
+        "/api/v1/study-plan/current"
+      ]
+    },
+    {
+      "route": "/student/study-plan",
+      "apiDependencies": [
+        "/api/v1/assistant/chat",
+        "/api/v1/courses/:param/progress",
+        "/api/v1/lessons/:param/completion",
+        "/api/v1/mastery/courses/:param",
+        "/api/v1/me/courses",
+        "/api/v1/study-plan/current",
+        "/api/v1/study-plan/generate",
+        "/api/v1/study-plan/items/:param/:param"
+      ]
+    },
+    {
+      "route": "/student/tutor",
+      "apiDependencies": [
+        "/api/v1/assistant/chat",
+        "/api/v1/courses/:param/progress",
+        "/api/v1/lessons/:param/completion",
+        "/api/v1/mastery/courses/:param",
+        "/api/v1/me/courses",
+        "/api/v1/study-plan/current"
+      ]
+    }
+  ],
+  "inventoryConsistency": {
+    "status": "PASS",
+    "checkedConnectRoutes": 22,
+    "checkedShipFeatures": 12,
+    "violations": []
+  }
+}

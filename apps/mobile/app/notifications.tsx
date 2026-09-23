@@ -26,7 +26,7 @@ import {
 import { ScalePressable, FadeSlideIn } from "../src/motion";
 
 export default function NotificationsScreen() {
-  const { r, unread } = useLocalSearchParams<{ r?: string; unread?: string }>();
+  const { r } = useLocalSearchParams<{ r?: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
@@ -55,10 +55,7 @@ export default function NotificationsScreen() {
         const raw = await session.request(url);
         const res = notificationList(raw);
 
-        let nextItems = res.items;
-        if (unread === "1" && nextItems.length > 1) {
-          nextItems = nextItems.map((it, idx) => (idx === 1 ? { ...it, readAt: null } : it));
-        }
+        const nextItems = res.items;
 
         if (cursor) {
           setItems((prev) => [...prev, ...nextItems]);
@@ -82,7 +79,7 @@ export default function NotificationsScreen() {
 
   useEffect(() => {
     void fetchNotifications(month);
-  }, [fetchNotifications, month, r, unread]);
+  }, [fetchNotifications, month, r]);
 
   const handleMarkRead = async (item: NotificationItem) => {
     if (markingId || isRead(item)) return;
