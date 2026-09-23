@@ -32,7 +32,6 @@ export function getFeaturesForRole(role?: string): FeatureItem[] {
       { id: "commerce", label: "Đối soát", icon: "card", bgColor: "#FEF3C7", iconColor: "#D97706", path: "/admin/commerce" },
       { id: "revenue", label: "Doanh thu", icon: "trending", bgColor: "#D1FAE5", iconColor: "#059669", path: "/admin/revenue" },
       { id: "stats", label: "Thống kê", icon: "stats", bgColor: "#CFFAFE", iconColor: "#0891B2", path: "/admin/stats" },
-      { id: "logs", label: "Nhật ký Logs", icon: "document", bgColor: "#FCE7F3", iconColor: "#DB2777", path: "/admin/logs" },
       { id: "settings", label: "Cài đặt", icon: "settings", bgColor: "#F1F5F9", iconColor: "#475569", path: "/settings" },
     ];
   }

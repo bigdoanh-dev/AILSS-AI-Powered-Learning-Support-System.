@@ -201,25 +201,6 @@ export default function AdminDashboard() {
               <Icon name="chevronRight" size={18} color={tokens.color.muted} />
             </Pressable>
 
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Nhật ký & Kiểm toán Hệ thống"
-              style={ds.queueCard}
-              onPress={() => router.push("/admin/logs" as Href)}
-            >
-              <View style={ds.queueHeader}>
-                <View style={[ds.queueIconWrap, { backgroundColor: "#EDE9FE" }]}>
-                  <Icon name="document" size={20} color="#7C3AED" />
-                </View>
-                <View style={ds.queueText}>
-                  <Text style={ds.queueTitle}>Nhật ký & Kiểm toán Logs</Text>
-                  <Text style={ds.queueDesc}>
-                    Audit Trail toàn hệ thống, xác thực Auth & bảo mật Gateway
-                  </Text>
-                </View>
-              </View>
-              <Icon name="chevronRight" size={18} color={tokens.color.muted} />
-            </Pressable>
           </View>
 
           {/* Operational Queues & Modules */}

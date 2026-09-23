@@ -1,10 +1,13 @@
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const baselinePath = new URL("../../lint-baseline.json", import.meta.url);
+const rootPath = fileURLToPath(new URL("../../", import.meta.url));
 const eslint = spawnSync("pnpm", ["exec", "eslint", "apps", "packages", "--format", "json", "--no-warn-ignored"], {
-  cwd: new URL("../../", import.meta.url),
+  cwd: rootPath,
   encoding: "utf8",
   maxBuffer: 32 * 1024 * 1024,
 });
@@ -14,13 +17,14 @@ const results = JSON.parse(eslint.stdout);
 const issues = results.flatMap((result) => result.messages
   .filter((message) => message.severity > 0)
   .map((message) => ({
-    file: relative(new URL("../../", import.meta.url).pathname, result.filePath),
-    rule: message.ruleId ?? "parser",
+    relativePath: relative(rootPath, result.filePath).replaceAll("\\", "/"),
+    ruleId: message.ruleId ?? "parser",
     severity: message.severity === 2 ? "error" : "warning",
     line: message.line,
     column: message.column,
+    messageFingerprint: createHash("sha256").update(message.message).digest("hex"),
   })));
-const signature = (issue) => `${issue.file}\u0000${issue.rule}\u0000${issue.severity}`;
+const signature = (issue) => `${issue.relativePath}\u0000${issue.ruleId}\u0000${issue.severity}\u0000${issue.messageFingerprint}`;
 const counts = (list) => list.reduce((map, issue) => map.set(signature(issue), (map.get(signature(issue)) ?? 0) + 1), new Map());
 
 if (process.argv.includes("--update")) {
