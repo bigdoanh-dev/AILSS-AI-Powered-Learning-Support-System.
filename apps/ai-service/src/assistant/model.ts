@@ -75,4 +75,11 @@ export interface ChatResponse {
   readonly citations: readonly Citation[];
   readonly mode: AssistantMode;
   readonly safetyBlocked?: boolean;
+  /** Bounded, authoritative catalog matches; not a personalized ranking. */
+  readonly catalogCourses?: readonly {
+    readonly courseId: string;
+    readonly title: string;
+    readonly priceAmount: number;
+    readonly priceCurrency: string;
+  }[];
 }

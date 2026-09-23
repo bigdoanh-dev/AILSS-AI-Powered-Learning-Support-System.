@@ -193,11 +193,14 @@ export class AssistantRepository {
       `SELECT message_id, conversation_id, created_at, sender, content, tool_calls, tool_results, citations
        FROM ai_keyspace.assistant_messages_by_conversation
        WHERE conversation_id = ?
+       ORDER BY created_at DESC, message_id DESC
        LIMIT ?`,
       [uuid(conversationId), limit],
       LOCAL_QUORUM,
     );
 
+    // Cassandra stores this partition in ascending clustering order. Fetch the latest
+    // rows first, then restore chronological order for the LLM and conversation UI.
     return rows.map((r) => {
       const createdAtVal: unknown = r.get("created_at");
       const toolCallsRaw: unknown = r.get("tool_calls");
@@ -240,7 +243,7 @@ export class AssistantRepository {
         ...(citations ? { citations } : {}),
         createdAt: createdAtVal instanceof Date ? createdAtVal : new Date(String(createdAtVal)),
       };
-    });
+    }).reverse();
   }
 
   public async logToolInvocation(input: LogToolInvocationInput): Promise<void> {
