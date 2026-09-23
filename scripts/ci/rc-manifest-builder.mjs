@@ -1,6 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import path from "node:path";
 
 export async function computeSha256(filePath) {
   const content = await readFile(filePath);
@@ -69,10 +68,10 @@ export async function buildReleaseManifest({
   rcVersion = "AILSS 6.2.0-rc4",
   releaseTag = "v6.2.0-rc.4",
   releaseGitSha = "HEAD",
-  outputFile = "release620rc4-test-manifest.json",
+  outputFile = "artifacts/release-evidence/release620rc4-test-manifest.json",
   isCompact = true,
 } = {}) {
-  const rc1Content = await readFile("release620rc1-test-manifest.json", "utf8");
+  const rc1Content = await readFile("artifacts/release-evidence/release620rc1-test-manifest.json", "utf8");
   const rc1Manifest = JSON.parse(rc1Content);
 
   const suites = [];
@@ -214,7 +213,7 @@ export async function buildReleaseManifest({
         mobileTests,
       },
       worktreeStatus: "CLEAN",
-      candidateClassification: "CONTROLLED_PRODUCT_PILOT_READY",
+      candidateClassification: "RUNTIME_INTEGRATION_INCOMPLETE",
       finalReleaseDecision: "HELD_UNRELEASED",
     },
     summary: {

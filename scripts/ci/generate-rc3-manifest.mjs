@@ -6,7 +6,7 @@ buildReleaseManifest({
   rcVersion: "AILSS 6.2.0-rc3",
   releaseTag: "v6.2.0-rc.3",
   releaseGitSha: sha,
-  outputFile: "release620rc3-test-manifest.json",
+  outputFile: "artifacts/release-evidence/release620rc3-test-manifest.json",
   isCompact: true,
 }).catch((err) => {
   console.error("RC3 manifest generation failed:", err);

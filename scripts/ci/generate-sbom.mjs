@@ -142,7 +142,7 @@ async function run() {
     ],
   };
 
-  const outputPath = path.join(root, "sbom.cyclonedx.json");
+  const outputPath = path.join(root, "artifacts/release-evidence/sbom.cyclonedx.json");
   await writeFile(outputPath, JSON.stringify(sbom, null, 2), "utf8");
 
   const auditSummary = {
