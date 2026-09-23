@@ -1,6 +1,7 @@
 import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
 import { Text, View, Pressable, ActivityIndicator, StyleSheet, ScrollView, Modal, Image } from "react-native";
 import { router, type Href } from "expo-router";
+import * as Crypto from "expo-crypto";
 import { runtime } from "../../src/runtime";
 import { courses as decodeCourses, type Course } from "../../src/learning";
 import { ApiError } from "../../src/api";
@@ -146,7 +147,7 @@ export default function CourseDiscoveryScreen() {
   const [activeQuery, setActiveQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [enrollFilter, setEnrollFilter] = useState<"ALL" | "UNENROLLED" | "ENROLLED">("UNENROLLED");
-  const [enrolledIds, setEnrolledIds] = useState<string[]>(["10000000-0000-4000-8000-000000000001"]);
+  const [enrolledIds, setEnrolledIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [checkoutCourse, setCheckoutCourse] = useState<MobileCatalogCourse | null>(null);
   const [buying, setBuying] = useState(false);
@@ -194,13 +195,9 @@ export default function CourseDiscoveryScreen() {
   const secs = countdown % 60;
   const timeFormatted = `${mins}:${secs < 10 ? "0" : ""}${secs}`;
 
-  const transferCode = checkoutCourse ? `AILSS ${checkoutCourse.courseId.slice(-6).toUpperCase()}` : "";
-  const vietQrUrl = checkoutCourse
-    ? `https://img.vietqr.io/image/970422-0982182701-compact2.png?amount=${checkoutCourse.priceValue}&addInfo=${encodeURIComponent(transferCode)}&accountName=NGUYEN%20VAN%20DOANH`
-    : "";
-  const sepayQrUrl = checkoutCourse
-    ? `https://qr.sepay.vn/img?bank=MBBank&acc=0982182701&template=compact&amount=${checkoutCourse.priceValue}&des=${encodeURIComponent(transferCode)}`
-    : "";
+  const transferCode = "";
+  const vietQrUrl = "";
+  const sepayQrUrl = "";
   const activeQrUrl = qrFallback ? sepayQrUrl : vietQrUrl;
 
   const handleCopy = (val: string, field: string) => {
@@ -211,26 +208,39 @@ export default function CourseDiscoveryScreen() {
 
   const handleCopyAll = () => {
     if (!checkoutCourse) return;
-    const allInfo = `Ngân hàng: MB Bank\nSTK: 0982182701\nChủ TK: NGUYEN VAN DOANH\nSố tiền: ${checkoutCourse.price}\nNội dung: ${transferCode}`;
+    const allInfo = "Thông tin thanh toán chưa được máy chủ phát hành.";
     setCopiedField("all");
     setToastMsg(`✓ Đã sao chép toàn bộ thông tin thanh toán!`);
     setTimeout(() => setCopiedField(null), 2500);
   };
 
   const handleSimulatePayment = () => {
-    if (!checkoutCourse) return;
-    setBuying(true);
-    setTimeout(() => {
-      const bought = checkoutCourse;
-      const tx = `TXN-${Date.now().toString().slice(-6)}`;
-      const nowTime = new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) + " • " + new Date().toLocaleDateString("vi-VN");
-      setEnrolledIds((prev) => [...prev, bought.courseId]);
-      setBuying(false);
-      setCheckoutCourse(null);
-      setTransactionId(tx);
-      setPaymentTime(nowTime);
-      setSuccessCourse(bought);
-    }, 600);
+    setBuying(false);
+    setToastMsg("Thanh toán Mobile đang tạm khóa cho đến khi máy chủ phát hành đơn và QR có thể xác minh.");
+  };
+
+  const handleEnrollFree = async (course: MobileCatalogCourse) => {
+    if (snapshot.state !== "AUTHENTICATED") {
+      router.push("/login");
+      return;
+    }
+    try {
+      setLoading(true);
+      await session.request(`/api/v1/courses/${course.courseId}/enrollments`, {
+        method: "POST",
+        idempotencyKey: Crypto.randomUUID(),
+      });
+      setEnrolledIds((prev) => Array.from(new Set([...prev, course.courseId])));
+      setToastMsg(`✓ Đã đăng ký thành công khóa học miễn phí "${course.title}"!`);
+    } catch (cause: unknown) {
+      setToastMsg(
+        cause instanceof ApiError
+          ? cause.message
+          : "Máy chủ chưa xác nhận đăng ký; quyền học không được thay đổi.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredCourses = CATALOG_COURSES.filter((c) => {
@@ -439,7 +449,9 @@ export default function CourseDiscoveryScreen() {
                     ) : c.priceType === "PAID" ? (
                       <Pressable
                         style={localStyles.buyNowBtn}
-                        onPress={() => setCheckoutCourse(c)}
+                        onPress={() => {
+                          setToastMsg("Giá đang hiển thị chỉ là dữ liệu danh mục. Thanh toán Mobile chưa được mở khi chưa có offering từ máy chủ.");
+                        }}
                       >
                         <Icon name="card" size={14} color="#FFFFFF" />
                         <Text style={localStyles.buyNowText}>Mua ngay</Text>
@@ -447,10 +459,7 @@ export default function CourseDiscoveryScreen() {
                     ) : (
                       <Pressable
                         style={[localStyles.buyNowBtn, { backgroundColor: "#16A34A" }]}
-                        onPress={() => {
-                          setEnrolledIds((prev) => [...prev, c.courseId]);
-                          setToastMsg(`✓ Đã đăng ký thành công khóa học miễn phí "${c.title}"!`);
-                        }}
+                        onPress={() => void handleEnrollFree(c)}
                       >
                         <Icon name="book" size={14} color="#FFFFFF" />
                         <Text style={localStyles.buyNowText}>Học miễn phí</Text>
@@ -555,11 +564,11 @@ export default function CourseDiscoveryScreen() {
                     <Text style={localStyles.paymentLabel}>Số tài khoản:</Text>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                       <Text style={[localStyles.paymentVal, { color: "#0284C7", fontWeight: "800", fontSize: 14 }]}>
-                        0982182701
+                        Chưa được phát hành
                       </Text>
                       <Pressable
                         style={[localStyles.miniCopyBtn, copiedField === "stk" && localStyles.miniCopyBtnActive]}
-                        onPress={() => handleCopy("0982182701", "stk")}
+                        onPress={() => handleCopy("", "stk")}
                       >
                         <Text style={localStyles.miniCopyText}>{copiedField === "stk" ? "✓ Đã chép" : "Sao chép"}</Text>
                       </Pressable>
@@ -569,10 +578,10 @@ export default function CourseDiscoveryScreen() {
                   <View style={localStyles.paymentRow}>
                     <Text style={localStyles.paymentLabel}>Chủ tài khoản:</Text>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={localStyles.paymentVal}>NGUYEN VAN DOANH</Text>
+                      <Text style={localStyles.paymentVal}>Chưa được phát hành</Text>
                       <Pressable
                         style={[localStyles.miniCopyBtn, copiedField === "name" && localStyles.miniCopyBtnActive]}
-                        onPress={() => handleCopy("NGUYEN VAN DOANH", "name")}
+                        onPress={() => handleCopy("", "name")}
                       >
                         <Text style={localStyles.miniCopyText}>{copiedField === "name" ? "✓ Đã chép" : "Sao chép"}</Text>
                       </Pressable>
@@ -1340,4 +1349,3 @@ const localStyles = StyleSheet.create({
     color: "#64748B",
   },
 });
-

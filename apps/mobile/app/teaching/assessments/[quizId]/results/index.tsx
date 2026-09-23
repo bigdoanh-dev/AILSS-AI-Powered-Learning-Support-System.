@@ -121,8 +121,12 @@ export default function LecturerQuizResultsScreen() {
           },
         );
       }
-    } catch {
-      // Local fallback
+    } catch (cause: unknown) {
+      Alert.alert(
+        "Chưa lưu được điểm",
+        cause instanceof ApiError ? cause.message : "Máy chủ chưa xác nhận kết quả chấm điểm.",
+      );
+      return;
     }
 
     gradeSubmission(gradingItem.attemptId, manualScore, manualFeedback);

@@ -3,7 +3,6 @@ import { Text, View, StyleSheet, Pressable } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSyncExternalStore } from "react";
 import * as Crypto from "expo-crypto";
-import { ApiError } from "../../../../../../src/api";
 import { runtime } from "../../../../../../src/runtime";
 import {
   sessionDetail,
@@ -19,99 +18,6 @@ const STATUS_LABELS: Record<string, string> = {
   EXCUSED: "Có phép",
   NOT_RECORDED: "Chưa ghi nhận",
 };
-
-const FALLBACK_SESSIONS: Record<string, ClassSession> = {
-  "sess-1": {
-    sessionId: "sess-1",
-    classId: "10000000-0000-4000-8000-000000000001",
-    title: "Buổi 1: Chỉ mục B-Tree & Tối ưu truy vấn EXPLAIN ANALYZE",
-    mode: "OFFLINE",
-    status: "SCHEDULED",
-    startAt: new Date(Date.now() - 30 * 60000).toISOString(),
-    endAt: new Date(Date.now() + 90 * 60000).toISOString(),
-    roomName: "Phòng P.302 (Tòa H1)",
-  },
-  "sess-2": {
-    sessionId: "sess-2",
-    classId: "10000000-0000-4000-8000-000000000002",
-    title: "Buổi 2: Thực hành REST API với FastAPI & Vector DB",
-    mode: "ONLINE",
-    status: "SCHEDULED",
-    startAt: new Date(Date.now() - 15 * 60000).toISOString(),
-    endAt: new Date(Date.now() + 105 * 60000).toISOString(),
-    roomName: "Live Classroom (Trực tuyến AILSS)",
-  },
-  "sess-3": {
-    sessionId: "sess-3",
-    classId: "10000000-0000-4000-8000-000000000003",
-    title: "Buổi 3: Thiết lập GitHub Actions & Docker Pipeline",
-    mode: "OFFLINE",
-    status: "SCHEDULED",
-    startAt: new Date(Date.now() - 10 * 60000).toISOString(),
-    endAt: new Date(Date.now() + 110 * 60000).toISOString(),
-    roomName: "Phòng Lab 405 (Tòa C2)",
-  },
-};
-
-const STUDENT_NAMES: Record<string, string> = {
-  "sv-2210101": "Nguyễn Văn An (MSSV: 2210101)",
-  "sv-2210102": "Trần Thị Bích (MSSV: 2210102)",
-  "sv-2210103": "Lê Hoàng Nam (MSSV: 2210103)",
-  "sv-2210104": "Phạm Minh Đức (MSSV: 2210104)",
-  "sv-2210105": "Đỗ Quỳnh Trang (MSSV: 2210105)",
-  "sv-2210106": "Vũ Hải Đăng (MSSV: 2210106)",
-};
-
-const DEFAULT_FALLBACK_ROSTER: AttendanceEntry[] = [
-  {
-    studentId: "sv-2210101",
-    attendanceStatus: "PRESENT",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "ONLINE",
-    connectedDurationSeconds: 5400,
-  },
-  {
-    studentId: "sv-2210102",
-    attendanceStatus: "PRESENT",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "ONLINE",
-    connectedDurationSeconds: 5200,
-  },
-  {
-    studentId: "sv-2210103",
-    attendanceStatus: "EXCUSED",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "OFFLINE",
-    connectedDurationSeconds: 0,
-  },
-  {
-    studentId: "sv-2210104",
-    attendanceStatus: "NOT_RECORDED",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "OFFLINE",
-    connectedDurationSeconds: 0,
-  },
-  {
-    studentId: "sv-2210105",
-    attendanceStatus: "ABSENT",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "OFFLINE",
-    connectedDurationSeconds: 0,
-  },
-  {
-    studentId: "sv-2210106",
-    attendanceStatus: "NOT_RECORDED",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "OFFLINE",
-    connectedDurationSeconds: 0,
-  },
-];
 
 export default function AttendanceScreen() {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
@@ -136,22 +42,11 @@ export default function AttendanceScreen() {
 
         const aVal = await session.request(`/api/v1/class-sessions/${sessionId}/attendance`, { signal });
         setRoster(attendanceRoster(aVal));
-      } catch (_e: unknown) {
+      } catch {
         if (!signal?.aborted) {
-          // Fallback to local session and roster so screen is fully interactive
-          const fallback =
-            FALLBACK_SESSIONS[sessionId] ?? {
-              sessionId,
-              classId: "10000000-0000-4000-8000-000000000001",
-              title: "Buổi học chuyên ngành AILSS",
-              mode: "OFFLINE",
-              status: "SCHEDULED",
-              startAt: new Date(Date.now() - 30 * 60000).toISOString(),
-              endAt: new Date(Date.now() + 90 * 60000).toISOString(),
-              roomName: "Phòng P.302 (Tòa H1)",
-            };
-          setClassSessionItem(fallback);
-          setRoster((prev) => prev ?? DEFAULT_FALLBACK_ROSTER);
+          setClassSessionItem(null);
+          setRoster(null);
+          setError("Không thể xác minh buổi học và danh sách điểm danh từ máy chủ.");
         }
       }
     },
@@ -186,35 +81,37 @@ export default function AttendanceScreen() {
       });
       setMsg(`✓ Đã cập nhật trạng thái ${STATUS_LABELS[status]} cho học viên.`);
       await fetchData();
-    } catch (_e: unknown) {
-      // Offline / demo fallback: update state locally so user never gets stuck
-      setRoster((prev) =>
-        prev
-          ? prev.map((item) =>
-              item.studentId === studentId
-                ? { ...item, attendanceStatus: status, attendanceVersion: (item.attendanceVersion || 1) + 1 }
-                : item,
-            )
-          : null,
-      );
-      const studentName = STUDENT_NAMES[studentId] || `Học viên ${studentId.slice(0, 8)}`;
-      setMsg(`✓ Đã cập nhật: ${studentName} → [${STATUS_LABELS[status]}]`);
+    } catch {
+      setMsg("Không thể cập nhật điểm danh; dữ liệu cục bộ không được thay đổi khi máy chủ chưa xác nhận.");
     } finally {
       setBusyStudentId(null);
     }
   };
 
-  const handleMarkAllPresent = () => {
-    setRoster((prev) =>
-      prev
-        ? prev.map((item) => ({
-            ...item,
-            attendanceStatus: "PRESENT",
-            attendanceVersion: (item.attendanceVersion || 1) + 1,
-          }))
-        : null,
-    );
-    setMsg("✓ Đã điểm danh Có mặt cho toàn bộ sinh viên trong lớp.");
+  const handleMarkAllPresent = async () => {
+    if (!sessionId || !roster) return;
+    setMsg("");
+    setBusyStudentId("ALL");
+    try {
+      await Promise.all(
+        roster
+          .filter((item) => item.attendanceStatus !== "PRESENT")
+          .map((item) =>
+            session.request(`/api/v1/class-sessions/${sessionId}/attendance/${item.studentId}`, {
+              method: "PUT",
+              headers: { "Idempotency-Key": Crypto.randomUUID(), "If-Match": `"v${item.attendanceVersion}"` },
+              body: { attendanceStatus: "PRESENT" },
+            }),
+          ),
+      );
+      await fetchData();
+      setMsg("✓ Máy chủ đã xác nhận điểm danh Có mặt cho toàn bộ học viên.");
+    } catch {
+      setMsg("Không thể điểm danh hàng loạt; màn hình sẽ tải lại dữ liệu đã được máy chủ xác nhận.");
+      await fetchData();
+    } finally {
+      setBusyStudentId(null);
+    }
   };
 
   if (snapshot.user?.role !== "LECTURER") {
@@ -228,7 +125,7 @@ export default function AttendanceScreen() {
 
   const renderAttendanceRow = ({ item, index }: { item: AttendanceEntry; index: number }) => {
     const isBusy = busyStudentId === item.studentId;
-    const studentLabel = STUDENT_NAMES[item.studentId] || `${index + 1}. Học viên ${item.studentId.slice(0, 8)}…`;
+    const studentLabel = `${index + 1}. Học viên ${item.studentId.slice(0, 8)}…`;
 
     return (
       <View style={at.rowCard}>
@@ -344,6 +241,7 @@ export default function AttendanceScreen() {
         <View style={{ marginBottom: 10 }}>
           <Pressable
             accessibilityRole="button"
+            disabled={busyStudentId !== null}
             style={at.quickAllBtn}
             onPress={handleMarkAllPresent}
           >

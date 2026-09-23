@@ -51,18 +51,6 @@ export default function AdminModerationDetailScreen() {
       const target = list.items.find((r) => r.reportId === itemId);
       if (target) {
         setReport(target);
-      } else if (typeof __DEV__ !== "undefined" && __DEV__ && itemId === "demo-report") {
-        setReport({
-          reportId: "demo-report",
-          targetType: "COMMENT",
-          targetId: "comment-sample-882",
-          reason: "Spam quảng cáo dịch vụ bên ngoài",
-          state: "OPEN",
-          decision: null,
-          version: 1,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
       } else {
         setError("Không tìm thấy báo cáo hoặc báo cáo đã được giải quyết.");
       }

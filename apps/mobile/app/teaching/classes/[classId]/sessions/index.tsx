@@ -13,44 +13,6 @@ import {
 } from "../../../../../src/teaching";
 import { Page, Button, NonVirtualizedList, styles, tokens } from "../../../../../src/ui";
 
-const FALLBACK_CLASS_SESSIONS: Record<string, ClassSession[]> = {
-  "10000000-0000-4000-8000-000000000001": [
-    {
-      sessionId: "sess-1",
-      classId: "10000000-0000-4000-8000-000000000001",
-      title: "Buổi 1: Chỉ mục B-Tree & Tối ưu truy vấn EXPLAIN ANALYZE",
-      mode: "OFFLINE",
-      status: "SCHEDULED",
-      startAt: new Date(Date.now() - 30 * 60000).toISOString(),
-      endAt: new Date(Date.now() + 90 * 60000).toISOString(),
-      roomName: "Phòng P.302 (Tòa H1)",
-    },
-    {
-      sessionId: "sess-1b",
-      classId: "10000000-0000-4000-8000-000000000001",
-      title: "Buổi 2: Thiết kế lược đồ phân tán Sharding & Partitioning",
-      mode: "OFFLINE",
-      status: "SCHEDULED",
-      startAt: new Date(Date.now() + 7 * 86400000).toISOString(),
-      endAt: new Date(Date.now() + 7 * 86400000 + 7200000).toISOString(),
-      roomName: "Phòng P.302 (Tòa H1)",
-    },
-  ],
-};
-
-const DEFAULT_FALLBACK_SESSIONS: ClassSession[] = [
-  {
-    sessionId: "sess-1",
-    classId: "10000000-0000-4000-8000-000000000001",
-    title: "Buổi 1: Tổng quan chương trình & Giới thiệu đề cương",
-    mode: "OFFLINE",
-    status: "SCHEDULED",
-    startAt: new Date(Date.now() - 30 * 60000).toISOString(),
-    endAt: new Date(Date.now() + 90 * 60000).toISOString(),
-    roomName: "Phòng P.302 (Tòa H1)",
-  },
-];
-
 export default function ClassSessionsList() {
   const { classId } = useLocalSearchParams<{ classId: string }>();
   const session = runtime!;
@@ -74,19 +36,11 @@ export default function ClassSessionsList() {
           { signal },
         );
         setItems(classSessions(sessionsVal));
-      } catch (_e: unknown) {
+      } catch (e: unknown) {
         if (!signal?.aborted) {
-          // Fallback to local sessions so screen works smoothly
-          setCls({
-            classId,
-            name: "Cơ sở dữ liệu Nâng cao & Tối ưu hóa - Nhóm 01",
-            classKind: "ACADEMIC",
-            state: "ACTIVE",
-            maxMembers: 70,
-            joinCode: "CSDL-2026",
-            scheduleState: "PUBLISHED",
-          });
-          setItems(FALLBACK_CLASS_SESSIONS[classId] ?? DEFAULT_FALLBACK_SESSIONS);
+          setCls(null);
+          setItems(null);
+          setError(e instanceof ApiError ? e.message : "Không thể tải lịch học từ máy chủ.");
         }
       }
     },

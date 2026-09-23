@@ -43,26 +43,7 @@ export default function QuizDetailScreen() {
         setError("Bạn chưa đủ điều kiện tham gia bài kiểm tra này.");
         return;
       }
-      // Demo fallback for mock quizzes (quiz-1, quiz-2, etc.)
-      const demoQuiz: QuizDetail = {
-        quizId,
-        targetType: "COURSE",
-        targetId: "10000000-0000-4000-8000-000000000001",
-        title: quizId === "quiz-2"
-          ? "Đề thi thử Thích ứng AI: JavaScript & REST API"
-          : quizId === "quiz-3"
-            ? "Kiểm tra 15 phút: Mô hình hóa ERD & Ràng buộc toàn vẹn"
-            : "Kiểm tra trắc nghiệm AI: Chuẩn hóa dữ liệu & SQL Nâng cao",
-        state: "PUBLISHED",
-        currentVersion: 1,
-        questionCount: 10,
-        durationSeconds: 2700,
-        attemptLimit: 3,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        questions: [],
-      };
-      setQuiz(demoQuiz);
+      setError(err instanceof ApiError ? err.message : "Không thể xác minh bài kiểm tra từ máy chủ.");
     } finally {
       setLoading(false);
     }
@@ -86,9 +67,8 @@ export default function QuizDetailScreen() {
 
       const parsed = decodeAttemptWithQuestions(res);
       router.push(`/assessments/${quizId}/attempt/${parsed.attempt.attemptId}` as Href);
-    } catch {
-      // Fallback to demo attempt
-      router.push(`/assessments/${quizId}/attempt/att-demo-${Date.now()}` as Href);
+    } catch (err: unknown) {
+      setError(err instanceof ApiError ? err.message : "Máy chủ chưa tạo lượt làm bài; vui lòng thử lại.");
     } finally {
       setStarting(false);
     }

@@ -43,33 +43,10 @@ export default function QuizResultScreen() {
 
       setResult(decodeAssessmentResult(resRes));
       setQuiz(decodeQuizDetail(quizRes));
-    } catch {
-      // Demo result fallback
-      const demoResult: AssessmentResult = {
-        attemptId: resultId,
-        quizId,
-        quizVersion: 1,
-        score: "9.0",
-        maxScore: "10.0",
-        submittedAt: new Date().toISOString(),
-        resultVersion: 1,
-        gradingAlgorithmVersion: "AI-ADAPTIVE-V1",
-      };
-      const demoQuiz: QuizDetail = {
-        quizId,
-        targetType: "COURSE",
-        targetId: "10000000-0000-4000-8000-000000000001",
-        title: "Kiểm tra trắc nghiệm AI: Chuẩn hóa dữ liệu & SQL Nâng cao",
-        state: "PUBLISHED",
-        currentVersion: 1,
-        questionCount: 5,
-        durationSeconds: 2700,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        questions: [],
-      };
-      setResult(demoResult);
-      setQuiz(demoQuiz);
+    } catch (cause: unknown) {
+      setResult(null);
+      setQuiz(null);
+      setError(cause instanceof ApiError ? cause.message : "Không thể xác minh kết quả bài thi.");
     } finally {
       setLoading(false);
     }
@@ -464,4 +441,3 @@ const screenStyles = StyleSheet.create({
     marginBottom: tokens.space.xl,
   },
 });
-
