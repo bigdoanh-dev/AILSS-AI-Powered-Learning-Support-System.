@@ -1,6 +1,6 @@
 import { useSyncExternalStore, useState, useEffect } from "react";
 import { Text, View, StyleSheet, ScrollView, Modal, StatusBar, Image } from "react-native";
-import { router, type Href } from "expo-router";
+import { Redirect, router, type Href } from "expo-router";
 import { runtime } from "../src/runtime";
 import {
   studentSchedule,
@@ -14,79 +14,15 @@ import {
 } from "../src/classroom";
 import { ownedOfferings, uniqueCoursesFromOfferings } from "../src/teaching";
 import { courses as decodeCourses, type Course } from "../src/learning";
-import {
-  Button,
-  Badge,
-  Icon,
-  tokens,
-  styles,
-  BottomNavBar,
-  type IconName,
-} from "../src/ui";
+import { Button, Badge, Icon, tokens, styles, BottomNavBar, type IconName } from "../src/ui";
 import { CinematicIntro } from "../src/CinematicIntro";
-import {
-  FadeSlideIn,
-  ScalePressable,
-  StaggerPop,
-  PulseBadge,
-  FloatingElement,
-  AnimatedProgressBar,
-  AnimatedNumber,
-} from "../src/motion";
+import { FadeSlideIn, ScalePressable, StaggerPop, PulseBadge, FloatingElement } from "../src/motion";
+import { TutorAvatar } from "../src/TutorAvatar";
 
 import { getFeaturesForRole, type FeatureItem } from "../src/features";
 export { getFeaturesForRole, type FeatureItem };
 import { getSystemSettings, updateSystemSettings, subscribeSystemSettings } from "../src/settings";
 import { LANGUAGES, getTranslation } from "../src/i18n";
-
-interface NewsItem {
-  id: string;
-  title: string;
-  category: string;
-  date: string;
-  accentColor: string;
-  icon: IconName;
-  readTime: string;
-}
-
-const NEWS_LIST: NewsItem[] = [
-  {
-    id: "n1",
-    title: "Trợ lý AI AILSS 2.0: Tự động phân tích điểm yếu và cá nhân hóa đề thi thích ứng",
-    category: "CÔNG NGHỆ AI",
-    date: "16/09/2026",
-    accentColor: "#062E3F",
-    icon: "sparkles",
-    readTime: "3 phút đọc",
-  },
-  {
-    id: "n2",
-    title: "Ra mắt bộ đề thi trắc nghiệm AI thích ứng cho môn Ngôn ngữ kịch bản & Web",
-    category: "ĐỀ THI MỚI",
-    date: "15/09/2026",
-    accentColor: "#4F46E5",
-    icon: "academic",
-    readTime: "5 phút đọc",
-  },
-  {
-    id: "n3",
-    title: "Cập nhật bài giảng thực hành tương tác và giải đáp trực tuyến cùng giảng viên",
-    category: "BÀI GIẢNG",
-    date: "12/09/2026",
-    accentColor: "#059669",
-    icon: "book",
-    readTime: "4 phút đọc",
-  },
-  {
-    id: "n4",
-    title: "Lịch mở các buổi học trực tuyến Live tương tác cao trong tuần này",
-    category: "LỚP HỌC LIVE",
-    date: "10/09/2026",
-    accentColor: "#D97706",
-    icon: "calendar",
-    readTime: "2 phút đọc",
-  },
-];
 
 interface HomeAssignment {
   id: string;
@@ -106,57 +42,9 @@ interface HomeAssessment {
   score?: number;
 }
 
-const DEFAULT_ASSIGNMENTS: HomeAssignment[] = [
-  {
-    id: "asg-1",
-    title: "Bài tập lớn: Thiết kế CSDL quan hệ chuẩn hóa 3NF",
-    className: "Cơ sở dữ liệu Nâng cao",
-    dueDate: "23:59 Hôm nay",
-    status: "PENDING",
-  },
-  {
-    id: "asg-2",
-    title: "Bài thực hành 03: Xây dựng REST API với Node.js",
-    className: "Lập trình Web & AI",
-    dueDate: "23:59 Ngày mai",
-    status: "PENDING",
-  },
-  {
-    id: "asg-3",
-    title: "Bài tập cá nhân: Tối ưu truy vấn với B-Tree Index",
-    className: "Cơ sở dữ liệu Nâng cao",
-    dueDate: "20/09/2026",
-    status: "SUBMITTED",
-  },
-];
-
-const DEFAULT_ASSESSMENTS: HomeAssessment[] = [
-  {
-    id: "quiz-1",
-    title: "Kiểm tra trắc nghiệm AI: Chuẩn hóa dữ liệu & SQL Nâng cao",
-    className: "Cơ sở dữ liệu Nâng cao",
-    questionsCount: 30,
-    durationMinutes: 45,
-    status: "PENDING",
-  },
-  {
-    id: "quiz-2",
-    title: "Đề thi thử Thích ứng AI: JavaScript & REST API",
-    className: "Lập trình Web & AI",
-    questionsCount: 20,
-    durationMinutes: 30,
-    status: "PENDING",
-  },
-  {
-    id: "quiz-3",
-    title: "Kiểm tra 15 phút: Mô hình hóa ERD & Ràng buộc toàn vẹn",
-    className: "Cơ sở dữ liệu Nâng cao",
-    questionsCount: 10,
-    durationMinutes: 15,
-    status: "COMPLETED",
-    score: 9.5,
-  },
-];
+// The sections stay empty until they can display authoritative assignments/results.
+const DEFAULT_ASSIGNMENTS: HomeAssignment[] = [];
+const DEFAULT_ASSESSMENTS: HomeAssessment[] = [];
 
 export default function Home() {
   const session = runtime!;
@@ -177,6 +65,7 @@ export default function Home() {
   useEffect(() => {
     let active = true;
     if (snapshot.state === "AUTHENTICATED") {
+      setUserAvatarUrl(null);
       void session
         .request("/api/v1/me/avatar")
         .then((res) => {
@@ -184,29 +73,30 @@ export default function Home() {
             setUserAvatarUrl((res as { dataUrl: string | null }).dataUrl);
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          if (active) setUserAvatarUrl(null);
+        });
     } else {
       setUserAvatarUrl(null);
     }
     return () => {
       active = false;
     };
-  }, [snapshot.state, session]);
+  }, [snapshot.state, snapshot.user?.userId, session]);
 
   useEffect(() => {
     let active = true;
     async function loadUpcoming() {
       if (snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT") {
+        if (active) setUpcomingSession(null);
         try {
           const range = getDateRangeForSchedule(new Date(), 7);
           const data = await session.request(`/api/v1/me/schedule?from=${range.from}&to=${range.to}`);
           const scheduleList = studentSchedule(data);
           const next = nextUpcomingSession(scheduleList);
-          if (active && next) {
-            setUpcomingSession(next);
-          }
+          if (active) setUpcomingSession(next ?? null);
         } catch {
-          // Non-fatal enhancement
+          if (active) setUpcomingSession(null);
         }
       } else {
         if (active) setUpcomingSession(null);
@@ -216,7 +106,7 @@ export default function Home() {
     return () => {
       active = false;
     };
-  }, [snapshot.state, snapshot.user?.role, session]);
+  }, [snapshot.state, snapshot.user?.role, snapshot.user?.userId, session]);
 
   useEffect(() => {
     let active = true;
@@ -246,9 +136,7 @@ export default function Home() {
       try {
         const path = "/api/v1/courses?categoryId=10000000-0000-4000-8000-000000000001&limit=4";
         const data =
-          snapshot.state === "AUTHENTICATED"
-            ? await session.request(path)
-            : await session.api.request(path);
+          snapshot.state === "AUTHENTICATED" ? await session.request(path) : await session.api.request(path);
         if (active) {
           setFeaturedCourses(decodeCourses(data));
         }
@@ -266,13 +154,14 @@ export default function Home() {
     let active = true;
     async function loadEnrolled() {
       if (snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT") {
+        if (active) setEnrolledList([]);
         try {
           const data = await session.request("/api/v1/me/courses");
           if (active) {
             setEnrolledList(decodeCourses(data));
           }
         } catch {
-          // Non-fatal enhancement
+          if (active) setEnrolledList([]);
         }
       } else {
         if (active) setEnrolledList([]);
@@ -282,19 +171,20 @@ export default function Home() {
     return () => {
       active = false;
     };
-  }, [snapshot.state, snapshot.user?.role, session]);
+  }, [snapshot.state, snapshot.user?.role, snapshot.user?.userId, session]);
 
   useEffect(() => {
     let active = true;
     async function loadClasses() {
       if (snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT") {
+        if (active) setClassList([]);
         try {
           const data = await session.request("/api/v1/me/classes");
           if (active) {
             setClassList(studentClasses(data));
           }
         } catch {
-          // Non-fatal enhancement
+          if (active) setClassList([]);
         }
       } else {
         if (active) setClassList([]);
@@ -304,7 +194,7 @@ export default function Home() {
     return () => {
       active = false;
     };
-  }, [snapshot.state, snapshot.user?.role, session]);
+  }, [snapshot.state, snapshot.user?.role, snapshot.user?.userId, session]);
 
   const activeCourse = enrolledList[0];
   const displayName = snapshot.user?.displayName || "HỌC VIÊN AILSS";
@@ -317,13 +207,21 @@ export default function Home() {
     }
     if (
       snapshot.state !== "AUTHENTICATED" &&
-      (feature.id === "learn" || feature.id === "grades" || feature.id === "ai_quiz" || feature.id === "schedule")
+      (feature.id === "learn" ||
+        feature.id === "grades" ||
+        feature.id === "ai_quiz" ||
+        feature.id === "schedule")
     ) {
       router.push("/login" as Href);
       return;
     }
     router.push(feature.path as Href);
   };
+
+  // The offline workspace presents cached learning data with its sync status.
+  if (snapshot.state === "OFFLINE_CACHE" && snapshot.user?.role === "STUDENT") {
+    return <Redirect href="/student" />;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
@@ -334,7 +232,7 @@ export default function Home() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 28 }}
+        contentContainerStyle={{ paddingBottom: snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT" ? 116 : 28 }}
       >
         {/* Top Deep Navy/Teal Banner matching Screenshot */}
         <FadeSlideIn delay={0} duration={400} fromY={-12}>
@@ -344,7 +242,9 @@ export default function Home() {
               <ScalePressable
                 style={hStyles.userProfile}
                 scaleTo={0.93}
-                onPress={() => router.push(snapshot.state === "AUTHENTICATED" ? ("/account" as Href) : ("/login" as Href))}
+                onPress={() =>
+                  router.push(snapshot.state === "AUTHENTICATED" ? ("/account" as Href) : ("/login" as Href))
+                }
                 accessibilityRole="button"
                 accessibilityLabel="Hồ sơ tài khoản"
               >
@@ -358,7 +258,9 @@ export default function Home() {
                 <View style={{ gap: 2 }}>
                   <Text style={hStyles.greetingSub}>{t("header.greeting")}</Text>
                   <Text style={hStyles.greetingName} numberOfLines={1}>
-                    {snapshot.state === "AUTHENTICATED" ? displayName.toUpperCase() : t("header.guest").toUpperCase()}
+                    {snapshot.state === "AUTHENTICATED"
+                      ? displayName.toUpperCase()
+                      : t("header.guest").toUpperCase()}
                   </Text>
                 </View>
               </ScalePressable>
@@ -432,9 +334,7 @@ export default function Home() {
                     <Badge label={t("badge.platform")} variant="ai" icon="sparkles" />
                   </View>
                   <Text style={hStyles.guestHeroTitle}>{t("hero.guest_title")}</Text>
-                  <Text style={hStyles.guestHeroSub}>
-                    {t("hero.guest_sub")}
-                  </Text>
+                  <Text style={hStyles.guestHeroSub}>{t("hero.guest_sub")}</Text>
                 </View>
               </View>
               <View style={hStyles.guestHeroActions}>
@@ -457,24 +357,17 @@ export default function Home() {
                 >
                   <Text style={hStyles.guestBtnSecondaryText}>Tạo tài khoản mới</Text>
                 </ScalePressable>
-                <ScalePressable
-                  style={hStyles.guestDemoBtn}
-                  scaleTo={0.95}
-                  onPress={() => router.push("/login?role=admin" as Href)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Đăng nhập Quản trị viên"
-                >
-                  <Icon name="shield" size={14} color="#64748B" />
-                  <Text style={hStyles.guestDemoBtnText}>Dùng tài khoản quản trị demo</Text>
-                  <Icon name="chevronRight" size={14} color="#94A3B8" />
-                </ScalePressable>
               </View>
             </View>
           ) : upcomingSession ? (
             <ScalePressable
               style={hStyles.heroClassCard}
               scaleTo={0.96}
-              onPress={() => router.push(`/classes/${upcomingSession.classId}/sessions/${upcomingSession.sessionId}` as Href)}
+              onPress={() =>
+                router.push(
+                  `/classes/${upcomingSession.classId}/sessions/${upcomingSession.sessionId}` as Href,
+                )
+              }
               accessibilityRole="button"
               accessibilityLabel="Chi tiết buổi học sắp diễn ra"
             >
@@ -500,7 +393,8 @@ export default function Home() {
                     parseTimestamp(upcomingSession.startAt),
                     parseTimestamp(upcomingSession.endAt),
                     upcomingSession.timezone,
-                  )} • {upcomingSession.className}
+                  )}{" "}
+                  • {upcomingSession.className}
                 </Text>
                 <Text style={hStyles.heroRoomText} numberOfLines={1}>
                   {upcomingSession.mode === "ONLINE" ? "Trực tuyến • Live Classroom" : "Phòng học trực tiếp"}
@@ -528,7 +422,6 @@ export default function Home() {
               <View style={{ flex: 1, gap: 3 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                   <Badge label="TIẾP TỤC HỌC" variant="ai" icon="sparkles" />
-                  <Text style={{ fontSize: 11, fontWeight: "700", color: "#6366F1" }}>68% hoàn thành</Text>
                 </View>
                 <Text style={hStyles.heroSubjectTitle} numberOfLines={1}>
                   {activeCourse.title}
@@ -661,7 +554,7 @@ export default function Home() {
                       <Icon name="class" size={16} color="#0891B2" />
                     </View>
                     <View>
-                      <AnimatedNumber value={3} suffix=" Lớp" style={hStyles.academicMetricValue} />
+                      <Text style={hStyles.academicMetricValue}>{lecturerInfo?.offerings ?? "—"}</Text>
                       <Text style={hStyles.academicMetricLabel}>Phụ trách</Text>
                     </View>
                   </View>
@@ -673,7 +566,7 @@ export default function Home() {
                       <Icon name="people" size={16} color="#7C3AED" />
                     </View>
                     <View>
-                      <AnimatedNumber value={186} suffix=" SV" style={hStyles.academicMetricValue} />
+                      <Text style={hStyles.academicMetricValue}>—</Text>
                       <Text style={hStyles.academicMetricLabel}>Học viên</Text>
                     </View>
                   </View>
@@ -685,7 +578,7 @@ export default function Home() {
                       <Icon name="award" size={16} color="#DC2626" />
                     </View>
                     <View>
-                      <AnimatedNumber value={14} suffix=" Bài" style={[hStyles.academicMetricValue, { color: "#DC2626" }]} />
+                      <Text style={[hStyles.academicMetricValue, { color: "#DC2626" }]}>—</Text>
                       <Text style={hStyles.academicMetricLabel}>Chờ chấm 🔥</Text>
                     </View>
                   </View>
@@ -716,7 +609,7 @@ export default function Home() {
                       <Icon name="people" size={16} color="#0284C7" />
                     </View>
                     <View>
-                      <AnimatedNumber value={1240} suffix=" SV" style={hStyles.academicMetricValue} />
+                      <Text style={hStyles.academicMetricValue}>—</Text>
                       <Text style={hStyles.academicMetricLabel}>Học viên</Text>
                     </View>
                   </View>
@@ -728,7 +621,7 @@ export default function Home() {
                       <Icon name="shield" size={16} color="#DC2626" />
                     </View>
                     <View>
-                      <AnimatedNumber value={3} suffix=" Hồ sơ" style={[hStyles.academicMetricValue, { color: "#DC2626" }]} />
+                      <Text style={[hStyles.academicMetricValue, { color: "#DC2626" }]}>—</Text>
                       <Text style={hStyles.academicMetricLabel}>Chờ duyệt 🔥</Text>
                     </View>
                   </View>
@@ -747,8 +640,8 @@ export default function Home() {
                       <Icon name="award" size={16} color="#D97706" />
                     </View>
                     <View>
-                      <AnimatedNumber value={8.6} suffix=" / 10" decimals={1} style={hStyles.academicMetricValue} />
-                      <Text style={hStyles.academicMetricLabel}>GPA Tích lũy</Text>
+                      <Text style={hStyles.academicMetricValue}>—</Text>
+                      <Text style={hStyles.academicMetricLabel}>Năng lực</Text>
                     </View>
                   </View>
 
@@ -759,8 +652,8 @@ export default function Home() {
                       <Icon name="sparkles" size={16} color="#DC2626" />
                     </View>
                     <View>
-                      <AnimatedNumber value={5} suffix=" Ngày 🔥" style={hStyles.academicMetricValue} />
-                      <Text style={hStyles.academicMetricLabel}>Chuỗi học tập</Text>
+                      <Text style={hStyles.academicMetricValue}>—</Text>
+                      <Text style={hStyles.academicMetricLabel}>Hoạt động học</Text>
                     </View>
                   </View>
 
@@ -771,7 +664,7 @@ export default function Home() {
                       <Icon name="calendar" size={16} color="#0284C7" />
                     </View>
                     <View>
-                      <AnimatedNumber value={2} suffix=" Bài" style={[hStyles.academicMetricValue, { color: "#DC2626" }]} />
+                      <Text style={[hStyles.academicMetricValue, { color: "#DC2626" }]}>—</Text>
                       <Text style={hStyles.academicMetricLabel}>Hạn hôm nay</Text>
                     </View>
                   </View>
@@ -794,7 +687,13 @@ export default function Home() {
 
               <View style={hStyles.featuresGrid}>
                 {features.map((item, index) => (
-                  <StaggerPop key={item.id} index={index} baseDelay={160} staggerStep={35} style={hStyles.featureItem}>
+                  <StaggerPop
+                    key={item.id}
+                    index={index}
+                    baseDelay={160}
+                    staggerStep={35}
+                    style={hStyles.featureItem}
+                  >
                     <ScalePressable
                       scaleTo={0.88}
                       style={{ alignItems: "center", gap: 6 }}
@@ -818,8 +717,8 @@ export default function Home() {
         )}
 
         {/* Role-Specific Work Sections */}
-        {snapshot.state === "AUTHENTICATED" && (
-          snapshot.user?.role === "LECTURER" ? (
+        {snapshot.state === "AUTHENTICATED" &&
+          (snapshot.user?.role === "LECTURER" ? (
             <>
               {/* LECTURER SECTION 1: Lớp giảng dạy phụ trách */}
               <FadeSlideIn delay={160} duration={450}>
@@ -838,20 +737,34 @@ export default function Home() {
                     <ScalePressable
                       style={hStyles.compactCard}
                       scaleTo={0.97}
-                      onPress={() => router.push("/teaching/classes/10000000-0000-4000-8000-000000000001" as Href)}
+                      onPress={() =>
+                        router.push("/teaching/classes/10000000-0000-4000-8000-000000000001" as Href)
+                      }
                     >
                       <View style={hStyles.cardBadgeRow}>
                         <Badge label="LỚP TRỰC TIẾP (P.302)" variant="neutral" />
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                          <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }} />
+                          <View
+                            style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }}
+                          />
                           <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>Đang dạy</Text>
                         </View>
                       </View>
                       <Text style={hStyles.compactCardTitle} numberOfLines={1}>
                         Cơ sở dữ liệu Nâng cao & Tối ưu hóa - Nhóm 01
                       </Text>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>👥 62 Học viên · 12/15 buổi · 96.4%</Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: 4,
+                          gap: 8,
+                        }}
+                      >
+                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
+                          👥 62 Học viên · 12/15 buổi · 96.4%
+                        </Text>
                         <View style={hStyles.actionMiniBtn}>
                           <Text style={hStyles.actionMiniBtnText}>Vào lớp</Text>
                           <Icon name="chevronRight" size={12} color="#FFFFFF" />
@@ -862,20 +775,34 @@ export default function Home() {
                     <ScalePressable
                       style={hStyles.compactCard}
                       scaleTo={0.97}
-                      onPress={() => router.push("/teaching/classes/10000000-0000-4000-8000-000000000002" as Href)}
+                      onPress={() =>
+                        router.push("/teaching/classes/10000000-0000-4000-8000-000000000002" as Href)
+                      }
                     >
                       <View style={hStyles.cardBadgeRow}>
                         <Badge label="LIVE CLASSROOM" variant="ai" />
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                          <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }} />
+                          <View
+                            style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }}
+                          />
                           <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>Đang dạy</Text>
                         </View>
                       </View>
                       <Text style={hStyles.compactCardTitle} numberOfLines={1}>
                         Lập trình Web & Trợ lý AI Fullstack - Nhóm 02
                       </Text>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>👥 58 Học viên · 10/16 buổi · 97.2%</Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: 4,
+                          gap: 8,
+                        }}
+                      >
+                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
+                          👥 58 Học viên · 10/16 buổi · 97.2%
+                        </Text>
                         <View style={hStyles.actionMiniBtn}>
                           <Text style={hStyles.actionMiniBtnText}>Vào lớp</Text>
                           <Icon name="chevronRight" size={12} color="#FFFFFF" />
@@ -896,7 +823,10 @@ export default function Home() {
                         <Text style={hStyles.pendingHeaderDotText}>14</Text>
                       </View>
                     </View>
-                    <ScalePressable scaleTo={0.92} onPress={() => router.push("/teaching/assessments" as Href)}>
+                    <ScalePressable
+                      scaleTo={0.92}
+                      onPress={() => router.push("/teaching/assessments" as Href)}
+                    >
                       <Text style={hStyles.sectionLink}>Chấm tất cả &gt;</Text>
                     </ScalePressable>
                   </View>
@@ -908,7 +838,9 @@ export default function Home() {
                       onPress={() => router.push("/teaching/assessments" as Href)}
                     >
                       <View style={hStyles.cardBadgeRow}>
-                        <Text style={{ fontSize: 12, fontWeight: "700", color: "#0284C7" }}>CSDL NÂNG CAO</Text>
+                        <Text style={{ fontSize: 12, fontWeight: "700", color: "#0284C7" }}>
+                          CSDL NÂNG CAO
+                        </Text>
                         <View style={hStyles.pendingDotBadge}>
                           <View style={hStyles.pendingDot} />
                           <Text style={hStyles.pendingDotText}>⏰ Nộp 35 phút trước</Text>
@@ -917,8 +849,18 @@ export default function Home() {
                       <Text style={hStyles.compactCardTitle} numberOfLines={1}>
                         Lê Văn Đức (SV-202601) — Bài tập lớn: Thiết kế CSDL 3NF
                       </Text>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>Tệp đính kèm: schema_3nf.sql (245 KB)</Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: 4,
+                          gap: 8,
+                        }}
+                      >
+                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
+                          Tệp đính kèm: schema_3nf.sql (245 KB)
+                        </Text>
                         <View style={[hStyles.actionMiniBtn, { backgroundColor: "#0284C7" }]}>
                           <Text style={hStyles.actionMiniBtnText}>Chấm bài →</Text>
                         </View>
@@ -931,7 +873,9 @@ export default function Home() {
                       onPress={() => router.push("/teaching/assessments" as Href)}
                     >
                       <View style={hStyles.cardBadgeRow}>
-                        <Text style={{ fontSize: 12, fontWeight: "700", color: "#7C3AED" }}>WEB & AI FULLSTACK</Text>
+                        <Text style={{ fontSize: 12, fontWeight: "700", color: "#7C3AED" }}>
+                          WEB & AI FULLSTACK
+                        </Text>
                         <View style={hStyles.pendingDotBadge}>
                           <View style={hStyles.pendingDot} />
                           <Text style={hStyles.pendingDotText}>⏰ Nộp 2 giờ trước</Text>
@@ -940,8 +884,18 @@ export default function Home() {
                       <Text style={hStyles.compactCardTitle} numberOfLines={1}>
                         Nguyễn Mai Phương (SV-202602) — Lab 03: REST API & Vector DB
                       </Text>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>Tệp đính kèm: fast_api_lab03.zip (1.2 MB)</Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: 4,
+                          gap: 8,
+                        }}
+                      >
+                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
+                          Tệp đính kèm: fast_api_lab03.zip (1.2 MB)
+                        </Text>
                         <View style={[hStyles.actionMiniBtn, { backgroundColor: "#0284C7" }]}>
                           <Text style={hStyles.actionMiniBtnText}>Chấm bài →</Text>
                         </View>
@@ -972,13 +926,25 @@ export default function Home() {
                     >
                       <View style={hStyles.cardBadgeRow}>
                         <Badge label="07:30 - 09:30 · TIẾT 1-3" variant="neutral" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#059669" }}>Phòng P.302 (Tòa H1)</Text>
+                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#059669" }}>
+                          Phòng P.302 (Tòa H1)
+                        </Text>
                       </View>
                       <Text style={hStyles.compactCardTitle} numberOfLines={1}>
                         Cơ sở dữ liệu Nâng cao & Tối ưu hóa - Nhóm 01
                       </Text>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>Chương 4: Chỉ mục B-Tree & Tối ưu truy vấn EXPLAIN</Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: 4,
+                          gap: 8,
+                        }}
+                      >
+                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
+                          Chương 4: Chỉ mục B-Tree & Tối ưu truy vấn EXPLAIN
+                        </Text>
                         <View style={[hStyles.actionMiniBtn, { backgroundColor: "#059669" }]}>
                           <Text style={hStyles.actionMiniBtnText}>Điểm danh SV</Text>
                         </View>
@@ -992,13 +958,25 @@ export default function Home() {
                     >
                       <View style={hStyles.cardBadgeRow}>
                         <Badge label="13:30 - 15:30 · TIẾT 7-9" variant="ai" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#0284C7" }}>Live Classroom Trực tuyến</Text>
+                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#0284C7" }}>
+                          Live Classroom Trực tuyến
+                        </Text>
                       </View>
                       <Text style={hStyles.compactCardTitle} numberOfLines={1}>
                         Lập trình Web & Trợ lý AI Fullstack - Nhóm 02
                       </Text>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>Thực hành REST API với FastAPI & Vector DB Pinecone</Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: 4,
+                          gap: 8,
+                        }}
+                      >
+                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
+                          Thực hành REST API với FastAPI & Vector DB Pinecone
+                        </Text>
                         <View style={[hStyles.actionMiniBtn, { backgroundColor: "#0284C7" }]}>
                           <Text style={hStyles.actionMiniBtnText}>Vào phòng Live</Text>
                         </View>
@@ -1031,13 +1009,25 @@ export default function Home() {
                     >
                       <View style={hStyles.cardBadgeRow}>
                         <Badge label="TIẾN SĨ CNTT" variant="neutral" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#D97706" }}>Chờ phê duyệt</Text>
+                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#D97706" }}>
+                          Chờ phê duyệt
+                        </Text>
                       </View>
                       <Text style={hStyles.compactCardTitle} numberOfLines={1}>
                         TS. Nguyễn Minh Trí — Cơ sở dữ liệu & Big Data
                       </Text>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>12 năm kinh nghiệm · Đầy đủ bằng cấp & minh chứng</Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: 4,
+                          gap: 8,
+                        }}
+                      >
+                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
+                          12 năm kinh nghiệm · Đầy đủ bằng cấp & minh chứng
+                        </Text>
                         <View style={[hStyles.actionMiniBtn, { backgroundColor: "#7C3AED" }]}>
                           <Text style={hStyles.actionMiniBtnText}>Thẩm định →</Text>
                         </View>
@@ -1051,13 +1041,25 @@ export default function Home() {
                     >
                       <View style={hStyles.cardBadgeRow}>
                         <Badge label="THẠC SĨ AI" variant="neutral" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#D97706" }}>Chờ phê duyệt</Text>
+                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#D97706" }}>
+                          Chờ phê duyệt
+                        </Text>
                       </View>
                       <Text style={hStyles.compactCardTitle} numberOfLines={1}>
                         ThS. Hoàng Quốc Bảo — Web & Trợ lý AI Copilot
                       </Text>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>8 năm kinh nghiệm · Hồ sơ chứng chỉ hoàn tất</Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: 4,
+                          gap: 8,
+                        }}
+                      >
+                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
+                          8 năm kinh nghiệm · Hồ sơ chứng chỉ hoàn tất
+                        </Text>
                         <View style={[hStyles.actionMiniBtn, { backgroundColor: "#7C3AED" }]}>
                           <Text style={hStyles.actionMiniBtnText}>Thẩm định →</Text>
                         </View>
@@ -1114,13 +1116,25 @@ export default function Home() {
                     >
                       <View style={hStyles.cardBadgeRow}>
                         <Badge label="CHỜ TELEMETRY" variant="neutral" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: tokens.color.muted }}>Độ trễ: —</Text>
+                        <Text style={{ fontSize: 11, fontWeight: "700", color: tokens.color.muted }}>
+                          Độ trễ: —
+                        </Text>
                       </View>
                       <Text style={hStyles.compactCardTitle} numberOfLines={1}>
                         Cổng Webhook Đối Soát Tự Động
                       </Text>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>Tự động nhận biến động số dư VietQR & kích hoạt học viên</Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: 4,
+                          gap: 8,
+                        }}
+                      >
+                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
+                          Tự động nhận biến động số dư VietQR & kích hoạt học viên
+                        </Text>
                         <View style={hStyles.actionMiniBtn}>
                           <Text style={hStyles.actionMiniBtnText}>Kiểm tra</Text>
                         </View>
@@ -1146,10 +1160,7 @@ export default function Home() {
                   </View>
 
                   <View style={{ gap: 10 }}>
-                    {(classList.length > 0 ? classList.slice(0, 2) : [
-                      { classId: "cls-csdl", name: "Cơ sở dữ liệu Nâng cao & Tối ưu hóa - Nhóm 01", classKind: "LIVE_COHORT", state: "ACTIVE" },
-                      { classId: "cls-web", name: "Lập trình Web & Trợ lý AI Fullstack - Nhóm 02", classKind: "LIVE_COHORT", state: "ACTIVE" }
-                    ]).map((c) => (
+                    {classList.slice(0, 2).map((c) => (
                       <ScalePressable
                         key={c.classId}
                         style={hStyles.compactCard}
@@ -1159,15 +1170,34 @@ export default function Home() {
                         accessibilityLabel={`Lớp học ${c.name}`}
                       >
                         <View style={hStyles.cardBadgeRow}>
-                          <Badge label={c.classKind === "LIVE_COHORT" ? "LỚP TRỰC TUYẾN" : "LỚP HỌC"} variant="neutral" />
+                          <Badge
+                            label={c.classKind === "LIVE_COHORT" ? "LỚP TRỰC TUYẾN" : "LỚP HỌC"}
+                            variant="neutral"
+                          />
                           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                            <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }} />
-                            <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>Đang học</Text>
+                            <View
+                              style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }}
+                            />
+                            <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>
+                              Đang học
+                            </Text>
                           </View>
                         </View>
-                        <Text style={hStyles.compactCardTitle} numberOfLines={1}>{c.name}</Text>
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                          <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>Giảng viên phụ trách: Bộ môn CNTT</Text>
+                        <Text style={hStyles.compactCardTitle} numberOfLines={1}>
+                          {c.name}
+                        </Text>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginTop: 4,
+                            gap: 8,
+                          }}
+                        >
+                          <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
+                            Mở chi tiết lớp để xem giảng viên phụ trách
+                          </Text>
                           <View style={hStyles.actionMiniBtn}>
                             <Text style={hStyles.actionMiniBtnText}>Vào lớp</Text>
                             <Icon name="chevronRight" size={12} color="#FFFFFF" />
@@ -1175,6 +1205,9 @@ export default function Home() {
                         </View>
                       </ScalePressable>
                     ))}
+                    {classList.length === 0 && (
+                      <Text style={styles.small}>Lớp được ghi danh sẽ xuất hiện ở đây.</Text>
+                    )}
                   </View>
                 </View>
               </FadeSlideIn>
@@ -1184,10 +1217,7 @@ export default function Home() {
                 <View style={hStyles.sectionContainer}>
                   <View style={hStyles.sectionHeader}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={hStyles.sectionTitle}>Bài tập cần hoàn thành</Text>
-                      <View style={hStyles.pendingHeaderDot}>
-                        <Text style={hStyles.pendingHeaderDotText}>2</Text>
-                      </View>
+                      <Text style={hStyles.sectionTitle}>Bài tập</Text>
                     </View>
                     <ScalePressable scaleTo={0.92} onPress={() => router.push("/classes" as Href)}>
                       <Text style={hStyles.sectionLink}>Xem tất cả &gt;</Text>
@@ -1195,20 +1225,37 @@ export default function Home() {
                   </View>
 
                   <View style={{ gap: 10 }}>
+                    {DEFAULT_ASSIGNMENTS.length === 0 && (
+                      <ScalePressable
+                        style={hStyles.compactCard}
+                        scaleTo={0.97}
+                        onPress={() => router.push("/classes?tab=assignments" as Href)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Mở lớp học để xem bài tập được giao"
+                      >
+                        <Text style={hStyles.compactCardTitle}>Xem bài tập trong lớp học</Text>
+                        <Text style={styles.small}>Bài được giao hiển thị trong từng lớp bạn đang học.</Text>
+                      </ScalePressable>
+                    )}
                     {DEFAULT_ASSIGNMENTS.map((asg) => (
                       <ScalePressable
                         key={asg.id}
                         style={hStyles.compactCard}
                         scaleTo={0.97}
                         onPress={() => {
-                          const targetClassId = classList[0]?.classId || "10000000-0000-4000-8000-000000000001";
-                          router.push(`/classes/${targetClassId}?tab=assignments&action=${asg.status === "PENDING" ? "submit" : "review"}&asgId=${asg.id}` as Href);
+                          const targetClassId =
+                            classList[0]?.classId || "10000000-0000-4000-8000-000000000001";
+                          router.push(
+                            `/classes/${targetClassId}?tab=assignments&action=${asg.status === "PENDING" ? "submit" : "review"}&asgId=${asg.id}` as Href,
+                          );
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={asg.title}
                       >
                         <View style={hStyles.cardBadgeRow}>
-                          <Text style={{ fontSize: 12, fontWeight: "700", color: "#0284C7" }}>{asg.className}</Text>
+                          <Text style={{ fontSize: 12, fontWeight: "700", color: "#0284C7" }}>
+                            {asg.className}
+                          </Text>
                           {asg.status === "PENDING" ? (
                             <View style={hStyles.pendingDotBadge}>
                               <View style={hStyles.pendingDot} />
@@ -1221,13 +1268,40 @@ export default function Home() {
                             </View>
                           )}
                         </View>
-                        <Text style={hStyles.compactCardTitle} numberOfLines={2}>{asg.title}</Text>
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
-                          <Text style={{ fontSize: 12, color: asg.status === "PENDING" ? "#DC2626" : "#64748B", fontWeight: asg.status === "PENDING" ? "600" : "500", flex: 1 }} numberOfLines={1}>
+                        <Text style={hStyles.compactCardTitle} numberOfLines={2}>
+                          {asg.title}
+                        </Text>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginTop: 4,
+                            gap: 8,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              color: asg.status === "PENDING" ? "#DC2626" : "#64748B",
+                              fontWeight: asg.status === "PENDING" ? "600" : "500",
+                              flex: 1,
+                            }}
+                            numberOfLines={1}
+                          >
                             ⏰ Hạn nộp: {asg.dueDate}
                           </Text>
-                          <View style={[hStyles.actionMiniBtn, asg.status === "PENDING" ? { backgroundColor: "#DC2626" } : { backgroundColor: "#64748B" }]}>
-                            <Text style={hStyles.actionMiniBtnText}>{asg.status === "PENDING" ? "Làm bài →" : "Xem lại"}</Text>
+                          <View
+                            style={[
+                              hStyles.actionMiniBtn,
+                              asg.status === "PENDING"
+                                ? { backgroundColor: "#DC2626" }
+                                : { backgroundColor: "#64748B" },
+                            ]}
+                          >
+                            <Text style={hStyles.actionMiniBtnText}>
+                              {asg.status === "PENDING" ? "Làm bài →" : "Xem lại"}
+                            </Text>
                           </View>
                         </View>
                       </ScalePressable>
@@ -1242,9 +1316,6 @@ export default function Home() {
                   <View style={hStyles.sectionHeader}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                       <Text style={hStyles.sectionTitle}>Bài kiểm tra &amp; Đề thi AI</Text>
-                      <View style={[hStyles.pendingHeaderDot, { backgroundColor: "#D97706" }]}>
-                        <Text style={hStyles.pendingHeaderDotText}>2</Text>
-                      </View>
                     </View>
                     <ScalePressable scaleTo={0.92} onPress={() => router.push("/assessments" as Href)}>
                       <Text style={hStyles.sectionLink}>Tất cả đề thi &gt;</Text>
@@ -1252,6 +1323,18 @@ export default function Home() {
                   </View>
 
                   <View style={{ gap: 10 }}>
+                    {DEFAULT_ASSESSMENTS.length === 0 && (
+                      <ScalePressable
+                        style={hStyles.compactCard}
+                        scaleTo={0.97}
+                        onPress={() => router.push("/assessments" as Href)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Mở bài kiểm tra đã phát hành"
+                      >
+                        <Text style={hStyles.compactCardTitle}>Xem bài kiểm tra đã phát hành</Text>
+                        <Text style={styles.small}>Chọn đề và xem kết quả chính thức tại đây.</Text>
+                      </ScalePressable>
+                    )}
                     {DEFAULT_ASSESSMENTS.map((quiz) => (
                       <ScalePressable
                         key={quiz.id}
@@ -1277,13 +1360,32 @@ export default function Home() {
                             </View>
                           )}
                         </View>
-                        <Text style={hStyles.compactCardTitle} numberOfLines={2}>{quiz.title}</Text>
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, gap: 8 }}>
+                        <Text style={hStyles.compactCardTitle} numberOfLines={2}>
+                          {quiz.title}
+                        </Text>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginTop: 4,
+                            gap: 8,
+                          }}
+                        >
                           <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
                             ⏱️ {quiz.durationMinutes} phút • {quiz.questionsCount} câu hỏi
                           </Text>
-                          <View style={[hStyles.actionMiniBtn, quiz.status === "PENDING" ? { backgroundColor: "#D97706" } : { backgroundColor: "#059669" }]}>
-                            <Text style={hStyles.actionMiniBtnText}>{quiz.status === "PENDING" ? "Vào thi →" : "Xem điểm"}</Text>
+                          <View
+                            style={[
+                              hStyles.actionMiniBtn,
+                              quiz.status === "PENDING"
+                                ? { backgroundColor: "#D97706" }
+                                : { backgroundColor: "#059669" },
+                            ]}
+                          >
+                            <Text style={hStyles.actionMiniBtnText}>
+                              {quiz.status === "PENDING" ? "Vào thi →" : "Xem điểm"}
+                            </Text>
                           </View>
                         </View>
                       </ScalePressable>
@@ -1292,39 +1394,13 @@ export default function Home() {
                 </View>
               </FadeSlideIn>
             </>
-          )
-        )}
+          ))}
 
         {/* ============================================================
             GUEST LANDING PAGE — chỉ hiển thị khi chưa đăng nhập
             ============================================================ */}
         {snapshot.state !== "AUTHENTICATED" && (
           <>
-            {/* Platform Stats Strip */}
-            <FadeSlideIn delay={140} duration={450}>
-              <View style={guestStyles.statsStrip}>
-                <View style={guestStyles.statItem}>
-                  <Text style={guestStyles.statValue}>1.292</Text>
-                  <Text style={guestStyles.statLabel}>Học viên</Text>
-                </View>
-                <View style={guestStyles.statDivider} />
-                <View style={guestStyles.statItem}>
-                  <Text style={guestStyles.statValue}>48</Text>
-                  <Text style={guestStyles.statLabel}>Khóa học</Text>
-                </View>
-                <View style={guestStyles.statDivider} />
-                <View style={guestStyles.statItem}>
-                  <Text style={guestStyles.statValue}>12</Text>
-                  <Text style={guestStyles.statLabel}>Giảng viên</Text>
-                </View>
-                <View style={guestStyles.statDivider} />
-                <View style={guestStyles.statItem}>
-                  <Text style={guestStyles.statValue}>4.9★</Text>
-                  <Text style={guestStyles.statLabel}>Đánh giá</Text>
-                </View>
-              </View>
-            </FadeSlideIn>
-
             {/* Feature Preview Cards */}
             <FadeSlideIn delay={170} duration={450}>
               <View style={hStyles.sectionContainer}>
@@ -1354,8 +1430,8 @@ export default function Home() {
                       color: "#D97706",
                       bg: "#FEF3C7",
                       title: "Theo dõi tiến độ học tập",
-                      desc: "Dashboard cá nhân hóa: GPA, chuỗi học tập, hạn nộp bài và biểu đồ năng lực theo chuẩn Bloom.",
-                      cta: "Xem demo",
+                      desc: "Theo dõi mục tiêu, nội dung học tập và các hạn được hệ thống cung cấp.",
+                      cta: "Tìm hiểu",
                     },
                     {
                       icon: "book" as const,
@@ -1379,7 +1455,9 @@ export default function Home() {
                         </View>
                         <View style={{ flex: 1, gap: 3 }}>
                           <Text style={guestStyles.featureCardTitle}>{f.title}</Text>
-                          <Text style={guestStyles.featureCardDesc} numberOfLines={2}>{f.desc}</Text>
+                          <Text style={guestStyles.featureCardDesc} numberOfLines={2}>
+                            {f.desc}
+                          </Text>
                         </View>
                         <View style={[guestStyles.featureCardCta, { backgroundColor: f.bg }]}>
                           <Text style={[guestStyles.featureCardCtaText, { color: f.color }]}>{f.cta}</Text>
@@ -1401,7 +1479,9 @@ export default function Home() {
                 </FloatingElement>
                 <View style={{ flex: 1, gap: 4 }}>
                   <Text style={guestStyles.ctaBannerTitle}>Tham gia miễn phí hôm nay</Text>
-                  <Text style={guestStyles.ctaBannerSub}>Tạo tài khoản trong 30 giây. Không cần thẻ tín dụng.</Text>
+                  <Text style={guestStyles.ctaBannerSub}>
+                    Tạo tài khoản trong 30 giây. Không cần thẻ tín dụng.
+                  </Text>
                 </View>
                 <ScalePressable
                   style={guestStyles.ctaBannerBtn}
@@ -1419,7 +1499,12 @@ export default function Home() {
 
         {/* Errors / Warnings Banner */}
         {snapshot.error && (
-          <View style={[styles.card, { marginHorizontal: 16, marginTop: 12, backgroundColor: "#FEF2F2", borderColor: "#FCA5A5" }]}>
+          <View
+            style={[
+              styles.card,
+              { marginHorizontal: 16, marginTop: 12, backgroundColor: "#FEF2F2", borderColor: "#FCA5A5" },
+            ]}
+          >
             <Text accessibilityRole="alert" style={styles.error}>
               {snapshot.error}
             </Text>
@@ -1445,55 +1530,6 @@ export default function Home() {
           </View>
         )}
 
-        {/* Section: Tin tức & Sự kiện AILSS (Horizontal Carousel with Rich Visuals) */}
-        <FadeSlideIn delay={220} duration={450}>
-          <View style={hStyles.sectionContainer}>
-            <View style={hStyles.sectionHeader}>
-              <Text style={hStyles.sectionTitle}>Tin tức &amp; Sự kiện</Text>
-              <ScalePressable scaleTo={0.92} onPress={() => router.push("/notifications" as Href)}>
-                <Text style={hStyles.sectionLink}>Xem tất cả &gt;</Text>
-              </ScalePressable>
-            </View>
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={hStyles.newsScrollContainer}
-            >
-              {NEWS_LIST.map((news) => (
-                <ScalePressable
-                  key={news.id}
-                  style={hStyles.newsCard}
-                  scaleTo={0.95}
-                  onPress={() => router.push("/notifications" as Href)}
-                  accessibilityRole="button"
-                  accessibilityLabel={news.title}
-                >
-                  <View style={[hStyles.newsCardBanner, { backgroundColor: news.accentColor }]}>
-                    {/* Decorative visual gradient shapes */}
-                    <View style={hStyles.newsDecoCircle1} />
-                    <View style={hStyles.newsDecoCircle2} />
-
-                    <Badge label={news.category} variant="primary" />
-                    <View style={hStyles.newsIconBadge}>
-                      <Icon name={news.icon} size={24} color="#FFFFFF" />
-                    </View>
-                  </View>
-                  <View style={hStyles.newsCardBody}>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                      <Text style={hStyles.newsCardDate}>{news.date}</Text>
-                      <Text style={hStyles.newsCardReadTime}>{news.readTime}</Text>
-                    </View>
-                    <Text style={hStyles.newsCardTitle} numberOfLines={2}>
-                      {news.title}
-                    </Text>
-                  </View>
-                </ScalePressable>
-              ))}
-            </ScrollView>
-          </View>
-        </FadeSlideIn>
-
         {/* Lecturer Quick Studio Widget */}
         {lecturerInfo && (
           <FadeSlideIn delay={280} duration={450}>
@@ -1511,11 +1547,7 @@ export default function Home() {
                 Theo dõi điểm danh buổi học, tạo bài kiểm tra AI và công bố điểm số.
               </Text>
               <View style={{ flexDirection: "row", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
-                <Button
-                  label="Bàn làm việc"
-                  size="sm"
-                  onPress={() => router.push("/teaching" as Href)}
-                />
+                <Button label="Bàn làm việc" size="sm" onPress={() => router.push("/teaching" as Href)} />
                 <Button
                   label="Báo cáo"
                   icon={<Icon name="chart" size={13} color={tokens.color.brand} />}
@@ -1545,13 +1577,18 @@ export default function Home() {
             >
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                 <Badge label="TIẾP TỤC HỌC TẬP" variant="ai" icon="sparkles" />
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#6366F1" }}>68% hoàn thành</Text>
               </View>
               <Text style={{ fontSize: 17, fontWeight: "800", color: tokens.color.ink }}>
                 {activeCourse.title}
               </Text>
-              <AnimatedProgressBar progress={68} color="#6366F1" height={8} />
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: 4,
+                }}
+              >
                 <ScalePressable scaleTo={0.95} onPress={() => router.push("/progress" as Href)}>
                   <Text style={{ fontSize: 12, fontWeight: "700", color: tokens.color.brand }}>
                     📊 Xem báo cáo học tập →
@@ -1574,7 +1611,7 @@ export default function Home() {
           <FadeSlideIn delay={360} duration={450}>
             <View style={hStyles.sectionContainer}>
               <View style={hStyles.sectionHeader}>
-                <Text style={hStyles.sectionTitle}>Khóa học đề xuất</Text>
+                <Text style={hStyles.sectionTitle}>Khóa học Lập trình</Text>
                 <ScalePressable scaleTo={0.92} onPress={() => router.push("/courses" as Href)}>
                   <Text style={hStyles.sectionLink}>Tất cả &gt;</Text>
                 </ScalePressable>
@@ -1590,21 +1627,31 @@ export default function Home() {
                     accessibilityRole="button"
                     accessibilityLabel={`Khóa học ${c.title}`}
                   >
-                    <View style={[hStyles.courseBanner, { backgroundColor: index % 2 === 0 ? "#0A7E85" : "#4F46E5" }]}>
+                    <View
+                      style={[
+                        hStyles.courseBanner,
+                        { backgroundColor: index % 2 === 0 ? "#0A7E85" : "#4F46E5" },
+                      ]}
+                    >
                       <Icon name="academic" size={24} color="#FFFFFF" />
                     </View>
                     <View style={{ flex: 1, gap: 3 }}>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
                         <Badge
                           label={c.priceType === "FREE" ? "Miễn phí" : "Chính khóa"}
                           variant={c.priceType === "FREE" ? "success" : "neutral"}
                         />
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                          <Icon name="star" size={11} color="#F59E0B" />
-                          <Text style={{ fontSize: 12, fontWeight: "700", color: tokens.color.ink }}>4.9</Text>
-                        </View>
                       </View>
-                      <Text style={{ fontSize: 15, fontWeight: "700", color: tokens.color.ink }} numberOfLines={1}>
+                      <Text
+                        style={{ fontSize: 15, fontWeight: "700", color: tokens.color.ink }}
+                        numberOfLines={1}
+                      >
                         {c.title}
                       </Text>
                       <Text style={styles.small} numberOfLines={1}>
@@ -1625,6 +1672,20 @@ export default function Home() {
         role={snapshot.user?.role}
         onNavigate={(path) => router.push(path as Href)}
       />
+
+      {snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT" && (
+        <ScalePressable
+          style={hStyles.tutorLauncher}
+          scaleTo={0.94}
+          onPress={() => router.push("/student/tutor" as Href)}
+          accessibilityRole="button"
+          accessibilityLabel="Trò chuyện với Gia sư AI"
+          accessibilityHint="Hỏi bài học hoặc tìm khóa học phù hợp"
+        >
+          <TutorAvatar size={58} decorative />
+          <Text style={hStyles.tutorLauncherLabel}>Hỏi AI</Text>
+        </ScalePressable>
+      )}
 
       {/* All Features Modal */}
       <Modal
@@ -1660,7 +1721,7 @@ export default function Home() {
                           iconColor: "#475569",
                           path: "/account",
                         }
-                      : item
+                      : item,
                   )
                   .map((item) => (
                     <ScalePressable
@@ -1724,10 +1785,7 @@ export default function Home() {
                 return (
                   <ScalePressable
                     key={item.code}
-                    style={[
-                      hStyles.langOptionCard,
-                      isSelected && hStyles.langOptionCardActive,
-                    ]}
+                    style={[hStyles.langOptionCard, isSelected && hStyles.langOptionCardActive]}
                     scaleTo={0.97}
                     onPress={() => {
                       updateSystemSettings({ language: item.code });
@@ -1769,6 +1827,24 @@ export default function Home() {
 }
 
 const hStyles = StyleSheet.create({
+  tutorLauncher: {
+    position: "absolute",
+    right: 18,
+    bottom: 82,
+    width: 76,
+    minHeight: 82,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 23,
+    borderWidth: 1,
+    borderColor: "#B8EDE5",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#0A5264",
+    shadowOpacity: 0.19,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  tutorLauncherLabel: { color: "#0A5E6A", fontSize: 11, fontWeight: "800", marginTop: -4 },
   academicMetricsStrip: {
     flexDirection: "row",
     backgroundColor: "#FFFFFF",

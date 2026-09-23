@@ -1,13 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { Transport, ApiError, profile, type Fetcher } from "../src/api";
 import { configuration } from "../src/config";
-import { Session, type Vault } from "../src/session";
+import { Session, type SessionLifecycle, type Vault } from "../src/session";
 import { destinations } from "../src/navigation";
+import { getFeaturesForRole, phase41RouteAvailable } from "../src/features";
 const user = {
   userId: "u",
   displayName: "Test",
   emailMasked: "t***@test.invalid",
-  role: "STUDENT",
+  role: "STUDENT" as const,
   status: "ACTIVE",
 };
 const credential = { accessToken: "a", refreshToken: "r", sessionId: "s" };
@@ -43,6 +44,20 @@ describe("configuration", () => {
     expect(configuration("research", "http://10.0.2.2:8080").origin).toBe("http://10.0.2.2:8080");
   });
 });
+describe("Phase 41 route scope", () => {
+  it("keeps Lecturer/Admin routes unreachable, including direct navigation and home", () => {
+    for (const path of ["/admin", "/admin/users", "/teaching", "/teaching/classes/1"])
+      expect(phase41RouteAvailable(path, "ADMIN")).toBe(false);
+    expect(phase41RouteAvailable("/", "LECTURER")).toBe(false);
+    expect(getFeaturesForRole("ADMIN")).toEqual([]);
+    expect(getFeaturesForRole("LECTURER")).toEqual([]);
+  });
+  it("preserves the Student and guest learning paths", () => {
+    expect(phase41RouteAvailable("/student", "STUDENT")).toBe(true);
+    expect(phase41RouteAvailable("/", "STUDENT")).toBe(true);
+    expect(phase41RouteAvailable("/courses", undefined)).toBe(true);
+  });
+});
 describe("transport", () => {
   it.each([401, 403, 404, 409, 422, 429, 500])("normalizes %i without leaking response", async (status) => {
     const request = vi
@@ -61,6 +76,12 @@ describe("transport", () => {
     );
     await expect(transport.request("/api/v1/me")).rejects.toMatchObject({ kind: "invalid" });
     await expect(transport.request("https://other.example.org")).rejects.toMatchObject({ kind: "invalid" });
+  });
+  it("sends a caller-generated correlation id without importing native runtime modules", async () => {
+    const request = vi.fn<Fetcher>().mockResolvedValue(new Response(JSON.stringify({ data: { ok: true } })));
+    const id = "00000000-0000-4000-8000-000000000041";
+    await new Transport("https://api.example.org", request, 12000, () => id).request("/api/v1/me");
+    expect(request.mock.calls[0]?.[1]?.headers).toMatchObject({ "X-Correlation-Id": id });
   });
   it("classifies network failure", async () => {
     await expect(
@@ -113,6 +134,7 @@ describe("session", () => {
     await expect(h.session.logout()).rejects.toThrow();
     expect(h.saved()).toBeNull();
     expect(h.session.snapshot.state).toBe("ANONYMOUS");
+    expect(h.session.snapshot.revocationStatus).toBe("REVOCATION_UNCONFIRMED");
     await expect(h.session.request("/api/v1/me")).rejects.toMatchObject({ status: 401 });
   });
   it("does not revive a session when login resolves after logout", async () => {
@@ -155,6 +177,40 @@ describe("session", () => {
     expect(destinations("LECTURER").map((x) => x.key)).toContain("teaching");
     expect(destinations("ADMIN").map((x) => x.key)).toContain("admin");
   });
+});
+it("enters student offline-cache mode only when a secure identity and scoped data exist", async () => {
+  const h = harness();
+  const lifecycle: SessionLifecycle = {
+    readLastIdentity: async () => user,
+    saveLastIdentity: async () => {},
+    clearLastIdentity: async () => {},
+    clearUserData: async () => {},
+    hasOfflineData: async () => true,
+  };
+  const session = new Session(h.api, h.vault, lifecycle);
+  await session.login("email", "password");
+  vi.mocked(h.api.request).mockRejectedValue(new ApiError("network"));
+  await session.restore();
+  expect(session.snapshot).toMatchObject({ state: "OFFLINE_CACHE", user: { role: "STUDENT", userId: "u" } });
+  await expect(session.request("/api/v1/me/courses")).rejects.toMatchObject({ status: 401 });
+});
+it("clears prior account cache before accepting a different server identity", async () => {
+  const h = harness();
+  const clearUserData = vi.fn(async () => {});
+  const latestUser = { ...user, userId: "second" };
+  const lifecycle: SessionLifecycle = {
+    readLastIdentity: async () => user,
+    saveLastIdentity: async () => {},
+    clearLastIdentity: async () => {},
+    clearUserData,
+    hasOfflineData: async () => true,
+  };
+  const session = new Session(h.api, h.vault, lifecycle);
+  vi.mocked(h.api.request).mockImplementation(async (path) =>
+    path.endsWith("/me") ? latestUser : credential,
+  );
+  await session.login("email", "password");
+  expect(clearUserData).toHaveBeenCalledWith("u");
 });
 
 it("single-flights cold start and fails closed if secure storage is unavailable", async () => {

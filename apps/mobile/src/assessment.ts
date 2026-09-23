@@ -79,6 +79,9 @@ export interface AssessmentResult {
   submittedAt: string;
   resultVersion: number;
   gradingAlgorithmVersion: string;
+  gradingStatus?: "AUTO_GRADED" | "PENDING_MANUAL_GRADING" | "MANUALLY_GRADED";
+  manualScore?: string;
+  teacherFeedback?: string;
 }
 
 const VALID_ATTEMPT_STATES = new Set<AttemptState>(["CREATED", "IN_PROGRESS", "SUBMITTED", "EXPIRED"]);
@@ -262,6 +265,11 @@ export function assessmentResult(value: unknown): AssessmentResult {
     resultVersion,
     gradingAlgorithmVersion:
       typeof row.gradingAlgorithmVersion === "string" ? row.gradingAlgorithmVersion : "objective-v1",
+    ...(row.gradingStatus === "AUTO_GRADED" || row.gradingStatus === "PENDING_MANUAL_GRADING" || row.gradingStatus === "MANUALLY_GRADED"
+      ? { gradingStatus: row.gradingStatus }
+      : {}),
+    ...(typeof row.manualScore === "string" ? { manualScore: row.manualScore } : {}),
+    ...(typeof row.teacherFeedback === "string" ? { teacherFeedback: row.teacherFeedback } : {}),
   };
 }
 
@@ -364,6 +372,23 @@ export function buildSubmitPayload(
 }
 
 export type SubmitReconciliationOutcome = "SUCCESS" | "ALLOW_RETRY" | "EXPIRED" | "UNKNOWN";
+
+/** Synchronous guard prevents two taps in the same React render from issuing two submits. */
+export class AttemptSubmissionGate {
+  private inFlight = false;
+  private complete = false;
+
+  begin(): boolean {
+    if (this.inFlight || this.complete) return false;
+    this.inFlight = true;
+    return true;
+  }
+
+  finish(outcome: "RETRYABLE" | "COMPLETE"): void {
+    this.inFlight = false;
+    if (outcome === "COMPLETE") this.complete = true;
+  }
+}
 
 export function reconcileAttemptSubmitOutcome(state: AttemptState): SubmitReconciliationOutcome {
   switch (state) {

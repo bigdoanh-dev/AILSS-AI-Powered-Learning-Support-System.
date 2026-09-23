@@ -12,6 +12,7 @@ import {
   type CourseDetail,
 } from "../../../src/learning";
 import { ApiError } from "../../../src/api";
+import { quizSummaries, type QuizSummary } from "../../../src/assessment";
 import {
   Page,
   Button,
@@ -26,40 +27,6 @@ import {
 } from "../../../src/ui";
 import { ScalePressable } from "../../../src/motion";
 
-interface CourseExercise {
-  id: string;
-  title: string;
-  questionsCount: number;
-  durationMinutes: number;
-  status: "PENDING" | "COMPLETED";
-  score?: number;
-}
-
-const COURSE_EXERCISES: CourseExercise[] = [
-  {
-    id: "ex-1",
-    title: "Trắc nghiệm ôn tập Chương 1: Kiến trúc & Mô hình quan hệ",
-    questionsCount: 10,
-    durationMinutes: 15,
-    status: "PENDING",
-  },
-  {
-    id: "ex-2",
-    title: "Bài tập thực hành: Thiết kế lược đồ CSDL chuẩn hóa 3NF",
-    questionsCount: 5,
-    durationMinutes: 45,
-    status: "PENDING",
-  },
-  {
-    id: "ex-3",
-    title: "Đề thi đánh giá năng lực thích ứng AI AILSS",
-    questionsCount: 25,
-    durationMinutes: 30,
-    status: "COMPLETED",
-    score: 9.2,
-  },
-];
-
 export default function CourseLearningScreen() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const session = runtime!;
@@ -68,7 +35,10 @@ export default function CourseLearningScreen() {
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [lessonsList, setLessonsList] = useState<LessonSummary[]>([]);
   const [courseProgress, setCourseProgress] = useState<Progress | null>(null);
-  const [courseTab, setCourseTab] = useState<"lessons" | "exercises">("lessons");
+  const [courseTab, setCourseTab] = useState<"lessons" | "assessments">("lessons");
+  const [courseAssessments, setCourseAssessments] = useState<QuizSummary[] | null>(null);
+  const [assessmentsError, setAssessmentsError] = useState<string | null>(null);
+  const [assessmentsLoading, setAssessmentsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -103,6 +73,20 @@ export default function CourseLearningScreen() {
   useEffect(() => {
     void fetchSyllabus();
   }, [fetchSyllabus]);
+
+  const fetchCourseAssessments = useCallback(async () => {
+    if (!courseId || snapshot.state !== "AUTHENTICATED") return;
+    setAssessmentsLoading(true);
+    setAssessmentsError(null);
+    try {
+      const data = await session.request(`/api/v1/targets/COURSE/${encodeURIComponent(courseId)}/quizzes`);
+      setCourseAssessments(quizSummaries(data).filter((quiz) => quiz.state === "PUBLISHED"));
+    } catch (cause) {
+      setAssessmentsError(cause instanceof ApiError ? cause.message : "Không thể tải bài kiểm tra của khóa học.");
+    } finally {
+      setAssessmentsLoading(false);
+    }
+  }, [courseId, session, snapshot.state]);
 
   const sections = useMemo(() => {
     const map = new Map<string, LessonSummary[]>();
@@ -199,11 +183,14 @@ export default function CourseLearningScreen() {
           </Text>
         </ScalePressable>
         <ScalePressable
-          style={[localStyles.tabSwitchBtn, courseTab === "exercises" && localStyles.tabSwitchBtnActive]}
-          onPress={() => setCourseTab("exercises")}
+          style={[localStyles.tabSwitchBtn, courseTab === "assessments" && localStyles.tabSwitchBtnActive]}
+          onPress={() => {
+            setCourseTab("assessments");
+            if (courseAssessments === null) void fetchCourseAssessments();
+          }}
         >
-          <Text style={[localStyles.tabSwitchText, courseTab === "exercises" && localStyles.tabSwitchTextActive]}>
-            📝 Bài Tập & Quiz ({COURSE_EXERCISES.length})
+          <Text style={[localStyles.tabSwitchText, courseTab === "assessments" && localStyles.tabSwitchTextActive]}>
+            📝 Bài kiểm tra
           </Text>
         </ScalePressable>
       </View>
@@ -311,39 +298,35 @@ export default function CourseLearningScreen() {
             )}
           </View>
         </>
+      ) : assessmentsLoading ? (
+        <View style={localStyles.center} accessibilityRole="progressbar">
+          <ActivityIndicator color={tokens.color.brand} />
+          <Text style={localStyles.loadingText}>Đang tải bài kiểm tra đã phát hành…</Text>
+        </View>
+      ) : assessmentsError ? (
+        <View style={localStyles.errorCard}>
+          <Text accessibilityRole="alert" style={localStyles.errorText}>{assessmentsError}</Text>
+          <Button label="Thử lại" onPress={() => void fetchCourseAssessments()} />
+        </View>
+      ) : courseAssessments && courseAssessments.length > 0 ? (
+        <View style={{ gap: 10 }}>
+          {courseAssessments.map((quiz) => (
+            <ScalePressable key={quiz.quizId} style={localStyles.exerciseCard} onPress={() => router.push(`/assessments/${quiz.quizId}` as Href)}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <Badge label="ĐÃ PHÁT HÀNH" variant="success" />
+                <Text style={styles.small}>{quiz.questionCount} câu{quiz.durationSeconds ? ` · ${Math.round(quiz.durationSeconds / 60)} phút` : ""}</Text>
+              </View>
+              <Text style={localStyles.exerciseTitle}>{quiz.title}</Text>
+              {!!quiz.opensAt && <Text style={styles.small}>Mở lúc {new Date(quiz.opensAt).toLocaleString()}</Text>}
+              {!!quiz.closesAt && <Text style={styles.small}>Đóng lúc {new Date(quiz.closesAt).toLocaleString()}</Text>}
+            </ScalePressable>
+          ))}
+        </View>
+      ) : courseAssessments ? (
+        <EmptyState icon="quiz" title="Chưa có bài kiểm tra" description="Khóa học hiện chưa có bài kiểm tra đã phát hành." />
       ) : (
-        /* Exercises Tab */
-        <View style={localStyles.exerciseSection}>
-          <View style={localStyles.sectionHeaderRow}>
-            <Text style={localStyles.syllabusHeading}>Bài tập & Kiểm tra kiến thức</Text>
-            <Badge label="2 bài chưa làm" variant="warning" />
-          </View>
-          <View style={{ gap: 10, marginTop: 10 }}>
-            {COURSE_EXERCISES.map((ex) => (
-              <ScalePressable
-                key={ex.id}
-                style={localStyles.exerciseCard}
-                onPress={() => router.push("/assessments" as Href)}
-              >
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <Badge
-                    label={ex.status === "PENDING" ? "● Chưa làm" : `✓ Đạt ${ex.score}/10`}
-                    variant={ex.status === "PENDING" ? "danger" : "success"}
-                  />
-                  <Text style={styles.small}>
-                    ⏱️ {ex.durationMinutes} phút • {ex.questionsCount} câu hỏi
-                  </Text>
-                </View>
-                <Text style={localStyles.exerciseTitle}>{ex.title}</Text>
-                <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 4, marginTop: 6 }}>
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
-                    {ex.status === "PENDING" ? "Vào làm bài" : "Xem phân tích"}
-                  </Text>
-                  <Icon name="chevronRight" size={14} color={tokens.color.brand} />
-                </View>
-              </ScalePressable>
-            ))}
-          </View>
+        <View style={localStyles.center}>
+          <Button label="Tải bài kiểm tra" onPress={() => void fetchCourseAssessments()} />
         </View>
       )}
 

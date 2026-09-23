@@ -4,15 +4,35 @@ export type Startup =
   | "ANONYMOUS"
   | "AUTHENTICATING"
   | "AUTHENTICATED"
+  | "OFFLINE_CACHE"
   | "SESSION_EXPIRED"
   | "NETWORK_UNAVAILABLE"
   | "FATAL_CONFIGURATION_ERROR";
-export type Snapshot = { state: Startup; user?: Profile; error?: string };
+export type Snapshot = {
+  state: Startup;
+  user?: Profile;
+  error?: string;
+  revocationStatus?: "REVOCATION_UNCONFIRMED";
+};
 export interface Vault {
   read(): Promise<string | null>;
   write(value: string): Promise<void>;
   clear(): Promise<void>;
 }
+export interface SessionLifecycle {
+  readLastIdentity(): Promise<Profile | null>;
+  saveLastIdentity(user: Profile): Promise<void>;
+  clearLastIdentity(): Promise<void>;
+  clearUserData(userId: string): Promise<void>;
+  hasOfflineData(userId: string): Promise<boolean>;
+}
+const noLifecycle: SessionLifecycle = {
+  readLastIdentity: async () => null,
+  saveLastIdentity: async () => {},
+  clearLastIdentity: async () => {},
+  clearUserData: async () => {},
+  hasOfflineData: async () => false,
+};
 export class Session {
   snapshot: Snapshot = { state: "BOOTING" };
   private credential?: Tokens;
@@ -20,10 +40,12 @@ export class Session {
   private restoreFlight?: Promise<void>;
   private epoch = 0;
   private writes = Promise.resolve();
+  private lastUserId?: string;
   private listeners = new Set<() => void>();
   constructor(
     readonly api: Transport,
     private vault: Vault,
+    private lifecycle: SessionLifecycle = noLifecycle,
   ) {}
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
@@ -52,9 +74,16 @@ export class Session {
   }
   private async identity(epoch: number) {
     const user = profile(await this.api.request("/api/v1/me", { token: this.credential?.accessToken }));
-    if (epoch === this.epoch) this.publish({ state: "AUTHENTICATED", user });
+    if (epoch !== this.epoch) return;
+    const previous = this.lastUserId ?? (await this.lifecycle.readLastIdentity())?.userId;
+    if (previous && previous !== user.userId) await this.lifecycle.clearUserData(previous);
+    await this.lifecycle.saveLastIdentity(user);
+    if (epoch === this.epoch) {
+      this.lastUserId = user.userId;
+      this.publish({ state: "AUTHENTICATED", user });
+    }
   }
-  private async failed(error: unknown, epoch: number) {
+  private async failed(error: unknown, epoch: number, allowOfflineCache = false) {
     if (epoch !== this.epoch) return;
     const transient =
       error instanceof ApiError && ["network", "timeout", "server", "429"].includes(error.kind);
@@ -62,6 +91,10 @@ export class Session {
       this.credential = undefined;
       try {
         await this.persist(() => this.vault.clear());
+        const previous = this.lastUserId ?? this.snapshot.user?.userId;
+        if (previous) await this.lifecycle.clearUserData(previous);
+        await this.lifecycle.clearLastIdentity();
+        this.lastUserId = undefined;
       } catch {
         this.publish({
           state: "SESSION_EXPIRED",
@@ -71,6 +104,19 @@ export class Session {
       }
     }
     if (epoch !== this.epoch) return;
+    if (transient && allowOfflineCache) {
+      try {
+        const user = await this.lifecycle.readLastIdentity();
+        if (user?.role === "STUDENT" && (await this.lifecycle.hasOfflineData(user.userId))) {
+          this.credential = undefined;
+          this.lastUserId = user.userId;
+          this.publish({ state: "OFFLINE_CACHE", user, error: "Đang dùng dữ liệu đã đồng bộ lần gần nhất." });
+          return;
+        }
+      } catch {
+        // A locked or unavailable private cache never falls back to unauthenticated disk data.
+      }
+    }
     this.publish({
       state: transient ? "NETWORK_UNAVAILABLE" : "SESSION_EXPIRED",
       error: error instanceof ApiError ? error.message : "Không thể khôi phục phiên an toàn.",
@@ -112,7 +158,7 @@ export class Session {
       );
       await this.identity(epoch);
     } catch (error) {
-      await this.failed(error, epoch);
+      await this.failed(error, epoch, true);
     }
   }
   async login(email: string, password: string) {
@@ -214,6 +260,10 @@ export class Session {
     }
   }
   async revalidate() {
+    if (this.snapshot.state === "OFFLINE_CACHE") {
+      await this.restore();
+      return;
+    }
     if (this.snapshot.state !== "AUTHENTICATED") return;
     const epoch = this.epoch;
     try {
@@ -225,14 +275,18 @@ export class Session {
   }
   async logout() {
     const accessToken = this.credential?.accessToken;
+    const userId = this.snapshot.user?.userId ?? this.lastUserId;
     const epoch = ++this.epoch;
     this.credential = undefined;
     this.publish({ state: "ANONYMOUS" });
     try {
       await this.persist(() => this.vault.clear());
+      if (userId) await this.lifecycle.clearUserData(userId);
+      await this.lifecycle.clearLastIdentity();
+      this.lastUserId = undefined;
     } catch (error) {
       if (epoch !== this.epoch) throw error;
-      this.publish({ state: "SESSION_EXPIRED", error: "Không thể xóa phiên trên thiết bị. Hãy thử lại." });
+      this.publish({ state: "ANONYMOUS", error: "Không thể xóa an toàn dữ liệu học tập trên thiết bị." });
       throw error;
     }
     try {
@@ -242,6 +296,7 @@ export class Session {
       this.publish({
         state: "ANONYMOUS",
         error: "Đã xóa phiên trên thiết bị. Chưa xác nhận được thu hồi trên máy chủ.",
+        revocationStatus: "REVOCATION_UNCONFIRMED",
       });
       throw error;
     }

@@ -15,6 +15,7 @@ import * as Crypto from "expo-crypto";
 import {
   attempt as decodeAttempt,
   buildSubmitPayload,
+  AttemptSubmissionGate,
   calculateRemainingSeconds,
   countAnsweredQuestions,
   formatRemainingTime,
@@ -26,7 +27,6 @@ import {
   type QuizQuestion,
   type SubmittedAnswer,
 } from "../../../../src/assessment";
-import { registerSubmission } from "../../../../src/grading-store";
 import { ApiError } from "../../../../src/api";
 import { runtime } from "../../../../src/runtime";
 import {
@@ -61,6 +61,8 @@ export default function AttemptScreen() {
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(confirm === "1" || confirm === "true");
+  const submissionOperation = useRef<{ idempotencyKey: string; payload: ReturnType<typeof buildSubmitPayload> } | null>(null);
+  const submissionGate = useRef(new AttemptSubmissionGate());
 
   useEffect(() => {
     if (confirm === "1" || confirm === "true") {
@@ -156,7 +158,7 @@ export default function AttemptScreen() {
 
   // Choice handlers
   const handleSelectSingleChoice = (option: string) => {
-    if (isExpired || isSubmitting || !currentQuestion) return;
+    if (isExpired || isSubmitting || submissionOperation.current || !currentQuestion) return;
     setDraftAnswers((prev) => ({
       ...prev,
       [currentQuestion.questionId]: {
@@ -167,7 +169,7 @@ export default function AttemptScreen() {
   };
 
   const handleToggleMultiChoice = (option: string) => {
-    if (isExpired || isSubmitting || !currentQuestion) return;
+    if (isExpired || isSubmitting || submissionOperation.current || !currentQuestion) return;
     const current = draftAnswers[currentQuestion.questionId];
     let selected: string[] = [];
     if (current && "selectedOptionIds" in current) {
@@ -190,7 +192,7 @@ export default function AttemptScreen() {
   };
 
   const handleSelectTrueFalse = (val: boolean) => {
-    if (isExpired || isSubmitting || !currentQuestion) return;
+    if (isExpired || isSubmitting || submissionOperation.current || !currentQuestion) return;
     setDraftAnswers((prev) => ({
       ...prev,
       [currentQuestion.questionId]: {
@@ -201,7 +203,7 @@ export default function AttemptScreen() {
   };
 
   const handleShortAnswerChange = (txt: string) => {
-    if (isExpired || isSubmitting || !currentQuestion) return;
+    if (isExpired || isSubmitting || submissionOperation.current || !currentQuestion) return;
     setDraftAnswers((prev) => ({
       ...prev,
       [currentQuestion.questionId]: {
@@ -213,54 +215,23 @@ export default function AttemptScreen() {
 
   // Submission handler with reconciliation on timeout/error
   const handleSubmitAttempt = async () => {
-    if (!attemptId || !quizId || isSubmitting || isExpired) return;
+    if (!attemptId || !quizId || isSubmitting || isExpired || !submissionGate.current.begin()) return;
     setIsSubmitting(true);
     setShowConfirmModal(false);
 
-    const idempotencyKey = Crypto.randomUUID();
-    const payload = buildSubmitPayload(questions, draftAnswers);
+    submissionOperation.current ??= {
+      idempotencyKey: Crypto.randomUUID(),
+      payload: buildSubmitPayload(questions, draftAnswers),
+    };
+    const operation = submissionOperation.current;
 
     try {
       await session.request(`/api/v1/attempts/${encodeURIComponent(attemptId)}/submit`, {
         method: "POST",
-        idempotencyKey,
-        body: payload,
+        idempotencyKey: operation.idempotencyKey,
+        body: operation.payload,
       });
-
-      const isEssayOrProject =
-        (quizData?.title && (
-          quizData.title.toLowerCase().includes("tự luận") ||
-          quizData.title.toLowerCase().includes("đồ án") ||
-          quizData.title.toLowerCase().includes("bài tập lớn")
-        )) ||
-        Object.values(draftAnswers).some((a) => "text" in a && a.text && a.text.length > 20);
-
-      if (isEssayOrProject) {
-        registerSubmission({
-          attemptId,
-          studentId: snapshot.user?.userId ?? "SV-STUDENT",
-          studentName: snapshot.user?.displayName ?? "Học viên AILSS",
-          quizId,
-          format: quizData?.title.toLowerCase().includes("đồ án") ? "PROJECT_FILE" : "ESSAY",
-          status: "PENDING_MANUAL_GRADING",
-          submittedAt: new Date().toISOString(),
-          essayContent: Object.values(draftAnswers)
-            .map((a) => ("text" in a ? a.text : ""))
-            .filter(Boolean)
-            .join("\n\n"),
-          fileAttachment: (quizData?.title.toLowerCase().includes("đồ án") || quizData?.title.toLowerCase().includes("bài tập lớn"))
-            ? {
-                fileName: "BaoCao_DoAn_HocVien.pdf",
-                fileSize: "3.6 MB",
-                fileType: "application/pdf",
-                repoUrl: "https://github.com/student/ailss-submission",
-                notes: "Học viên đã nộp báo cáo và mã nguồn dự án.",
-              }
-            : undefined,
-          maxScore: "10.0",
-        });
-      }
-
+      submissionGate.current.finish("COMPLETE");
       router.replace(`/assessments/${quizId}/result/${attemptId}` as Href);
     } catch {
       // Reconcile ambiguous outcome by fetching attempt
@@ -269,10 +240,12 @@ export default function AttemptScreen() {
         const fresh = decodeAttempt(checkRes);
         const outcome = reconcileAttemptSubmitOutcome(fresh.state);
         if (outcome === "SUCCESS") {
+          submissionGate.current.finish("COMPLETE");
           router.replace(`/assessments/${quizId}/result/${attemptId}` as Href);
           return;
         }
         if (outcome === "EXPIRED") {
+          submissionGate.current.finish("COMPLETE");
           Alert.alert("Hết giờ làm bài", "Bài làm đã hết thời gian quy định và hệ thống đã ghi nhận.");
           setAttemptData(fresh);
           setIsSubmitting(false);
@@ -282,7 +255,8 @@ export default function AttemptScreen() {
         // Fall through to error presentation
       }
 
-      Alert.alert("Nộp bài chưa hoàn tất", "Có lỗi kết nối trong quá trình nộp bài. Bạn có thể thử nộp lại.");
+      Alert.alert("Nộp bài chưa hoàn tất", "Không xác minh được kết quả với máy chủ. Bản trả lời đã được khóa để lần thử lại dùng cùng mã chống trùng; vui lòng thử nộp lại khi có mạng.");
+      submissionGate.current.finish("RETRYABLE");
       setIsSubmitting(false);
     }
   };
@@ -366,10 +340,16 @@ export default function AttemptScreen() {
               </Text>
             </View>
           )}
+          {submissionOperation.current && (
+            <Text accessibilityRole="alert" style={[styles.text, { color: tokens.color.warning }]}>
+              Yêu cầu nộp trước đó chưa được xác minh. Lần thử lại sẽ gửi nguyên câu trả lời với cùng mã chống trùng.
+            </Text>
+          )}
           <View style={screenStyles.confirmActions}>
             <Button
               label={isSubmitting ? "Đang nộp bài..." : "Xác nhận nộp bài"}
               onPress={() => void handleSubmitAttempt()}
+              disabled={isSubmitting}
               size="lg"
             />
             <Button
@@ -427,6 +407,12 @@ export default function AttemptScreen() {
           </Text>
         </View>
       )}
+      {submissionOperation.current && (
+        <View style={screenStyles.expiredBanner} accessibilityRole="alert">
+          <Text style={screenStyles.expiredTitle}>Đáp án đã khóa để xác minh lần nộp</Text>
+          <Text style={screenStyles.expiredText}>Nếu mạng gián đoạn, thử nộp lại sẽ dùng cùng nội dung và mã chống trùng.</Text>
+        </View>
+      )}
 
       <View style={screenStyles.scrollArea}>
         {/* Question card */}
@@ -451,7 +437,7 @@ export default function AttemptScreen() {
                   accessibilityRole="radio"
                   accessibilityState={{ selected }}
                   accessibilityLabel={opt}
-                  disabled={isExpired || isSubmitting}
+                  disabled={isExpired || isSubmitting || !!submissionOperation.current}
                   style={[screenStyles.optionRow, selected && screenStyles.optionRowSelected]}
                   onPress={() => handleSelectSingleChoice(opt)}
                 >
@@ -478,7 +464,7 @@ export default function AttemptScreen() {
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: selected }}
                   accessibilityLabel={opt}
-                  disabled={isExpired || isSubmitting}
+                  disabled={isExpired || isSubmitting || !!submissionOperation.current}
                   style={[screenStyles.optionRow, selected && screenStyles.optionRowSelected]}
                   onPress={() => handleToggleMultiChoice(opt)}
                 >
@@ -501,7 +487,7 @@ export default function AttemptScreen() {
                   selected: currentAnswer && "value" in currentAnswer && currentAnswer.value === true,
                 }}
                 accessibilityLabel="Đúng"
-                disabled={isExpired || isSubmitting}
+                disabled={isExpired || isSubmitting || !!submissionOperation.current}
                 style={[
                   screenStyles.tfButton,
                   currentAnswer &&
@@ -530,7 +516,7 @@ export default function AttemptScreen() {
                   selected: currentAnswer && "value" in currentAnswer && currentAnswer.value === false,
                 }}
                 accessibilityLabel="Sai"
-                disabled={isExpired || isSubmitting}
+                disabled={isExpired || isSubmitting || !!submissionOperation.current}
                 style={[
                   screenStyles.tfButton,
                   currentAnswer &&
@@ -560,7 +546,7 @@ export default function AttemptScreen() {
             <TextInput
               accessibilityRole="none"
               accessibilityLabel="Câu trả lời ngắn"
-              editable={!isExpired && !isSubmitting}
+              editable={!isExpired && !isSubmitting && !submissionOperation.current}
               style={screenStyles.textInput}
               placeholder="Nhập câu trả lời của bạn..."
               placeholderTextColor={tokens.color.muted}
@@ -644,7 +630,7 @@ export default function AttemptScreen() {
 
       <View style={screenStyles.footer}>
         <Button
-          label={isExpired ? "Thời gian đã hết" : "Nộp bài thi"}
+          label={isExpired ? "Thời gian đã hết" : submissionOperation.current ? "Thử xác minh nộp bài" : "Nộp bài thi"}
           onPress={() => {
             if (!isExpired) setShowConfirmModal(true);
           }}
@@ -894,9 +880,9 @@ const screenStyles = StyleSheet.create({
     gap: 8,
   },
   indexDot: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: 1.5,
     borderColor: tokens.color.border,
     alignItems: "center",

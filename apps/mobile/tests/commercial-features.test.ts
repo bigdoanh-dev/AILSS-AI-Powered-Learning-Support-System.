@@ -1,8 +1,10 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { getFeaturesForRole } from "../src/features";
 import {
   getSystemSettings,
   updateSystemSettings,
+  restoreColdStartLoginPreference,
+  persistColdStartLoginPreference,
   resetSettingsForTesting,
   subscribeSystemSettings,
 } from "../src/settings";
@@ -19,39 +21,12 @@ describe("commercial features and role-based matrix", () => {
   });
 
   describe("getFeaturesForRole matrix", () => {
-    it("provides clean administrative features without student schedule/assessment leaks", () => {
-      const adminFeatures = getFeaturesForRole("ADMIN");
-      expect(adminFeatures.length).toBe(7);
-
-      const paths = adminFeatures.map((f) => f.path);
-      // Ensure no student routes are present
-      expect(paths).not.toContain("/classes");
-      expect(paths).not.toContain("/assessments");
-      expect(paths).not.toContain("/learn");
-
-      // Ensure authoritative admin dashboards are present
-      expect(paths).toContain("/admin/users");
-      expect(paths).toContain("/admin/lecturers");
-      expect(paths).toContain("/admin/moderation");
-      expect(paths).toContain("/admin/commerce");
-      expect(paths).toContain("/admin/revenue");
-      expect(paths).toContain("/admin/stats");
-      expect(paths).not.toContain("/admin/logs");
-      expect(paths).toContain("/settings");
+    it("does not expose deferred administrative features in the Phase 41 Mobile navigation", () => {
+      expect(getFeaturesForRole("ADMIN")).toEqual([]);
     });
 
-    it("provides dedicated lecturer workspace features without student classes route", () => {
-      const lecturerFeatures = getFeaturesForRole("LECTURER");
-      expect(lecturerFeatures.length).toBe(8);
-
-      const paths = lecturerFeatures.map((f) => f.path);
-      // Lecturer must manage via /teaching/classes, not student /classes
-      expect(paths).not.toContain("/classes");
-      expect(paths).toContain("/teaching");
-      expect(paths).toContain("/teaching/classes");
-      expect(paths).toContain("/teaching/courses");
-      expect(paths).toContain("/teaching/ai");
-      expect(paths).toContain("/teaching/assessments");
+    it("does not expose deferred lecturer features in the Phase 41 Mobile navigation", () => {
+      expect(getFeaturesForRole("LECTURER")).toEqual([]);
     });
 
     it("provides standard student features for learner role or guests", () => {
@@ -70,8 +45,8 @@ describe("commercial features and role-based matrix", () => {
     it("defaults to requiring login on cold launch for commercial security", () => {
       const settings = getSystemSettings();
       expect(settings.requireLoginOnColdStart).toBe(true);
-      expect(settings.pushNotifications).toBe(true);
-      expect(settings.learningReminders).toBe(true);
+      expect(settings).not.toHaveProperty("pushNotifications");
+      expect(settings).not.toHaveProperty("learningReminders");
     });
 
     it("allows updating settings and notifies subscribers", () => {
@@ -85,6 +60,43 @@ describe("commercial features and role-based matrix", () => {
       expect(notified).toBe(true);
 
       unsubscribe();
+    });
+
+    it.each(["true", "false"])("restores a persisted cold-start choice (%s)", async (stored) => {
+      await restoreColdStartLoginPreference({ read: async () => stored });
+      expect(getSystemSettings().requireLoginOnColdStart).toBe(stored === "true");
+    });
+
+    it("fails closed to login-required when the persisted choice is absent, invalid, or unavailable", async () => {
+      updateSystemSettings({ requireLoginOnColdStart: false });
+      await restoreColdStartLoginPreference({ read: async () => "unexpected" });
+      expect(getSystemSettings().requireLoginOnColdStart).toBe(true);
+
+      updateSystemSettings({ requireLoginOnColdStart: false });
+      await restoreColdStartLoginPreference({ read: async () => { throw new Error("Keychain unavailable"); } });
+      expect(getSystemSettings().requireLoginOnColdStart).toBe(true);
+    });
+
+    it("persists a cold-start choice before publishing it and leaves state unchanged on storage failure", async () => {
+      const write = vi.fn(async () => {});
+      await persistColdStartLoginPreference(false, { write });
+      expect(write).toHaveBeenCalledWith("false");
+      expect(getSystemSettings().requireLoginOnColdStart).toBe(false);
+
+      await expect(
+        persistColdStartLoginPreference(true, { write: async () => { throw new Error("Keychain full"); } }),
+      ).rejects.toThrow("Keychain full");
+      expect(getSystemSettings().requireLoginOnColdStart).toBe(false);
+    });
+
+    it("restores the saved cold-start choice after simulated process recreation", async () => {
+      let securePreference: string | null = null;
+      await persistColdStartLoginPreference(false, {
+        write: async (value) => { securePreference = value; },
+      });
+      resetSettingsForTesting();
+      await restoreColdStartLoginPreference({ read: async () => securePreference });
+      expect(getSystemSettings().requireLoginOnColdStart).toBe(false);
     });
 
     it("allows recording cache clearance timestamp", () => {

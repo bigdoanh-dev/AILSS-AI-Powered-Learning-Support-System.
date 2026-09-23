@@ -1,4 +1,31 @@
-const { withAndroidManifest } = require("expo/config-plugins");
+const { withAndroidManifest, withPodfileProperties, withXcodeProject } = require("expo/config-plugins");
+
+function withPathSafeReactNativeBundle(config) {
+  return withXcodeProject(config, (value) => {
+    const phases = value.modResults.hash.project.objects.PBXShellScriptBuildPhase;
+    const brokenCommand =
+      "`" +
+      String.raw`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"` +
+      "`";
+    const safeCommand = String.raw`REACT_NATIVE_XCODE_SCRIPT=\"$(\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\")\" && \"$REACT_NATIVE_XCODE_SCRIPT\"`;
+    let patched = false;
+
+    for (const phase of Object.values(phases)) {
+      if (!phase.name?.includes("Bundle React Native code and images")) continue;
+      if (phase.shellScript.includes(brokenCommand)) {
+        phase.shellScript = phase.shellScript.replace(brokenCommand, safeCommand);
+        patched = true;
+      } else if (phase.shellScript.includes(safeCommand)) {
+        patched = true;
+      } else {
+        throw Error("FATAL_IOS_CONFIGURATION_ERROR: Unexpected React Native bundle script");
+      }
+    }
+
+    if (!patched) throw Error("FATAL_IOS_CONFIGURATION_ERROR: React Native bundle phase not found");
+    return value;
+  });
+}
 
 const PLACEHOLDER_HOSTNAMES = new Set([
   "api.ailss.example.org",
@@ -59,6 +86,10 @@ module.exports = ({ config }) => {
     throw Error("FATAL_CONFIGURATION_ERROR: Invalid Gateway origin");
   }
   const localHttp = environment !== "production" && url.protocol === "http:";
+  config.plugins = [
+    ...(config.plugins ?? []).filter((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) !== "expo-sqlite"),
+    ["expo-sqlite", { useSQLCipher: true }],
+  ];
   config.ios = {
     ...config.ios,
     infoPlist: {
@@ -69,9 +100,18 @@ module.exports = ({ config }) => {
         : {}),
     },
   };
-  return withAndroidManifest(config, (value) => {
+  const withAndroidConfig = withAndroidManifest(config, (value) => {
     const app = value.modResults.manifest.application?.[0];
     if (app) app.$["android:usesCleartextTraffic"] = String(localHttp);
     return value;
   });
+  const withNativeBuildProperties = withPodfileProperties(withAndroidConfig, (value) => {
+    // Expo Dev Launcher currently references RCTPackagerConnection, which is
+    // absent from the bundled prebuilt React Native Core. Build RN from source
+    // until Expo ships a compatible Dev Launcher/prebuilt-core combination.
+    value.modResults["ios.buildReactNativeFromSource"] = "true";
+    value.modResults.EXPO_USE_PRECOMPILED_MODULES = "false";
+    return value;
+  });
+  return withPathSafeReactNativeBundle(withNativeBuildProperties);
 };
