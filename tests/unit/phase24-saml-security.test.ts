@@ -97,6 +97,33 @@ describe("Phase 24.9: SAML 2.0 Cryptographic Security & Adversarial Protocol Def
     ).toThrowError("SAML assertion digest mismatch");
   });
 
+  it("ignores identity claims outside the cryptographically verified Assertion", () => {
+    const assertionId = "_assertion_signed_claims";
+    const assertionXml = buildTestAssertion(assertionId, "signed@polytech.edu.vn", ["Student"]);
+    const signatureXml = signSamlElement(assertionXml, privateKey, assertionId);
+    const unsignedClaims = [
+      '<saml:Attribute Name="email"><saml:AttributeValue>attacker@evil.example</saml:AttributeValue></saml:Attribute>',
+      '<saml:Attribute Name="roles"><saml:AttributeValue>Administrator</saml:AttributeValue></saml:Attribute>',
+      '<saml:Attribute Name="tenantId"><saml:AttributeValue>victim-tenant</saml:AttributeValue></saml:Attribute>',
+    ].join("");
+    const fullXml = wrapInResponse(assertionXml, signatureXml, "_resp_signed_claims").replace(
+      "</samlp:Response>",
+      `${unsignedClaims}</samlp:Response>`,
+    );
+
+    const identity = validateSamlResponse(Buffer.from(fullXml).toString("base64"), {
+      expectedDestination: spConfig.assertionConsumerServiceUrl,
+      expectedAudience: spConfig.entityId,
+      idpConfig,
+      expectedInResponseTo: "_req_p24",
+      requireCryptographicVerification: true,
+    });
+
+    expect(identity.email).toBe("signed@polytech.edu.vn");
+    expect(identity.roles).toEqual(["STUDENT"]);
+    expect(identity.tenantId).toBeUndefined();
+  });
+
   it("rejects response signed with wrong private key", () => {
     const { privateKey: wrongKey } = generateKeyPairSync("rsa", {
       modulusLength: 2048,

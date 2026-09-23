@@ -22,8 +22,8 @@ const safeSnapshot = {
 };
 
 describe("populated migration precheck", () => {
-  it("has an exact explicit 46-file policy covering both profiles", async () => {
-    expect(Object.keys(canonicalPolicy)).toHaveLength(46);
+  it("has an exact explicit 50-file policy covering both profiles", async () => {
+    expect(Object.keys(canonicalPolicy)).toHaveLength(50);
     const result = (await runPrecheck()) as {
       status: string;
       networkAccessPerformed: boolean;
@@ -35,7 +35,7 @@ describe("populated migration precheck", () => {
       status: "PASS_SOURCE_POLICY",
       networkAccessPerformed: false,
       targetMutationPerformed: false,
-      profiles: { dev: 46, research: 46 },
+      profiles: { dev: 50, research: 50 },
       targetQualification: { status: "BLOCKED_EXTERNAL" },
     });
   });
@@ -112,7 +112,7 @@ describe("populated migration precheck", () => {
     expect(evaluateTargetSnapshot(safeSnapshot)).toEqual({ status: "QUALIFIED_READ_ONLY", reasons: [] });
   });
 
-  it("verifies canonical migration registry contains 46 migrations matching precheck baseline", async () => {
+  it("verifies canonical migration registry contains 50 migrations matching precheck baseline", async () => {
     const { readFile } = await import("node:fs/promises");
     const registryContent = await readFile("database/migration-registry.json", "utf8");
     interface MigrationEntry {
@@ -133,12 +133,12 @@ describe("populated migration precheck", () => {
     }
     const registry = JSON.parse(registryContent) as MigrationRegistry;
 
-    expect(registry.totalMigrations).toBe(46);
-    expect(registry.migrations).toHaveLength(46);
+    expect(registry.totalMigrations).toBe(50);
+    expect(registry.migrations).toHaveLength(50);
 
     const ids = registry.migrations.map((m: MigrationEntry) => m.id);
     const uniqueIds = new Set(ids);
-    expect(uniqueIds.size).toBe(46); // No duplicates
+    expect(uniqueIds.size).toBe(50); // No duplicates
 
     // Verify ordering
     for (let i = 1; i < registry.migrations.length; i++) {

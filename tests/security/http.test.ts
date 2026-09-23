@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import express from "express";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { sanitizeIdentityHeaders } from "../../packages/http/src/index.js";
 import { InProcessRateLimiter } from "../../packages/http/src/rate-limiter.js";
 import { parseBearerAuthorization } from "../../apps/api-gateway/src/logout-proxy.js";
@@ -66,6 +66,54 @@ describe("gateway trust boundary", () => {
     await expect(response.json()).resolves.toMatchObject({
       error: { code: "RATE_LIMITED", retryable: true },
     });
+  });
+
+  it("keeps attacker-selected paths in one client budget within a hard memory bound", () => {
+    const limiter = new InProcessRateLimiter(3);
+    const middleware = limiter.middleware(1);
+    const statuses: number[] = [];
+    const response = {
+      setHeader: () => response,
+      status: vi.fn((status: number) => {
+        statuses.push(status);
+        return response;
+      }),
+      json: () => response,
+    };
+    for (let index = 0; index < 100; index += 1) {
+      middleware(
+        { ip: "127.0.0.1", method: "GET", path: `/attacker-${String(index)}` } as never,
+        response as never,
+        () => {},
+      );
+    }
+    expect(limiter.bucketCount).toBe(1);
+    expect(statuses).toHaveLength(99);
+    expect(statuses.every((status) => status === 429)).toBe(true);
+  });
+
+  it("does not evict an active throttled client when bucket capacity is exhausted", () => {
+    const limiter = new InProcessRateLimiter(1);
+    const middleware = limiter.middleware(1);
+    const statuses: number[] = [];
+    const response = {
+      setHeader: () => response,
+      status: (status: number) => {
+        statuses.push(status);
+        return response;
+      },
+      json: () => response,
+    };
+    const request = (ip: string, path: string) =>
+      middleware({ ip, method: "GET", path } as never, response as never, () => {});
+
+    request("192.0.2.1", "/target");
+    request("192.0.2.1", "/target");
+    request("198.51.100.1", "/churn");
+    request("192.0.2.1", "/target");
+
+    expect(limiter.bucketCount).toBe(1);
+    expect(statuses).toEqual([429, 429]);
   });
 
   it("accepts only one exact Service compact JWS and rejects Bearer/duplicates/oversize", () => {

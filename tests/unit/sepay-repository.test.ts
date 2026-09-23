@@ -4,6 +4,72 @@ import { LearningCommerceRepository } from "../../apps/learning-service/src/comm
 import type { CassandraClient } from "../../packages/cassandra/src/index.js";
 
 describe("SePay durable claim classification", () => {
+  it("writes an idempotent payment fact guarded by the paid event", async () => {
+    const orderId = randomUUID();
+    const paidEventId = randomUUID();
+    const execute = vi
+      .fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ order_id: orderId }])
+      .mockResolvedValueOnce([]);
+    const repo = new LearningCommerceRepository({ execute } as unknown as CassandraClient);
+
+    await repo.ensureRevenuePaymentFact(
+      {
+        orderId,
+        paidEventId,
+        studentId: randomUUID(),
+        courseId: randomUUID(),
+        offeringId: randomUUID(),
+        price: "490000",
+        currency: "VND",
+      } as never,
+      "sepay-123",
+      new Date("2026-09-22T01:00:00.000Z"),
+    );
+
+    expect(execute).toHaveBeenCalledTimes(3);
+    expect(String(execute.mock.calls[0]?.[0])).toContain("IF NOT EXISTS");
+    expect(String(execute.mock.calls[2]?.[0])).toContain("revenue_payment_facts_by_day_shard");
+  });
+
+  it("aggregates only reconciled VND payment and refund facts", async () => {
+    const now = new Date("2026-09-22T12:00:00.000Z");
+    const execute = vi.fn(async (query: string) => {
+      if (query.includes("finance_projection_control"))
+        return [{ status: "READY", backfill_through: new Date("2026-09-22T13:00:00.000Z"), checksum: "sha256:ok" }];
+      if (query.includes("revenue_payment_facts"))
+        return query.includes("shard=?") && execute.mock.calls.length === 2
+          ? [{ gross_minor: "490000", currency: "VND" }]
+          : [];
+      if (query.includes("revenue_refund_facts")) return [];
+      return [];
+    });
+    const repo = new LearningCommerceRepository({ execute } as unknown as CassandraClient);
+
+    await expect(repo.revenueDashboard("today", now)).resolves.toMatchObject({
+      dataSource: "AUTHORITATIVE_PAYMENT_REFUND_PROJECTION",
+      grossMinor: "490000",
+      netMinor: "490000",
+      orderCount: 1,
+      completeness: { status: "READY", checksum: "sha256:ok" },
+    });
+  });
+
+  it("fails closed while the authoritative revenue projection is unavailable", async () => {
+    const execute = vi.fn().mockResolvedValue([]);
+    const repo = new LearningCommerceRepository({ execute } as unknown as CassandraClient);
+
+    await expect(repo.revenueDashboard("30d")).rejects.toMatchObject(
+      expect.objectContaining({
+        code: "REVENUE_PROJECTION_NOT_READY",
+        status: 503,
+        retryable: true,
+      }),
+    );
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+
   it("classifies changed replay without claiming a second Order payment", async () => {
     const orderId = randomUUID();
     const execute = vi

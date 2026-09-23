@@ -81,14 +81,22 @@ describe("Phase 16B & 17 — Assistant Orchestrator (Study Buddy & Lecturer Copi
     searchCourseMaterials: (_uid, cid, topic) =>
       Promise.resolve([
         {
+          courseId: cid,
           lessonId: "lesson-05-consistency",
+          courseVersion: 1,
+          lessonVersion: 1,
           title: "Quorum and Tunable Consistency",
           contentSnippet: `In ScyllaDB/Cassandra, LOCAL_QUORUM ensures strong consistency within a datacenter when R + W > N. Topic: ${topic}`,
+          sourceObjectId: "a".repeat(64),
+          retrievalScore: 3,
+          sourceType: "LESSON_OBJECT" as const,
         },
       ]),
     generateQuizDraft: () => Promise.resolve({}),
     diagnoseCohortGaps: () => Promise.resolve({}),
     hasActiveAssessmentAttempt: () => Promise.resolve(false),
+    getStudentMastery: (_studentId, cid) => Promise.resolve([{ courseId: cid, masteryScore: 45 }]),
+    getRecommendedLearningPath: (studentId, cid) => Promise.resolve({ planId: randomUUID(), studentId, courseId: cid, items: [] }),
   };
 
   it("Study Buddy executes search_course_materials and returns verified lesson citations", async () => {
@@ -160,37 +168,30 @@ describe("Phase 16B & 17 — Assistant Orchestrator (Study Buddy & Lecturer Copi
     expect(mockRepo.toolLogs[0]?.toolName).toBe("get_knowledge_gaps");
   });
 
-  it("Lecturer Copilot accepts LECTURER_COPILOT mode and enforces curriculum design instructions", async () => {
+  it("Study Buddy retrieves persisted mastery and Study Plan through registered tools", async () => {
+    const mockRepo = createMockRepo();
+    const orchestrator = new AssistantOrchestrator({ repository: mockRepo.repo, toolRunner: new ToolRunner(domainClient), domainClient, llmProvider: { generate: () => Promise.resolve({ content: "Grounded response" }) } });
+    const res = await orchestrator.chat(
+      { userId: randomUUID(), role: "STUDENT" },
+      { mode: "STUDY_BUDDY", courseId, message: "Mastery của tôi thế nào và kế hoạch học gì tiếp?" },
+    );
+    expect(res.toolInvocations.map((call) => call.name)).toEqual(["get_student_mastery", "get_recommended_learning_path"]);
+  });
+
+  it("keeps deferred Lecturer Copilot inaccessible", async () => {
     const lecturerId = randomUUID();
     const mockRepo = createMockRepo();
-
-    const mockLlm: AssistantLlmProvider = {
-      generate: (req) => {
-        expect(req.systemPrompt).toContain("academic curriculum design expert");
-        expect(req.systemPrompt).toContain("Bloom's cognitive taxonomy");
-        return Promise.resolve({
-          content: "Dưới đây là đề xuất khung chương trình 4 tuần theo chuẩn Bloom.",
-        });
-      },
-    };
 
     const orchestrator = new AssistantOrchestrator({
       repository: mockRepo.repo,
       toolRunner: new ToolRunner(domainClient),
       domainClient,
-      llmProvider: mockLlm,
+      llmProvider: { generate: () => Promise.resolve({ content: "must not execute" }) },
     });
-
-    const res = await orchestrator.chat(
+    await expect(orchestrator.chat(
       { userId: lecturerId, role: "LECTURER" },
-      {
-        mode: "LECTURER_COPILOT",
-        message: "Hãy giúp tôi thiết kế khung chương trình môn Kiến trúc Microservices",
-      },
-    );
-
-    expect(res.mode).toBe("LECTURER_COPILOT");
-    expect(res.content).toContain("chuẩn Bloom");
+      { mode: "LECTURER_COPILOT", message: "Hãy giúp tôi thiết kế khung chương trình" },
+    )).rejects.toMatchObject({ code: "ASSISTANT_MODE_NOT_ALLOWED", status: 403 });
   });
 
   it("rejects unauthorized mode for role with 403 AppError", async () => {
