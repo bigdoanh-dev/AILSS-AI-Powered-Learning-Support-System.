@@ -546,6 +546,14 @@ export function validateSamlResponse(
     );
   }
 
+  const assertionMatch = /<(?:saml:)?Assertion[\s\S]*?<\/(?:saml:)?Assertion>/u.exec(xml);
+  if (!assertionMatch) {
+    throw new AppError("SAML_ASSERTION_MISSING", 401, "SAML response contains no assertion");
+  }
+  // Every identity-bearing value below must be read from this exact assertion.
+  // The assertion is the element bound by the verified Reference URI and digest.
+  const assertionXml = assertionMatch[0];
+
   // 3. Duplicate ID Defense: ensure element IDs are unique throughout the document
   const idRegex = /\bID="([^"]+)"/gu;
   const seenIds = new Set<string>();
@@ -652,14 +660,11 @@ export function validateSamlResponse(
     if (digestValueMatch?.[1]) {
       const expectedDigest = digestValueMatch[1].trim();
       // Target is either Assertion or Response
-      const assertionMatch = /<(?:saml:)?Assertion[\s\S]*?<\/(?:saml:)?Assertion>/u.exec(xml);
-      if (assertionMatch) {
-        // Strip signature block from assertion for digest verification if enveloped
-        const assertionXmlForDigest = assertionMatch[0].replace(/<(?:ds:)?Signature[\s\S]*?<\/(?:ds:)?Signature>/u, "");
-        const computedDigest = createHash("sha256").update(assertionXmlForDigest).digest("base64");
-        if (computedDigest !== expectedDigest) {
-          throw new AppError("SAML_DIGEST_MISMATCH", 401, "SAML assertion digest mismatch");
-        }
+      // Strip signature block from assertion for digest verification if enveloped
+      const assertionXmlForDigest = assertionXml.replace(/<(?:ds:)?Signature[\s\S]*?<\/(?:ds:)?Signature>/u, "");
+      const computedDigest = createHash("sha256").update(assertionXmlForDigest).digest("base64");
+      if (computedDigest !== expectedDigest) {
+        throw new AppError("SAML_DIGEST_MISMATCH", 401, "SAML assertion digest mismatch");
       }
     }
   }
@@ -671,14 +676,14 @@ export function validateSamlResponse(
   }
 
   // 8. Audience check
-  const audienceMatch = /<saml:Audience(?:Restriction)?[^>]*>([^<]+)<\/saml:Audience>/u.exec(xml);
+  const audienceMatch = /<saml:Audience(?:Restriction)?[^>]*>([^<]+)<\/saml:Audience>/u.exec(assertionXml);
   if (!audienceMatch || audienceMatch[1]?.trim() !== options.expectedAudience) {
     throw new AppError("SAML_AUDIENCE_MISMATCH", 401, "SAML audience does not match SP entity ID");
   }
 
   // 8. Conditions validity window
-  const notBeforeMatch = /NotBefore="([^"]+)"/u.exec(xml);
-  const notOnOrAfterMatch = /NotOnOrAfter="([^"]+)"/u.exec(xml);
+  const notBeforeMatch = /NotBefore="([^"]+)"/u.exec(assertionXml);
+  const notOnOrAfterMatch = /NotOnOrAfter="([^"]+)"/u.exec(assertionXml);
 
   if (notBeforeMatch && notBeforeMatch[1]) {
     const notBefore = new Date(notBeforeMatch[1]).getTime();
@@ -696,7 +701,7 @@ export function validateSamlResponse(
 
   // 9. InResponseTo verification if provided
   if (options.expectedInResponseTo) {
-    const inResponseToMatch = /InResponseTo="([^"]+)"/u.exec(xml);
+    const inResponseToMatch = /InResponseTo="([^"]+)"/u.exec(assertionXml);
     if (!inResponseToMatch || inResponseToMatch[1] !== options.expectedInResponseTo) {
       throw new AppError("SAML_IN_RESPONSE_TO_MISMATCH", 401, "SAML InResponseTo does not match request ID");
     }
@@ -713,7 +718,7 @@ export function validateSamlResponse(
       const notOnOrAfterStr = notOnOrAfterMatch?.[1];
       const issuedAt = notBeforeStr ? new Date(notBeforeStr) : new Date(now);
       const expiresAt = notOnOrAfterStr ? new Date(notOnOrAfterStr) : new Date(now + 300_000);
-      const idpIssuer = /<(?:saml:)?Issuer[^>]*>([^<]+)<\/(?:saml:)?Issuer>/u.exec(xml)?.[1] ?? options.idpConfig.entityId;
+      const idpIssuer = /<(?:saml:)?Issuer[^>]*>([^<]+)<\/(?:saml:)?Issuer>/u.exec(assertionXml)?.[1] ?? options.idpConfig.entityId;
 
       const record: SamlReplayRecord = {
         tenantId: options.tenantId ?? "tenant-default",
@@ -746,7 +751,7 @@ export function validateSamlResponse(
   }
 
   // 11. NameID extraction
-  const nameIdMatch = /<saml:NameID[^>]*>([^<]+)<\/saml:NameID>/u.exec(xml);
+  const nameIdMatch = /<saml:NameID[^>]*>([^<]+)<\/saml:NameID>/u.exec(assertionXml);
   if (!nameIdMatch || !nameIdMatch[1]) {
     throw new AppError("SAML_NAMEID_MISSING", 401, "SAML assertion does not contain NameID");
   }
@@ -757,7 +762,7 @@ export function validateSamlResponse(
   const attrRegex = /<saml:Attribute Name="([^"]+)"[^>]*>([\s\S]*?)<\/saml:Attribute>/gu;
   let match: RegExpExecArray | null;
 
-  while ((match = attrRegex.exec(xml)) !== null) {
+  while ((match = attrRegex.exec(assertionXml)) !== null) {
     const attrName = match[1];
     const valRegex = /<saml:AttributeValue[^>]*>([^<]+)<\/saml:AttributeValue>/gu;
     const values: string[] = [];

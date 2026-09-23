@@ -18,6 +18,7 @@ const baseSchema = z.object({
   LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),
   HTTP_BODY_LIMIT: z.string().default("1mb"),
   IDENTITY_SERVICE_URL: z.string().url().default("http://127.0.0.1:8101"),
+  IDENTITY_PUBLIC_URL: z.string().url().default("http://127.0.0.1:8080"),
   LEARNING_SERVICE_URL: z.string().url().default("http://127.0.0.1:8102"),
   CLASSROOM_SERVICE_URL: z.string().url().default("http://127.0.0.1:8103"),
   ASSESSMENT_SERVICE_URL: z.string().url().default("http://127.0.0.1:8104"),
@@ -59,6 +60,7 @@ const baseSchema = z.object({
   PASSWORD_IDEMPOTENCY_HMAC_KEY: optionalInjected,
   ADMIN_CURSOR_HMAC_KEY: optionalInjected,
   LEARNING_CURSOR_HMAC_KEY: optionalInjected,
+  PLATFORM_TENANT_ID: z.string().uuid().default("00000000-0000-4000-8000-000000000001"),
   AI_CURSOR_HMAC_KEY: optionalInjected,
   NOTIFICATION_TOKEN_SECRET: optionalInjected,
   NOTIFICATION_CURSOR_TTL_SECONDS: z.coerce.number().int().min(1).max(900).default(900),
@@ -112,6 +114,8 @@ const baseSchema = z.object({
   OBJECT_STORAGE_SECRET_KEY: optionalInjected,
   GOOGLE_CLIENT_IDS: z.string().default("ailss-web-google-client-id,ailss-mobile-google-client-id"),
   APPLE_CLIENT_IDS: z.string().default("com.ailss.web,com.ailss.mobile"),
+  SEPAY_WEBHOOK_API_KEY: optionalInjected,
+  SEPAY_REFUND_API_URL: z.string().url().optional(),
 });
 
 export type AppConfig = z.infer<typeof baseSchema>;

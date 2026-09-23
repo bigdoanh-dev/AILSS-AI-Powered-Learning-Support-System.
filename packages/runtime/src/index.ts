@@ -8,6 +8,7 @@ import { createLogger, httpRequestSerializer, safeError } from "../../logger/src
 import { createMetrics } from "../../observability/src/index.js";
 import { RabbitHealthClient } from "../../rabbitmq/src/index.js";
 import type { ReadinessSnapshot, ServiceId } from "../../types/src/index.js";
+import { hydrateRuntimeSecrets } from "../../security/src/index.js";
 
 export interface ServiceManifest {
   readonly serviceId: ServiceId;
@@ -54,7 +55,8 @@ function effectiveEnvironment(manifest: ServiceManifest): NodeJS.ProcessEnv {
 }
 
 export async function startService(manifest: ServiceManifest, hooks: RuntimeHooks = {}): Promise<void> {
-  const config = loadConfig(effectiveEnvironment(manifest));
+  const environment = await hydrateRuntimeSecrets(manifest.serviceId, effectiveEnvironment(manifest));
+  const config = loadConfig(environment);
   const logger = createLogger({
     service: manifest.serviceId,
     environment: config.NODE_ENV,
