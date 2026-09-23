@@ -68,7 +68,7 @@ export async function assistantProxyFactory(c: AppConfig): Promise<{
             ...(method === "POST" ? { "content-type": "application/json" } : {}),
           },
           ...(method === "POST" ? { body: JSON.stringify(req.body) } : {}),
-          signal: AbortSignal.timeout(c.INTERNAL_HTTP_TIMEOUT_MS),
+          signal: AbortSignal.timeout(c.AI_PROVIDER_TIMEOUT_MS),
         });
 
         const type = upstream.headers.get("content-type");

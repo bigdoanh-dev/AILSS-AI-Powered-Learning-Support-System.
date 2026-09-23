@@ -31,6 +31,8 @@ import { learningProgressProxyFactory } from "./learning-progress-proxy.js";
 import { aiDocumentProxyFactory } from "./ai-document-proxy.js";
 import { assistantProxyFactory } from "./assistant-proxy.js";
 import { notificationProxyFactory } from "./notification-proxy.js";
+import { federationProxy } from "./federation-proxy.js";
+import { adaptiveLearningProxyFactory } from "./adaptive-learning-proxy.js";
 
 const config = loadConfig({
   APP_NAME: "api-gateway",
@@ -44,6 +46,7 @@ const logger = createLogger({
   level: config.LOG_LEVEL,
 });
 const metrics = createMetrics("api-gateway");
+const globalLimiter = new InProcessRateLimiter();
 const readLimiter = new InProcessRateLimiter();
 const authLimiter = new InProcessRateLimiter();
 const adminStepUp = await createAdminStepUpClient(config);
@@ -62,6 +65,7 @@ const interaction = await interactionProxyFactory(config, adminStepUp, (record) 
   logger.info(record, "interaction moderation audit"),
 );
 const learningProgress = await learningProgressProxyFactory(config);
+const adaptiveLearning = await adaptiveLearningProxyFactory(config);
 const aiDocuments = await aiDocumentProxyFactory(config);
 const assistant = await assistantProxyFactory(config);
 const notifications = await notificationProxyFactory(config);
@@ -172,8 +176,12 @@ app.use(sanitizeIdentityHeaders());
 app.use(requestContextMiddleware());
 app.use(pinoHttp({ logger, serializers: { req: httpRequestSerializer } }));
 app.use("/api/v1/payments/sepay/webhook", express.json({ limit: "16kb", strict: true }));
+app.use("/api/v1/auth/saml", express.urlencoded({ extended: false, limit: "2mb" }));
+app.use("/api/v1/auth/lti/launch", express.urlencoded({ extended: false, limit: "64kb" }));
 app.use(express.json({ limit: config.HTTP_BODY_LIMIT }));
-app.use(readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)));
+// Keep volumetric protection separate from route budgets. Reusing readLimiter here
+// charged every read twice and cut the advertised per-route allowance in half.
+app.use(globalLimiter.middleware(Number(process.env.RATE_LIMIT_GLOBAL_PER_MINUTE ?? 1_200)));
 app.post(
   "/api/v1/auth/register",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
@@ -199,6 +207,11 @@ app.post(
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
   socialLoginProxy(config),
 );
+app.get("/api/v1/auth/saml/:organizationId/metadata", federationProxy(config, (request) => `/api/v1/auth/saml/${encodeURIComponent(String(request.params.organizationId))}/metadata`, "GET"));
+app.get("/api/v1/auth/saml/:organizationId/login", federationProxy(config, (request) => `/api/v1/auth/saml/${encodeURIComponent(String(request.params.organizationId))}/login`, "GET"));
+app.post("/api/v1/auth/saml/:organizationId/acs", authLimiter.middleware(30), federationProxy(config, (request) => `/api/v1/auth/saml/${encodeURIComponent(String(request.params.organizationId))}/acs`, "POST"));
+app.get("/api/v1/auth/lti/login", authLimiter.middleware(60), federationProxy(config, () => "/api/v1/auth/lti/login", "GET"));
+app.post("/api/v1/auth/lti/launch", authLimiter.middleware(60), federationProxy(config, () => "/api/v1/auth/lti/launch", "POST"));
 app.get("/api/v1/auth/identities", identitiesListHandler);
 app.post(
   "/api/v1/auth/identities/link",
@@ -294,6 +307,13 @@ app.post(
 app.get("/api/v1/me/courses", learningCommerce.myCourses);
 app.get("/api/v1/courses/:courseId/roster", learningCommerce.roster);
 app.get("/api/v1/courses/:courseId/progress", learningProgress.read);
+app.get("/api/v1/mastery/me", adaptiveLearning.mastery);
+app.get("/api/v1/mastery/courses/:courseId", adaptiveLearning.courseMastery);
+app.get("/api/v1/mastery/outcomes/:outcomeId", adaptiveLearning.outcome);
+app.post("/api/v1/study-plan/generate", authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)), adaptiveLearning.generate);
+app.get("/api/v1/study-plan/current", adaptiveLearning.current);
+app.patch("/api/v1/study-plan/items/:itemId", authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)), adaptiveLearning.updateItem);
+app.post("/api/v1/study-plan/items/:itemId/:action", authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)), adaptiveLearning.itemAction);
 app.put(
   "/api/v1/lessons/:lessonId/completion",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
@@ -606,6 +626,11 @@ app.get(
   "/api/v1/admin/dashboard/revenue",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_ADMIN_PER_MINUTE ?? 30)),
   learningCommerce.dashboardRevenue,
+);
+app.post(
+  "/api/v1/learning/refunds",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  learningCommerce.refund,
 );
 app.get(
   "/api/v1/admin/audit-logs",
