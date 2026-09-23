@@ -120,7 +120,7 @@ describe("Phase 17 — Student Course Advisor & Grounded Recommendations", () =>
         expect(hasToolContext).toBe(true);
 
         return Promise.resolve({
-          content: "Tôi gợi ý bạn nên bắt đầu với khóa 'Nhập môn Lập trình Web' giá 450.000 VND.",
+          content: "Khóa 'Cơ sở dữ liệu nâng cao' hiện có trong danh mục với giá 890.000 VND.",
         });
       },
     };
@@ -136,16 +136,125 @@ describe("Phase 17 — Student Course Advisor & Grounded Recommendations", () =>
       { userId: studentId, role: "STUDENT" },
       {
         mode: "STUDENT_ADVISOR",
-        message: "Hãy gợi ý khóa học cho tôi với",
+        message: "Hãy gợi ý khóa học Cassandra cho tôi với",
       },
     );
 
     expect(searchCalled).toBe(true);
     expect(res.toolInvocations).toHaveLength(1);
     expect(res.toolInvocations[0]?.name).toBe("search_courses");
+    expect(res.catalogCourses).toEqual(mockCatalogCourses.map(({ courseId, title, priceAmount, priceCurrency }) => ({
+      courseId, title, priceAmount, priceCurrency,
+    })));
+    expect(res.catalogCourses?.[0]).not.toHaveProperty("instructorName");
+    expect(res.catalogCourses?.[0]).not.toHaveProperty("level");
     expect(mockRepo.toolLogs).toHaveLength(1);
     expect(mockRepo.toolLogs[0]?.toolName).toBe("search_courses");
     expect(mockRepo.toolLogs[0]?.status).toBe("SUCCESS");
+  });
+
+  it("asks about goals before searching, then reuses the chosen subject after a qualification answer", async () => {
+    const mockRepo = createMockRepo();
+    const queries: string[] = [];
+    const domainClient: AssistantDomainClient = {
+      searchCourses: (query) => {
+        queries.push(query ?? "");
+        return Promise.resolve(mockCatalogCourses.slice(0, 1));
+      },
+      getCourseDetails: () => Promise.resolve(null),
+      compareCourses: () => Promise.resolve([]),
+      getKnowledgeGaps: () => Promise.resolve([]),
+      searchCourseMaterials: () => Promise.resolve([]),
+      generateQuizDraft: () => Promise.resolve({}),
+      diagnoseCohortGaps: () => Promise.resolve({}),
+      hasActiveAssessmentAttempt: () => Promise.resolve(false),
+    };
+    let completionCount = 0;
+    const orchestrator = new AssistantOrchestrator({
+      repository: mockRepo.repo,
+      toolRunner: new ToolRunner(domainClient),
+      domainClient,
+      llmProvider: { generate: () => {
+        completionCount += 1;
+        return Promise.resolve({ content: "Tôi đã kiểm tra khóa học Cassandra đang được xuất bản." });
+      } },
+    });
+    const student = { userId: randomUUID(), role: "STUDENT" as const };
+    const greeting = await orchestrator.chat(student, {
+      mode: "STUDENT_ADVISOR", message: "Tôi không biết chọn khóa học nào",
+    });
+    expect(greeting.content).toContain("Bạn muốn học để đạt mục tiêu gì");
+    expect(greeting.toolInvocations).toHaveLength(0);
+    expect(greeting.catalogCourses).toBeUndefined();
+    expect(queries).toEqual([]);
+
+    const mobilePrompt = await orchestrator.chat(student, {
+      mode: "STUDENT_ADVISOR", message: "Tìm khóa học phù hợp với người mới bắt đầu",
+    });
+    expect(mobilePrompt.content).toContain("Bạn muốn học để đạt mục tiêu gì");
+    expect(mobilePrompt.toolInvocations).toHaveLength(0);
+    expect(queries).toEqual([]);
+
+    const topic = await orchestrator.chat(student, {
+      mode: "STUDENT_ADVISOR", conversationId: greeting.conversationId, message: "Tôi muốn học Cassandra",
+    });
+    expect(topic.toolInvocations.map((call) => call.name)).toEqual(["search_courses"]);
+
+    const availability = await orchestrator.chat(student, {
+      mode: "STUDENT_ADVISOR", conversationId: greeting.conversationId, message: "Tôi chỉ rảnh buổi tối",
+    });
+    expect(availability.toolInvocations.map((call) => call.name)).toEqual(["search_courses"]);
+
+    const qualification = await orchestrator.chat(student, {
+      mode: "STUDENT_ADVISOR", conversationId: greeting.conversationId, message: "Em mới bắt đầu, mỗi tuần học 4 giờ",
+    });
+    expect(qualification.toolInvocations.map((call) => call.name)).toEqual(["search_courses"]);
+    const budget = await orchestrator.chat(student, {
+      mode: "STUDENT_ADVISOR", conversationId: greeting.conversationId, message: "Ngân sách dưới 500 nghìn",
+    });
+    expect(budget.toolInvocations.map((call) => call.name)).toEqual(["search_courses"]);
+    expect(queries).toEqual(Array.from({ length: 4 }, () => "Tôi muốn học Cassandra"));
+    expect(completionCount).toBe(4);
+  });
+
+  it("does not invent a course when the live catalog is empty or unavailable", async () => {
+    const mockRepo = createMockRepo();
+    const domainClient: AssistantDomainClient = {
+      searchCourses: () => Promise.resolve([]),
+      getCourseDetails: () => Promise.resolve(null),
+      compareCourses: () => Promise.resolve([]),
+      getKnowledgeGaps: () => Promise.resolve([]),
+      searchCourseMaterials: () => Promise.resolve([]),
+      generateQuizDraft: () => Promise.resolve({}),
+      diagnoseCohortGaps: () => Promise.resolve({}),
+      hasActiveAssessmentAttempt: () => Promise.resolve(false),
+    };
+    let completionCount = 0;
+    const orchestrator = new AssistantOrchestrator({
+      repository: mockRepo.repo,
+      toolRunner: new ToolRunner(domainClient),
+      domainClient,
+      llmProvider: { generate: () => { completionCount += 1; return Promise.resolve({ content: "fabricated offer" }); } },
+    });
+    const student = { userId: randomUUID(), role: "STUDENT" as const };
+    const empty = await orchestrator.chat(student, { mode: "STUDENT_ADVISOR", message: "Tôi muốn học Cassandra" });
+    expect(empty.content).toContain("chưa tìm thấy khóa học đã xuất bản");
+    expect(completionCount).toBe(0);
+
+    const failedClient: AssistantDomainClient = {
+      ...domainClient,
+      searchCourses: () => Promise.reject(new Error("CATALOG_UNAVAILABLE")),
+    };
+    const unavailableOrchestrator = new AssistantOrchestrator({
+      repository: createMockRepo().repo,
+      toolRunner: new ToolRunner(failedClient),
+      domainClient: failedClient,
+      llmProvider: { generate: () => { completionCount += 1; return Promise.resolve({ content: "fabricated offer" }); } },
+    });
+    const unavailable = await unavailableOrchestrator.chat(student, { mode: "STUDENT_ADVISOR", message: "Tôi muốn học Cassandra" });
+    expect(unavailable.content).toContain("tạm thời không khả dụng");
+    expect(unavailable.toolInvocations).toHaveLength(1);
+    expect(completionCount).toBe(0);
   });
 
   it("compares courses using live metadata via tool runner", async () => {
