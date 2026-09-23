@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test:browser": "node scripts/verify-browser.mjs",
+    "verify:phase40:revision-l": "node scripts/verify-phase40-revision-l.mjs",
     "assets": "node scripts/assets.mjs",
     "video": "node scripts/video.mjs"
   },

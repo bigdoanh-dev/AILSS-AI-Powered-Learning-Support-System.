@@ -279,22 +279,7 @@ export function Auth() {
         : "Đang kết nối tài khoản Apple ID…",
     );
     try {
-      await auth.login({
-        email: "student.demo@ailss.local",
-        password: "AilssDemo!2026",
-      });
-      navigate("/auth/result", {
-        replace: true,
-        state: {
-          success: true,
-          title: "Đăng nhập thành công",
-          message: `Xác thực an toàn qua ${
-            provider === "google" ? "Google" : "Apple"
-          } thành công. Tài khoản đã sẵn sàng.`,
-          to: safeReturnTo(new URLSearchParams(location.search).get("returnTo")),
-          label: "Tiếp tục",
-        },
-      });
+      throw new Error(`SSO ${provider === "google" ? "Google" : "Apple"} chưa được cấu hình cho môi trường này.`);
     } catch (error) {
       navigate("/auth/result", {
         state: {
@@ -734,54 +719,6 @@ export function Auth() {
               <button className="button auth-submit-btn" disabled={busy} type="submit">
                 {busy ? "Đang xử lý…" : register ? "Tạo tài khoản" : "Đăng nhập"}
               </button>
-
-              {/* 1-Tap Demo Quick Fill Pills for login */}
-              {!register && (
-                <div className="auth-quick-demo-wrapper">
-                  <div className="auth-quick-demo-header">
-                    <span className="quick-demo-icon" aria-hidden="true">⚡</span>
-                    <span>Tài khoản thử nghiệm nhanh:</span>
-                  </div>
-                  <div className="auth-quick-demo-chips">
-                    <button
-                      type="button"
-                      className="demo-chip-btn student"
-                      disabled={busy}
-                      title="Đăng nhập thử Học viên"
-                      onClick={() => {
-                        setEmailVal("student.demo@ailss.local");
-                        setPasswordVal("AilssDemo!2026");
-                      }}
-                    >
-                      🎓 Học viên
-                    </button>
-                    <button
-                      type="button"
-                      className="demo-chip-btn lecturer"
-                      disabled={busy}
-                      title="Đăng nhập thử Giảng viên"
-                      onClick={() => {
-                        setEmailVal("lecturer.demo@ailss.local");
-                        setPasswordVal("AilssLecturer!2026");
-                      }}
-                    >
-                      👨‍🏫 Giảng viên
-                    </button>
-                    <button
-                      type="button"
-                      className="demo-chip-btn admin"
-                      disabled={busy}
-                      title="Đăng nhập thử Quản trị viên"
-                      onClick={() => {
-                        setEmailVal("admin.demo@ailss.local");
-                        setPasswordVal("AilssAdmin!2026");
-                      }}
-                    >
-                      🛡️ Admin
-                    </button>
-                  </div>
-                </div>
-              )}
 
               <p className="form-status" role="status">
                 {status || auth.message}

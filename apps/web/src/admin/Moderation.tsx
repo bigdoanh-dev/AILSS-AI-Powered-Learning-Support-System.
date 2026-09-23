@@ -439,7 +439,7 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
   const [reason, setReason] = useState(
     report.reportedReason ? `Vi phạm quy chế cộng đồng: ${report.reportedReason}` : "Vi phạm quy chế cộng đồng và chuẩn mực giao tiếp học thuật AILSS.",
   );
-  const [currentPassword, setCurrentPassword] = useState("AilssAdmin!2026");
+  const [currentPassword, setCurrentPassword] = useState("");
 
   useEffect(() => {
     setReason(
@@ -588,4 +588,3 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
     </form>
   );
 }
-

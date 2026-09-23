@@ -39,7 +39,7 @@ const server = http.createServer(async (req, res) => {
         response.pipe(res);
       },
     );
-    upstream.setTimeout(15000, () => upstream.destroy());
+    upstream.setTimeout(req.url?.startsWith("/api/v1/assistant/chat") ? 60000 : 15000, () => upstream.destroy());
     upstream.on("error", () => {
       if (!res.headersSent) res.writeHead(502, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: { code: "GATEWAY_UNAVAILABLE" } }));

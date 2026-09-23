@@ -164,7 +164,7 @@ export async function studentRequest<T>(
     method,
     credentials: "same-origin",
     cache: "no-store",
-    signal: AbortSignal.any([signal, AbortSignal.timeout(20000)]),
+    signal: AbortSignal.any([signal, AbortSignal.timeout(path === "/assistant/chat" ? 65000 : 20000)]),
     headers: {
       Accept: "application/json",
       ...(method !== "GET" ? { "Content-Type": "application/json" } : {}),
