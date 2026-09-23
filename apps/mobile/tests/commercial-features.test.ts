@@ -21,7 +21,7 @@ describe("commercial features and role-based matrix", () => {
   describe("getFeaturesForRole matrix", () => {
     it("provides clean administrative features without student schedule/assessment leaks", () => {
       const adminFeatures = getFeaturesForRole("ADMIN");
-      expect(adminFeatures.length).toBe(8);
+      expect(adminFeatures.length).toBe(7);
 
       const paths = adminFeatures.map((f) => f.path);
       // Ensure no student routes are present
@@ -36,7 +36,7 @@ describe("commercial features and role-based matrix", () => {
       expect(paths).toContain("/admin/commerce");
       expect(paths).toContain("/admin/revenue");
       expect(paths).toContain("/admin/stats");
-      expect(paths).toContain("/admin/logs");
+      expect(paths).not.toContain("/admin/logs");
       expect(paths).toContain("/settings");
     });
 
@@ -109,4 +109,3 @@ describe("commercial features and role-based matrix", () => {
     });
   });
 });
-
