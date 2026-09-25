@@ -22,23 +22,41 @@ x-cassandra-common: &cassandra-common
     CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
     AILSS_CASSANDRA_AUDIT: "false"
     AILSS_CASSANDRA_TLS: "false"
-    MAX_HEAP_SIZE: 1024M
-    HEAP_NEWSIZE: 256M
+    MAX_HEAP_SIZE: 512M
+    HEAP_NEWSIZE: 128M
   healthcheck:
     test:
       [
         "CMD-SHELL",
-        "cqlsh -u cassandra -p cassandra -e 'SELECT release_version FROM system.local' >/dev/null 2>&1",
+        "cqlsh --connect-timeout=5 --request-timeout=10 -u cassandra -p cassandra -e 'SELECT release_version FROM system.local' >/dev/null 2>&1",
       ]
     interval: 10s
-    timeout: 8s
-    retries: 30
-    start_period: 50s
+    timeout: 15s
+    retries: 15
+    # The current persisted local schema reached CQL in ~53s on the 2.35 GiB Docker VM.
+    # Keep a bounded allowance; readiness still requires an authenticated system.local query.
+    start_period: 90s
   networks: [data_net]
 
 x-app-common: &app-common
   build: { context: ., dockerfile: Dockerfile }
   restart: unless-stopped
+  depends_on:
+    # Only the Cassandra service matching the active profile is enabled. Optional
+    # dependencies keep dev and research profiles isolated while still enforcing
+    # useful CQL readiness before any service process starts.
+    cassandra-dev:
+      condition: service_healthy
+      required: false
+    cassandra-node1:
+      condition: service_healthy
+      required: false
+    cassandra-node2:
+      condition: service_healthy
+      required: false
+    cassandra-node3:
+      condition: service_healthy
+      required: false
   environment: &app-env
     NODE_ENV: ${NODE_ENV:-development}
     AILSS_PROFILE: ${AILSS_PROFILE:-dev-async}
@@ -66,7 +84,9 @@ services:
     container_name: ailss-cassandra-dev
     hostname: cassandra
     ports: ["127.0.0.1:9042:9042"]
-    mem_limit: 2560m
+    # Keep the single-node development Cassandra small enough for the local
+    # Docker Desktop VM to run alongside the application and async workers.
+    mem_limit: 1536m
     cpus: 1.50
     volumes: [cassandra_dev_data:/var/lib/cassandra]
     networks:
