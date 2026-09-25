@@ -27,13 +27,17 @@ async function readProviderJson<T>(response: Response): Promise<T> {
   try {
     return (await response.json()) as T;
   } catch {
-    throw new AppError(
-      "AI_PROVIDER_INVALID_RESPONSE",
-      503,
-      "The assistant service is temporarily unavailable",
-      true,
-    );
+    throw invalidProviderResponse();
   }
+}
+
+function invalidProviderResponse(): AppError {
+  return new AppError(
+    "AI_PROVIDER_INVALID_RESPONSE",
+    503,
+    "The assistant service is temporarily unavailable",
+    true,
+  );
 }
 
 export interface LlmMessage {
@@ -104,15 +108,16 @@ export class IntegrationOnlyAssistantLlmProvider implements AssistantLlmProvider
 
     if (context.mode === "STUDY_BUDDY") {
       const materialTool = resultFor("search_course_materials");
-      if (!materialTool || materialTool.error || !Array.isArray(materialTool.result))
-        throw integrationFailure();
-      const materials = materialTool.result.filter(isRecord);
-      for (const material of materials.slice(0, 3)) {
-        if (typeof material.title !== "string" || typeof material.contentSnippet !== "string") continue;
-        const excerpt = material.contentSnippet.trim().replace(/\s+/gu, " ").slice(0, 700);
-        if (!excerpt) continue;
-        const section = typeof material.sectionTitle === "string" ? ` · ${material.sectionTitle}` : "";
-        sections.push(`Tài liệu “${material.title}${section}” ghi: “${excerpt}”`);
+      if (materialTool) {
+        if (materialTool.error || !Array.isArray(materialTool.result)) throw integrationFailure();
+        const materials = materialTool.result.filter(isRecord);
+        for (const material of materials.slice(0, 3)) {
+          if (typeof material.title !== "string" || typeof material.contentSnippet !== "string") continue;
+          const excerpt = material.contentSnippet.trim().replace(/\s+/gu, " ").slice(0, 700);
+          if (!excerpt) continue;
+          const section = typeof material.sectionTitle === "string" ? ` · ${material.sectionTitle}` : "";
+          sections.push(`Tài liệu “${material.title}${section}” ghi: “${excerpt}”`);
+        }
       }
 
       const masteryTool = resultFor("get_student_mastery");
@@ -227,7 +232,11 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
         usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
       }>(res);
 
-      const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+      const text =
+        json.candidates?.[0]?.content?.parts
+          ?.map((part) => (typeof part.text === "string" ? part.text : ""))
+          .join("") ?? "";
+      if (!text.trim()) throw invalidProviderResponse();
       return {
         content: text,
         usage: {
@@ -266,7 +275,8 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
       usage?: { prompt_tokens?: number; completion_tokens?: number };
     }>(res);
 
-    const text = json.choices?.[0]?.message?.content ?? "";
+    const text = json.choices?.[0]?.message?.content;
+    if (typeof text !== "string" || !text.trim()) throw invalidProviderResponse();
     return {
       content: text,
       usage: {
