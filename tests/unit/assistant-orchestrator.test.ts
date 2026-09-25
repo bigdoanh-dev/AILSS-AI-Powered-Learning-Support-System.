@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
+import { AppError } from "../../packages/http/src/index.js";
 import {
   AssistantOrchestrator,
   IntegrationOnlyAssistantLlmProvider,
@@ -170,6 +171,44 @@ describe("Phase 16B & 17 — Assistant Orchestrator (Study Buddy & Lecturer Copi
     expect(response.citations).toHaveLength(1);
     expect(response.citations[0]?.sourceObjectId).toBe("a".repeat(64));
     expect(mockRepo.messages.get(response.conversationId)?.at(-1)?.citations).toEqual(response.citations);
+  });
+
+  it("does not persist a successful assistant answer or citations when the provider fails", async () => {
+    const mockRepo = createMockRepo();
+    const orchestrator = new AssistantOrchestrator({
+      repository: mockRepo.repo,
+      toolRunner: new ToolRunner(domainClient),
+      domainClient,
+      llmProvider: {
+        generate: () =>
+          Promise.reject(
+            new AppError(
+              "AI_PROVIDER_INVALID_RESPONSE",
+              503,
+              "The assistant service is temporarily unavailable",
+              true,
+            ),
+          ),
+      },
+    });
+
+    await expect(
+      orchestrator.chat(
+        { userId: randomUUID(), role: "STUDENT" },
+        {
+          mode: "STUDY_BUDDY",
+          courseId,
+          message: "Giải thích tài liệu về tính nhất quán quorum",
+        },
+      ),
+    ).rejects.toMatchObject({ code: "AI_PROVIDER_INVALID_RESPONSE", status: 503, retryable: true });
+
+    const persisted = [...mockRepo.messages.values()];
+    expect(persisted).toHaveLength(1);
+    expect(persisted[0]).toHaveLength(1);
+    expect(persisted[0]?.[0]?.sender).toBe("USER");
+    expect(persisted[0]?.[0]?.citations).toBeUndefined();
+    expect(persisted[0]?.some((message) => message.sender === "ASSISTANT")).toBe(false);
   });
 
   it("Study Buddy detects knowledge gap inquiries and runs get_knowledge_gaps", async () => {

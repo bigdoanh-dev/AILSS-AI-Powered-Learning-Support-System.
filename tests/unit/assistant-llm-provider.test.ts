@@ -68,6 +68,32 @@ describe("assistant LLM provider failure handling", () => {
       retryable: true,
     });
   });
+
+  it.each([
+    [
+      "Gemini",
+      "https://generativelanguage.googleapis.com/v1beta/models/test:generateContent",
+      {
+        candidates: [{ content: { parts: [{ text: "   " }] } }],
+      },
+    ],
+    [
+      "OpenAI-compatible",
+      "https://provider.example.invalid/v1/chat/completions",
+      {
+        choices: [{ message: { content: "   " } }],
+      },
+    ],
+  ])("rejects an empty successful %s response", async (_provider, endpoint, payload) => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 })));
+    const provider = new HttpAssistantLlmProvider({ endpoint, apiKey: "test-key", model: "test-model" });
+    await expect(provider.generate(request)).rejects.toMatchObject({
+      code: "AI_PROVIDER_INVALID_RESPONSE",
+      status: 503,
+      retryable: true,
+      message: "The assistant service is temporarily unavailable",
+    });
+  });
 });
 
 describe("integration-only assistant model boundary", () => {
@@ -133,5 +159,30 @@ describe("integration-only assistant model boundary", () => {
     expect(completion.content).toContain("Review quorum — Revisit the lesson");
     expect(completion).not.toHaveProperty("citations");
     expect(completion.content).not.toContain("unprovided course");
+  });
+
+  it("grounds adaptive-only replies in successful mastery and study-plan tools without requiring a material search", async () => {
+    const completion = await provider.generate({
+      ...request,
+      integrationContext: {
+        mode: "STUDY_BUDDY",
+        toolResults: [
+          {
+            toolCallId: "mastery",
+            name: "get_student_mastery",
+            result: [{ conceptId: "partitioning", masteryState: "DEVELOPING", masteryScore: 0.58 }],
+          },
+          {
+            toolCallId: "plan",
+            name: "get_recommended_learning_path",
+            result: { items: [{ title: "Review partitions", action: "Complete the lesson" }] },
+          },
+        ],
+      },
+    });
+
+    expect(completion.content).toContain("DEVELOPING — score 0.58");
+    expect(completion.content).toContain("Review partitions — Complete the lesson");
+    expect(completion).not.toHaveProperty("citations");
   });
 });
