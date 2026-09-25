@@ -33,6 +33,7 @@ import { assistantProxyFactory } from "./assistant-proxy.js";
 import { notificationProxyFactory } from "./notification-proxy.js";
 import { federationProxy } from "./federation-proxy.js";
 import { adaptiveLearningProxyFactory } from "./adaptive-learning-proxy.js";
+import { createUpstreamReadinessHandler, gatewayReadinessDependencies } from "./readiness.js";
 
 const config = loadConfig({
   APP_NAME: "api-gateway",
@@ -638,13 +639,12 @@ app.get(
   interaction.auditLogs,
 );
 app.get("/health/live", (_request, response) => response.json({ status: "UP", service: "api-gateway" }));
-app.get("/health/ready", (_request, response) =>
-  response.json({
-    service: "api-gateway",
-    ready: true,
-    dependencies: [],
-    checkedAt: new Date().toISOString(),
-  }),
+app.get(
+  "/health/ready",
+  createUpstreamReadinessHandler(
+    gatewayReadinessDependencies(process.env.AILSS_PROFILE, config),
+    Math.min(config.INTERNAL_HTTP_TIMEOUT_MS, 2_000),
+  ),
 );
 app.get("/metrics", async (_request, response) =>
   response.type(metrics.registry.contentType).send(await metrics.registry.metrics()),

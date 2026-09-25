@@ -1,0 +1,46 @@
+appId: dev.ailss.mobile
+---
+# Set DEMO_EMAIL and DEMO_PASSWORD as Maestro environment variables. This flow
+# expects the app to be at the sign-in screen; it never clears native app data.
+- launchApp
+- tapOn:
+    id: student-intro-skip
+    optional: true
+# Always reach the login form without clearing app data. If a previous flow left
+# the seeded student signed in, revoke that app session through the account UI.
+- openLink:
+    link: "ailss-mobile://login"
+- tapOn:
+    text: "Đăng xuất"
+    optional: true
+- openLink:
+    link: "ailss-mobile://login"
+- extendedWaitUntil:
+    visible:
+      id: student-login-email
+    timeout: 120000
+- tapOn:
+    id: student-login-email
+- inputText: ${DEMO_EMAIL}
+- assertVisible: ${DEMO_EMAIL}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: student-login-password
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-login-password
+- inputText: ${DEMO_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: student-login-submit
+    waitToSettleTimeoutMs: 1000
+- extendedWaitUntil:
+    visible:
+      id: student-login-success
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      id: student-home-authenticated-profile
+    timeout: 120000

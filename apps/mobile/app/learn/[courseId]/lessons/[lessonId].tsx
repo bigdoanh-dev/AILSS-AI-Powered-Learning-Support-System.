@@ -237,7 +237,7 @@ export default function LessonConsumptionScreen() {
   const isPdf = lesson.contentType === "application/pdf";
 
   return (
-    <Page>
+    <Page testID="student-lesson-screen">
       <ScreenHeader
         title={lesson.sectionTitle || "Bài học"}
         subtitle={lesson.title}
@@ -338,6 +338,7 @@ export default function LessonConsumptionScreen() {
 
         {mutationMessage && (
           <View
+            testID={pendingSyncState ? "student-lesson-pending-sync" : "student-lesson-completion-feedback"}
             style={[
               localStyles.mutationBox,
               mutationSucceeded ? localStyles.mutationBoxSuccess : localStyles.mutationBoxError,
@@ -366,6 +367,7 @@ export default function LessonConsumptionScreen() {
             />
           ) : (
             <Button
+              testID="student-lesson-complete"
               label={mutationLoading ? "Đang lưu tiến độ…" : "Đánh dấu đã hoàn thành"}
               onPress={() => void toggleCompletion(true)}
               disabled={mutationLoading}

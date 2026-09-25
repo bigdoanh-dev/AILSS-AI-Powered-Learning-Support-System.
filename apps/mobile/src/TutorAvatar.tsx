@@ -7,7 +7,7 @@ export function TutorAvatar({
   decorative = false,
   size = 54,
 }: { active?: boolean; decorative?: boolean; size?: number }) {
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
   const motion = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export function TutorAvatar({
   }, []);
 
   useEffect(() => {
-    if (reduceMotion) {
+    if (reduceMotion !== false) {
       motion.stopAnimation();
       motion.setValue(0);
       return;

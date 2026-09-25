@@ -684,25 +684,37 @@ const policy = {
 };
 
 await mkdir(out, { recursive: true });
-await writeFile(
-  path.join(out, "phase41-mobile-feature-inventory.json"),
-  JSON.stringify(
-    {
-      generatedAt: new Date().toISOString(),
-      sourceRoots: ["app", "src"],
-      routeCount: inventory.length,
-      summary: {
-        connect: inventory.filter((x) => x.decision === "CONNECT").length,
-        refactor: inventory.filter((x) => x.decision === "REFACTOR").length,
-        defer: inventory.filter((x) => x.decision === "DEFER").length,
-        remove: inventory.filter((x) => x.decision === "REMOVE").length,
-      },
-      routes: inventory,
-    },
-    null,
-    2,
-  ) + "\n",
-);
+const inventoryPath = path.join(out, "phase41-mobile-feature-inventory.json");
+const inventoryEvidence = {
+  generatedAt: new Date().toISOString(),
+  sourceRoots: ["app", "src"],
+  routeCount: inventory.length,
+  summary: {
+    connect: inventory.filter((x) => x.decision === "CONNECT").length,
+    refactor: inventory.filter((x) => x.decision === "REFACTOR").length,
+    defer: inventory.filter((x) => x.decision === "DEFER").length,
+    remove: inventory.filter((x) => x.decision === "REMOVE").length,
+  },
+  routes: inventory,
+};
+let previousInventory = null;
+try {
+  previousInventory = JSON.parse(await readFile(inventoryPath, "utf8"));
+} catch {
+  // Missing or invalid evidence is regenerated from the current source.
+}
+if (previousInventory) {
+  if (
+    JSON.stringify({ ...previousInventory, generatedAt: undefined }) ===
+    JSON.stringify({ ...inventoryEvidence, generatedAt: undefined })
+  ) {
+    inventoryEvidence.generatedAt = previousInventory.generatedAt;
+  }
+}
+const inventoryOutput = `${JSON.stringify(inventoryEvidence, null, 2)}\n`;
+if ((await readFile(inventoryPath, "utf8").catch(() => null)) !== inventoryOutput) {
+  await writeFile(inventoryPath, inventoryOutput);
+}
 await writeFile(
   path.join(out, "phase41-mobile-runtime-feature-graph.json"),
   JSON.stringify(graph, null, 2) + "\n",

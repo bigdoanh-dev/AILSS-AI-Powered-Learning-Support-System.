@@ -1,0 +1,12 @@
+appId: dev.ailss.mobile
+---
+# Run after the Learning path is stopped. If the completion was already
+# queued by an earlier interrupted run, this remains a safe assertion-only run.
+- tapOn:
+    text: "Đánh dấu đã hoàn thành"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: student-lesson-pending-sync
+    timeout: 30000
+- assertVisible: "PENDING_SYNC · thao tác sẽ được gửi lại cùng idempotency key khi có mạng; máy chủ chưa xác nhận hoàn thành."

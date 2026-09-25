@@ -124,7 +124,7 @@ export default function QuizDetailScreen() {
   if (!quiz) return null;
 
   return (
-    <Page>
+    <Page testID="student-assessment-detail">
       <ScreenHeader
         title="Bài kiểm tra"
         subtitle={quiz.targetType === "COURSE" ? "Theo khóa học" : "Theo lớp học"}
@@ -217,6 +217,7 @@ export default function QuizDetailScreen() {
       {/* Primary Action Button */}
       <View style={screenStyles.actionRow}>
         <Button
+          testID="student-assessment-start"
           label={starting ? "Đang chuẩn bị đề thi..." : "▶ Bắt đầu làm bài thi"}
           onPress={() => void handleStartAttempt()}
           disabled={starting}

@@ -320,11 +320,72 @@ if (process.env.AILSS_ACCEPTANCE_P8_2 === "true") {
       submitBody = { answers, clientSubmittedAt: new Date().toISOString() },
       brokerRecovery = process.env.AILSS_ACCEPTANCE_P8_4 === "true";
     if (brokerRecovery) execFileSync("docker", ["stop", "ailss-rabbitmq"], { stdio: "pipe" });
-    const submitted = await http("POST", `/api/v1/attempts/${started.json.data.attemptId}/submit`, {
-      bearer: studentToken,
-      key: submitKey,
-      body: submitBody,
-    });
+    let ambiguousResponseReplay = false;
+    let rapidDoubleSubmit;
+    let submitted;
+    if (process.env.AILSS_ACCEPTANCE_RAPID_DOUBLE_SUBMIT === "true") {
+      const deliveries = await Promise.all(
+        [0, 1].map(() =>
+          http("POST", `/api/v1/attempts/${started.json.data.attemptId}/submit`, {
+            bearer: studentToken,
+            key: submitKey,
+            body: submitBody,
+          }),
+        ),
+      );
+      for (const delivery of deliveries) expectStatus(delivery, 202, "ASM-08 rapid duplicate submit");
+      if (
+        deliveries.some(
+          (delivery) =>
+            delivery.json.data.attemptId !== deliveries[0].json.data.attemptId ||
+            delivery.json.data.score !== deliveries[0].json.data.score ||
+            delivery.json.data.resultVersion !== deliveries[0].json.data.resultVersion,
+        )
+      )
+        throw new Error("rapid double-submit returned divergent authoritative results");
+      const durable = assessmentSubmitState(started.json.data.attemptId);
+      if (
+        durable.attemptState !== "SUBMITTED" ||
+        !durable.resultExists ||
+        !["READY", "PUBLISHED"].includes(durable.eventState)
+      )
+        throw new Error(`rapid double-submit durable state mismatch ${JSON.stringify(durable)}`);
+      submitted = deliveries[0];
+      rapidDoubleSubmit = {
+        concurrentDeliveries: deliveries.length,
+        sameIdempotencyKey: true,
+        samePayload: true,
+        oneAttemptId: deliveries.every(
+          (delivery) => delivery.json.data.attemptId === started.json.data.attemptId,
+        ),
+        oneDurableResult: durable.resultExists,
+        oneDeterministicOutboxEvent: durable.eventId,
+        eventState: durable.eventState,
+      };
+    } else if (process.env.AILSS_ACCEPTANCE_AMBIGUOUS_SUBMIT_RESPONSE === "true") {
+      const firstDelivery = await http("POST", `/api/v1/attempts/${started.json.data.attemptId}/submit`, {
+        bearer: studentToken,
+        key: submitKey,
+        body: submitBody,
+      });
+      // Fault-injection boundary: intentionally discard the first response after the server handles the command.
+      void firstDelivery;
+      submitted = await http("POST", `/api/v1/attempts/${started.json.data.attemptId}/submit`, {
+        bearer: studentToken,
+        key: submitKey,
+        body: submitBody,
+      });
+      expectStatus(submitted, 202, "ASM-08 ambiguous-response same-key replay");
+      if (!submitted.json.meta.replayed || submitted.json.data.score !== "15")
+        throw new Error("ambiguous-response replay changed canonical result");
+      ambiguousResponseReplay = true;
+    } else {
+      submitted = await http("POST", `/api/v1/attempts/${started.json.data.attemptId}/submit`, {
+        bearer: studentToken,
+        key: submitKey,
+        body: submitBody,
+      });
+    }
     expectStatus(submitted, 202, "ASM-08 objective submit");
     let brokerProof;
     if (brokerRecovery) {
@@ -380,6 +441,11 @@ if (process.env.AILSS_ACCEPTANCE_P8_2 === "true") {
       sameKeyReplay: true,
       sameKeyDifferentPayloadConflict: true,
       secondOperationConflict: true,
+      ambiguousResponseReplay,
+      ...(ambiguousResponseReplay
+        ? { faultInjectionClassification: "CLIENT_RESPONSE_DROP_IDEMPOTENCY_ACCEPTANCE" }
+        : {}),
+      ...(rapidDoubleSubmit ? { rapidDoubleSubmit } : {}),
     };
     if (process.env.AILSS_ACCEPTANCE_P8_4 === "true") {
       const summary = await http("GET", `/api/v1/attempts/${started.json.data.attemptId}/result`, {

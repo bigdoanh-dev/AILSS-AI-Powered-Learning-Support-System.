@@ -373,6 +373,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
               </Text>
               <TextInput
                 accessibilityLabel="Email"
+                testID={screen === "login" ? "student-login-email" : undefined}
                 style={styles.input}
                 placeholder="name@domain.com"
                 placeholderTextColor={tokens.color.muted}
@@ -395,6 +396,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
               </View>
               <TextInput
                 accessibilityLabel="Mật khẩu"
+                testID={screen === "login" ? "student-login-password" : undefined}
                 style={styles.input}
                 placeholder="••••••••••••"
                 placeholderTextColor={tokens.color.muted}
@@ -411,6 +413,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
 
             <View style={{ marginTop: 6 }}>
               <Button
+                testID={screen === "login" ? "student-login-submit" : undefined}
                 label={busy ? "Đang xử lý…" : screen === "login" ? "Đăng nhập ngay" : "Tạo tài khoản"}
                 disabled={
                   busy || !email || !password || (screen === "register" && (!name || password.length < 12))

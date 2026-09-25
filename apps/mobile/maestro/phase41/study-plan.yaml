@@ -1,0 +1,34 @@
+appId: dev.ailss.mobile
+---
+# COURSE_ID must be an enrolled course ID from the current local runtime seed.
+- runFlow:
+    file: login.yaml
+- extendedWaitUntil:
+    visible:
+      id: student-home-authenticated-profile
+    timeout: 120000
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-home-study-plan
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-home-study-plan
+- extendedWaitUntil:
+    visible:
+      id: student-study-plan-title
+    timeout: 60000
+- assertVisible:
+    id: student-study-plan-data-source
+- assertVisible: "LIVE"
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-study-plan-course-${COURSE_ID}
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-study-plan-course-${COURSE_ID}
+- assertVisible:
+    id: student-study-plan-selected-course-${COURSE_ID}

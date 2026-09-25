@@ -1,0 +1,23 @@
+appId: dev.ailss.mobile
+---
+# The lesson is first made incomplete in the local demo fixture, then opened
+# online so the native app has its canonical content/progress in memory.
+- runFlow:
+    file: login.yaml
+- openLink:
+    link: "ailss-mobile://learn/${COURSE_ID}/lessons/${LESSON_ID}"
+- extendedWaitUntil:
+    visible:
+      id: student-lesson-screen
+    timeout: 60000
+- tapOn:
+    text: "Đánh dấu chưa hoàn thành"
+    optional: true
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      text: "Đánh dấu đã hoàn thành"
+    direction: DOWN
+    timeout: 30000
+- assertVisible:
+    text: "Đánh dấu đã hoàn thành"

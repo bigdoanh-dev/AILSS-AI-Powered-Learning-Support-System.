@@ -16,7 +16,59 @@ export interface CassandraOptions {
   readonly username: string;
   readonly password: string;
   readonly requestTimeoutMs?: number;
+  readonly startupRetry?: {
+    readonly attempts?: number;
+    readonly initialDelayMs?: number;
+    readonly maxDelayMs?: number;
+    readonly onRetry?: (details: {
+      readonly attempt: number;
+      readonly attempts: number;
+      readonly delayMs: number;
+      readonly error: unknown;
+    }) => void;
+  };
   readonly tls?: { readonly caPath: string; readonly serverName: string };
+}
+
+export interface ConnectRetryOptions {
+  readonly attempts?: number;
+  readonly initialDelayMs?: number;
+  readonly maxDelayMs?: number;
+  readonly onRetry?: (details: {
+    readonly attempt: number;
+    readonly attempts: number;
+    readonly delayMs: number;
+    readonly error: unknown;
+  }) => void;
+  readonly delay?: (delayMs: number) => Promise<void>;
+}
+
+export async function connectWithRetry(
+  connect: () => Promise<unknown>,
+  options: ConnectRetryOptions = {},
+): Promise<void> {
+  const attempts = options.attempts ?? 18;
+  const initialDelayMs = options.initialDelayMs ?? 500;
+  const maxDelayMs = options.maxDelayMs ?? 15_000;
+  const delay = options.delay ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  if (!Number.isInteger(attempts) || attempts < 1)
+    throw new RangeError("Cassandra connect attempts must be positive");
+  if (!Number.isFinite(initialDelayMs) || initialDelayMs < 0)
+    throw new RangeError("Cassandra retry delay must be non-negative");
+  if (!Number.isFinite(maxDelayMs) || maxDelayMs < initialDelayMs)
+    throw new RangeError("Cassandra max retry delay must be at least the initial delay");
+
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      await connect();
+      return;
+    } catch (error) {
+      if (attempt >= attempts) throw error;
+      const delayMs = Math.min(initialDelayMs * 2 ** (attempt - 1), maxDelayMs);
+      options.onRetry?.({ attempt, attempts, delayMs, error });
+      await delay(delayMs);
+    }
+  }
 }
 
 export class CassandraClient {
@@ -43,7 +95,12 @@ export class CassandraClient {
       socketOptions: { readTimeout: options.requestTimeoutMs ?? 2_000 },
       queryOptions: { prepare: true },
     });
-    await client.connect();
+    try {
+      await connectWithRetry(() => client.connect(), options.startupRetry);
+    } catch (error) {
+      await client.shutdown().catch(() => undefined);
+      throw error;
+    }
     return new CassandraClient(client);
   }
 

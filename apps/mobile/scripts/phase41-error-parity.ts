@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { once } from "node:events";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { ApiError as MobileApiError, Transport } from "../src/api";
 import { ApiError as WebApiError, errorMessage, request as webRequest } from "../../web/src/lib/api";
@@ -241,7 +241,24 @@ async function main() {
     assert.equal(evidence.caseCount, 32);
     assert.equal(evidence.allSemanticParity, true);
     const output = fileURLToPath(new URL("../docs/phase41/phase41-cross-platform-error-parity.json", import.meta.url));
-    await writeFile(output, `${JSON.stringify(evidence, null, 2)}\n`, { mode: 0o600 });
+    let previousEvidence: typeof evidence | null = null;
+    try {
+      previousEvidence = JSON.parse(await readFile(output, "utf8")) as typeof evidence;
+    } catch {
+      // Missing or invalid evidence is regenerated from the current run.
+    }
+    if (previousEvidence) {
+      if (
+        JSON.stringify({ ...previousEvidence, generatedAt: undefined }) ===
+        JSON.stringify({ ...evidence, generatedAt: undefined })
+      ) {
+        evidence.generatedAt = previousEvidence.generatedAt;
+      }
+    }
+    const content = `${JSON.stringify(evidence, null, 2)}\n`;
+    if ((await readFile(output, "utf8").catch(() => null)) !== content) {
+      await writeFile(output, content, { mode: 0o600 });
+    }
     console.log(JSON.stringify({ status: "PASS", caseCount: evidence.caseCount, output }));
   } finally {
     globalThis.fetch = nativeFetch;

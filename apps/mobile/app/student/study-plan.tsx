@@ -56,12 +56,12 @@ export default function StudyPlanScreen() {
   if (auth.user?.role !== "STUDENT") return <Redirect href="/" />;
   return (
     <View style={page.root}>
-      <Page style={{ gap: 16, paddingBottom: 28 }}>
+      <Page testID="student-study-plan" style={{ gap: 16, paddingBottom: 28 }}>
         <View style={{ gap: 5 }}>
           <Text style={local.eyebrow}>STUDY PLAN V2</Text>
-          <Text style={styles.title}>Lộ trình của bạn</Text>
+          <Text testID="student-study-plan-title" style={styles.title}>Lộ trình của bạn</Text>
           <Text style={styles.text}>Đề xuất, lịch và lý do được cung cấp bởi Learning Service.</Text>
-          <Text accessibilityLabel={data.source === "LIVE" ? "LIVE" : "OFFLINE_CACHE"} style={styles.small}>
+          <Text testID="student-study-plan-data-source" accessibilityLabel={data.source === "LIVE" ? "LIVE" : "OFFLINE_CACHE"} style={styles.small}>
             {data.source === "LIVE" ? "LIVE · dữ liệu mới nhất từ máy chủ" : `OFFLINE_CACHE · LAST_SYNCED ${selected?.studyPlanSyncedAt ?? "chưa có"}`}
           </Text>
         </View>
@@ -87,6 +87,7 @@ export default function StudyPlanScreen() {
               {data.courses.map((item) => (
                 <Pressable
                   key={item.course.courseId}
+                  testID={`student-study-plan-course-${item.course.courseId}`}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: item.course.courseId === selected?.course.courseId }}
                   onPress={() => router.setParams({ courseId: item.course.courseId })}
@@ -117,7 +118,7 @@ export default function StudyPlanScreen() {
             ) : selected?.studyPlan ? (
               <>
                 <View style={local.summary}>
-                  <Text style={local.summaryTitle}>{selected.course.title}</Text>
+                  <Text testID={`student-study-plan-selected-course-${selected.course.courseId}`} style={local.summaryTitle}>{selected.course.title}</Text>
                   <Text style={local.summaryText}>
                     Sinh lúc {new Date(selected.studyPlan.generatedAt).toLocaleString("vi-VN")} · Mastery tổng
                     quan {Math.round(selected.studyPlan.overallMasteryPercent)}%

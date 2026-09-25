@@ -74,6 +74,22 @@ export async function startService(manifest: ServiceManifest, hooks: RuntimeHook
       ...(config.CASSANDRA_KEYSPACE ? { keyspace: config.CASSANDRA_KEYSPACE } : {}),
       username: config.CASSANDRA_USERNAME,
       password: config.CASSANDRA_PASSWORD,
+      startupRetry: {
+        attempts: 18,
+        initialDelayMs: 500,
+        maxDelayMs: 15_000,
+        onRetry: ({ attempt, attempts, delayMs, error }) =>
+          logger.warn(
+            {
+              operation: "cassandra.startup.retry",
+              attempt,
+              attempts,
+              retryInMs: delayMs,
+              err: safeError(error),
+            },
+            "Cassandra is not ready; retrying bounded startup connection",
+          ),
+      },
       ...(config.CASSANDRA_TLS_ENABLED && config.CASSANDRA_CA_PATH
         ? { tls: { caPath: config.CASSANDRA_CA_PATH, serverName: config.CASSANDRA_TLS_SERVER_NAME } }
         : {}),

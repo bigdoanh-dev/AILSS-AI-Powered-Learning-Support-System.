@@ -254,7 +254,7 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
         <View style={chat.topSpacer} />
       </View>
 
-      <View style={[chat.panel, nativeGlass && chat.panelNativeGlass]}>
+      <View testID="student-tutor-panel-container" style={[chat.panel, nativeGlass && chat.panelNativeGlass]}>
         {nativeGlass ? (
           <GlassView
             pointerEvents="none"
@@ -275,7 +275,9 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
         <View style={chat.panelHeader}>
           <TutorAvatar active={busy} size={64} />
           <View style={chat.panelTitleWrap}>
-            <Text style={chat.panelTitle}>Gia sư AILSS</Text>
+            <Text testID="student-tutor-panel" style={chat.panelTitle}>
+              Gia sư AILSS
+            </Text>
             <Text style={chat.panelSubtitle}>
               {offline ? "Cần kết nối để trò chuyện" : busy ? "Đang tìm câu trả lời…" : "Sẵn sàng trò chuyện"}
             </Text>
@@ -284,6 +286,7 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
 
         <View accessibilityRole="tablist" style={chat.modeTabs}>
           <Pressable
+            testID="student-tutor-mode-advisor"
             accessibilityRole="tab"
             accessibilityState={{ selected: mode === "STUDENT_ADVISOR" }}
             onPress={() => chooseMode("STUDENT_ADVISOR")}
@@ -294,6 +297,7 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
             </Text>
           </Pressable>
           <Pressable
+            testID="student-tutor-mode-study-buddy"
             accessibilityRole="tab"
             accessibilityState={{ selected: mode === "STUDY_BUDDY" }}
             onPress={() => chooseMode("STUDY_BUDDY")}
@@ -322,6 +326,7 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
             ) : (
               <>
                 <Pressable
+                  testID="student-tutor-course-selector"
                   accessibilityRole="button"
                   accessibilityLabel="Chọn ngữ cảnh khóa học"
                   accessibilityState={{ expanded: showCourses }}
@@ -329,13 +334,20 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
                   style={chat.courseButton}
                 >
                   <Icon name="book" size={16} color={tokens.color.brand} />
-                  <Text numberOfLines={1} style={chat.courseButtonText}>
+                  <Text
+                    testID={
+                      selectedCourseId ? `student-tutor-selected-course-${selectedCourseId}` : undefined
+                    }
+                    numberOfLines={1}
+                    style={chat.courseButtonText}
+                  >
                     {selectedCourse?.course.title ?? "Chọn khóa học"}
                   </Text>
                   <Icon name="chevronRight" size={15} color={tokens.color.brand} />
                 </Pressable>
                 {showCourses && (
                   <ScrollView
+                    testID="student-tutor-course-options"
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={chat.courseOptions}
@@ -343,6 +355,7 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
                     {data.courses.map((item) => (
                       <Pressable
                         key={item.course.courseId}
+                        testID={`student-tutor-course-${item.course.courseId}`}
                         accessibilityRole="radio"
                         accessibilityState={{ selected: selectedCourseId === item.course.courseId }}
                         onPress={() => chooseCourse(item.course.courseId)}
@@ -380,9 +393,14 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
           </View>
           {messages.length === 0 && !offline && (
             <View style={chat.suggestions}>
-              {prompts.map((prompt) => (
+              {prompts.map((prompt, index) => (
                 <Pressable
                   key={prompt}
+                  testID={
+                    mode === "STUDY_BUDDY"
+                      ? `student-tutor-prompt-study-${index}`
+                      : `student-tutor-prompt-advisor-${index}`
+                  }
                   accessibilityRole="button"
                   accessibilityLabel={prompt}
                   disabled={busy || (mode === "STUDY_BUDDY" && !selectedCourseId)}
@@ -397,6 +415,11 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
           {messages.map((message) => (
             <View
               key={message.id}
+              testID={
+                message.role === "assistant"
+                  ? "student-tutor-assistant-response"
+                  : "student-tutor-user-message"
+              }
               accessibilityLiveRegion={message.role === "assistant" ? "polite" : "none"}
               style={[chat.message, message.role === "user" ? chat.userMessage : chat.botMessage]}
             >
@@ -407,13 +430,18 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
                 )}
               </Text>
               {message.citations?.map((citation, index) => (
-                <View key={`${citation.sourceId}-${String(index)}`} style={chat.citation}>
+                <View
+                  key={`${citation.sourceId}-${String(index)}`}
+                  testID={`student-tutor-citation-${index + 1}`}
+                  style={chat.citation}
+                >
                   <Text style={chat.citationTitle}>
                     Nguồn {String(index + 1)}: {citation.title}
                   </Text>
                   {citation.snippet ? <Text style={chat.citationSnippet}>{citation.snippet}</Text> : null}
                   {citation.lessonId && citation.courseId ? (
                     <Pressable
+                      testID={`student-tutor-citation-link-${index + 1}`}
                       accessibilityRole="link"
                       accessibilityLabel={`Mở bài học ${citation.title}`}
                       onPress={() =>
@@ -491,20 +519,25 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
 
         <View style={chat.composer}>
           <TextInput
+            testID="student-tutor-composer"
             accessibilityLabel="Câu hỏi cho Gia sư AI"
             accessibilityHint={
               mode === "STUDENT_ADVISOR" ? "Hỏi về lựa chọn khóa học" : "Hỏi về khóa học đã chọn"
             }
             multiline
             maxLength={4000}
+            returnKeyType="send"
+            submitBehavior="submit"
             editable={!offline}
             value={draft}
             onChangeText={setDraft}
+            onSubmitEditing={() => void send()}
             placeholder={mode === "STUDENT_ADVISOR" ? "Bạn muốn học gì?" : "Hỏi về bài học của bạn…"}
             placeholderTextColor="#89939F"
             style={chat.input}
           />
           <Pressable
+            testID="student-tutor-send"
             accessibilityRole="button"
             accessibilityLabel="Gửi câu hỏi"
             accessibilityState={{

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { Transport, ApiError, profile, type Fetcher } from "../src/api";
+import { Transport, ApiError, profile, type Fetcher, type Profile } from "../src/api";
 import { configuration } from "../src/config";
 import { Session, type SessionLifecycle, type Vault } from "../src/session";
 import { destinations } from "../src/navigation";
@@ -136,6 +136,67 @@ describe("session", () => {
     expect(h.session.snapshot.state).toBe("ANONYMOUS");
     expect(h.session.snapshot.revocationStatus).toBe("REVOCATION_UNCONFIRMED");
     await expect(h.session.request("/api/v1/me")).rejects.toMatchObject({ status: 401 });
+  });
+  it("requires login after a process restart without deleting queued lesson completion", async () => {
+    const h = harness();
+    const pending = [{ operationId: "operation-1", resourceId: "lesson-1", idempotencyKey: "key-1" }];
+    let lastIdentity: Profile | null = null;
+    const clearUserData = vi.fn(async () => {
+      pending.length = 0;
+    });
+    const clearLastIdentity = vi.fn(async () => {
+      lastIdentity = null;
+    });
+    const lifecycle: SessionLifecycle = {
+      readLastIdentity: async () => lastIdentity,
+      saveLastIdentity: async (value) => {
+        lastIdentity = value;
+      },
+      clearLastIdentity,
+      clearUserData,
+      hasOfflineData: async () => pending.length > 0,
+    };
+    const beforeKill = new Session(h.api, h.vault, lifecycle);
+    await beforeKill.login("email", "password");
+    expect(h.saved()).not.toBeNull();
+
+    // A new Session instance models a terminated native process using the same
+    // secure vault and durable offline data.
+    const afterRestart = new Session(h.api, h.vault, lifecycle);
+    await afterRestart.requireLoginAfterColdStart();
+    expect(afterRestart.snapshot.state).toBe("ANONYMOUS");
+    expect(h.saved()).toBeNull();
+    expect(pending).toEqual([
+      { operationId: "operation-1", resourceId: "lesson-1", idempotencyKey: "key-1" },
+    ]);
+    expect(clearUserData).not.toHaveBeenCalled();
+    expect(clearLastIdentity).not.toHaveBeenCalled();
+    expect(vi.mocked(h.api.request).mock.calls.some(([path]) => path === "/api/v1/auth/logout")).toBe(false);
+    await expect(afterRestart.request("/api/v1/me")).rejects.toMatchObject({ status: 401 });
+
+    await afterRestart.login("email", "password");
+    expect(afterRestart.snapshot.state).toBe("AUTHENTICATED");
+    expect(clearUserData).not.toHaveBeenCalled();
+    expect(pending).toHaveLength(1);
+  });
+  it("keeps a previously verified session available for provisional offline completion after revalidation fails", async () => {
+    const h = harness();
+    await h.session.login("email", "password");
+    vi.mocked(h.api.request).mockRejectedValue(new ApiError("network"));
+    await h.session.revalidate();
+    expect(h.session.snapshot).toMatchObject({ state: "AUTHENTICATED", user: { userId: "u" } });
+    expect(h.saved()).not.toBeNull();
+    await expect(
+      h.session.request("/api/v1/lessons/lesson-1/completion", {
+        method: "PUT",
+        body: { completed: true },
+        idempotencyKey: "key-1",
+      }),
+    ).rejects.toMatchObject({ kind: "network" });
+    vi.mocked(h.api.request).mockImplementation(async (path) => (path === "/api/v1/me" ? user : credential));
+    await h.session.revalidate();
+    expect(h.session.snapshot).toMatchObject({ state: "AUTHENTICATED", user: { userId: "u" } });
+    expect(h.session.snapshot.error).toBeUndefined();
   });
   it("does not revive a session when login resolves after logout", async () => {
     let finish!: (value: unknown) => void;
