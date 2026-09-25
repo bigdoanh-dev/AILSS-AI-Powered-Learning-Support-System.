@@ -1,0 +1,162 @@
+appId: dev.ailss.mobile
+---
+# One Maestro session owns login and the complete student journey; a separate
+# launch would trigger the deliberate cold-start authentication policy.
+- runFlow:
+    file: login.yaml
+- extendedWaitUntil:
+    visible:
+      id: student-home-authenticated-profile
+    timeout: 120000
+- tapOn:
+    id: student-home-mastery-navigation
+- extendedWaitUntil:
+    visible:
+      id: student-mastery-title
+    timeout: 60000
+- tapOn:
+    id: app-nav-home
+- scrollUntilVisible:
+    centerElement: false
+    element:
+      id: student-home-study-plan
+    direction: DOWN
+    speed: 80
+    visibilityPercentage: 80
+    timeout: 120000
+    waitToSettleTimeoutMs: 1000
+- assertVisible:
+    id: student-home-study-plan
+- tapOn:
+    id: student-home-study-plan
+- extendedWaitUntil:
+    visible:
+      id: student-study-plan-title
+    timeout: 60000
+- assertVisible:
+    id: student-study-plan-data-source
+- assertVisible: "LIVE"
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-study-plan-course-${COURSE_ID}
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-study-plan-course-${COURSE_ID}
+- extendedWaitUntil:
+    visible:
+      id: student-study-plan-selected-course-${COURSE_ID}
+    timeout: 60000
+- tapOn:
+    id: app-nav-home
+- tapOn:
+    id: student-home-tutor-launcher
+- tapOn:
+    id: student-tutor-mode-study-buddy
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-course-selector
+    timeout: 60000
+- tapOn:
+    id: student-tutor-course-selector
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: student-tutor-course-${COURSE_ID}
+    commands:
+      - swipe:
+          from:
+            id: student-tutor-course-options
+          direction: LEFT
+- swipe:
+    from:
+      id: student-tutor-course-options
+    direction: LEFT
+- tapOn:
+    id: student-tutor-course-${COURSE_ID}
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-selected-course-${COURSE_ID}
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-prompt-study-0
+    timeout: 30000
+- tapOn:
+    id: student-tutor-prompt-study-0
+    waitToSettleTimeoutMs: 1000
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-citation-link-1
+    timeout: 120000
+- tapOn:
+    id: student-tutor-citation-link-1
+- extendedWaitUntil:
+    visible:
+      id: student-lesson-screen
+    timeout: 60000
+- tapOn:
+    id: student-lesson-complete
+- extendedWaitUntil:
+    visible:
+      id: student-lesson-completion-feedback
+    timeout: 60000
+- assertVisible: "Đã ghi nhận hoàn thành bài học!"
+- openLink:
+    link: "ailss-mobile://assessments/${QUIZ_ID}"
+- extendedWaitUntil:
+    visible:
+      id: student-assessment-detail
+    timeout: 60000
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-assessment-start
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-assessment-start
+- extendedWaitUntil:
+    visible:
+      id: student-assessment-attempt
+    timeout: 60000
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-assessment-answer-true
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-assessment-answer-true
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-assessment-submit
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-assessment-submit
+- tapOn:
+    id: student-assessment-confirm-submit
+- extendedWaitUntil:
+    visible:
+      id: student-assessment-result
+    timeout: 120000
+- openLink:
+    link: "ailss-mobile://student/mastery"
+- extendedWaitUntil:
+    visible:
+      id: student-mastery-title
+    timeout: 60000
+- assertVisible: "Đã đồng bộ từ máy chủ"
+- openLink:
+    link: "ailss-mobile://student/study-plan?courseId=${COURSE_ID}"
+- extendedWaitUntil:
+    visible:
+      id: student-study-plan-title
+    timeout: 60000
+- assertVisible: "LIVE"
+- assertVisible:
+    id: student-study-plan-selected-course-${COURSE_ID}

@@ -58,10 +58,10 @@ export default function MasteryScreen() {
 
   return (
     <View style={page.root}>
-      <Page style={local.pageContent}>
+      <Page testID="student-mastery" style={local.pageContent}>
         <View style={local.intro}>
           <View style={local.introIcon}><Icon name="stats" size={19} color={tokens.color.brand} /></View>
-          <Text style={styles.title}>Năng lực học tập</Text>
+          <Text testID="student-mastery-title" style={styles.title}>Năng lực học tập</Text>
           <Text style={styles.text}>Theo dõi từng khái niệm từ bằng chứng học tập đã được ghi nhận.</Text>
         </View>
 

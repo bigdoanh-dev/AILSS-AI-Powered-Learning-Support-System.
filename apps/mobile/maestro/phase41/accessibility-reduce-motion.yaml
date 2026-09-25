@@ -1,0 +1,22 @@
+appId: dev.ailss.mobile
+---
+# Set DEMO_EMAIL and DEMO_PASSWORD. Run with Android animation scales set to 0
+# or iOS Reduce Motion enabled. The intro must resolve without tapping its skip
+# control; then authenticate and verify the tutor entry remains usable.
+- launchApp
+- extendedWaitUntil:
+    notVisible:
+      id: student-intro-skip
+    timeout: 60000
+- runFlow:
+    file: login.yaml
+- extendedWaitUntil:
+    visible:
+      id: student-home-authenticated-profile
+    timeout: 60000
+- tapOn:
+    id: student-home-tutor-launcher
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-panel
+    timeout: 60000

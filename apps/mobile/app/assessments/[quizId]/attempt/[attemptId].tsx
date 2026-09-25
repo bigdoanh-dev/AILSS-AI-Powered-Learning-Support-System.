@@ -263,7 +263,7 @@ export default function AttemptScreen() {
 
   if (snapshot.state !== "AUTHENTICATED") {
     return (
-      <Page>
+      <Page testID="student-assessment-confirm">
         <Text style={styles.title}>Làm bài kiểm tra</Text>
         <Text style={styles.text}>Vui lòng đăng nhập để tiếp tục.</Text>
         <Button label="Đăng nhập" onPress={() => router.push("/login" as Href)} />
@@ -347,6 +347,7 @@ export default function AttemptScreen() {
           )}
           <View style={screenStyles.confirmActions}>
             <Button
+              testID="student-assessment-confirm-submit"
               label={isSubmitting ? "Đang nộp bài..." : "Xác nhận nộp bài"}
               onPress={() => void handleSubmitAttempt()}
               disabled={isSubmitting}
@@ -364,7 +365,7 @@ export default function AttemptScreen() {
   }
 
   return (
-    <Page>
+    <Page testID="student-assessment-attempt">
       {/* Header bar: Timer & question counter */}
       <View style={screenStyles.topBar}>
         <View style={{ flex: 1 }}>
@@ -434,6 +435,7 @@ export default function AttemptScreen() {
               return (
                 <Pressable
                   key={idx}
+                  testID={`student-assessment-answer-${idx + 1}`}
                   accessibilityRole="radio"
                   accessibilityState={{ selected }}
                   accessibilityLabel={opt}
@@ -482,6 +484,7 @@ export default function AttemptScreen() {
           {currentQuestion.questionType === "TRUE_FALSE" && (
             <View style={screenStyles.tfRow}>
               <Pressable
+                testID="student-assessment-answer-true"
                 accessibilityRole="radio"
                 accessibilityState={{
                   selected: currentAnswer && "value" in currentAnswer && currentAnswer.value === true,
@@ -511,6 +514,7 @@ export default function AttemptScreen() {
               </Pressable>
 
               <Pressable
+                testID="student-assessment-answer-false"
                 accessibilityRole="radio"
                 accessibilityState={{
                   selected: currentAnswer && "value" in currentAnswer && currentAnswer.value === false,
@@ -630,6 +634,7 @@ export default function AttemptScreen() {
 
       <View style={screenStyles.footer}>
         <Button
+          testID="student-assessment-submit"
           label={isExpired ? "Thời gian đã hết" : submissionOperation.current ? "Thử xác minh nộp bài" : "Nộp bài thi"}
           onPress={() => {
             if (!isExpired) setShowConfirmModal(true);

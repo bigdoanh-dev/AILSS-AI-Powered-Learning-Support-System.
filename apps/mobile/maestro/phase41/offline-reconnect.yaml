@@ -1,0 +1,58 @@
+appId: dev.ailss.mobile
+---
+# Run after Learning is restored and the same student has reauthenticated.
+# These fresh views must read server-authoritative progress, Mastery and plan.
+- runFlow:
+    file: login.yaml
+- extendedWaitUntil:
+    visible:
+      id: student-home-authenticated-profile
+    timeout: 120000
+- openLink:
+    link: "ailss-mobile://learn/${COURSE_ID}/lessons/${LESSON_ID}"
+- extendedWaitUntil:
+    visible:
+      id: student-lesson-screen
+    timeout: 60000
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      text: "Đã hoàn thành 2 trên 2 bài học"
+    direction: DOWN
+    timeout: 30000
+- assertVisible: "Đã hoàn thành 2 trên 2 bài học"
+- openLink:
+    link: "ailss-mobile://student/mastery"
+- extendedWaitUntil:
+    visible:
+      id: student-mastery-title
+    timeout: 60000
+- assertVisible: "Đã đồng bộ từ máy chủ"
+- openLink:
+    link: "ailss-mobile://student/study-plan?courseId=${COURSE_ID}"
+- extendedWaitUntil:
+    visible:
+      id: student-study-plan-title
+    timeout: 60000
+- assertVisible: "LIVE"
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-study-plan-selected-course-${COURSE_ID}
+    direction: DOWN
+    timeout: 30000
+- assertVisible:
+    id: student-study-plan-selected-course-${COURSE_ID}
+- openLink:
+    link: "ailss-mobile://learn/${COURSE_ID}/lessons/${LESSON_ID}"
+- extendedWaitUntil:
+    visible:
+      id: student-lesson-screen
+    timeout: 60000
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      text: "Đã hoàn thành 2 trên 2 bài học"
+    direction: DOWN
+    timeout: 30000
+- assertVisible: "Đã hoàn thành 2 trên 2 bài học"

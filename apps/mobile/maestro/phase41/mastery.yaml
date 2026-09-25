@@ -1,0 +1,21 @@
+appId: dev.ailss.mobile
+---
+- runFlow:
+    file: login.yaml
+- extendedWaitUntil:
+    visible:
+      id: student-home-authenticated-profile
+    timeout: 120000
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-home-mastery-navigation
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-home-mastery-navigation
+- extendedWaitUntil:
+    visible:
+      id: student-mastery-title
+    timeout: 60000
+- assertVisible: "Đã đồng bộ từ máy chủ"

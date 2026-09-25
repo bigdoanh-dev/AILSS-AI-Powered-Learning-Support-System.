@@ -1,0 +1,13 @@
+appId: dev.ailss.mobile
+---
+# Opens a lesson only through a grounded, server-returned Tutor citation.
+- runFlow:
+    file: tutor.yaml
+- tapOn:
+    id: student-tutor-citation-link-1
+- extendedWaitUntil:
+    visible:
+      id: student-lesson-screen
+    timeout: 60000
+- assertVisible:
+    id: student-lesson-complete

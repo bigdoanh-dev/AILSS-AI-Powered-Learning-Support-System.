@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useReducedMotionPreference } from "./motion";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const videoSource = require("../assets/intro_cinematic.mp4");
@@ -18,9 +19,12 @@ export interface CinematicIntroProps {
 }
 
 export function CinematicIntro({ onFinish }: CinematicIntroProps) {
-  const shouldShow = !getHasPlayedIntroThisSession();
+  // The session flag changes in an effect below. Keep the mount decision stable
+  // while the asynchronous Reduce Motion preference is being resolved.
+  const shouldShow = useRef(!getHasPlayedIntroThisSession()).current;
   const [visible, setVisible] = useState(shouldShow);
   const [isMuted, setIsMuted] = useState(true);
+  const reduceMotion = useReducedMotionPreference();
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const isClosing = useRef(false);
 
@@ -33,6 +37,12 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
     markIntroAsPlayed();
     if (isClosing.current) return;
     isClosing.current = true;
+    if (reduceMotion !== false) {
+      player.pause();
+      setVisible(false);
+      onFinish?.();
+      return;
+    }
     Animated.timing(fadeAnim, {
       toValue: 0,
       duration: 600,
@@ -46,8 +56,23 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
   const player = useVideoPlayer(videoSource, (p) => {
     p.loop = false;
     p.muted = true;
-    p.play();
   });
+
+  useEffect(() => {
+    if (!shouldShow || !visible || reduceMotion === null) return;
+    if (reduceMotion) {
+      markIntroAsPlayed();
+      player.pause();
+      setVisible(false);
+      if (!isClosing.current) {
+        isClosing.current = true;
+        onFinish?.();
+      }
+      return;
+    }
+    player.play();
+    return () => player.pause();
+  }, [onFinish, player, reduceMotion, shouldShow, visible]);
 
   useEffect(() => {
     if (!player) return;
@@ -61,11 +86,12 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
 
   // Safety fallback timeout in case playback stalls or is in test environment
   useEffect(() => {
+    if (!visible || reduceMotion !== false) return;
     const timer = setTimeout(() => {
       handleClose();
     }, 16000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [reduceMotion, visible]);
 
   const toggleSound = () => {
     if (player) {
@@ -80,8 +106,6 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
     <Animated.View
       style={[styles.container, { opacity: fadeAnim }]}
       pointerEvents={isClosing.current ? "none" : "auto"}
-      accessibilityRole="none"
-      accessibilityLabel="Video giới thiệu ứng dụng"
     >
       <VideoView
         player={player}
@@ -108,6 +132,7 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
         </Pressable>
 
         <Pressable
+          testID="student-intro-skip"
           style={[styles.controlButton, styles.skipButton]}
           onPress={handleClose}
           accessibilityRole="button"

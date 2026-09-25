@@ -113,7 +113,7 @@ export default function QuizResultScreen() {
   const submittedDate = parseTimestamp(result.submittedAt);
 
   return (
-    <Page>
+    <Page testID="student-assessment-result">
       <ScreenHeader
         title="Kết quả thi"
         subtitle={quiz ? quiz.title : undefined}
@@ -121,7 +121,7 @@ export default function QuizResultScreen() {
       />
 
       {/* Celebratory Hero Score Card */}
-      <View style={screenStyles.scoreCard}>
+      <View testID="student-assessment-result-score" style={screenStyles.scoreCard}>
         <View style={screenStyles.trophyCircle}>
           <Icon
             name={isPendingManual ? "clock" : isPassed ? "award" : "sparkles"}
@@ -160,7 +160,7 @@ export default function QuizResultScreen() {
               {isManuallyGraded ? "ĐIỂM SỐ DO GIẢNG VIÊN ĐÁNH GIÁ" : "ĐIỂM SỐ CHÍNH THỨC (TỰ ĐỘNG)"}
             </Text>
             <View style={screenStyles.scoreNumberRow}>
-              <Text style={screenStyles.scoreNumber}>{finalScore}</Text>
+              <Text testID="student-assessment-result-value" style={screenStyles.scoreNumber}>{finalScore}</Text>
               <Text style={screenStyles.maxScoreNumber}> / {finalMaxScore}</Text>
             </View>
 

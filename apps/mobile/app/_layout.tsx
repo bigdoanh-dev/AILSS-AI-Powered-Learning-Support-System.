@@ -21,7 +21,7 @@ function Shell() {
       await restoreMobilePreferences();
       if (!mounted) return;
       if (getSystemSettings().requireLoginOnColdStart) {
-        void session.logout().catch(() => {});
+        void session.requireLoginAfterColdStart();
       } else {
         void session.restore();
       }

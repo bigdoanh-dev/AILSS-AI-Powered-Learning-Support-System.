@@ -1,0 +1,20 @@
+appId: dev.ailss.mobile
+---
+# Requires an authenticated local student. Credentials are supplied only to login.yaml.
+- launchApp
+- tapOn:
+    id: student-intro-skip
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: student-home-tutor-launcher
+    timeout: 120000
+- assertVisible:
+    id: student-home-mastery-navigation
+- assertVisible:
+    id: student-home-tutor-launcher
+- scrollUntilVisible:
+    element:
+      id: student-home-study-plan
+    direction: DOWN
+    timeout: 30000

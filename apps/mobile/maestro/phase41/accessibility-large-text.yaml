@@ -1,0 +1,133 @@
+appId: dev.ailss.mobile
+---
+# Run after loading the current app bundle with Android font_scale >= 1.3 or an
+# iOS accessibility content size. Verify controls through the submitted result.
+- runFlow:
+    file: login.yaml
+- extendedWaitUntil:
+    visible:
+      id: student-home-authenticated-profile
+    timeout: 120000
+- takeScreenshot: phase41-large-text-home
+- openLink:
+    link: "ailss-mobile://student/study-plan?courseId=${COURSE_ID}"
+- extendedWaitUntil:
+    visible:
+      id: student-study-plan-title
+    timeout: 60000
+- assertVisible:
+    id: student-study-plan-data-source
+- assertVisible: "LIVE"
+- assertVisible:
+    id: student-study-plan-selected-course-${COURSE_ID}
+- takeScreenshot: phase41-large-text-study-plan
+- tapOn:
+    id: app-nav-home
+- assertVisible:
+    id: student-home-tutor-launcher
+- tapOn:
+    id: student-home-tutor-launcher
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-panel
+    timeout: 60000
+- tapOn:
+    id: student-tutor-mode-study-buddy
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-course-selector
+    timeout: 60000
+- tapOn:
+    id: student-tutor-course-selector
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: student-tutor-course-${COURSE_ID}
+    commands:
+      - swipe:
+          from:
+            id: student-tutor-course-options
+          direction: LEFT
+- tapOn:
+    id: student-tutor-course-${COURSE_ID}
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-selected-course-${COURSE_ID}
+    timeout: 30000
+- assertVisible:
+    id: student-tutor-composer
+- assertVisible:
+    id: student-tutor-send
+- takeScreenshot: phase41-large-text-tutor-composer
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-prompt-study-0
+    timeout: 30000
+- tapOn:
+    id: student-tutor-prompt-study-0
+    waitToSettleTimeoutMs: 1000
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-citation-link-1
+    timeout: 120000
+- tapOn:
+    id: student-tutor-citation-link-1
+- extendedWaitUntil:
+    visible:
+      id: student-lesson-screen
+    timeout: 60000
+- takeScreenshot: phase41-large-text-lesson
+- tapOn:
+    id: student-lesson-complete
+- extendedWaitUntil:
+    visible:
+      id: student-lesson-completion-feedback
+    timeout: 60000
+- assertVisible: "Đã ghi nhận hoàn thành bài học!"
+- takeScreenshot: phase41-large-text-lesson-complete
+- openLink:
+    link: "ailss-mobile://assessments/${QUIZ_ID}"
+- extendedWaitUntil:
+    visible:
+      id: student-assessment-detail
+    timeout: 60000
+- takeScreenshot: phase41-large-text-assessment-controls
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-assessment-start
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-assessment-start
+- extendedWaitUntil:
+    visible:
+      id: student-assessment-attempt
+    timeout: 60000
+- takeScreenshot: phase41-large-text-assessment-answer
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-assessment-answer-true
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-assessment-answer-true
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-assessment-submit
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-assessment-submit
+- tapOn:
+    id: student-assessment-confirm-submit
+- extendedWaitUntil:
+    visible:
+      id: student-assessment-result
+    timeout: 120000
+- assertVisible:
+    id: student-assessment-result-score
+- takeScreenshot: phase41-large-text-assessment-result

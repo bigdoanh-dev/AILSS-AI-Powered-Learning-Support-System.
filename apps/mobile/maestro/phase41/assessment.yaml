@@ -1,0 +1,46 @@
+appId: dev.ailss.mobile
+---
+# QUIZ_ID identifies the published, open local acceptance quiz. The current
+# Revision L seed uses a TRUE_FALSE question whose statement is true.
+- openLink:
+    link: "ailss-mobile://assessments/${QUIZ_ID}"
+- extendedWaitUntil:
+    visible:
+      id: student-assessment-detail
+    timeout: 60000
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-assessment-start
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-assessment-start
+- extendedWaitUntil:
+    visible:
+      id: student-assessment-attempt
+    timeout: 60000
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-assessment-answer-true
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-assessment-answer-true
+- scrollUntilVisible:
+    centerElement: true
+    element:
+      id: student-assessment-submit
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: student-assessment-submit
+- tapOn:
+    id: student-assessment-confirm-submit
+- extendedWaitUntil:
+    visible:
+      id: student-assessment-result
+    timeout: 120000
+- assertVisible:
+    id: student-assessment-result-score

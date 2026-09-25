@@ -87,6 +87,17 @@ export class Session {
     if (epoch !== this.epoch) return;
     const transient =
       error instanceof ApiError && ["network", "timeout", "server", "429"].includes(error.kind);
+    // A temporary loss of connectivity cannot revoke an already verified in-memory
+    // identity. Keep it so lesson completion can be queued provisionally; the server
+    // still authorizes the operation when the original request is replayed.
+    if (transient && this.snapshot.state === "AUTHENTICATED" && this.snapshot.user && this.credential) {
+      this.publish({
+        state: "AUTHENTICATED",
+        user: this.snapshot.user,
+        error: "Mất kết nối tạm thời. Thao tác học tập sẽ chờ máy chủ xác nhận.",
+      });
+      return;
+    }
     if (!transient) {
       this.credential = undefined;
       try {
@@ -271,6 +282,23 @@ export class Session {
       if (epoch === this.epoch) this.publish({ state: "AUTHENTICATED", user });
     } catch (error) {
       await this.failed(error, epoch);
+    }
+  }
+  async requireLoginAfterColdStart() {
+    const epoch = ++this.epoch;
+    this.credential = undefined;
+    this.publish({ state: "BOOTING" });
+    try {
+      // This is a local session lock, not a user logout. A real logout deletes the
+      // encrypted cache and durable queue; a cold-start login requirement must not.
+      await this.persist(() => this.vault.clear());
+      if (epoch === this.epoch) this.publish({ state: "ANONYMOUS" });
+    } catch {
+      if (epoch === this.epoch)
+        this.publish({
+          state: "SESSION_EXPIRED",
+          error: "Không thể khóa phiên trong bộ nhớ an toàn. Hãy thử mở lại ứng dụng.",
+        });
     }
   }
   async logout() {

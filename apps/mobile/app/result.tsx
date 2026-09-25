@@ -10,7 +10,13 @@ import {
 } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import { Icon, type IconName } from "../src/ui";
-import { ScalePressable, PulseBadge, FadeSlideIn, StaggerPop } from "../src/motion";
+import {
+  ScalePressable,
+  PulseBadge,
+  FadeSlideIn,
+  StaggerPop,
+  useReducedMotionPreference,
+} from "../src/motion";
 
 export default function ResultScreen() {
   const params = useLocalSearchParams<{
@@ -29,6 +35,7 @@ export default function ResultScreen() {
   const isSuccess = isLoginSuccess || isRegisterSuccess;
   const isLogout = type === "logout-success";
   const isError = type === "login-failure" || type === "logout-failure" || type === "error";
+  const reduceMotion = useReducedMotionPreference();
 
   // Animation drivers
   const heroScale = useRef(new Animated.Value(0.4)).current;
@@ -47,26 +54,45 @@ export default function ResultScreen() {
   const autoProceedMs = isSuccess ? 2200 : isLogout ? 2000 : 0;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(heroOpacity, {
-        toValue: 1,
-        duration: 350,
-        useNativeDriver: true,
-      }),
-      Animated.spring(heroScale, {
-        toValue: 1,
-        speed: 16,
-        bounciness: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    let entrance: Animated.CompositeAnimation | undefined;
+    let progress: Animated.CompositeAnimation | undefined;
+    if (reduceMotion === false) {
+      heroOpacity.setValue(0);
+      heroScale.setValue(0.4);
+      progressAnim.setValue(0);
+      entrance = Animated.parallel([
+        Animated.timing(heroOpacity, {
+          toValue: 1,
+          duration: 350,
+          useNativeDriver: true,
+        }),
+        Animated.spring(heroScale, {
+          toValue: 1,
+          speed: 16,
+          bounciness: 8,
+          useNativeDriver: true,
+        }),
+      ]);
+      entrance.start();
+    } else if (reduceMotion) {
+      heroOpacity.setValue(1);
+      heroScale.setValue(1);
+      progressAnim.setValue(1);
+    } else {
+      heroOpacity.setValue(0);
+      heroScale.setValue(0.4);
+      progressAnim.setValue(0);
+    }
 
     if (autoProceedMs > 0) {
-      Animated.timing(progressAnim, {
-        toValue: 1,
-        duration: autoProceedMs,
-        useNativeDriver: false,
-      }).start();
+      if (reduceMotion === false) {
+        progress = Animated.timing(progressAnim, {
+          toValue: 1,
+          duration: autoProceedMs,
+          useNativeDriver: false,
+        });
+        progress.start();
+      }
 
       const timer = setTimeout(() => {
         if (isLogout) {
@@ -76,9 +102,14 @@ export default function ResultScreen() {
         }
       }, autoProceedMs);
 
-      return () => clearTimeout(timer);
+      return () => {
+        entrance?.stop();
+        progress?.stop();
+        clearTimeout(timer);
+      };
     }
-  }, [autoProceedMs, defaultTarget, heroOpacity, heroScale, isLogout, isSuccess, progressAnim]);
+    return () => entrance?.stop();
+  }, [autoProceedMs, defaultTarget, heroOpacity, heroScale, isLogout, isSuccess, progressAnim, reduceMotion]);
 
   const handleProceed = () => {
     if (isLogout) {
@@ -172,7 +203,10 @@ export default function ResultScreen() {
 
         {/* Text Details with Stagger Animation */}
         <StaggerPop index={1} baseDelay={150}>
-          <Text style={screenStyles.titleText}>
+          <Text
+            testID={isLoginSuccess ? "student-login-success" : isError ? "student-login-error" : undefined}
+            style={screenStyles.titleText}
+          >
             {params.title ||
               (isLoginSuccess
                 ? "Đăng Nhập Thành Công!"

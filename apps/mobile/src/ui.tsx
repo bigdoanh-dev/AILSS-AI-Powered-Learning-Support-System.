@@ -300,12 +300,14 @@ export function Page({
   children,
   style,
   scroll = true,
-}: PropsWithChildren<{ style?: StyleProp<ViewStyle>; scroll?: boolean }>) {
+  testID,
+}: PropsWithChildren<{ style?: StyleProp<ViewStyle>; scroll?: boolean; testID?: string }>) {
   if (!scroll) {
-    return <View style={[styles.page, { flex: 1 }, style]}>{children}</View>;
+    return <View testID={testID} style={[styles.page, { flex: 1 }, style]}>{children}</View>;
   }
   return (
     <ScrollView
+      testID={testID}
       contentContainerStyle={[styles.page, style]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
@@ -367,6 +369,7 @@ export function Button({
   icon,
   style,
   textStyle,
+  testID,
 }: {
   label: string;
   onPress: () => void;
@@ -376,6 +379,7 @@ export function Button({
   icon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  testID?: string;
 }) {
   const getVariantStyles = (): { button: ViewStyle; text: TextStyle } => {
     switch (variant) {
@@ -459,6 +463,7 @@ export function Button({
 
   return (
     <ScalePressable
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
@@ -975,6 +980,7 @@ export function BottomNavBar({
         return (
           <ScalePressable
             key={tab.key}
+            testID={`app-nav-${tab.key}`}
             onPress={() => onNavigate(tab.path)}
             scaleTo={0.92}
             style={{

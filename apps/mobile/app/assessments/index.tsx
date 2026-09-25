@@ -102,7 +102,7 @@ export default function AssessmentListScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
-      <Page style={{ paddingBottom: 24 }}>
+      <Page testID="student-assessment-list" style={{ paddingBottom: 24 }}>
         <View style={{ gap: 4 }}>
           <Badge label="ĐÁNH GIÁ NĂNG LỰC" variant="ai" icon="sparkles" />
           <Text style={styles.title}>Bài kiểm tra</Text>
@@ -148,6 +148,7 @@ export default function AssessmentListScreen() {
             {quizzes.map((item) => (
               <Pressable
                 key={item.quizId}
+                testID={`student-assessment-${item.quizId}`}
                 accessibilityRole="button"
                 accessibilityLabel={`Bài kiểm tra: ${item.title}`}
                 style={screenStyles.quizCard}

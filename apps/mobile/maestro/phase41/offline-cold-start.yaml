@@ -1,0 +1,11 @@
+appId: dev.ailss.mobile
+---
+# Run after terminating and relaunching the app while Learning remains offline.
+# The cold-start policy requires login. Lesson detail remains server-backed, so
+# the durable queue is verified by authoritative replay after Learning returns.
+- runFlow:
+    file: login.yaml
+- extendedWaitUntil:
+    visible:
+      id: student-home-authenticated-profile
+    timeout: 120000

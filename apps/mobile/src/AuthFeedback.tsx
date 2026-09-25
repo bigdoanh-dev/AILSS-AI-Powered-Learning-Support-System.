@@ -10,7 +10,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { Icon, tokens, type IconName } from "./ui";
-import { ScalePressable, PulseBadge } from "./motion";
+import { ScalePressable, PulseBadge, useReducedMotionPreference } from "./motion";
 
 export type AuthFeedbackType =
   | "LOGIN_SUCCESS"
@@ -48,6 +48,7 @@ export function AuthFeedbackModal({
   const isSuccess = type === "LOGIN_SUCCESS" || type === "REGISTER_SUCCESS";
   const isLogout = type === "LOGOUT_SUCCESS";
   const isError = type === "LOGIN_ERROR";
+  const reduceMotion = useReducedMotionPreference();
 
   const backdropAnim = useRef(new Animated.Value(0)).current;
   const cardScaleAnim = useRef(new Animated.Value(0.7)).current;
@@ -55,13 +56,18 @@ export function AuthFeedbackModal({
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (visible) {
+    if (!visible) return;
+
+    let entrance: Animated.CompositeAnimation | undefined;
+    let progress: Animated.CompositeAnimation | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (reduceMotion === false) {
       backdropAnim.setValue(0);
       cardScaleAnim.setValue(0.7);
       cardTranslateY.setValue(30);
       progressAnim.setValue(0);
 
-      Animated.parallel([
+      entrance = Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 1,
           duration: 300,
@@ -79,23 +85,52 @@ export function AuthFeedbackModal({
           bounciness: 5,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]);
+      entrance.start();
+    } else if (reduceMotion) {
+      backdropAnim.setValue(1);
+      cardScaleAnim.setValue(1);
+      cardTranslateY.setValue(0);
+      progressAnim.setValue(1);
+    } else {
+      backdropAnim.setValue(0);
+      cardScaleAnim.setValue(0.7);
+      cardTranslateY.setValue(30);
+      progressAnim.setValue(0);
+    }
 
-      if ((isSuccess || isLogout) && autoProceedMs > 0 && onProceed) {
-        Animated.timing(progressAnim, {
+    if ((isSuccess || isLogout) && autoProceedMs > 0 && onProceed) {
+      if (reduceMotion === false) {
+        progress = Animated.timing(progressAnim, {
           toValue: 1,
           duration: autoProceedMs,
           useNativeDriver: false,
-        }).start();
-
-        const timer = setTimeout(() => {
-          onProceed();
-        }, autoProceedMs);
-
-        return () => clearTimeout(timer);
+        });
+        progress.start();
       }
+
+      timer = setTimeout(() => {
+        onProceed();
+      }, autoProceedMs);
     }
-  }, [visible, isSuccess, isLogout, autoProceedMs, onProceed]);
+
+    return () => {
+      entrance?.stop();
+      progress?.stop();
+      if (timer) clearTimeout(timer);
+    };
+  }, [
+    autoProceedMs,
+    backdropAnim,
+    cardScaleAnim,
+    cardTranslateY,
+    isLogout,
+    isSuccess,
+    onProceed,
+    progressAnim,
+    reduceMotion,
+    visible,
+  ]);
 
   if (!visible) return null;
 

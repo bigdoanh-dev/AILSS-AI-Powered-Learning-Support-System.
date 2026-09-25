@@ -1,5 +1,14 @@
 import { useSyncExternalStore, useState, useEffect } from "react";
-import { Text, View, StyleSheet, ScrollView, Modal, StatusBar, Image } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  ScrollView,
+  Modal,
+  StatusBar,
+  Image,
+  useWindowDimensions,
+} from "react-native";
 import { Redirect, router, type Href } from "expo-router";
 import { runtime } from "../src/runtime";
 import {
@@ -49,6 +58,8 @@ const DEFAULT_ASSESSMENTS: HomeAssessment[] = [];
 export default function Home() {
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
+  const { fontScale } = useWindowDimensions();
+  const largeText = fontScale >= 1.3;
   const [upcomingSession, setUpcomingSession] = useState<StudentScheduleEntry | null>(null);
   const [lecturerInfo, setLecturerInfo] = useState<{ courses: number; offerings: number } | null>(null);
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
@@ -231,16 +242,22 @@ export default function Home() {
       <CinematicIntro />
 
       <ScrollView
+        testID="student-home"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT" ? 116 : 28 }}
       >
         {/* Top Deep Navy/Teal Banner matching Screenshot */}
         <FadeSlideIn delay={0} duration={400} fromY={-12}>
           <View style={hStyles.topBanner}>
-            <View style={hStyles.headerRow}>
+            <View style={[hStyles.headerRow, largeText && hStyles.headerRowLarge]}>
               {/* Left: User Avatar & Greeting with spring touch */}
               <ScalePressable
-                style={hStyles.userProfile}
+                testID={
+                  snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT"
+                    ? "student-home-authenticated-profile"
+                    : undefined
+                }
+                style={[hStyles.userProfile, largeText && hStyles.userProfileLarge]}
                 scaleTo={0.93}
                 onPress={() =>
                   router.push(snapshot.state === "AUTHENTICATED" ? ("/account" as Href) : ("/login" as Href))
@@ -257,7 +274,7 @@ export default function Home() {
                 </View>
                 <View style={{ gap: 2 }}>
                   <Text style={hStyles.greetingSub}>{t("header.greeting")}</Text>
-                  <Text style={hStyles.greetingName} numberOfLines={1}>
+                  <Text style={hStyles.greetingName} numberOfLines={largeText ? 2 : 1}>
                     {snapshot.state === "AUTHENTICATED"
                       ? displayName.toUpperCase()
                       : t("header.guest").toUpperCase()}
@@ -266,7 +283,7 @@ export default function Home() {
               </ScalePressable>
 
               {/* Right Side: Language Switcher and Auth Buttons or Bell Notification */}
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <View style={[hStyles.headerActions, largeText && hStyles.headerActionsLarge]}>
                 <ScalePressable
                   style={hStyles.langButton}
                   scaleTo={0.92}
@@ -281,6 +298,7 @@ export default function Home() {
                 {snapshot.state !== "AUTHENTICATED" ? (
                   <>
                     <ScalePressable
+                      testID="student-login-entry"
                       style={hStyles.loginPillBtn}
                       scaleTo={0.92}
                       onPress={() => router.push("/login" as Href)}
@@ -339,6 +357,7 @@ export default function Home() {
               </View>
               <View style={hStyles.guestHeroActions}>
                 <ScalePressable
+                  testID="student-login-entry-primary"
                   style={hStyles.guestBtnPrimary}
                   scaleTo={0.95}
                   onPress={() => router.push("/login" as Href)}
@@ -629,6 +648,7 @@ export default function Home() {
               </ScalePressable>
             ) : (
               <ScalePressable
+                testID="student-home-mastery-navigation"
                 scaleTo={0.98}
                 onPress={() => router.push("/progress" as Href)}
                 accessibilityRole="button"
@@ -1570,11 +1590,7 @@ export default function Home() {
         {/* Student Learning Progress Card with Animated Progress Fill */}
         {activeCourse && (
           <FadeSlideIn delay={300} duration={450}>
-            <ScalePressable
-              style={hStyles.resumeCard}
-              scaleTo={0.97}
-              onPress={() => router.push(`/learn/${activeCourse.courseId}` as Href)}
-            >
+            <View style={hStyles.resumeCard}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                 <Badge label="TIẾP TỤC HỌC TẬP" variant="ai" icon="sparkles" />
               </View>
@@ -1602,7 +1618,19 @@ export default function Home() {
                   onPress={() => router.push(`/learn/${activeCourse.courseId}` as Href)}
                 />
               </View>
-            </ScalePressable>
+              <Button
+                testID="student-home-study-plan"
+                label="Mở lộ trình học"
+                variant="outline"
+                size="sm"
+                onPress={() =>
+                  router.push({
+                    pathname: "/student/study-plan",
+                    params: { courseId: activeCourse.courseId },
+                  })
+                }
+              />
+            </View>
           </FadeSlideIn>
         )}
 
@@ -1675,6 +1703,7 @@ export default function Home() {
 
       {snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT" && (
         <ScalePressable
+          testID="student-home-tutor-launcher"
           style={hStyles.tutorLauncher}
           scaleTo={0.94}
           onPress={() => router.push("/student/tutor" as Href)}
@@ -1898,11 +1927,30 @@ const hStyles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  headerRowLarge: {
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 14,
+  },
   userProfile: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     flex: 1,
+  },
+  userProfileLarge: {
+    flex: 0,
+    alignSelf: "stretch",
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  headerActionsLarge: {
+    width: "100%",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
   },
   avatarCircle: {
     width: 44,

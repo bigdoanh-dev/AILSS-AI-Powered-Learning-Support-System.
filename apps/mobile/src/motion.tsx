@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useSyncExternalStore } from "react";
 import {
+  AccessibilityInfo,
   Animated,
   View,
   Text,
@@ -19,6 +20,42 @@ export interface ScalePressableProps extends PressableProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+let reduceMotionSnapshot: boolean | null = null;
+let reduceMotionInitialized = false;
+const reduceMotionListeners = new Set<() => void>();
+
+function updateReduceMotionSnapshot(enabled: boolean): void {
+  if (reduceMotionSnapshot === enabled) return;
+  reduceMotionSnapshot = enabled;
+  for (const listener of reduceMotionListeners) listener();
+}
+
+function subscribeToReduceMotion(listener: () => void): () => void {
+  reduceMotionListeners.add(listener);
+  if (!reduceMotionInitialized) {
+    reduceMotionInitialized = true;
+    AccessibilityInfo.addEventListener("reduceMotionChanged", updateReduceMotionSnapshot);
+    void AccessibilityInfo.isReduceMotionEnabled()
+      .then(updateReduceMotionSnapshot)
+      .catch(() => {
+        updateReduceMotionSnapshot(true);
+      });
+  }
+  return () => reduceMotionListeners.delete(listener);
+}
+
+function getReduceMotionSnapshot(): boolean | null {
+  return reduceMotionSnapshot;
+}
+
+export function useReducedMotionPreference(): boolean | null {
+  return useSyncExternalStore(subscribeToReduceMotion, getReduceMotionSnapshot, getReduceMotionSnapshot);
+}
+
+function shouldAnimate(reduceMotion: boolean | null): boolean {
+  return reduceMotion === false;
+}
+
 export function ScalePressable({
   style,
   scaleTo = 0.94,
@@ -28,24 +65,33 @@ export function ScalePressable({
   ...props
 }: ScalePressableProps) {
   const scale = useRef(new Animated.Value(1)).current;
+  const reduceMotion = useReducedMotionPreference();
 
   const handlePressIn = (e: GestureResponderEvent) => {
-    Animated.spring(scale, {
-      toValue: scaleTo,
-      useNativeDriver: true,
-      speed: 30,
-      bounciness: 4,
-    }).start();
+    if (shouldAnimate(reduceMotion)) {
+      Animated.spring(scale, {
+        toValue: scaleTo,
+        useNativeDriver: true,
+        speed: 30,
+        bounciness: 4,
+      }).start();
+    } else {
+      scale.setValue(1);
+    }
     onPressIn?.(e);
   };
 
   const handlePressOut = (e: GestureResponderEvent) => {
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 25,
-      bounciness: 6,
-    }).start();
+    if (shouldAnimate(reduceMotion)) {
+      Animated.spring(scale, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 25,
+        bounciness: 6,
+      }).start();
+    } else {
+      scale.setValue(1);
+    }
     onPressOut?.(e);
   };
 
@@ -76,10 +122,21 @@ export function FadeSlideIn({
 }) {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(fromY)).current;
+  const reduceMotion = useReducedMotionPreference();
 
   useEffect(() => {
+    if (reduceMotion === null) return;
+    if (reduceMotion) {
+      opacity.setValue(1);
+      translateY.setValue(0);
+      return;
+    }
+
+    opacity.setValue(0);
+    translateY.setValue(fromY);
+    let animation: Animated.CompositeAnimation | undefined;
     const timer = setTimeout(() => {
-      Animated.parallel([
+      animation = Animated.parallel([
         Animated.timing(opacity, {
           toValue: 1,
           duration,
@@ -91,11 +148,15 @@ export function FadeSlideIn({
           bounciness: 4,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]);
+      animation.start();
     }, delay);
 
-    return () => clearTimeout(timer);
-  }, [delay, duration, opacity, translateY]);
+    return () => {
+      clearTimeout(timer);
+      animation?.stop();
+    };
+  }, [delay, duration, fromY, opacity, reduceMotion, translateY]);
 
   return (
     <Animated.View style={[{ opacity, transform: [{ translateY }] }, style]}>
@@ -119,26 +180,44 @@ export function StaggerPop({
 }) {
   const scale = useRef(new Animated.Value(0.7)).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const reduceMotion = useReducedMotionPreference();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 280,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scale, {
-          toValue: 1,
-          speed: 22,
-          bounciness: 7,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }, baseDelay + index * staggerStep);
+    if (reduceMotion === null) return;
+    if (reduceMotion) {
+      scale.setValue(1);
+      opacity.setValue(1);
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  }, [baseDelay, index, opacity, scale, staggerStep]);
+    scale.setValue(0.7);
+    opacity.setValue(0);
+    let animation: Animated.CompositeAnimation | undefined;
+    const timer = setTimeout(
+      () => {
+        animation = Animated.parallel([
+          Animated.timing(opacity, {
+            toValue: 1,
+            duration: 280,
+            useNativeDriver: true,
+          }),
+          Animated.spring(scale, {
+            toValue: 1,
+            speed: 22,
+            bounciness: 7,
+            useNativeDriver: true,
+          }),
+        ]);
+        animation.start();
+      },
+      baseDelay + index * staggerStep,
+    );
+
+    return () => {
+      clearTimeout(timer);
+      animation?.stop();
+    };
+  }, [baseDelay, index, opacity, reduceMotion, scale, staggerStep]);
 
   return (
     <Animated.View style={[{ opacity, transform: [{ scale }] }, style]}>
@@ -156,8 +235,15 @@ export function PulseBadge({
 }) {
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(0.85)).current;
+  const reduceMotion = useReducedMotionPreference();
 
   useEffect(() => {
+    if (!shouldAnimate(reduceMotion)) {
+      scale.setValue(1);
+      opacity.setValue(1);
+      return;
+    }
+
     const anim = Animated.loop(
       Animated.sequence([
         Animated.parallel([
@@ -188,7 +274,7 @@ export function PulseBadge({
     );
     anim.start();
     return () => anim.stop();
-  }, [opacity, scale]);
+  }, [opacity, reduceMotion, scale]);
 
   return (
     <Animated.View style={[{ opacity, transform: [{ scale }] }, style]}>
@@ -209,8 +295,14 @@ export function FloatingElement({
   style?: StyleProp<ViewStyle>;
 }) {
   const translateY = useRef(new Animated.Value(0)).current;
+  const reduceMotion = useReducedMotionPreference();
 
   useEffect(() => {
+    if (!shouldAnimate(reduceMotion)) {
+      translateY.setValue(0);
+      return;
+    }
+
     const anim = Animated.loop(
       Animated.sequence([
         Animated.timing(translateY, {
@@ -227,7 +319,7 @@ export function FloatingElement({
     );
     anim.start();
     return () => anim.stop();
-  }, [distance, duration, translateY]);
+  }, [distance, duration, reduceMotion, translateY]);
 
   return (
     <Animated.View style={[{ transform: [{ translateY }] }, style]}>
@@ -248,14 +340,23 @@ export function AnimatedProgressBar({
   style?: StyleProp<ViewStyle>;
 }) {
   const animatedWidth = useRef(new Animated.Value(0)).current;
+  const reduceMotion = useReducedMotionPreference();
+  const targetWidth = Math.min(100, Math.max(0, progress));
 
   useEffect(() => {
-    Animated.timing(animatedWidth, {
-      toValue: Math.min(100, Math.max(0, progress)),
+    if (!shouldAnimate(reduceMotion)) {
+      animatedWidth.setValue(targetWidth);
+      return;
+    }
+
+    const animation = Animated.timing(animatedWidth, {
+      toValue: targetWidth,
       duration: 800,
       useNativeDriver: false,
-    }).start();
-  }, [animatedWidth, progress]);
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [animatedWidth, reduceMotion, targetWidth]);
 
   const widthInterpolated = animatedWidth.interpolate({
     inputRange: [0, 100],
@@ -342,25 +443,35 @@ export function AnimatedNumber({
   style?: StyleProp<TextStyle>;
 }) {
   const { target, decimals: parsedDecimals } = parseMobileNumber(value, decimals);
-  const [displayValue, setDisplayValue] = React.useState(target);
+  const [displayValue, setDisplayValue] = React.useState(0);
   const animValue = useRef(new Animated.Value(0)).current;
+  const reduceMotion = useReducedMotionPreference();
 
   useEffect(() => {
+    if (reduceMotion === null) return;
+    if (reduceMotion) {
+      animValue.setValue(target);
+      setDisplayValue(target);
+      return;
+    }
+
     animValue.setValue(0);
     const listener = animValue.addListener(({ value: current }) => {
       setDisplayValue(current);
     });
 
-    Animated.timing(animValue, {
+    const animation = Animated.timing(animValue, {
       toValue: target,
       duration,
       useNativeDriver: false,
-    }).start();
+    });
+    animation.start();
 
     return () => {
+      animation.stop();
       animValue.removeListener(listener);
     };
-  }, [animValue, target, duration]);
+  }, [animValue, duration, reduceMotion, target]);
 
   const formatted = formatter
     ? formatter(displayValue)

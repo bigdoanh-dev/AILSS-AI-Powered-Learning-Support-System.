@@ -1,0 +1,62 @@
+appId: dev.ailss.mobile
+---
+# Uses the real enrolled COURSE_ID and the published Cassandra reading material.
+- launchApp
+- tapOn:
+    id: student-intro-skip
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: student-home-tutor-launcher
+    timeout: 120000
+- tapOn:
+    id: student-home-tutor-launcher
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-panel
+    timeout: 60000
+- tapOn:
+    id: student-tutor-mode-study-buddy
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-course-selector
+    timeout: 60000
+- tapOn:
+    id: student-tutor-course-selector
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: student-tutor-course-${COURSE_ID}
+    commands:
+      - swipe:
+          from:
+            id: student-tutor-course-options
+          direction: LEFT
+- swipe:
+    from:
+      id: student-tutor-course-options
+    direction: LEFT
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-course-${COURSE_ID}
+    timeout: 60000
+- tapOn:
+    id: student-tutor-course-${COURSE_ID}
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-selected-course-${COURSE_ID}
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-prompt-study-0
+    timeout: 30000
+- tapOn:
+    id: student-tutor-prompt-study-0
+    waitToSettleTimeoutMs: 1000
+- extendedWaitUntil:
+    visible:
+      id: student-tutor-citation-1
+    timeout: 120000
+- assertVisible:
+    id: student-tutor-citation-link-1
