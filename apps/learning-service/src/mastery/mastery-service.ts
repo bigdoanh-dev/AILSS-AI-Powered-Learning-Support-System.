@@ -532,7 +532,7 @@ export class LearnerMasteryServiceV2 {
 
     // Store history record for audit and explainability UI
     const historyEntry: MasteryHistoryRecord = {
-      historyId: `hist-${studentId}-${conceptId}-${Date.now()}`,
+      historyId: `hist-${studentId}-${conceptId}-${String(Date.now())}`,
       studentId,
       tenantId,
       courseId,

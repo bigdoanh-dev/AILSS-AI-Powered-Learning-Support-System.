@@ -116,8 +116,18 @@ const validTransition = (from: StudyPlanItemStatus, to: StudyPlanItemStatus) => 
 };
 
 const parseObject = (value: unknown): Record<string, unknown> => {
-  try { const parsed: unknown = JSON.parse(String(value ?? "{}")); return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {}; }
-  catch { return {}; }
+  if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (typeof value !== "string") return {};
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return {};
+  }
 };
 const date = (value: unknown) => value instanceof Date ? value : new Date(String(value));
 const text = (value: unknown) => typeof value === "string" && value ? value : undefined;
