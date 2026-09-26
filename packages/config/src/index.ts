@@ -130,6 +130,8 @@ const baseSchema = z.object({
   MEDIA_PROCESSING_TIMEOUT_MS: z.coerce.number().int().min(1000).max(3_600_000).default(600000),
   MEDIA_RENDITION_HEIGHT: z.coerce.number().int().min(2).max(2160).default(360),
   MEDIA_VIDEO_BITRATE: z.coerce.number().int().min(64000).max(20_000_000).default(800000),
+  MEDIA_TRANSCODE_PROFILES: z.string().optional(),
+  MEDIA_QUOTA_LIMITS: z.string().optional(),
   MEDIA_PLAYBACK_TTL_SECONDS: z.coerce.number().int().min(1).max(300).default(120),
   GOOGLE_CLIENT_IDS: z.string().default("ailss-web-google-client-id,ailss-mobile-google-client-id"),
   APPLE_CLIENT_IDS: z.string().default("com.ailss.web,com.ailss.mobile"),
