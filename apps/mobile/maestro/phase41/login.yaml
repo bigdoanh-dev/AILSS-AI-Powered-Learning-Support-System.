@@ -1,29 +1,52 @@
 appId: dev.ailss.mobile
 ---
-# Set DEMO_EMAIL and DEMO_PASSWORD as Maestro environment variables. This flow
-# expects the app to be at the sign-in screen; it never clears native app data.
+# Set DEMO_EMAIL and DEMO_PASSWORD as Maestro environment variables. Wait for
+# the React Native app shell before navigating; a dev client can otherwise drop
+# a deep-link delivered before its JS context is ready.
 - launchApp
+- extendedWaitUntil:
+    visible:
+      id: student-home
+    timeout: 120000
 - tapOn:
     id: student-intro-skip
     optional: true
-# Always reach the login form without clearing app data. If a previous flow left
-# the seeded student signed in, revoke that app session through the account UI.
+    waitToSettleTimeoutMs: 1000
+# The path form is required by Android's custom-scheme parser; the host-only
+# form resolves to Home instead of the login route.
 - openLink:
-    link: "ailss-mobile://login"
+    link: "ailss-mobile:///login"
 - tapOn:
     text: "Đăng xuất"
     optional: true
+    waitToSettleTimeoutMs: 1000
 - openLink:
-    link: "ailss-mobile://login"
-- extendedWaitUntil:
-    visible:
+    link: "ailss-mobile:///login"
+- tapOn:
+    text: "Close"
+    optional: true
+    waitToSettleTimeoutMs: 1000
+- scrollUntilVisible:
+    element:
       id: student-login-email
+    direction: DOWN
+    centerElement: false
+    visibilityPercentage: 80
     timeout: 120000
 - tapOn:
     id: student-login-email
 - inputText: ${DEMO_EMAIL}
 - assertVisible: ${DEMO_EMAIL}
-- hideKeyboard
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Địa chỉ Email"
 - scrollUntilVisible:
     element:
       id: student-login-password
@@ -32,7 +55,18 @@ appId: dev.ailss.mobile
 - tapOn:
     id: student-login-password
 - inputText: ${DEMO_PASSWORD}
-- hideKeyboard
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Mật khẩu"
+          index: 0
 - tapOn:
     id: student-login-submit
     waitToSettleTimeoutMs: 1000

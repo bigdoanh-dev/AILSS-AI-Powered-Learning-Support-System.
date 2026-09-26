@@ -59,6 +59,22 @@ describe("Phase 41 route scope", () => {
   });
 });
 describe("transport", () => {
+  it("explains an exhausted assessment attempt without calling it stale data", async () => {
+    const request = vi.fn<Fetcher>().mockResolvedValue(
+      new Response(JSON.stringify({ error: { code: "ATTEMPT_LIMIT_REACHED" } }), {
+        status: 409,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    await expect(
+      new Transport("https://api.example.org", request).request("/api/v1/quiz-attempts"),
+    ).rejects.toMatchObject({
+      status: 409,
+      code: "ATTEMPT_LIMIT_REACHED",
+      message: "Bạn đã dùng hết số lần làm bài cho phép.",
+    });
+    expect(new ApiError("409", 409).message).toBe("Dữ liệu đã thay đổi. Vui lòng thử lại.");
+  });
   it.each([401, 403, 404, 409, 422, 429, 500])("normalizes %i without leaking response", async (status) => {
     const request = vi
       .fn<Fetcher>()
