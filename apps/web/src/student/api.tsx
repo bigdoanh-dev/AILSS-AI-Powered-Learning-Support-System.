@@ -23,6 +23,8 @@ export interface Lesson {
   contentUrl?: string;
   externalVideo?: string;
   contentType?: string;
+  mediaAssetId?: string;
+  mediaStatus?: string;
   position?: { sectionOrder: number; lessonOrder: number };
 }
 export interface Progress {

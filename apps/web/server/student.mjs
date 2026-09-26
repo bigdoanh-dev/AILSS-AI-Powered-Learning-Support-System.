@@ -69,22 +69,27 @@ rule(
   "POST",
   "/assistant/chat",
   empty,
-  z.object({
-    conversationId: z.string().uuid().optional(),
-    mode: z.enum(["STUDENT_ADVISOR", "STUDY_BUDDY"]),
-    courseId: z.string().uuid().optional(),
-    message: z.string().trim().min(1).max(4000),
-  }).strict(),
+  z
+    .object({
+      conversationId: z.string().uuid().optional(),
+      mode: z.enum(["STUDENT_ADVISOR", "STUDY_BUDDY"]),
+      courseId: z.string().uuid().optional(),
+      message: z.string().trim().min(1).max(4000),
+    })
+    .strict(),
 );
 rule(
   "PATCH",
   "/study-plan/items/:id",
   empty,
-  z.object({
-    courseId: z.string().uuid(),
-    status: z.enum(["ACCEPTED", "SKIPPED", "RESCHEDULED", "COMPLETED", "REPLACED"]),
-    scheduledDate: date.optional(),
-  }).strict().refine((value) => value.status !== "RESCHEDULED" || !!value.scheduledDate),
+  z
+    .object({
+      courseId: z.string().uuid(),
+      status: z.enum(["ACCEPTED", "SKIPPED", "RESCHEDULED", "COMPLETED", "REPLACED"]),
+      scheduledDate: date.optional(),
+    })
+    .strict()
+    .refine((value) => value.status !== "RESCHEDULED" || !!value.scheduledDate),
 );
 rule("POST", "/orders", empty, z.object({ offeringId: z.string().uuid() }).strict(), "key");
 rule(
@@ -95,6 +100,7 @@ rule(
   "key",
 );
 rule("POST", "/courses/:id/enrollments", empty, empty, "key");
+rule("POST", "/lessons/:id/media-session", empty, empty);
 rule("PUT", "/lessons/:id/completion", empty, z.object({ completed: z.boolean() }).strict(), "key");
 rule(
   "POST",
