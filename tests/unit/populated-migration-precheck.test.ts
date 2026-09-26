@@ -22,8 +22,11 @@ const safeSnapshot = {
 };
 
 describe("populated migration precheck", () => {
-  it("has an exact explicit 51-file policy covering both profiles", async () => {
-    expect(Object.keys(canonicalPolicy)).toHaveLength(51);
+  it("has an exact explicit 54-file policy covering both profiles", async () => {
+    expect(Object.keys(canonicalPolicy)).toHaveLength(54);
+    expect(canonicalPolicy).toHaveProperty("086_media_replacement_audit.cql");
+    expect(canonicalPolicy).toHaveProperty("087_media_quota.cql");
+    expect(canonicalPolicy).toHaveProperty("088_media_output_journal.cql");
     const result = (await runPrecheck()) as {
       status: string;
       networkAccessPerformed: boolean;
@@ -35,7 +38,7 @@ describe("populated migration precheck", () => {
       status: "PASS_SOURCE_POLICY",
       networkAccessPerformed: false,
       targetMutationPerformed: false,
-      profiles: { dev: 51, research: 51 },
+      profiles: { dev: 54, research: 54 },
       targetQualification: { status: "BLOCKED_EXTERNAL" },
     });
   });
@@ -112,7 +115,7 @@ describe("populated migration precheck", () => {
     expect(evaluateTargetSnapshot(safeSnapshot)).toEqual({ status: "QUALIFIED_READ_ONLY", reasons: [] });
   });
 
-  it("verifies canonical migration registry contains 51 migrations matching precheck baseline", async () => {
+  it("verifies canonical migration registry contains 54 migrations matching precheck baseline", async () => {
     const { readFile } = await import("node:fs/promises");
     const registryContent = await readFile("database/migration-registry.json", "utf8");
     interface MigrationEntry {
@@ -133,12 +136,12 @@ describe("populated migration precheck", () => {
     }
     const registry = JSON.parse(registryContent) as MigrationRegistry;
 
-    expect(registry.totalMigrations).toBe(51);
-    expect(registry.migrations).toHaveLength(51);
+    expect(registry.totalMigrations).toBe(54);
+    expect(registry.migrations).toHaveLength(54);
 
     const ids = registry.migrations.map((m: MigrationEntry) => m.id);
     const uniqueIds = new Set(ids);
-    expect(uniqueIds.size).toBe(51); // No duplicates
+    expect(uniqueIds.size).toBe(54); // No duplicates
 
     // Verify ordering
     for (let i = 1; i < registry.migrations.length; i++) {
