@@ -39,8 +39,6 @@ const contentRef = z
       "application/pdf",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "text/plain",
-      "video/mp4",
-      "video/webm",
     ]),
     sha256: z
       .string()

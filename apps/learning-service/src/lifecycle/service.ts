@@ -56,6 +56,7 @@ export class LearningLifecycleService {
       resourceId: string;
     }) => Promise<unknown>,
     private readonly secret: string,
+    private readonly requireMediaReady?: (courseId:string,contentVersion:number)=>Promise<void>,
   ) {}
 
   public async submitReview(input: {
@@ -72,6 +73,7 @@ export class LearningLifecycleService {
       from: "DRAFT",
       to: "IN_REVIEW",
       before: async (course) => {
+        await this.requireMediaReady?.(course.courseId,course.contentVersion);
         if (!(await this.lifecycle.allLessonsReady(course.courseId, course.contentVersion)))
           throw conflict(
             "COURSE_CONTENT_NOT_READY",
@@ -97,6 +99,7 @@ export class LearningLifecycleService {
       to: "PUBLISHED",
       eventType: "learning.course.published.v1",
       before: async (course, record, ids) => {
+        await this.requireMediaReady?.(course.courseId,course.contentVersion);
         const publishedAt = new Date(record.receipt.publishedAt ?? receiptTime(record.receipt));
         const version = course.recordVersion + 1;
         await this.lifecycle.prepareEvent({
