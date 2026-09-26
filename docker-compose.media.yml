@@ -15,22 +15,24 @@ x-media-env: &media-env
   MEDIA_PROCESSING_TIMEOUT_MS: ${MEDIA_PROCESSING_TIMEOUT_MS:-600000}
   MEDIA_RENDITION_HEIGHT: ${MEDIA_RENDITION_HEIGHT:-360}
   MEDIA_VIDEO_BITRATE: ${MEDIA_VIDEO_BITRATE:-800000}
+  MEDIA_TRANSCODE_PROFILES: ${MEDIA_TRANSCODE_PROFILES:-}
+  MEDIA_QUOTA_LIMITS: '${MEDIA_QUOTA_LIMITS:-{"tenantOriginalBytes":1099511627776,"tenantDerivedBytes":1099511627776,"courseOriginalBytes":107374182400,"courseDerivedBytes":107374182400,"tenantAssets":2048,"courseAssets":256}}'
 
 services:
   api-gateway:
-    image: ailss-runtime:phase42-a
+    image: ${MEDIA_RUNTIME_IMAGE:-ailss-runtime:phase42-b}
     environment:
       MEDIA_DELIVERY_INTERNAL_URL: http://media-delivery:8211
       MEDIA_ALLOWED_ORIGINS: ${MEDIA_ALLOWED_ORIGINS:-http://127.0.0.1:5173,http://localhost:5173}
   learning-service:
-    image: ailss-runtime:phase42-a
+    image: ${MEDIA_RUNTIME_IMAGE:-ailss-runtime:phase42-b}
     environment:
       <<: *media-env
       MEDIA_STORAGE_ACCESS_KEY: ${MEDIA_API_ACCESS_KEY:?Media API storage principal required}
       MEDIA_STORAGE_SECRET_KEY: ${MEDIA_API_SECRET_KEY:?Media API storage secret required}
       MEDIA_PLAYBACK_SECRET: ${MEDIA_PLAYBACK_SECRET:?Playback signing secret required}
   media-worker:
-    image: ailss-media-worker:phase42-a
+    image: ${MEDIA_WORKER_IMAGE:-ailss-media-worker:phase42-b}
     profiles: [dev-async, demo]
     build: { context: ., dockerfile: apps/media-worker/Dockerfile }
     container_name: ailss-media-worker
@@ -54,7 +56,7 @@ services:
     pids_limit: 128
     security_opt: [no-new-privileges:true]
   media-delivery:
-    image: ailss-runtime:phase42-a
+    image: ${MEDIA_RUNTIME_IMAGE:-ailss-runtime:phase42-b}
     profiles: [dev-async, demo]
     build: { context: ., dockerfile: Dockerfile }
     container_name: ailss-media-delivery
