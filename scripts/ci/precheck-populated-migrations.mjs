@@ -19,10 +19,7 @@ export const canonicalPolicy = {
     "BACKFILL_OR_RECONCILIATION_REVIEW",
     "Inventory existing avatar objects and metadata.",
   ),
-  "014_external_identity.cql": P(
-    "SAFE_ADDITIVE",
-    "Verify identity keyspace and external identity tables.",
-  ),
+  "014_external_identity.cql": P("SAFE_ADDITIVE", "Verify identity keyspace and external identity tables."),
   "015_institution_tenancy.cql": P(
     "SAFE_ADDITIVE",
     "Verify identity keyspace and institutional tenancy/SSO tables.",
@@ -138,6 +135,10 @@ export const canonicalPolicy = {
   "084_mastery_evidence_ingestion.cql": P(
     "SAFE_ADDITIVE",
     "Create idempotent authoritative mastery evidence and ingestion recovery tables before starting the recalculation consumer.",
+  ),
+  "085_media_vertical_slice.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify private media metadata/queue tables, media worker role, and course publication fence before enabling upload traffic.",
   ),
 };
 

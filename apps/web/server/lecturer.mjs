@@ -34,8 +34,6 @@ const pos = z
         "application/pdf",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "text/plain",
-        "video/mp4",
-        "video/webm",
       ]),
       sha256: z.string().regex(/^[a-f0-9]{64}$/i),
     })
@@ -169,6 +167,28 @@ rule("PATCH", "/courses/:id", { body: partialNonempty(course), command: true });
 rule("POST", "/courses/:id/submit-review", { command: true });
 rule("POST", "/courses/:id/lessons", { body: lesson, command: true });
 rule("PATCH", "/lessons/:id", { body: lessonPatch, command: true });
+rule("POST", "/courses/:id/media-assets", {
+  body: z
+    .object({
+      lessonId: id,
+      originalFilename: txt(1, 255).refine((value) => !/[\x00-\x1f\x7f]/u.test(value)),
+      mimeType: z.enum(["video/mp4", "video/webm"]),
+      sizeBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      sourceSha256: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional(),
+    })
+    .strict(),
+  command: true,
+});
+rule("GET", "/media-assets/:id");
+rule("GET", "/media-assets/:id/upload");
+rule("POST", "/media-assets/:id/parts", {
+  body: z.object({ partNumber: z.number().int().min(1).max(10000) }).strict(),
+});
+for (const action of ["complete", "cancel", "attach"])
+  rule("POST", `/media-assets/:id/${action}`, { body: empty });
 rule("GET", "/courses/:id/offerings", { query: z.object(page).strict() });
 rule("GET", "/courses/:id/reviews", { query: z.object(page).strict() });
 rule("GET", "/resources/(COURSE|CLASS)/:id/comments", { query: z.object(page).strict() });

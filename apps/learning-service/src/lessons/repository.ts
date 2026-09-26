@@ -319,7 +319,7 @@ export class LearningLessonRepository {
       [uuid(studentId), uuid(courseId)],
       LQ,
     );
-    if (String(entitlement[0]?.state ?? "") === "ACTIVE") return true;
+    if (entitlement[0]) return String(entitlement[0].state ?? "") === "ACTIVE";
     // P7.17 verified migration-window compatibility fallback. Canonical entitlement is always read first.
     const rows = await this.db.execute(
       "SELECT state FROM enrollment_by_student_course WHERE student_id=? AND course_id=?",

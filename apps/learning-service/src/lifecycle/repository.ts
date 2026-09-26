@@ -55,7 +55,7 @@ export class LearningLifecycleRepository {
     params.push(uuid(course.courseId), from, long(course.recordVersion), long(course.contentVersion));
     const rows = await this.db.execute(
       `UPDATE course_by_id SET state=?,record_version=?,updated_at=?${setPublished}
-       WHERE course_id=? IF state=? AND record_version=? AND content_version=?`,
+       WHERE course_id=? IF state=? AND record_version=? AND content_version=? AND media_write_token=null`,
       params,
       LQ,
       LS,

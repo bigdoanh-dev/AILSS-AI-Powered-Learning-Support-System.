@@ -18,6 +18,7 @@ import { Heading, State, Empty, ProgressView, Status } from "./ui";
 import Discussion from "./Discussion";
 import { Icon } from "../components/Icon";
 import ProgressDashboard from "./ProgressDashboard";
+import { MediaPlayer } from "./MediaPlayer";
 
 interface MarketplaceCourse {
   courseId: string;
@@ -1173,7 +1174,7 @@ function LessonView({
           <>
             <p className="eyebrow">BÀI HỌC</p>
             <h2>{lesson.data.title}</h2>
-            {lesson.data.externalVideo &&
+            {lesson.data.mediaAssetId ? <MediaPlayer key={lessonId} lessonId={lessonId} title={lesson.data.title} /> : lesson.data.externalVideo &&
             /^https:\/\/(drive\.google\.com\/file\/d\/[A-Za-z0-9_-]+\/preview|www\.youtube-nocookie\.com\/embed\/[A-Za-z0-9_-]+)$/.test(
               lesson.data.externalVideo,
             ) ? (

@@ -51,6 +51,12 @@ import { MasteryRecalculationConsumer } from "./adaptive/mastery-consumer.js";
 import { adaptiveInternalRouter } from "./adaptive/internal-router.js";
 import { learningMaterialsInternalRouter } from "./materials/internal-router.js";
 import { AuthoritativePlanContextProvider } from "./adaptive/plan-context.js";
+import { mediaRuntime } from "./media/config.js";
+import { CassandraMediaRepository } from "./media/repository.js";
+import { MediaService } from "./media/service.js";
+import { MediaReferences } from "./media/references.js";
+import { createMediaMetrics } from "../../../packages/observability/src/media.js";
+import { mediaRouter } from "./media/router.js";
 
 const manifest: ServiceManifest = {
   serviceId: "learning-service",
@@ -190,6 +196,16 @@ await startService(manifest, {
         kid: config.ACTOR_CONTEXT_KID,
         clockToleranceSeconds: config.JWT_CLOCK_SKEW_SECONDS,
       });
+    const mediaSettings = mediaRuntime(config);
+    const mediaReferences = new MediaReferences(new CassandraMediaRepository(cassandra),new LearningLessonRepository(cassandra),config.PLATFORM_TENANT_ID);
+    const media = mediaSettings ? new MediaService(
+      new CassandraMediaRepository(cassandra), new LearningLessonRepository(cassandra),
+      mediaSettings.storage, async (studentId, courseId) => (await commerceRepository.entitlement(studentId,courseId))?.state === "ACTIVE",
+      config.PLATFORM_TENANT_ID, mediaSettings.secret, mediaSettings.policy,
+      (userId,requestId) => identity.get(userId,requestId),
+      createMediaMetrics(context.metrics.registry).event,
+    ) : undefined;
+    if(media) app.use(mediaRouter(media,(token,purpose)=>verifier(purpose)(token)));
     app.use(
       learningAuthoringRouter(
         authoring,
@@ -209,6 +225,7 @@ await startService(manifest, {
       identity,
       (input) => adminProof.verify(input),
       config.LEARNING_CURSOR_HMAC_KEY,
+      (courseId,contentVersion) => mediaReferences.requireReady(courseId,contentVersion),
     );
     app.use(
       learningLifecycleRouter(
@@ -240,6 +257,7 @@ await startService(manifest, {
       identity,
       objectStorage,
       config.LEARNING_CURSOR_HMAC_KEY,
+      mediaReferences,
     );
     app.use(
       learningLessonRouter(

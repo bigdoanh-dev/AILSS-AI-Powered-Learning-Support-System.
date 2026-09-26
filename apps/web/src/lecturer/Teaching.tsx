@@ -5,6 +5,7 @@ import { CourseArtwork, categories } from "../components/CourseArtwork";
 import { CatalogCourseSelect, Field, State } from "./ui";
 import { Breadcrumbs, EmptyState, StateChip, stateLabel, useUnsavedChanges } from "../components/product";
 import { Icon } from "../components/Icon";
+import { MediaUpload } from "./MediaUpload";
 type Course = {
   courseId: string;
   title: string;
@@ -19,6 +20,8 @@ type Course = {
 };
 type Lesson = {
   lessonId: string;
+  courseId: string;
+  mediaAssetId?: string;
   title: string;
   sectionTitle: string;
   state: string;
@@ -2338,6 +2341,7 @@ export function LessonDetail() {
         {(x) => (
           <>
             <h1>{x.title}</h1>
+            <MediaUpload key={lessonId} courseId={x.courseId} lessonId={lessonId} preview={x.preview} mediaAssetId={x.mediaAssetId} />
             <form
               className="form-panel form-grid"
               onSubmit={async (e) => {

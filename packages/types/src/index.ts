@@ -10,7 +10,9 @@ export type ServiceId =
   | "document-worker"
   | "notification-worker"
   | "audit-worker"
-  | "reconciliation-worker";
+  | "reconciliation-worker"
+  | "media-worker"
+  | "media-delivery";
 
 export type BusinessServiceId = Exclude<
   ServiceId,
@@ -20,6 +22,8 @@ export type BusinessServiceId = Exclude<
   | "notification-worker"
   | "audit-worker"
   | "reconciliation-worker"
+  | "media-worker"
+  | "media-delivery"
 >;
 
 export interface DependencyState {
