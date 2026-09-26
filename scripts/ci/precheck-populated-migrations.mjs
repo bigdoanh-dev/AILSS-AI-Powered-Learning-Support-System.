@@ -140,6 +140,18 @@ export const canonicalPolicy = {
     "SAFE_ADDITIVE",
     "Verify private media metadata/queue tables, media worker role, and course publication fence before enabling upload traffic.",
   ),
+  "086_media_replacement_audit.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify the media lesson binding has an atomic replacement history column before enabling published-media replacement.",
+  ),
+  "087_media_quota.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify tenant media quota CAS table and reconcile existing media before enabling quota-enforced uploads.",
+  ),
+  "088_media_output_journal.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify output-attempt journal and worker grants before enabling durable derived cleanup.",
+  ),
 };
 
 export function findUnsafeStatements(body) {

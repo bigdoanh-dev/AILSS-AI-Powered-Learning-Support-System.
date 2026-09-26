@@ -272,8 +272,13 @@ try {
       original.durationMs >= 30000,
   );
   check(
-    "Single rendition is not upscaled",
-    original.availableRenditions.length === 1 && original.availableRenditions[0].height === 360,
+    "Source-appropriate adaptive ladder has 360p, 480p and 720p without upscaling",
+    JSON.stringify(original.availableRenditions.map((value) => value.height)) ===
+      JSON.stringify([360, 480, 720]),
+  );
+  check(
+    "Poster object is stored under the private output prefix",
+    original.posterObjectKey === original.masterPlaylistObjectKey.replace(/master\.m3u8$/, "poster.jpg"),
   );
   check(
     "Auditable lifecycle includes actual verification and encoding",
@@ -311,8 +316,21 @@ try {
   const master = await fetch(playback.playlistUrl),
     text = await master.text();
   check(
-    "Private delivery serves actual HLS master",
-    master.status === 200 && text.startsWith("#EXTM3U") && text.includes("RESOLUTION=640x360"),
+    "Private delivery serves adaptive HLS master with three variants",
+    master.status === 200 &&
+      text.startsWith("#EXTM3U") &&
+      ["640x360", "852x480", "1280x720"].every((resolution) => text.includes(`RESOLUTION=${resolution}`)) &&
+      (text.match(/#EXT-X-STREAM-INF:/g) ?? []).length === 3,
+  );
+  const poster = await fetch(playback.posterUrl);
+  const posterBytes = new Uint8Array(await poster.arrayBuffer());
+  check(
+    "Protected poster is a real JPEG",
+    poster.status === 200 && posterBytes[0] === 0xff && posterBytes[1] === 0xd8,
+  );
+  check(
+    "Unsigned poster is denied",
+    (await fetch(new URL(playback.posterUrl).origin + new URL(playback.posterUrl).pathname)).status === 403,
   );
   const variantUrl = new URL(
       text.split("\n").find((line) => line && !line.startsWith("#")),
@@ -376,7 +394,7 @@ try {
       return permission.readable && permission.denied;
     })(),
   );
-  const evidence = new URL("../../docs/evidence/phase42-a/", import.meta.url);
+  const evidence = new URL("../../docs/evidence/phase42-b/", import.meta.url);
   await mkdir(evidence, { recursive: true });
   const implementationHead = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
   const sourceState = execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim()
