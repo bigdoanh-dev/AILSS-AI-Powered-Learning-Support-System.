@@ -378,9 +378,13 @@ try {
   );
   const evidence = new URL("../../docs/evidence/phase42-a/", import.meta.url);
   await mkdir(evidence, { recursive: true });
+  const implementationHead = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  const sourceState = execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim()
+    ? "DIRTY"
+    : "CLEAN";
   await writeFile(
     new URL("runtime.md", evidence),
-    `# Phase 42 real media runtime\n\nGenerated: ${new Date().toISOString()}\nBaseline HEAD: ${execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim()}\nSource: current dirty Phase 42 working tree, NOT baseline image or immutable candidate.\n\n${journal.map((label) => `- PASS: ${label}`).join("\n")}\n\nSource size: ${size}; SHA256: ${sha}.\nCourse: ${course.courseId}; lesson: ${lesson.lessonId}; asset: ${id}.\n\nEntitlement was seeded as an explicit local acceptance fixture. This is NOT proof of live purchase/payment-provider fulfillment. No object storage, transcoding, HTTP authorization, or media delivery was mocked.\n`,
+    `# Phase 42 real media runtime\n\nGenerated: ${new Date().toISOString()}\nBaseline RC7: 73d7b8a187fc9ea2a5b8d7f05fe51581c50d38d2\nImplementation HEAD: ${implementationHead}\nSource state: ${sourceState}; local Docker images were built from the implementation source, not from RC7. No Phase 42 RC or tag was created.\n\n${journal.map((label) => `- PASS: ${label}`).join("\n")}\n\nSource size: ${size}; SHA256: ${sha}.\nCourse: ${course.courseId}; lesson: ${lesson.lessonId}; asset: ${id}.\n\nEntitlement was seeded as an explicit local acceptance fixture. This is NOT proof of live purchase/payment-provider fulfillment. No object storage, transcoding, HTTP authorization, or media delivery was mocked.\n`,
   );
   const fixture = {
     PHASE42_STUDENT_EMAIL: student.email,
