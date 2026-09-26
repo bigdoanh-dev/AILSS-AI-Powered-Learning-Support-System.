@@ -18,15 +18,22 @@ appId: dev.ailss.mobile
 - assertVisible:
     id: student-study-plan-data-source
 - assertVisible: "LIVE"
-- assertVisible:
-    id: student-study-plan-selected-course-${COURSE_ID}
+- scrollUntilVisible:
+    element:
+      id: student-study-plan-selected-course-${COURSE_ID}
+    direction: DOWN
+    centerElement: false
+    visibilityPercentage: 50
+    timeout: 30000
 - takeScreenshot: phase41-large-text-study-plan
 - tapOn:
     id: app-nav-home
+    waitToSettleTimeoutMs: 1000
 - assertVisible:
     id: student-home-tutor-launcher
 - tapOn:
     id: student-home-tutor-launcher
+    waitToSettleTimeoutMs: 1000
 - extendedWaitUntil:
     visible:
       id: student-tutor-panel
@@ -69,8 +76,15 @@ appId: dev.ailss.mobile
     waitToSettleTimeoutMs: 1000
 - extendedWaitUntil:
     visible:
-      id: student-tutor-citation-link-1
+      id: student-tutor-citation-1
     timeout: 120000
+- scrollUntilVisible:
+    centerElement: false
+    element:
+      id: student-tutor-citation-link-1
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 30000
 - tapOn:
     id: student-tutor-citation-link-1
 - extendedWaitUntil:
@@ -78,6 +92,13 @@ appId: dev.ailss.mobile
       id: student-lesson-screen
     timeout: 60000
 - takeScreenshot: phase41-large-text-lesson
+- scrollUntilVisible:
+    element:
+      id: student-lesson-complete
+    direction: DOWN
+    centerElement: false
+    visibilityPercentage: 50
+    timeout: 120000
 - tapOn:
     id: student-lesson-complete
 - extendedWaitUntil:
@@ -94,10 +115,11 @@ appId: dev.ailss.mobile
     timeout: 60000
 - takeScreenshot: phase41-large-text-assessment-controls
 - scrollUntilVisible:
-    centerElement: true
+    centerElement: false
     element:
       id: student-assessment-start
     direction: DOWN
+    visibilityPercentage: 50
     timeout: 30000
 - tapOn:
     id: student-assessment-start
@@ -107,18 +129,20 @@ appId: dev.ailss.mobile
     timeout: 60000
 - takeScreenshot: phase41-large-text-assessment-answer
 - scrollUntilVisible:
-    centerElement: true
+    centerElement: false
     element:
       id: student-assessment-answer-true
     direction: DOWN
+    visibilityPercentage: 50
     timeout: 30000
 - tapOn:
     id: student-assessment-answer-true
 - scrollUntilVisible:
-    centerElement: true
+    centerElement: false
     element:
       id: student-assessment-submit
     direction: DOWN
+    visibilityPercentage: 50
     timeout: 30000
 - tapOn:
     id: student-assessment-submit
@@ -128,6 +152,11 @@ appId: dev.ailss.mobile
     visible:
       id: student-assessment-result
     timeout: 120000
-- assertVisible:
-    id: student-assessment-result-score
+- scrollUntilVisible:
+    element:
+      id: student-assessment-result-score
+    direction: DOWN
+    centerElement: false
+    visibilityPercentage: 50
+    timeout: 30000
 - takeScreenshot: phase41-large-text-assessment-result

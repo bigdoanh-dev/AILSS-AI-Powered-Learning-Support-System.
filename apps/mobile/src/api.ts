@@ -1,3 +1,17 @@
+const API_ERROR_MESSAGES: Record<string, string> = {
+  network: "Không thể kết nối. Kiểm tra mạng rồi thử lại.",
+  timeout: "Kết nối quá thời gian. Vui lòng thử lại.",
+  cancelled: "Yêu cầu đã hủy.",
+  invalid: "Dữ liệu phản hồi không hợp lệ.",
+  401: "Phiên đăng nhập đã hết hạn.",
+  403: "Bạn không có quyền thực hiện.",
+  404: "Không tìm thấy dữ liệu.",
+  409: "Dữ liệu đã thay đổi. Vui lòng thử lại.",
+  422: "Vui lòng kiểm tra thông tin đã nhập.",
+  429: "Quá nhiều yêu cầu. Vui lòng đợi.",
+  server: "Dịch vụ tạm thời không khả dụng.",
+};
+
 export class ApiError extends Error {
   constructor(
     public kind: string,
@@ -6,21 +20,9 @@ export class ApiError extends Error {
     public code?: string,
   ) {
     super(
-      (
-        {
-          network: "Không thể kết nối. Kiểm tra mạng rồi thử lại.",
-          timeout: "Kết nối quá thời gian. Vui lòng thử lại.",
-          cancelled: "Yêu cầu đã hủy.",
-          invalid: "Dữ liệu phản hồi không hợp lệ.",
-          401: "Phiên đăng nhập đã hết hạn.",
-          403: "Bạn không có quyền thực hiện.",
-          404: "Không tìm thấy dữ liệu.",
-          409: "Dữ liệu đã thay đổi. Vui lòng thử lại.",
-          422: "Vui lòng kiểm tra thông tin đã nhập.",
-          429: "Quá nhiều yêu cầu. Vui lòng đợi.",
-          server: "Dịch vụ tạm thời không khả dụng.",
-        } as Record<string, string>
-      )[kind] ?? "Không thể hoàn tất yêu cầu.",
+      code === "ATTEMPT_LIMIT_REACHED"
+        ? "Bạn đã dùng hết số lần làm bài cho phép."
+        : (API_ERROR_MESSAGES[kind] ?? "Không thể hoàn tất yêu cầu."),
     );
   }
 }
