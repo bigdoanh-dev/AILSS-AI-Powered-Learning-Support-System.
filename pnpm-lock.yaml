@@ -119,6 +119,10 @@ importers:
 
   apps/learning-service: {}
 
+  apps/media-delivery: {}
+
+  apps/media-worker: {}
+
   apps/mobile:
     dependencies:
       '@expo/vector-icons':
@@ -204,6 +208,9 @@ importers:
 
   apps/web:
     dependencies:
+      hls.js:
+        specifier: 1.6.19
+        version: 1.6.19
       react:
         specifier: 19.1.1
         version: 19.1.1
@@ -3452,6 +3459,9 @@ packages:
 
   hermes-parser@0.36.1:
     resolution: {integrity: sha512-GApNk4zLHi2UWoWZZkx7LNCOSzLSc5lB55pZ/PhK7ycFeg7u5LcF88p/WbpIi1XUDtE0MpHE3uRR3u3KB7TjSQ==}
+
+  hls.js@1.6.19:
+    resolution: {integrity: sha512-A//aZeaAgM5rgUCbTURD4gkfyw5Uag2/4Jky7CfDOukL/DN+P5DjbgK2BYteyP3/KnCkPfkGVkbLxQG2T0AbUQ==}
 
   hosted-git-info@7.0.2:
     resolution: {integrity: sha512-puUZAUKT5m8Zzvs72XWy3HtvVbTWljRE66cP60bxJzAqf2DgICo7lYTY2IHUmLnNpjYvw5bvmoHvPc0QO2a62w==}
@@ -8532,6 +8542,8 @@ snapshots:
   hermes-parser@0.36.1:
     dependencies:
       hermes-estree: 0.36.1
+
+  hls.js@1.6.19: {}
 
   hosted-git-info@7.0.2:
     dependencies:

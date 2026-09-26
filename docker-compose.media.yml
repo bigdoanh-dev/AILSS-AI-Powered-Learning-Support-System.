@@ -1,0 +1,76 @@
+# Opt-in Phase 42 media boundary; use with base + async Compose.
+# Every policy/secret below is injected. No production-size default is assumed.
+x-media-env: &media-env
+  NODE_ENV: ${NODE_ENV:-development}
+  MEDIA_ENABLED: "true"
+  MEDIA_STORAGE_BUCKET: ${MEDIA_STORAGE_BUCKET:-ailss-media}
+  MEDIA_MAX_SOURCE_BYTES: ${MEDIA_MAX_SOURCE_BYTES:?Explicit media source-size policy required}
+  MEDIA_MAX_DURATION_SECONDS: ${MEDIA_MAX_DURATION_SECONDS:?Explicit media duration policy required}
+  MEDIA_DELIVERY_ORIGIN: ${MEDIA_DELIVERY_ORIGIN:?Media delivery origin required}
+  OBJECT_STORAGE_ENDPOINT: minio
+  OBJECT_STORAGE_PORT: 9000
+  OBJECT_STORAGE_USE_SSL: "false"
+  OBJECT_STORAGE_PUBLIC_URL: ${OBJECT_STORAGE_PUBLIC_URL:-http://127.0.0.1:9000}
+  MEDIA_ALLOWED_ORIGINS: ${MEDIA_ALLOWED_ORIGINS:-http://127.0.0.1:5173,http://localhost:5173}
+  MEDIA_PROCESSING_TIMEOUT_MS: ${MEDIA_PROCESSING_TIMEOUT_MS:-600000}
+  MEDIA_RENDITION_HEIGHT: ${MEDIA_RENDITION_HEIGHT:-360}
+  MEDIA_VIDEO_BITRATE: ${MEDIA_VIDEO_BITRATE:-800000}
+
+services:
+  api-gateway:
+    image: ailss-runtime:phase42-a
+    environment:
+      MEDIA_DELIVERY_INTERNAL_URL: http://media-delivery:8211
+      MEDIA_ALLOWED_ORIGINS: ${MEDIA_ALLOWED_ORIGINS:-http://127.0.0.1:5173,http://localhost:5173}
+  learning-service:
+    image: ailss-runtime:phase42-a
+    environment:
+      <<: *media-env
+      MEDIA_STORAGE_ACCESS_KEY: ${MEDIA_API_ACCESS_KEY:?Media API storage principal required}
+      MEDIA_STORAGE_SECRET_KEY: ${MEDIA_API_SECRET_KEY:?Media API storage secret required}
+      MEDIA_PLAYBACK_SECRET: ${MEDIA_PLAYBACK_SECRET:?Playback signing secret required}
+  media-worker:
+    image: ailss-media-worker:phase42-a
+    profiles: [dev-async, demo]
+    build: { context: ., dockerfile: apps/media-worker/Dockerfile }
+    container_name: ailss-media-worker
+    command: [dist/apps/media-worker/src/server.js]
+    restart: unless-stopped
+    environment:
+      <<: *media-env
+      PORT: 8210
+      ENABLE_CASSANDRA: "true"
+      ENABLE_RABBITMQ: "false"
+      CASSANDRA_CONTACT_POINTS: cassandra:9042
+      CASSANDRA_LOCAL_DC: ailss_dc
+      CASSANDRA_USERNAME: svc_media_worker
+      CASSANDRA_PASSWORD: ${CASSANDRA_SVC_MEDIA_WORKER_PASSWORD:?Dedicated media worker Cassandra credential required}
+      MEDIA_STORAGE_ACCESS_KEY: ${MEDIA_WORKER_ACCESS_KEY:?Media worker storage principal required}
+      MEDIA_STORAGE_SECRET_KEY: ${MEDIA_WORKER_SECRET_KEY:?Media worker storage secret required}
+    ports: ["127.0.0.1:8210:8210"]
+    networks: [service_net, data_net]
+    mem_limit: 768m
+    cpus: 1.00
+    pids_limit: 128
+    security_opt: [no-new-privileges:true]
+  media-delivery:
+    image: ailss-runtime:phase42-a
+    profiles: [dev-async, demo]
+    build: { context: ., dockerfile: Dockerfile }
+    container_name: ailss-media-delivery
+    command: [dist/apps/media-delivery/src/server.js]
+    restart: unless-stopped
+    environment:
+      <<: *media-env
+      PORT: 8211
+      ENABLE_CASSANDRA: "false"
+      ENABLE_RABBITMQ: "false"
+      MEDIA_STORAGE_ACCESS_KEY: ${MEDIA_DELIVERY_ACCESS_KEY:?Read-only media delivery principal required}
+      MEDIA_STORAGE_SECRET_KEY: ${MEDIA_DELIVERY_SECRET_KEY:?Media delivery storage secret required}
+      MEDIA_PLAYBACK_SECRET: ${MEDIA_PLAYBACK_SECRET:?Playback verification secret required}
+    ports: ["127.0.0.1:8211:8211"]
+    networks: [service_net, data_net]
+    mem_limit: 256m
+    cpus: 0.50
+    pids_limit: 64
+    security_opt: [no-new-privileges:true]
