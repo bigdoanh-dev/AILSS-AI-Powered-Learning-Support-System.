@@ -67,14 +67,15 @@ export interface HttpRequestSerializerInput {
 
 export function redactSensitiveUrl(url: string | undefined): string | undefined {
   if (!url) return url;
-  return url.replace(/([?&]cursor=)[^&]+/gu, "$1[REDACTED]");
+  return url.replace(/([?&](?:cursor|token|uploadId|X-Amz-Signature|X-Amz-Credential)=)[^&]+/giu, "$1[REDACTED]");
 }
 
 function redactSensitiveQuery(query: unknown): unknown {
   if (!query || typeof query !== "object") return query;
   const record = query as Record<string, unknown>;
-  if (!("cursor" in record)) return record;
-  return { ...record, cursor: "[REDACTED]" };
+  const result = { ...record };
+  for (const name of Object.keys(result)) if (/^(cursor|token|uploadId|x-amz-signature|x-amz-credential)$/i.test(name)) result[name] = "[REDACTED]";
+  return result;
 }
 
 export function httpRequestSerializer(request: HttpRequestSerializerInput): Record<string, unknown> {
