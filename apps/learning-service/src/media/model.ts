@@ -1,6 +1,9 @@
 import { createHash, createHmac } from "node:crypto";
 import { z } from "zod";
 import { AppError } from "../../../../packages/http/src/index.js";
+import type { RenditionProfile } from "./profiles.js";
+export const mediaVisibilities = ["PROTECTED_LESSON", "PUBLIC_PREVIEW"] as const;
+export type MediaVisibility = (typeof mediaVisibilities)[number];
 
 export const mediaStates = [
   "CREATED",
@@ -20,7 +23,7 @@ const transitions: Record<MediaState, readonly MediaState[]> = {
   UPLOADING: ["UPLOADED", "FAILED", "DELETED"],
   UPLOADED: ["VERIFYING", "FAILED", "QUARANTINED"],
   VERIFYING: ["QUEUED", "FAILED", "QUARANTINED"],
-  QUEUED: ["PROCESSING", "FAILED", "DELETED"],
+  QUEUED: ["PROCESSING", "FAILED", "QUARANTINED", "DELETED"],
   PROCESSING: ["READY", "FAILED", "QUARANTINED"],
   READY: ["DELETED"],
   FAILED: ["VERIFYING", "QUEUED", "DELETED"],
@@ -37,8 +40,31 @@ export interface MediaPolicy {
   processingTimeoutMs: number;
   renditionHeight: number;
   videoBitrate: number;
+  profiles?: RenditionProfile[];
   playbackTtlSeconds: number;
   deliveryOrigin: string;
+}
+export interface CaptionTrack {
+  captionTrackId: string;
+  mediaAssetId: string;
+  language: string;
+  label: string;
+  kind: "SUBTITLES" | "CAPTIONS";
+  format: "WEBVTT";
+  objectKey: string;
+  contentSha256?: string;
+  status: "UPLOADING" | "READY" | "FAILED" | "DELETED";
+}
+export interface MediaReplacementEvent {
+  previousMediaAssetId: string;
+  replacementMediaAssetId: string;
+  lessonId: string;
+  changedBy: string;
+  changedAt: string;
+  status: "APPLIED" | "FAILED";
+  processingLease?: string;
+  failureCode?: string;
+  recordedBy?: "media-worker";
 }
 export interface MediaAsset {
   mediaAssetId: string;
@@ -68,11 +94,32 @@ export interface MediaAsset {
   audioCodec?: string;
   container?: string;
   processingLease?: string;
+  replacementOfMediaAssetId?: string;
   masterPlaylistObjectKey?: string;
+  posterObjectKey?: string;
   availableRenditions?: { height: number; width: number; bitrate: number }[];
-  captionTracks: { language: string; label: string; objectKey: string }[];
+  captionTracks: CaptionTrack[];
+  visibility?: MediaVisibility;
   failureCode?: string;
-  audit: { from: MediaState; to: MediaState; at: string; actor: string }[];
+  audit: {
+    from: MediaState;
+    to: MediaState;
+    at: string;
+    actor: string;
+    failureCode?: string;
+    processingLease?: string;
+  }[];
+}
+export function captionMetadata(asset: MediaAsset) {
+  return asset.captionTracks
+    .filter((track) => track.status === "READY" && track.mediaAssetId === asset.mediaAssetId)
+    .map(({ captionTrackId, language, label, kind, format }) => ({
+      captionTrackId,
+      language,
+      label,
+      kind,
+      format,
+    }));
 }
 export const mediaCreateSchema = z
   .object({
@@ -90,13 +137,14 @@ export const mediaCreateSchema = z
       ),
     mimeType: z.enum(["video/mp4", "video/webm"]),
     sizeBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+    visibility: z.enum(mediaVisibilities).default("PROTECTED_LESSON"),
     sourceSha256: z
       .string()
       .regex(/^[a-f0-9]{64}$/)
       .optional(),
   })
   .strict();
-export type MediaCreate = z.infer<typeof mediaCreateSchema>;
+export type MediaCreate = z.input<typeof mediaCreateSchema>;
 export const MULTIPART_PART_BYTES = 8 * 1024 * 1024;
 export function mediaId(secret: string, scope: string) {
   const b = createHmac("sha256", secret).update(scope).digest().subarray(0, 16);
@@ -147,6 +195,7 @@ export function mediaDto(asset: MediaAsset) {
     mimeType,
     sizeBytes,
     status,
+    visibility: asset.visibility ?? "PROTECTED_LESSON",
     processingVersion,
     createdAt,
     updatedAt,
@@ -155,5 +204,6 @@ export function mediaDto(asset: MediaAsset) {
     height,
     failureCode,
     availableRenditions,
+    captionTracks: captionMetadata(asset),
   };
 }

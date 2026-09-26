@@ -4,9 +4,13 @@ import { signMediaPlayback } from "../../../../packages/security/src/media-playb
 import type { MediaObjectStorage } from "../../../../packages/storage/src/media.js";
 import type { LearningLessonRepository } from "../lessons/repository.js";
 import type { MediaStore } from "./repository.js";
+import type { MediaQuota } from "./quota.js";
+import { localProfiles } from "./profiles.js";
 import type { MediaEvent } from "../../../../packages/observability/src/media.js";
+import { captionUploadSchema, validateWebVtt } from "./captions.js";
 import {
   fingerprint,
+  captionMetadata,
   mediaId,
   mediaDto,
   transition,
@@ -14,6 +18,7 @@ import {
   type MediaAsset,
   type MediaCreate,
   type MediaPolicy,
+  type MediaVisibility,
 } from "./model.js";
 export class MediaService {
   constructor(
@@ -26,6 +31,8 @@ export class MediaService {
     private readonly policy: MediaPolicy,
     private readonly eligible: (userId: string, requestId: string) => Promise<unknown>,
     private readonly event: (name: MediaEvent) => void = () => undefined,
+    private readonly quota?: MediaQuota,
+    private readonly recordUploadBytes: (bytes: number) => void = () => undefined,
   ) {}
   async create(
     courseId: string,
@@ -48,12 +55,33 @@ export class MediaService {
     idempotencyKey: string,
     requestId: string,
   ) {
-    await this.editable(courseId, actor);
+    const course = await this.editable(courseId, actor);
     await this.eligible(actor.userId, requestId);
     const pointer = await this.lessons.pointer(request.lessonId);
     const detail = pointer ? await this.lessons.detail(request.lessonId, pointer.lessonVersion) : undefined;
-    if (!detail || pointer?.courseId !== courseId || detail.preview)
-      throw new AppError("MEDIA_LESSON_REJECTED", 422, "A protected lesson in the owned course is required");
+    if (!detail || pointer?.courseId !== courseId)
+      throw new AppError("MEDIA_LESSON_REJECTED", 422, "A valid lesson in the owned course is required");
+    const visibility: MediaVisibility = request.visibility ?? (detail.preview ? "PUBLIC_PREVIEW" : "PROTECTED_LESSON");
+    if (visibility === "PUBLIC_PREVIEW" && !detail.preview)
+      throw new AppError("MEDIA_LESSON_REJECTED", 422, "Public preview media requires a preview lesson");
+    if (visibility === "PROTECTED_LESSON" && detail.preview)
+      throw new AppError("MEDIA_LESSON_REJECTED", 422, "Protected media cannot be attached to a preview lesson");
+    if (course.state === "PUBLISHED") {
+      const activeId = await this.store.binding(this.tenantId, request.lessonId);
+      const active = activeId ? await this.store.get(this.tenantId, activeId) : undefined;
+      if (
+        !active ||
+        active.status !== "READY" ||
+        active.courseId !== courseId ||
+        active.lessonId !== request.lessonId ||
+        detail.state !== "READY"
+      )
+        throw new AppError(
+          "MEDIA_REPLACEMENT_REQUIRED",
+          409,
+          "Published lesson requires a READY active video",
+        );
+    }
     if (
       request.sizeBytes > this.policy.maxSourceBytes ||
       Math.ceil(request.sizeBytes / MULTIPART_PART_BYTES) > 10_000
@@ -63,12 +91,15 @@ export class MediaService {
     const now = new Date().toISOString(),
       bodyHash = fingerprint(request);
     const { sourceSha256, ...fields } = request;
+    const previous = await this.store.binding(this.tenantId, request.lessonId);
     const proposed: MediaAsset = {
       ...fields,
       ...(sourceSha256 ? { sourceSha256 } : {}),
       mediaAssetId: id,
       tenantId: this.tenantId,
       ownerUserId: actor.userId,
+      visibility,
+      ...(previous ? { replacementOfMediaAssetId: previous } : {}),
       courseId,
       mediaType: "VIDEO",
       originalObjectKey: `media-original/${this.tenantId}/${id}/1/source`,
@@ -82,6 +113,23 @@ export class MediaService {
       captionTracks: [],
       audit: [],
     };
+    const derivedBudget = Math.ceil(
+      (((this.policy.profiles ?? localProfiles).reduce(
+        (sum, profile) => sum + profile.maxBitrate + profile.audioBitrate,
+        0,
+      ) *
+        this.policy.maxDurationSeconds) /
+        8) *
+        1.1 +
+        1024 * 1024,
+    );
+    try {
+      await this.quota?.reserve(proposed, derivedBudget);
+      if (this.quota) this.event("quota_reserved");
+    } catch (error) {
+      this.event("quota_rejected");
+      throw error;
+    }
     await this.store.insert(proposed);
     let asset = await this.owned(id, actor);
     if (asset.fingerprint !== bodyHash)
@@ -111,6 +159,74 @@ export class MediaService {
   }
   async get(id: string, actor: ActorContext) {
     return mediaDto(await this.owned(id, actor));
+  }
+  async uploadCaption(
+    id: string,
+    actor: ActorContext,
+    request: unknown,
+    idempotencyKey: string,
+  ) {
+    const input = captionUploadSchema.parse(request);
+    let content: string;
+    try {
+      content = validateWebVtt(input.content);
+    } catch {
+      throw new AppError("MEDIA_CAPTION_INVALID", 422, "A valid plain-text WebVTT caption is required");
+    }
+    const captionTrackId = mediaId(
+      this.secret,
+      `caption:${this.tenantId}:${actor.userId}:${id}:${idempotencyKey}`,
+    );
+    const contentSha256 = fingerprint({ ...input, content });
+    const bytes = Buffer.from(content, "utf8");
+    const initial = await this.owned(id, actor);
+    return this.withCourseWrite(
+      initial.courseId,
+      actor,
+      mediaId(this.secret, `caption-write:${this.tenantId}:${actor.userId}:${id}:${idempotencyKey}`),
+      async () => {
+        const a = await this.owned(id, actor);
+        if (a.status !== "READY")
+          throw new AppError("MEDIA_NOT_READY", 409, "Only READY media accepts caption tracks");
+        const existing = a.captionTracks.find((track) => track.captionTrackId === captionTrackId);
+        if (existing) {
+          if (existing.contentSha256 !== contentSha256 || existing.status !== "READY")
+            throw new AppError("IDEMPOTENCY_CONFLICT", 409, "Caption command key was reused");
+          return captionMetadata(a).find((track) => track.captionTrackId === captionTrackId);
+        }
+        if (a.captionTracks.length >= 32)
+          throw new AppError("MEDIA_CAPTION_LIMIT", 409, "Caption track limit reached");
+        const objectKey = `media-caption/${this.tenantId}/${id}/${captionTrackId}.vtt`;
+        await this.storage.writeBytes(objectKey, bytes, "text/vtt; charset=utf-8");
+        const next = {
+          ...a,
+          revision: a.revision + 1,
+          updatedAt: new Date().toISOString(),
+          captionTracks: [...a.captionTracks, {
+            captionTrackId,
+            mediaAssetId: id,
+            language: input.language,
+            label: input.label,
+            kind: input.kind,
+            format: "WEBVTT" as const,
+            objectKey,
+            contentSha256,
+            status: "READY" as const,
+          }],
+        };
+        if (!(await this.store.replace(a, next))) {
+          // A timed-out CAS can have committed. Read authoritative metadata
+          // before removing the unique object for this command.
+          const actual = await this.store.get(this.tenantId, id);
+          const committed = actual?.captionTracks.find((track) => track.captionTrackId === captionTrackId);
+          if (actual && committed?.contentSha256 === contentSha256 && committed.status === "READY")
+            return captionMetadata(actual).find((track) => track.captionTrackId === captionTrackId);
+          await this.storage.remove(objectKey);
+          throw new AppError("MEDIA_VERSION_CONFLICT", 409, "Caption metadata changed concurrently", true);
+        }
+        return captionMetadata(next).find((track) => track.captionTrackId === captionTrackId);
+      },
+    );
   }
   async resume(id: string, actor: ActorContext) {
     const a = await this.owned(id, actor);
@@ -181,9 +297,11 @@ export class MediaService {
           422,
           "Uploaded object size differs from the media declaration",
         );
+      await this.quota?.originalStored(a);
       const next = transition(a, "UPLOADED", actor.userId);
       await this.cas(a, next);
       this.event("upload_completed");
+      this.recordUploadBytes(stat.size);
       a = next;
     }
     if (a.status === "UPLOADED") {
@@ -204,11 +322,15 @@ export class MediaService {
   async cancel(id: string, actor: ActorContext) {
     const a = await this.owned(id, actor);
     await this.editable(a.courseId, actor);
-    if (a.status === "DELETED") return mediaDto(a);
+    if (a.status === "DELETED") {
+      await this.quota?.release(a);
+      return mediaDto(a);
+    }
     this.uploadOpen(a);
     await this.storage.abort(a.originalObjectKey, a.uploadId);
     const next = transition(a, "DELETED", actor.userId);
     await this.cas(a, next);
+    await this.quota?.release(next);
     return mediaDto(next);
   }
   async attach(id: string, actor: ActorContext) {
@@ -221,7 +343,7 @@ export class MediaService {
       actor,
       mediaId(this.secret, `attach:${this.tenantId}:${actor.userId}:${id}`),
       async () => {
-        await this.store.bind(a, true);
+        await this.store.bind(a, true, actor.userId);
         return mediaDto(a);
       },
     );
@@ -281,14 +403,17 @@ export class MediaService {
       !a.masterPlaylistObjectKey
     )
       throw new AppError("MEDIA_NOT_AVAILABLE", 404, "Published lesson media is not available");
-    // Canonical commercial truth only: never resurrect a revoked entitlement
-    // through legacy enrollment compatibility fallback.
-    if (!(await this.entitled(actor.userId, a.courseId)))
-      throw new AppError(
-        "MEDIA_ENTITLEMENT_REQUIRED",
-        403,
-        "Active course entitlement is required for playback",
-      );
+    const isPublicPreview = (a.visibility ?? "PROTECTED_LESSON") === "PUBLIC_PREVIEW" && lesson.preview;
+    if (!isPublicPreview) {
+      if (!actor.userId || actor.userId === "00000000-0000-0000-0000-000000000000")
+        throw new AppError("MEDIA_ENTITLEMENT_REQUIRED", 401, "Authentication required for protected lesson");
+      if (!(await this.entitled(actor.userId, a.courseId)))
+        throw new AppError(
+          "MEDIA_ENTITLEMENT_REQUIRED",
+          403,
+          "Active course entitlement is required for playback",
+        );
+    }
     const outputPrefix = a.masterPlaylistObjectKey.replace(/^media-hls\//, "").replace(/\/master\.m3u8$/, "");
     const token = await signMediaPlayback(
       {
@@ -307,10 +432,48 @@ export class MediaService {
     return {
       mediaAssetId: a.mediaAssetId,
       playlistUrl: `${this.policy.deliveryOrigin}/playback/${a.mediaAssetId}/master.m3u8?token=${encodeURIComponent(token)}`,
+      ...(a.posterObjectKey
+        ? {
+            posterUrl: `${this.policy.deliveryOrigin}/playback/${a.mediaAssetId}/poster.jpg?token=${encodeURIComponent(token)}`,
+          }
+        : {}),
       expiresAt: new Date(Date.now() + this.policy.playbackTtlSeconds * 1000).toISOString(),
       completionPolicy: "EXPLICIT_AUTHORITATIVE_LESSON_ACK",
-      captionTracks: a.captionTracks,
+      captionTracks: captionMetadata(a).map((track) => ({
+        ...track,
+        url: `${this.policy.deliveryOrigin}/playback/${a.mediaAssetId}/caption-${track.captionTrackId}.vtt?token=${encodeURIComponent(token)}`,
+      })),
     };
+  }
+  async courseTrailer(courseId: string, actor?: ActorContext) {
+    const course = await this.lessons.course(courseId);
+    if (!course || course.state !== "PUBLISHED")
+      throw new AppError("COURSE_NOT_AVAILABLE", 404, "Published course trailer is not available");
+    const list = await this.lessons.list(course.courseId, course.contentVersion);
+    const previewLessons = list.filter((l) => l.preview);
+    for (const p of previewLessons) {
+      const id = await this.store.binding(this.tenantId, p.lessonId);
+      if (!id) continue;
+      const a = await this.store.get(this.tenantId, id);
+      if (
+        a &&
+        a.status === "READY" &&
+        a.masterPlaylistObjectKey &&
+        (a.visibility ?? "PROTECTED_LESSON") === "PUBLIC_PREVIEW"
+      ) {
+        const effectiveActor: ActorContext = actor && actor.userId ? actor : {
+          userId: "00000000-0000-0000-0000-000000000000",
+          roles: ["ANONYMOUS"],
+          sessionId: "00000000-0000-0000-0000-000000000000",
+          tokenVersion: 0,
+          correlationId: "",
+          issuedAt: Math.floor(Date.now() / 1000),
+          expiresAt: Math.floor(Date.now() / 1000) + this.policy.playbackTtlSeconds,
+        };
+        return this.playback(p.lessonId, effectiveActor);
+      }
+    }
+    throw new AppError("TRAILER_NOT_FOUND", 404, "No public trailer available for this course");
   }
   private async owned(id: string, actor: ActorContext) {
     const a = await this.store.get(this.tenantId, id);
@@ -326,8 +489,8 @@ export class MediaService {
     const c = await this.lessons.course(courseId);
     if (!c || !actor.roles.includes("LECTURER") || c.ownerLecturerId !== actor.userId)
       throw new AppError("COURSE_OWNER_REQUIRED", 403, "Course owner authorization is required");
-    if (c.state !== "DRAFT")
-      throw new AppError("COURSE_NOT_EDITABLE", 409, "Media authoring requires a draft course");
+    if (c.state !== "DRAFT" && c.state !== "PUBLISHED")
+      throw new AppError("COURSE_NOT_EDITABLE", 409, "Media authoring requires a draft or published course");
     return c;
   }
   private uploadOpen(a: MediaAsset): asserts a is MediaAsset & { uploadId: string } {

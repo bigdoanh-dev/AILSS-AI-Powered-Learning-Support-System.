@@ -1,6 +1,8 @@
 import type { AppConfig } from "../../../../packages/config/src/index.js";
 import type { MediaPolicy } from "./model.js";
 import { S3MediaStorage } from "../../../../packages/storage/src/media.js";
+import { parseRenditionProfiles } from "./profiles.js";
+import { z } from "zod";
 export function mediaRuntime(config: AppConfig, requirePlaybackSecret = true) {
   if (!config.MEDIA_ENABLED) return undefined;
   if (
@@ -30,11 +32,25 @@ export function mediaRuntime(config: AppConfig, requirePlaybackSecret = true) {
     processingTimeoutMs: config.MEDIA_PROCESSING_TIMEOUT_MS,
     renditionHeight: config.MEDIA_RENDITION_HEIGHT,
     videoBitrate: config.MEDIA_VIDEO_BITRATE,
+    profiles: parseRenditionProfiles(config.MEDIA_TRANSCODE_PROFILES, config.NODE_ENV === "production"),
     playbackTtlSeconds: config.MEDIA_PLAYBACK_TTL_SECONDS,
     deliveryOrigin: config.MEDIA_DELIVERY_ORIGIN.replace(/\/$/, ""),
   };
+  if (!config.MEDIA_QUOTA_LIMITS) throw Error("MEDIA_QUOTA_LIMITS_REQUIRED");
+  const quotaLimits = z
+    .object({
+      tenantOriginalBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      tenantDerivedBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      courseOriginalBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      courseDerivedBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      tenantAssets: z.number().int().positive().max(2048),
+      courseAssets: z.number().int().positive().max(2048),
+    })
+    .strict()
+    .parse(JSON.parse(config.MEDIA_QUOTA_LIMITS));
   return {
     policy,
+    quotaLimits,
     secret: config.MEDIA_PLAYBACK_SECRET ?? "",
     storage: new S3MediaStorage(
       config.MEDIA_STORAGE_BUCKET,
