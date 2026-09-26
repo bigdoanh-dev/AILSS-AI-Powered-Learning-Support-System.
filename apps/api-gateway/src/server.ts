@@ -21,6 +21,8 @@ import { learningAuthoringProxyFactory } from "./learning-authoring-proxy.js";
 import { createAdminStepUpClient } from "./admin-step-up-client.js";
 import { learningLifecycleProxyFactory } from "./learning-lifecycle-proxy.js";
 import { learningLessonsProxyFactory } from "./learning-lessons-proxy.js";
+import { mediaProxy } from "./media-proxy.js";
+import { mediaDeliveryProxy } from "./media-delivery-proxy.js";
 import { learningOfferingsProxyFactory } from "./learning-offerings-proxy.js";
 import { learningCommerceProxyFactory } from "./learning-commerce-proxy.js";
 import { classroomProxyFactory } from "./classroom-proxy.js";
@@ -558,6 +560,13 @@ app.get(
   readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)),
   learningLessons.list,
 );
+const mediaHandler=await mediaProxy(config);
+app.get("/playback/:assetId/:filename",mediaDeliveryProxy(process.env.MEDIA_DELIVERY_INTERNAL_URL??"http://media-delivery:8211",(process.env.MEDIA_ALLOWED_ORIGINS??"").split(",").filter(Boolean)));
+app.post("/api/v1/courses/:courseId/media-assets",authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE??60)),mediaHandler);
+app.get("/api/v1/media-assets/:assetId",readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE??300)),mediaHandler);
+app.get("/api/v1/media-assets/:assetId/upload",readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE??300)),mediaHandler);
+for(const action of ["parts","complete","cancel","attach"])app.post(`/api/v1/media-assets/:assetId/${action}`,authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE??60)),mediaHandler);
+app.post("/api/v1/lessons/:lessonId/media-session",readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE??300)),mediaHandler);
 app.post(
   "/api/v1/courses/:courseId/lessons",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
