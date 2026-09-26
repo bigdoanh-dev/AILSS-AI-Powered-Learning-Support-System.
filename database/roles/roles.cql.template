@@ -9,3 +9,5 @@ CREATE ROLE IF NOT EXISTS svc_interaction WITH LOGIN = true AND SUPERUSER = fals
 CREATE ROLE IF NOT EXISTS svc_ai WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_AI_PASSWORD}}';
 CREATE ROLE IF NOT EXISTS svc_notification WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_NOTIFICATION_PASSWORD}}';
 CREATE ROLE IF NOT EXISTS svc_audit WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_AUDIT_PASSWORD}}';
+-- Media role credentials are provisioned separately; never borrow svc_learning.
+CREATE ROLE IF NOT EXISTS svc_media_worker WITH LOGIN = false AND SUPERUSER = false;

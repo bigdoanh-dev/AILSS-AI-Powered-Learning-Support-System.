@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "totalMigrations": 50,
+  "totalMigrations": 51,
   "canonicalKeyspaces": [
     "identity_keyspace",
     "learning_keyspace",
@@ -560,6 +560,17 @@
       "classification": "SAFE_ADDITIVE",
       "status": "LOCAL_DEPLOYED_VERIFIED_EXTERNAL_PENDING",
       "predecessor": "083",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "085",
+      "filename": "085_media_vertical_slice.cql",
+      "sha256Dev": "d192ada586853de7737afbc032296144b89d09bcbb4074fcd05e5d8526abbbd2",
+      "sha256Research": "d192ada586853de7737afbc032296144b89d09bcbb4074fcd05e5d8526abbbd2",
+      "keyspace": "learning_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "LOCAL_DEPLOYED_VERIFIED_EXTERNAL_PENDING",
+      "predecessor": "084",
       "environmentParity": "IDENTICAL"
     }
   ]
