@@ -13,7 +13,7 @@ import {
   type UserProfile,
 } from "../src/account";
 import { ApiError } from "../src/api";
-import { Page, Button, Icon, Badge, StatCard, BottomNavBar, styles, tokens } from "../src/ui";
+import { Page, Button, Icon, Badge, BottomNavBar, styles, tokens } from "../src/ui";
 import { ScalePressable } from "../src/motion";
 
 // Minimal valid PNG data URIs for preset avatars (1x1 PNGs in distinct colors)
@@ -193,7 +193,7 @@ export default function AccountScreen() {
       if (!validation.valid) {
         Alert.alert(
           "Ảnh không hợp lệ",
-          validation.error ?? "Dung lượng ảnh vượt quá giới hạn tối đa (256 KiB)."
+          validation.error ?? "Dung lượng ảnh vượt quá giới hạn tối đa (256 KiB).",
         );
         return;
       }
@@ -240,10 +240,7 @@ export default function AccountScreen() {
 
       const validation = validateAvatarDataUrl(dataUrl);
       if (!validation.valid) {
-        Alert.alert(
-          "Ảnh không hợp lệ",
-          validation.error ?? "Dung lượng ảnh vượt quá giới hạn tối đa."
-        );
+        Alert.alert("Ảnh không hợp lệ", validation.error ?? "Dung lượng ảnh vượt quá giới hạn tối đa.");
         return;
       }
 
@@ -396,9 +393,7 @@ export default function AccountScreen() {
           </View>
 
           <View style={{ alignItems: "center", gap: 4, marginTop: 10 }}>
-            <Text style={[styles.title, { fontSize: 22, textAlign: "center" }]}>
-              {profile?.displayName}
-            </Text>
+            <Text style={[styles.title, { fontSize: 22, textAlign: "center" }]}>{profile?.displayName}</Text>
             <Text style={styles.small}>{profile?.emailMasked}</Text>
 
             <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>
@@ -410,27 +405,6 @@ export default function AccountScreen() {
               <Badge label="Đang hoạt động" variant="success" icon="check" />
             </View>
           </View>
-        </View>
-
-        {/* Quick KPI Stats for Student or Lecturer */}
-        <View style={{ flexDirection: "row", gap: 10 }}>
-          <StatCard
-            value={profile?.role === "LECTURER" ? "4" : "3"}
-            label={profile?.role === "LECTURER" ? "Lớp phụ trách" : "Khóa đăng ký"}
-            icon="book"
-          />
-          <StatCard
-            value={profile?.role === "LECTURER" ? "98%" : "92%"}
-            label={profile?.role === "LECTURER" ? "Đánh giá tốt" : "Điểm TB"}
-            icon="award"
-            color="#059669"
-          />
-          <StatCard
-            value={profile?.role === "LECTURER" ? "120" : "14h"}
-            label={profile?.role === "LECTURER" ? "Học viên" : "Thời gian học"}
-            icon="clock"
-            color="#D97706"
-          />
         </View>
 
         {error && (
@@ -450,7 +424,14 @@ export default function AccountScreen() {
           </View>
 
           {nameMessage && (
-            <Text accessibilityRole="alert" style={nameMessage.type === "error" ? styles.error : { color: tokens.color.success, fontSize: 13, fontWeight: "600" }}>
+            <Text
+              accessibilityRole="alert"
+              style={
+                nameMessage.type === "error"
+                  ? styles.error
+                  : { color: tokens.color.success, fontSize: 13, fontWeight: "600" }
+              }
+            >
               {nameMessage.text}
             </Text>
           )}
@@ -489,7 +470,12 @@ export default function AccountScreen() {
                 <Text style={styles.small}>Họ và tên</Text>
                 <Text style={[styles.text, { fontWeight: "700" }]}>{profile?.displayName}</Text>
               </View>
-              <Button label="Chỉnh sửa" variant="secondary" size="sm" onPress={() => setIsEditingName(true)} />
+              <Button
+                label="Chỉnh sửa"
+                variant="secondary"
+                size="sm"
+                onPress={() => setIsEditingName(true)}
+              />
             </View>
           )}
 
@@ -504,9 +490,7 @@ export default function AccountScreen() {
             <View style={localStyles.infoRow}>
               <View>
                 <Text style={styles.small}>Ngày tham gia</Text>
-                <Text style={styles.text}>
-                  {new Date(profile.createdAt).toLocaleDateString("vi-VN")}
-                </Text>
+                <Text style={styles.text}>{new Date(profile.createdAt).toLocaleDateString("vi-VN")}</Text>
               </View>
             </View>
           )}
@@ -519,7 +503,8 @@ export default function AccountScreen() {
             <Text style={localStyles.cardSectionTitle}>ẢNH ĐẠI DIỆN HỆ THỐNG</Text>
           </View>
           <Text style={styles.small}>
-            Tải ảnh đại diện từ thiết bị hoặc chọn màu đại diện cho hồ sơ của bạn trên toàn hệ thống AILSS (tối đa 256 KiB).
+            Tải ảnh đại diện từ thiết bị hoặc chọn màu đại diện cho hồ sơ của bạn trên toàn hệ thống AILSS
+            (tối đa 256 KiB).
           </Text>
 
           <View style={localStyles.avatarActions}>
@@ -533,11 +518,7 @@ export default function AccountScreen() {
                 {/* Upload Buttons Row */}
                 <View style={{ flexDirection: "row", gap: 10 }}>
                   <View style={{ flex: 1 }}>
-                    <Button
-                      label="Tải ảnh từ máy"
-                      size="sm"
-                      onPress={() => void handlePickImage()}
-                    />
+                    <Button label="Tải ảnh từ máy" size="sm" onPress={() => void handlePickImage()} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Button
@@ -550,7 +531,15 @@ export default function AccountScreen() {
                 </View>
 
                 {/* Preset & Delete Actions */}
-                <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 4 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    gap: 8,
+                    marginTop: 4,
+                  }}
+                >
                   <Text style={[styles.small, { fontWeight: "600", width: "100%" }]}>Màu sắc mẫu:</Text>
                   {PRESET_AVATARS.map((p) => (
                     <Button
@@ -602,7 +591,14 @@ export default function AccountScreen() {
           </View>
 
           {passMessage && (
-            <Text accessibilityRole="alert" style={passMessage.type === "error" ? styles.error : { color: tokens.color.success, fontSize: 13, fontWeight: "600" }}>
+            <Text
+              accessibilityRole="alert"
+              style={
+                passMessage.type === "error"
+                  ? styles.error
+                  : { color: tokens.color.success, fontSize: 13, fontWeight: "600" }
+              }
+            >
               {passMessage.text}
             </Text>
           )}
@@ -793,4 +789,3 @@ const localStyles = StyleSheet.create({
     gap: 10,
   },
 });
-

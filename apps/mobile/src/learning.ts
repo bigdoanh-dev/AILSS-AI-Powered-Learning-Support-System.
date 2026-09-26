@@ -157,6 +157,8 @@ export function lessonSummaries(value: unknown): LessonSummary[] {
 }
 
 export interface LessonDetail extends LessonSummary {
+  mediaAssetId?: string;
+  mediaStatus?: string;
   contentUrl?: string;
   externalVideo?: string;
   contentType?: string;
@@ -175,6 +177,8 @@ export function lessonDetail(value: unknown): LessonDetail {
     contentUrl: typeof rec.contentUrl === "string" ? rec.contentUrl : undefined,
     externalVideo: typeof rec.externalVideo === "string" ? rec.externalVideo : undefined,
     contentType: typeof rec.contentType === "string" ? rec.contentType : undefined,
+    mediaAssetId: typeof rec.mediaAssetId === "string" ? rec.mediaAssetId : undefined,
+    mediaStatus: typeof rec.mediaStatus === "string" ? rec.mediaStatus : undefined,
     state: typeof rec.state === "string" ? rec.state : undefined,
   };
 }
@@ -282,25 +286,34 @@ export interface RefundResponse {
 
 export async function requestCourseRefund(
   input: RefundRequestInput,
-  apiCall = async (endpoint: string, body: unknown): Promise<any> => {
-    void endpoint;
-    void body;
-    return {
-      data: {
-        refundId: "ref_sim_" + Date.now(),
-        status: "PROCESSED",
-        message: "Yêu cầu hoàn tiền đã được xử lý thành công theo chính sách 7 ngày.",
-      },
-    };
-  },
+  apiCall?: (endpoint: string, body: unknown) => Promise<unknown>,
 ): Promise<RefundResponse> {
+  if (!apiCall) throw new ApiError("unavailable");
   const res = await apiCall("/api/v1/learning/refunds", {
     orderId: input.orderId,
     courseId: input.courseId,
     reason: input.reason,
     bankAccount: input.bankAccount,
   });
-  return res.data;
+  const data = record(record(res).data),
+    status = data.status;
+  if (
+    typeof data.refundId !== "string" ||
+    !data.refundId.trim() ||
+    (status !== "PROCESSED" && status !== "REJECTED" && status !== "PENDING") ||
+    typeof data.message !== "string" ||
+    (data.amountMinor !== undefined &&
+      (typeof data.amountMinor !== "number" ||
+        !Number.isSafeInteger(data.amountMinor) ||
+        data.amountMinor < 0))
+  )
+    throw new ApiError("invalid");
+  return {
+    refundId: data.refundId,
+    status,
+    message: data.message,
+    ...(typeof data.amountMinor === "number" ? { amountMinor: data.amountMinor } : {}),
+  };
 }
 
 export interface MobileMasteryItem {
@@ -343,5 +356,3 @@ export function isRefundEligible(
   }
   return { eligible: true };
 }
-
-
