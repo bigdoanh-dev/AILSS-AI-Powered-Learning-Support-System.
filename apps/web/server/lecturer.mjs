@@ -171,7 +171,10 @@ rule("POST", "/courses/:id/media-assets", {
   body: z
     .object({
       lessonId: id,
-      originalFilename: txt(1, 255).refine((value) => !/[\x00-\x1f\x7f]/u.test(value)),
+      originalFilename: txt(1, 255).refine((value) => Array.from(value).every((char) => {
+        const code = char.codePointAt(0) ?? 0;
+        return code > 31 && code !== 127;
+      })),
       mimeType: z.enum(["video/mp4", "video/webm"]),
       sizeBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
       sourceSha256: z
@@ -184,6 +187,16 @@ rule("POST", "/courses/:id/media-assets", {
 });
 rule("GET", "/media-assets/:id");
 rule("GET", "/media-assets/:id/upload");
+rule("POST", "/media-assets/:id/captions", {
+  body: z.object({
+    language: z.string().regex(/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8}){0,3}$/).max(35),
+    label: txt(1, 80),
+    kind: z.enum(["SUBTITLES", "CAPTIONS"]),
+    contentType: z.literal("text/vtt"),
+    content: z.string().min(1).max(262144),
+  }).strict(),
+  command: true,
+});
 rule("POST", "/media-assets/:id/parts", {
   body: z.object({ partNumber: z.number().int().min(1).max(10000) }).strict(),
 });

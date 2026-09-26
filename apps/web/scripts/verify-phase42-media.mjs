@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { resolve } from "node:path";
 import { chromium, expect } from "@playwright/test";
 
 const origin = process.env.AILSS_WEB_ORIGIN || "http://127.0.0.1:5173";
@@ -13,7 +14,9 @@ const fixture = Object.fromEntries(
       return [line.slice(0, separator), line.slice(separator + 1)];
     }),
 );
-const evidence = new URL("../../../docs/evidence/phase42-a/", import.meta.url);
+const evidence = process.env.PHASE42_BROWSER_EVIDENCE_DIR
+  ? pathToFileURL(`${resolve(process.env.PHASE42_BROWSER_EVIDENCE_DIR)}/`)
+  : new URL("../../../docs/evidence/phase42-b/", import.meta.url);
 await mkdir(evidence, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const results = [];
@@ -35,11 +38,19 @@ try {
   const errors = [],
     mediaResponses = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
   page.on("response", (response) => {
     if (response.url().includes("/playback/") || response.url().includes("/media-session"))
       mediaResponses.push({ path: new URL(response.url()).pathname, status: response.status() });
   });
   await page.goto(`${origin}/app/learn/${fixture.PHASE42_COURSE_ID}/lessons/${fixture.PHASE42_LESSON_ID}`);
+  assert.ok(
+    page.url().includes(`/app/learn/${fixture.PHASE42_COURSE_ID}/lessons/${fixture.PHASE42_LESSON_ID}`),
+  );
+  assert.match(await page.title(), /AILSS/i);
+  await expect(page.locator("vite-error-overlay")).toHaveCount(0);
   const skipIntro = page.getByRole("button", { name: "Bỏ qua" });
   if (await skipIntro.isVisible()) await skipIntro.click();
   await expect(page.locator(".cinematic-intro-overlay")).toHaveCount(0);
@@ -55,13 +66,31 @@ try {
     .toBeGreaterThan(0);
   assert.ok(mediaResponses.some((entry) => entry.path.endsWith("/media-session") && entry.status === 200));
   assert.ok(mediaResponses.some((entry) => entry.path.endsWith("master.m3u8") && entry.status === 200));
+  assert.ok(mediaResponses.some((entry) => /variant-\d+\.m3u8$/.test(entry.path) && entry.status === 200));
   assert.ok(mediaResponses.some((entry) => entry.path.endsWith(".ts") && entry.status === 200));
+  const captions = page.getByLabel("Chọn phụ đề");
+  await expect(captions).toBeVisible();
+  await captions.selectOption({ label: "Tiếng Việt" });
+  await expect.poll(
+    () => video.evaluate((element) => Array.from(element.textTracks).some((track) =>
+      track.mode === "showing" && (track.activeCues?.length ?? 0) > 0)),
+    { timeout: 20_000 },
+  ).toBe(true);
+  assert.ok(mediaResponses.some((entry) => entry.path.endsWith(".vtt") && entry.status === 200));
+  await expect(video).toHaveAttribute("poster", /poster\.jpg\?token=/);
   assert.deepEqual(errors, []);
   await expect(page.getByText("Video đã sẵn sàng. Dùng nút phát để bắt đầu.")).toBeVisible();
   await video.scrollIntoViewIfNeeded();
-  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.evaluate(() => globalThis.scrollTo(0, 0));
   await page.screenshot({ path: fileURLToPath(new URL("student-playback.png", evidence)), fullPage: true });
-  results.push("Entitled student plays real protected HLS in Chrome; playlist and segment return 200");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("region", { name: "Video bài giảng" })).toBeVisible();
+  await expect(page.getByLabel("Tốc độ phát")).toBeVisible();
+  await page.screenshot({
+    path: fileURLToPath(new URL("student-playback-mobile.png", evidence)),
+    fullPage: true,
+  });
+  results.push("Entitled student plays real protected HLS and selected WebVTT captions in Chrome; playlist, segment and caption return 200");
   await student.close();
 
   const other = await authenticated(fixture.PHASE42_OTHER_EMAIL, fixture.PHASE42_OTHER_PASSWORD);
