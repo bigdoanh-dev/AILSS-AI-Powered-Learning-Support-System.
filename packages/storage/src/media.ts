@@ -16,6 +16,7 @@ export interface MediaObjectStorage {
   stat(key: string): Promise<{ size: number; etag: string }>;
   readStream(key: string): Promise<Readable>;
   writeFile(key: string, filename: string, mimeType: string): Promise<void>;
+  writeBytes(key: string, bytes: Buffer, mimeType: string): Promise<void>;
   remove(key: string): Promise<void>;
 }
 // Keep the SDK's low-level multipart API inside this S3-compatible adapter only.
@@ -82,6 +83,11 @@ export class S3MediaStorage implements MediaObjectStorage {
   }
   async writeFile(key: string, filename: string, mimeType: string) {
     await this.client.fPutObject(this.bucket, validateObjectKey(key), filename, { "Content-Type": mimeType });
+  }
+  async writeBytes(key: string, bytes: Buffer, mimeType: string) {
+    await this.client.putObject(this.bucket, validateObjectKey(key), bytes, bytes.length, {
+      "Content-Type": mimeType,
+    });
   }
   async remove(key: string) {
     await this.client.removeObject(this.bucket, validateObjectKey(key));

@@ -4,6 +4,7 @@ import { AppError, currentRequestContext } from "../../../../packages/http/src/i
 import type { ActorContext } from "../../../../packages/security/src/index.js";
 import { validateIdempotencyKey } from "../authoring/model.js";
 import { mediaCreateSchema } from "./model.js";
+import { captionUploadSchema } from "./captions.js";
 import type { MediaService } from "./service.js";
 export function mediaRouter(
   service: MediaService,
@@ -60,6 +61,22 @@ export function mediaRouter(
       next(e);
     }
   });
+  router.post("/api/v1/media-assets/:assetId/captions", async (req, res, next) => {
+    try {
+      const c = await context(req, "learning.media.write");
+      const body = captionUploadSchema.safeParse(req.body);
+      if (!body.success) throw new AppError("MEDIA_CAPTION_INVALID", 422, "Invalid WebVTT caption declaration");
+      let key: string;
+      try {
+        key = validateIdempotencyKey(req.header("idempotency-key"));
+      } catch {
+        throw new AppError("INVALID_IDEMPOTENCY_KEY", 400, "Idempotency-Key required");
+      }
+      res.status(201).json({ data: await service.uploadCaption(id(req.params.assetId), c.actor, body.data, key) });
+    } catch (e) {
+      next(e);
+    }
+  });
   router.post("/api/v1/media-assets/:assetId/parts", async (req, res, next) => {
     try {
       const c = await context(req, "learning.media.write");
@@ -91,9 +108,43 @@ export function mediaRouter(
         next(e);
       }
     });
+  router.get("/api/v1/courses/:courseId/trailer", async (req, res, next) => {
+    try {
+      const raw = req.header("x-actor-context");
+      let actor: ActorContext | undefined;
+      if (raw) {
+        try {
+          actor = await verify(raw, "learning.media.playback");
+        } catch {
+          /* optional actor context */
+        }
+      }
+      res.setHeader("Cache-Control", "no-store");
+      res.json({ data: await service.courseTrailer(id(req.params.courseId), actor) });
+    } catch (e) {
+      next(e);
+    }
+  });
   router.post("/api/v1/lessons/:lessonId/media-session", async (req, res, next) => {
     try {
-      const c = await context(req, "learning.media.playback");
+      const raw = req.rawHeaders.filter((x, i) => i % 2 === 0 && x.toLowerCase() === "x-actor-context");
+      let actor: ActorContext;
+      if (raw.length === 1) {
+        const c = currentRequestContext();
+        actor = await verify(req.header("x-actor-context") ?? "", "learning.media.playback");
+        if (c && actor.correlationId !== c.correlationId)
+          throw new AppError("INVALID_ACTOR_CONTEXT", 401, "Actor correlation mismatch");
+      } else {
+        actor = {
+          userId: "00000000-0000-0000-0000-000000000000",
+          roles: ["ANONYMOUS"],
+          sessionId: "00000000-0000-0000-0000-000000000000",
+          tokenVersion: 0,
+          correlationId: currentRequestContext()?.correlationId ?? "",
+          issuedAt: Math.floor(Date.now() / 1000),
+          expiresAt: Math.floor(Date.now() / 1000) + 300,
+        };
+      }
       if (
         !z
           .object({})
@@ -102,7 +153,7 @@ export function mediaRouter(
       )
         throw new AppError("MEDIA_VALIDATION_FAILED", 422, "Empty playback request required");
       res.setHeader("Cache-Control", "no-store");
-      res.json({ data: await service.playback(id(req.params.lessonId), c.actor) });
+      res.json({ data: await service.playback(id(req.params.lessonId), actor) });
     } catch (e) {
       next(e);
     }

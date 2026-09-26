@@ -56,6 +56,7 @@ import { CassandraMediaRepository } from "./media/repository.js";
 import { MediaService } from "./media/service.js";
 import { MediaReferences } from "./media/references.js";
 import { createMediaMetrics } from "../../../packages/observability/src/media.js";
+import { MediaQuota, CassandraQuotaStore } from "./media/quota.js";
 import { mediaRouter } from "./media/router.js";
 
 const manifest: ServiceManifest = {
@@ -198,12 +199,16 @@ await startService(manifest, {
       });
     const mediaSettings = mediaRuntime(config);
     const mediaReferences = new MediaReferences(new CassandraMediaRepository(cassandra),new LearningLessonRepository(cassandra),config.PLATFORM_TENANT_ID);
+    const mediaQuota = mediaSettings ? new MediaQuota(new CassandraQuotaStore(cassandra), mediaSettings.quotaLimits) : undefined;
+    const mediaMetrics = mediaQuota ? createMediaMetrics(context.metrics.registry, () => mediaQuota.snapshot(config.PLATFORM_TENANT_ID)) : undefined;
     const media = mediaSettings ? new MediaService(
       new CassandraMediaRepository(cassandra), new LearningLessonRepository(cassandra),
       mediaSettings.storage, async (studentId, courseId) => (await commerceRepository.entitlement(studentId,courseId))?.state === "ACTIVE",
       config.PLATFORM_TENANT_ID, mediaSettings.secret, mediaSettings.policy,
       (userId,requestId) => identity.get(userId,requestId),
-      createMediaMetrics(context.metrics.registry).event,
+      mediaMetrics?.event,
+      mediaQuota,
+      (bytes) => mediaMetrics?.uploadBytes.inc(bytes),
     ) : undefined;
     if(media) app.use(mediaRouter(media,(token,purpose)=>verifier(purpose)(token)));
     app.use(

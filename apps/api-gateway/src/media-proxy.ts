@@ -17,22 +17,35 @@ export async function mediaProxy(config: AppConfig): Promise<RequestHandler> {
     try {
       const c = currentRequestContext();
       if (!c) throw Error("REQUEST_CONTEXT_UNAVAILABLE");
+      const hasAuth = Boolean(req.header("authorization"));
       let actor;
-      try {
-        actor = await verifyAccessToken(parseBearerAuthorization(req), jwtKey, {
-          issuer: config.JWT_ISSUER,
-          audience: config.JWT_AUDIENCE,
-          kid: config.JWT_KID,
-          clockToleranceSeconds: config.JWT_CLOCK_SKEW_SECONDS,
-        });
-      } catch {
-        throw new AppError("INVALID_ACCESS_TOKEN", 401, "Invalid access token");
+      if (hasAuth) {
+        try {
+          actor = await verifyAccessToken(parseBearerAuthorization(req), jwtKey, {
+            issuer: config.JWT_ISSUER,
+            audience: config.JWT_AUDIENCE,
+            kid: config.JWT_KID,
+            clockToleranceSeconds: config.JWT_CLOCK_SKEW_SECONDS,
+          });
+        } catch {
+          throw new AppError("INVALID_ACCESS_TOKEN", 401, "Invalid access token");
+        }
+      } else if (req.path.endsWith("/media-session") || req.path.includes("/trailer")) {
+        actor = {
+          userId: "00000000-0000-0000-0000-000000000000",
+          roles: ["ANONYMOUS"],
+          sessionId: "00000000-0000-0000-0000-000000000000",
+          tokenVersion: 0,
+        };
+      } else {
+        throw new AppError("UNAUTHORIZED", 401, "Authorization header required");
       }
-      const purpose = req.path.endsWith("/media-session")
-        ? "learning.media.playback"
-        : req.method === "GET" && !req.path.endsWith("/upload")
-          ? "learning.media.read"
-          : "learning.media.write";
+      const purpose =
+        req.path.endsWith("/media-session") || req.path.includes("/trailer")
+          ? "learning.media.playback"
+          : req.method === "GET" && !req.path.endsWith("/upload")
+            ? "learning.media.read"
+            : "learning.media.write";
       const issuedAt = Math.floor(Date.now() / 1000);
       const context = await signActorContext(
         actorKey,

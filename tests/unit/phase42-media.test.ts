@@ -6,6 +6,7 @@ import type { Server } from "node:http";
 import { SignJWT } from "jose";
 import {
   mediaCreateSchema,
+  captionMetadata,
   mediaDto,
   mediaStates,
   transition,
@@ -14,6 +15,7 @@ import {
   type MediaPolicy,
 } from "../../apps/learning-service/src/media/model.js";
 import { MediaService } from "../../apps/learning-service/src/media/service.js";
+import { captionUploadSchema, validateWebVtt } from "../../apps/learning-service/src/media/captions.js";
 import { MediaReferences } from "../../apps/learning-service/src/media/references.js";
 import type { MediaStore } from "../../apps/learning-service/src/media/repository.js";
 import { mediaDeliveryRouter } from "../../apps/media-delivery/src/router.js";
@@ -63,7 +65,9 @@ const request = {
 } as const;
 function fixture() {
   const assets = new Map<string, MediaAsset>(),
-    bindings = new Map<string, string>();
+    writtenBytes = new Map<string, Buffer>(),
+    bindings = new Map<string, string>(),
+    replacements: { previousMediaAssetId: string; replacementMediaAssetId: string; changedBy: string }[] = [];
   let state = "DRAFT",
     active = true,
     queued = 0,
@@ -91,9 +95,18 @@ function fixture() {
       return true;
     },
     binding: async (t, id) => bindings.get(`${t}:${id}`),
-    bind: async (a, replace) => {
+    bind: async (a, replace, changedBy) => {
       const key = `${a.tenantId}:${a.lessonId}`;
-      if (replace || !bindings.has(key)) bindings.set(key, a.mediaAssetId);
+      const previous = bindings.get(key);
+      if (replace && previous && previous !== a.mediaAssetId) {
+        if (!changedBy) throw Error("MEDIA_REPLACEMENT_ACTOR_REQUIRED");
+        replacements.push({
+          previousMediaAssetId: previous,
+          replacementMediaAssetId: a.mediaAssetId,
+          changedBy,
+        });
+      }
+      if (replace || !previous) bindings.set(key, a.mediaAssetId);
     },
     enqueue: async () => {
       queued++;
@@ -120,7 +133,8 @@ function fixture() {
     },
     readStream: async () => Readable.from([]),
     writeFile: async () => undefined,
-    remove: async () => undefined,
+    writeBytes: async (key, bytes) => { writtenBytes.set(key, bytes); },
+    remove: async (key) => { writtenBytes.delete(key); },
   };
   const service = new MediaService(
     store,
@@ -150,6 +164,9 @@ function fixture() {
     lessons,
     storage,
     assets,
+    writtenBytes,
+    binding: () => bindings.get(`${tenant}:${lessonId}`),
+    replacements,
     create,
     ready,
     setState: (v: string) => {
@@ -171,6 +188,39 @@ function fixture() {
   };
 }
 describe("Phase 42 authoritative media boundary", () => {
+  it("accepts a bounded plain-text WebVTT cue and rejects malformed cue structures", () => {
+    const valid = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nXin chào\n";
+    expect(validateWebVtt(valid)).toBe(valid);
+    for (const content of [
+      "not VTT", "WEBVTT\n", "WEBVTT\n\n00:00:03.000 --> 00:00:01.000\nBad",
+      "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n<script>",
+      "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nA\n\n00:00:05.000 --> bad\nB",
+    ]) expect(() => validateWebVtt(content)).toThrow("WEBVTT_INVALID");
+    expect(captionUploadSchema.safeParse({ language: "vi", label: "Tiếng Việt", kind: "SUBTITLES", contentType: "text/vtt", content: valid, objectKey: "fake" }).success).toBe(false);
+  });
+  it("uploads private caption bytes idempotently without leaking object keys", async () => {
+    const f = fixture();
+    const id = await f.ready();
+    const input = {
+      language: "vi", label: "Tiếng Việt", kind: "SUBTITLES" as const,
+      contentType: "text/vtt" as const,
+      content: "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nXin chào\n",
+    };
+    const first = await f.service.uploadCaption(id, actor(), input, "caption-one");
+    const repeated = await f.service.uploadCaption(id, actor(), input, "caption-one");
+    expect(repeated).toEqual(first);
+    expect(f.writtenBytes.size).toBe(1);
+    expect([...f.writtenBytes.values()][0]?.toString("utf8")).toBe(input.content);
+    expect(JSON.stringify(first)).not.toContain("media-caption/");
+    const session = await f.service.playback(lessonId, actor());
+    expect(session.captionTracks).toHaveLength(1);
+    expect(session.captionTracks[0]?.url).toContain(`/caption-${required(first).captionTrackId}.vtt?token=`);
+    expect(JSON.stringify(session)).not.toContain("media-caption/");
+    await expect(f.service.uploadCaption(id, actor(), { ...input, content: input.content.replace("Xin chào", "Khác") }, "caption-one"))
+      .rejects.toMatchObject({ code: "IDEMPOTENCY_CONFLICT" });
+    await expect(f.service.uploadCaption(id, actor(randomUUID()), input, "caption-other"))
+      .rejects.toMatchObject({ code: "MEDIA_OWNER_REQUIRED" });
+  });
   it("accepts configurable lecture sizes over 25 MiB and rejects client object paths", () => {
     expect(mediaCreateSchema.parse({ ...request, sizeBytes: 100 * 1024 ** 2 }).sizeBytes).toBe(
       100 * 1024 ** 2,
@@ -217,10 +267,48 @@ describe("Phase 42 authoritative media boundary", () => {
     await expect(f.create()).rejects.toMatchObject({ code: "MEDIA_COURSE_WRITE_CONFLICT" });
     expect(f.assets.size).toBe(0);
   });
-  it("refuses upload outside DRAFT", async () => {
+  it("refuses a first upload to an already published lesson", async () => {
     const f = fixture();
     f.setState("PUBLISHED");
-    await expect(f.create()).rejects.toMatchObject({ code: "COURSE_NOT_EDITABLE" });
+    await expect(f.create()).rejects.toMatchObject({ code: "MEDIA_REPLACEMENT_REQUIRED" });
+  });
+  it("keeps published V1 playable until READY V2 switches with an audit event", async () => {
+    const f = fixture();
+    const first = await f.ready();
+    const created = await f.service.create(courseId, actor(), request, "replacement-2", randomUUID());
+    const second = created.asset.mediaAssetId;
+    expect(second).not.toBe(first);
+    expect(f.binding()).toBe(first);
+    expect((await f.service.playback(lessonId, actor())).mediaAssetId).toBe(first);
+    const key = `${tenant}:${second}`;
+    const processing = required(f.assets.get(key));
+    f.assets.set(key, {
+      ...processing,
+      status: "READY",
+      masterPlaylistObjectKey: `media-hls/${tenant}/${second}/1/${randomUUID()}/master.m3u8`,
+    });
+    await f.service.attach(second, actor());
+    expect(f.binding()).toBe(second);
+    expect((await f.service.playback(lessonId, actor())).mediaAssetId).toBe(second);
+    expect(f.replacements).toEqual([
+      { previousMediaAssetId: first, replacementMediaAssetId: second, changedBy: owner },
+    ]);
+  });
+  it("keeps published V1 bound and playable when V2 processing fails", async () => {
+    const f = fixture();
+    const first = await f.ready();
+    const created = await f.service.create(courseId, actor(), request, "replacement-failed", randomUUID());
+    const second = created.asset.mediaAssetId;
+    const key = `${tenant}:${second}`;
+    f.assets.set(key, {
+      ...required(f.assets.get(key)),
+      status: "FAILED",
+      failureCode: "MEDIA_PROCESSING_FAILED",
+    });
+    await expect(f.service.attach(second, actor())).rejects.toMatchObject({ code: "MEDIA_NOT_READY" });
+    expect(f.binding()).toBe(first);
+    expect((await f.service.playback(lessonId, actor())).mediaAssetId).toBe(first);
+    expect(f.replacements).toHaveLength(0);
   });
   it("enforces the configured source size before S3 issuance", async () => {
     const f = fixture();
@@ -325,6 +413,40 @@ describe("Phase 42 authoritative media boundary", () => {
     );
     expect(s.sub).toBe(owner);
   });
+  it("exposes only ready caption metadata, never private object keys", async () => {
+    const f = fixture();
+    const id = await f.ready();
+    const a = required([...f.assets.values()].find((value) => value.mediaAssetId === id));
+    a.captionTracks = [
+      {
+        captionTrackId: randomUUID(),
+        mediaAssetId: a.mediaAssetId,
+        language: "vi",
+        label: "Tiếng Việt",
+        kind: "SUBTITLES",
+        format: "WEBVTT",
+        objectKey: "private/captions/vi.vtt",
+        status: "READY",
+      },
+      {
+        captionTrackId: randomUUID(),
+        mediaAssetId: a.mediaAssetId,
+        language: "en",
+        label: "English",
+        kind: "SUBTITLES",
+        format: "WEBVTT",
+        objectKey: "private/captions/en.vtt",
+        status: "UPLOADING",
+      },
+    ];
+    const metadata = captionMetadata(a);
+    expect(metadata).toHaveLength(1);
+    expect(metadata[0]).toMatchObject({ language: "vi", format: "WEBVTT" });
+    expect(JSON.stringify(metadata)).not.toContain("private/captions/");
+    const playback = await f.service.playback(lessonId, actor());
+    expect(playback.captionTracks).toMatchObject(metadata);
+    expect(playback.captionTracks[0]?.url).toContain(`/caption-${required(metadata[0]).captionTrackId}.vtt?token=`);
+  });
   it("does not find a foreign-tenant binding", async () => {
     const f = fixture();
     await f.ready();
@@ -340,6 +462,85 @@ describe("Phase 42 authoritative media boundary", () => {
       if (status !== "PROCESSING") expect(() => transition({ ...a, status }, "READY", "worker")).toThrow();
     expect(mediaDto(a)).not.toHaveProperty("processingLease");
   });
+  it("enforces explicit visibility rules and permits anonymous playback for public preview", async () => {
+    const f = fixture();
+    await expect(
+      f.service.create(
+        courseId,
+        actor(),
+        { ...request, visibility: "PUBLIC_PREVIEW" },
+        "preview-err",
+        randomUUID(),
+      ),
+    ).rejects.toThrow("Public preview media requires a preview lesson");
+
+    const previewLessonId = randomUUID();
+    const mockLessons = f.lessons as unknown as {
+      pointer: () => Promise<unknown>;
+      detail: (lId: string) => Promise<unknown>;
+      list: () => Promise<unknown[]>;
+    };
+    mockLessons.pointer = async () => ({ courseId, lessonVersion: 1 });
+    mockLessons.detail = async (lId: string) => ({
+      courseId,
+      lessonId: lId,
+      lessonVersion: 1,
+      preview: lId === previewLessonId,
+      state: "READY",
+    });
+    mockLessons.list = async () => [
+      { lessonId, lessonVersion: 1, preview: false },
+      { lessonId: previewLessonId, lessonVersion: 1, preview: true },
+    ];
+
+    await expect(
+      f.service.create(
+        courseId,
+        actor(),
+        { ...request, lessonId: previewLessonId, visibility: "PROTECTED_LESSON" },
+        "prot-err",
+        randomUUID(),
+      ),
+    ).rejects.toThrow("Protected media cannot be attached to a preview lesson");
+
+    const { asset: created } = await f.service.create(
+      courseId,
+      actor(),
+      { ...request, lessonId: previewLessonId, visibility: "PUBLIC_PREVIEW" },
+      "prev-ok",
+      randomUUID(),
+    );
+    expect(created.visibility).toBe("PUBLIC_PREVIEW");
+
+    const asset = required(f.assets.get(`${tenant}:${created.mediaAssetId}`));
+    const readyAsset: MediaAsset = {
+      ...asset,
+      status: "READY",
+      visibility: "PUBLIC_PREVIEW",
+      masterPlaylistObjectKey: `media-hls/${tenant}/${created.mediaAssetId}/1/${randomUUID()}/master.m3u8`,
+    };
+    f.assets.set(`${tenant}:${created.mediaAssetId}`, readyAsset);
+    await f.store.bind(readyAsset, true, owner);
+
+    f.setState("PUBLISHED");
+
+    const anonActor: ActorContext = {
+      userId: "00000000-0000-0000-0000-000000000000",
+      roles: [],
+      sessionId: "00000000-0000-0000-0000-000000000000",
+      tokenVersion: 0,
+      correlationId: randomUUID(),
+      issuedAt: Math.floor(Date.now() / 1000),
+      expiresAt: Math.floor(Date.now() / 1000) + 300,
+    };
+    const session = await f.service.playback(previewLessonId, anonActor);
+    expect(session.playlistUrl).toContain("/playback/");
+
+    await expect(f.service.playback(lessonId, anonActor)).rejects.toThrow();
+
+    const trailer = await f.service.courseTrailer(courseId);
+    expect(trailer.mediaAssetId).toBe(created.mediaAssetId);
+  });
 });
 describe("Phase 42 actual-media policy", () => {
   const probe = {
@@ -350,24 +551,25 @@ describe("Phase 42 actual-media policy", () => {
     ],
   };
   it("extracts actual duration/codecs rather than MIME declarations", () =>
-    expect(probeMetadata(probe, policy)).toMatchObject({
+    expect(probeMetadata(probe, policy, "mp4")).toMatchObject({
       durationMs: 12500,
       width: 1920,
       videoCodec: "h264",
       audioCodec: "aac",
     }));
   it.each(["NaN", "0", "601"])("rejects invalid/excessive actual duration %s", (duration) =>
-    expect(() => probeMetadata({ ...probe, format: { ...probe.format, duration } }, policy)).toThrow(),
+    expect(() => probeMetadata({ ...probe, format: { ...probe.format, duration } }, policy, "mp4")).toThrow(),
   );
   it("rejects unsupported codecs and container metadata", () => {
     expect(() =>
       probeMetadata(
         { ...probe, streams: [{ codec_type: "video", codec_name: "mpeg2video", width: 1920, height: 1080 }] },
         policy,
+        "mp4",
       ),
     ).toThrow();
     expect(() =>
-      probeMetadata({ ...probe, format: { ...probe.format, format_name: "exe" } }, policy),
+      probeMetadata({ ...probe, format: { ...probe.format, format_name: "exe" } }, policy, "mp4"),
     ).toThrow();
   });
   it("never upscales and uses even dimensions", () => {

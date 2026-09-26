@@ -19,7 +19,6 @@ import {
 } from "../src/learning";
 import { ApiError } from "../src/api";
 
-
 const sampleCourse = {
   courseId: "c-1",
   title: "Cơ sở dữ liệu",
@@ -519,6 +518,18 @@ describe("idempotency key & optimistic rollback behavior", () => {
   });
 
   describe("mobile course refunds and adaptive path helpers (Phase 20A)", () => {
+    it("fails closed when no real refund adapter is provided", async () => {
+      await expect(
+        requestCourseRefund({ orderId: "order", courseId: "course", reason: "reason" }),
+      ).rejects.toMatchObject({ kind: "unavailable" });
+    });
+    it("rejects malformed refund responses instead of displaying fabricated success", async () => {
+      await expect(
+        requestCourseRefund({ orderId: "order", courseId: "course", reason: "reason" }, async () => ({
+          data: { refundId: "", status: "PROCESSED", message: "success" },
+        })),
+      ).rejects.toMatchObject({ kind: "invalid" });
+    });
     it("submits mobile refund request and parses response", async () => {
       const mockApi = vi.fn().mockResolvedValue({
         data: {
@@ -569,4 +580,3 @@ describe("idempotency key & optimistic rollback behavior", () => {
     });
   });
 });
-

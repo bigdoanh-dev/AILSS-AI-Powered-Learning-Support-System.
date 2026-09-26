@@ -57,12 +57,16 @@ try {
         ["s3:GetObject", "s3:PutObject", "s3:AbortMultipartUpload", "s3:ListMultipartUploadParts"],
         [`${arn}/media-original/*`],
       ),
+      statement(["s3:PutObject", "s3:DeleteObject"], [`${arn}/media-caption/*`]),
     ],
     WORKER: [
-      statement(["s3:GetObject"], [`${arn}/media-original/*`]),
+      statement(["s3:GetObject", "s3:AbortMultipartUpload"], [`${arn}/media-original/*`]),
       statement(["s3:GetObject", "s3:PutObject", "s3:DeleteObject"], [`${arn}/media-hls/*`]),
     ],
-    DELIVERY: [statement(["s3:GetObject"], [`${arn}/media-hls/*`])],
+    DELIVERY: [
+      statement(["s3:GetObject"], [`${arn}/media-hls/*`]),
+      statement(["s3:GetObject"], [`${arn}/media-caption/*`]),
+    ],
   };
   for (const principal of Object.keys(policies)) {
     const name = `ailss-media-${principal.toLowerCase()}`;
@@ -89,10 +93,13 @@ try {
   }
   // Run on the already-authorized internal Docker network. Cassandra need not
   // expose a host port. Send secrets through stdin, never argv or diagnostics.
-  const migration = await readFile(
-    new URL("../../database/migrations/dev/085_media_vertical_slice.cql", import.meta.url),
-    "utf8",
-  );
+  const migration = (
+    await Promise.all(
+      ["085_media_vertical_slice.cql", "086_media_replacement_audit.cql", "087_media_quota.cql"].map((name) =>
+        readFile(new URL(`../../database/migrations/dev/${name}`, import.meta.url), "utf8"),
+      ),
+    )
+  ).join("\n");
   execFileSync(
     "docker",
     [
@@ -136,7 +143,7 @@ try {
     { mode: 0o600 },
   );
   console.log(
-    "MEDIA_LOCAL_INITIALIZATION PASS: private bucket; 3 scoped S3 principals; dedicated Cassandra worker role; migration 085. Local policy: 1 GiB/4 hours (not a production default). Credentials saved only in ignored .env.media.",
+    "MEDIA_LOCAL_INITIALIZATION PASS: private bucket; 3 scoped S3 principals; dedicated Cassandra worker role; migrations 085-087. Local policy: 1 GiB/4 hours (not a production default). Credentials saved only in ignored .env.media.",
   );
 } catch (error) {
   console.error(`MEDIA_LOCAL_INITIALIZATION FAIL: ${error.name} (credential-bearing diagnostics suppressed)`);

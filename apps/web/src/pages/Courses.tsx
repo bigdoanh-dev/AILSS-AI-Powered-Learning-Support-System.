@@ -304,6 +304,7 @@ export function CourseDetail() {
   const { profile } = useSession();
   const { id } = useParams();
   const [course, setCourse] = useState<Course | null>(null);
+  const [trailer, setTrailer] = useState<{ playlistUrl: string; posterUrl?: string } | null>(null);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const subject = course ? courseSubject(course.title, course.categoryId) : null;
@@ -316,6 +317,7 @@ export function CourseDetail() {
   useEffect(() => {
     setError("");
     setCourse(null);
+    setTrailer(null);
     const controller = new AbortController();
     if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
       setError("Không tìm thấy khóa học công khai này.");
@@ -326,6 +328,12 @@ export function CourseDetail() {
       .catch((e) => {
         if (!controller.signal.aborted) setError(errorMessage(e));
       });
+    void request<{ data: { playlistUrl: string; posterUrl?: string } }>(
+      `/courses/${encodeURIComponent(id)}/trailer`,
+      { signal: controller.signal },
+    )
+      .then((r) => setTrailer(r.data))
+      .catch(() => setTrailer(null));
     return () => controller.abort();
   }, [id, retry]);
   return (
@@ -361,7 +369,20 @@ export function CourseDetail() {
               <CourseComments id={course.courseId} />
             </div>
             <aside className="course-enroll-card">
-              <CourseArtwork title={course.title} categoryId={course.categoryId} eager />
+              {trailer?.playlistUrl ? (
+                <div className="course-trailer-container" style={{ marginBottom: "1rem" }}>
+                  <video
+                    controls
+                    playsInline
+                    poster={trailer.posterUrl}
+                    src={trailer.playlistUrl}
+                    style={{ width: "100%", borderRadius: "8px", aspectRatio: "16/9", objectFit: "cover" }}
+                    aria-label="Video giới thiệu khóa học"
+                  />
+                </div>
+              ) : (
+                <CourseArtwork title={course.title} categoryId={course.categoryId} eager />
+              )}
               <div className="course-enroll-content">
                 <strong className={`course-detail-price ${paid ? "" : "free"}`}>{priceLabel(course)}</strong>
                 <ButtonLink

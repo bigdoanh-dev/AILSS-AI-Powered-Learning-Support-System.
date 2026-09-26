@@ -1,6 +1,6 @@
 import { types } from "cassandra-driver";
 import type { CassandraClient } from "../../../../packages/cassandra/src/index.js";
-import type { MediaAsset } from "./model.js";
+import type { MediaAsset, MediaReplacementEvent } from "./model.js";
 const uuid = (s: string) => types.Uuid.fromString(s);
 const long = (n: number) => types.Long.fromNumber(n);
 export interface MediaJob {
@@ -19,7 +19,7 @@ export interface MediaStore {
   get(tenantId: string, id: string): Promise<MediaAsset | undefined>;
   insert(asset: MediaAsset): Promise<boolean>;
   replace(old: MediaAsset, next: MediaAsset): Promise<boolean>;
-  bind(asset: MediaAsset, replace: boolean): Promise<void>;
+  bind(asset: MediaAsset, replace: boolean, changedBy?: string): Promise<void>;
   binding(tenantId: string, lessonId: string): Promise<string | undefined>;
   enqueue(asset: MediaAsset): Promise<void>;
 }
@@ -28,17 +28,28 @@ export class CassandraMediaRepository implements MediaStore {
   async acquireCourseWrite(courseId: string, lease: string) {
     const row = (
       await this.db.execute(
-        "SELECT media_write_token,media_write_until FROM course_by_id WHERE course_id=?",
+        "SELECT state,media_write_token,media_write_until FROM course_by_id WHERE course_id=?",
         [uuid(courseId)],
         "LOCAL_QUORUM",
       )
     )[0];
     // No automatic lock expiry: a delayed old writer must never outlive the
     // publication fence. Replaying the same idempotent command recovers its lock.
-    if (!row || (row.media_write_token && String(row.media_write_token) !== lease)) return false;
+    if (
+      !row ||
+      !["DRAFT", "PUBLISHED"].includes(String(row.state)) ||
+      (row.media_write_token && String(row.media_write_token) !== lease)
+    )
+      return false;
     const result = await this.db.execute(
-      "UPDATE course_by_id SET media_write_token=?,media_write_until=? WHERE course_id=? IF state='DRAFT' AND media_write_token=?",
-      [uuid(lease), new Date(Date.now() + 60000), uuid(courseId), row.media_write_token ?? null],
+      "UPDATE course_by_id SET media_write_token=?,media_write_until=? WHERE course_id=? IF state=? AND media_write_token=?",
+      [
+        uuid(lease),
+        new Date(Date.now() + 60000),
+        uuid(courseId),
+        String(row.state),
+        row.media_write_token ?? null,
+      ],
       "LOCAL_QUORUM",
       "LOCAL_SERIAL",
     );
@@ -108,7 +119,7 @@ export class CassandraMediaRepository implements MediaStore {
     )[0];
     return r ? String(r.media_asset_id) : undefined;
   }
-  async bind(a: MediaAsset, replace: boolean): Promise<void> {
+  async bind(a: MediaAsset, replace: boolean, changedBy?: string): Promise<void> {
     // First upload marks the lesson's required media immediately; publish must wait
     // for READY. Replacement switches only after the new asset is READY.
     if (!replace) {
@@ -120,16 +131,116 @@ export class CassandraMediaRepository implements MediaStore {
       );
     } else {
       if (a.status !== "READY") throw Error("MEDIA_NOT_READY");
-      const current = await this.binding(a.tenantId, a.lessonId);
-      if (!current) return this.bind(a, false);
+      const row = (
+        await this.db.execute(
+          "SELECT media_asset_id,replacement_history FROM media_asset_by_lesson WHERE tenant_id=? AND lesson_id=?",
+          [uuid(a.tenantId), uuid(a.lessonId)],
+          "LOCAL_QUORUM",
+        )
+      )[0];
+      const current = row?.media_asset_id ? String(row.media_asset_id) : undefined;
+      if (!row || !current) return this.bind(a, false);
+      if (current === a.mediaAssetId) return;
+      if (!changedBy) throw Error("MEDIA_REPLACEMENT_ACTOR_REQUIRED");
+      const history = row.replacement_history
+        ? (JSON.parse(String(row.replacement_history)) as MediaReplacementEvent[])
+        : [];
+      if (!Array.isArray(history) || history.length >= 1000) throw Error("MEDIA_REPLACEMENT_HISTORY_LIMIT");
+      const event: MediaReplacementEvent = {
+        previousMediaAssetId: current,
+        replacementMediaAssetId: a.mediaAssetId,
+        lessonId: a.lessonId,
+        changedBy,
+        changedAt: new Date().toISOString(),
+        status: "APPLIED",
+      };
       const r = await this.db.execute(
-        "UPDATE media_asset_by_lesson SET media_asset_id=? WHERE tenant_id=? AND lesson_id=? IF media_asset_id=?",
-        [uuid(a.mediaAssetId), uuid(a.tenantId), uuid(a.lessonId), uuid(current)],
+        "UPDATE media_asset_by_lesson SET media_asset_id=?,replacement_history=? WHERE tenant_id=? AND lesson_id=? IF media_asset_id=? AND replacement_history=?",
+        [
+          uuid(a.mediaAssetId),
+          JSON.stringify([...history, event]),
+          uuid(a.tenantId),
+          uuid(a.lessonId),
+          uuid(current),
+          row.replacement_history ?? null,
+        ],
         "LOCAL_QUORUM",
         "LOCAL_SERIAL",
       );
       if (r[0]?.["[applied]"] !== true) throw Error("MEDIA_BINDING_CONFLICT");
     }
+  }
+  async recordReplacementFailure(a: MediaAsset): Promise<void> {
+    // Legacy payloads did not capture V1 when the attempt was created. Their
+    // asset audit remains available, but today's binding is not historical proof.
+    const previous = a.replacementOfMediaAssetId;
+    if (!previous) return;
+    const failures = a.audit.filter((event) => event.to === "FAILED");
+    if (failures.length === 0) return;
+    for (let attempt = 0; attempt < 16; attempt++) {
+      const row = (
+        await this.db.execute(
+          "SELECT media_asset_id,replacement_history FROM media_asset_by_lesson WHERE tenant_id=? AND lesson_id=?",
+          [uuid(a.tenantId), uuid(a.lessonId)],
+          "LOCAL_QUORUM",
+        )
+      )[0];
+      const current = row?.media_asset_id ? String(row.media_asset_id) : undefined;
+      // A failed first upload is not a replacement. Never move the active binding.
+      if (!row || !current || current === a.mediaAssetId) return;
+      const history = row.replacement_history
+        ? (JSON.parse(String(row.replacement_history)) as MediaReplacementEvent[])
+        : [];
+      if (!Array.isArray(history)) throw Error("MEDIA_REPLACEMENT_HISTORY_INVALID");
+      const missing = failures.filter(
+        (failure) =>
+          !history.some(
+            (event) =>
+              event.status === "FAILED" &&
+              event.replacementMediaAssetId === a.mediaAssetId &&
+              event.changedAt === failure.at,
+          ),
+      );
+      if (missing.length === 0) return;
+      if (history.length + missing.length > 1000) throw Error("MEDIA_REPLACEMENT_HISTORY_LIMIT");
+      const events: MediaReplacementEvent[] = missing.map((failure) => ({
+        previousMediaAssetId: previous,
+        replacementMediaAssetId: a.mediaAssetId,
+        lessonId: a.lessonId,
+        changedBy: a.ownerUserId,
+        changedAt: failure.at,
+        status: "FAILED",
+        ...(failure.failureCode ? { failureCode: failure.failureCode } : {}),
+        ...(failure.processingLease ? { processingLease: failure.processingLease } : {}),
+        recordedBy: "media-worker",
+      }));
+      const result = await this.db.execute(
+        "UPDATE media_asset_by_lesson SET replacement_history=? WHERE tenant_id=? AND lesson_id=? IF media_asset_id=? AND replacement_history=?",
+        [
+          JSON.stringify([...history, ...events]),
+          uuid(a.tenantId),
+          uuid(a.lessonId),
+          uuid(current),
+          row.replacement_history ?? null,
+        ],
+        "LOCAL_QUORUM",
+        "LOCAL_SERIAL",
+      );
+      if (result[0]?.["[applied]"] === true) return;
+    }
+    throw Error("MEDIA_BINDING_CONFLICT");
+  }
+  async replacementHistory(tenantId: string, lessonId: string): Promise<MediaReplacementEvent[]> {
+    const row = (
+      await this.db.execute(
+        "SELECT replacement_history FROM media_asset_by_lesson WHERE tenant_id=? AND lesson_id=?",
+        [uuid(tenantId), uuid(lessonId)],
+        "LOCAL_QUORUM",
+      )
+    )[0];
+    return row?.replacement_history
+      ? (JSON.parse(String(row.replacement_history)) as MediaReplacementEvent[])
+      : [];
   }
   async enqueue(a: MediaAsset) {
     const day = a.jobDay ?? a.updatedAt.slice(0, 10),
@@ -171,6 +282,27 @@ export class CassandraMediaRepository implements MediaStore {
       leaseUntil: r.lease_until ? new Date(String(r.lease_until)) : null,
     }));
   }
+  async job(tenantId: string, day: string, shard: number, id: string): Promise<MediaJob | undefined> {
+    const row = (
+      await this.db.execute(
+        "SELECT revision,attempts,lease,lease_until FROM media_job_by_day_shard WHERE tenant_id=? AND job_day=? AND shard=? AND media_asset_id=?",
+        [uuid(tenantId), types.LocalDate.fromString(day), shard, uuid(id)],
+        "LOCAL_QUORUM",
+      )
+    )[0];
+    return row
+      ? {
+          tenantId,
+          day,
+          shard,
+          mediaAssetId: id,
+          revision: Number(row.revision),
+          attempts: Number(row.attempts),
+          lease: row.lease ? String(row.lease) : null,
+          leaseUntil: row.lease_until ? new Date(String(row.lease_until)) : null,
+        }
+      : undefined;
+  }
   async claim(j: MediaJob, lease: string, leaseUntil: Date) {
     if (j.leaseUntil && j.leaseUntil.getTime() > Date.now()) return false;
     const r = await this.db.execute(
@@ -185,6 +317,24 @@ export class CassandraMediaRepository implements MediaStore {
         j.shard,
         uuid(j.mediaAssetId),
         long(j.revision),
+      ],
+      "LOCAL_QUORUM",
+      "LOCAL_SERIAL",
+    );
+    return r[0]?.["[applied]"] === true;
+  }
+  async renew(j: MediaJob, lease: string, revision: number, leaseUntil: Date) {
+    const r = await this.db.execute(
+      "UPDATE media_job_by_day_shard SET revision=?,lease_until=? WHERE tenant_id=? AND job_day=? AND shard=? AND media_asset_id=? IF revision=? AND lease=?",
+      [
+        long(revision + 1),
+        leaseUntil,
+        uuid(j.tenantId),
+        types.LocalDate.fromString(j.day),
+        j.shard,
+        uuid(j.mediaAssetId),
+        long(revision),
+        uuid(lease),
       ],
       "LOCAL_QUORUM",
       "LOCAL_SERIAL",
