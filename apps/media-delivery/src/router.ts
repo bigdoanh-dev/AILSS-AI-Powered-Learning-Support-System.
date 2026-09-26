@@ -1,12 +1,15 @@
 import { Router } from "express";
 import { pipeline } from "node:stream/promises";
+import { Transform } from "node:stream";
 import { verifyMediaPlayback } from "../../../packages/security/src/media-playback.js";
 import type { MediaObjectStorage } from "../../../packages/storage/src/media.js";
+import type { createMediaMetrics } from "../../../packages/observability/src/media.js";
 export function mediaDeliveryRouter(
   storage: MediaObjectStorage,
   secret: string,
   tenantId: string,
   allowedOrigins: readonly string[],
+  metrics?: ReturnType<typeof createMediaMetrics>,
 ): Router {
   const router = Router();
   router.use((req, res, next) => {
@@ -28,7 +31,7 @@ export function mediaDeliveryRouter(
     const filename = req.params.filename,
       assetId = req.params.assetId,
       token = typeof req.query.token === "string" ? req.query.token : "";
-    if (!/^(master|variant)\.m3u8$|^segment-\d{5}\.ts$/.test(filename)) {
+    if (!/^(master|variant|variant-\d+)\.m3u8$|^segment-(?:\d+-)?\d{5}\.ts$|^poster\.jpg$|^caption-[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\.vtt$/i.test(filename)) {
       res.status(404).end();
       return;
     }
@@ -40,7 +43,9 @@ export function mediaDeliveryRouter(
       return;
     }
     try {
-      const key = `media-hls/${scope.outputPrefix}/${filename}`,
+      const key = filename.endsWith(".vtt")
+        ? `media-caption/${scope.tenantId}/${scope.mediaAssetId}/${filename.slice(8)}`
+        : `media-hls/${scope.outputPrefix}/${filename}`,
         stream = await storage.readStream(key);
       if (filename.endsWith(".m3u8")) {
         let text = "";
@@ -56,17 +61,25 @@ export function mediaDeliveryRouter(
           .split("\n")
           .map((line) => {
             if (!line || line.startsWith("#")) return line;
-            if (!/^(variant\.m3u8|segment-\d{5}\.ts)$/.test(line.trim()))
+            if (!/^(variant(?:-\d+)?\.m3u8|segment-(?:\d+-)?\d{5}\.ts)$/.test(line.trim()))
               throw Error("PLAYLIST_REFERENCE_REJECTED");
             return `${line.trim()}?token=${encodeURIComponent(token)}`;
           })
           .join("\n");
+        res.once("finish", () => metrics?.deliveryBytes.inc(Buffer.byteLength(signed)));
         res.type("application/vnd.apple.mpegurl").send(signed);
       } else {
-        res.type("video/mp2t");
-        await pipeline(stream, res);
+        res.type(filename.endsWith(".jpg") ? "image/jpeg" : filename.endsWith(".vtt") ? "text/vtt; charset=utf-8" : "video/mp2t");
+        let delivered = 0;
+        const meter = new Transform({ transform(chunk: Buffer, _encoding, callback) {
+          delivered += chunk.length;
+          callback(null, chunk);
+        } });
+        await pipeline(stream, meter, res);
+        metrics?.deliveryBytes.inc(delivered);
       }
     } catch {
+      metrics?.deliveryFailure.inc();
       if (!res.headersSent) res.status(503).json({ error: { code: "MEDIA_DELIVERY_UNAVAILABLE" } });
       else res.destroy();
     }
