@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "totalMigrations": 51,
+  "totalMigrations": 54,
   "canonicalKeyspaces": [
     "identity_keyspace",
     "learning_keyspace",
@@ -571,6 +571,39 @@
       "classification": "SAFE_ADDITIVE",
       "status": "LOCAL_DEPLOYED_VERIFIED_EXTERNAL_PENDING",
       "predecessor": "084",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "086",
+      "filename": "086_media_replacement_audit.cql",
+      "sha256Dev": "83efc09e17f4fe1710971d730fa135709db3360df18c1cf8e891e8fe800aa682",
+      "sha256Research": "83efc09e17f4fe1710971d730fa135709db3360df18c1cf8e891e8fe800aa682",
+      "keyspace": "learning_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "LOCAL_DEPLOYED_VERIFIED_EXTERNAL_PENDING",
+      "predecessor": "085",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "087",
+      "filename": "087_media_quota.cql",
+      "sha256Dev": "b98079f0208ee7fb122a55ccf220fd838bd6e83c186a294f6033eb7ac86d337b",
+      "sha256Research": "b98079f0208ee7fb122a55ccf220fd838bd6e83c186a294f6033eb7ac86d337b",
+      "keyspace": "learning_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "LOCAL_DEPLOYED_VERIFIED_EXTERNAL_PENDING",
+      "predecessor": "086",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "088",
+      "filename": "088_media_output_journal.cql",
+      "sha256Dev": "f5058fe3dbe75470e591b7d3ccc9fe58ed6d836a37a8d61a466de69153244c59",
+      "sha256Research": "f5058fe3dbe75470e591b7d3ccc9fe58ed6d836a37a8d61a466de69153244c59",
+      "keyspace": "learning_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "LOCAL_DEPLOYED_VERIFIED_EXTERNAL_PENDING",
+      "predecessor": "087",
       "environmentParity": "IDENTICAL"
     }
   ]
