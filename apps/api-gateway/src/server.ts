@@ -565,8 +565,10 @@ app.get("/playback/:assetId/:filename",mediaDeliveryProxy(process.env.MEDIA_DELI
 app.post("/api/v1/courses/:courseId/media-assets",authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE??60)),mediaHandler);
 app.get("/api/v1/media-assets/:assetId",readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE??300)),mediaHandler);
 app.get("/api/v1/media-assets/:assetId/upload",readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE??300)),mediaHandler);
+app.post("/api/v1/media-assets/:assetId/captions",authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE??60)),mediaHandler);
 for(const action of ["parts","complete","cancel","attach"])app.post(`/api/v1/media-assets/:assetId/${action}`,authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE??60)),mediaHandler);
 app.post("/api/v1/lessons/:lessonId/media-session",readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE??300)),mediaHandler);
+app.get("/api/v1/courses/:courseId/trailer",readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE??300)),mediaHandler);
 app.post(
   "/api/v1/courses/:courseId/lessons",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),

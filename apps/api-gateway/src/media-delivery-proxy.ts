@@ -29,7 +29,7 @@ export function mediaDeliveryProxy(
       token = req.query.token;
     if (
       !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(assetId) ||
-      !/^(master|variant)\.m3u8$|^segment-\d{5}\.ts$/.test(filename)
+      !/^(master|variant|variant-\d+)\.m3u8$|^segment-(?:\d+-)?\d{5}\.ts$|^poster\.jpg$|^caption-[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\.vtt$/i.test(filename)
     ) {
       res.status(404).end();
       return;
@@ -57,7 +57,13 @@ export function mediaDeliveryProxy(
       }
       const type = upstream.headers.get("content-type");
       res.type(
-        type?.startsWith("application/vnd.apple.mpegurl") ? "application/vnd.apple.mpegurl" : "video/mp2t",
+        type?.startsWith("application/vnd.apple.mpegurl")
+          ? "application/vnd.apple.mpegurl"
+          : type?.startsWith("image/jpeg")
+            ? "image/jpeg"
+            : type?.startsWith("text/vtt")
+              ? "text/vtt; charset=utf-8"
+            : "video/mp2t",
       );
       if (!upstream.body) throw Error("MEDIA_DELIVERY_BODY_MISSING");
       await pipeline(upstream.body, res);
