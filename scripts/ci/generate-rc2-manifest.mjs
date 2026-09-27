@@ -146,12 +146,12 @@ async function main() {
 
   // Add the new root suites introduced in Phase 40 Wave 2 and Corrective Closure:
   const newRootSuites = [
-    { path: "tests/unit/phase40-pilot-hardening.test.ts", count: 14 },
-    { path: "tests/unit/phase40-product-expansion-wave2.test.ts", count: 13 },
-    { path: "tests/unit/phase40-wave2-e2e-and-security.test.ts", count: 12 },
-    { path: "tests/unit/phase40-mastery-calibration-v2.test.ts", count: 3 },
-    { path: "tests/unit/phase40-differential-privacy.test.ts", count: 5 },
-    { path: "tests/unit/phase40-ai-tutor-eval-v3.test.ts", count: 4 },
+    { path: "tests/unit/pilot-hardening.test.ts", count: 14 },
+    { path: "tests/unit/product-expansion-wave2.test.ts", count: 13 },
+    { path: "tests/unit/wave2-e2e-and-security.test.ts", count: 12 },
+    { path: "tests/unit/mastery-calibration-v2.test.ts", count: 3 },
+    { path: "tests/unit/differential-privacy.test.ts", count: 5 },
+    { path: "tests/unit/ai-tutor-eval-v3.test.ts", count: 4 },
   ];
 
   for (const n of newRootSuites) {
@@ -205,13 +205,13 @@ async function main() {
       deltaSuites: "+7 suites",
       deltaTests: "+53 tests",
       newSuitesInRC2: [
-        "tests/unit/phase40-pilot-hardening.test.ts (14 tests)",
-        "tests/unit/phase40-product-expansion-wave2.test.ts (13 tests)",
+        "tests/unit/pilot-hardening.test.ts (14 tests)",
+        "tests/unit/product-expansion-wave2.test.ts (13 tests)",
         "apps/web/tests/e2e-browser-journeys.test.tsx (5 tests)",
-        "tests/unit/phase40-wave2-e2e-and-security.test.ts (12 tests)",
-        "tests/unit/phase40-mastery-calibration-v2.test.ts (3 tests)",
-        "tests/unit/phase40-differential-privacy.test.ts (5 tests)",
-        "tests/unit/phase40-ai-tutor-eval-v3.test.ts (4 tests)",
+        "tests/unit/wave2-e2e-and-security.test.ts (12 tests)",
+        "tests/unit/mastery-calibration-v2.test.ts (3 tests)",
+        "tests/unit/differential-privacy.test.ts (5 tests)",
+        "tests/unit/ai-tutor-eval-v3.test.ts (4 tests)",
       ],
       worktreeStatus: "CLEAN",
       packageVersion: "6.1.4",

@@ -12,7 +12,7 @@ const temporary = await mkdtemp(join(tmpdir(), "ailss-p103-")),
   handoffPath = join(temporary, "handoff.json");
 let assessmentFaultEnabled = false;
 try {
-  await promisify(execFile)("node", ["scripts/acceptance/phase-10-2-ai-quiz.mjs"], {
+  await promisify(execFile)("node", ["scripts/acceptance/ai-quiz.mjs"], {
     cwd: process.cwd(),
     env: { ...process.env, P103_HANDOFF_PATH: handoffPath },
     maxBuffer: 10 * 1024 * 1024,

@@ -410,7 +410,7 @@ async function main() {
     }
   };
 
-  await writeFile("artifacts/release-evidence/phase40-pilot-hardening-evidence.json", JSON.stringify(evidence, null, 2), "utf8");
+  await writeFile("artifacts/release-evidence/runtime-connectivity-and-pilot-evidence.json", JSON.stringify(evidence, null, 2), "utf8");
   console.log("Updated Phase 40 evidence with Revision F runtime classifications; unconnected features are not pilot-ready.");
 }
 

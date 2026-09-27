@@ -101,5 +101,5 @@ const output = {
 };
 
 await mkdir("artifacts/runtime-audit", { recursive: true });
-await writeFile("artifacts/runtime-audit/phase40-runtime-feature-graph.json", `${JSON.stringify(output, null, 2)}\n`, "utf8");
+await writeFile("artifacts/runtime-audit/runtime-feature-graph.json", `${JSON.stringify(output, null, 2)}\n`, "utf8");
 process.stdout.write(`${JSON.stringify({ generatedAt, featureCount: features.length, phase40Status: output.phase40Status })}\n`);

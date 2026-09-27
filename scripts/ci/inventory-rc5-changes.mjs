@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 
 const root = process.cwd();
-const outputPath = "phase40-rc5-change-inventory.json";
+const outputPath = "rc5-change-inventory.json";
 const raw = execFileSync("git", ["status", "--porcelain=v1", "-uall", "-z"], { cwd: root });
 const entries = raw.toString("utf8").split("\0").filter(Boolean);
 const historicalEvidence = (path) => /^(artifacts\/release-evidence\/|(?:api-|backup-|break-|d0-|deployment-|dns-|finops-|iam-|metric-|payment-|phase\d+|pilot-|production-|regional-|release\d+|sbom\.|test-discovery))/u.test(path);
@@ -17,7 +17,7 @@ function category(path) {
   if (path.startsWith("database/migrations/") || path.startsWith("database/migration-")) return "MIGRATION_REQUIRED";
   if (path.startsWith("tests/") || path.startsWith("apps/web/tests/") || path.endsWith(".test.mjs") || path.includes("verify-phase40") || path.includes("acceptance/") || path.includes("run-rc5-canonical") || path.includes("verify-clean-cassandra")) return "TEST_REQUIRED";
   if (path.startsWith("docs/") || path === "README.md" || path.endsWith("/README.md")) return "DOCUMENTATION_REQUIRED";
-  if (historicalEvidence(path) || path.startsWith("artifacts/") || path.includes("manifest") || path === "lint-baseline.json" || path === "phase40-pilot-feature-scope.json" || path === outputPath) return "RELEASE_EVIDENCE_REQUIRED";
+  if (historicalEvidence(path) || path.startsWith("artifacts/") || path.includes("manifest") || path === "lint-baseline.json" || path === "pilot-feature-scope.json" || path === outputPath) return "RELEASE_EVIDENCE_REQUIRED";
   if (path.startsWith("scripts/ci/") || path === ".github/workflows/ci.yml") return "TEST_REQUIRED";
   return "RUNTIME_REQUIRED";
 }

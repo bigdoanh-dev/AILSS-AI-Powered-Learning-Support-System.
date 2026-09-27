@@ -684,7 +684,7 @@ const policy = {
 };
 
 await mkdir(out, { recursive: true });
-const inventoryPath = path.join(out, "phase41-mobile-feature-inventory.json");
+const inventoryPath = path.join(out, "mobile-feature-inventory.json");
 const inventoryEvidence = {
   generatedAt: new Date().toISOString(),
   sourceRoots: ["app", "src"],
@@ -716,7 +716,7 @@ if ((await readFile(inventoryPath, "utf8").catch(() => null)) !== inventoryOutpu
   await writeFile(inventoryPath, inventoryOutput);
 }
 await writeFile(
-  path.join(out, "phase41-mobile-runtime-feature-graph.json"),
+  path.join(out, "mobile-runtime-feature-graph.json"),
   JSON.stringify(graph, null, 2) + "\n",
 );
 await writeFile(path.join(out, "mobile-offline-data-policy.json"), JSON.stringify(policy, null, 2) + "\n");

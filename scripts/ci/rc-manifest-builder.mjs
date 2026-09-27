@@ -56,12 +56,12 @@ const WEB_FILES = [
 ];
 
 const ROOT_EXPANSION_SUITES = [
-  { path: "tests/unit/phase40-pilot-hardening.test.ts", count: 11 },
-  { path: "tests/unit/phase40-product-expansion-wave2.test.ts", count: 13 },
-  { path: "tests/unit/phase40-wave2-e2e-and-security.test.ts", count: 13 },
-  { path: "tests/unit/phase40-mastery-calibration-v2.test.ts", count: 3 },
-  { path: "tests/unit/phase40-differential-privacy.test.ts", count: 12 },
-  { path: "tests/unit/phase40-ai-tutor-eval-v3.test.ts", count: 4 },
+  { path: "tests/unit/pilot-hardening.test.ts", count: 11 },
+  { path: "tests/unit/product-expansion-wave2.test.ts", count: 13 },
+  { path: "tests/unit/wave2-e2e-and-security.test.ts", count: 13 },
+  { path: "tests/unit/mastery-calibration-v2.test.ts", count: 3 },
+  { path: "tests/unit/differential-privacy.test.ts", count: 12 },
+  { path: "tests/unit/ai-tutor-eval-v3.test.ts", count: 4 },
 ];
 
 export async function buildReleaseManifest({

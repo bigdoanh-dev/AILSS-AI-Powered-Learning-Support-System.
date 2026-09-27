@@ -240,7 +240,7 @@ async function main() {
     };
     assert.equal(evidence.caseCount, 32);
     assert.equal(evidence.allSemanticParity, true);
-    const output = fileURLToPath(new URL("../docs/phase41/phase41-cross-platform-error-parity.json", import.meta.url));
+    const output = fileURLToPath(new URL("../docs/phase41/cross-platform-error-parity.json", import.meta.url));
     let previousEvidence: typeof evidence | null = null;
     try {
       previousEvidence = JSON.parse(await readFile(output, "utf8")) as typeof evidence;

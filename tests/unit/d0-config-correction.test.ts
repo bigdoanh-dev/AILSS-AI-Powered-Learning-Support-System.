@@ -3,10 +3,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 describe("AILSS Phase 39: D0 Cassandra Configuration Correction & RPO Re-attestation", () => {
-  const correctionPath = resolve(process.cwd(), "artifacts/release-evidence/phase39-d0-config-correction.json");
+  const correctionPath = resolve(process.cwd(), "artifacts/release-evidence/durability-configuration-correction.json");
   const topologyPath = resolve(process.cwd(), "artifacts/release-evidence/d0-storage-topology.json");
 
-  it("verifies phase39-d0-config-correction.json exists and conforms to Cassandra batch vs group rules", () => {
+  it("verifies durability-configuration-correction.json exists and conforms to Cassandra batch vs group rules", () => {
     const raw = readFileSync(correctionPath, "utf8");
     const json = JSON.parse(raw);
 

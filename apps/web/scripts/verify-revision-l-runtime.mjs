@@ -2,7 +2,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { chromium, expect } from "@playwright/test";
-import { captureDurable } from "../../../scripts/acceptance/capture-phase40-durable.mjs";
+import { captureDurable } from "../../../scripts/acceptance/capture-durability-evidence.mjs";
 
 const base = "http://127.0.0.1:4174",
   out = "../../artifacts/release-evidence/revision-l/browser";

@@ -32,7 +32,7 @@ async function runVerification() {
     "artifacts/release-evidence/test-discovery-manifest.json",
     "artifacts/release-evidence/api-route-inventory.json",
     "artifacts/release-evidence/regional-rpo-sequence-proof.json",
-    "artifacts/release-evidence/phase32-evidence-timeline.json",
+    "artifacts/release-evidence/release-evidence-timeline-v6.1.3.json",
     "artifacts/release-evidence/dns-probes-vantage-50.json",
     "artifacts/release-evidence/metric-semantics-registry.json",
     "artifacts/release-evidence/payment-pci-scope-assessment.json",

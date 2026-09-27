@@ -18,7 +18,7 @@ try {
   groups.push(await vitestGroup("WEB_VITEST", join(root, "apps/web"), join(temp, "web.json")));
   groups.push(await nodeGroup());
   groups.push(await vitestGroup("MOBILE", join(root, "apps/mobile"), join(temp, "mobile.json")));
-  groups.push(await commandGroup("BROWSER_E2E", "pnpm", ["--filter", "@ailss/web", "verify:phase40:revision-l"], "apps/web/scripts/verify-phase40-revision-l.mjs"));
+  groups.push(await commandGroup("BROWSER_E2E", "pnpm", ["--filter", "@ailss/web", "verify:phase40:revision-l"], "apps/web/scripts/verify-revision-l-runtime.mjs"));
 
   const suites = groups.flatMap((group) => group.suites);
   const paths = suites.map((suite) => suite.path);
