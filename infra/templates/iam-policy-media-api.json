@@ -1,0 +1,34 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowBucketLocation",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetBucketLocation"
+      ],
+      "Resource": "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}"
+    },
+    {
+      "Sid": "AllowOriginalMediaMultipartUploadAndRead",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:AbortMultipartUpload",
+        "s3:ListMultipartUploadParts"
+      ],
+      "Resource": "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}/media-original/*"
+    },
+    {
+      "Sid": "AllowCaptionManagement",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}/media-caption/*"
+    }
+  ]
+}

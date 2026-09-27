@@ -1,0 +1,32 @@
+{
+  "Rules": [
+    {
+      "ID": "AbortIncompleteMultipartUploadsAfter7Days",
+      "Status": "Enabled",
+      "Filter": {},
+      "AbortIncompleteMultipartUpload": {
+        "DaysAfterInitiation": 7
+      }
+    },
+    {
+      "ID": "ExpireNoncurrentVersionsForOriginalMedia",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": "media-original/"
+      },
+      "NoncurrentVersionExpiration": {
+        "NoncurrentDays": 90
+      }
+    },
+    {
+      "ID": "ExpireUnreferencedDerivedOutputPrefixes",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": "media-hls/"
+      },
+      "Expiration": {
+        "Days": 180
+      }
+    }
+  ]
+}

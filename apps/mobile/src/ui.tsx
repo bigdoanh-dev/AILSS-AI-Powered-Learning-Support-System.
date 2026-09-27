@@ -866,43 +866,58 @@ export function ScreenHeader({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingVertical: 10,
-        marginBottom: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        marginBottom: 10,
+        backgroundColor: "rgba(255, 255, 255, 0.88)",
+        borderRadius: 18,
+        borderWidth: 1.5,
+        borderColor: "rgba(255, 255, 255, 0.9)",
+        shadowColor: "#0A7E85",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        elevation: 3,
       }}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
         {onBack && (
           <ScalePressable
             onPress={onBack}
             style={{
-              width: 38,
-              height: 38,
-              borderRadius: 19,
-              backgroundColor: tokens.color.surface,
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: "rgba(255, 255, 255, 0.92)",
               alignItems: "center",
               justifyContent: "center",
-              borderWidth: 1,
-              borderColor: tokens.color.border,
-              ...tokens.shadow.subtle,
+              borderWidth: 1.5,
+              borderColor: "rgba(255, 255, 255, 0.95)",
+              shadowColor: "#0A7E85",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.12,
+              shadowRadius: 6,
+              elevation: 2,
             }}
             accessibilityLabel="Quay lại"
           >
-            <Icon name="chevronLeft" size={18} color={tokens.color.ink} />
+            <Icon name="chevronLeft" size={20} color={tokens.color.ink} />
           </ScalePressable>
         )}
         <View style={{ flex: 1 }}>
           <Text
             style={{
-              fontSize: 17,
-              fontWeight: "700",
+              fontSize: 18,
+              fontWeight: "800",
               color: tokens.color.ink,
+              letterSpacing: -0.3,
             }}
             numberOfLines={1}
           >
             {title}
           </Text>
           {subtitle ? (
-            <Text style={{ fontSize: 12, color: tokens.color.muted }} numberOfLines={1}>
+            <Text style={{ fontSize: 12, color: tokens.color.muted, marginTop: 1 }} numberOfLines={1}>
               {subtitle}
             </Text>
           ) : null}
@@ -956,15 +971,20 @@ export function BottomNavBar({
     <View
       style={{
         flexDirection: "row",
-        backgroundColor: tokens.color.surface,
-        borderTopWidth: 1,
-        borderColor: tokens.color.border,
+        backgroundColor: "rgba(255, 255, 255, 0.88)",
+        borderTopWidth: 1.5,
+        borderTopColor: "rgba(255, 255, 255, 0.95)",
+        borderColor: "rgba(226, 232, 240, 0.8)",
         paddingTop: 8,
         paddingBottom: Platform.OS === "ios" ? 22 : 10,
-        paddingHorizontal: 6,
+        paddingHorizontal: 8,
         alignItems: "center",
         justifyContent: "space-between",
-        ...tokens.shadow.floating,
+        shadowColor: "#0A7E85",
+        shadowOffset: { width: 0, height: -6 },
+        shadowOpacity: 0.1,
+        shadowRadius: 18,
+        elevation: 10,
       }}
     >
       {tabs.map((tab) => {
@@ -994,12 +1014,18 @@ export function BottomNavBar({
           >
             <View
               style={{
-                width: 46,
-                height: 28,
-                borderRadius: 14,
+                width: 48,
+                height: 30,
+                borderRadius: 15,
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: isActive ? tokens.color.brandLight : "transparent",
+                backgroundColor: isActive ? "rgba(10, 126, 133, 0.12)" : "transparent",
+                borderWidth: isActive ? 1 : 0,
+                borderColor: isActive ? "rgba(10, 126, 133, 0.25)" : "transparent",
+                shadowColor: isActive ? "#0A7E85" : "transparent",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: isActive ? 0.2 : 0,
+                shadowRadius: 4,
               }}
             >
               <Icon
@@ -1013,14 +1039,26 @@ export function BottomNavBar({
               numberOfLines={1}
               style={{
                 fontSize: 11,
-                fontWeight: isActive ? "700" : "500",
+                fontWeight: isActive ? "800" : "500",
                 color: isActive ? tokens.color.brand : tokens.color.muted,
                 marginTop: 2,
                 textAlign: "center",
+                letterSpacing: isActive ? 0.1 : 0,
               }}
             >
               {tab.label}
             </Text>
+            {isActive && (
+              <View
+                style={{
+                  width: 4,
+                  height: 4,
+                  borderRadius: 2,
+                  backgroundColor: tokens.color.brand,
+                  marginTop: 2,
+                }}
+              />
+            )}
           </ScalePressable>
         );
       })}

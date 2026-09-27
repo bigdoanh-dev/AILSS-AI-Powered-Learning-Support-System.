@@ -203,6 +203,17 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   ) {
     throw new ConfigurationError(["Production AI worker provider credential is missing"]);
   }
+  if (result.data.NODE_ENV === "production" && result.data.MEDIA_ENABLED) {
+    if (!result.data.MEDIA_STORAGE_ACCESS_KEY || !result.data.MEDIA_STORAGE_SECRET_KEY) {
+      throw new ConfigurationError(["Production media storage credentials are missing"]);
+    }
+    if (!result.data.OBJECT_STORAGE_USE_SSL) {
+      throw new ConfigurationError(["Production object storage must use SSL"]);
+    }
+    if (result.data.MEDIA_DELIVERY_ORIGIN && !result.data.MEDIA_DELIVERY_ORIGIN.startsWith("https://")) {
+      throw new ConfigurationError(["Production media delivery origin must use HTTPS"]);
+    }
+  }
   return result.data;
 }
 

@@ -24,9 +24,10 @@ describe("Phase 42 media operational metrics", () => {
     expect(text).toContain("ailss_media_cleanup_pending 7");
   });
 
-  it("keeps operational byte/failure counters label-free and tracks all 11 required metrics", async () => {
+  it("keeps operational byte/failure counters label-free and tracks all 12 operational media metrics", async () => {
     const registry = new Registry();
     const metrics = createMediaMetrics(registry);
+    metrics.processingDuration.observe(1.25);
     metrics.uploadBytes.inc(120);
     metrics.deliveryBytes.inc(72);
     metrics.deliveryFailure.inc();
@@ -37,6 +38,7 @@ describe("Phase 42 media operational metrics", () => {
     metrics.cleanupPending.set(1);
 
     const text = await registry.metrics();
+    expect(text).toContain("ailss_media_processing_duration_seconds");
     expect(text).toContain("ailss_media_upload_bytes_total 120");
     expect(text).toContain("ailss_media_delivery_bytes_total 72");
     expect(text).toContain("ailss_media_delivery_failure_total 1");
