@@ -1,5 +1,6 @@
 import React, { type PropsWithChildren } from "react";
 import {
+  Animated,
   StyleSheet,
   Text,
   Pressable,
@@ -11,8 +12,10 @@ import {
   type ViewStyle,
   type TextStyle,
 } from "react-native";
-import { ScalePressable } from "./motion";
+import { ScalePressable, useReducedMotionPreference } from "./motion";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { BlurView } from "expo-blur";
+import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from "expo-glass-effect";
 
 export const tokens = {
   color: {
@@ -302,13 +305,17 @@ export function Page({
   scroll = true,
   testID,
 }: PropsWithChildren<{ style?: StyleProp<ViewStyle>; scroll?: boolean; testID?: string }>) {
+  const requestedBottomPadding = StyleSheet.flatten([styles.page, style]).paddingBottom;
+  const scrollBottomPadding = typeof requestedBottomPadding === "number"
+    ? Math.max(requestedBottomPadding, 120)
+    : 120;
   if (!scroll) {
     return <View testID={testID} style={[styles.page, { flex: 1 }, style]}>{children}</View>;
   }
   return (
     <ScrollView
       testID={testID}
-      contentContainerStyle={[styles.page, style]}
+      contentContainerStyle={[styles.page, style, { paddingBottom: scrollBottomPadding }]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
@@ -928,6 +935,153 @@ export function ScreenHeader({
   );
 }
 
+function isBottomTabActive(key: string, currentRoute: string): boolean {
+  return (
+    (key === "attendance" && (currentRoute === "attendance" || currentRoute.includes("attendance"))) ||
+    (key === "classes" && (currentRoute === "classes" || currentRoute.includes("classes") || currentRoute === "schedule")) ||
+    (key === "home" && (currentRoute === "home" || currentRoute === "" || currentRoute === "/" || currentRoute === "/index")) ||
+    (key === "teaching" && currentRoute.includes("teaching")) ||
+    (key === "courses" && (currentRoute.includes("courses") || currentRoute === "/courses")) ||
+    (key === "admin" && (currentRoute.includes("admin") || currentRoute === "/admin")) ||
+    (key === "notifications" && (currentRoute.includes("notification") || currentRoute === "notifications")) ||
+    (key === "account" && (currentRoute.includes("account") || currentRoute === "account" || currentRoute.includes("login") || currentRoute.includes("settings")))
+  );
+}
+
+const bottomNavStyles = StyleSheet.create({
+  dock: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 20,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: Platform.OS === "ios" ? 18 : 10,
+    backgroundColor: "transparent",
+  },
+  shellShadow: {
+    borderRadius: 38,
+    shadowColor: "#111820",
+    shadowOffset: { width: 0, height: 9 },
+    shadowOpacity: 0.24,
+    shadowRadius: 20,
+    elevation: 11,
+  },
+  shell: {
+    height: 76,
+    borderRadius: 38,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.88)",
+  },
+  glassFill: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 38,
+  },
+  wash: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  innerRim: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    bottom: 2,
+    left: 2,
+    borderRadius: 36,
+    borderWidth: 1,
+    borderColor: "rgba(18,27,34,0.18)",
+  },
+  topGlint: {
+    position: "absolute",
+    top: 1,
+    left: 24,
+    right: 24,
+    height: 1,
+    borderRadius: 1,
+    backgroundColor: "rgba(255,255,255,0.7)",
+  },
+  bottomGlint: {
+    position: "absolute",
+    bottom: 2,
+    left: 40,
+    right: 40,
+    height: 1,
+    borderRadius: 1,
+    backgroundColor: "rgba(18,27,34,0.22)",
+  },
+  row: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 6,
+  },
+  selection: {
+    position: "absolute",
+    top: 6,
+    bottom: 6,
+    left: 10,
+    borderRadius: 32,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.9)",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 9,
+    elevation: 3,
+  },
+  selectionInnerRim: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    bottom: 2,
+    left: 2,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: "rgba(18,27,34,0.18)",
+  },
+  selectionGlint: {
+    position: "absolute",
+    top: 2,
+    left: 12,
+    right: 12,
+    height: 1,
+    borderRadius: 1,
+    backgroundColor: "rgba(255,255,255,0.82)",
+  },
+  tab: {
+    flex: 1,
+    height: 68,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+  },
+  label: {
+    color: "rgba(24,31,38,0.64)",
+    fontSize: 10.5,
+    fontWeight: "600",
+    lineHeight: 14,
+    textAlign: "center",
+    width: "100%",
+    paddingHorizontal: 2,
+  },
+  activeLabel: {
+    color: "#17212B",
+    fontWeight: "800",
+  },
+});
+
 export function BottomNavBar({
   currentRoute,
   onNavigate,
@@ -937,131 +1091,153 @@ export function BottomNavBar({
   onNavigate: (route: string) => void;
   role?: string;
 }) {
-  const tabs = role === "LECTURER"
-    ? [
-        { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-        { key: "teaching", label: "Giảng dạy", icon: "book" as IconName, path: "/teaching" },
-        { key: "classes", label: "Lớp học", icon: "calendar" as IconName, path: "/teaching/classes" },
-        { key: "notifications", label: "Thông báo", icon: "bell" as IconName, path: "/notifications" },
-        { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
-      ]
-    : role === "ADMIN"
-    ? [
-        { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-        { key: "admin", label: "Quản trị", icon: "shield" as IconName, path: "/admin" },
-        { key: "notifications", label: "Thông báo", icon: "bell" as IconName, path: "/notifications" },
-        { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
-      ]
-    : role === "STUDENT"
-    ? [
-        { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-        { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
-        { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/classes" },
-        { key: "attendance", label: "Điểm danh", icon: "checkCircle" as IconName, path: "/classes?tab=attendance" },
-        { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
-      ]
-    : [
-        { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-        { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
-        { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/login" },
-        { key: "account", label: "Đăng nhập", icon: "user" as IconName, path: "/login" },
-      ];
+  const tabs =
+    role === "LECTURER"
+      ? [
+          { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
+          { key: "teaching", label: "Giảng dạy", icon: "award" as IconName, path: "/teaching" },
+          { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/teaching/classes" },
+          { key: "notifications", label: "Thông báo", icon: "bell" as IconName, path: "/notifications" },
+          { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
+        ]
+      : role === "ADMIN"
+      ? [
+          { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
+          { key: "admin", label: "Quản trị", icon: "shield" as IconName, path: "/admin" },
+          { key: "notifications", label: "Thông báo", icon: "bell" as IconName, path: "/notifications" },
+          { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
+        ]
+      : role === "STUDENT"
+      ? [
+          { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
+          { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
+          { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/classes" },
+          { key: "attendance", label: "Điểm danh", icon: "checkCircle" as IconName, path: "/classes?tab=attendance" },
+          { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
+        ]
+      : [
+          { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
+          { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
+          { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/login" },
+          { key: "account", label: "Đăng nhập", icon: "user" as IconName, path: "/login" },
+        ];
+
+  const [nativeGlass, setNativeGlass] = React.useState(false);
+  const [rowWidth, setRowWidth] = React.useState(0);
+  const reduceMotion = useReducedMotionPreference();
+  const indicatorX = React.useRef(new Animated.Value(0)).current;
+  const previousIndex = React.useRef<number | null>(null);
+  const activeKey = ["attendance", "classes", "teaching", "courses", "admin", "notifications", "account", "home"]
+    .find((key) => tabs.some((tab) => tab.key === key && isBottomTabActive(key, currentRoute)));
+  const activeIndex = tabs.findIndex((tab) => tab.key === activeKey);
+  const tabWidth = rowWidth > 0 ? (rowWidth - 12) / tabs.length : 0;
+
+  React.useEffect(() => {
+    if (Platform.OS === "ios") {
+      setNativeGlass(isGlassEffectAPIAvailable() && isLiquidGlassAvailable());
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (tabWidth <= 0 || activeIndex < 0) return;
+    const nextX = activeIndex * tabWidth;
+    indicatorX.stopAnimation();
+    if (previousIndex.current === null || reduceMotion !== false) {
+      indicatorX.setValue(nextX);
+    } else {
+      Animated.spring(indicatorX, {
+        toValue: nextX,
+        useNativeDriver: true,
+        speed: 19,
+        bounciness: 5,
+      }).start();
+    }
+    previousIndex.current = activeIndex;
+  }, [activeIndex, indicatorX, reduceMotion, tabWidth]);
 
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        backgroundColor: "rgba(255, 255, 255, 0.88)",
-        borderTopWidth: 1.5,
-        borderTopColor: "rgba(255, 255, 255, 0.95)",
-        borderColor: "rgba(226, 232, 240, 0.8)",
-        paddingTop: 8,
-        paddingBottom: Platform.OS === "ios" ? 22 : 10,
-        paddingHorizontal: 8,
-        alignItems: "center",
-        justifyContent: "space-between",
-        shadowColor: "#0A7E85",
-        shadowOffset: { width: 0, height: -6 },
-        shadowOpacity: 0.1,
-        shadowRadius: 18,
-        elevation: 10,
-      }}
-    >
-      {tabs.map((tab) => {
-        const isActive =
-          (tab.key === "attendance" && currentRoute === "attendance") ||
-          (tab.key === "classes" && (currentRoute === "classes" || currentRoute === "schedule")) ||
-          (tab.key === "home" && (currentRoute === "home" || currentRoute === "" || currentRoute === "/")) ||
-          (tab.key === "teaching" && currentRoute.includes("teaching")) ||
-          (tab.key === "admin" && currentRoute.includes("admin")) ||
-          (tab.key === "notifications" && currentRoute.includes("notifications")) ||
-          (tab.key === "account" && currentRoute.includes("account"));
-
-        return (
-          <ScalePressable
-            key={tab.key}
-            testID={`app-nav-${tab.key}`}
-            onPress={() => onNavigate(tab.path)}
-            scaleTo={0.92}
-            style={{
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              paddingVertical: 2,
-            }}
-            accessibilityRole="tab"
-            accessibilityLabel={tab.label}
+    <View pointerEvents="box-none" style={bottomNavStyles.dock}>
+      <View style={bottomNavStyles.shellShadow}>
+        <View style={bottomNavStyles.shell}>
+          {nativeGlass ? (
+            <GlassView
+              pointerEvents="none"
+              glassEffectStyle="clear"
+              colorScheme="light"
+              style={bottomNavStyles.glassFill}
+            />
+          ) : (
+            <BlurView
+              pointerEvents="none"
+              intensity={Platform.OS === "ios" ? 65 : 40}
+              tint="light"
+              style={bottomNavStyles.glassFill}
+            />
+          )}
+          <View pointerEvents="none" style={bottomNavStyles.wash} />
+          <View pointerEvents="none" style={bottomNavStyles.innerRim} />
+          <View pointerEvents="none" style={bottomNavStyles.topGlint} />
+          <View pointerEvents="none" style={bottomNavStyles.bottomGlint} />
+          <View
+            style={bottomNavStyles.row}
+            onLayout={(event) => setRowWidth(Math.round(event.nativeEvent.layout.width))}
           >
-            <View
-              style={{
-                width: 48,
-                height: 30,
-                borderRadius: 15,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: isActive ? "rgba(10, 126, 133, 0.12)" : "transparent",
-                borderWidth: isActive ? 1 : 0,
-                borderColor: isActive ? "rgba(10, 126, 133, 0.25)" : "transparent",
-                shadowColor: isActive ? "#0A7E85" : "transparent",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: isActive ? 0.2 : 0,
-                shadowRadius: 4,
-              }}
-            >
-              <Icon
-                name={tab.icon}
-                size={20}
-                color={isActive ? tokens.color.brand : tokens.color.muted}
-                active={isActive}
-              />
-            </View>
-            <Text
-              numberOfLines={1}
-              style={{
-                fontSize: 11,
-                fontWeight: isActive ? "800" : "500",
-                color: isActive ? tokens.color.brand : tokens.color.muted,
-                marginTop: 2,
-                textAlign: "center",
-                letterSpacing: isActive ? 0.1 : 0,
-              }}
-            >
-              {tab.label}
-            </Text>
-            {isActive && (
-              <View
-                style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: 2,
-                  backgroundColor: tokens.color.brand,
-                  marginTop: 2,
-                }}
-              />
+            {activeIndex >= 0 && tabWidth > 0 && (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  bottomNavStyles.selection,
+                  {
+                    width: tabWidth - 8,
+                    transform: [{ translateX: indicatorX }],
+                  },
+                ]}
+              >
+                {nativeGlass && (
+                  <GlassView
+                    pointerEvents="none"
+                    glassEffectStyle="clear"
+                    colorScheme="light"
+                    style={StyleSheet.absoluteFill}
+                  />
+                )}
+                <View pointerEvents="none" style={bottomNavStyles.selectionInnerRim} />
+                <View pointerEvents="none" style={bottomNavStyles.selectionGlint} />
+              </Animated.View>
             )}
-          </ScalePressable>
-        );
-      })}
+            {tabs.map((tab, index) => {
+              const isActive = index === activeIndex;
+              return (
+                <ScalePressable
+                  key={tab.key}
+                  testID={`app-nav-${tab.key}`}
+                  onPress={() => onNavigate(tab.path)}
+                  scaleTo={0.94}
+                  style={bottomNavStyles.tab}
+                  accessibilityRole="tab"
+                  accessibilityLabel={tab.label}
+                  accessibilityState={{ selected: isActive }}
+                >
+                  <Icon
+                    name={tab.icon}
+                    size={22}
+                    color={isActive ? "#17212B" : "rgba(24,31,38,0.7)"}
+                    active={isActive}
+                  />
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.86}
+                    style={[bottomNavStyles.label, isActive && bottomNavStyles.activeLabel]}
+                  >
+                    {tab.label}
+                  </Text>
+                </ScalePressable>
+              );
+            })}
+          </View>
+        </View>
+      </View>
     </View>
   );
 }

@@ -244,7 +244,7 @@ export default function Home() {
       <ScrollView
         testID="student-home"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT" ? 116 : 28 }}
+        contentContainerStyle={{ paddingBottom: 116 }}
       >
         {/* Top Deep Navy/Teal Banner matching Screenshot */}
         <FadeSlideIn delay={0} duration={400} fromY={-12}>
