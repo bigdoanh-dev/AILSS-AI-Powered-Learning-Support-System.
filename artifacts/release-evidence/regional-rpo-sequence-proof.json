@@ -21,7 +21,7 @@
     "firstMissingSequence": "REGION_SEQ_009581",
     "lastMissingSequence": "REGION_SEQ_009790",
     "measuredReplicationDeltaMs": 420,
-    "derivedCatastrophicRpoSeconds": 0.420
+    "derivedCatastrophicRpoSeconds": 0.42
   },
   "gracefulFailoverValidation": {
     "drainBufferAllowed": true,

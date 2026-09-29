@@ -61,7 +61,7 @@
       {
         "domain": "LEARNING",
         "targetSlo": 0.9995,
-        "observedSli": 0.99980,
+        "observedSli": 0.9998,
         "budgetConsumedPercent": "40.00%",
         "budgetRemainingPercent": "60.00%",
         "status": "NORMAL"
@@ -76,40 +76,40 @@
       },
       {
         "domain": "LTI",
-        "targetSlo": 0.9990,
-        "observedSli": 0.99960,
+        "targetSlo": 0.999,
+        "observedSli": 0.9996,
         "budgetConsumedPercent": "40.00%",
         "budgetRemainingPercent": "60.00%",
         "status": "NORMAL"
       },
       {
         "domain": "SCIM",
-        "targetSlo": 0.9950,
-        "observedSli": 0.99850,
+        "targetSlo": 0.995,
+        "observedSli": 0.9985,
         "budgetConsumedPercent": "30.00%",
         "budgetRemainingPercent": "70.00%",
         "status": "NORMAL"
       },
       {
         "domain": "AI_RAG",
-        "targetSlo": 0.9900,
-        "observedSli": 0.99720,
+        "targetSlo": 0.99,
+        "observedSli": 0.9972,
         "budgetConsumedPercent": "28.00%",
         "budgetRemainingPercent": "72.00%",
         "status": "NORMAL"
       },
       {
         "domain": "CREDENTIAL_VERIFICATION",
-        "targetSlo": 0.9990,
-        "observedSli": 0.99980,
+        "targetSlo": 0.999,
+        "observedSli": 0.9998,
         "budgetConsumedPercent": "20.00%",
         "budgetRemainingPercent": "80.00%",
         "status": "NORMAL"
       },
       {
         "domain": "NOTIFICATION",
-        "targetSlo": 0.9990,
-        "observedSli": 1.00000,
+        "targetSlo": 0.999,
+        "observedSli": 1.0,
         "budgetConsumedPercent": "0.00%",
         "budgetRemainingPercent": "100.00%",
         "status": "NORMAL"
@@ -233,11 +233,7 @@
     "institutionPolicyReference": "INST-ACADEMIC-INTEGRITY-RECORD-RETENTION-POLICY",
     "logRedactionPaths": 51,
     "piiLeaks": 0,
-    "dsrVerified": [
-      "DATA_PORTABILITY_EXPORT",
-      "DATA_RECTIFICATION",
-      "DATA_DEACTIVATION"
-    ],
+    "dsrVerified": ["DATA_PORTABILITY_EXPORT", "DATA_RECTIFICATION", "DATA_DEACTIVATION"],
     "legalHoldAndAuditRetentionEnforced": true
   },
   "changeFailureRate": {

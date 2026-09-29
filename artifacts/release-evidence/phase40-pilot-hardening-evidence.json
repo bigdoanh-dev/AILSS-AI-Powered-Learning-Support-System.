@@ -112,10 +112,7 @@
         "formula": "M(x) = f(x) + Lap(Δf / ε)",
         "contributionBounding": {
           "aggregationMethod": "USER_MEAN_SCALAR_CLAMPED",
-          "clampingBounds": [
-            0,
-            100
-          ],
+          "clampingBounds": [0, 100],
           "maxRowsPerUser": 10,
           "duplicateHandling": "LATEST_SUBMISSION",
           "joinSafetyGuaranteed": true,
@@ -198,12 +195,7 @@
       "calibrationDataset": {
         "datasetVersion": "mastery-calibration-v2",
         "totalTestCases": 20,
-        "coursesCovered": [
-          "CS101",
-          "MATH201",
-          "DATA301",
-          "PHYS101"
-        ],
+        "coursesCovered": ["CS101", "MATH201", "DATA301", "PHYS101"],
         "passedCases": 20,
         "failedCases": 0,
         "unexpectedStateJumps": 0,
@@ -308,13 +300,7 @@
     },
     "featureFlags": {
       "resolver": "TenantFeatureFlagResolver",
-      "rolloutModes": [
-        "OFF",
-        "INTERNAL",
-        "PILOT_TENANTS",
-        "PERCENT_ROLLOUT",
-        "ON"
-      ],
+      "rolloutModes": ["OFF", "INTERNAL", "PILOT_TENANTS", "PERCENT_ROLLOUT", "ON"],
       "flagsConfigured": [
         {
           "flag": "ADAPTIVE_V2",
@@ -421,13 +407,7 @@
         "Tenant Scoping",
         "Strict Sensitive Scope Guard"
       ],
-      "forbiddenScopes": [
-        "GRADES",
-        "CREDENTIALS",
-        "SECURITY_CONTROLS",
-        "PAYMENTS",
-        "AUTHORIZATION"
-      ],
+      "forbiddenScopes": ["GRADES", "CREDENTIALS", "SECURITY_CONTROLS", "PAYMENTS", "AUTHORIZATION"],
       "service": "apps/learning-service/src/experimentation/product-experimentation-service.ts"
     }
   },

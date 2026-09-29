@@ -13,14 +13,14 @@ Date: 2026-09-23 (Asia/Ho_Chi_Minh). This is a working-tree report, **not** an R
 
 ## Verified locally
 
-| Gate | Result | Evidence |
-| --- | --- | --- |
-| Local positive runtime seed | Pass: entitlement, scheduled quiz, Mastery, durable Study Plan, requirement and schedule sources, material tool and citation | `artifacts/release-evidence/revision-l/positive-runtime.json` |
-| Browser positive + degraded paths | Pass: login, Study Plan, AI citation, quiz submission, asynchronous plan change, Learning-down, AI-down; 32 BFF requests | `artifacts/release-evidence/revision-l/browser/` |
-| Browser feedback loop | Real attempt `74a5a898-0097-4cae-a34a-f600c1f3156f`; plan ID changed and item count 4 → 7 | `artifacts/release-evidence/revision-l/browser/feedback-loop.json` |
-| Clean-volume Cassandra bootstrap | Pass: 50 migrations, 8 keyspaces, schema agreement and required Phase 40 tables; disposable container/volume removed | `pnpm verify:clean-cassandra-bootstrap` output on 2026-09-23 |
-| Canonical test discovery | 213 unique suites, 1,474 unique tests, 1,474 passed, 0 failed/skipped/duplicates | `artifacts/release-evidence/rc5-test-discovery.json` |
-| Typecheck, Web build, no-new-issues lint | Pass in this working tree | command output from this revision |
+| Gate                                     | Result                                                                                                                       | Evidence                                                           |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Local positive runtime seed              | Pass: entitlement, scheduled quiz, Mastery, durable Study Plan, requirement and schedule sources, material tool and citation | `artifacts/release-evidence/revision-l/positive-runtime.json`      |
+| Browser positive + degraded paths        | Pass: login, Study Plan, AI citation, quiz submission, asynchronous plan change, Learning-down, AI-down; 32 BFF requests     | `artifacts/release-evidence/revision-l/browser/`                   |
+| Browser feedback loop                    | Real attempt `74a5a898-0097-4cae-a34a-f600c1f3156f`; plan ID changed and item count 4 → 7                                    | `artifacts/release-evidence/revision-l/browser/feedback-loop.json` |
+| Clean-volume Cassandra bootstrap         | Pass: 50 migrations, 8 keyspaces, schema agreement and required Phase 40 tables; disposable container/volume removed         | `pnpm verify:clean-cassandra-bootstrap` output on 2026-09-23       |
+| Canonical test discovery                 | 213 unique suites, 1,474 unique tests, 1,474 passed, 0 failed/skipped/duplicates                                             | `artifacts/release-evidence/rc5-test-discovery.json`               |
+| Typecheck, Web build, no-new-issues lint | Pass in this working tree                                                                                                    | command output from this revision                                  |
 
 The earlier **1,028** was described as “full repository” incorrectly: it represented an earlier root-only run. The earlier reconciled **1,451** was a historical all-group snapshot. Current runner discovery is 1,474 after subsequent test additions and four browser assertions. The current root Vitest plus migration groups total 1,033; the release number is the all-group unique count, not a root-only number.
 

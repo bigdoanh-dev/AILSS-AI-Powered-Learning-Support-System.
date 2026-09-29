@@ -196,15 +196,48 @@
       "correctionConfirmed": "All references to Article 26.3 as the data definition clause have been excised."
     },
     "governanceMetadata": [
-      { "dataCategory": "USER_PERSONAL_DATA", "legalReference": "Decree 53/2022/ND-CP Article 26(1)(a) & Article 26(2)", "applicableEntityType": "DOMESTIC_ENTERPRISE", "policyVersion": "v2.1", "effectiveDate": "2022-10-01", "approvedByReference": "LEGAL-GOV-2026-09-01" },
-      { "dataCategory": "USER_GENERATED_ACCOUNT_LOGS", "legalReference": "Decree 53/2022/ND-CP Article 26(1)(b) & Article 26(2)", "applicableEntityType": "DOMESTIC_ENTERPRISE", "policyVersion": "v2.1", "effectiveDate": "2022-10-01", "approvedByReference": "LEGAL-GOV-2026-09-01" },
-      { "dataCategory": "PAYMENT_TRANSACTION_DATA", "legalReference": "Decree 53/2022/ND-CP Article 26(1)(b); Law on Accounting", "applicableEntityType": "DOMESTIC_ENTERPRISE", "policyVersion": "v2.1", "effectiveDate": "2022-10-01", "approvedByReference": "LEGAL-GOV-2026-09-01" }
+      {
+        "dataCategory": "USER_PERSONAL_DATA",
+        "legalReference": "Decree 53/2022/ND-CP Article 26(1)(a) & Article 26(2)",
+        "applicableEntityType": "DOMESTIC_ENTERPRISE",
+        "policyVersion": "v2.1",
+        "effectiveDate": "2022-10-01",
+        "approvedByReference": "LEGAL-GOV-2026-09-01"
+      },
+      {
+        "dataCategory": "USER_GENERATED_ACCOUNT_LOGS",
+        "legalReference": "Decree 53/2022/ND-CP Article 26(1)(b) & Article 26(2)",
+        "applicableEntityType": "DOMESTIC_ENTERPRISE",
+        "policyVersion": "v2.1",
+        "effectiveDate": "2022-10-01",
+        "approvedByReference": "LEGAL-GOV-2026-09-01"
+      },
+      {
+        "dataCategory": "PAYMENT_TRANSACTION_DATA",
+        "legalReference": "Decree 53/2022/ND-CP Article 26(1)(b); Law on Accounting",
+        "applicableEntityType": "DOMESTIC_ENTERPRISE",
+        "policyVersion": "v2.1",
+        "effectiveDate": "2022-10-01",
+        "approvedByReference": "LEGAL-GOV-2026-09-01"
+      }
     ]
   },
   "infrastructureAttestations": [
-    { "claim": "Tier III Data Center Certification", "classification": "PROVIDER_ATTESTED", "evidenceReference": "Uptime Institute Facility Certs #VN-TT-2023-01 (Tan Thuan) & #VN-HL-2023-04 (Hoa Lac)" },
-    { "claim": "10 Gbps Dedicated Leased Line with MACsec", "classification": "CONFIG_VERIFIED", "evidenceReference": "Switch port IEEE 802.1AE MACsec telemetry & VNPT leased line SLA contract" },
-    { "claim": "Enterprise NVMe SSD Hardware PLP", "classification": "CONFIG_VERIFIED", "evidenceReference": "Samsung PM9A3 U.2 SMART Attribute #175 (Program Fail Count) & PLP capacitor health telemetry" }
+    {
+      "claim": "Tier III Data Center Certification",
+      "classification": "PROVIDER_ATTESTED",
+      "evidenceReference": "Uptime Institute Facility Certs #VN-TT-2023-01 (Tan Thuan) & #VN-HL-2023-04 (Hoa Lac)"
+    },
+    {
+      "claim": "10 Gbps Dedicated Leased Line with MACsec",
+      "classification": "CONFIG_VERIFIED",
+      "evidenceReference": "Switch port IEEE 802.1AE MACsec telemetry & VNPT leased line SLA contract"
+    },
+    {
+      "claim": "Enterprise NVMe SSD Hardware PLP",
+      "classification": "CONFIG_VERIFIED",
+      "evidenceReference": "Samsung PM9A3 U.2 SMART Attribute #175 (Program Fail Count) & PLP capacitor health telemetry"
+    }
   ],
   "pentestReadiness": {
     "status": "EXTERNAL_ASSESSMENT_PENDING",
@@ -244,16 +277,38 @@
     "signAlgorithm": "Ed25519",
     "signerIdentity": "release-signer@ailss.edu.vn",
     "signature": "30450221008d1c945a271c0821d45bc88ef77960e75a34e029ba6a0f44e21b716f98246d84950220bfe0ede2b6c54725757b649716731e152f353a127a81c049b2de8194c038810284ab91c0",
-    "signedArtifacts": [
-      "d0-storage-topology.json",
-      "phase38-storage-config-rpo-assurance.json"
-    ]
+    "signedArtifacts": ["d0-storage-topology.json", "phase38-storage-config-rpo-assurance.json"]
   },
   "remainingRisks": [
-    { "riskId": "RISK-38-01", "category": "EXTERNAL_PENTEST", "status": "PENDING_SCHEDULED_OCT_2026", "paymentBlocker": true },
-    { "riskId": "RISK-38-02", "category": "PCI_ASV_SCAN", "status": "PENDING_SCHEDULED_SEP_28_2026", "paymentBlocker": true },
-    { "riskId": "RISK-38-03", "category": "PCI_SAQ_A_ACQUIRER_SIGN_OFF", "status": "PENDING_FORMAL_REVIEW", "paymentBlocker": true },
-    { "riskId": "RISK-38-04", "category": "1EDTECH_OFFICIAL_DIRECTORY", "status": "CONFORMANCE_TESTING_IN_PROGRESS", "paymentBlocker": false },
-    { "riskId": "RISK-38-05", "category": "LONG_WINDOW_CALENDAR_HISTORY", "status": "2.003_DAYS_ELAPSED_REQUIRING_14D_28D", "paymentBlocker": false }
+    {
+      "riskId": "RISK-38-01",
+      "category": "EXTERNAL_PENTEST",
+      "status": "PENDING_SCHEDULED_OCT_2026",
+      "paymentBlocker": true
+    },
+    {
+      "riskId": "RISK-38-02",
+      "category": "PCI_ASV_SCAN",
+      "status": "PENDING_SCHEDULED_SEP_28_2026",
+      "paymentBlocker": true
+    },
+    {
+      "riskId": "RISK-38-03",
+      "category": "PCI_SAQ_A_ACQUIRER_SIGN_OFF",
+      "status": "PENDING_FORMAL_REVIEW",
+      "paymentBlocker": true
+    },
+    {
+      "riskId": "RISK-38-04",
+      "category": "1EDTECH_OFFICIAL_DIRECTORY",
+      "status": "CONFORMANCE_TESTING_IN_PROGRESS",
+      "paymentBlocker": false
+    },
+    {
+      "riskId": "RISK-38-05",
+      "category": "LONG_WINDOW_CALENDAR_HISTORY",
+      "status": "2.003_DAYS_ELAPSED_REQUIRING_14D_28D",
+      "paymentBlocker": false
+    }
   ]
 }

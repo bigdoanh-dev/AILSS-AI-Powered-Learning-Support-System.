@@ -20,10 +20,7 @@
       "requiredScope": "identity.logout",
       "requiredRole": ["STUDENT", "LECTURER", "INSTITUTION_ADMIN", "PLATFORM_ADMIN"],
       "tenantEnforcementLocation": "ActorContext & RevocationStore",
-      "testsCoveringRoute": [
-        "tests/security/jwt.test.ts",
-        "tests/security/http.test.ts"
-      ]
+      "testsCoveringRoute": ["tests/security/jwt.test.ts", "tests/security/http.test.ts"]
     },
     {
       "route": "/api/v1/me",
@@ -32,9 +29,7 @@
       "requiredScope": "identity.profile.read",
       "requiredRole": ["STUDENT", "LECTURER", "INSTITUTION_ADMIN", "PLATFORM_ADMIN"],
       "tenantEnforcementLocation": "ActorContext.userId lookup",
-      "testsCoveringRoute": [
-        "tests/security/http.test.ts"
-      ]
+      "testsCoveringRoute": ["tests/security/http.test.ts"]
     },
     {
       "route": "/api/v1/me",
@@ -43,9 +38,7 @@
       "requiredScope": "identity.profile.update",
       "requiredRole": ["STUDENT", "LECTURER", "INSTITUTION_ADMIN", "PLATFORM_ADMIN"],
       "tenantEnforcementLocation": "ActorContext.userId lookup",
-      "testsCoveringRoute": [
-        "tests/security/http.test.ts"
-      ]
+      "testsCoveringRoute": ["tests/security/http.test.ts"]
     },
     {
       "route": "/api/v1/me/password",
@@ -54,9 +47,7 @@
       "requiredScope": "identity.password.change",
       "requiredRole": ["STUDENT", "LECTURER", "INSTITUTION_ADMIN", "PLATFORM_ADMIN"],
       "tenantEnforcementLocation": "ActorContext.userId lookup",
-      "testsCoveringRoute": [
-        "tests/security/http.test.ts"
-      ]
+      "testsCoveringRoute": ["tests/security/http.test.ts"]
     },
     {
       "route": "/api/v1/admin/users",
@@ -89,9 +80,7 @@
       "requiredScope": "storage.file.read",
       "requiredRole": ["STUDENT", "LECTURER", "INSTITUTION_ADMIN", "PLATFORM_ADMIN"],
       "tenantEnforcementLocation": "S3 Object Prefix / Tenant Key Isolation",
-      "testsCoveringRoute": [
-        "tests/security/phase31-blackbox-tenant-penetration.test.ts"
-      ]
+      "testsCoveringRoute": ["tests/security/phase31-blackbox-tenant-penetration.test.ts"]
     },
     {
       "route": "/api/v1/ai/query",
@@ -124,9 +113,7 @@
       "requiredScope": "commerce.payout",
       "requiredRole": ["LECTURER"],
       "tenantEnforcementLocation": "CommercialGate: GATED Fail-Closed Enforcement",
-      "testsCoveringRoute": [
-        "tests/security/phase31-blackbox-tenant-penetration.test.ts"
-      ]
+      "testsCoveringRoute": ["tests/security/phase31-blackbox-tenant-penetration.test.ts"]
     },
     {
       "route": "/api/v1/scim/v2/Users",

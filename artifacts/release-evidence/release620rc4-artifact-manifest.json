@@ -19,94 +19,116 @@
   },
   "runtimeServices": [
     {
-      "service": "api-gateway", "status": "ACTIVE_CHANGED",
-      "repository": "registry.ailss.edu.vn/staging/api-gateway", "imageTag": "v6.2.0-rc.4",
+      "service": "api-gateway",
+      "status": "ACTIVE_CHANGED",
+      "repository": "registry.ailss.edu.vn/staging/api-gateway",
+      "imageTag": "v6.2.0-rc.4",
       "manifestDigest": "sha256:1a84f329bb6d8a24fe72b0c48e5812903ceef74549b803ea406b0d99824c6501",
       "configDigest": "sha256:3bf947ea8d9c612015df3324ceb84291845bb32187f59d47a82c611488c91901",
       "sbomHash": "sha256:7f49c9502ab4d42b938f32810a9fbc7412702a4ecfa88924b10b0d36184a5118",
       "cosignSignature": "sha256:88bc4123ae49d8123fa9420b9802c61453efb7291a82c409861df4b612ea7101.sig"
     },
     {
-      "service": "bff", "status": "ACTIVE_CHANGED",
-      "repository": "registry.ailss.edu.vn/staging/bff", "imageTag": "v6.2.0-rc.4",
+      "service": "bff",
+      "status": "ACTIVE_CHANGED",
+      "repository": "registry.ailss.edu.vn/staging/bff",
+      "imageTag": "v6.2.0-rc.4",
       "manifestDigest": "sha256:2b95c430cc7e9b35af83c1d59f6923014dff085650c914fb517c1e00935d7612",
       "configDigest": "sha256:4ca058fb9e0d723126e04435dfc95302956cc4329806ae58b93d722599da2012",
       "sbomHash": "sha256:8a50da613bc5e53c049043921b00cd8523813b5fd0b99035c21c1e47295b6229",
       "cosignSignature": "sha256:99cd5234bf50e92340ba531ca913d72564fac8302b93d510972ea5c723fb8212.sig"
     },
     {
-      "service": "core-learning", "status": "ACTIVE_CHANGED",
-      "repository": "registry.ailss.edu.vn/staging/core-learning", "imageTag": "v6.2.0-rc.4",
+      "service": "core-learning",
+      "status": "ACTIVE_CHANGED",
+      "repository": "registry.ailss.edu.vn/staging/core-learning",
+      "imageTag": "v6.2.0-rc.4",
       "manifestDigest": "sha256:3ca6d541dd8fa046ba94d2e6007034125e00196761da250c628d2f11046e8723",
       "configDigest": "sha256:5db1690caf1e834237f15546e0da6413067dd5430917bf69ca4e833600eb3123",
       "sbomHash": "sha256:9b61eb724cd6f64d150154a32c11de9634924c60e1ca0146d32d2f58306c7330",
       "cosignSignature": "sha256:00de6345ca61fa3451cb642db024e836750bd9413ca4e621083fb6d8340c9323.sig"
     },
     {
-      "service": "assessment-service", "status": "ACTIVE_CHANGED",
-      "repository": "registry.ailss.edu.vn/staging/assessment-service", "imageTag": "v6.2.0-rc.4",
+      "service": "assessment-service",
+      "status": "ACTIVE_CHANGED",
+      "repository": "registry.ailss.edu.vn/staging/assessment-service",
+      "imageTag": "v6.2.0-rc.4",
       "manifestDigest": "sha256:4db7e652ee90b157cb05e3f7118145236f11207872eb361d739e3022157f9834",
       "configDigest": "sha256:6ec2701db02f945348026657f1eb7524178ee6541028c07adb5f944711fc4234",
       "sbomHash": "sha256:0c72fc835de7075e261265b43d22ef0745035d71f2db1257e43e3069417d8441",
       "cosignSignature": "sha256:11ef7456db720b4562dc753ec135f947861ce0524db5f7321940c7e9451da434.sig"
     },
     {
-      "service": "ai-rag-worker", "status": "ACTIVE_CHANGED",
-      "repository": "registry.ailss.edu.vn/staging/ai-rag-worker", "imageTag": "v6.2.0-rc.4",
+      "service": "ai-rag-worker",
+      "status": "ACTIVE_CHANGED",
+      "repository": "registry.ailss.edu.vn/staging/ai-rag-worker",
+      "imageTag": "v6.2.0-rc.4",
       "manifestDigest": "sha256:5ec8f763ff01c268dc16f408229256347022318983fc472e840f413326800945",
       "configDigest": "sha256:7fd3812ec130a5645913776802fc8635289ff7652139d18bec60a558220d5345",
       "sbomHash": "sha256:1d830d946ef8186f372376c54e33f01856146e8203ec2368f54f4170528e9552",
       "cosignSignature": "sha256:22fa8567ec831c5673ed864fd2460058972df1635ec608432051d8fa562eb545.sig"
     },
     {
-      "service": "classroom-service", "status": "ACTIVE_CHANGED",
-      "repository": "registry.ailss.edu.vn/staging/classroom-service", "imageTag": "v6.2.0-rc.4",
+      "service": "classroom-service",
+      "status": "ACTIVE_CHANGED",
+      "repository": "registry.ailss.edu.vn/staging/classroom-service",
+      "imageTag": "v6.2.0-rc.4",
       "manifestDigest": "sha256:6fd908740012d379ed2705193303674581334290940d583f9510524437911056",
       "configDigest": "sha256:80e4923fd241b67560248879130d9746390008763240e29cfd71b669331e6456",
       "sbomHash": "sha256:2e941ea57f092970483487d65f44012967257f9314fd347906505281639fa663",
       "cosignSignature": "sha256:330b9678fd942d6784fe9750e3571169083e02746fd719543162e90b673fc656.sig"
     },
     {
-      "service": "notification-service", "status": "ACTIVE_CHANGED",
+      "service": "notification-service",
+      "status": "ACTIVE_CHANGED",
       "mergesFrom": ["notification-worker@v6.1.4", "outbox-worker@v6.1.4"],
       "mergeNote": "40.H10: notification-worker (email/push dispatch) and outbox-worker (transactional outbox relay) consolidated into notification-service. No background job responsibilities disappeared.",
-      "repository": "registry.ailss.edu.vn/staging/notification-service", "imageTag": "v6.2.0-rc.4",
+      "repository": "registry.ailss.edu.vn/staging/notification-service",
+      "imageTag": "v6.2.0-rc.4",
       "manifestDigest": "sha256:70ea19851123e480fe3816204414785692445301a51e69400621635548022167",
       "configDigest": "sha256:91f50340e352c78671359980241ea857401119874351f3adf082c770442f7567",
       "sbomHash": "sha256:3fa52fb6801a3a81594598e76055123078368004250e45801761639274a0b774",
       "cosignSignature": "sha256:441ca7890ea53e78950f0861f4682270194f138570e820654273f01c7840d767.sig"
     },
     {
-      "service": "integration-lti-worker", "status": "ACTIVE_UNCHANGED",
+      "service": "integration-lti-worker",
+      "status": "ACTIVE_UNCHANGED",
       "unchangedNote": "No RC4 code changes. Image inherited from 6.1.4 baseline.",
-      "repository": "registry.ailss.edu.vn/staging/integration-lti-worker", "imageTag": "v6.1.4",
+      "repository": "registry.ailss.edu.vn/staging/integration-lti-worker",
+      "imageTag": "v6.1.4",
       "manifestDigest": "sha256:398b1b22998a44d156cb6e729ef5e07661b1736181f7d264583191f63a62886a",
       "configDigest": "sha256:22bc8971f11cb208819543e498da1bc04781ca266a2e411b0e77d446901abcb3",
       "sbomHash": "sha256:spdx-integration-lti-worker-v6.1.4-sbom-sha256",
       "cosignSignature": "sha256:398b1b22998a44d156cb6e729ef5e07661b1736181f7d264583191f63a62886a.sig"
     },
     {
-      "service": "scim-worker", "status": "ACTIVE_UNCHANGED",
+      "service": "scim-worker",
+      "status": "ACTIVE_UNCHANGED",
       "unchangedNote": "No RC4 code changes. Image inherited from 6.1.4 baseline.",
-      "repository": "registry.ailss.edu.vn/staging/scim-worker", "imageTag": "v6.1.4",
+      "repository": "registry.ailss.edu.vn/staging/scim-worker",
+      "imageTag": "v6.1.4",
       "manifestDigest": "sha256:5e66b44f210d7a188f54c9301daec70498b813ec6042a3449cb943dfd71c45d3",
       "configDigest": "sha256:33d7b9200aa9cb14e7a895b6c201a4e5178651d45bc88ef77960e75a34e029ba",
       "sbomHash": "sha256:spdx-scim-worker-v6.1.4-sbom-sha256",
       "cosignSignature": "sha256:5e66b44f210d7a188f54c9301daec70498b813ec6042a3449cb943dfd71c45d3.sig"
     },
     {
-      "service": "credential-service", "status": "ACTIVE_UNCHANGED",
+      "service": "credential-service",
+      "status": "ACTIVE_UNCHANGED",
       "unchangedNote": "No RC4 code changes. Image inherited from 6.1.4 baseline.",
-      "repository": "registry.ailss.edu.vn/staging/credential-service", "imageTag": "v6.1.4",
+      "repository": "registry.ailss.edu.vn/staging/credential-service",
+      "imageTag": "v6.1.4",
       "manifestDigest": "sha256:2d1847cbb0293daee8490a618f3b145efbca851210874ec5392cf996384a861d",
       "configDigest": "sha256:6630f901103bda97127e7d6928e14b8a213961dc8bfa85c57aa93692ea40dd02",
       "sbomHash": "sha256:spdx-credential-service-v6.1.4-sbom-sha256",
       "cosignSignature": "sha256:2d1847cbb0293daee8490a618f3b145efbca851210874ec5392cf996384a861d.sig"
     },
     {
-      "service": "payment-worker", "status": "ACTIVE_UNCHANGED",
+      "service": "payment-worker",
+      "status": "ACTIVE_UNCHANGED",
       "paymentNote": "40.H11: Deployed in FAIL_CLOSED sandbox. All live payment routes return HTTP 503 PAYMENT_NOT_ENABLED_IN_PILOT. COMMERCIAL_PAYMENT_STATUS=PILOT_BLOCKED is a policy gate — not omission from inventory.",
-      "repository": "registry.ailss.edu.vn/staging/payment-worker", "imageTag": "v6.1.4",
+      "repository": "registry.ailss.edu.vn/staging/payment-worker",
+      "imageTag": "v6.1.4",
       "manifestDigest": "sha256:90e1cb2a41768824df9aa9b486256f8f537651a2e7963d41ceb623253b8b1a8f",
       "configDigest": "sha256:77d130a112ec4846f4810f3bb2c48866ad50451a96527baae5573426e95bf081",
       "sbomHash": "sha256:spdx-payment-worker-v6.1.4-sbom-sha256",
@@ -128,8 +150,16 @@
     "entrypointsHash": "sha256:4b9e28f2cf29f44a80695029e0a2e58a74e5b98b975e1f0e495a498b89e81b9e"
   },
   "migrationInventory": {
-    "migration079": { "devStatus": "DEV_DEPLOYED", "stagingStatus": "STAGING_REHEARSED_VERIFIED", "productionStatus": "PRODUCTION_NOT_APPLIED" },
-    "migration080": { "devStatus": "DEV_DEPLOYED", "stagingStatus": "STAGING_REHEARSED_VERIFIED", "productionStatus": "PRODUCTION_NOT_APPLIED" }
+    "migration079": {
+      "devStatus": "DEV_DEPLOYED",
+      "stagingStatus": "STAGING_REHEARSED_VERIFIED",
+      "productionStatus": "PRODUCTION_NOT_APPLIED"
+    },
+    "migration080": {
+      "devStatus": "DEV_DEPLOYED",
+      "stagingStatus": "STAGING_REHEARSED_VERIFIED",
+      "productionStatus": "PRODUCTION_NOT_APPLIED"
+    }
   },
   "stagingDeploymentBindings": {
     "targetCluster": "k8s-staging-vn-south",

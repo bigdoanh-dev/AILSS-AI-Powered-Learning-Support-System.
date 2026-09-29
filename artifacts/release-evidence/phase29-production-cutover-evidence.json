@@ -127,7 +127,7 @@
       },
       {
         "domain": "LTI_AND_WEBHOOKS",
-        "targetSlo": 0.9990,
+        "targetSlo": 0.999,
         "observedSli": 0.9996,
         "budgetConsumedPercent": "40.00%",
         "budgetRemainingPercent": "60.00%",
@@ -136,7 +136,7 @@
       },
       {
         "domain": "AI_STUDY_ASSISTANT",
-        "targetSlo": 0.9900,
+        "targetSlo": 0.99,
         "observedSli": 0.9972,
         "budgetConsumedPercent": "28.00%",
         "budgetRemainingPercent": "72.00%",
@@ -145,7 +145,7 @@
       },
       {
         "domain": "BATCH_AND_OUTBOX_WORKERS",
-        "targetSlo": 0.9990,
+        "targetSlo": 0.999,
         "observedSli": 1.0,
         "budgetConsumedPercent": "0.00%",
         "budgetRemainingPercent": "100.00%",
@@ -153,7 +153,7 @@
       },
       {
         "domain": "DATA_RECONCILIATION",
-        "targetSlo": 0.9950,
+        "targetSlo": 0.995,
         "observedSli": 1.0,
         "budgetConsumedPercent": "0.00%",
         "budgetRemainingPercent": "100.00%",

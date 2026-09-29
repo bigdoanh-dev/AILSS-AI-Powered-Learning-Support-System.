@@ -46,23 +46,23 @@ This increment completes the first required implementation slice: production-rea
 
 ## Required status matrix
 
-| Area | Current status |
-| --- | --- |
-| Adaptive Learning | `PARTIALLY_CONNECTED` |
-| Mastery V2 | `PARTIALLY_CONNECTED` |
-| Study Plan | `PARTIALLY_CONNECTED` |
-| AI Tutor | `PARTIALLY_CONNECTED` |
-| Teacher Copilot | `PARTIALLY_CONNECTED` |
-| Question Bank V2 | `PARTIALLY_CONNECTED` |
-| Institution Onboarding | `PARTIALLY_CONNECTED` |
-| Curriculum Intelligence | `DEFERRED_UNSHIPPED` |
-| Fleet Operations | `DEFERRED_UNSHIPPED` |
-| Advanced Experimentation | `DEFERRED_UNSHIPPED` |
-| Migration 081 | `NOT_EXECUTED_ON_TARGET` |
-| Migration 082 | `NOT_EXECUTED_ON_TARGET` |
-| Migration 083 | `NOT_EXECUTED_ON_TARGET` |
-| SAML external E2E | `EXTERNAL_TARGET_REQUIRED` |
-| LTI external E2E | `EXTERNAL_TARGET_REQUIRED` |
-| Vault target auth | `CODE_READY_TARGET_NOT_CONFIGURED` |
-| Full-stack E2E | `NOT_EXECUTED` |
-| Commercial payment | `BLOCKED` |
+| Area                     | Current status                     |
+| ------------------------ | ---------------------------------- |
+| Adaptive Learning        | `PARTIALLY_CONNECTED`              |
+| Mastery V2               | `PARTIALLY_CONNECTED`              |
+| Study Plan               | `PARTIALLY_CONNECTED`              |
+| AI Tutor                 | `PARTIALLY_CONNECTED`              |
+| Teacher Copilot          | `PARTIALLY_CONNECTED`              |
+| Question Bank V2         | `PARTIALLY_CONNECTED`              |
+| Institution Onboarding   | `PARTIALLY_CONNECTED`              |
+| Curriculum Intelligence  | `DEFERRED_UNSHIPPED`               |
+| Fleet Operations         | `DEFERRED_UNSHIPPED`               |
+| Advanced Experimentation | `DEFERRED_UNSHIPPED`               |
+| Migration 081            | `NOT_EXECUTED_ON_TARGET`           |
+| Migration 082            | `NOT_EXECUTED_ON_TARGET`           |
+| Migration 083            | `NOT_EXECUTED_ON_TARGET`           |
+| SAML external E2E        | `EXTERNAL_TARGET_REQUIRED`         |
+| LTI external E2E         | `EXTERNAL_TARGET_REQUIRED`         |
+| Vault target auth        | `CODE_READY_TARGET_NOT_CONFIGURED` |
+| Full-stack E2E           | `NOT_EXECUTED`                     |
+| Commercial payment       | `BLOCKED`                          |

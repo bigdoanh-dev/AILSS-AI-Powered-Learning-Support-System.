@@ -10,28 +10,28 @@ This recovery pass completed the source/runtime audit, generated the required fe
 
 ## Required status output
 
-| Field | Status | Evidence / reason |
-|---|---|---|
-| PHASE_40_STATUS | `RUNTIME_INTEGRATION_INCOMPLETE` | External and zero-inbound acceptance gates remain open. |
-| RUNTIME_AUDIT_STATUS | `COMPLETE_FOR_CURRENT_SOURCE` | Runtime graph generated under `artifacts/runtime-audit`. |
-| DEAD_CODE_AUDIT_STATUS | `COMPLETE_WITH_OWNER_DECISIONS` | `pnpm audit:dead-code`; high-confidence Phase 39–40 modules classified CONNECT or DEFER. |
-| ADAPTIVE_LEARNING_RUNTIME_STATUS | `DEFERRED_UNSHIPPED` | V2 service has no production controller/repository path. |
-| STUDY_PLAN_RUNTIME_STATUS | `DEFERRED_UNSHIPPED` | Service is in-memory and has no production API importer. |
-| MASTERY_RUNTIME_STATUS | `DEFERRED_UNSHIPPED` | V2 engine is reached only by calibration/evaluation modules. |
-| AI_TUTOR_RUNTIME_STATUS | `PARTIALLY_CONNECTED` | Gateway, API, orchestrator and durable conversation store exist; staging browser/RAG proof is absent. |
-| TEACHER_COPILOT_RUNTIME_STATUS | `DEFERRED_UNSHIPPED` | Service is zero-inbound and Web UI contains local fixtures. |
-| QUESTION_BANK_V2_RUNTIME_STATUS | `DEFERRED_UNSHIPPED` | In-memory service has no production router or durable repository. |
-| CURRICULUM_INTELLIGENCE_RUNTIME_STATUS | `DEFERRED_UNSHIPPED` | In-memory export history; no production API or audited durable export. |
-| INSTITUTION_ONBOARDING_RUNTIME_STATUS | `DEFERRED_UNSHIPPED` | In-memory service and optimistic synthetic connection health. |
-| FLEET_OPERATIONS_RUNTIME_STATUS | `DEFERRED_UNSHIPPED` | No production router, durable audit store, or target adapter. |
-| SAML_EXTERNAL_E2E_STATUS | `EXTERNAL_TARGET_REQUIRED` | Local metadata/ACS runtime exists; no authorized real staging IdP supplied. |
-| LTI_EXTERNAL_E2E_STATUS | `EXTERNAL_TARGET_REQUIRED` | Local OIDC/JWKS/launch runtime exists; no staging LMS registration supplied. |
-| MIGRATION_081_STATUS | `LOCAL_APPLIED_READY` | Local Cassandra backfill is `READY`; DEV/RESEARCH/STAGING/PRODUCTION are not asserted. |
-| MIGRATION_082_STATUS | `LOCAL_APPLIED` | Federation tables verified locally; other environments are not asserted. |
-| STAGING_LOAD_STATUS | `NOT_RUN_NO_AUTHORIZED_TARGET` | Local load evidence exists but is not staging capacity evidence. |
-| VAULT_TARGET_AUTH_STATUS | `CODE_READY_TARGET_NOT_CONFIGURED` | Kubernetes/AppRole/renewal/fail-closed code exists; platform role binding is external. |
-| CONTROLLED_PRODUCT_PILOT_STATUS | `REVOKED` | Candidate classification changed to `RUNTIME_INTEGRATION_INCOMPLETE`. |
-| COMMERCIAL_PAYMENT_STATUS | `PILOT_BLOCKED_FAIL_CLOSED` | No production payment activation was performed. |
+| Field                                  | Status                             | Evidence / reason                                                                                     |
+| -------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| PHASE_40_STATUS                        | `RUNTIME_INTEGRATION_INCOMPLETE`   | External and zero-inbound acceptance gates remain open.                                               |
+| RUNTIME_AUDIT_STATUS                   | `COMPLETE_FOR_CURRENT_SOURCE`      | Runtime graph generated under `artifacts/runtime-audit`.                                              |
+| DEAD_CODE_AUDIT_STATUS                 | `COMPLETE_WITH_OWNER_DECISIONS`    | `pnpm audit:dead-code`; high-confidence Phase 39–40 modules classified CONNECT or DEFER.              |
+| ADAPTIVE_LEARNING_RUNTIME_STATUS       | `DEFERRED_UNSHIPPED`               | V2 service has no production controller/repository path.                                              |
+| STUDY_PLAN_RUNTIME_STATUS              | `DEFERRED_UNSHIPPED`               | Service is in-memory and has no production API importer.                                              |
+| MASTERY_RUNTIME_STATUS                 | `DEFERRED_UNSHIPPED`               | V2 engine is reached only by calibration/evaluation modules.                                          |
+| AI_TUTOR_RUNTIME_STATUS                | `PARTIALLY_CONNECTED`              | Gateway, API, orchestrator and durable conversation store exist; staging browser/RAG proof is absent. |
+| TEACHER_COPILOT_RUNTIME_STATUS         | `DEFERRED_UNSHIPPED`               | Service is zero-inbound and Web UI contains local fixtures.                                           |
+| QUESTION_BANK_V2_RUNTIME_STATUS        | `DEFERRED_UNSHIPPED`               | In-memory service has no production router or durable repository.                                     |
+| CURRICULUM_INTELLIGENCE_RUNTIME_STATUS | `DEFERRED_UNSHIPPED`               | In-memory export history; no production API or audited durable export.                                |
+| INSTITUTION_ONBOARDING_RUNTIME_STATUS  | `DEFERRED_UNSHIPPED`               | In-memory service and optimistic synthetic connection health.                                         |
+| FLEET_OPERATIONS_RUNTIME_STATUS        | `DEFERRED_UNSHIPPED`               | No production router, durable audit store, or target adapter.                                         |
+| SAML_EXTERNAL_E2E_STATUS               | `EXTERNAL_TARGET_REQUIRED`         | Local metadata/ACS runtime exists; no authorized real staging IdP supplied.                           |
+| LTI_EXTERNAL_E2E_STATUS                | `EXTERNAL_TARGET_REQUIRED`         | Local OIDC/JWKS/launch runtime exists; no staging LMS registration supplied.                          |
+| MIGRATION_081_STATUS                   | `LOCAL_APPLIED_READY`              | Local Cassandra backfill is `READY`; DEV/RESEARCH/STAGING/PRODUCTION are not asserted.                |
+| MIGRATION_082_STATUS                   | `LOCAL_APPLIED`                    | Federation tables verified locally; other environments are not asserted.                              |
+| STAGING_LOAD_STATUS                    | `NOT_RUN_NO_AUTHORIZED_TARGET`     | Local load evidence exists but is not staging capacity evidence.                                      |
+| VAULT_TARGET_AUTH_STATUS               | `CODE_READY_TARGET_NOT_CONFIGURED` | Kubernetes/AppRole/renewal/fail-closed code exists; platform role binding is external.                |
+| CONTROLLED_PRODUCT_PILOT_STATUS        | `REVOKED`                          | Candidate classification changed to `RUNTIME_INTEGRATION_INCOMPLETE`.                                 |
+| COMMERCIAL_PAYMENT_STATUS              | `PILOT_BLOCKED_FAIL_CLOSED`        | No production payment activation was performed.                                                       |
 
 ## Changes made
 
@@ -61,18 +61,18 @@ This recovery pass completed the source/runtime audit, generated the required fe
 
 ## High-confidence module decisions
 
-| Module | Decision | Reason |
-|---|---|---|
-| AI Tutor evaluation V1/V2/V3 | DEFER | Benchmark harness, not production runtime. |
-| TeacherCopilotService | DEFER | Zero inbound production import; UI is fixture-backed. |
-| StudyPlanService | DEFER | In-memory state and no router/repository. |
-| LearnerMasteryServiceV2 | DEFER | Used only by calibration modules. |
-| Mastery calibration V1/V2 | DEFER | Evaluation datasets, not runtime. |
-| QuestionBankV2Service | DEFER | In-memory and zero-inbound. |
-| CurriculumIntelligenceService | DEFER | In-memory export audit and zero-inbound. |
-| InstitutionOnboardingV2Service | DEFER | In-memory and returns optimistic connection results. |
-| FleetOperationsService | DEFER | In-memory templates/config and no API/audit persistence. |
-| AI assistant/RAG orchestrator | CONNECT | Production route and durable conversation storage exist; external E2E remains required. |
+| Module                         | Decision | Reason                                                                                  |
+| ------------------------------ | -------- | --------------------------------------------------------------------------------------- |
+| AI Tutor evaluation V1/V2/V3   | DEFER    | Benchmark harness, not production runtime.                                              |
+| TeacherCopilotService          | DEFER    | Zero inbound production import; UI is fixture-backed.                                   |
+| StudyPlanService               | DEFER    | In-memory state and no router/repository.                                               |
+| LearnerMasteryServiceV2        | DEFER    | Used only by calibration modules.                                                       |
+| Mastery calibration V1/V2      | DEFER    | Evaluation datasets, not runtime.                                                       |
+| QuestionBankV2Service          | DEFER    | In-memory and zero-inbound.                                                             |
+| CurriculumIntelligenceService  | DEFER    | In-memory export audit and zero-inbound.                                                |
+| InstitutionOnboardingV2Service | DEFER    | In-memory and returns optimistic connection results.                                    |
+| FleetOperationsService         | DEFER    | In-memory templates/config and no API/audit persistence.                                |
+| AI assistant/RAG orchestrator  | CONNECT  | Production route and durable conversation storage exist; external E2E remains required. |
 
 ## Validation performed
 

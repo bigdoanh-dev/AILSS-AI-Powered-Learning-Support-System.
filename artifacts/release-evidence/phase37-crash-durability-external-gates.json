@@ -34,12 +34,72 @@
   },
   "commitlogAudit": {
     "targetNodes": [
-      { "nodeIp": "10.240.10.11", "datacenter": "vn-south-primary", "rack": "rack-1a", "version": "5.0.2", "commitlogSync": "periodic", "syncPeriodMs": 10000, "storageMedium": "NVMe PCIe Gen4 SSD", "filesystem": "ext4", "mountOptions": "noatime,nodiratime,data=ordered" },
-      { "nodeIp": "10.240.20.11", "datacenter": "vn-south-primary", "rack": "rack-1b", "version": "5.0.2", "commitlogSync": "periodic", "syncPeriodMs": 10000, "storageMedium": "NVMe PCIe Gen4 SSD", "filesystem": "ext4", "mountOptions": "noatime,nodiratime,data=ordered" },
-      { "nodeIp": "10.240.30.11", "datacenter": "vn-south-primary", "rack": "rack-1c", "version": "5.0.2", "commitlogSync": "periodic", "syncPeriodMs": 10000, "storageMedium": "NVMe PCIe Gen4 SSD", "filesystem": "ext4", "mountOptions": "noatime,nodiratime,data=ordered" },
-      { "nodeIp": "10.241.10.11", "datacenter": "vn-north-secondary", "rack": "rack-2a", "version": "5.0.2", "commitlogSync": "periodic", "syncPeriodMs": 10000, "storageMedium": "NVMe PCIe Gen4 SSD", "filesystem": "ext4", "mountOptions": "noatime,nodiratime,data=ordered" },
-      { "nodeIp": "10.241.20.11", "datacenter": "vn-north-secondary", "rack": "rack-2b", "version": "5.0.2", "commitlogSync": "periodic", "syncPeriodMs": 10000, "storageMedium": "NVMe PCIe Gen4 SSD", "filesystem": "ext4", "mountOptions": "noatime,nodiratime,data=ordered" },
-      { "nodeIp": "10.241.30.11", "datacenter": "vn-north-secondary", "rack": "rack-2c", "version": "5.0.2", "commitlogSync": "periodic", "syncPeriodMs": 10000, "storageMedium": "NVMe PCIe Gen4 SSD", "filesystem": "ext4", "mountOptions": "noatime,nodiratime,data=ordered" }
+      {
+        "nodeIp": "10.240.10.11",
+        "datacenter": "vn-south-primary",
+        "rack": "rack-1a",
+        "version": "5.0.2",
+        "commitlogSync": "periodic",
+        "syncPeriodMs": 10000,
+        "storageMedium": "NVMe PCIe Gen4 SSD",
+        "filesystem": "ext4",
+        "mountOptions": "noatime,nodiratime,data=ordered"
+      },
+      {
+        "nodeIp": "10.240.20.11",
+        "datacenter": "vn-south-primary",
+        "rack": "rack-1b",
+        "version": "5.0.2",
+        "commitlogSync": "periodic",
+        "syncPeriodMs": 10000,
+        "storageMedium": "NVMe PCIe Gen4 SSD",
+        "filesystem": "ext4",
+        "mountOptions": "noatime,nodiratime,data=ordered"
+      },
+      {
+        "nodeIp": "10.240.30.11",
+        "datacenter": "vn-south-primary",
+        "rack": "rack-1c",
+        "version": "5.0.2",
+        "commitlogSync": "periodic",
+        "syncPeriodMs": 10000,
+        "storageMedium": "NVMe PCIe Gen4 SSD",
+        "filesystem": "ext4",
+        "mountOptions": "noatime,nodiratime,data=ordered"
+      },
+      {
+        "nodeIp": "10.241.10.11",
+        "datacenter": "vn-north-secondary",
+        "rack": "rack-2a",
+        "version": "5.0.2",
+        "commitlogSync": "periodic",
+        "syncPeriodMs": 10000,
+        "storageMedium": "NVMe PCIe Gen4 SSD",
+        "filesystem": "ext4",
+        "mountOptions": "noatime,nodiratime,data=ordered"
+      },
+      {
+        "nodeIp": "10.241.20.11",
+        "datacenter": "vn-north-secondary",
+        "rack": "rack-2b",
+        "version": "5.0.2",
+        "commitlogSync": "periodic",
+        "syncPeriodMs": 10000,
+        "storageMedium": "NVMe PCIe Gen4 SSD",
+        "filesystem": "ext4",
+        "mountOptions": "noatime,nodiratime,data=ordered"
+      },
+      {
+        "nodeIp": "10.241.30.11",
+        "datacenter": "vn-north-secondary",
+        "rack": "rack-2c",
+        "version": "5.0.2",
+        "commitlogSync": "periodic",
+        "syncPeriodMs": 10000,
+        "storageMedium": "NVMe PCIe Gen4 SSD",
+        "filesystem": "ext4",
+        "mountOptions": "noatime,nodiratime,data=ordered"
+      }
     ],
     "auditFinding": "In the shared cluster, commitlog_sync=periodic (10,000ms) relies on OS page cache. If power/process failure occurs during the 10,000ms buffer window, un-flushed writes acknowledged to clients will be lost upon restart. This is documented as an explicit durability risk for shared nodes."
   },
@@ -100,11 +160,31 @@
   },
   "crashTests": {
     "processCrashMatrix": [
-      { "scenario": "COORDINATOR_KILL_9", "status": "VERIFIED_NO_LOSS", "details": "Coordinator process aborted mid-ACK; client retried with same operationId, completed successfully without double write." },
-      { "scenario": "LOCAL_PRIMARY_REPLICA_CRASH", "status": "VERIFIED_NO_LOSS", "details": "Primary storage replica terminated; secondary DC retained exact state; primary recovered from CommitLog replay." },
-      { "scenario": "SECONDARY_REPLICA_CRASH", "status": "VERIFIED_NO_LOSS", "details": "Secondary DC replica terminated; write safely failed-closed (EACH_QUORUM WriteTimeoutException) without phantom uncommitted state." },
-      { "scenario": "MULTIPLE_REPLICA_CRASH_ACROSS_AZS", "status": "VERIFIED_NO_LOSS", "details": "1 node in vn-south-1a and 1 node in vn-north-2a killed; quorum maintained (2 of 3 in each DC); all writes succeeded." },
-      { "scenario": "ENTIRE_CASSANDRA_PROCESS_RESTART", "status": "VERIFIED_NO_LOSS", "details": "Entire cluster restarted; all 120 D0 batch operations recovered from NVMe durable storage." }
+      {
+        "scenario": "COORDINATOR_KILL_9",
+        "status": "VERIFIED_NO_LOSS",
+        "details": "Coordinator process aborted mid-ACK; client retried with same operationId, completed successfully without double write."
+      },
+      {
+        "scenario": "LOCAL_PRIMARY_REPLICA_CRASH",
+        "status": "VERIFIED_NO_LOSS",
+        "details": "Primary storage replica terminated; secondary DC retained exact state; primary recovered from CommitLog replay."
+      },
+      {
+        "scenario": "SECONDARY_REPLICA_CRASH",
+        "status": "VERIFIED_NO_LOSS",
+        "details": "Secondary DC replica terminated; write safely failed-closed (EACH_QUORUM WriteTimeoutException) without phantom uncommitted state."
+      },
+      {
+        "scenario": "MULTIPLE_REPLICA_CRASH_ACROSS_AZS",
+        "status": "VERIFIED_NO_LOSS",
+        "details": "1 node in vn-south-1a and 1 node in vn-north-2a killed; quorum maintained (2 of 3 in each DC); all writes succeeded."
+      },
+      {
+        "scenario": "ENTIRE_CASSANDRA_PROCESS_RESTART",
+        "status": "VERIFIED_NO_LOSS",
+        "details": "Entire cluster restarted; all 120 D0 batch operations recovered from NVMe durable storage."
+      }
     ]
   },
   "powerTests": {
@@ -177,10 +257,45 @@
     }
   },
   "RPOByClass": {
-    "D0_CRITICAL": { "name": "Critical Academic & Financial Writes", "operations": ["ASSESSMENT_SUBMIT", "GRADE_FINALIZE", "SECURITY_SESSION_REVOKE", "CREDENTIAL_REVOKE", "PAYMENT_CONFIRM", "REFUND_CONFIRM"], "writePolicy": "SYNCHRONOUS_SECONDARY_COMMIT", "replication": "SYNCHRONOUS_EACH_QUORUM", "rpoSeconds": 0, "recoveryMechanism": "Automatic cross-region quorum failover" },
-    "D1_HIGH": { "name": "Educational Integration & Grade Passback", "operations": ["LTI_GRADE_PASSBACK", "SCIM_PROVISIONING"], "writePolicy": "REGIONALLY_DURABLE_JOURNAL", "replication": "ASYNCHRONOUS_REPLICATION_STREAM", "rpoSeconds": 2, "recoveryMechanism": "Outbox replay from secondary region journal" },
-    "D2_STANDARD": { "name": "General Learning Progress & Content", "operations": ["LEARNING_PROGRESS", "COURSE_CONSUMPTION", "FORUM_POSTS"], "writePolicy": "LOCAL_QUORUM", "replication": "ASYNCHRONOUS_STREAM", "rpoSeconds": 5, "recoveryMechanism": "Kafka MirrorMaker 2 stream catch-up" },
-    "D3_RECONSTRUCTABLE": { "name": "Ephemeral Telemetry & UI State", "operations": ["TELEMETRY_RECORD", "SESSION_PRESENCE", "CLICKSTREAM"], "writePolicy": "BEST_EFFORT", "replication": "NONE", "rpoSeconds": 60, "recoveryMechanism": "Reconstructed from client cache or discarded" }
+    "D0_CRITICAL": {
+      "name": "Critical Academic & Financial Writes",
+      "operations": [
+        "ASSESSMENT_SUBMIT",
+        "GRADE_FINALIZE",
+        "SECURITY_SESSION_REVOKE",
+        "CREDENTIAL_REVOKE",
+        "PAYMENT_CONFIRM",
+        "REFUND_CONFIRM"
+      ],
+      "writePolicy": "SYNCHRONOUS_SECONDARY_COMMIT",
+      "replication": "SYNCHRONOUS_EACH_QUORUM",
+      "rpoSeconds": 0,
+      "recoveryMechanism": "Automatic cross-region quorum failover"
+    },
+    "D1_HIGH": {
+      "name": "Educational Integration & Grade Passback",
+      "operations": ["LTI_GRADE_PASSBACK", "SCIM_PROVISIONING"],
+      "writePolicy": "REGIONALLY_DURABLE_JOURNAL",
+      "replication": "ASYNCHRONOUS_REPLICATION_STREAM",
+      "rpoSeconds": 2,
+      "recoveryMechanism": "Outbox replay from secondary region journal"
+    },
+    "D2_STANDARD": {
+      "name": "General Learning Progress & Content",
+      "operations": ["LEARNING_PROGRESS", "COURSE_CONSUMPTION", "FORUM_POSTS"],
+      "writePolicy": "LOCAL_QUORUM",
+      "replication": "ASYNCHRONOUS_STREAM",
+      "rpoSeconds": 5,
+      "recoveryMechanism": "Kafka MirrorMaker 2 stream catch-up"
+    },
+    "D3_RECONSTRUCTABLE": {
+      "name": "Ephemeral Telemetry & UI State",
+      "operations": ["TELEMETRY_RECORD", "SESSION_PRESENCE", "CLICKSTREAM"],
+      "writePolicy": "BEST_EFFORT",
+      "replication": "NONE",
+      "rpoSeconds": 60,
+      "recoveryMechanism": "Reconstructed from client cache or discarded"
+    }
   },
   "platformRPO": {
     "platformDrMaxRpoSeconds": 60,
@@ -199,16 +314,96 @@
     "calendarBackfillProhibited": true
   },
   "dataResidencyMatrix": [
-    { "category": "IDENTITY_DATA", "personalDataClassification": "SENSITIVE_PERSONAL", "businessOwner": "Security & Identity", "residencyPolicy": "DOMESTIC_VIETNAM_ONLY", "legalReference": "Decree 53/2022/ND-CP Article 26.3(a); Cybersecurity Law 2018 Article 26.2", "institutionalRequirement": "MANDATORY_IN_COUNTRY", "retentionPolicy": "Duration of user account lifecycle + 5 years" },
-    { "category": "ACCOUNT_METADATA", "personalDataClassification": "GENERAL_PERSONAL", "businessOwner": "Platform Services", "residencyPolicy": "DOMESTIC_VIETNAM_ONLY", "legalReference": "Decree 53/2022/ND-CP Article 26.3(b)", "institutionalRequirement": "MANDATORY_IN_COUNTRY", "retentionPolicy": "Duration of service provision + 3 years" },
-    { "category": "TELECOM_LOGIN_AUDIT_LOGS", "personalDataClassification": "TECHNICAL_IDENTIFIER", "businessOwner": "Infrastructure & SecOps", "residencyPolicy": "DOMESTIC_VIETNAM_ONLY", "legalReference": "Decree 53/2022/ND-CP Article 26.3(b) (IP, time of login/logout, device)", "institutionalRequirement": "MANDATORY_MINIMUM_12_MONTHS", "retentionPolicy": "12 months minimum pursuant to Article 26.4" },
-    { "category": "PAYMENT_METADATA", "personalDataClassification": "FINANCIAL_TRANSACTION", "businessOwner": "Finance & Commerce", "residencyPolicy": "DOMESTIC_VIETNAM_ONLY", "legalReference": "Decree 53/2022/ND-CP Article 26.3(b) (Credit card/payment info); Law on Accounting", "institutionalRequirement": "MANDATORY_IN_COUNTRY", "retentionPolicy": "10 years statutory tax and financial retention" },
-    { "category": "ACADEMIC_RECORDS_GRADES", "personalDataClassification": "EDUCATIONAL_RECORD", "businessOwner": "Academic Affairs", "residencyPolicy": "DOMESTIC_VIETNAM_PRIMARY", "legalReference": "Law on Higher Education; MOET Circular on Digital Academic Transcripts", "institutionalRequirement": "INSTITUTIONAL_DATA_SOVEREIGNTY_AGREEMENT", "retentionPolicy": "Permanent academic record storage" },
-    { "category": "DIGITAL_CREDENTIALS_VC", "personalDataClassification": "ACADEMIC_CREDENTIAL", "businessOwner": "Registrar Office", "residencyPolicy": "DOMESTIC_ISSUANCE_GLOBAL_VERIFICATION", "legalReference": "Law on Electronic Transactions 2023; W3C VC & Open Badges standard", "institutionalRequirement": "ISSUER_SOVEREIGNTY_PUBLIC_VERIFICATION", "retentionPolicy": "Permanent cryptographic ledger" },
-    { "category": "LEARNING_CONTENT_CURRICULUM", "personalDataClassification": "NON_PERSONAL_IP", "businessOwner": "Instructional Design", "residencyPolicy": "DOMESTIC_OPTIMIZED_GLOBAL_CDN", "legalReference": "Intellectual Property Law 2005 (Amended 2022)", "institutionalRequirement": "LOW_LATENCY_DOMESTIC_EDGE", "retentionPolicy": "Course edition lifecycle" },
-    { "category": "ASSESSMENT_ANSWERS_SCRIPTS", "personalDataClassification": "STUDENT_WORK", "businessOwner": "Testing & Examination Center", "residencyPolicy": "DOMESTIC_VIETNAM_PRIMARY", "legalReference": "Examination Regulations (MOET); Institutional Academic Integrity Policy", "institutionalRequirement": "CONFIDENTIAL_DOMESTIC_EXAM_ARCHIVE", "retentionPolicy": "5 years after course graduation" },
-    { "category": "AI_TUTOR_CONVERSATIONS", "personalDataClassification": "USER_GENERATED_CONTENT", "businessOwner": "AI Lab & Learning Science", "residencyPolicy": "DOMESTIC_VIETNAM_PRIMARY", "legalReference": "Personal Data Protection Decree 13/2023/ND-CP", "institutionalRequirement": "ANONYMIZED_FOR_RESEARCH", "retentionPolicy": "24 months, subject to user erasure requests" },
-    { "category": "PERFORMANCE_TELEMETRY", "personalDataClassification": "ANONYMIZED_METRICS", "businessOwner": "Platform SRE", "residencyPolicy": "GLOBAL_MONITORING_FABRIC", "legalReference": "Not regulated by Decree 53 data localization (aggregated technical metric)", "institutionalRequirement": "OPERATIONAL_OBSERVABILITY", "retentionPolicy": "90 days high-resolution, 13 months downsampled" }
+    {
+      "category": "IDENTITY_DATA",
+      "personalDataClassification": "SENSITIVE_PERSONAL",
+      "businessOwner": "Security & Identity",
+      "residencyPolicy": "DOMESTIC_VIETNAM_ONLY",
+      "legalReference": "Decree 53/2022/ND-CP Article 26.3(a); Cybersecurity Law 2018 Article 26.2",
+      "institutionalRequirement": "MANDATORY_IN_COUNTRY",
+      "retentionPolicy": "Duration of user account lifecycle + 5 years"
+    },
+    {
+      "category": "ACCOUNT_METADATA",
+      "personalDataClassification": "GENERAL_PERSONAL",
+      "businessOwner": "Platform Services",
+      "residencyPolicy": "DOMESTIC_VIETNAM_ONLY",
+      "legalReference": "Decree 53/2022/ND-CP Article 26.3(b)",
+      "institutionalRequirement": "MANDATORY_IN_COUNTRY",
+      "retentionPolicy": "Duration of service provision + 3 years"
+    },
+    {
+      "category": "TELECOM_LOGIN_AUDIT_LOGS",
+      "personalDataClassification": "TECHNICAL_IDENTIFIER",
+      "businessOwner": "Infrastructure & SecOps",
+      "residencyPolicy": "DOMESTIC_VIETNAM_ONLY",
+      "legalReference": "Decree 53/2022/ND-CP Article 26.3(b) (IP, time of login/logout, device)",
+      "institutionalRequirement": "MANDATORY_MINIMUM_12_MONTHS",
+      "retentionPolicy": "12 months minimum pursuant to Article 26.4"
+    },
+    {
+      "category": "PAYMENT_METADATA",
+      "personalDataClassification": "FINANCIAL_TRANSACTION",
+      "businessOwner": "Finance & Commerce",
+      "residencyPolicy": "DOMESTIC_VIETNAM_ONLY",
+      "legalReference": "Decree 53/2022/ND-CP Article 26.3(b) (Credit card/payment info); Law on Accounting",
+      "institutionalRequirement": "MANDATORY_IN_COUNTRY",
+      "retentionPolicy": "10 years statutory tax and financial retention"
+    },
+    {
+      "category": "ACADEMIC_RECORDS_GRADES",
+      "personalDataClassification": "EDUCATIONAL_RECORD",
+      "businessOwner": "Academic Affairs",
+      "residencyPolicy": "DOMESTIC_VIETNAM_PRIMARY",
+      "legalReference": "Law on Higher Education; MOET Circular on Digital Academic Transcripts",
+      "institutionalRequirement": "INSTITUTIONAL_DATA_SOVEREIGNTY_AGREEMENT",
+      "retentionPolicy": "Permanent academic record storage"
+    },
+    {
+      "category": "DIGITAL_CREDENTIALS_VC",
+      "personalDataClassification": "ACADEMIC_CREDENTIAL",
+      "businessOwner": "Registrar Office",
+      "residencyPolicy": "DOMESTIC_ISSUANCE_GLOBAL_VERIFICATION",
+      "legalReference": "Law on Electronic Transactions 2023; W3C VC & Open Badges standard",
+      "institutionalRequirement": "ISSUER_SOVEREIGNTY_PUBLIC_VERIFICATION",
+      "retentionPolicy": "Permanent cryptographic ledger"
+    },
+    {
+      "category": "LEARNING_CONTENT_CURRICULUM",
+      "personalDataClassification": "NON_PERSONAL_IP",
+      "businessOwner": "Instructional Design",
+      "residencyPolicy": "DOMESTIC_OPTIMIZED_GLOBAL_CDN",
+      "legalReference": "Intellectual Property Law 2005 (Amended 2022)",
+      "institutionalRequirement": "LOW_LATENCY_DOMESTIC_EDGE",
+      "retentionPolicy": "Course edition lifecycle"
+    },
+    {
+      "category": "ASSESSMENT_ANSWERS_SCRIPTS",
+      "personalDataClassification": "STUDENT_WORK",
+      "businessOwner": "Testing & Examination Center",
+      "residencyPolicy": "DOMESTIC_VIETNAM_PRIMARY",
+      "legalReference": "Examination Regulations (MOET); Institutional Academic Integrity Policy",
+      "institutionalRequirement": "CONFIDENTIAL_DOMESTIC_EXAM_ARCHIVE",
+      "retentionPolicy": "5 years after course graduation"
+    },
+    {
+      "category": "AI_TUTOR_CONVERSATIONS",
+      "personalDataClassification": "USER_GENERATED_CONTENT",
+      "businessOwner": "AI Lab & Learning Science",
+      "residencyPolicy": "DOMESTIC_VIETNAM_PRIMARY",
+      "legalReference": "Personal Data Protection Decree 13/2023/ND-CP",
+      "institutionalRequirement": "ANONYMIZED_FOR_RESEARCH",
+      "retentionPolicy": "24 months, subject to user erasure requests"
+    },
+    {
+      "category": "PERFORMANCE_TELEMETRY",
+      "personalDataClassification": "ANONYMIZED_METRICS",
+      "businessOwner": "Platform SRE",
+      "residencyPolicy": "GLOBAL_MONITORING_FABRIC",
+      "legalReference": "Not regulated by Decree 53 data localization (aggregated technical metric)",
+      "institutionalRequirement": "OPERATIONAL_OBSERVABILITY",
+      "retentionPolicy": "90 days high-resolution, 13 months downsampled"
+    }
   ],
   "topologyEvidence": {
     "datacenterCertifications": {
@@ -279,16 +474,38 @@
     "signAlgorithm": "Ed25519",
     "signerIdentity": "release-signer@ailss.edu.vn",
     "evidenceSignature": "3045022100e4b891a271c0821d45bc88ef77960e75a34e029ba6a0f44e21b716f98246d84950220398b1b22998a44d156cb6e729ef5e07661b1736181f7d264583191f63a62886a",
-    "signedArtifacts": [
-      "release614-deployment-timeline.json",
-      "phase37-crash-durability-external-gates.json"
-    ]
+    "signedArtifacts": ["release614-deployment-timeline.json", "phase37-crash-durability-external-gates.json"]
   },
   "remainingRisks": [
-    { "riskId": "RISK-37-01", "category": "EXTERNAL_PENTEST", "status": "PENDING_SCHEDULED_OCT_2026", "paymentBlocker": true },
-    { "riskId": "RISK-37-02", "category": "ASV_VULNERABILITY_SCAN", "status": "PENDING_SCHEDULED_SEP_28_2026", "paymentBlocker": true },
-    { "riskId": "RISK-37-03", "category": "PCI_SAQ_A_FORMAL_SIGN_OFF", "status": "PENDING_ACQUIRING_BANK_REVIEW", "paymentBlocker": true },
-    { "riskId": "RISK-37-04", "category": "1EDTECH_OFFICIAL_DIRECTORY", "status": "CONFORMANCE_TESTING_IN_PROGRESS", "paymentBlocker": false },
-    { "riskId": "RISK-37-05", "category": "LONG_WINDOW_CALENDAR_HISTORY", "status": "2.48_DAYS_ELAPSED_REQUIRING_14D_28D", "paymentBlocker": false }
+    {
+      "riskId": "RISK-37-01",
+      "category": "EXTERNAL_PENTEST",
+      "status": "PENDING_SCHEDULED_OCT_2026",
+      "paymentBlocker": true
+    },
+    {
+      "riskId": "RISK-37-02",
+      "category": "ASV_VULNERABILITY_SCAN",
+      "status": "PENDING_SCHEDULED_SEP_28_2026",
+      "paymentBlocker": true
+    },
+    {
+      "riskId": "RISK-37-03",
+      "category": "PCI_SAQ_A_FORMAL_SIGN_OFF",
+      "status": "PENDING_ACQUIRING_BANK_REVIEW",
+      "paymentBlocker": true
+    },
+    {
+      "riskId": "RISK-37-04",
+      "category": "1EDTECH_OFFICIAL_DIRECTORY",
+      "status": "CONFORMANCE_TESTING_IN_PROGRESS",
+      "paymentBlocker": false
+    },
+    {
+      "riskId": "RISK-37-05",
+      "category": "LONG_WINDOW_CALENDAR_HISTORY",
+      "status": "2.48_DAYS_ELAPSED_REQUIRING_14D_28D",
+      "paymentBlocker": false
+    }
   ]
 }

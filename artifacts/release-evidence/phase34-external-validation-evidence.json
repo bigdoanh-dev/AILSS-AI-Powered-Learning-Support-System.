@@ -108,12 +108,7 @@
     ]
   },
   "D0Policy": {
-    "implementedTiers": [
-      "D0_CRITICAL",
-      "D1_HIGH",
-      "D2_STANDARD",
-      "D3_RECONSTRUCTABLE"
-    ],
+    "implementedTiers": ["D0_CRITICAL", "D1_HIGH", "D2_STANDARD", "D3_RECONSTRUCTABLE"],
     "d0Operations": [
       "ASSESSMENT_SUBMIT",
       "GRADE_FINALIZE",
@@ -300,7 +295,7 @@
     "costPerThousandRequestsUsd": 1.78,
     "costPerAiQueryUsd": 0.024,
     "costPerTenantUsd": 1340.08,
-    "incrementalD0DurabilityCostUsdPerMonth": 42.50
+    "incrementalD0DurabilityCostUsdPerMonth": 42.5
   },
   "signedEvidence": {
     "signerId": "release-signer@ailss.edu.vn",

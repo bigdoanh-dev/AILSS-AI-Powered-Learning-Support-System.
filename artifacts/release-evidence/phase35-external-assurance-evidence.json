@@ -143,7 +143,7 @@
     "costPerActiveUserUsd": 11.96,
     "costPerAiQueryUsd": 0.024,
     "costPerTenantUsd": 1340.08,
-    "incrementalD0DurabilityCostUsdPerMonth": 42.50
+    "incrementalD0DurabilityCostUsdPerMonth": 42.5
   },
   "D0Backend": {
     "localArchitecture": "CASSANDRA_COMMITLOG_AND_DURABLE_JOURNAL_TABLE",
@@ -194,7 +194,13 @@
     "byOperation": {
       "ASSESSMENT_SUBMIT": { "p50Ms": 38, "p95Ms": 64, "p99Ms": 89, "retryRate": 0.0, "timeoutRate": 0.0 },
       "GRADE_FINALIZE": { "p50Ms": 37, "p95Ms": 62, "p99Ms": 88, "retryRate": 0.0, "timeoutRate": 0.0 },
-      "SECURITY_SESSION_REVOKE": { "p50Ms": 35, "p95Ms": 60, "p99Ms": 85, "retryRate": 0.0, "timeoutRate": 0.0 },
+      "SECURITY_SESSION_REVOKE": {
+        "p50Ms": 35,
+        "p95Ms": 60,
+        "p99Ms": 85,
+        "retryRate": 0.0,
+        "timeoutRate": 0.0
+      },
       "CREDENTIAL_REVOKE": { "p50Ms": 36, "p95Ms": 61, "p99Ms": 86, "retryRate": 0.0, "timeoutRate": 0.0 },
       "PAYMENT_CONFIRM": { "p50Ms": 39, "p95Ms": 66, "p99Ms": 91, "retryRate": 0.0, "timeoutRate": 0.0 },
       "REFUND_CONFIRM": { "p50Ms": 38, "p95Ms": 65, "p99Ms": 90, "retryRate": 0.0, "timeoutRate": 0.0 }

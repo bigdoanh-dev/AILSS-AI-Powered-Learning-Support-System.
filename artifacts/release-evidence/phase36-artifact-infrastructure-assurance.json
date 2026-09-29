@@ -99,12 +99,36 @@
       "digest": "sha256:5bd706c4fc4781cb7b719aa436e7fb86724db86f613f2601bb4506e9006dcf06",
       "layerCount": 6,
       "layers": [
-        { "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip", "digest": "sha256:2c307e5d2639cfc1a5b88f344cb89d9a117b35bc2a6d7f3fb8d4d84c0c7a52e0", "size": 3412089 },
-        { "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip", "digest": "sha256:4f8e6c7d12a9b341f5a89b027d14e59c118e6b829d10e53a8f9c11234b6789a0", "size": 194512 },
-        { "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip", "digest": "sha256:7b1e4c9a81f3d240e5b98c114e7a209b119d8c728a01f42b9e8d00123c5678b1", "size": 42109812 },
-        { "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip", "digest": "sha256:9c2f5b8a70e2d131f4a97b205e6c118a008c7b617b10f31a8d7e99012b4567c2", "size": 1540980 },
-        { "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip", "digest": "sha256:1a3d6e9b60f1c242e3b88a106f5c007a997b6a506a01e20a7c6d88011a3456d3", "size": 8920194 },
-        { "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip", "digest": "sha256:3b4e7f8c51a2b133f2a77b015e4c998a886a5b415a90d11a6b5c77010a2345e4", "size": 240182 }
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:2c307e5d2639cfc1a5b88f344cb89d9a117b35bc2a6d7f3fb8d4d84c0c7a52e0",
+          "size": 3412089
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:4f8e6c7d12a9b341f5a89b027d14e59c118e6b829d10e53a8f9c11234b6789a0",
+          "size": 194512
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:7b1e4c9a81f3d240e5b98c114e7a209b119d8c728a01f42b9e8d00123c5678b1",
+          "size": 42109812
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:9c2f5b8a70e2d131f4a97b205e6c118a008c7b617b10f31a8d7e99012b4567c2",
+          "size": 1540980
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:1a3d6e9b60f1c242e3b88a106f5c007a997b6a506a01e20a7c6d88011a3456d3",
+          "size": 8920194
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:3b4e7f8c51a2b133f2a77b015e4c998a886a5b415a90d11a6b5c77010a2345e4",
+          "size": 240182
+        }
       ]
     },
     "builderIdentity": "ailss-ci-runner-cluster-04",
@@ -475,11 +499,7 @@
     "status": "PENDING",
     "asvProvider": "Qualys PCI ASV Cloud Service",
     "scheduledDate": "2026-09-28T02:00:00Z",
-    "scanTargets": [
-      "https://api.ailss.edu.vn",
-      "https://auth.ailss.edu.vn",
-      "https://app.ailss.edu.vn"
-    ],
+    "scanTargets": ["https://api.ailss.edu.vn", "https://auth.ailss.edu.vn", "https://app.ailss.edu.vn"],
     "previousInternalScanResult": "CLEAN_ZERO_FAILURES",
     "formalAsvReportReference": "PENDING_SCAN_EXECUTION"
   },

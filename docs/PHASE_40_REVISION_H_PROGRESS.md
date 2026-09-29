@@ -33,12 +33,12 @@ This revision increment implements the Assessment-to-Mastery write path and clos
 - Verified migration 083 columns on mastery and Study Plan status tables.
 - Real write/read/delete probe against `mastery_ingestion_by_event`: PASS.
 
-| Migration | LOCAL | DEV | RESEARCH | STAGING | PRODUCTION |
-| --- | --- | --- | --- | --- | --- |
-| 081 | APPLIED_BY_LOCAL_BOOTSTRAP | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET |
-| 082 | APPLIED_BY_LOCAL_BOOTSTRAP | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET |
-| 083 | DEPLOYED_VERIFIED | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET |
-| 084 | DEPLOYED_VERIFIED | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET |
+| Migration | LOCAL                      | DEV                    | RESEARCH               | STAGING                | PRODUCTION             |
+| --------- | -------------------------- | ---------------------- | ---------------------- | ---------------------- | ---------------------- |
+| 081       | APPLIED_BY_LOCAL_BOOTSTRAP | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET |
+| 082       | APPLIED_BY_LOCAL_BOOTSTRAP | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET |
+| 083       | DEPLOYED_VERIFIED          | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET |
+| 084       | DEPLOYED_VERIFIED          | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET | NOT_EXECUTED_ON_TARGET |
 
 ## Verification
 

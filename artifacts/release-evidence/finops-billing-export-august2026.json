@@ -7,10 +7,10 @@
   "currency": "USD",
   "totalBilledAmount": 4185.42,
   "categoryBreakdown": {
-    "compute": 1210.30,
+    "compute": 1210.3,
     "cassandraNvmeStorage": 1820.12,
-    "interRegionNetworkAndDns": 310.50,
-    "aiLlmInference": 844.50
+    "interRegionNetworkAndDns": 310.5,
+    "aiLlmInference": 844.5
   },
   "unitCostMetrics": {
     "costPerActiveUser": {
