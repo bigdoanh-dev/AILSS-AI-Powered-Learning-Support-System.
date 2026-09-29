@@ -23,6 +23,8 @@ export function useVideoPlayer(_source: unknown, setup?: (player: MockPlayer) =>
   return player;
 }
 
-export function VideoView(props: React.ComponentProps<typeof View> & { player?: unknown; nativeControls?: boolean }) {
+export function VideoView(
+  props: React.ComponentProps<typeof View> & { player?: unknown; nativeControls?: boolean },
+) {
   return React.createElement(View, { testID: "mock-video-view", ...props });
 }

@@ -2,25 +2,62 @@ import type { AssistantMode, ToolCall, ToolResult } from "./model.js";
 import { AppError } from "../../../../packages/http/src/index.js";
 
 async function requestProvider(endpoint: string, init: RequestInit): Promise<Response> {
-  let response: Response;
-  try {
-    response = await fetch(endpoint, init);
-  } catch {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    let response: Response;
+    try {
+      response = await fetch(endpoint, init);
+    } catch (error) {
+      const timedOut =
+        init.signal?.aborted ||
+        (error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError"));
+      const cause = error instanceof Error ? error.cause : undefined;
+      const connectCode = cause && typeof cause === "object" && "code" in cause ? cause.code : undefined;
+      if (
+        attempt === 0 &&
+        !timedOut &&
+        ["EAI_AGAIN", "ENOTFOUND", "ECONNREFUSED", "UND_ERR_CONNECT_TIMEOUT"].includes(String(connectCode))
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        if (!init.signal?.aborted) continue;
+      }
+      throw new AppError(
+        timedOut ? "AI_PROVIDER_TIMEOUT" : "AI_PROVIDER_NETWORK_ERROR",
+        503,
+        "The assistant service is temporarily unavailable",
+        true,
+      );
+    }
+    if (response.ok) return response;
+
+    // A transient upstream outage can be brief. Reuse the same deadline and
+    // retry once; do not retry rate limits or authentication/configuration errors.
+    if (attempt === 0 && [502, 503, 504].includes(response.status) && !init.signal?.aborted) {
+      await response.body?.cancel().catch(() => undefined);
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      if (init.signal?.aborted)
+        throw new AppError(
+          "AI_PROVIDER_TIMEOUT",
+          503,
+          "The assistant service is temporarily unavailable",
+          true,
+        );
+      continue;
+    }
+
     throw new AppError(
-      "AI_PROVIDER_UNAVAILABLE",
+      `AI_PROVIDER_HTTP_${String(response.status)}`,
       503,
       "The assistant service is temporarily unavailable",
-      true,
+      response.status === 429 || response.status >= 500,
     );
   }
-  if (!response.ok)
-    throw new AppError(
-      "AI_PROVIDER_UNAVAILABLE",
-      503,
-      "The assistant service is temporarily unavailable",
-      true,
-    );
-  return response;
+
+  throw new AppError(
+    "AI_PROVIDER_UNAVAILABLE",
+    503,
+    "The assistant service is temporarily unavailable",
+    true,
+  );
 }
 
 async function readProviderJson<T>(response: Response): Promise<T> {
@@ -202,6 +239,7 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
       this.options.endpoint.endsWith(":generateContent");
 
     if (isGoogle) {
+      const isGemini3 = /^gemini-3(?:[.-]|$)/u.test(this.options.model);
       // Gemini native format
       const contents = request.messages
         .filter((m) => m.role !== "system")
@@ -220,7 +258,9 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
           systemInstruction: { parts: [{ text: request.systemPrompt }] },
           contents,
           generationConfig: {
-            temperature: request.temperature ?? 0.3,
+            ...(isGemini3
+              ? { thinkingConfig: { thinkingLevel: "low" } }
+              : { temperature: request.temperature ?? 0.3 }),
             maxOutputTokens: request.maxTokens ?? 2048,
           },
         }),

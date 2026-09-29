@@ -57,7 +57,8 @@ function memoryDatabase() {
           row.lastErrorCode = errorCode == null ? undefined : String(errorCode);
         }
       } else if (sql.includes("DELETE FROM lesson_completion_queue")) {
-        for (const [operationId, row] of operations) if (row.userId === params[0]) operations.delete(operationId);
+        for (const [operationId, row] of operations)
+          if (row.userId === params[0]) operations.delete(operationId);
       }
       return {};
     },
@@ -65,15 +66,20 @@ function memoryDatabase() {
       if (sql.includes("PRAGMA cipher_version")) return { cipher_version: "4.7.0" } as T;
       if (sql.includes("PRAGMA user_version")) return { user_version: 0 } as T;
       if (sql.includes("SELECT 1 AS found"))
-        return ([...cache.keys()].some((key) => key.startsWith(`${params[0]}|`)) ? { found: 1 } : null) as T | null;
+        return (
+          [...cache.keys()].some((key) => key.startsWith(`${params[0]}|`)) ? { found: 1 } : null
+        ) as T | null;
       if (sql.includes("FROM cache_records")) {
-        return (cache.get(keyOf(String(params[0]), String(params[1]), String(params[2]))) ?? null) as T | null;
+        return (cache.get(keyOf(String(params[0]), String(params[1]), String(params[2]))) ??
+          null) as T | null;
       }
       if (sql.includes("FROM lesson_completion_queue")) {
         const rows = [...operations.values()];
         const row = sql.includes("OR idempotency_key")
           ? rows.find((value) => value.operationId === params[0] || value.idempotencyKey === params[1])
-          : rows.filter((value) => value.userId === params[0] && value.resourceId === params[1]).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0];
+          : rows
+              .filter((value) => value.userId === params[0] && value.resourceId === params[1])
+              .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0];
         return (row ?? null) as T | null;
       }
       return null;
@@ -81,7 +87,9 @@ function memoryDatabase() {
     async getAllAsync<T>(sql: string, ...params: (string | number | null)[]): Promise<T[]> {
       if (!sql.includes("FROM lesson_completion_queue")) return [];
       const [userId, ...states] = params;
-      return [...operations.values()].filter((row) => row.userId === userId && states.includes(row.state ?? null)).map((row) => ({ ...row })) as T[];
+      return [...operations.values()]
+        .filter((row) => row.userId === userId && states.includes(row.state ?? null))
+        .map((row) => ({ ...row })) as T[];
     },
   };
 }
@@ -95,14 +103,25 @@ describe("SQLCipher offline store", () => {
     let key: string | null = null;
     secrets = {
       getItemAsync: vi.fn(async () => key),
-      setItemAsync: vi.fn(async (_name: string, value: string) => { key = value; }),
+      setItemAsync: vi.fn(async (_name: string, value: string) => {
+        key = value;
+      }),
     };
-    store = new OfflineStore("research_local", async () => db as never, secrets as never, () => "a".repeat(64));
+    store = new OfflineStore(
+      "research_local",
+      async () => db as never,
+      secrets as never,
+      () => "a".repeat(64),
+    );
   });
 
   it("applies a device-keyed SQLCipher key before reading the schema and migrates schema version 1", async () => {
     await store.hasUserData("student-1");
-    expect(secrets.setItemAsync).toHaveBeenCalledWith("ailss.offline.key.research_local", "a".repeat(64), expect.anything());
+    expect(secrets.setItemAsync).toHaveBeenCalledWith(
+      "ailss.offline.key.research_local",
+      "a".repeat(64),
+      expect.anything(),
+    );
     expect(db.exec[0]).toContain(`PRAGMA key = "x'${"a".repeat(64)}'"`);
     expect(db.exec[0]).toContain("foreign_keys = ON");
     expect(db.exec[1]).toContain("CREATE TABLE cache_records");

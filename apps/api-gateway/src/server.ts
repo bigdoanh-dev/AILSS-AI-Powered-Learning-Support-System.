@@ -26,7 +26,13 @@ import { mediaDeliveryProxy } from "./media-delivery-proxy.js";
 import { learningOfferingsProxyFactory } from "./learning-offerings-proxy.js";
 import { learningCommerceProxyFactory } from "./learning-commerce-proxy.js";
 import { classroomProxyFactory } from "./classroom-proxy.js";
-import { loginProxy, refreshProxy, registrationProxy, socialLoginProxy } from "./registration-proxy.js";
+import {
+  loginProxy,
+  passwordResetProxy,
+  refreshProxy,
+  registrationProxy,
+  socialLoginProxy,
+} from "./registration-proxy.js";
 import { assessmentProxyFactory } from "./assessment-proxy.js";
 import { interactionProxyFactory } from "./interaction-proxy.js";
 import { learningProgressProxyFactory } from "./learning-progress-proxy.js";
@@ -200,6 +206,13 @@ app.post(
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
   refreshProxy(config),
 );
+for (const operation of ["request", "verify", "complete"] as const) {
+  app.post(
+    `/api/v1/auth/password-reset/${operation}`,
+    authLimiter.middleware(operation === "request" ? 10 : 20),
+    passwordResetProxy(config, operation),
+  );
+}
 app.post(
   "/api/v1/auth/logout",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
@@ -210,11 +223,41 @@ app.post(
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
   socialLoginProxy(config),
 );
-app.get("/api/v1/auth/saml/:organizationId/metadata", federationProxy(config, (request) => `/api/v1/auth/saml/${encodeURIComponent(String(request.params.organizationId))}/metadata`, "GET"));
-app.get("/api/v1/auth/saml/:organizationId/login", federationProxy(config, (request) => `/api/v1/auth/saml/${encodeURIComponent(String(request.params.organizationId))}/login`, "GET"));
-app.post("/api/v1/auth/saml/:organizationId/acs", authLimiter.middleware(30), federationProxy(config, (request) => `/api/v1/auth/saml/${encodeURIComponent(String(request.params.organizationId))}/acs`, "POST"));
-app.get("/api/v1/auth/lti/login", authLimiter.middleware(60), federationProxy(config, () => "/api/v1/auth/lti/login", "GET"));
-app.post("/api/v1/auth/lti/launch", authLimiter.middleware(60), federationProxy(config, () => "/api/v1/auth/lti/launch", "POST"));
+app.get(
+  "/api/v1/auth/saml/:organizationId/metadata",
+  federationProxy(
+    config,
+    (request) => `/api/v1/auth/saml/${encodeURIComponent(String(request.params.organizationId))}/metadata`,
+    "GET",
+  ),
+);
+app.get(
+  "/api/v1/auth/saml/:organizationId/login",
+  federationProxy(
+    config,
+    (request) => `/api/v1/auth/saml/${encodeURIComponent(String(request.params.organizationId))}/login`,
+    "GET",
+  ),
+);
+app.post(
+  "/api/v1/auth/saml/:organizationId/acs",
+  authLimiter.middleware(30),
+  federationProxy(
+    config,
+    (request) => `/api/v1/auth/saml/${encodeURIComponent(String(request.params.organizationId))}/acs`,
+    "POST",
+  ),
+);
+app.get(
+  "/api/v1/auth/lti/login",
+  authLimiter.middleware(60),
+  federationProxy(config, () => "/api/v1/auth/lti/login", "GET"),
+);
+app.post(
+  "/api/v1/auth/lti/launch",
+  authLimiter.middleware(60),
+  federationProxy(config, () => "/api/v1/auth/lti/launch", "POST"),
+);
 app.get("/api/v1/auth/identities", identitiesListHandler);
 app.post(
   "/api/v1/auth/identities/link",
@@ -227,6 +270,17 @@ app.post(
   identitiesUnlinkHandler,
 );
 app.get("/api/v1/me", profileReadHandler);
+for (const method of ["GET", "PATCH"] as const) {
+  const handler = protectedProxy.handler({
+    method,
+    path: "/api/v1/me/lecturer-profile",
+    purpose: "identity.profile.lecturer-details",
+    forwardBody: method === "PATCH",
+    onInvalidBearer: () => {},
+  });
+  if (method === "GET") app.get("/api/v1/me/lecturer-profile", handler);
+  else app.patch("/api/v1/me/lecturer-profile", authLimiter.middleware(30), handler);
+}
 for (const method of ["GET", "POST"] as const) {
   const handler = protectedProxy.handler({
     method,
@@ -313,10 +367,22 @@ app.get("/api/v1/courses/:courseId/progress", learningProgress.read);
 app.get("/api/v1/mastery/me", adaptiveLearning.mastery);
 app.get("/api/v1/mastery/courses/:courseId", adaptiveLearning.courseMastery);
 app.get("/api/v1/mastery/outcomes/:outcomeId", adaptiveLearning.outcome);
-app.post("/api/v1/study-plan/generate", authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)), adaptiveLearning.generate);
+app.post(
+  "/api/v1/study-plan/generate",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  adaptiveLearning.generate,
+);
 app.get("/api/v1/study-plan/current", adaptiveLearning.current);
-app.patch("/api/v1/study-plan/items/:itemId", authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)), adaptiveLearning.updateItem);
-app.post("/api/v1/study-plan/items/:itemId/:action", authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)), adaptiveLearning.itemAction);
+app.patch(
+  "/api/v1/study-plan/items/:itemId",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  adaptiveLearning.updateItem,
+);
+app.post(
+  "/api/v1/study-plan/items/:itemId/:action",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  adaptiveLearning.itemAction,
+);
 app.put(
   "/api/v1/lessons/:lessonId/completion",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
@@ -560,15 +626,50 @@ app.get(
   readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)),
   learningLessons.list,
 );
-const mediaHandler=await mediaProxy(config);
-app.get("/playback/:assetId/:filename",mediaDeliveryProxy(process.env.MEDIA_DELIVERY_INTERNAL_URL??"http://media-delivery:8211",(process.env.MEDIA_ALLOWED_ORIGINS??"").split(",").filter(Boolean)));
-app.post("/api/v1/courses/:courseId/media-assets",authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE??60)),mediaHandler);
-app.get("/api/v1/media-assets/:assetId",readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE??300)),mediaHandler);
-app.get("/api/v1/media-assets/:assetId/upload",readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE??300)),mediaHandler);
-app.post("/api/v1/media-assets/:assetId/captions",authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE??60)),mediaHandler);
-for(const action of ["parts","complete","cancel","attach"])app.post(`/api/v1/media-assets/:assetId/${action}`,authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE??60)),mediaHandler);
-app.post("/api/v1/lessons/:lessonId/media-session",readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE??300)),mediaHandler);
-app.get("/api/v1/courses/:courseId/trailer",readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE??300)),mediaHandler);
+const mediaHandler = await mediaProxy(config);
+app.get(
+  "/playback/:assetId/:filename",
+  mediaDeliveryProxy(
+    process.env.MEDIA_DELIVERY_INTERNAL_URL ?? "http://media-delivery:8211",
+    (process.env.MEDIA_ALLOWED_ORIGINS ?? "").split(",").filter(Boolean),
+  ),
+);
+app.post(
+  "/api/v1/courses/:courseId/media-assets",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  mediaHandler,
+);
+app.get(
+  "/api/v1/media-assets/:assetId",
+  readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)),
+  mediaHandler,
+);
+app.get(
+  "/api/v1/media-assets/:assetId/upload",
+  readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)),
+  mediaHandler,
+);
+app.post(
+  "/api/v1/media-assets/:assetId/captions",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  mediaHandler,
+);
+for (const action of ["parts", "complete", "cancel", "attach"])
+  app.post(
+    `/api/v1/media-assets/:assetId/${action}`,
+    authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+    mediaHandler,
+  );
+app.post(
+  "/api/v1/lessons/:lessonId/media-session",
+  readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)),
+  mediaHandler,
+);
+app.get(
+  "/api/v1/courses/:courseId/trailer",
+  readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)),
+  mediaHandler,
+);
 app.post(
   "/api/v1/courses/:courseId/lessons",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
@@ -639,6 +740,14 @@ app.get(
   authLimiter.middleware(Number(process.env.RATE_LIMIT_ADMIN_PER_MINUTE ?? 30)),
   learningCommerce.dashboardRevenue,
 );
+app.get("/api/v1/me/dashboard/revenue", learningCommerce.lecturerRevenue);
+app.get("/api/v1/me/payout-account", learningCommerce.payoutAccountRead);
+app.post("/api/v1/me/payout-account", authLimiter.middleware(30), learningCommerce.payoutAccountSave);
+app.get("/api/v1/admin/payouts", learningCommerce.adminPayouts);
+app.post("/api/v1/admin/payouts/prepare", authLimiter.middleware(30), learningCommerce.preparePayouts);
+app.get("/api/v1/me/commission", learningCommerce.lecturerCommission);
+app.get("/api/v1/admin/commission", authLimiter.middleware(30), learningCommerce.adminCommissionRead);
+app.post("/api/v1/admin/commission", authLimiter.middleware(30), learningCommerce.adminCommissionSave);
 app.post(
   "/api/v1/learning/refunds",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),

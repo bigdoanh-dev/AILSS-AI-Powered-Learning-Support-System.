@@ -54,13 +54,7 @@ function computeSnapshotChecksum(payload: PilotDataSnapshot["payload"]): string 
   return createHash("sha256").update(serialized).digest("hex");
 }
 
-export type DataCategory =
-  | "IDENTITY"
-  | "ACADEMIC"
-  | "AI"
-  | "ANALYTICS"
-  | "NOTIFICATION"
-  | "INTEGRATION";
+export type DataCategory = "IDENTITY" | "ACADEMIC" | "AI" | "ANALYTICS" | "NOTIFICATION" | "INTEGRATION";
 
 export interface DataInventoryField {
   readonly category: DataCategory;
@@ -73,23 +67,107 @@ export interface DataInventoryField {
 
 export const PILOT_DATA_INVENTORY: readonly DataInventoryField[] = [
   // Identity
-  { category: "IDENTITY", fieldName: "fullName", piiClassification: "DIRECT_IDENTIFIER", retentionDays: 1825, exportable: true, erasableOnGdprRequest: true },
-  { category: "IDENTITY", fieldName: "email", piiClassification: "DIRECT_IDENTIFIER", retentionDays: 1825, exportable: true, erasableOnGdprRequest: true },
-  { category: "IDENTITY", fieldName: "scimExternalId", piiClassification: "INDIRECT_IDENTIFIER", retentionDays: 1825, exportable: true, erasableOnGdprRequest: true },
-  { category: "IDENTITY", fieldName: "samlNameId", piiClassification: "INDIRECT_IDENTIFIER", retentionDays: 1825, exportable: true, erasableOnGdprRequest: true },
+  {
+    category: "IDENTITY",
+    fieldName: "fullName",
+    piiClassification: "DIRECT_IDENTIFIER",
+    retentionDays: 1825,
+    exportable: true,
+    erasableOnGdprRequest: true,
+  },
+  {
+    category: "IDENTITY",
+    fieldName: "email",
+    piiClassification: "DIRECT_IDENTIFIER",
+    retentionDays: 1825,
+    exportable: true,
+    erasableOnGdprRequest: true,
+  },
+  {
+    category: "IDENTITY",
+    fieldName: "scimExternalId",
+    piiClassification: "INDIRECT_IDENTIFIER",
+    retentionDays: 1825,
+    exportable: true,
+    erasableOnGdprRequest: true,
+  },
+  {
+    category: "IDENTITY",
+    fieldName: "samlNameId",
+    piiClassification: "INDIRECT_IDENTIFIER",
+    retentionDays: 1825,
+    exportable: true,
+    erasableOnGdprRequest: true,
+  },
   // Academic
-  { category: "ACADEMIC", fieldName: "assessmentSubmissions", piiClassification: "ACADEMIC_RECORD", retentionDays: 1825, exportable: true, erasableOnGdprRequest: false }, // Academic record retention law
-  { category: "ACADEMIC", fieldName: "courseGrades", piiClassification: "ACADEMIC_RECORD", retentionDays: 1825, exportable: true, erasableOnGdprRequest: false },
-  { category: "ACADEMIC", fieldName: "verifiableCredentials", piiClassification: "ACADEMIC_RECORD", retentionDays: 1825, exportable: true, erasableOnGdprRequest: false },
+  {
+    category: "ACADEMIC",
+    fieldName: "assessmentSubmissions",
+    piiClassification: "ACADEMIC_RECORD",
+    retentionDays: 1825,
+    exportable: true,
+    erasableOnGdprRequest: false,
+  }, // Academic record retention law
+  {
+    category: "ACADEMIC",
+    fieldName: "courseGrades",
+    piiClassification: "ACADEMIC_RECORD",
+    retentionDays: 1825,
+    exportable: true,
+    erasableOnGdprRequest: false,
+  },
+  {
+    category: "ACADEMIC",
+    fieldName: "verifiableCredentials",
+    piiClassification: "ACADEMIC_RECORD",
+    retentionDays: 1825,
+    exportable: true,
+    erasableOnGdprRequest: false,
+  },
   // AI
-  { category: "AI", fieldName: "promptHistory", piiClassification: "INDIRECT_IDENTIFIER", retentionDays: 90, exportable: true, erasableOnGdprRequest: true },
-  { category: "AI", fieldName: "safetyRefusals", piiClassification: "OPERATIONAL", retentionDays: 90, exportable: true, erasableOnGdprRequest: false },
+  {
+    category: "AI",
+    fieldName: "promptHistory",
+    piiClassification: "INDIRECT_IDENTIFIER",
+    retentionDays: 90,
+    exportable: true,
+    erasableOnGdprRequest: true,
+  },
+  {
+    category: "AI",
+    fieldName: "safetyRefusals",
+    piiClassification: "OPERATIONAL",
+    retentionDays: 90,
+    exportable: true,
+    erasableOnGdprRequest: false,
+  },
   // Analytics
-  { category: "ANALYTICS", fieldName: "studySessionDuration", piiClassification: "OPERATIONAL", retentionDays: 180, exportable: true, erasableOnGdprRequest: true },
+  {
+    category: "ANALYTICS",
+    fieldName: "studySessionDuration",
+    piiClassification: "OPERATIONAL",
+    retentionDays: 180,
+    exportable: true,
+    erasableOnGdprRequest: true,
+  },
   // Notification
-  { category: "NOTIFICATION", fieldName: "devicePushTokens", piiClassification: "INDIRECT_IDENTIFIER", retentionDays: 90, exportable: false, erasableOnGdprRequest: true },
+  {
+    category: "NOTIFICATION",
+    fieldName: "devicePushTokens",
+    piiClassification: "INDIRECT_IDENTIFIER",
+    retentionDays: 90,
+    exportable: false,
+    erasableOnGdprRequest: true,
+  },
   // Integration
-  { category: "INTEGRATION", fieldName: "lmsGradeSyncLogs", piiClassification: "OPERATIONAL", retentionDays: 60, exportable: false, erasableOnGdprRequest: false },
+  {
+    category: "INTEGRATION",
+    fieldName: "lmsGradeSyncLogs",
+    piiClassification: "OPERATIONAL",
+    retentionDays: 60,
+    exportable: false,
+    erasableOnGdprRequest: false,
+  },
 ];
 
 describe("Phase 26.28: Pilot Backup & Isolated Restore Validation", () => {
@@ -105,24 +183,12 @@ describe("Phase 26.28: Pilot Backup & Isolated Restore Validation", () => {
         { courseId: "crs-cs101", version: "v1.2.0", hash: "a8f3b201c" },
         { courseId: "crs-db201", version: "v2.0.0", hash: "b7e4c302d" },
       ],
-      assessments: [
-        { assessmentId: "asm-01", learnerId: "usr-01", score: 9.5 },
-      ],
-      scimUsers: [
-        { scimId: "scim-u1", externalId: "poly-01", email: "student@polytech.edu.vn" },
-      ],
-      oneRosterMappings: [
-        { sourcedId: "oneroster-u1", entityType: "user" },
-      ],
-      verifiableCredentials: [
-        { vcId: "urn:uuid:vc-degree-01", statusIndex: 12 },
-      ],
-      ledgerTransactions: [
-        { txId: "tx-pilot-001", amountMinor: 500000 },
-      ],
-      outboxEvents: [
-        { eventId: "evt-01", topic: "grade.recorded" },
-      ],
+      assessments: [{ assessmentId: "asm-01", learnerId: "usr-01", score: 9.5 }],
+      scimUsers: [{ scimId: "scim-u1", externalId: "poly-01", email: "student@polytech.edu.vn" }],
+      oneRosterMappings: [{ sourcedId: "oneroster-u1", entityType: "user" }],
+      verifiableCredentials: [{ vcId: "urn:uuid:vc-degree-01", statusIndex: 12 }],
+      ledgerTransactions: [{ txId: "tx-pilot-001", amountMinor: 500000 }],
+      outboxEvents: [{ eventId: "evt-01", topic: "grade.recorded" }],
     };
 
     const checksum = computeSnapshotChecksum(originalPayload);

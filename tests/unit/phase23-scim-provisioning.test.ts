@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  SCIM_USER_SCHEMA_URI,
-  processScimUserProvisioning,
-} from "../../packages/contracts/src/scim.js";
+import { SCIM_USER_SCHEMA_URI, processScimUserProvisioning } from "../../packages/contracts/src/scim.js";
 
 describe("Phase 23E: SCIM 2.0 User Provisioning & Privilege Guard", () => {
   const institutionId = "tenant-pilot-polytech";

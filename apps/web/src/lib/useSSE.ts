@@ -26,7 +26,9 @@ export function useSSE(url: string | null, onEvent: (event: SSEEvent) => void) {
       if (destroyed) return;
       try {
         es = new EventSource(targetUrl);
-        es.onopen = () => { retryDelay = 2000; };
+        es.onopen = () => {
+          retryDelay = 2000;
+        };
         es.onmessage = (e) => {
           try {
             onEventRef.current(JSON.parse(e.data) as SSEEvent);
@@ -54,7 +56,9 @@ export function useSSE(url: string | null, onEvent: (event: SSEEvent) => void) {
             }, retryDelay);
           }
         };
-      } catch { /* invalid url */ }
+      } catch {
+        /* invalid url */
+      }
     }
 
     connect();

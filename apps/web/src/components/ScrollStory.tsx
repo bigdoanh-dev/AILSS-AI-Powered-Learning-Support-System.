@@ -36,16 +36,13 @@ const stages = [
 export function ScrollStory() {
   const root = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
-  const [autoPlay, setAutoPlay] = useState(true);
-
   // Auto-play cycling through 3D stages every 4 seconds
   useEffect(() => {
-    if (!autoPlay) return;
     const timer = setInterval(() => {
       setActive((prev) => (prev + 1) % stages.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, [autoPlay]);
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -62,7 +59,7 @@ export function ScrollStory() {
   }, []);
 
   return (
-    <section ref={root} className="scroll-story section dark">
+    <section ref={root} className="scroll-story section ai-scroll-story-adaptive">
       <div className="container story-grid">
         <div className="story-sticky">
           <p className="eyebrow">TỪ Ý TƯỞNG ĐẾN BÀI HỌC</p>
@@ -71,27 +68,7 @@ export function ScrollStory() {
             <br />
             Bạn giữ tay lái.
           </h2>
-          <p>Cuộn hoặc xem tự động để khám phá cách tài liệu trở thành một cơ hội học tập.</p>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, marginBottom: 12 }}>
-            <button
-              type="button"
-              className="button button-subtle button-small"
-              style={{
-                fontSize: 12,
-                padding: "4px 10px",
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.06)",
-                color: "#7dd3fc",
-                border: "1px solid rgba(125,211,252,0.25)",
-                cursor: "pointer",
-              }}
-              onClick={() => setAutoPlay(!autoPlay)}
-              title={autoPlay ? "Bấm để tạm dừng tự động chuyển động" : "Bấm để tiếp tục tự động chuyển động"}
-            >
-              <span>{autoPlay ? "⏸ Tự động chuyển động 3D: Bật" : "▶ Tiếp tục chuyển động 3D"}</span>
-            </button>
-          </div>
+          <p>Cuộn để khám phá cách tài liệu trở thành một cơ hội học tập.</p>
 
           <div
             className="story-stage"
@@ -127,7 +104,6 @@ export function ScrollStory() {
               className={active === i ? "is-current" : ""}
               onClick={() => {
                 setActive(i);
-                setAutoPlay(false);
               }}
               style={{ cursor: "pointer" }}
               title={`Nhấp để chuyển sang giai đoạn 0${i + 1}`}
@@ -144,4 +120,3 @@ export function ScrollStory() {
     </section>
   );
 }
-

@@ -53,7 +53,9 @@ export function Layout() {
                   ? t("tab.overview", "không gian giảng dạy")
                   : t("tab.overview", "không gian học tập")}
             </Link>
-            <span>{t("nav.loggedInAs", "Đăng nhập với tên")} {profile.displayName}</span>
+            <span>
+              {t("nav.loggedInAs", "Đăng nhập với tên")} {profile.displayName}
+            </span>
           </div>
         </div>
       )}
@@ -89,4 +91,3 @@ export function Layout() {
     </>
   );
 }
-

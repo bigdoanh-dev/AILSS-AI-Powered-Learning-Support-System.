@@ -39,7 +39,11 @@ export class TenantService {
   }): Promise<Organization> {
     const existing = await this.#repo.findOrganizationBySlug(input.slug);
     if (existing) {
-      throw new AppError("ORGANIZATION_SLUG_EXISTS", 409, `Organization with slug ${input.slug} already exists`);
+      throw new AppError(
+        "ORGANIZATION_SLUG_EXISTS",
+        409,
+        `Organization with slug ${input.slug} already exists`,
+      );
     }
 
     const existingDomain = await this.#repo.findOrganizationByDomain(input.domain.trim().toLowerCase());

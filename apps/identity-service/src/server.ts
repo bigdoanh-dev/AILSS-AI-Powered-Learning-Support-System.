@@ -22,9 +22,14 @@ import { LoginService } from "./login/service.js";
 import { passwordRouter } from "./password/router.js";
 import { IdentityPasswordRepository } from "./password/repository.js";
 import { PasswordChangeService } from "./password/service.js";
+import { IdentityPasswordResetRepository } from "./password-reset/repository.js";
+import { PasswordResetMailer } from "./password-reset/mailer.js";
+import { PasswordResetService } from "./password-reset/service.js";
+import { passwordResetRouter } from "./password-reset/router.js";
 import { PublicProfileRepository } from "./public-profile/repository.js";
 import { publicProfileRouter } from "./public-profile/router.js";
 import { PublicProfileService } from "./public-profile/service.js";
+import { lecturerEditorRouter } from "./public-profile/lecturer-editor.js";
 import { logoutRouter } from "./logout/router.js";
 import { LogoutService } from "./logout/service.js";
 import { IdentityProfileRepository } from "./profile/repository.js";
@@ -60,7 +65,7 @@ const manifest: ServiceManifest = {
   defaultPort: 8101,
   keyspace: "identity_keyspace",
   cassandraRole: "svc_identity",
-  publicApiIds: Array.from({ length: 19 }, (_, i) => `IDN-${String(i + 1).padStart(2, "0")}`),
+  publicApiIds: Array.from({ length: 22 }, (_, i) => `IDN-${String(i + 1).padStart(2, "0")}`),
   internalApiIds: ["INT-IDN-01", "INT-IDN-02"],
   producedEvents: [
     "identity.user.registered.v1",
@@ -266,6 +271,14 @@ await startService(manifest, {
       throw new Error("Identity password change requires a dedicated idempotency HMAC key");
     }
     const passwordRepository = new IdentityPasswordRepository(context.cassandra);
+    const passwordReset = new PasswordResetService(
+      passwordRepository,
+      new IdentityPasswordResetRepository(context.cassandra),
+      new PasswordResetMailer(config),
+      config.PASSWORD_IDEMPOTENCY_HMAC_KEY,
+      context.logger,
+    );
+    app.use(passwordResetRouter(passwordReset));
     const passwordChange = new PasswordChangeService(
       {
         getUser: (userId) => passwordRepository.getUser(userId),
@@ -298,10 +311,32 @@ await startService(manifest, {
         context.metrics,
       ),
     );
+    const publicProfileRepository = new PublicProfileRepository(context.cassandra);
+    const avatarStorage =
+      config.OBJECT_STORAGE_ACCESS_KEY && config.OBJECT_STORAGE_SECRET_KEY
+        ? new MinioStorage(config.OBJECT_STORAGE_BUCKET, {
+            endPoint: config.OBJECT_STORAGE_ENDPOINT,
+            port: config.OBJECT_STORAGE_PORT,
+            useSSL: config.OBJECT_STORAGE_USE_SSL,
+            accessKey: config.OBJECT_STORAGE_ACCESS_KEY,
+            secretKey: config.OBJECT_STORAGE_SECRET_KEY,
+          })
+        : undefined;
     const publicProfiles = new PublicProfileService(
-      new PublicProfileRepository(context.cassandra),
+      publicProfileRepository,
       context.metrics,
       context.logger,
+      avatarStorage,
+    );
+    app.use(
+      lecturerEditorRouter(context.cassandra, profile, publicProfileRepository, (token) =>
+        verifyActorContext(token, actorContextPublicKey, {
+          issuer: config.ACTOR_CONTEXT_ISSUER,
+          audience: config.ACTOR_CONTEXT_AUDIENCE,
+          purpose: "identity.profile.lecturer-details",
+          kid: config.ACTOR_CONTEXT_KID,
+        }),
+      ),
     );
     const classroomPublicKey = config.CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH
       ? await loadPublicKey(config.CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH)

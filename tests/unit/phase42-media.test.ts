@@ -133,8 +133,12 @@ function fixture() {
     },
     readStream: async () => Readable.from([]),
     writeFile: async () => undefined,
-    writeBytes: async (key, bytes) => { writtenBytes.set(key, bytes); },
-    remove: async (key) => { writtenBytes.delete(key); },
+    writeBytes: async (key, bytes) => {
+      writtenBytes.set(key, bytes);
+    },
+    remove: async (key) => {
+      writtenBytes.delete(key);
+    },
   };
   const service = new MediaService(
     store,
@@ -192,17 +196,31 @@ describe("Phase 42 authoritative media boundary", () => {
     const valid = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nXin chào\n";
     expect(validateWebVtt(valid)).toBe(valid);
     for (const content of [
-      "not VTT", "WEBVTT\n", "WEBVTT\n\n00:00:03.000 --> 00:00:01.000\nBad",
+      "not VTT",
+      "WEBVTT\n",
+      "WEBVTT\n\n00:00:03.000 --> 00:00:01.000\nBad",
       "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n<script>",
       "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nA\n\n00:00:05.000 --> bad\nB",
-    ]) expect(() => validateWebVtt(content)).toThrow("WEBVTT_INVALID");
-    expect(captionUploadSchema.safeParse({ language: "vi", label: "Tiếng Việt", kind: "SUBTITLES", contentType: "text/vtt", content: valid, objectKey: "fake" }).success).toBe(false);
+    ])
+      expect(() => validateWebVtt(content)).toThrow("WEBVTT_INVALID");
+    expect(
+      captionUploadSchema.safeParse({
+        language: "vi",
+        label: "Tiếng Việt",
+        kind: "SUBTITLES",
+        contentType: "text/vtt",
+        content: valid,
+        objectKey: "fake",
+      }).success,
+    ).toBe(false);
   });
   it("uploads private caption bytes idempotently without leaking object keys", async () => {
     const f = fixture();
     const id = await f.ready();
     const input = {
-      language: "vi", label: "Tiếng Việt", kind: "SUBTITLES" as const,
+      language: "vi",
+      label: "Tiếng Việt",
+      kind: "SUBTITLES" as const,
       contentType: "text/vtt" as const,
       content: "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nXin chào\n",
     };
@@ -216,10 +234,17 @@ describe("Phase 42 authoritative media boundary", () => {
     expect(session.captionTracks).toHaveLength(1);
     expect(session.captionTracks[0]?.url).toContain(`/caption-${required(first).captionTrackId}.vtt?token=`);
     expect(JSON.stringify(session)).not.toContain("media-caption/");
-    await expect(f.service.uploadCaption(id, actor(), { ...input, content: input.content.replace("Xin chào", "Khác") }, "caption-one"))
-      .rejects.toMatchObject({ code: "IDEMPOTENCY_CONFLICT" });
-    await expect(f.service.uploadCaption(id, actor(randomUUID()), input, "caption-other"))
-      .rejects.toMatchObject({ code: "MEDIA_OWNER_REQUIRED" });
+    await expect(
+      f.service.uploadCaption(
+        id,
+        actor(),
+        { ...input, content: input.content.replace("Xin chào", "Khác") },
+        "caption-one",
+      ),
+    ).rejects.toMatchObject({ code: "IDEMPOTENCY_CONFLICT" });
+    await expect(
+      f.service.uploadCaption(id, actor(randomUUID()), input, "caption-other"),
+    ).rejects.toMatchObject({ code: "MEDIA_OWNER_REQUIRED" });
   });
   it("accepts configurable lecture sizes over 25 MiB and rejects client object paths", () => {
     expect(mediaCreateSchema.parse({ ...request, sizeBytes: 100 * 1024 ** 2 }).sizeBytes).toBe(
@@ -445,7 +470,9 @@ describe("Phase 42 authoritative media boundary", () => {
     expect(JSON.stringify(metadata)).not.toContain("private/captions/");
     const playback = await f.service.playback(lessonId, actor());
     expect(playback.captionTracks).toMatchObject(metadata);
-    expect(playback.captionTracks[0]?.url).toContain(`/caption-${required(metadata[0]).captionTrackId}.vtt?token=`);
+    expect(playback.captionTracks[0]?.url).toContain(
+      `/caption-${required(metadata[0]).captionTrackId}.vtt?token=`,
+    );
   });
   it("does not find a foreign-tenant binding", async () => {
     const f = fixture();

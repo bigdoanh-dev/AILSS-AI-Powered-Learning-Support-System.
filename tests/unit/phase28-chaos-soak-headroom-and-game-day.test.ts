@@ -98,7 +98,11 @@ describe("Phase 28.16 - 28.29: Soak, Capacity Headroom, Chaos Resilience & Produ
 
     it("Object storage 503 read failure fails gracefully without corrupting course metadata", () => {
       let storageAvailable = false;
-      const courseMetadata = { courseId: "c-101", title: "Distributed Systems", assetUrl: "s3://assets/video.mp4" };
+      const courseMetadata = {
+        courseId: "c-101",
+        title: "Distributed Systems",
+        assetUrl: "s3://assets/video.mp4",
+      };
 
       let assetResult: { status: "SERVED" | "FALLBACK_PLACEHOLDER"; title: string };
       if (!storageAvailable) {
@@ -146,9 +150,9 @@ describe("Phase 28.16 - 28.29: Soak, Capacity Headroom, Chaos Resilience & Produ
     it("measures human on-call timeline independently from sub-second automated failover", () => {
       const alertTime = new Date("2026-09-15T10:00:00Z");
       const acknowledgedTime = new Date("2026-09-15T10:03:30Z"); // 3.5 min MTTA
-      const triageTime = new Date("2026-09-15T10:06:00Z");       // 6.0 min
-      const mitigatedTime = new Date("2026-09-15T10:18:00Z");    // 18.0 min (mitigation)
-      const resolvedTime = new Date("2026-09-15T10:25:00Z");     // 25.0 min MTTR
+      const triageTime = new Date("2026-09-15T10:06:00Z"); // 6.0 min
+      const mitigatedTime = new Date("2026-09-15T10:18:00Z"); // 18.0 min (mitigation)
+      const resolvedTime = new Date("2026-09-15T10:25:00Z"); // 25.0 min MTTR
 
       const mttaMinutes = (acknowledgedTime.getTime() - alertTime.getTime()) / 60000;
       const mttrMinutes = (resolvedTime.getTime() - alertTime.getTime()) / 60000;
@@ -167,11 +171,11 @@ describe("Phase 28.16 - 28.29: Soak, Capacity Headroom, Chaos Resilience & Produ
     it("evaluates SLO targets against observed user telemetry across 6 domains", () => {
       const sloTable = [
         { domain: "Authentication", target: 99.95, observed: 99.98, compliant: true },
-        { domain: "Learning", target: 99.90, observed: 99.95, compliant: true },
-        { domain: "Assessment", target: 99.90, observed: 99.92, compliant: true },
-        { domain: "LTI_Advantage", target: 99.50, observed: 99.85, compliant: true },
-        { domain: "Credential_Verification", target: 99.90, observed: 100.0, compliant: true },
-        { domain: "AI_RAG", target: 99.00, observed: 99.70, compliant: true },
+        { domain: "Learning", target: 99.9, observed: 99.95, compliant: true },
+        { domain: "Assessment", target: 99.9, observed: 99.92, compliant: true },
+        { domain: "LTI_Advantage", target: 99.5, observed: 99.85, compliant: true },
+        { domain: "Credential_Verification", target: 99.9, observed: 100.0, compliant: true },
+        { domain: "AI_RAG", target: 99.0, observed: 99.7, compliant: true },
       ];
 
       for (const slo of sloTable) {
@@ -186,7 +190,9 @@ describe("Phase 28.16 - 28.29: Soak, Capacity Headroom, Chaos Resilience & Produ
         { id: "dep-002", version: "6.1.1-pilot.1", outcome: "SUCCESS", causedIncident: false },
       ];
 
-      const failedDeploys = deploymentHistory.filter((d) => d.outcome !== "SUCCESS" || d.causedIncident).length;
+      const failedDeploys = deploymentHistory.filter(
+        (d) => d.outcome !== "SUCCESS" || d.causedIncident,
+      ).length;
       const changeFailureRate = (failedDeploys / deploymentHistory.length) * 100;
 
       expect(changeFailureRate).toBe(0.0);
@@ -198,7 +204,7 @@ describe("Phase 28.16 - 28.29: Soak, Capacity Headroom, Chaos Resilience & Produ
         snapshotTimestamp: "2026-09-18T18:00:00Z",
         restoreTestedTimestamp: "2026-09-18T19:30:00Z",
         rtoMinutes: 14.2, // RTO < 30 min target
-        rpoSeconds: 0,    // RPO = 0 with synchronous commit logs
+        rpoSeconds: 0, // RPO = 0 with synchronous commit logs
         recordParityPercent: 100.0,
         checksumMatchPercent: 100.0,
       };

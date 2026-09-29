@@ -54,7 +54,11 @@ function performOneRosterDifferentialSync(
 
     // Validate required fields
     if (!sourcedId || !givenName || !familyName || !role) {
-      results.push({ sourcedId: sourcedId || "UNKNOWN", outcome: "REJECTED", reason: "MISSING_REQUIRED_FIELDS" });
+      results.push({
+        sourcedId: sourcedId || "UNKNOWN",
+        outcome: "REJECTED",
+        reason: "MISSING_REQUIRED_FIELDS",
+      });
       continue;
     }
 
@@ -86,9 +90,27 @@ function performOneRosterDifferentialSync(
 }
 
 const PILOT_EXISTING_USERS: ExistingAilssUser[] = [
-  { sourcedId: "poly-001", email: "nguyen.van.a@polytech.edu.vn", givenName: "Văn A", familyName: "Nguyễn", role: "student" },
-  { sourcedId: "poly-002", email: "tran.thi.b@polytech.edu.vn", givenName: "Thị B", familyName: "Trần", role: "teacher" },
-  { sourcedId: "poly-003", email: "le.van.c@polytech.edu.vn", givenName: "Văn C", familyName: "Lê", role: "student" },
+  {
+    sourcedId: "poly-001",
+    email: "nguyen.van.a@polytech.edu.vn",
+    givenName: "Văn A",
+    familyName: "Nguyễn",
+    role: "student",
+  },
+  {
+    sourcedId: "poly-002",
+    email: "tran.thi.b@polytech.edu.vn",
+    givenName: "Thị B",
+    familyName: "Trần",
+    role: "teacher",
+  },
+  {
+    sourcedId: "poly-003",
+    email: "le.van.c@polytech.edu.vn",
+    givenName: "Văn C",
+    familyName: "Lê",
+    role: "student",
+  },
 ];
 
 describe("Phase 25.9: OneRoster External SIS Pilot — Realistic Sync Outcomes", () => {

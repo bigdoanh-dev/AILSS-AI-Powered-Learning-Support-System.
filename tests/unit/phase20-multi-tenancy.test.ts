@@ -72,14 +72,14 @@ describe("Phase 20B & 20C: Institutional Multi-Tenancy & SSO", () => {
     expect(accessA.role).toBe("STUDENT");
 
     // 2. Student in Org A CANNOT access Org B (Horizontal isolation guard)
-    await expect(
-      service.verifyTenantAccess(studentId, orgB.organizationId),
-    ).rejects.toThrowError(/TENANT_ACCESS_DENIED/);
+    await expect(service.verifyTenantAccess(studentId, orgB.organizationId)).rejects.toThrowError(
+      /TENANT_ACCESS_DENIED/,
+    );
 
     // 3. Student in Org A cannot perform LECTURER or ADMIN actions
-    await expect(
-      service.verifyTenantAccess(studentId, orgA.organizationId, "LECTURER"),
-    ).rejects.toThrowError(/TENANT_INSUFFICIENT_ROLE/);
+    await expect(service.verifyTenantAccess(studentId, orgA.organizationId, "LECTURER")).rejects.toThrowError(
+      /TENANT_INSUFFICIENT_ROLE/,
+    );
 
     // 4. Admin in Org A can perform STUDENT, LECTURER, and ADMIN actions
     const adminAccess = await service.verifyTenantAccess(adminId, orgA.organizationId, "LECTURER");

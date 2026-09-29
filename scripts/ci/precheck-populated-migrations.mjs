@@ -152,6 +152,22 @@ export const canonicalPolicy = {
     "SAFE_ADDITIVE",
     "Verify output-attempt journal and worker grants before enabling durable derived cleanup.",
   ),
+  "089_identity_password_reset.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify password reset challenge storage and token expiry before enabling recovery.",
+  ),
+  "090_lecturer_public_details.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify lecturer profile detail columns and public read compatibility.",
+  ),
+  "091_lecturer_payout_preparation.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify payout destination and monthly instruction tables before preparing transfers.",
+  ),
+  "092_platform_commission_policy.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify effective-time commission history before enabling admin rate changes.",
+  ),
 };
 
 export function findUnsafeStatements(body) {

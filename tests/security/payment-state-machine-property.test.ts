@@ -10,11 +10,19 @@ import crypto from "node:crypto";
 
 class EmergencyKillSwitchTestHarness {
   private static killSwitchActive = false;
-  static setEmergencyKillSwitch(active: boolean): void { this.killSwitchActive = active; }
-  static isEmergencyKillSwitchActive(): boolean { return this.killSwitchActive; }
+  static setEmergencyKillSwitch(active: boolean): void {
+    this.killSwitchActive = active;
+  }
+  static isEmergencyKillSwitchActive(): boolean {
+    return this.killSwitchActive;
+  }
   static evaluatePaymentExecution(
     config: CommercialGateConfig,
-    request: { readonly amount: number; readonly currency: string; readonly liveSettlementRequested?: boolean },
+    request: {
+      readonly amount: number;
+      readonly currency: string;
+      readonly liveSettlementRequested?: boolean;
+    },
   ) {
     if (this.killSwitchActive) {
       return {
@@ -198,7 +206,12 @@ describe("Phase 35.33 & 35.37: Payment State Machine Property Invariants & Kill 
       const dataToSign = `${payload.eventId}:${payload.transactionId}:${payload.orderId}:${payload.amountMinorUnits}:${payload.currency}:${payload.timestamp}`;
       const signature = crypto.createHmac("sha256", secret).update(dataToSign).digest("hex");
 
-      const webhookResult = CommercialGateGuard.verifyAndDeduplicateWebhook(payload, signature, secret, processedStore);
+      const webhookResult = CommercialGateGuard.verifyAndDeduplicateWebhook(
+        payload,
+        signature,
+        secret,
+        processedStore,
+      );
       expect(webhookResult.success).toBe(true);
 
       // Ledger recording continues to record balanced entries

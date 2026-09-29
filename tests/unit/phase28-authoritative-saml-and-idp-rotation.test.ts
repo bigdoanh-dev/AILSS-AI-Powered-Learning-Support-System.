@@ -100,10 +100,9 @@ describe("Phase 28.4 & 28.5: Authoritative SAML Replay & IdP Certificate Rotatio
 
       // 3. Node A abruptly crashes/dies (reference destroyed)
       // 4. Node C spins up fresh on another host/container pointing to shared storage
-      const nodeC = new DistributedSamlReplayStore(
-        new DurableCrossProcessReplayCluster(tempDir),
-        { tenantId },
-      );
+      const nodeC = new DistributedSamlReplayStore(new DurableCrossProcessReplayCluster(tempDir), {
+        tenantId,
+      });
       expect(nodeC.has(assertionId)).toBe(true);
       expect(nodeC.consume(record)).toBe(false);
     });

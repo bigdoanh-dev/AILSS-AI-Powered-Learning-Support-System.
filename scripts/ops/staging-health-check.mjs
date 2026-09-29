@@ -58,7 +58,11 @@ async function run() {
   const summary = {
     timestamp: new Date().toISOString(),
     targetUrl,
-    overallStatus: hasCriticalFailure ? "UNHEALTHY" : results.some((r) => r.status !== "UP") ? "DEGRADED" : "HEALTHY",
+    overallStatus: hasCriticalFailure
+      ? "UNHEALTHY"
+      : results.some((r) => r.status !== "UP")
+        ? "DEGRADED"
+        : "HEALTHY",
     probes: results,
   };
 

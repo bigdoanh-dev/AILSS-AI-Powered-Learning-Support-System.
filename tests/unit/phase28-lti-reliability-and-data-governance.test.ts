@@ -54,7 +54,9 @@ describe("Phase 28.8, 28.9, 28.11-28.15: LTI Reliability, Conformance Decision &
       expect(ltiDecision?.decision).toBe("CERTIFICATION_NOT_REQUIRED_FOR_PILOT");
       expect(ltiDecision?.currentConformanceState).toBe("EXTERNAL_VALIDATED");
 
-      const ob3Decision = ONE_EDTECH_CONFORMANCE_DECISIONS.find((d) => d.standardFamily === "OPEN_BADGES_3_0");
+      const ob3Decision = ONE_EDTECH_CONFORMANCE_DECISIONS.find(
+        (d) => d.standardFamily === "OPEN_BADGES_3_0",
+      );
       expect(ob3Decision).toBeDefined();
       expect(ob3Decision?.decision).toBe("CERTIFICATION_NOT_REQUIRED_FOR_PILOT");
       expect(ob3Decision?.currentConformanceState).toBe("EXTERNAL_VALIDATED");
@@ -70,11 +72,11 @@ describe("Phase 28.8, 28.9, 28.11-28.15: LTI Reliability, Conformance Decision &
       effectiveUntil: "2026-12-31T23:59:59Z",
       approvedByReference: "MOU-2026-POLYTECH-AILSS-001/ADDENDUM-DPA-v2",
       retentionRules: {
-        IDENTITY: 1825,       // 5 years
-        ACADEMIC: 3650,       // 10 years
-        AI: 90,               // 90 days
-        ANALYTICS: 180,       // 180 days
-        NOTIFICATION: 90,     // 90 days
+        IDENTITY: 1825, // 5 years
+        ACADEMIC: 3650, // 10 years
+        AI: 90, // 90 days
+        ANALYTICS: 180, // 180 days
+        NOTIFICATION: 90, // 90 days
         AUDIT_SECURITY: 1825, // 5 years
       },
       legalPolicyReferences: {

@@ -32,7 +32,9 @@ export interface RiskSignalItem {
 }
 
 export function TeacherCopilotPage() {
-  const [activeTab, setActiveTab] = useState<"QUESTIONS" | "RUBRICS" | "MISCONCEPTIONS" | "INTERVENTIONS">("QUESTIONS");
+  const [activeTab, setActiveTab] = useState<"QUESTIONS" | "RUBRICS" | "MISCONCEPTIONS" | "INTERVENTIONS">(
+    "QUESTIONS",
+  );
 
   const [questions, setQuestions] = useState<QuestionDraft[]>([
     {
@@ -71,7 +73,8 @@ export function TeacherCopilotPage() {
       concept: "Độ phức tạp thuật toán Dijkstra",
       affectedCount: 9,
       cohortPercent: 21,
-      pattern: "Mặc định độ phức tạp luôn là O(V^2) mà bỏ qua vai trò của hàng đợi ưu tiên Min-Heap O((V+E)log V)",
+      pattern:
+        "Mặc định độ phức tạp luôn là O(V^2) mà bỏ qua vai trò của hàng đợi ưu tiên Min-Heap O((V+E)log V)",
       remediation: "Giao thêm bài tập so sánh cấu trúc dữ liệu mảng vs Binary Heap.",
     },
   ]);
@@ -96,27 +99,26 @@ export function TeacherCopilotPage() {
   ]);
 
   const handleApprove = (id: string) => {
-    setQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, status: "APPROVED" } : q)),
-    );
+    setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, status: "APPROVED" } : q)));
   };
 
   const handleReject = (id: string) => {
     setQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, status: "REJECTED", rejectionReason: "Từ chối bởi giảng viên" } : q)),
+      prev.map((q) =>
+        q.id === id ? { ...q, status: "REJECTED", rejectionReason: "Từ chối bởi giảng viên" } : q,
+      ),
     );
   };
 
   const handleIntervene = (id: string, newStatus: "CONTACTED" | "RESOLVED") => {
-    setSignals((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, interventionStatus: newStatus } : s)),
-    );
+    setSignals((prev) => prev.map((s) => (s.id === id ? { ...s, interventionStatus: newStatus } : s)));
   };
 
   return (
     <div className="teacher-copilot-container" style={{ padding: "var(--space-6) 0" }}>
       <Heading title="Teacher Copilot & Misconceptions Studio">
-        Trợ lý giảng viên hỗ trợ soạn câu hỏi, ma trận tiêu chí chấm (Rubrics), phân tích lỗi sai phổ biến và can thiệp sư phạm kịp thời.
+        Trợ lý giảng viên hỗ trợ soạn câu hỏi, ma trận tiêu chí chấm (Rubrics), phân tích lỗi sai phổ biến và
+        can thiệp sư phạm kịp thời.
       </Heading>
 
       {/* Human Approval Gate Alert */}
@@ -131,7 +133,9 @@ export function TeacherCopilotPage() {
           color: "var(--ink)",
         }}
       >
-        🔒 <strong>Cổng phê duyệt Giảng viên (Human Approval Required):</strong> Toàn bộ câu hỏi, tiêu chí rubric và nội dung do AI tạo ra mặc định ở trạng thái <em>DRAFT</em> và chỉ có hiệu lực chính thức khi được giảng viên xem xét và phê duyệt.
+        🔒 <strong>Cổng phê duyệt Giảng viên (Human Approval Required):</strong> Toàn bộ câu hỏi, tiêu chí
+        rubric và nội dung do AI tạo ra mặc định ở trạng thái <em>DRAFT</em> và chỉ có hiệu lực chính thức khi
+        được giảng viên xem xét và phê duyệt.
       </div>
 
       {/* Tabs */}
@@ -190,16 +194,24 @@ export function TeacherCopilotPage() {
                         fontSize: "0.75rem",
                         fontWeight: 600,
                         background:
-                          q.status === "APPROVED" ? "#e8f5e9" : q.status === "REJECTED" ? "#ffebee" : "#fff3cd",
+                          q.status === "APPROVED"
+                            ? "#e8f5e9"
+                            : q.status === "REJECTED"
+                              ? "#ffebee"
+                              : "#fff3cd",
                         color:
-                          q.status === "APPROVED" ? "#2e7d32" : q.status === "REJECTED" ? "#c62828" : "#856404",
+                          q.status === "APPROVED"
+                            ? "#2e7d32"
+                            : q.status === "REJECTED"
+                              ? "#c62828"
+                              : "#856404",
                       }}
                     >
                       {q.status === "APPROVED"
                         ? "✓ ĐÃ DUYỆT (ĐÃ VÀO NGÂN HÀNG CÂU HỎI)"
                         : q.status === "REJECTED"
-                        ? "✕ TỪ CHỐI"
-                        : "⏳ BẢN NHÁP (CHỜ GIẢNG VIÊN DUYỆT)"}
+                          ? "✕ TỪ CHỐI"
+                          : "⏳ BẢN NHÁP (CHỜ GIẢNG VIÊN DUYỆT)"}
                     </span>
                     <h3 style={{ margin: "var(--space-2) 0", fontSize: "1.1rem" }}>{q.text}</h3>
                     <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>
@@ -270,24 +282,38 @@ export function TeacherCopilotPage() {
                 <tr style={{ background: "#f8fafc", textAlign: "left" }}>
                   <th style={{ padding: "10px", borderBottom: "2px solid var(--line)" }}>Tiêu chí</th>
                   <th style={{ padding: "10px", borderBottom: "2px solid var(--line)" }}>Điểm tối đa</th>
-                  <th style={{ padding: "10px", borderBottom: "2px solid var(--line)" }}>Mô tả mức xuất sắc (A)</th>
+                  <th style={{ padding: "10px", borderBottom: "2px solid var(--line)" }}>
+                    Mô tả mức xuất sắc (A)
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>1. Tính đúng đắn của cấu trúc tự cân bằng</td>
+                  <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>
+                    1. Tính đúng đắn của cấu trúc tự cân bằng
+                  </td>
                   <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>40 điểm</td>
-                  <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>Tất cả các phép quay đơn và kép xử lý chính xác 100% test case kiểm thử.</td>
+                  <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>
+                    Tất cả các phép quay đơn và kép xử lý chính xác 100% test case kiểm thử.
+                  </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>2. Tối ưu bộ nhớ & thời gian thực thi</td>
+                  <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>
+                    2. Tối ưu bộ nhớ & thời gian thực thi
+                  </td>
                   <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>35 điểm</td>
-                  <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>Đạt độ phức tạp thời gian O(log N) và giải phóng bộ nhớ sạch không có memory leak.</td>
+                  <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>
+                    Đạt độ phức tạp thời gian O(log N) và giải phóng bộ nhớ sạch không có memory leak.
+                  </td>
                 </tr>
                 <tr>
-                  <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>3. Phong cách mã nguồn & tài liệu hóa</td>
+                  <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>
+                    3. Phong cách mã nguồn & tài liệu hóa
+                  </td>
                   <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>25 điểm</td>
-                  <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>Mã nguồn tuân thủ Clean Code, có unit tests bao phủ đầy đủ.</td>
+                  <td style={{ padding: "10px", borderBottom: "1px solid var(--line)" }}>
+                    Mã nguồn tuân thủ Clean Code, có unit tests bao phủ đầy đủ.
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -318,7 +344,13 @@ export function TeacherCopilotPage() {
                 <p style={{ margin: "var(--space-2) 0", color: "var(--ink)" }}>
                   <strong>Quy luật sai phổ biến:</strong> {m.pattern}
                 </p>
-                <div style={{ background: "#e8f4fd", padding: "var(--space-3)", borderRadius: "var(--radius-sm)" }}>
+                <div
+                  style={{
+                    background: "#e8f4fd",
+                    padding: "var(--space-3)",
+                    borderRadius: "var(--radius-sm)",
+                  }}
+                >
                   <span style={{ fontWeight: 600, color: "var(--blue)" }}>💡 Đề xuất sư phạm khắc phục:</span>
                   <p style={{ margin: "4px 0 0 0" }}>{m.remediation}</p>
                 </div>

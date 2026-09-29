@@ -162,7 +162,7 @@ describe("Phase 21.6: LTI 1.3 Security & Role Escalation Protection", () => {
     expect(result.valid).toBe(true);
     // Crucial security requirement: maps strictly to INSTITUTION_ADMIN, never global PLATFORM_ADMIN
     expect(result.role).toBe("INSTITUTION_ADMIN");
-    expect((result.role as string)).not.toBe("ADMIN");
-    expect((result.role as string)).not.toBe("PLATFORM_ADMIN");
+    expect(result.role as string).not.toBe("ADMIN");
+    expect(result.role as string).not.toBe("PLATFORM_ADMIN");
   });
 });

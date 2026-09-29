@@ -4,7 +4,7 @@ const dir = new URL("ca/", generated);
 const key = new URL("ca-key.pem", dir);
 const cert = new URL("ca-cert.pem", dir);
 await ensureDir(dir);
-if (!(await exists(key))) {
+if (process.env.AILSS_ROTATE_TLS_KEYS === "true" || !(await exists(key))) {
   await openssl([
     "genpkey",
     "-algorithm",
@@ -16,7 +16,17 @@ if (!(await exists(key))) {
   ]);
   await protect(key);
 }
-if (!(await exists(cert))) {
+
+let shouldGenerateCert = !(await exists(cert)) || process.env.AILSS_ROTATE_TLS_KEYS === "true";
+if (!shouldGenerateCert) {
+  try {
+    await openssl(["x509", "-checkend", "86400", "-noout", "-in", filePath(cert)]);
+  } catch {
+    shouldGenerateCert = true;
+  }
+}
+
+if (shouldGenerateCert) {
   await openssl([
     "req",
     "-x509",
@@ -27,7 +37,7 @@ if (!(await exists(cert))) {
     "-out",
     filePath(cert),
     "-days",
-    "30",
+    "365",
     "-subj",
     "/C=VN/O=AILSS Development/CN=AILSS Development Root CA",
   ]);
@@ -37,6 +47,6 @@ console.log(
     stage: "dev-ca",
     status: "PASS",
     path: "infrastructure/tls/generated/ca/ca-cert.pem",
-    validityDays: 30,
+    validityDays: 365,
   }),
 );

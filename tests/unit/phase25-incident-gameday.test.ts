@@ -81,7 +81,10 @@ describe("Phase 25.24: SRE Incident Game Day Simulation & Resilience Invariants"
     let failureCount = 0;
     const failureThreshold = 3;
 
-    function queryAssistant(prompt: string, simulate503: boolean): {
+    function queryAssistant(
+      prompt: string,
+      simulate503: boolean,
+    ): {
       response: string;
       source: "PRIMARY_LLM" | "DETERMINISTIC_FALLBACK";
       circuitState: CircuitState;

@@ -35,12 +35,18 @@ describe("Phase 34.3 - 34.32: External Validation, Route Hardening, and Payment 
 
   describe("Observability & Health Endpoint Hardening (Phase 34.15 - 34.16)", () => {
     it("2. /metrics endpoint denies public Internet access and permits authenticated monitoring scraper", () => {
-      const simulateMetricsRequest = (clientSource: "PUBLIC_INTERNET" | "MONITORING_SUBNET", authToken?: string) => {
+      const simulateMetricsRequest = (
+        clientSource: "PUBLIC_INTERNET" | "MONITORING_SUBNET",
+        authToken?: string,
+      ) => {
         if (clientSource === "PUBLIC_INTERNET") {
           return { status: 403, error: "ACCESS_DENIED_INTERNAL_SCRAPE_ONLY" };
         }
         if (clientSource === "MONITORING_SUBNET" && authToken === "Bearer valid-prometheus-token") {
-          return { status: 200, body: "# HELP http_requests_total Total HTTP Requests\nhttp_requests_total 49915" };
+          return {
+            status: 200,
+            body: "# HELP http_requests_total Total HTTP Requests\nhttp_requests_total 49915",
+          };
         }
         return { status: 401, error: "UNAUTHORIZED" };
       };
@@ -51,7 +57,10 @@ describe("Phase 34.3 - 34.32: External Validation, Route Hardening, and Payment 
       const unauthenticatedInternal = simulateMetricsRequest("MONITORING_SUBNET");
       expect(unauthenticatedInternal.status).toBe(401);
 
-      const authenticatedMonitoring = simulateMetricsRequest("MONITORING_SUBNET", "Bearer valid-prometheus-token");
+      const authenticatedMonitoring = simulateMetricsRequest(
+        "MONITORING_SUBNET",
+        "Bearer valid-prometheus-token",
+      );
       expect(authenticatedMonitoring.status).toBe(200);
     });
 
@@ -161,12 +170,22 @@ ailss_http_request_duration_seconds_bucket{le="0.1"} 26500
       const validSignature = crypto.createHmac("sha256", secret).update(dataToSign).digest("hex");
 
       // First webhook delivery
-      const firstRun = CommercialGateGuard.verifyAndDeduplicateWebhook(payload, validSignature, secret, processedStore);
+      const firstRun = CommercialGateGuard.verifyAndDeduplicateWebhook(
+        payload,
+        validSignature,
+        secret,
+        processedStore,
+      );
       expect(firstRun.success).toBe(true);
       expect(firstRun.duplicate).toBe(false);
 
       // Replayed webhook (same eventId & transactionId)
-      const replayRun = CommercialGateGuard.verifyAndDeduplicateWebhook(payload, validSignature, secret, processedStore);
+      const replayRun = CommercialGateGuard.verifyAndDeduplicateWebhook(
+        payload,
+        validSignature,
+        secret,
+        processedStore,
+      );
       expect(replayRun.success).toBe(true);
       expect(replayRun.duplicate).toBe(true);
       expect(replayRun.reason).toBe("EVENT_ALREADY_PROCESSED_IDEMPOTENT");
@@ -180,7 +199,12 @@ ailss_http_request_duration_seconds_bucket{le="0.1"} 26500
       const expiredData = `${expiredPayload.eventId}:${expiredPayload.transactionId}:${expiredPayload.orderId}:${expiredPayload.amountMinorUnits}:${expiredPayload.currency}:${expiredPayload.timestamp}`;
       const expiredSig = crypto.createHmac("sha256", secret).update(expiredData).digest("hex");
 
-      const expiredRun = CommercialGateGuard.verifyAndDeduplicateWebhook(expiredPayload, expiredSig, secret, processedStore);
+      const expiredRun = CommercialGateGuard.verifyAndDeduplicateWebhook(
+        expiredPayload,
+        expiredSig,
+        secret,
+        processedStore,
+      );
       expect(expiredRun.success).toBe(false);
       expect(expiredRun.reason).toBe("WEBHOOK_TIMESTAMP_EXPIRED");
     });
@@ -199,16 +223,33 @@ ailss_http_request_duration_seconds_bucket{le="0.1"} 26500
       expect(ledgerEntry.amountMinorUnits).toBe(499000);
 
       // Rejects floating point amount (e.g. 499.50)
-      expect(() =>
-        CommercialGateGuard.recordDoubleEntryLedger("tx-1", "ord-1", 499.5, "USD"),
-      ).toThrow(/INVALID_LEDGER_AMOUNT/);
+      expect(() => CommercialGateGuard.recordDoubleEntryLedger("tx-1", "ord-1", 499.5, "USD")).toThrow(
+        /INVALID_LEDGER_AMOUNT/,
+      );
     });
 
     it("8. Reconciles payment provider transaction against order and ledger", () => {
-      const order = { id: "ord-ailss-sub-100", amountMinorUnits: 499000, currency: "VND", status: "PAID" as PaymentState };
-      const providerTx = { id: "tx-sepay-7741", orderId: "ord-ailss-sub-100", amountMinorUnits: 499000, currency: "VND", status: "PAID" as const };
+      const order = {
+        id: "ord-ailss-sub-100",
+        amountMinorUnits: 499000,
+        currency: "VND",
+        status: "PAID" as PaymentState,
+      };
+      const providerTx = {
+        id: "tx-sepay-7741",
+        orderId: "ord-ailss-sub-100",
+        amountMinorUnits: 499000,
+        currency: "VND",
+        status: "PAID" as const,
+      };
       const ledger = [
-        CommercialGateGuard.recordDoubleEntryLedger("tx-sepay-7741", "ord-ailss-sub-100", 499000, "VND", "SETTLEMENT"),
+        CommercialGateGuard.recordDoubleEntryLedger(
+          "tx-sepay-7741",
+          "ord-ailss-sub-100",
+          499000,
+          "VND",
+          "SETTLEMENT",
+        ),
       ];
 
       const reconciliation = CommercialGateGuard.reconcilePaymentTransaction(order, providerTx, ledger, true);
@@ -216,7 +257,12 @@ ailss_http_request_duration_seconds_bucket{le="0.1"} 26500
       expect(reconciliation.discrepancies).toHaveLength(0);
 
       // Discrepancy case: Missing ledger record
-      const faultyReconciliation = CommercialGateGuard.reconcilePaymentTransaction(order, providerTx, [], true);
+      const faultyReconciliation = CommercialGateGuard.reconcilePaymentTransaction(
+        order,
+        providerTx,
+        [],
+        true,
+      );
       expect(faultyReconciliation.reconciled).toBe(false);
       expect(faultyReconciliation.discrepancies).toContain("MISSING_LEDGER_RECORD_FOR_PAID_TRANSACTION");
     });

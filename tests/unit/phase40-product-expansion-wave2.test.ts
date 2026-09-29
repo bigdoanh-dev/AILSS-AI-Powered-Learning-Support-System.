@@ -203,9 +203,7 @@ describe("Phase 40 Track 2: Product Expansion Wave 2 Verification", () => {
         { outcomeId: "LO-99", title: "Cây B-Tree nâng cao" }, // Unassessed!
       ];
 
-      const report = curriculum.analyzeCoverage(map, knownOutcomes, [
-        { source: "LO-01", target: "LO-99" },
-      ]);
+      const report = curriculum.analyzeCoverage(map, knownOutcomes, [{ source: "LO-01", target: "LO-99" }]);
 
       expect(report.unassessedOutcomes).toContain("LO-99 (Cây B-Tree nâng cao)");
       expect(report.summaryVerdict).toBe("ACTION_RECOMMENDED");
@@ -253,7 +251,7 @@ describe("Phase 40 Track 2: Product Expansion Wave 2 Verification", () => {
           discoveryUrlPattern: "https://auth.example.com",
           allowedDomainRules: ["example.com"],
           // Secret sneak-in:
-          ...( { client_secret: "super-secret-password" } as unknown as object ),
+          ...({ client_secret: "super-secret-password" } as unknown as object),
         },
         featurePolicy: {},
         aiPolicy: {
@@ -337,13 +335,28 @@ describe("Phase 40 Track 2: Product Expansion Wave 2 Verification", () => {
 
       experimentation.registerExperiment(validExp);
 
-      const a1 = experimentation.assignVariant("exp-study-plan-layout-v1", "stu-01", "tenant-polytech", "2026-Fall");
-      const a2 = experimentation.assignVariant("exp-study-plan-layout-v1", "stu-01", "tenant-polytech", "2026-Fall");
+      const a1 = experimentation.assignVariant(
+        "exp-study-plan-layout-v1",
+        "stu-01",
+        "tenant-polytech",
+        "2026-Fall",
+      );
+      const a2 = experimentation.assignVariant(
+        "exp-study-plan-layout-v1",
+        "stu-01",
+        "tenant-polytech",
+        "2026-Fall",
+      );
       // Deterministic invariant
       expect(a1.assignedVariant).toBe(a2.assignedVariant);
 
       // Tenant outside allowlist defaults to CONTROL
-      const ext = experimentation.assignVariant("exp-study-plan-layout-v1", "stu-99", "tenant-other", "2026-Fall");
+      const ext = experimentation.assignVariant(
+        "exp-study-plan-layout-v1",
+        "stu-99",
+        "tenant-other",
+        "2026-Fall",
+      );
       expect(ext.assignedVariant).toBe("CONTROL");
     });
 

@@ -75,7 +75,7 @@ describe("Phase 27 Soak & Incident Response Disaggregation Verification", () => 
     it("should validate IncidentLifecycleManager SLA compliance for realistic human-paced incidents", () => {
       const detected = new Date("2026-09-02T10:00:00Z");
       const acknowledged = new Date("2026-09-02T10:04:30Z"); // 4.5 min MTTA
-      const resolved = new Date("2026-09-02T10:28:00Z");     // 28 min MTTR
+      const resolved = new Date("2026-09-02T10:28:00Z"); // 28 min MTTR
 
       const record: IncidentRecord = {
         incidentId: "INC-TEST-001",

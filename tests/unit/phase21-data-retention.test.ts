@@ -85,10 +85,7 @@ describe("Phase 21G/H: Data Retention Execution Runner & Compliance", () => {
 
   it("rejects invalid retention windows with AppError", async () => {
     await expect(
-      runner.executeRetentionPass(
-        { category: "EPHEMERAL_UPLOADS", retentionWindowDays: 0 },
-        [],
-      ),
+      runner.executeRetentionPass({ category: "EPHEMERAL_UPLOADS", retentionWindowDays: 0 }, []),
     ).rejects.toMatchObject({
       code: "INVALID_RETENTION_POLICY",
       status: 400,

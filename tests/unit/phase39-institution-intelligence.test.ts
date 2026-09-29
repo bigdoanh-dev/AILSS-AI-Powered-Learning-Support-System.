@@ -50,7 +50,9 @@ describe("Phase 39 Track A: Institutional Operations V2 & Learning Intelligence"
       expect(draftRes.state).toBe("DRAFT");
 
       // Attempting to activate before validation MUST fail closed
-      expect(() => service.activateOnboarding("tenant-polytech-hcm")).toThrow("CANNOT_ACTIVATE_IN_STATE_DRAFT");
+      expect(() => service.activateOnboarding("tenant-polytech-hcm")).toThrow(
+        "CANNOT_ACTIVATE_IN_STATE_DRAFT",
+      );
 
       // 2. Validate
       const valRes = service.validateOnboarding("tenant-polytech-hcm");
@@ -176,29 +178,23 @@ describe("Phase 39 Track A: Institutional Operations V2 & Learning Intelligence"
       service.assignDelegatedAdmin(deptAdminAssignment);
 
       // 1. Faculty Admin CAN manage CS Department (descendant subtree)
-      expect(
-        service.verifySubtreeAuthorization("user-dean-cse", "node-dept-cs", "DEPARTMENT_ADMIN"),
-      ).toBe(true);
+      expect(service.verifySubtreeAuthorization("user-dean-cse", "node-dept-cs", "DEPARTMENT_ADMIN")).toBe(
+        true,
+      );
 
       // 2. Faculty Admin CAN manage CS101 Class (descendant subtree)
-      expect(
-        service.verifySubtreeAuthorization("user-dean-cse", "node-class-cs101", "INSTRUCTOR"),
-      ).toBe(true);
+      expect(service.verifySubtreeAuthorization("user-dean-cse", "node-class-cs101", "INSTRUCTOR")).toBe(
+        true,
+      );
 
       // 3. Department Admin CAN manage CS101 Class (descendant subtree)
-      expect(
-        service.verifySubtreeAuthorization("user-head-cs", "node-class-cs101", "INSTRUCTOR"),
-      ).toBe(true);
+      expect(service.verifySubtreeAuthorization("user-head-cs", "node-class-cs101", "INSTRUCTOR")).toBe(true);
 
       // 4. Department Admin CANNOT manage parent Faculty (ascendant subtree violation)
-      expect(
-        service.verifySubtreeAuthorization("user-head-cs", "node-fac-cse", "FACULTY_ADMIN"),
-      ).toBe(false);
+      expect(service.verifySubtreeAuthorization("user-head-cs", "node-fac-cse", "FACULTY_ADMIN")).toBe(false);
 
       // 5. Cross-tenant or unknown node check rejected
-      expect(
-        service.verifySubtreeAuthorization("user-dean-cse", "unknown-node", "INSTRUCTOR"),
-      ).toBe(false);
+      expect(service.verifySubtreeAuthorization("user-dean-cse", "unknown-node", "INSTRUCTOR")).toBe(false);
     });
   });
 

@@ -11,12 +11,7 @@ export const CopilotDraftTypeEnum = z.enum([
 ]);
 export type CopilotDraftType = z.infer<typeof CopilotDraftTypeEnum>;
 
-export const ApprovalStatusEnum = z.enum([
-  "DRAFT",
-  "REVIEWED",
-  "APPROVED",
-  "REJECTED",
-]);
+export const ApprovalStatusEnum = z.enum(["DRAFT", "REVIEWED", "APPROVED", "REJECTED"]);
 export type ApprovalStatus = z.infer<typeof ApprovalStatusEnum>;
 
 export interface GeneratedQuestionDraft {

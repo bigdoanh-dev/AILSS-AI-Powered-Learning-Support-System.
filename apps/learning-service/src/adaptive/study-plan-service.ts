@@ -14,19 +14,23 @@ export interface CreateStudyPlanInput {
   weekStartDate?: string | undefined;
   availableHoursPerWeek: number;
   masteryRecords: MasteryRecordV2[];
-  courseRequirements?: {
-    lessonId: string;
-    title: string;
-    learningOutcomeId: string;
-    sourceVersion: number;
-  }[] | undefined;
-  upcomingAssessments?: {
-    assessmentId: string;
-    title: string;
-    dueDate: string;
-    targetOutcomeIds: string[];
-    sourceVersion: number;
-  }[] | undefined;
+  courseRequirements?:
+    | {
+        lessonId: string;
+        title: string;
+        learningOutcomeId: string;
+        sourceVersion: number;
+      }[]
+    | undefined;
+  upcomingAssessments?:
+    | {
+        assessmentId: string;
+        title: string;
+        dueDate: string;
+        targetOutcomeIds: string[];
+        sourceVersion: number;
+      }[]
+    | undefined;
 }
 
 export class StudyPlanService {
@@ -41,7 +45,12 @@ export class StudyPlanService {
 
     // Collect mastery gaps
     const masteryGaps = input.masteryRecords
-      .filter((m) => m.masteryState === "DEVELOPING" || m.masteryState === "INTRODUCED" || m.masteryState === "DECAY_RISK")
+      .filter(
+        (m) =>
+          m.masteryState === "DEVELOPING" ||
+          m.masteryState === "INTRODUCED" ||
+          m.masteryState === "DECAY_RISK",
+      )
       .map((m) => ({
         conceptId: m.conceptId,
         conceptName: m.conceptId,
@@ -83,7 +92,9 @@ export class StudyPlanService {
     }
 
     // 2. Second priority: Developing prerequisites & core concepts
-    const developing = input.masteryRecords.filter((m) => m.masteryState === "DEVELOPING" || m.masteryState === "INTRODUCED");
+    const developing = input.masteryRecords.filter(
+      (m) => m.masteryState === "DEVELOPING" || m.masteryState === "INTRODUCED",
+    );
     for (const item of developing) {
       items.push({
         itemId: deterministicItemId(planId, item.conceptId, "REVIEW_CONCEPT"),
@@ -112,15 +123,25 @@ export class StudyPlanService {
     for (const requirement of input.courseRequirements ?? []) {
       if (items.some((item) => item.learningOutcomeId === requirement.learningOutcomeId)) continue;
       items.push({
-        itemId: deterministicItemId(planId, requirement.lessonId, "WATCH_LESSON"), planId,
-        courseId: input.courseId, lessonId: requirement.lessonId, conceptId: requirement.learningOutcomeId,
-        title: `Required lesson: ${requirement.title}`, description: "Complete this lesson from the published course syllabus.",
-        action: "WATCH_LESSON", status: "PROPOSED", scheduledDate: addDate(dayOffset % 7),
-        estimatedMinutes: 35, priority: 3, reasonCode: "TEACHER_PRIORITY",
+        itemId: deterministicItemId(planId, requirement.lessonId, "WATCH_LESSON"),
+        planId,
+        courseId: input.courseId,
+        lessonId: requirement.lessonId,
+        conceptId: requirement.learningOutcomeId,
+        title: `Required lesson: ${requirement.title}`,
+        description: "Complete this lesson from the published course syllabus.",
+        action: "WATCH_LESSON",
+        status: "PROPOSED",
+        scheduledDate: addDate(dayOffset % 7),
+        estimatedMinutes: 35,
+        priority: 3,
+        reasonCode: "TEACHER_PRIORITY",
         rationale: `Required by published course version ${String(requirement.sourceVersion)}.`,
-        sourceType: "COURSE_REQUIREMENT", sourceId: requirement.lessonId,
+        sourceType: "COURSE_REQUIREMENT",
+        sourceId: requirement.lessonId,
         sourceVersion: requirement.sourceVersion,
-        learningOutcomeId: requirement.learningOutcomeId, generatedAt,
+        learningOutcomeId: requirement.learningOutcomeId,
+        generatedAt,
       });
       dayOffset++;
     }
@@ -153,7 +174,8 @@ export class StudyPlanService {
     }
 
     const totalScores = input.masteryRecords.reduce((acc, r) => acc + r.masteryScore, 0);
-    const overallMasteryPercent = input.masteryRecords.length > 0 ? Math.round(totalScores / input.masteryRecords.length) : 0;
+    const overallMasteryPercent =
+      input.masteryRecords.length > 0 ? Math.round(totalScores / input.masteryRecords.length) : 0;
 
     const plan: StudyPlanV2 = {
       planId,
@@ -172,7 +194,12 @@ export class StudyPlanService {
     return plan;
   }
 
-  public updateItemStatus(planId: string, itemId: string, newStatus: StudyPlanItemStatus, rescheduledDate?: string): StudyPlanItem | null {
+  public updateItemStatus(
+    planId: string,
+    itemId: string,
+    newStatus: StudyPlanItemStatus,
+    rescheduledDate?: string,
+  ): StudyPlanItem | null {
     const item = this.plansStore.get(planId)?.items.find((candidate) => candidate.itemId === itemId);
     if (!item) return null;
     item.status = newStatus;
@@ -180,11 +207,17 @@ export class StudyPlanService {
     return item;
   }
 
-  public getPlan(planId: string): StudyPlanV2 | null { return this.plansStore.get(planId) ?? null; }
+  public getPlan(planId: string): StudyPlanV2 | null {
+    return this.plansStore.get(planId) ?? null;
+  }
 }
 
 function deterministicItemId(planId: string, target: string, action: string): string {
-  const hex = createHash("sha256").update(`${planId}:${target}:${action}`).digest("hex").slice(0, 32).split("");
+  const hex = createHash("sha256")
+    .update(`${planId}:${target}:${action}`)
+    .digest("hex")
+    .slice(0, 32)
+    .split("");
   hex[12] = "4";
   hex[16] = ((Number.parseInt(hex[16] ?? "0", 16) & 0x3) | 0x8).toString(16);
   return `${hex.slice(0, 8).join("")}-${hex.slice(8, 12).join("")}-${hex.slice(12, 16).join("")}-${hex.slice(16, 20).join("")}-${hex.slice(20).join("")}`;

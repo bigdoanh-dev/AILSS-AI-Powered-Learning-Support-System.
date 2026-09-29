@@ -1,11 +1,7 @@
 import { types } from "cassandra-driver";
 import type { CassandraClient } from "../../../../packages/cassandra/src/index.js";
 import { maskEmail } from "../registration/model.js";
-import type {
-  ExternalIdentityRecord,
-  SocialProvider,
-  UserLinkedProvider,
-} from "./model.js";
+import type { ExternalIdentityRecord, SocialProvider, UserLinkedProvider } from "./model.js";
 
 const LOCAL_QUORUM = "LOCAL_QUORUM" as const;
 const uuid = (value: string) => types.Uuid.fromString(value);
@@ -85,7 +81,9 @@ export class IdentityExternalAuthRepository {
     });
   }
 
-  public async findCredentialByEmail(normalizedEmail: string): Promise<{ userId: string; status: string } | null> {
+  public async findCredentialByEmail(
+    normalizedEmail: string,
+  ): Promise<{ userId: string; status: string } | null> {
     const rows = await this.client.execute(
       `SELECT user_id, status FROM credential_by_email WHERE normalized_email = ?`,
       [normalizedEmail],
@@ -126,11 +124,7 @@ export class IdentityExternalAuthRepository {
     };
   }
 
-  public async updateLastLogin(
-    provider: SocialProvider,
-    providerSubject: string,
-    now: Date,
-  ): Promise<void> {
+  public async updateLastLogin(provider: SocialProvider, providerSubject: string, now: Date): Promise<void> {
     await this.client.execute(
       `UPDATE external_identity_by_provider_subject
        SET last_login_at = ?

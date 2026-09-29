@@ -54,7 +54,7 @@ export default function AdminUsersListScreen() {
         setRefreshing(false);
       }
     },
-    [session, snapshot.user?.role, role, status]
+    [session, snapshot.user?.role, role, status],
   );
 
   useEffect(() => {

@@ -49,7 +49,12 @@ const input = {
 };
 for (const id of [activeId, otherId]) {
   const response = await request(
-    `/api/v1/media-assets/${id}/captions`, 201, lecturer, "POST", input, `phase42-caption-${id}-v1`,
+    `/api/v1/media-assets/${id}/captions`,
+    201,
+    lecturer,
+    "POST",
+    input,
+    `phase42-caption-${id}-v1`,
   );
   const value = (await response.json()).data;
   assert.equal(value.format, "WEBVTT");
@@ -57,9 +62,17 @@ for (const id of [activeId, otherId]) {
   assert.ok(!JSON.stringify(value).includes("media-caption/"));
 }
 await request(`/api/v1/media-assets/${activeId}/captions`, 403, other, "POST", input, "non-owner-caption");
-await request(`/api/v1/media-assets/${activeId}/captions`, 422, lecturer, "POST", {
-  ...input, content: "WEBVTT\n\n00:00:25.000 --> 00:00:01.000\nInvalid\n",
-}, "bad-caption");
+await request(
+  `/api/v1/media-assets/${activeId}/captions`,
+  422,
+  lecturer,
+  "POST",
+  {
+    ...input,
+    content: "WEBVTT\n\n00:00:25.000 --> 00:00:01.000\nInvalid\n",
+  },
+  "bad-caption",
+);
 const session = await playback();
 const track = session.captionTracks.find((item) => item.language === "vi" && item.label === "Tiếng Việt");
 assert.ok(track?.url);
@@ -82,4 +95,6 @@ const privateObject = await fetch(
 );
 assert.equal(privateObject.status, 403, "Anonymous direct object request must remain denied");
 checks++;
-console.log(`PHASE42_CAPTIONS_PASS checks=${checks} active=${activeId} other=${otherId} track=${track.captionTrackId}`);
+console.log(
+  `PHASE42_CAPTIONS_PASS checks=${checks} active=${activeId} other=${otherId} track=${track.captionTrackId}`,
+);

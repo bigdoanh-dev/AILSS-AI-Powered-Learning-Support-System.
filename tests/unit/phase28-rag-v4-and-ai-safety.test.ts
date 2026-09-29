@@ -18,7 +18,7 @@ describe("Phase 28.30, 28.31 & 28.32: RAG Evaluation V4 & AI Quality Drift Compa
     crossTenantLeakageCount: 0,
     crossVersionLeakageCount: 0,
     quarantinedLeakageCount: 0,
-    outOfDomainRejectionAccuracy: 0.990,
+    outOfDomainRejectionAccuracy: 0.99,
     isPilotGrade: true,
   };
 

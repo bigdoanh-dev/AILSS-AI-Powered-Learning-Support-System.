@@ -44,11 +44,31 @@ describe("configuration", () => {
     expect(configuration("research", "http://10.0.2.2:8080").origin).toBe("http://10.0.2.2:8080");
   });
 });
-describe("Phase 41 route scope", () => {
-  it("keeps Lecturer/Admin routes unreachable, including direct navigation and home", () => {
-    for (const path of ["/admin", "/admin/users", "/teaching", "/teaching/classes/1"])
+describe("mobile role route scope", () => {
+  it("allows the admin and lecturer journeys only for the matching role", () => {
+    for (const path of ["/admin", "/admin/revenue", "/admin/ai", "/admin/users/1"]) {
+      expect(phase41RouteAvailable(path, "ADMIN")).toBe(true);
+      expect(phase41RouteAvailable(path, "LECTURER")).toBe(false);
+      expect(phase41RouteAvailable(path, "STUDENT")).toBe(false);
+      expect(phase41RouteAvailable(path, undefined)).toBe(false);
+    }
+    for (const path of [
+      "/teaching",
+      "/teaching/revenue",
+      "/teaching/profile",
+      "/teaching/ai",
+      "/teaching/copilot",
+      "/teaching/media",
+      "/teaching/courses/create",
+      "/teaching/courses/1/edit",
+      "/teaching/offerings/1",
+      "/teaching/reports",
+    ]) {
+      expect(phase41RouteAvailable(path, "LECTURER")).toBe(true);
       expect(phase41RouteAvailable(path, "ADMIN")).toBe(false);
-    expect(phase41RouteAvailable("/", "LECTURER")).toBe(false);
+      expect(phase41RouteAvailable(path, "STUDENT")).toBe(false);
+      expect(phase41RouteAvailable(path, undefined)).toBe(false);
+    }
     expect(getFeaturesForRole("ADMIN")).toEqual([]);
     expect(getFeaturesForRole("LECTURER")).toEqual([]);
   });
@@ -56,6 +76,8 @@ describe("Phase 41 route scope", () => {
     expect(phase41RouteAvailable("/student", "STUDENT")).toBe(true);
     expect(phase41RouteAvailable("/", "STUDENT")).toBe(true);
     expect(phase41RouteAvailable("/courses", undefined)).toBe(true);
+    expect(phase41RouteAvailable("/courses/1?tab=reviews", "STUDENT")).toBe(true);
+    expect(phase41RouteAvailable("/lecturers/1", undefined)).toBe(true);
   });
 });
 describe("transport", () => {

@@ -66,10 +66,7 @@ export default function LecturerQuizResultsScreen() {
               (data as { data: { items?: unknown[] } }).data?.items) ||
             [];
           if (Array.isArray(rawItems)) {
-            syncSubmissionsFromApi(
-              rawItems as Parameters<typeof syncSubmissionsFromApi>[0],
-              quizId,
-            );
+            syncSubmissionsFromApi(rawItems as Parameters<typeof syncSubmissionsFromApi>[0], quizId);
           }
           setNextCursor(page.nextCursor);
           setLoading(false);
@@ -95,7 +92,7 @@ export default function LecturerQuizResultsScreen() {
     setGradingItem(item);
     setManualScore(existing?.manualScore ?? item.score ?? "8.5");
     setManualFeedback(
-      existing?.lecturerFeedback ?? "Bài làm thể hiện tốt tư duy giải quyết vấn đề, lập luận rõ ràng."
+      existing?.lecturerFeedback ?? "Bài làm thể hiện tốt tư duy giải quyết vấn đề, lập luận rõ ràng.",
     );
   };
 
@@ -158,9 +155,7 @@ export default function LecturerQuizResultsScreen() {
       {!loading && !error && items && items.length === 0 && (
         <View style={s.emptyBox}>
           <Text style={styles.text}>Chưa có kết quả làm bài trong tháng này.</Text>
-          <Text style={styles.small}>
-            Kết quả sẽ tự động hiển thị sau khi học viên nộp bài.
-          </Text>
+          <Text style={styles.small}>Kết quả sẽ tự động hiển thị sau khi học viên nộp bài.</Text>
         </View>
       )}
 
@@ -205,7 +200,14 @@ export default function LecturerQuizResultsScreen() {
                     </Text>
                   )}
 
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginTop: 4,
+                    }}
+                  >
                     <Text style={styles.small}>
                       Nộp:{" "}
                       {new Date(item.submittedAt).toLocaleDateString("vi-VN", {
@@ -216,10 +218,7 @@ export default function LecturerQuizResultsScreen() {
                       })}
                     </Text>
 
-                    <Button
-                      label="✏️ Chấm / Sửa điểm"
-                      onPress={() => handleOpenGrading(item)}
-                    />
+                    <Button label="✏️ Chấm / Sửa điểm" onPress={() => handleOpenGrading(item)} />
                   </View>
                 </View>
               );
@@ -256,10 +255,12 @@ export default function LecturerQuizResultsScreen() {
                 {getSubmissionByAttemptId(gradingItem?.attemptId || "")?.fileAttachment && (
                   <View style={{ marginTop: 8, padding: 8, backgroundColor: "#E0F2FE", borderRadius: 8 }}>
                     <Text style={{ fontSize: 12, fontWeight: "700", color: "#0284C7" }}>
-                      📁 Tệp đính kèm: {getSubmissionByAttemptId(gradingItem?.attemptId || "")?.fileAttachment?.fileName}
+                      📁 Tệp đính kèm:{" "}
+                      {getSubmissionByAttemptId(gradingItem?.attemptId || "")?.fileAttachment?.fileName}
                     </Text>
                     <Text style={{ fontSize: 11, color: "#475569" }}>
-                      Dung lượng: {getSubmissionByAttemptId(gradingItem?.attemptId || "")?.fileAttachment?.fileSize}
+                      Dung lượng:{" "}
+                      {getSubmissionByAttemptId(gradingItem?.attemptId || "")?.fileAttachment?.fileSize}
                     </Text>
                   </View>
                 )}

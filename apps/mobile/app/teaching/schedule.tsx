@@ -171,9 +171,7 @@ export default function TeachingScheduleScreen() {
 
       <View style={sc.infoRow}>
         <Icon name="mapPin" size={14} color="#059669" />
-        <Text style={[sc.infoText, { color: "#059669", fontWeight: "600" }]}>
-          {session.room}
-        </Text>
+        <Text style={[sc.infoText, { color: "#059669", fontWeight: "600" }]}>{session.room}</Text>
       </View>
 
       <View style={sc.topicBox}>
@@ -183,7 +181,8 @@ export default function TeachingScheduleScreen() {
 
       <View style={sc.metaRow}>
         <Text style={sc.metaStat}>
-          👥 Sĩ số: <Text style={{ fontWeight: "800" }}>{session.studentCount} SV</Text> ({session.attendedCount} đã điểm danh)
+          👥 Sĩ số: <Text style={{ fontWeight: "800" }}>{session.studentCount} SV</Text> (
+          {session.attendedCount} đã điểm danh)
         </Text>
       </View>
 
@@ -192,9 +191,7 @@ export default function TeachingScheduleScreen() {
           scaleTo={0.94}
           style={sc.actionBtnOutline}
           onPress={() =>
-            router.push(
-              `/teaching/classes/${session.classId}/sessions/${session.id}/attendance` as Href,
-            )
+            router.push(`/teaching/classes/${session.classId}/sessions/${session.id}/attendance` as Href)
           }
         >
           <Icon name="checkCircle" size={14} color="#0891B2" />
@@ -204,9 +201,7 @@ export default function TeachingScheduleScreen() {
         <ScalePressable
           scaleTo={0.94}
           style={sc.actionBtnPrimary}
-          onPress={() =>
-            router.push(`/teaching/classes/${session.classId}` as Href)
-          }
+          onPress={() => router.push(`/teaching/classes/${session.classId}` as Href)}
         >
           <Text style={sc.actionBtnPrimaryText}>Vào lớp dạy →</Text>
         </ScalePressable>
@@ -248,9 +243,7 @@ export default function TeachingScheduleScreen() {
               style={[sc.viewTabBtn, viewMode === "DAY" && sc.viewTabBtnActive]}
               onPress={() => setViewMode("DAY")}
             >
-              <Text style={[sc.viewTabText, viewMode === "DAY" && sc.viewTabTextActive]}>
-                📅 Theo ngày
-              </Text>
+              <Text style={[sc.viewTabText, viewMode === "DAY" && sc.viewTabTextActive]}>📅 Theo ngày</Text>
             </ScalePressable>
 
             <ScalePressable
@@ -258,9 +251,7 @@ export default function TeachingScheduleScreen() {
               style={[sc.viewTabBtn, viewMode === "WEEK" && sc.viewTabBtnActive]}
               onPress={() => setViewMode("WEEK")}
             >
-              <Text style={[sc.viewTabText, viewMode === "WEEK" && sc.viewTabTextActive]}>
-                🗓️ Theo tuần
-              </Text>
+              <Text style={[sc.viewTabText, viewMode === "WEEK" && sc.viewTabTextActive]}>🗓️ Theo tuần</Text>
             </ScalePressable>
 
             <ScalePressable
@@ -284,7 +275,11 @@ export default function TeachingScheduleScreen() {
                 </Text>
               </View>
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 8 }}
+              >
                 <ScalePressable
                   scaleTo={0.93}
                   style={[sc.filterPill, listFilter === "ALL" && sc.filterPillActive]}
@@ -323,9 +318,7 @@ export default function TeachingScheduleScreen() {
                 </ScalePressable>
               </ScrollView>
 
-              <View style={{ gap: 12 }}>
-                {filteredListSessions.map(renderSessionCard)}
-              </View>
+              <View style={{ gap: 12 }}>{filteredListSessions.map(renderSessionCard)}</View>
             </View>
           )}
 
@@ -339,7 +332,9 @@ export default function TeachingScheduleScreen() {
                 <View style={{ alignItems: "center" }}>
                   <Text style={sc.dayNavTitle}>{selectedDayInfo?.fullLabel}</Text>
                   <Text style={sc.dayNavSubtitle}>
-                    {daySessions.length > 0 ? `${daySessions.length} ca giảng dạy` : "Không có lịch giảng dạy"}
+                    {daySessions.length > 0
+                      ? `${daySessions.length} ca giảng dạy`
+                      : "Không có lịch giảng dạy"}
                   </Text>
                 </View>
                 <ScalePressable scaleTo={0.9} style={sc.dayNavBtn} onPress={handleNextDay}>
@@ -347,7 +342,11 @@ export default function TeachingScheduleScreen() {
                 </ScalePressable>
               </View>
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 8, paddingVertical: 2 }}
+              >
                 {DAYS_OF_WEEK.map((d) => {
                   const isSelected = d.dateStr === selectedDateStr;
                   const isToday = d.dateStr === "2026-09-17";
@@ -364,9 +363,7 @@ export default function TeachingScheduleScreen() {
                       ]}
                       onPress={() => setSelectedDateStr(d.dateStr)}
                     >
-                      <Text style={[sc.dayChipLabel, isSelected && sc.dayChipLabelSelected]}>
-                        {d.label}
-                      </Text>
+                      <Text style={[sc.dayChipLabel, isSelected && sc.dayChipLabelSelected]}>{d.label}</Text>
                       <Text style={[sc.dayChipDate, isSelected && sc.dayChipDateSelected]}>
                         {d.dateStr.slice(8)}/09
                       </Text>
@@ -391,9 +388,7 @@ export default function TeachingScheduleScreen() {
                   </Text>
                 </View>
               ) : (
-                <View style={{ gap: 12 }}>
-                  {daySessions.map(renderSessionCard)}
-                </View>
+                <View style={{ gap: 12 }}>{daySessions.map(renderSessionCard)}</View>
               )}
             </View>
           )}
@@ -406,9 +401,7 @@ export default function TeachingScheduleScreen() {
                   <Text style={sc.weekTitle}>Tuần 38 (14/09 – 20/09/2026)</Text>
                   <Badge label="5 BUỔI DẠY" variant="ai" />
                 </View>
-                <Text style={sc.weekSubtitle}>
-                  Kế hoạch giảng dạy học kỳ 1 năm học 2026 - 2027
-                </Text>
+                <Text style={sc.weekSubtitle}>Kế hoạch giảng dạy học kỳ 1 năm học 2026 - 2027</Text>
               </View>
 
               {DAYS_OF_WEEK.map((day) => {
@@ -420,9 +413,7 @@ export default function TeachingScheduleScreen() {
                     <View style={sc.weekDayHeader}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                         <View style={[sc.dayCircle, isToday && sc.dayCircleToday]}>
-                          <Text style={[sc.dayCircleText, isToday && { color: "#FFFFFF" }]}>
-                            {day.label}
-                          </Text>
+                          <Text style={[sc.dayCircleText, isToday && { color: "#FFFFFF" }]}>{day.label}</Text>
                         </View>
                         <Text style={[sc.weekDayTitle, isToday && { color: "#0284C7" }]}>
                           {day.fullLabel}
@@ -516,10 +507,14 @@ export default function TeachingScheduleScreen() {
 
               <View style={[sc.weekProgressCard, { borderColor: "#0284C7", backgroundColor: "#F0F9FF" }]}>
                 <View style={sc.progressRow}>
-                  <Text style={[sc.progressTitle, { color: "#0284C7" }]}>Tuần 3 (15/09 – 21/09) ★ ĐANG DẠY</Text>
+                  <Text style={[sc.progressTitle, { color: "#0284C7" }]}>
+                    Tuần 3 (15/09 – 21/09) ★ ĐANG DẠY
+                  </Text>
                   <Text style={[sc.progressStatus, { color: "#0284C7" }]}>2/4 buổi (Hôm nay: 2 ca)</Text>
                 </View>
-                <Text style={sc.progressDetail}>Hôm nay có 2 ca dạy: CSDL Nhóm 01 (07:30) & Web AI (13:30).</Text>
+                <Text style={sc.progressDetail}>
+                  Hôm nay có 2 ca dạy: CSDL Nhóm 01 (07:30) & Web AI (13:30).
+                </Text>
               </View>
 
               <View style={sc.weekProgressCard}>
@@ -527,7 +522,9 @@ export default function TeachingScheduleScreen() {
                   <Text style={sc.progressTitle}>Tuần 4 (22/09 – 30/09)</Text>
                   <Text style={sc.progressStatus}>0/4 buổi (Sắp diễn ra)</Text>
                 </View>
-                <Text style={sc.progressDetail}>Lịch thi giữa kỳ và báo cáo bài tập lớn đồ án chuyên đề.</Text>
+                <Text style={sc.progressDetail}>
+                  Lịch thi giữa kỳ và báo cáo bài tập lớn đồ án chuyên đề.
+                </Text>
               </View>
             </View>
           )}

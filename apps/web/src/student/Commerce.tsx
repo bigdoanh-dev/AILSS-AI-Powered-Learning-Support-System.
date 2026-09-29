@@ -33,7 +33,10 @@ type Order = {
 
 const offeringsOf = (v?: Offering[] | { items: Offering[] }) => (Array.isArray(v) ? v : v?.items || []);
 
-const COURSE_CATALOG_MAP: Record<string, { title: string; price: number; originalPrice?: number; level: string }> = {
+const COURSE_CATALOG_MAP: Record<
+  string,
+  { title: string; price: number; originalPrice?: number; level: string }
+> = {
   "10000000-0000-4000-8000-000000000002": {
     title: "Lập trình Web & Trợ lý AI Fullstack",
     price: 590000,
@@ -132,7 +135,9 @@ export default function Purchase() {
       })
       .catch(() => {
         setOrder(null);
-        setMessage("Không thể xác minh đơn hàng. Không thực hiện chuyển khoản khi chưa có đơn hợp lệ từ máy chủ.");
+        setMessage(
+          "Không thể xác minh đơn hàng. Không thực hiện chuyển khoản khi chưa có đơn hợp lệ từ máy chủ.",
+        );
       });
     return () => controller.abort();
   }, [savedOrderId]);
@@ -156,7 +161,9 @@ export default function Purchase() {
         setOrder(r.data);
         setMessage("");
       } catch {
-        setMessage("Mất kết nối khi xác minh đơn hàng. Vui lòng không chuyển khoản cho đến khi kết nối được khôi phục.");
+        setMessage(
+          "Mất kết nối khi xác minh đơn hàng. Vui lòng không chuyển khoản cho đến khi kết nối được khôi phục.",
+        );
       } finally {
         polling = false;
       }
@@ -185,7 +192,6 @@ export default function Purchase() {
 
   async function handleCreateOrder(offeringIdToBuy?: string) {
     const targetOfferingId = offeringIdToBuy || selectedOfferingId || available[0]?.offeringId;
-    const selectedOffering = available.find((o) => o.offeringId === targetOfferingId) || available[0];
     const path = "/orders";
     const body = { offeringId: targetOfferingId };
     const fingerprint = path + JSON.stringify(body);
@@ -202,7 +208,9 @@ export default function Purchase() {
       setParams({ order: r.data.orderId }, { replace: true });
     } catch {
       setOrder(null);
-      setMessage("Không thể tạo đơn hàng có thẩm quyền. Hệ thống chưa phát sinh mã chuyển khoản hoặc yêu cầu thanh toán.");
+      setMessage(
+        "Không thể tạo đơn hàng có thẩm quyền. Hệ thống chưa phát sinh mã chuyển khoản hoặc yêu cầu thanh toán.",
+      );
     } finally {
       setBusy(false);
     }
@@ -213,7 +221,12 @@ export default function Purchase() {
     try {
       if (order) {
         // Try calling real API simulation endpoint if order was created on server
-        const response = await studentRequest<Order>(`/orders/${order.orderId}/simulate-payment`, abort.current.signal, "POST", { outcome: "SUCCESS" });
+        const response = await studentRequest<Order>(
+          `/orders/${order.orderId}/simulate-payment`,
+          abort.current.signal,
+          "POST",
+          { outcome: "SUCCESS" },
+        );
         setOrder(response.data);
       }
     } catch {
@@ -227,7 +240,6 @@ export default function Purchase() {
   const seconds = countdownSeconds % 60;
   const timeFormatted = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 
-  const currentOffering = available.find((o) => o.offeringId === selectedOfferingId) || available[0];
   const cleanNumericPrice = order?.price.replace(/[^\d]/g, "") || "";
   const formattedDisplayPrice = Number(cleanNumericPrice).toLocaleString("vi-VN") + " ₫";
   const paymentContent = order?.payment?.content || "";
@@ -253,7 +265,9 @@ export default function Purchase() {
         <section className="study-card commerce-status">
           <p className="eyebrow">QUYỀN HỌC HỢP LỆ</p>
           <h2>Bạn đã sở hữu khóa học này!</h2>
-          <p className="subtext">Tài khoản của bạn đã được kích hoạt toàn bộ nội dung video, bài tập và trợ lý AI.</p>
+          <p className="subtext">
+            Tài khoản của bạn đã được kích hoạt toàn bộ nội dung video, bài tập và trợ lý AI.
+          </p>
           <div style={{ marginTop: 16 }}>
             <Link className="button" to={`/app/learn/${courseId}`}>
               Tiếp tục học ngay →
@@ -279,8 +293,11 @@ export default function Purchase() {
         >
           <div style={{ display: "grid", gap: 8 }}>
             <p>
-              Hệ thống đã nhận thanh toán <strong>{order.price} {order.currency}</strong> cho đơn hàng{" "}
-              <code>{order.orderId}</code>.
+              Hệ thống đã nhận thanh toán{" "}
+              <strong>
+                {order.price} {order.currency}
+              </strong>{" "}
+              cho đơn hàng <code>{order.orderId}</code>.
             </p>
             <p style={{ color: "#16a34a", fontWeight: 600 }}>
               ✓ Giao dịch đã được đối soát tự động và cấp quyền truy cập khóa học hoàn tất!
@@ -363,12 +380,45 @@ export default function Purchase() {
             {method === "VIETQR_SEPAY" && (
               <div className="payment-instructions" style={{ marginTop: 0 }}>
                 <div className="sepay-qr-card">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", paddingBottom: 8, marginBottom: 8, borderBottom: "1px solid var(--line)" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      width: "100%",
+                      paddingBottom: 8,
+                      marginBottom: 8,
+                      borderBottom: "1px solid var(--line)",
+                    }}
+                  >
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <strong style={{ color: "#0284c7", fontSize: 13, letterSpacing: 0.5 }}>VIETQR</strong>
-                      <span style={{ background: "#eff6ff", color: "#1d4ed8", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, border: "1px solid #bfdbfe" }}>NAPAS 24/7</span>
+                      <span
+                        style={{
+                          background: "#eff6ff",
+                          color: "#1d4ed8",
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: "2px 6px",
+                          borderRadius: 4,
+                          border: "1px solid #bfdbfe",
+                        }}
+                      >
+                        NAPAS 24/7
+                      </span>
                     </div>
-                    <span style={{ background: "#002b49", color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4 }}>{order.payment?.bank}</span>
+                    <span
+                      style={{
+                        background: "#002b49",
+                        color: "#fff",
+                        fontSize: 10,
+                        fontWeight: 800,
+                        padding: "2px 8px",
+                        borderRadius: 4,
+                      }}
+                    >
+                      {order.payment?.bank}
+                    </span>
                   </div>
                   <img
                     className="sepay-qr-img"
@@ -402,14 +452,24 @@ export default function Purchase() {
 
                 <div>
                   <div style={{ marginBottom: 16 }}>
-                    <p className="eyebrow" style={{ color: "var(--blue)" }}>CHUYỂN KHOẢN VIETQR 24/7</p>
+                    <p className="eyebrow" style={{ color: "var(--blue)" }}>
+                      CHUYỂN KHOẢN VIETQR 24/7
+                    </p>
                     <h3 style={{ margin: "4px 0 8px" }}>Thông Tin Chuyển Khoản Ngân Hàng</h3>
                     <p style={{ fontSize: "0.88rem", color: "var(--muted)" }}>
                       Hệ thống tự động kiểm tra biến động số dư và kích hoạt khóa học trong vòng 1-3 giây.
                     </p>
                   </div>
 
-                  <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: "12px 16px", marginBottom: 16 }}>
+                  <div
+                    style={{
+                      background: "var(--surface)",
+                      border: "1px solid var(--line)",
+                      borderRadius: 14,
+                      padding: "12px 16px",
+                      marginBottom: 16,
+                    }}
+                  >
                     <div className="bank-copy-row">
                       <span className="bank-copy-label">Ngân hàng thụ hưởng</span>
                       <div className="bank-copy-value-wrap">
@@ -426,7 +486,9 @@ export default function Purchase() {
                     <div className="bank-copy-row">
                       <span className="bank-copy-label">Số tài khoản</span>
                       <div className="bank-copy-value-wrap">
-                        <span className="bank-copy-value" style={{ color: "var(--blue)" }}>{order.payment?.accountNumber}</span>
+                        <span className="bank-copy-value" style={{ color: "var(--blue)" }}>
+                          {order.payment?.accountNumber}
+                        </span>
                         <button
                           type="button"
                           className={`copy-btn-mini ${copiedField === "stk" ? "copied" : ""}`}
@@ -452,7 +514,9 @@ export default function Purchase() {
                     <div className="bank-copy-row">
                       <span className="bank-copy-label">Số tiền chính xác</span>
                       <div className="bank-copy-value-wrap">
-                        <span className="bank-copy-value" style={{ color: "#16a34a" }}>{order.price} {order.currency}</span>
+                        <span className="bank-copy-value" style={{ color: "#16a34a" }}>
+                          {order.price} {order.currency}
+                        </span>
                         <button
                           type="button"
                           className={`copy-btn-mini ${copiedField === "amount" ? "copied" : ""}`}
@@ -465,7 +529,15 @@ export default function Purchase() {
                     <div className="bank-copy-row">
                       <span className="bank-copy-label">Nội dung chuyển khoản</span>
                       <div className="bank-copy-value-wrap">
-                        <strong className="bank-copy-value" style={{ background: "#fef3c7", color: "#92400e", padding: "2px 6px", borderRadius: 6 }}>
+                        <strong
+                          className="bank-copy-value"
+                          style={{
+                            background: "#fef3c7",
+                            color: "#92400e",
+                            padding: "2px 6px",
+                            borderRadius: 6,
+                          }}
+                        >
                           {paymentContent}
                         </strong>
                         <button
@@ -489,7 +561,11 @@ export default function Purchase() {
                     }}
                   >
                     <Icon name="receipt" size={14} />
-                    <span>{copiedField === "all" ? "✓ Đã sao chép toàn bộ thông tin CK" : "📋 Sao chép toàn bộ thông tin chuyển khoản"}</span>
+                    <span>
+                      {copiedField === "all"
+                        ? "✓ Đã sao chép toàn bộ thông tin CK"
+                        : "📋 Sao chép toàn bộ thông tin chuyển khoản"}
+                    </span>
                   </button>
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -525,16 +601,32 @@ export default function Purchase() {
                 <h3>Hướng Dẫn Chuyển Khoản Internet Banking</h3>
                 <ol style={{ lineHeight: 1.8, paddingLeft: 20, color: "var(--muted)", margin: "14px 0" }}>
                   <li>Mở ứng dụng ngân hàng của bạn trên điện thoại.</li>
-                  <li>Chọn <strong>Chuyển tiền nhanh 24/7 (Naphas)</strong>.</li>
-                  <li>Nhập STK <strong>{order.payment?.accountNumber}</strong> tại ngân hàng <strong>{order.payment?.bank}</strong>.</li>
-                  <li>Nhập chính xác số tiền: <strong>{order.price} {order.currency}</strong></li>
-                  <li>Điền đúng nội dung: <strong style={{ color: "var(--blue)" }}>{paymentContent}</strong></li>
+                  <li>
+                    Chọn <strong>Chuyển tiền nhanh 24/7 (Naphas)</strong>.
+                  </li>
+                  <li>
+                    Nhập STK <strong>{order.payment?.accountNumber}</strong> tại ngân hàng{" "}
+                    <strong>{order.payment?.bank}</strong>.
+                  </li>
+                  <li>
+                    Nhập chính xác số tiền:{" "}
+                    <strong>
+                      {order.price} {order.currency}
+                    </strong>
+                  </li>
+                  <li>
+                    Điền đúng nội dung: <strong style={{ color: "var(--blue)" }}>{paymentContent}</strong>
+                  </li>
                 </ol>
                 <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
                   <button type="button" className="button" disabled={busy} onClick={handleSimulateSuccess}>
                     Tôi đã chuyển khoản xong
                   </button>
-                  <button type="button" className="button button-subtle" onClick={() => setMethod("VIETQR_SEPAY")}>
+                  <button
+                    type="button"
+                    className="button button-subtle"
+                    onClick={() => setMethod("VIETQR_SEPAY")}
+                  >
                     Xem mã VietQR
                   </button>
                 </div>
@@ -544,7 +636,9 @@ export default function Purchase() {
             {/* MoMo View */}
             {method === "MOMO" && (
               <div style={{ padding: "8px 0" }}>
-                <p className="eyebrow" style={{ color: "#a21caf" }}>VÍ ĐIỆN TỬ MOMO</p>
+                <p className="eyebrow" style={{ color: "#a21caf" }}>
+                  VÍ ĐIỆN TỬ MOMO
+                </p>
                 <h3>Quét Mã Thanh Toán Qua MoMo</h3>
                 <p style={{ color: "var(--muted)", fontSize: "0.9rem", margin: "8px 0 16px" }}>
                   Mở ứng dụng MoMo trên điện thoại và quét mã QR hoặc chuyển đến số điện thoại bên dưới:
@@ -558,7 +652,9 @@ export default function Purchase() {
                       width="200"
                       height="200"
                     />
-                    <small style={{ marginTop: 8, color: "#a21caf", fontWeight: 700 }}>Ví MoMo / Chuyển tiền</small>
+                    <small style={{ marginTop: 8, color: "#a21caf", fontWeight: 700 }}>
+                      Ví MoMo / Chuyển tiền
+                    </small>
                   </div>
                   <div style={{ display: "grid", gap: 10, flex: 1, minWidth: 260 }}>
                     <div className="bank-copy-row">
@@ -571,13 +667,21 @@ export default function Purchase() {
                     </div>
                     <div className="bank-copy-row">
                       <span className="bank-copy-label">Số tiền</span>
-                      <span className="bank-copy-value" style={{ color: "#a21caf" }}>{order.price} {order.currency}</span>
+                      <span className="bank-copy-value" style={{ color: "#a21caf" }}>
+                        {order.price} {order.currency}
+                      </span>
                     </div>
                     <div className="bank-copy-row">
                       <span className="bank-copy-label">Lời nhắn</span>
                       <span className="bank-copy-value">{paymentContent}</span>
                     </div>
-                    <button type="button" className="button" style={{ marginTop: 12 }} disabled={busy} onClick={handleSimulateSuccess}>
+                    <button
+                      type="button"
+                      className="button"
+                      style={{ marginTop: 12 }}
+                      disabled={busy}
+                      onClick={handleSimulateSuccess}
+                    >
                       Xác nhận đã thanh toán MoMo
                     </button>
                   </div>
@@ -588,7 +692,14 @@ export default function Purchase() {
             {/* International Card Form */}
             {method === "CARD" && (
               <div style={{ padding: "8px 0" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 12,
+                  }}
+                >
                   <div>
                     <p className="eyebrow">THẺ TÍN DỤNG / GHI NỢ</p>
                     <h3>Thanh Toán Qua Thẻ Visa / Mastercard</h3>
@@ -651,10 +762,13 @@ export default function Purchase() {
             {/* VNPAY View */}
             {method === "VNPAY" && (
               <div style={{ padding: "8px 0" }}>
-                <p className="eyebrow" style={{ color: "#0284c7" }}>CỔNG VNPAY-QR</p>
+                <p className="eyebrow" style={{ color: "#0284c7" }}>
+                  CỔNG VNPAY-QR
+                </p>
                 <h3>Thanh Toán Qua Cổng VNPAY / ZaloPay</h3>
                 <p style={{ color: "var(--muted)", fontSize: "0.9rem", margin: "8px 0 16px" }}>
-                  Hỗ trợ thanh toán nhanh bằng tính năng QR Pay trên ứng dụng của hơn 30 ngân hàng tại Việt Nam.
+                  Hỗ trợ thanh toán nhanh bằng tính năng QR Pay trên ứng dụng của hơn 30 ngân hàng tại Việt
+                  Nam.
                 </p>
                 <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
                   <img
@@ -681,17 +795,24 @@ export default function Purchase() {
             <h2 style={{ fontSize: "1.25rem", margin: "4px 0 12px" }}>{courseMeta.title}</h2>
             <dl className="profile-facts" style={{ margin: "16px 0" }}>
               <dt>Mã đơn</dt>
-              <dd><code>{order.orderId}</code></dd>
+              <dd>
+                <code>{order.orderId}</code>
+              </dd>
               <dt>Gói học</dt>
               <dd>{order.offeringType === "SELF_PACED" ? "Tự học AI" : "Live Cohort"}</dd>
               <dt>Tổng tiền</dt>
-              <dd><strong style={{ color: "var(--blue)", fontSize: "1.1rem" }}>{order.price} {order.currency}</strong></dd>
-              <dt>Trạng thái</dt>
-              <dd><span className="status-pill status-pending">● Đang chờ chuyển khoản</span></dd>
+              <dd>
+                <strong style={{ color: "var(--blue)", fontSize: "1.1rem" }}>
+                  {order.price} {order.currency}
+                </strong>
+              </dd>
             </dl>
             <div className="sepay-assurance" style={{ marginTop: 16 }}>
               <strong>Bảo đảm an toàn giao dịch</strong>
-              <span>Biến động số dư tài khoản được đối soát tức thì. Không chuyển tiền lại khi đã bị trừ tiền trong tài khoản.</span>
+              <span>
+                Biến động số dư tài khoản được đối soát tức thì. Không chuyển tiền lại khi đã bị trừ tiền
+                trong tài khoản.
+              </span>
             </div>
             <button
               type="button"
@@ -791,7 +912,9 @@ export default function Purchase() {
 
             <div className="sepay-assurance">
               <strong>Hệ thống thanh toán đối soát tự động</strong>
-              <span>Khóa học sẽ được kích hoạt quyền học tự động ngay khi tài khoản nhận được thanh toán.</span>
+              <span>
+                Khóa học sẽ được kích hoạt quyền học tự động ngay khi tài khoản nhận được thanh toán.
+              </span>
             </div>
           </section>
 
@@ -815,12 +938,21 @@ export default function Purchase() {
                       padding: 16,
                       border: isSelected ? "2px solid var(--blue)" : "1px solid var(--line)",
                       borderRadius: 14,
-                      background: isSelected ? "color-mix(in srgb, var(--blue) 5%, var(--surface))" : "var(--surface)",
+                      background: isSelected
+                        ? "color-mix(in srgb, var(--blue) 5%, var(--surface))"
+                        : "var(--surface)",
                       cursor: "pointer",
                     }}
                     onClick={() => setSelectedOfferingId(o.offeringId)}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 6,
+                      }}
+                    >
                       <span className="badge">
                         {o.offeringType === "SELF_PACED" ? "Tự học AI" : "Live Cohort"}
                       </span>
@@ -838,7 +970,14 @@ export default function Purchase() {
             </div>
 
             <div style={{ marginTop: 20 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, fontWeight: 700 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 12,
+                  fontWeight: 700,
+                }}
+              >
                 <span>Tổng thanh toán:</span>
                 <span style={{ color: "var(--blue)", fontSize: "1.2rem" }}>{formattedDisplayPrice}</span>
               </div>
@@ -848,7 +987,9 @@ export default function Purchase() {
                 disabled={busy}
                 onClick={() => handleCreateOrder(selectedOfferingId)}
               >
-                {busy ? "Đang tạo đơn hàng..." : `Tiếp tục thanh toán (${method === "VIETQR_SEPAY" ? "VietQR 24/7" : method === "MOMO" ? "Ví MoMo" : method === "CARD" ? "Thẻ Quốc Tế" : "Chuyển khoản"})`}
+                {busy
+                  ? "Đang tạo đơn hàng..."
+                  : `Tiếp tục thanh toán (${method === "VIETQR_SEPAY" ? "VietQR 24/7" : method === "MOMO" ? "Ví MoMo" : method === "CARD" ? "Thẻ Quốc Tế" : "Chuyển khoản"})`}
               </button>
             </div>
 
@@ -859,7 +1000,11 @@ export default function Purchase() {
         </div>
       )}
 
-      {message && <p role="status" style={{ marginTop: 12, color: "var(--danger)" }}>{message}</p>}
+      {message && (
+        <p role="status" style={{ marginTop: 12, color: "var(--danger)" }}>
+          {message}
+        </p>
+      )}
     </>
   );
 }

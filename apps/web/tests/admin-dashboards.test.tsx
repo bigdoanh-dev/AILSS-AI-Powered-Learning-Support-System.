@@ -87,7 +87,9 @@ describe("Admin Dedicated Dashboards on Web", () => {
       expect(screen.getByText("Cài Đặt Hệ Thống & Quản Trị Bảo Mật")).toBeTruthy();
 
       // Check default toggle state
-      const coldStartToggle = screen.getByLabelText(/Yêu cầu đăng nhập lại khi đóng trình duyệt/) as HTMLInputElement;
+      const coldStartToggle = screen.getByLabelText(
+        /Yêu cầu đăng nhập lại khi đóng trình duyệt/,
+      ) as HTMLInputElement;
       expect(coldStartToggle.checked).toBe(true);
 
       // Toggle cold start
@@ -96,12 +98,16 @@ describe("Admin Dedicated Dashboards on Web", () => {
       expect(screen.getByText("Đã lưu các thay đổi cấu hình thành công!")).toBeTruthy();
 
       // Change timeout select
-      const timeoutSelect = screen.getByLabelText("Thời gian nhàn rỗi tự động đăng xuất") as HTMLSelectElement;
+      const timeoutSelect = screen.getByLabelText(
+        "Thời gian nhàn rỗi tự động đăng xuất",
+      ) as HTMLSelectElement;
       fireEvent.change(timeoutSelect, { target: { value: "60" } });
       expect(timeoutSelect.value).toBe("60");
 
       // Clear cache
-      const clearCacheButtons = screen.getAllByRole("button", { name: /Dọn dẹp Cache|Xóa toàn bộ bộ nhớ đệm/ });
+      const clearCacheButtons = screen.getAllByRole("button", {
+        name: /Dọn dẹp Cache|Xóa toàn bộ bộ nhớ đệm/,
+      });
       fireEvent.click(clearCacheButtons[0]);
       expect(screen.getByText(/Đã dọn dẹp bộ nhớ đệm/)).toBeTruthy();
     });

@@ -27,7 +27,11 @@ export function configuredCategoryName(categoryId?: string): string {
 export function isSupportedTitleSearchTerm(value: string): boolean {
   const raw = value.trim();
   if (!raw || raw.length > 20 || /\s/u.test(raw)) return false;
-  const normalized = raw.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/gu, "");
+  const normalized = raw
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/gu, "");
   return normalized.length >= 3 && normalized.length <= 20;
 }
 

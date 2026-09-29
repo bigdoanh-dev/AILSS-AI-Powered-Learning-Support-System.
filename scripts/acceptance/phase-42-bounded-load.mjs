@@ -26,7 +26,7 @@ async function request(url, expectedStatus, options = {}) {
     assert.equal(
       res.status,
       expectedStatus,
-      `${options.method || "GET"} ${url}: expected HTTP ${expectedStatus}, got ${res.status}: ${body}`
+      `${options.method || "GET"} ${url}: expected HTTP ${expectedStatus}, got ${res.status}: ${body}`,
     );
   }
   checks++;
@@ -49,13 +49,15 @@ function cassandraQuery(query) {
   return execFileSync(
     "docker",
     ["exec", "-i", "ailss-cassandra-dev", "cqlsh", "-u", "cassandra", "-p", "cassandra", "-e", query],
-    { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }
+    { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] },
   );
 }
 
 try {
   console.log("--- STARTING PHASE 42 BOUNDED LOAD & FAULT ACCEPTANCE ---");
-  console.log(`Configured Bounded Concurrency: ${CONCURRENCY.uploads} uploads, ${CONCURRENCY.jobs} jobs, ${CONCURRENCY.viewers} viewers`);
+  console.log(
+    `Configured Bounded Concurrency: ${CONCURRENCY.uploads} uploads, ${CONCURRENCY.jobs} jobs, ${CONCURRENCY.viewers} viewers`,
+  );
 
   const lecturerToken = await login("PHASE42_LECTURER");
   const studentToken = await login("PHASE42_STUDENT");
@@ -75,10 +77,16 @@ try {
   const viewerTasks = Array.from({ length: CONCURRENCY.viewers }).map(async (_, viewerIdx) => {
     // Each viewer fetches master, then variant, then segment
     const masterText = await (await request(masterUrl, 200)).text();
-    const variantPath = masterText.split("\n").find((l) => l && !l.startsWith("#")).trim();
+    const variantPath = masterText
+      .split("\n")
+      .find((l) => l && !l.startsWith("#"))
+      .trim();
     const variantUrl = new URL(variantPath, masterUrl).toString();
     const variantText = await (await request(variantUrl, 200)).text();
-    const segmentPath = variantText.split("\n").find((l) => l && !l.startsWith("#")).trim();
+    const segmentPath = variantText
+      .split("\n")
+      .find((l) => l && !l.startsWith("#"))
+      .trim();
     const segmentUrl = new URL(segmentPath, variantUrl).toString();
     const segmentBytes = await (await request(segmentUrl, 200)).arrayBuffer();
     assert.ok(segmentBytes.byteLength > 188);
@@ -124,7 +132,7 @@ try {
       "+faststart",
       "/fixture/load_clip.mp4",
     ],
-    { stdio: ["ignore", "pipe", "pipe"] }
+    { stdio: ["ignore", "pipe", "pipe"] },
   );
   const clipStat = await stat(clipPath);
 
@@ -260,7 +268,9 @@ try {
   // Check Cassandra quota state
   const quotaOut = cassandraQuery("SELECT * FROM learning_keyspace.media_quota_by_tenant LIMIT 10;");
   // Check cleanup journal
-  const journalOut = cassandraQuery("SELECT * FROM learning_keyspace.media_output_journal_by_day_shard LIMIT 10;");
+  const journalOut = cassandraQuery(
+    "SELECT * FROM learning_keyspace.media_output_journal_by_day_shard LIMIT 10;",
+  );
   assert.ok(!journalOut.includes("FAILED_PERMANENT"), "No unhandled failed cleanup entries remain");
   checks += 2;
 

@@ -3,8 +3,19 @@ import { signServiceToken } from "../../../../packages/security/src/index.js";
 import type { LearningLessonRepository } from "../lessons/repository.js";
 
 export interface PlanContext {
-  courseRequirements: Array<{ lessonId: string; title: string; learningOutcomeId: string; sourceVersion: number }>;
-  upcomingAssessments: Array<{ assessmentId: string; title: string; dueDate: string; targetOutcomeIds: string[]; sourceVersion: number }>;
+  courseRequirements: Array<{
+    lessonId: string;
+    title: string;
+    learningOutcomeId: string;
+    sourceVersion: number;
+  }>;
+  upcomingAssessments: Array<{
+    assessmentId: string;
+    title: string;
+    dueDate: string;
+    targetOutcomeIds: string[];
+    sourceVersion: number;
+  }>;
 }
 
 export class AuthoritativePlanContextProvider {
@@ -21,12 +32,14 @@ export class AuthoritativePlanContextProvider {
     const course = await this.lessons.course(courseId);
     if (!course || course.state !== "PUBLISHED") throw new Error("PUBLISHED_COURSE_REQUIRED");
     const syllabus = await this.lessons.list(courseId, course.contentVersion);
-    const courseRequirements = syllabus.filter((lesson) => lesson.state === "READY").map((lesson) => ({
-      lessonId: lesson.lessonId,
-      title: lesson.title,
-      learningOutcomeId: `lesson:${lesson.lessonId}`,
-      sourceVersion: course.contentVersion,
-    }));
+    const courseRequirements = syllabus
+      .filter((lesson) => lesson.state === "READY")
+      .map((lesson) => ({
+        lessonId: lesson.lessonId,
+        title: lesson.title,
+        learningOutcomeId: `lesson:${lesson.lessonId}`,
+        sourceVersion: course.contentVersion,
+      }));
     const token = await signServiceToken(this.key, {
       issuer: this.issuer,
       serviceId: "learning-service",
@@ -35,12 +48,15 @@ export class AuthoritativePlanContextProvider {
       kid: this.kid,
       ttlSeconds: 60,
     });
-    const response = await fetch(new URL(`/internal/v1/courses/${encodeURIComponent(courseId)}/assessment-schedule`, this.assessmentUrl), {
-      headers: { authorization: `Service ${token}` },
-      signal: AbortSignal.timeout(this.timeoutMs),
-    });
+    const response = await fetch(
+      new URL(`/internal/v1/courses/${encodeURIComponent(courseId)}/assessment-schedule`, this.assessmentUrl),
+      {
+        headers: { authorization: `Service ${token}` },
+        signal: AbortSignal.timeout(this.timeoutMs),
+      },
+    );
     if (!response.ok) throw new Error("ASSESSMENT_SCHEDULE_UNAVAILABLE");
-    const body = await response.json() as { data?: PlanContext["upcomingAssessments"] };
+    const body = (await response.json()) as { data?: PlanContext["upcomingAssessments"] };
     return { courseRequirements, upcomingAssessments: body.data ?? [] };
   }
 }

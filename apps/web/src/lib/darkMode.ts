@@ -12,7 +12,9 @@ function getSavedTheme(): Theme | null {
   try {
     const v = localStorage.getItem(STORAGE_KEY);
     return v === "dark" || v === "light" ? v : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function applyTheme(theme: Theme) {
@@ -30,7 +32,11 @@ export function toggleDarkMode() {
   const current = document.documentElement.getAttribute("data-theme") as Theme | null;
   const next: Theme = current === "dark" ? "light" : "dark";
   applyTheme(next);
-  try { localStorage.setItem(STORAGE_KEY, next); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(STORAGE_KEY, next);
+  } catch {
+    /* ignore */
+  }
   window.dispatchEvent(new CustomEvent("ailss-theme-change", { detail: next }));
 }
 

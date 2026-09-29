@@ -20,22 +20,37 @@ const ROLE_RANKS: Record<DelegatedRole, number> = {
 };
 
 export class InstitutionOnboardingV2Service {
-  private readonly onboardingStore = new Map<string, { payload: InstitutionOnboardingPayload; state: OnboardingLifecycleState }>();
+  private readonly onboardingStore = new Map<
+    string,
+    { payload: InstitutionOnboardingPayload; state: OnboardingLifecycleState }
+  >();
   private readonly configVersions = new Map<string, InstitutionConfigVersion[]>();
   private readonly orgNodes = new Map<string, OrgHierarchyNode>();
   private readonly delegatedAssignments = new Map<string, DelegatedAdminAssignment[]>();
 
-  public saveDraft(payload: InstitutionOnboardingPayload): { tenantId: string; state: OnboardingLifecycleState } {
+  public saveDraft(payload: InstitutionOnboardingPayload): {
+    tenantId: string;
+    state: OnboardingLifecycleState;
+  } {
     this.onboardingStore.set(payload.tenantId, {
       payload,
       state: "DRAFT",
     });
 
-    this.saveConfigSnapshot(payload.tenantId, payload as unknown as Record<string, unknown>, "system", "Initial draft configuration");
+    this.saveConfigSnapshot(
+      payload.tenantId,
+      payload as unknown as Record<string, unknown>,
+      "system",
+      "Initial draft configuration",
+    );
     return { tenantId: payload.tenantId, state: "DRAFT" };
   }
 
-  public validateOnboarding(tenantId: string): { isValid: boolean; validationErrors: string[]; state: OnboardingLifecycleState } {
+  public validateOnboarding(tenantId: string): {
+    isValid: boolean;
+    validationErrors: string[];
+    state: OnboardingLifecycleState;
+  } {
     const entry = this.onboardingStore.get(tenantId);
     if (!entry) throw new Error("TENANT_ONBOARDING_NOT_FOUND");
 
@@ -91,7 +106,9 @@ export class InstitutionOnboardingV2Service {
         status: p?.identityConfig?.discoveryUrl ? "CONNECTED" : "NOT_CONFIGURED",
         latencyMs: p?.identityConfig?.discoveryUrl ? 42 : undefined,
         lastTestedAt: new Date().toISOString(),
-        details: p?.identityConfig?.discoveryUrl ? "Discovery endpoint verified (HTTPS 200 OK)." : "No OIDC provider discovery URL configured.",
+        details: p?.identityConfig?.discoveryUrl
+          ? "Discovery endpoint verified (HTTPS 200 OK)."
+          : "No OIDC provider discovery URL configured.",
       },
       {
         integration: "SAML",
@@ -111,14 +128,18 @@ export class InstitutionOnboardingV2Service {
         status: p?.oneRosterEnabled ? "CONNECTED" : "NOT_CONFIGURED",
         latencyMs: p?.oneRosterEnabled ? 50 : undefined,
         lastTestedAt: new Date().toISOString(),
-        details: p?.oneRosterEnabled ? "OneRoster 1.2 REST OAuth2 token acquired successfully." : "OneRoster disabled.",
+        details: p?.oneRosterEnabled
+          ? "OneRoster 1.2 REST OAuth2 token acquired successfully."
+          : "OneRoster disabled.",
       },
       {
         integration: "LTI",
         status: p?.ltiEnabled ? "CONNECTED" : "NOT_CONFIGURED",
         latencyMs: p?.ltiEnabled ? 28 : undefined,
         lastTestedAt: new Date().toISOString(),
-        details: p?.ltiEnabled ? "LTI 1.3 Advantage key set reachable; JWKS valid." : "LTI deployment inactive.",
+        details: p?.ltiEnabled
+          ? "LTI 1.3 Advantage key set reachable; JWKS valid."
+          : "LTI deployment inactive.",
       },
       {
         integration: "EMAIL",
@@ -132,7 +153,9 @@ export class InstitutionOnboardingV2Service {
         status: p?.aiPolicy?.enabled ? "CONNECTED" : "NOT_CONFIGURED",
         latencyMs: p?.aiPolicy?.enabled ? 64 : undefined,
         lastTestedAt: new Date().toISOString(),
-        details: p?.aiPolicy?.enabled ? "Internal Gateway proxy connected; latency p95: 64ms." : "AI provider policy disabled.",
+        details: p?.aiPolicy?.enabled
+          ? "Internal Gateway proxy connected; latency p95: 64ms."
+          : "AI provider policy disabled.",
       },
     ];
   }

@@ -51,9 +51,7 @@ describe("Phase 24.10: SCIM 2.0 Core Provisioning & Standard Endpoints", () => {
         familyName: "Nguyen Van",
         formatted: "Nguyen Van A",
       },
-      emails: [
-        { value: "nguyen.van.a@polytech.edu.vn", primary: true },
-      ],
+      emails: [{ value: "nguyen.van.a@polytech.edu.vn", primary: true }],
       roles: [{ value: "Student" }],
       active: true,
     };
@@ -139,9 +137,7 @@ describe("Phase 24.10: SCIM 2.0 Core Provisioning & Standard Endpoints", () => {
       method: "PATCH",
       path: `/Users/${userId}`,
       body: {
-        Operations: [
-          { op: "replace", path: "roles", value: [{ value: "PLATFORM_ADMIN" }] },
-        ],
+        Operations: [{ op: "replace", path: "roles", value: [{ value: "PLATFORM_ADMIN" }] }],
       },
     });
     expect(patchEscalationRes.status).toBe(403);
@@ -151,9 +147,7 @@ describe("Phase 24.10: SCIM 2.0 Core Provisioning & Standard Endpoints", () => {
       method: "PATCH",
       path: `/Users/${userId}`,
       body: {
-        Operations: [
-          { op: "replace", path: "active", value: false },
-        ],
+        Operations: [{ op: "replace", path: "active", value: false }],
       },
     });
     expect(patchOkRes.status).toBe(200);

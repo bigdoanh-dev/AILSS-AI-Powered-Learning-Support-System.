@@ -60,8 +60,6 @@ describe("Phase 21E: Integration Registry Contracts & Governance", () => {
       updatedAt: new Date().toISOString(),
     };
 
-    expect(() => assertIntegrationScope(integration, "roster:read")).toThrow(
-      /is not active/u,
-    );
+    expect(() => assertIntegrationScope(integration, "roster:read")).toThrow(/is not active/u);
   });
 });

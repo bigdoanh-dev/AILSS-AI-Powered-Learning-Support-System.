@@ -18,11 +18,13 @@ export interface AdaptivePathItem {
   action: AdaptiveActionType;
   priority: number; // 1 (highest) to 5 (lowest)
   rationale: string;
-  prerequisiteGaps?: {
-    prerequisiteConceptId: string;
-    currentScore: number;
-    requiredScore: number;
-  }[] | undefined;
+  prerequisiteGaps?:
+    | {
+        prerequisiteConceptId: string;
+        currentScore: number;
+        requiredScore: number;
+      }[]
+    | undefined;
 }
 
 export interface AdaptiveLearningPath {
@@ -57,7 +59,6 @@ export interface CourseRecommendation {
   eligibilityStatus?: CandidateEligibilityStatus | undefined;
   prerequisiteGaps?: string[] | undefined;
 }
-
 
 export interface RecommendationFeedback {
   recommendationId: string;

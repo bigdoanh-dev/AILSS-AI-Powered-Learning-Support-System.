@@ -229,7 +229,16 @@ describe("Phase 39 Track A: Adaptive Learning V2 & Mastery Engine", () => {
           algorithmVersion: "v2.0.0",
           calculatedAt: new Date().toISOString(),
           lastDecayEvaluationAt: new Date().toISOString(),
-          explanation: { whyState: "Developing", nextSteps: "Practice", contributingFactors: { assessmentPerformance: 60, attemptCount: 1, recencyStatus: "FRESH", prerequisiteFoundationMet: true } },
+          explanation: {
+            whyState: "Developing",
+            nextSteps: "Practice",
+            contributingFactors: {
+              assessmentPerformance: 60,
+              attemptCount: 1,
+              recencyStatus: "FRESH",
+              prerequisiteFoundationMet: true,
+            },
+          },
         },
         {
           studentId: "std-001",
@@ -245,7 +254,16 @@ describe("Phase 39 Track A: Adaptive Learning V2 & Mastery Engine", () => {
           algorithmVersion: "v2.0.0",
           calculatedAt: new Date().toISOString(),
           lastDecayEvaluationAt: new Date().toISOString(),
-          explanation: { whyState: "Decay Risk", nextSteps: "Refresher", contributingFactors: { assessmentPerformance: 85, attemptCount: 2, recencyStatus: "DECAYING", prerequisiteFoundationMet: true } },
+          explanation: {
+            whyState: "Decay Risk",
+            nextSteps: "Refresher",
+            contributingFactors: {
+              assessmentPerformance: 85,
+              attemptCount: 2,
+              recencyStatus: "DECAYING",
+              prerequisiteFoundationMet: true,
+            },
+          },
         },
       ];
 
@@ -255,12 +273,14 @@ describe("Phase 39 Track A: Adaptive Learning V2 & Mastery Engine", () => {
         courseId: "course-cs101",
         availableHoursPerWeek: 5,
         masteryRecords: records,
-        courseRequirements: [{
-          lessonId: "lesson-required-1",
-          title: "Required syllabus lesson",
-          learningOutcomeId: "lo-required",
-          sourceVersion: 7,
-        }],
+        courseRequirements: [
+          {
+            lessonId: "lesson-required-1",
+            title: "Required syllabus lesson",
+            learningOutcomeId: "lo-required",
+            sourceVersion: 7,
+          },
+        ],
         upcomingAssessments: [
           {
             assessmentId: "midterm-1",
@@ -277,12 +297,14 @@ describe("Phase 39 Track A: Adaptive Learning V2 & Mastery Engine", () => {
       expect(plan.items.some((i) => i.reasonCode === "RECENCY_DECAY")).toBe(true);
       expect(plan.items.some((i) => i.reasonCode === "LOW_MASTERY")).toBe(true);
       expect(plan.items.some((i) => i.reasonCode === "UPCOMING_ASSESSMENT")).toBe(true);
-      expect(plan.items).toContainEqual(expect.objectContaining({
-        lessonId: "lesson-required-1",
-        sourceType: "COURSE_REQUIREMENT",
-        sourceId: "lesson-required-1",
-        learningOutcomeId: "lo-required",
-      }));
+      expect(plan.items).toContainEqual(
+        expect.objectContaining({
+          lessonId: "lesson-required-1",
+          sourceType: "COURSE_REQUIREMENT",
+          sourceId: "lesson-required-1",
+          learningOutcomeId: "lo-required",
+        }),
+      );
 
       // Student mutation: mark complete
       const firstItem = plan.items[0];
@@ -323,7 +345,16 @@ describe("Phase 39 Track A: Adaptive Learning V2 & Mastery Engine", () => {
           algorithmVersion: "v2.0.0",
           calculatedAt: new Date().toISOString(),
           lastDecayEvaluationAt: new Date().toISOString(),
-          explanation: { whyState: "Developing", nextSteps: "Practice", contributingFactors: { assessmentPerformance: 50, attemptCount: 1, recencyStatus: "FRESH", prerequisiteFoundationMet: true } },
+          explanation: {
+            whyState: "Developing",
+            nextSteps: "Practice",
+            contributingFactors: {
+              assessmentPerformance: 50,
+              attemptCount: 1,
+              recencyStatus: "FRESH",
+              prerequisiteFoundationMet: true,
+            },
+          },
         },
       ];
 

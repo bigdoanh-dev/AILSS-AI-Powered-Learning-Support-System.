@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 import { Text, TextInput, View, Image, Pressable } from "react-native";
 import { router, useLocalSearchParams, useGlobalSearchParams, usePathname, type Href } from "expo-router";
 import * as Crypto from "expo-crypto";
@@ -6,7 +6,7 @@ import { ApiError, record } from "../src/api";
 import { runtime } from "../src/runtime";
 import { destinations } from "../src/navigation";
 import { items } from "../src/domain";
-import { Page, Button, Icon, tokens, styles } from "../src/ui";
+import { Page, Button, Icon, PasswordInput, tokens, styles } from "../src/ui";
 
 function goToResult(
   type: string,
@@ -43,6 +43,8 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
         : undefined);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const passwordRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -141,12 +143,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
         await session.login(email, password);
         if (session.snapshot.state === "AUTHENTICATED") {
           const user = session.snapshot.user;
-          const target =
-            user?.role === "ADMIN"
-              ? "/admin"
-              : user?.role === "LECTURER"
-                ? "/teaching"
-                : "/";
+          const target = user?.role === "ADMIN" ? "/admin" : user?.role === "LECTURER" ? "/teaching" : "/";
           goToResult("login-success", {
             role: user?.role,
             name: user?.displayName,
@@ -246,7 +243,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                 alignItems: "center",
                 borderRadius: 10,
                 backgroundColor: screen === "login" ? "#FFF" : "transparent",
-                ... (screen === "login" ? tokens.shadow.subtle : {}),
+                ...(screen === "login" ? tokens.shadow.subtle : {}),
               }}
             >
               <Text
@@ -267,7 +264,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                 alignItems: "center",
                 borderRadius: 10,
                 backgroundColor: screen === "register" ? "#FFF" : "transparent",
-                ... (screen === "register" ? tokens.shadow.subtle : {}),
+                ...(screen === "register" ? tokens.shadow.subtle : {}),
               }}
             >
               <Text
@@ -299,12 +296,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                   <Text style={{ fontSize: 12, color: "#166534", fontWeight: "700" }}>
                     Phiên hiện tại: {snapshot.user.displayName} ({snapshot.user.role})
                   </Text>
-                  <Button
-                    label="Đăng xuất"
-                    size="sm"
-                    variant="outline"
-                    onPress={() => void handleLogout()}
-                  />
+                  <Button label="Đăng xuất" size="sm" variant="outline" onPress={() => void handleLogout()} />
                 </View>
                 <Text style={{ fontSize: 11, color: "#15803D" }}>
                   Bạn có thể nhập thông tin Quản trị viên bên dưới để chuyển sang tài khoản Admin.
@@ -363,6 +355,8 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                     setRegistrationKey(Crypto.randomUUID());
                   }}
                   autoComplete="name"
+                  returnKeyType="next"
+                  onSubmitEditing={() => emailRef.current?.focus()}
                 />
               </View>
             )}
@@ -372,6 +366,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                 Địa chỉ Email
               </Text>
               <TextInput
+                ref={emailRef}
                 accessibilityLabel="Email"
                 testID={screen === "login" ? "student-login-email" : undefined}
                 style={styles.input}
@@ -385,6 +380,8 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                 autoCapitalize="none"
                 keyboardType="email-address"
                 autoComplete="email"
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
               />
             </View>
 
@@ -394,10 +391,10 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                   Mật khẩu {screen === "register" ? "(tối thiểu 12 ký tự)" : ""}
                 </Text>
               </View>
-              <TextInput
+              <PasswordInput
+                ref={passwordRef}
                 accessibilityLabel="Mật khẩu"
                 testID={screen === "login" ? "student-login-password" : undefined}
-                style={styles.input}
                 placeholder="••••••••••••"
                 placeholderTextColor={tokens.color.muted}
                 value={password}
@@ -405,9 +402,13 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                   setPassword(v);
                   setRegistrationKey(Crypto.randomUUID());
                 }}
-                secureTextEntry
-                autoCapitalize="none"
                 autoComplete={screen === "register" ? "new-password" : "current-password"}
+                returnKeyType="go"
+                onSubmitEditing={() => {
+                  if (email && password && !(screen === "register" && (!name || password.length < 12))) {
+                    void submit();
+                  }
+                }}
               />
             </View>
 
@@ -424,11 +425,18 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                 }}
               />
             </View>
-
           </View>
 
           {/* Security badge */}
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 4 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              marginTop: 4,
+            }}
+          >
             <Icon name="check" size={12} color={tokens.color.muted} />
             <Text style={styles.small}>Bảo mật mã hóa đầu cuối TLS & Idempotent Token</Text>
           </View>
@@ -454,10 +462,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
           <Text style={styles.text}>{snapshot.user.displayName}</Text>
           <Text style={styles.text}>{snapshot.user.emailMasked}</Text>
           <Text style={styles.small}>{snapshot.user.role}</Text>
-          <Button
-            label="Đăng xuất"
-            onPress={() => void handleLogout()}
-          />
+          <Button label="Đăng xuất" onPress={() => void handleLogout()} />
         </View>
       )}
       {screen === "admin" && (

@@ -103,7 +103,6 @@ export default function ClassDetail() {
 
       {cls && (
         <>
-
           <View style={styles.card}>
             <Text style={styles.small}>Loại lớp: {cls.classKind}</Text>
             <Text style={styles.small}>Trạng thái: {cls.state ?? "—"}</Text>
@@ -130,10 +129,7 @@ export default function ClassDetail() {
           {/* Publish Schedule if DRAFT */}
           {cls.scheduleState === "DRAFT" && (
             <View style={{ marginBottom: 8 }}>
-              <Button
-                label={busy ? "Đang xuất bản…" : "Xuất bản lịch học"}
-                onPress={handlePublishSchedule}
-              />
+              <Button label={busy ? "Đang xuất bản…" : "Xuất bản lịch học"} onPress={handlePublishSchedule} />
             </View>
           )}
 

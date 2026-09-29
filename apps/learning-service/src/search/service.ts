@@ -1,11 +1,6 @@
 import { AppError } from "../../../../packages/http/src/index.js";
 import type { ActorContext } from "../../../../packages/security/src/index.js";
-import type {
-  SearchDocument,
-  SearchQueryInput,
-  SearchResponse,
-  SearchResultItem,
-} from "./model.js";
+import type { SearchDocument, SearchQueryInput, SearchResponse, SearchResultItem } from "./model.js";
 import type { SearchIndexRepository } from "./repository.js";
 
 export interface SearchAuthorizationContext {
@@ -24,7 +19,10 @@ export class MultiTenantSearchService {
 
   public async index(doc: SearchDocument, actor: ActorContext): Promise<void> {
     const isPlatformAdmin = actor.roles.includes("PLATFORM_ADMIN");
-    const isStaff = actor.roles.includes("ADMIN") || actor.roles.includes("LECTURER") || actor.roles.includes("INSTITUTION_ADMIN");
+    const isStaff =
+      actor.roles.includes("ADMIN") ||
+      actor.roles.includes("LECTURER") ||
+      actor.roles.includes("INSTITUTION_ADMIN");
 
     if (!isPlatformAdmin && !isStaff) {
       throw new AppError("FORBIDDEN", 403, "Only authorized staff or administrators can index documents");
@@ -79,7 +77,16 @@ export class MultiTenantSearchService {
     for (const hit of rawHits) {
       const doc = hit.document;
 
-      if (this.#canAccessDocument(doc, actor, isPlatformAdmin, accessibleTenantIds, enrolledCourseIds, taughtCourseIds)) {
+      if (
+        this.#canAccessDocument(
+          doc,
+          actor,
+          isPlatformAdmin,
+          accessibleTenantIds,
+          enrolledCourseIds,
+          taughtCourseIds,
+        )
+      ) {
         authorizedItems.push({
           id: doc.id,
           entityType: doc.entityType,

@@ -21,7 +21,10 @@ class PeriodicCommitLogNode {
   private lastFsyncTimestamp: number = Date.now();
   private readonly syncPeriodMs: number = 10000; // 10,000ms periodic window
 
-  public writeAndAcknowledge(operationId: string, payload: unknown): { acknowledged: boolean; diskFlushed: boolean } {
+  public writeAndAcknowledge(
+    operationId: string,
+    payload: unknown,
+  ): { acknowledged: boolean; diskFlushed: boolean } {
     const now = Date.now();
     const entry: PeriodicCommitLogBufferEntry = {
       operationId,
@@ -140,7 +143,10 @@ export interface FencedWriteRequest<T> {
 export class ActiveWriterEpochFencingCoordinator {
   private currentActiveWriterEpoch: number = 100; // Monotonic 64-bit epoch
   private activeRegion: "vn-south-primary" | "vn-north-secondary" = "vn-south-primary";
-  private committedMutations: Map<string, { entityId: string; epoch: number; region: string; mutation: unknown }> = new Map();
+  private committedMutations: Map<
+    string,
+    { entityId: string; epoch: number; region: string; mutation: unknown }
+  > = new Map();
 
   public getCurrentEpoch(): number {
     return this.currentActiveWriterEpoch;
@@ -154,7 +160,10 @@ export class ActiveWriterEpochFencingCoordinator {
    * Promotes secondary to active primary and increments monotonic epoch.
    * Fences out any writes from the previous primary region.
    */
-  public promoteSecondaryFailover(targetRegion: "vn-north-secondary"): { newEpoch: number; promotedAt: string } {
+  public promoteSecondaryFailover(targetRegion: "vn-north-secondary"): {
+    newEpoch: number;
+    promotedAt: string;
+  } {
     this.currentActiveWriterEpoch += 1;
     this.activeRegion = targetRegion;
     return {

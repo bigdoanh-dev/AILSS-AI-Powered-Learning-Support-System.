@@ -38,7 +38,7 @@ export default function TeachingDashboard() {
         }
       }
     },
-    [session, snapshot.user?.role]
+    [session, snapshot.user?.role],
   );
 
   useEffect(() => {
@@ -60,7 +60,10 @@ export default function TeachingDashboard() {
       <Page>
         <ScreenHeader title="Giảng dạy" onBack={() => router.replace("/")} />
         <Text style={styles.error}>Chức năng này chỉ dành cho Giảng viên.</Text>
-        <Button label="Đăng nhập bằng tài khoản Giảng viên" onPress={() => router.push("/login?role=lecturer" as Href)} />
+        <Button
+          label="Đăng nhập bằng tài khoản Giảng viên"
+          onPress={() => router.push("/login?role=lecturer" as Href)}
+        />
         <Button label="Về trang chủ" onPress={() => router.replace("/")} />
       </Page>
     );
@@ -68,11 +71,11 @@ export default function TeachingDashboard() {
 
   return (
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
-      <Page>
+      <Page scroll={false}>
         <ScreenHeader
           title="Bàn làm việc Giảng dạy"
           subtitle={`${snapshot.user.displayName} · Giảng viên AILSS`}
-          onBack={() => router.replace("/")}
+          onBack={() => router.replace("/account")}
           rightElement={
             <ScalePressable
               onPress={() => router.push("/teaching/courses/create" as Href)}
@@ -90,41 +93,19 @@ export default function TeachingDashboard() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           contentContainerStyle={{ gap: 14, paddingBottom: 90 }}
         >
-          {/* Balanced 2x2 KPI Grid */}
-          <View style={ds.kpiGrid}>
-            <View style={ds.kpiCard}>
-              <View style={[ds.kpiIconWrap, { backgroundColor: "#EDE9FE" }]}>
-                <Icon name="people" size={20} color="#7C3AED" />
+          {/* Owned course totals from the lecturer's API response. */}
+          {items && (
+            <View style={ds.kpiGrid}>
+              <View style={ds.kpiCard}>
+                <Text style={ds.kpiNumber}>{uniqueCoursesFromOfferings(items).length}</Text>
+                <Text style={ds.kpiTitle}>Khóa học</Text>
               </View>
-              <Text style={ds.kpiNumber}>186</Text>
-              <Text style={ds.kpiTitle}>Học viên (3 lớp)</Text>
-            </View>
-
-            <View style={ds.kpiCard}>
-              <View style={[ds.kpiIconWrap, { backgroundColor: "#DCFCE7" }]}>
-                <Icon name="calendar" size={20} color="#15803D" />
+              <View style={ds.kpiCard}>
+                <Text style={ds.kpiNumber}>{items.length}</Text>
+                <Text style={ds.kpiTitle}>Gói giảng dạy</Text>
               </View>
-              <Text style={[ds.kpiNumber, { color: "#15803D" }]}>96.4%</Text>
-              <Text style={ds.kpiTitle}>Chuyên cần</Text>
             </View>
-
-            <View style={ds.kpiCard}>
-              <View style={[ds.kpiIconWrap, { backgroundColor: "#FEE2E2" }]}>
-                <Icon name="award" size={20} color="#DC2626" />
-              </View>
-              <Text style={[ds.kpiNumber, { color: "#DC2626" }]}>14</Text>
-              <Text style={ds.kpiTitle}>Bài chờ chấm</Text>
-            </View>
-
-            <View style={ds.kpiCard}>
-              <View style={[ds.kpiIconWrap, { backgroundColor: "#FEF3C7" }]}>
-                <Icon name="starFilled" size={20} color="#D97706" />
-              </View>
-              <Text style={[ds.kpiNumber, { color: "#D97706" }]}>4.9 ★</Text>
-              <Text style={ds.kpiTitle}>Đánh giá (142)</Text>
-            </View>
-          </View>
-
+          )}
           {/* Quick Actions 3x2 Grid */}
           <Text style={ds.sectionHeader}>Công cụ quản trị giảng dạy</Text>
           <View style={ds.actionGrid}>
@@ -185,97 +166,51 @@ export default function TeachingDashboard() {
               scaleTo={0.94}
               onPress={() => router.push("/teaching/ai" as Href)}
               accessibilityRole="button"
-              accessibilityLabel="Trợ lý soạn đề AI"
+              accessibilityLabel="AI soạn đề kiểm tra"
             >
               <View style={[ds.actionIcon, { backgroundColor: "#FEF3C7" }]}>
                 <Icon name="sparkles" size={22} color="#D97706" />
               </View>
-              <Text style={ds.actionText}>Trợ lý AI</Text>
+              <Text style={ds.actionText}>AI soạn đề</Text>
             </ScalePressable>
 
             <ScalePressable
               style={ds.actionItem}
               scaleTo={0.94}
-              onPress={() => router.push("/teaching/reports" as Href)}
+              onPress={() => router.push("/teaching/copilot" as Href)}
               accessibilityRole="button"
-              accessibilityLabel="Báo cáo & Thống kê giảng dạy"
+              accessibilityLabel="Trợ lý AI giảng viên"
             >
-              <View style={[ds.actionIcon, { backgroundColor: "#F3E8FF" }]}>
-                <Icon name="chart" size={22} color="#7C3AED" />
+              <View style={[ds.actionIcon, { backgroundColor: "#EDE9FE" }]}>
+                <Icon name="sparkles" size={22} color="#7C3AED" />
               </View>
-              <Text style={ds.actionText}>Báo cáo</Text>
+              <Text style={ds.actionText}>AI giảng viên</Text>
             </ScalePressable>
-          </View>
 
-          {/* Pending Grading Queue Widget */}
-          <View style={ds.listHeaderRow}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <Text style={ds.sectionHeader}>Hàng đợi chấm bài</Text>
-              <Badge label="14 bài mới" variant="danger" />
-            </View>
-            <ScalePressable scaleTo={0.92} onPress={() => router.push("/teaching/assessments" as Href)}>
-              <Text style={ds.viewAllText}>Chấm tất cả &gt;</Text>
+            <ScalePressable
+              style={ds.actionItem}
+              scaleTo={0.94}
+              onPress={() => router.push("/teaching/revenue" as Href)}
+              accessibilityRole="button"
+              accessibilityLabel="Doanh thu và tài khoản nhận tiền"
+            >
+              <View style={[ds.actionIcon, { backgroundColor: "#DCFCE7" }]}>
+                <Icon name="trending" size={22} color="#15803D" />
+              </View>
+              <Text style={ds.actionText}>Doanh thu</Text>
             </ScalePressable>
-          </View>
-
-          <View style={{ gap: 10 }}>
-            <View style={ds.card}>
-              <View style={ds.cardTop}>
-                <View style={{ flex: 1, gap: 4 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <Badge label="CSDL NÂNG CAO" variant="primary" />
-                    <Text style={{ fontSize: 11, color: "#64748B" }}>⏰ Nộp 35 phút trước</Text>
-                  </View>
-                  <Text style={ds.cardTitle}>Lê Văn Đức (SV-202601)</Text>
-                  <Text style={ds.meta}>Bài tập lớn: Thiết kế CSDL quan hệ chuẩn hóa 3NF</Text>
-                </View>
+            <ScalePressable
+              style={ds.actionItem}
+              scaleTo={0.94}
+              onPress={() => router.push("/teaching/profile" as Href)}
+              accessibilityRole="button"
+              accessibilityLabel="Hồ sơ giảng viên công khai"
+            >
+              <View style={[ds.actionIcon, { backgroundColor: "#E0F2FE" }]}>
+                <Icon name="people" size={22} color="#0284C7" />
               </View>
-              <View style={ds.cardFooter}>
-                <ScalePressable
-                  scaleTo={0.95}
-                  style={ds.gradeButton}
-                  onPress={() => router.push("/teaching/assessments" as Href)}
-                >
-                  <Icon name="pencil" size={15} color="#FFFFFF" />
-                  <Text style={ds.gradeButtonText}>Chấm bài & Nhận xét</Text>
-                </ScalePressable>
-              </View>
-            </View>
-
-            <View style={ds.card}>
-              <View style={ds.cardTop}>
-                <View style={{ flex: 1, gap: 4 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <Badge label="WEB & AI" variant="neutral" />
-                    <Text style={{ fontSize: 11, color: "#64748B" }}>⏰ Nộp 2 giờ trước</Text>
-                  </View>
-                  <Text style={ds.cardTitle}>Nguyễn Mai Phương (SV-202602)</Text>
-                  <Text style={ds.meta}>Lab 03: Xây dựng REST API & Tích hợp Vector DB</Text>
-                </View>
-              </View>
-              <View style={ds.cardFooter}>
-                <ScalePressable
-                  scaleTo={0.95}
-                  style={ds.gradeButton}
-                  onPress={() => router.push("/teaching/assessments" as Href)}
-                >
-                  <Icon name="pencil" size={15} color="#FFFFFF" />
-                  <Text style={ds.gradeButtonText}>Chấm bài & Nhận xét</Text>
-                </ScalePressable>
-              </View>
-            </View>
-          </View>
-
-          {/* At-Risk Warning Widget */}
-          <View style={ds.warningBox}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <Text style={ds.warningTitle}>⚠️ CẢNH BÁO SINH VIÊN CẦN HỖ TRỢ</Text>
-              <Badge label="2 trường hợp" variant="warning" />
-            </View>
-            <Text style={ds.warningContent}>
-              • <Text style={{ fontWeight: "700" }}>Hoàng Gia Huy (SV-202607)</Text>: Vắng 2 buổi liên tiếp môn CSDL.{"\n"}
-              • <Text style={{ fontWeight: "700" }}>3 SV chưa nộp bài</Text>: Hạn chót Bài tập lớn CSDL 23:59 đêm nay.
-            </Text>
+              <Text style={ds.actionText}>Hồ sơ</Text>
+            </ScalePressable>
           </View>
 
           {/* Offerings and Courses List */}

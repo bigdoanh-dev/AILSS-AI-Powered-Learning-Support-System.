@@ -38,7 +38,11 @@ export interface AssistantDomainClient {
   getCourseDetails(courseId: string): Promise<CourseCatalogItem | null>;
   compareCourses(courseIds: readonly string[]): Promise<readonly CourseCatalogItem[]>;
   getKnowledgeGaps(studentId: string, courseId?: string): Promise<readonly StudentKnowledgeGap[]>;
-  searchCourseMaterials(studentId: string, courseId: string, topic: string): Promise<readonly CourseMaterialSnippet[]>;
+  searchCourseMaterials(
+    studentId: string,
+    courseId: string,
+    topic: string,
+  ): Promise<readonly CourseMaterialSnippet[]>;
   generateQuizDraft(topic: string, difficulty: string, questionCount: number): Promise<unknown>;
   diagnoseCohortGaps(courseId: string, quizId?: string): Promise<unknown>;
   hasActiveAssessmentAttempt(studentId: string): Promise<boolean>;
@@ -198,7 +202,8 @@ export class ToolRunner {
 
         case "get_recommended_learning_path": {
           const courseId = String(args.courseId);
-          if (!this.domainClient.getRecommendedLearningPath) throw new Error("STUDY_PLAN_TOOL_NOT_CONFIGURED");
+          if (!this.domainClient.getRecommendedLearningPath)
+            throw new Error("STUDY_PLAN_TOOL_NOT_CONFIGURED");
           const path = await this.domainClient.getRecommendedLearningPath(user.userId, courseId);
           return { toolCallId, name: toolName, result: path };
         }

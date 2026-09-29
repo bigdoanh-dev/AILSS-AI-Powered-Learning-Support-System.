@@ -133,7 +133,9 @@ export default function CourseDetail() {
               </View>
               <View style={ds.pricePill}>
                 <Text style={ds.pricePillText}>
-                  {course.priceType === "FREE" ? "Miễn phí" : `${course.price ?? "—"} ${course.currency ?? "VND"}`}
+                  {course.priceType === "FREE"
+                    ? "Miễn phí"
+                    : `${course.price ?? "—"} ${course.currency ?? "VND"}`}
                 </Text>
               </View>
             </View>
@@ -198,7 +200,9 @@ export default function CourseDetail() {
               style={[ds.actionButton, ds.actionButtonAccent]}
               onPress={() => router.push(`/teaching/courses/${courseId}/reviews` as Href)}
             >
-              <Text style={[ds.actionButtonText, ds.actionButtonAccentText]}>⭐ Đánh giá ({reviewCount})</Text>
+              <Text style={[ds.actionButtonText, ds.actionButtonAccentText]}>
+                ⭐ Đánh giá ({reviewCount})
+              </Text>
             </Pressable>
           </View>
 
@@ -253,7 +257,9 @@ export default function CourseDetail() {
                 ))
               ) : (
                 <View style={[styles.card, { alignItems: "center", paddingVertical: 24 }]}>
-                  <Text style={[styles.text, { marginBottom: 12 }]}>Chưa có bài học nào trong khóa học này.</Text>
+                  <Text style={[styles.text, { marginBottom: 12 }]}>
+                    Chưa có bài học nào trong khóa học này.
+                  </Text>
                   <Button
                     label="➕ Thêm bài học đầu tiên"
                     onPress={() => router.push(`/teaching/courses/${courseId}/lessons` as Href)}
@@ -283,7 +289,9 @@ export default function CourseDetail() {
                       </Text>
                     </View>
                     <Text style={ds.offeringTypeTitle}>Gói: {o.offeringType}</Text>
-                    <Text style={[styles.small, { color: tokens.color.brand }]}>Quản lý đợt tuyển sinh →</Text>
+                    <Text style={[styles.small, { color: tokens.color.brand }]}>
+                      Quản lý đợt tuyển sinh →
+                    </Text>
                   </Pressable>
                 ))
               ) : (
@@ -307,7 +315,10 @@ export default function CourseDetail() {
       )}
       {error && <Button label="Thử lại" onPress={handleRetry} />}
       <View style={{ marginTop: 12 }}>
-        <Button label="Quay lại danh sách" onPress={() => (router.canGoBack() ? router.back() : router.replace("/teaching/courses"))} />
+        <Button
+          label="Quay lại danh sách"
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/teaching/courses"))}
+        />
       </View>
     </Page>
   );

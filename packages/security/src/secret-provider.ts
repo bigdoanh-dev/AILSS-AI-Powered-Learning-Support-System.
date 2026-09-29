@@ -26,11 +26,7 @@ export class EnvironmentSecretProvider implements SecretProvider {
   public async requireSecret(key: string): Promise<string> {
     const val = this.#env[key];
     if (val === undefined || val.trim().length === 0) {
-      throw new AppError(
-        "SECRET_NOT_FOUND",
-        500,
-        `Required secret "${key}" is not set in environment`,
-      );
+      throw new AppError("SECRET_NOT_FOUND", 500, `Required secret "${key}" is not set in environment`);
     }
     return Promise.resolve(val);
   }
@@ -202,7 +198,11 @@ export async function hydrateRuntimeSecrets(
   const providerName = environment.SECRET_PROVIDER ?? "ENVIRONMENT";
   if (providerName !== "VAULT") {
     if (environment.NODE_ENV === "production")
-      throw new AppError("CENTRAL_SECRET_PROVIDER_REQUIRED", 500, "Production requires SECRET_PROVIDER=VAULT");
+      throw new AppError(
+        "CENTRAL_SECRET_PROVIDER_REQUIRED",
+        500,
+        "Production requires SECRET_PROVIDER=VAULT",
+      );
     return { ...environment };
   }
   const endpoint = environment.VAULT_ADDR;
@@ -234,33 +234,54 @@ interface VaultAuthentication {
   readonly leaseDurationSeconds: number;
 }
 
-async function vaultWorkloadToken(endpoint: string, environment: NodeJS.ProcessEnv): Promise<VaultAuthentication> {
+async function vaultWorkloadToken(
+  endpoint: string,
+  environment: NodeJS.ProcessEnv,
+): Promise<VaultAuthentication> {
   if (environment.VAULT_TOKEN) {
     return { token: environment.VAULT_TOKEN, renewable: false, leaseDurationSeconds: 0 };
   }
-  const namespaceHeaders = environment.VAULT_NAMESPACE ? { "X-Vault-Namespace": environment.VAULT_NAMESPACE } : {};
+  const namespaceHeaders = environment.VAULT_NAMESPACE
+    ? { "X-Vault-Namespace": environment.VAULT_NAMESPACE }
+    : {};
   let path: string, body: Record<string, string>;
   if (environment.VAULT_KUBERNETES_ROLE) {
-    const jwtPath = environment.VAULT_KUBERNETES_JWT_PATH ?? "/var/run/secrets/kubernetes.io/serviceaccount/token";
+    const jwtPath =
+      environment.VAULT_KUBERNETES_JWT_PATH ?? "/var/run/secrets/kubernetes.io/serviceaccount/token";
     path = `/v1/auth/${encodeURIComponent(environment.VAULT_KUBERNETES_MOUNT ?? "kubernetes")}/login`;
     body = { role: environment.VAULT_KUBERNETES_ROLE, jwt: (await readFile(jwtPath, "utf8")).trim() };
   } else if (environment.VAULT_APPROLE_ROLE_ID) {
-    const secretId = environment.VAULT_APPROLE_SECRET_ID ?? (environment.VAULT_APPROLE_SECRET_ID_PATH
-      ? (await readFile(environment.VAULT_APPROLE_SECRET_ID_PATH, "utf8")).trim() : undefined);
+    const secretId =
+      environment.VAULT_APPROLE_SECRET_ID ??
+      (environment.VAULT_APPROLE_SECRET_ID_PATH
+        ? (await readFile(environment.VAULT_APPROLE_SECRET_ID_PATH, "utf8")).trim()
+        : undefined);
     if (!secretId) throw new AppError("VAULT_CONFIGURATION_MISSING", 500, "AppRole secret ID is required");
     path = `/v1/auth/${encodeURIComponent(environment.VAULT_APPROLE_MOUNT ?? "approle")}/login`;
     body = { role_id: environment.VAULT_APPROLE_ROLE_ID, secret_id: secretId };
   } else {
-    throw new AppError("VAULT_WORKLOAD_IDENTITY_REQUIRED", 500, "Vault token, Kubernetes auth, or AppRole auth is required");
+    throw new AppError(
+      "VAULT_WORKLOAD_IDENTITY_REQUIRED",
+      500,
+      "Vault token, Kubernetes auth, or AppRole auth is required",
+    );
   }
   const response = await fetch(`${endpoint.replace(/\/+$/u, "")}${path}`, {
-    method: "POST", headers: { "content-type": "application/json", ...namespaceHeaders }, body: JSON.stringify(body),
+    method: "POST",
+    headers: { "content-type": "application/json", ...namespaceHeaders },
+    body: JSON.stringify(body),
   });
-  if (!response.ok) throw new AppError("VAULT_AUTHENTICATION_FAILED", 503, `Vault workload authentication failed with HTTP ${String(response.status)}`);
-  const result = await response.json() as {
+  if (!response.ok)
+    throw new AppError(
+      "VAULT_AUTHENTICATION_FAILED",
+      503,
+      `Vault workload authentication failed with HTTP ${String(response.status)}`,
+    );
+  const result = (await response.json()) as {
     auth?: { client_token?: string; renewable?: boolean; lease_duration?: number };
   };
-  if (!result.auth?.client_token) throw new AppError("VAULT_AUTHENTICATION_FAILED", 503, "Vault did not return a client token");
+  if (!result.auth?.client_token)
+    throw new AppError("VAULT_AUTHENTICATION_FAILED", 503, "Vault did not return a client token");
   return {
     token: result.auth.client_token,
     renewable: result.auth.renewable === true,
@@ -287,15 +308,17 @@ function startVaultTokenRenewal(
         ...namespaceHeaders,
       },
       body: JSON.stringify({ increment: `${String(leaseDurationSeconds)}s` }),
-    }).then((response) => {
-      if (!response.ok) {
-        process.emitWarning(`Vault token renewal failed with HTTP ${String(response.status)}`, {
-          code: "VAULT_TOKEN_RENEWAL_FAILED",
-        });
-      }
-    }).catch(() => {
-      process.emitWarning("Vault token renewal request failed", { code: "VAULT_TOKEN_RENEWAL_FAILED" });
-    });
+    })
+      .then((response) => {
+        if (!response.ok) {
+          process.emitWarning(`Vault token renewal failed with HTTP ${String(response.status)}`, {
+            code: "VAULT_TOKEN_RENEWAL_FAILED",
+          });
+        }
+      })
+      .catch(() => {
+        process.emitWarning("Vault token renewal request failed", { code: "VAULT_TOKEN_RENEWAL_FAILED" });
+      });
   }, renewalIntervalMs);
   timer.unref();
 }
@@ -362,9 +385,7 @@ export function validateProductionSecrets(
     // Check insecure/demo patterns
     for (const pattern of INSECURE_PATTERNS) {
       if (pattern.test(trimmed)) {
-        violations.push(
-          `Secret "${key}" matches forbidden insecure/demo pattern in production`,
-        );
+        violations.push(`Secret "${key}" matches forbidden insecure/demo pattern in production`);
         break;
       }
     }

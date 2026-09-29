@@ -45,7 +45,8 @@ if (!isStagingRun || !stagingUrl) {
       {
         suite: "phase-42-staging-smoke-test",
         status: "PREPARED_PENDING_STAGING_DEPLOYMENT",
-        message: "Staging smoke suite is prepared. Set AILSS_STAGING_SMOKE_RUN=true and AILSS_STAGING_URL to execute against staging cluster.",
+        message:
+          "Staging smoke suite is prepared. Set AILSS_STAGING_SMOKE_RUN=true and AILSS_STAGING_URL to execute against staging cluster.",
         stepsPlanned: stepsPlan.length,
         steps: stepsPlan,
       },

@@ -61,11 +61,16 @@ export class MediaService {
     const detail = pointer ? await this.lessons.detail(request.lessonId, pointer.lessonVersion) : undefined;
     if (!detail || pointer?.courseId !== courseId)
       throw new AppError("MEDIA_LESSON_REJECTED", 422, "A valid lesson in the owned course is required");
-    const visibility: MediaVisibility = request.visibility ?? (detail.preview ? "PUBLIC_PREVIEW" : "PROTECTED_LESSON");
+    const visibility: MediaVisibility =
+      request.visibility ?? (detail.preview ? "PUBLIC_PREVIEW" : "PROTECTED_LESSON");
     if (visibility === "PUBLIC_PREVIEW" && !detail.preview)
       throw new AppError("MEDIA_LESSON_REJECTED", 422, "Public preview media requires a preview lesson");
     if (visibility === "PROTECTED_LESSON" && detail.preview)
-      throw new AppError("MEDIA_LESSON_REJECTED", 422, "Protected media cannot be attached to a preview lesson");
+      throw new AppError(
+        "MEDIA_LESSON_REJECTED",
+        422,
+        "Protected media cannot be attached to a preview lesson",
+      );
     if (course.state === "PUBLISHED") {
       const activeId = await this.store.binding(this.tenantId, request.lessonId);
       const active = activeId ? await this.store.get(this.tenantId, activeId) : undefined;
@@ -160,12 +165,7 @@ export class MediaService {
   async get(id: string, actor: ActorContext) {
     return mediaDto(await this.owned(id, actor));
   }
-  async uploadCaption(
-    id: string,
-    actor: ActorContext,
-    request: unknown,
-    idempotencyKey: string,
-  ) {
+  async uploadCaption(id: string, actor: ActorContext, request: unknown, idempotencyKey: string) {
     const input = captionUploadSchema.parse(request);
     let content: string;
     try {
@@ -202,17 +202,20 @@ export class MediaService {
           ...a,
           revision: a.revision + 1,
           updatedAt: new Date().toISOString(),
-          captionTracks: [...a.captionTracks, {
-            captionTrackId,
-            mediaAssetId: id,
-            language: input.language,
-            label: input.label,
-            kind: input.kind,
-            format: "WEBVTT" as const,
-            objectKey,
-            contentSha256,
-            status: "READY" as const,
-          }],
+          captionTracks: [
+            ...a.captionTracks,
+            {
+              captionTrackId,
+              mediaAssetId: id,
+              language: input.language,
+              label: input.label,
+              kind: input.kind,
+              format: "WEBVTT" as const,
+              objectKey,
+              contentSha256,
+              status: "READY" as const,
+            },
+          ],
         };
         if (!(await this.store.replace(a, next))) {
           // A timed-out CAS can have committed. Read authoritative metadata
@@ -461,15 +464,18 @@ export class MediaService {
         a.masterPlaylistObjectKey &&
         (a.visibility ?? "PROTECTED_LESSON") === "PUBLIC_PREVIEW"
       ) {
-        const effectiveActor: ActorContext = actor && actor.userId ? actor : {
-          userId: "00000000-0000-0000-0000-000000000000",
-          roles: ["ANONYMOUS"],
-          sessionId: "00000000-0000-0000-0000-000000000000",
-          tokenVersion: 0,
-          correlationId: "",
-          issuedAt: Math.floor(Date.now() / 1000),
-          expiresAt: Math.floor(Date.now() / 1000) + this.policy.playbackTtlSeconds,
-        };
+        const effectiveActor: ActorContext =
+          actor && actor.userId
+            ? actor
+            : {
+                userId: "00000000-0000-0000-0000-000000000000",
+                roles: ["ANONYMOUS"],
+                sessionId: "00000000-0000-0000-0000-000000000000",
+                tokenVersion: 0,
+                correlationId: "",
+                issuedAt: Math.floor(Date.now() / 1000),
+                expiresAt: Math.floor(Date.now() / 1000) + this.policy.playbackTtlSeconds,
+              };
         return this.playback(p.lessonId, effectiveActor);
       }
     }

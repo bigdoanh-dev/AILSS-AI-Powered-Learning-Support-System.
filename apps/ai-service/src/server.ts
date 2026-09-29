@@ -8,6 +8,7 @@ import { aiDocumentRouter } from "./documents/router.js";
 import { AiIdentityClient } from "./identity-client.js";
 import { AiDocumentRelay } from "./documents/relay.js";
 import { safeError } from "../../../packages/logger/src/index.js";
+import { AppError } from "../../../packages/http/src/index.js";
 import { AiQuizRepository } from "./quiz/repository.js";
 import { AiQuizService } from "./quiz/service.js";
 import { AiTargetClient } from "./quiz/target-client.js";
@@ -174,13 +175,22 @@ await startService(manifest, {
     );
     app.use((error: unknown, _request: unknown, _response: unknown, next: (error: unknown) => void) => {
       context.logger.error(
-        { operation: "ai.document.request", err: safeError(error) },
-        "AI document request failed",
+        {
+          operation: "ai.request",
+          ...(error instanceof AppError ? { errorCode: error.code, statusCode: error.status } : {}),
+          err: safeError(error),
+        },
+        "AI request failed",
       );
       next(error);
     });
     const relay = config.ENABLE_RABBITMQ
-      ? new AiDocumentRelay(context.cassandra, authenticatedRabbitUrl(config))
+      ? new AiDocumentRelay(context.cassandra, authenticatedRabbitUrl(config), (error) => {
+          context.logger.warn(
+            { operation: "ai.document.relay.poll", err: safeError(error) },
+            "AI document relay poll failed; retrying",
+          );
+        })
       : undefined;
     relay?.start();
     return async () => relay?.close();

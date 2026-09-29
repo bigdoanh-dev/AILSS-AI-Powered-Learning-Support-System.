@@ -79,12 +79,12 @@ export const CANONICAL_MASTERY_POLICY_V2: MasteryPolicyConfig = {
   evidenceWeights: {
     QUIZ: 0.35,
     MANUAL_ASSESSMENT: 0.35,
-    TEACHER_OBSERVATION: 0.20,
-    LESSON_COMPLETION: 0.10,
+    TEACHER_OBSERVATION: 0.2,
+    LESSON_COMPLETION: 0.1,
     PRACTICE_ATTEMPT: 0.15,
   },
   attemptDampenerFactor: 0.15,
-  difficultyBonusMultiplier: 0.20,
+  difficultyBonusMultiplier: 0.2,
   freshWindowDays: 14,
   staleWindowDays: 21,
   decayLambda: 0.015,
@@ -199,7 +199,8 @@ export interface StudyPlanItem {
   scheduledDate: string; // ISO date YYYY-MM-DD
   estimatedMinutes: number;
   priority: number; // 1 (highest) to 5
-  reasonCode: "LOW_MASTERY" | "PREREQUISITE_GAP" | "RECENCY_DECAY" | "UPCOMING_ASSESSMENT" | "TEACHER_PRIORITY";
+  reasonCode:
+    "LOW_MASTERY" | "PREREQUISITE_GAP" | "RECENCY_DECAY" | "UPCOMING_ASSESSMENT" | "TEACHER_PRIORITY";
   rationale: string;
   /** Mandatory on the Phase 40 runtime path; optional here for historical payload compatibility. */
   sourceType?: "MASTERY_PROJECTION" | "COURSE_REQUIREMENT" | "ASSESSMENT";
@@ -244,7 +245,8 @@ export interface NextActionRecommendation {
   action: StudyPlanItemAction;
   targetId: string; // conceptId or lessonId or assessmentId
   title: string;
-  reasonCode: "LOW_MASTERY" | "PREREQUISITE_GAP" | "RECENCY_DECAY" | "UPCOMING_ASSESSMENT" | "TEACHER_PRIORITY";
+  reasonCode:
+    "LOW_MASTERY" | "PREREQUISITE_GAP" | "RECENCY_DECAY" | "UPCOMING_ASSESSMENT" | "TEACHER_PRIORITY";
   reasonDescription: string;
   urgencyScore: number; // 0 - 100
   loopPreventionHash: string; // hash of (studentId, action, targetId, last24h)

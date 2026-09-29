@@ -1,40 +1,17 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { Logo } from "./Logo";
 import { Picture } from "./ui";
 import { ThemeToggle } from "./Preferences";
+import { Icon } from "./Icon";
 export function AuthLayout() {
   const { pathname } = useLocation();
-  const visual = useRef<HTMLDivElement>(null);
-  const [paused, setPaused] = useState(false);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
     const heading = document.querySelector<HTMLElement>("main h1");
     heading?.setAttribute("tabindex", "-1");
     if (window.history.state?.idx > 0) heading?.focus({ preventScroll: true });
   }, [pathname]);
-  useEffect(() => {
-    const element = visual.current!;
-    const fine = matchMedia("(pointer: fine) and (prefers-reduced-motion: no-preference)");
-    const move = (e: PointerEvent) => {
-      if (!fine.matches) return;
-      const r = element.getBoundingClientRect();
-      element.style.setProperty("--light-x", `${((e.clientX - r.left) / r.width) * 100}%`);
-      element.style.setProperty("--light-y", `${((e.clientY - r.top) / r.height) * 100}%`);
-    };
-    element.addEventListener("pointermove", move, { passive: true });
-    const observer = new IntersectionObserver(([e]) =>
-      element.classList.toggle("visual-paused", !e.isIntersecting),
-    );
-    observer.observe(element);
-    const pause = () => element.classList.toggle("visual-hidden", document.hidden);
-    document.addEventListener("visibilitychange", pause);
-    return () => {
-      element.removeEventListener("pointermove", move);
-      observer.disconnect();
-      document.removeEventListener("visibilitychange", pause);
-    };
-  }, []);
   const isRegister = pathname.includes("register");
   const register = isRegister;
   const isForgot = pathname.includes("forgot-password");
@@ -69,7 +46,7 @@ export function AuthLayout() {
                   aria-current={isLogin ? "page" : undefined}
                 >
                   <span className="pill-icon" aria-hidden="true">
-                    🔑
+                    <Icon name="key" size={14} />
                   </span>
                   <span>Đăng nhập</span>
                 </Link>
@@ -79,7 +56,7 @@ export function AuthLayout() {
                   aria-current={isRegister ? "page" : undefined}
                 >
                   <span className="pill-icon" aria-hidden="true">
-                    ✨
+                    <Icon name="sparkles" size={14} />
                   </span>
                   <span>Đăng ký</span>
                 </Link>
@@ -95,11 +72,7 @@ export function AuthLayout() {
             <Link to="/legal/terms">Điều khoản</Link>
           </div>
         </main>
-        <aside
-          ref={visual}
-          className={`auth-universe ${paused ? "user-paused" : ""}`}
-          aria-label="AI đồng hành trong hành trình học tập"
-        >
+        <aside className="auth-universe" aria-label="AI đồng hành trong hành trình học tập">
           <div className="auth-universe-copy" key={register ? "register" : "login"}>
             <p className="eyebrow">KHỞI ĐẦU NHỎ. KHẢ NĂNG LỚN.</p>
             <h2>
@@ -120,9 +93,6 @@ export function AuthLayout() {
             <span className="floating-note note-quiz">✓ Bản nháp để giảng viên duyệt</span>
           </div>
           <p className="auth-universe-caption">AI hỗ trợ. Con người quyết định.</p>
-          <button className="auth-motion-toggle" aria-pressed={paused} onClick={() => setPaused(!paused)}>
-            {paused ? "Bật chuyển động" : "Tạm dừng chuyển động"}
-          </button>
         </aside>
       </div>
     </div>

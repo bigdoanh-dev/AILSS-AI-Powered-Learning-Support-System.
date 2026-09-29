@@ -144,6 +144,27 @@ const rules = [];
 function rule(method, path, { query = empty, body = empty, command = false, match = false } = {}) {
   rules.push({ method, pattern: new RegExp(`^${path.replaceAll(":id", U)}$`), query, body, command, match });
 }
+rule("GET", "/me/dashboard/revenue", {
+  query: z.object({ range: z.enum(["today", "7d", "30d"]).optional() }).strict(),
+});
+rule("GET", "/me/commission");
+rule("GET", "/me/payout-account");
+rule("POST", "/me/payout-account", {
+  body: z
+    .object({
+      bankName: z
+        .string()
+        .trim()
+        .regex(/^[\p{L}\p{N} .&-]{2,100}$/u),
+      accountNumber: z.string().regex(/^[0-9]{6,24}$/),
+      accountHolder: z
+        .string()
+        .trim()
+        .regex(/^[\p{L} .'-]{2,100}$/u),
+    })
+    .strict(),
+  command: true,
+});
 rule("GET", "/courses", {
   query: z.object({ categoryId: id.optional(), state: z.string().optional(), ...page }).strict(),
 });
@@ -171,10 +192,12 @@ rule("POST", "/courses/:id/media-assets", {
   body: z
     .object({
       lessonId: id,
-      originalFilename: txt(1, 255).refine((value) => Array.from(value).every((char) => {
-        const code = char.codePointAt(0) ?? 0;
-        return code > 31 && code !== 127;
-      })),
+      originalFilename: txt(1, 255).refine((value) =>
+        Array.from(value).every((char) => {
+          const code = char.codePointAt(0) ?? 0;
+          return code > 31 && code !== 127;
+        }),
+      ),
       mimeType: z.enum(["video/mp4", "video/webm"]),
       sizeBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
       sourceSha256: z
@@ -188,13 +211,18 @@ rule("POST", "/courses/:id/media-assets", {
 rule("GET", "/media-assets/:id");
 rule("GET", "/media-assets/:id/upload");
 rule("POST", "/media-assets/:id/captions", {
-  body: z.object({
-    language: z.string().regex(/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8}){0,3}$/).max(35),
-    label: txt(1, 80),
-    kind: z.enum(["SUBTITLES", "CAPTIONS"]),
-    contentType: z.literal("text/vtt"),
-    content: z.string().min(1).max(262144),
-  }).strict(),
+  body: z
+    .object({
+      language: z
+        .string()
+        .regex(/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8}){0,3}$/)
+        .max(35),
+      label: txt(1, 80),
+      kind: z.enum(["SUBTITLES", "CAPTIONS"]),
+      contentType: z.literal("text/vtt"),
+      content: z.string().min(1).max(262144),
+    })
+    .strict(),
   command: true,
 });
 rule("POST", "/media-assets/:id/parts", {

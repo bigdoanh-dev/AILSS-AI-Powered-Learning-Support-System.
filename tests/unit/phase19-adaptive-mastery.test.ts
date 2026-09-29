@@ -76,11 +76,7 @@ describe("Phase 19B/C/D/E — Learner Mastery, Adaptive Paths & Explainable Reco
       ]);
 
       // Student has no evidence in RELATIONAL_ALGEBRA (score 0 < 60)
-      const gaps = await masteryService.findPrerequisiteGaps(
-        studentId,
-        courseId,
-        "QUERY_OPTIMIZATION",
-      );
+      const gaps = await masteryService.findPrerequisiteGaps(studentId, courseId, "QUERY_OPTIMIZATION");
 
       expect(gaps).toHaveLength(1);
       expect(gaps[0]?.prerequisiteConceptId).toBe("RELATIONAL_ALGEBRA");

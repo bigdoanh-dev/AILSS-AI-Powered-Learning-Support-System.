@@ -205,40 +205,22 @@
   "routeMappings": [
     {
       "featureId": "native-auth-password",
-      "routes": [
-        "/login"
-      ],
-      "apiPatterns": [
-        "/api/v1/auth/login"
-      ]
+      "routes": ["/login"],
+      "apiPatterns": ["/api/v1/auth/login"]
     },
     {
       "featureId": "account-registration",
-      "routes": [
-        "/register"
-      ],
-      "apiPatterns": [
-        "/api/v1/auth/register"
-      ]
+      "routes": ["/register"],
+      "apiPatterns": ["/api/v1/auth/register"]
     },
     {
       "featureId": "student-workspace",
-      "routes": [
-        "/student"
-      ],
-      "apiPatterns": [
-        "/api/v1/me/courses",
-        "/api/v1/mastery/courses/:courseId",
-        "/api/v1/study-plan/current"
-      ]
+      "routes": ["/student"],
+      "apiPatterns": ["/api/v1/me/courses", "/api/v1/mastery/courses/:courseId", "/api/v1/study-plan/current"]
     },
     {
       "featureId": "course-lessons",
-      "routes": [
-        "/learn",
-        "/learn/:courseId",
-        "/learn/:courseId/lessons/:lessonId"
-      ],
+      "routes": ["/learn", "/learn/:courseId", "/learn/:courseId/lessons/:lessonId"],
       "apiPatterns": [
         "/api/v1/me/courses",
         "/api/v1/courses/:courseId/lessons",
@@ -250,19 +232,12 @@
     },
     {
       "featureId": "mastery-v2",
-      "routes": [
-        "/student/mastery",
-        "/progress"
-      ],
-      "apiPatterns": [
-        "/api/v1/mastery/courses/:courseId"
-      ]
+      "routes": ["/student/mastery", "/progress"],
+      "apiPatterns": ["/api/v1/mastery/courses/:courseId"]
     },
     {
       "featureId": "study-plan-v2",
-      "routes": [
-        "/student/study-plan"
-      ],
+      "routes": ["/student/study-plan"],
       "apiPatterns": [
         "/api/v1/study-plan/current",
         "/api/v1/study-plan/generate",
@@ -271,12 +246,8 @@
     },
     {
       "featureId": "ai-tutor-v2",
-      "routes": [
-        "/student/tutor"
-      ],
-      "apiPatterns": [
-        "/api/v1/assistant/chat"
-      ]
+      "routes": ["/student/tutor"],
+      "apiPatterns": ["/api/v1/assistant/chat"]
     },
     {
       "featureId": "assessments",
@@ -300,31 +271,17 @@
     },
     {
       "featureId": "notifications",
-      "routes": [
-        "/notifications"
-      ],
-      "apiPatterns": [
-        "/api/v1/notifications",
-        "/api/v1/notifications/:notificationId/read"
-      ]
+      "routes": ["/notifications"],
+      "apiPatterns": ["/api/v1/notifications", "/api/v1/notifications/:notificationId/read"]
     },
     {
       "featureId": "account-settings",
-      "routes": [
-        "/account",
-        "/settings"
-      ],
-      "apiPatterns": [
-        "/api/v1/me/avatar",
-        "/api/v1/me/password"
-      ]
+      "routes": ["/account", "/settings"],
+      "apiPatterns": ["/api/v1/me/avatar", "/api/v1/me/password"]
     },
     {
       "featureId": "public-course-catalog",
-      "routes": [
-        "/courses",
-        "/courses/:courseId"
-      ],
+      "routes": ["/courses", "/courses/:courseId"],
       "apiPatterns": [
         "/api/v1/courses",
         "/api/v1/courses/search",
@@ -337,11 +294,7 @@
     },
     {
       "featureId": "student-classroom-schedule",
-      "routes": [
-        "/classes",
-        "/classes/:classId",
-        "/classes/:classId/sessions/:sessionId"
-      ],
+      "routes": ["/classes", "/classes/:classId", "/classes/:classId/sessions/:sessionId"],
       "apiPatterns": [
         "/api/v1/me/classes",
         "/api/v1/me/schedule",
@@ -362,92 +315,59 @@
   "apiInventory": [
     {
       "apiPath": "/api/v1/assistant/chat",
-      "routes": [
-        "/student",
-        "/student/mastery",
-        "/student/study-plan",
-        "/student/tutor"
-      ]
+      "routes": ["/student", "/student/mastery", "/student/study-plan", "/student/tutor"]
     },
     {
       "apiPath": "/api/v1/attempts/:param",
-      "routes": [
-        "/assessments/[quizId]/attempt/[attemptId]"
-      ]
+      "routes": ["/assessments/[quizId]/attempt/[attemptId]"]
     },
     {
       "apiPath": "/api/v1/attempts/:param/result",
-      "routes": [
-        "/assessments/[quizId]/result/[resultId]"
-      ]
+      "routes": ["/assessments/[quizId]/result/[resultId]"]
     },
     {
       "apiPath": "/api/v1/attempts/:param/submit",
-      "routes": [
-        "/assessments/[quizId]/attempt/[attemptId]"
-      ]
+      "routes": ["/assessments/[quizId]/attempt/[attemptId]"]
     },
     {
       "apiPath": "/api/v1/auth/register",
-      "routes": [
-        "/login",
-        "/register"
-      ]
+      "routes": ["/login", "/register"]
     },
     {
       "apiPath": "/api/v1/class-sessions/:param",
-      "routes": [
-        "/classes/[classId]/sessions/[sessionId]"
-      ]
+      "routes": ["/classes/[classId]/sessions/[sessionId]"]
     },
     {
       "apiPath": "/api/v1/classes",
-      "routes": [
-        "/assessments"
-      ]
+      "routes": ["/assessments"]
     },
     {
       "apiPath": "/api/v1/classes/:param",
-      "routes": [
-        "/classes/[classId]"
-      ]
+      "routes": ["/classes/[classId]"]
     },
     {
       "apiPath": "/api/v1/classes/:param/sessions",
-      "routes": [
-        "/classes/[classId]"
-      ]
+      "routes": ["/classes/[classId]"]
     },
     {
       "apiPath": "/api/v1/courses",
-      "routes": [
-        "/courses"
-      ]
+      "routes": ["/courses"]
     },
     {
       "apiPath": "/api/v1/courses/:param",
-      "routes": [
-        "/courses/[courseId]",
-        "/learn/[courseId]"
-      ]
+      "routes": ["/courses/[courseId]", "/learn/[courseId]"]
     },
     {
       "apiPath": "/api/v1/courses/:param/enrollments",
-      "routes": [
-        "/courses/[courseId]"
-      ]
+      "routes": ["/courses/[courseId]"]
     },
     {
       "apiPath": "/api/v1/courses/:param/lessons",
-      "routes": [
-        "/learn/[courseId]"
-      ]
+      "routes": ["/learn/[courseId]"]
     },
     {
       "apiPath": "/api/v1/courses/:param/offerings",
-      "routes": [
-        "/courses/[courseId]"
-      ]
+      "routes": ["/courses/[courseId]"]
     },
     {
       "apiPath": "/api/v1/courses/:param/progress",
@@ -464,23 +384,15 @@
     },
     {
       "apiPath": "/api/v1/courses/:param/reviews",
-      "routes": [
-        "/courses/[courseId]"
-      ]
+      "routes": ["/courses/[courseId]"]
     },
     {
       "apiPath": "/api/v1/courses/search",
-      "routes": [
-        "/courses",
-        "/login",
-        "/register"
-      ]
+      "routes": ["/courses", "/login", "/register"]
     },
     {
       "apiPath": "/api/v1/lessons/:param",
-      "routes": [
-        "/learn/[courseId]/lessons/[lessonId]"
-      ]
+      "routes": ["/learn/[courseId]/lessons/[lessonId]"]
     },
     {
       "apiPath": "/api/v1/lessons/:param/completion",
@@ -494,39 +406,23 @@
     },
     {
       "apiPath": "/api/v1/mastery/courses/:param",
-      "routes": [
-        "/student",
-        "/student/mastery",
-        "/student/study-plan",
-        "/student/tutor"
-      ]
+      "routes": ["/student", "/student/mastery", "/student/study-plan", "/student/tutor"]
     },
     {
       "apiPath": "/api/v1/me",
-      "routes": [
-        "/account"
-      ]
+      "routes": ["/account"]
     },
     {
       "apiPath": "/api/v1/me/attendance",
-      "routes": [
-        "/classes",
-        "/classes/[classId]/sessions/[sessionId]"
-      ]
+      "routes": ["/classes", "/classes/[classId]/sessions/[sessionId]"]
     },
     {
       "apiPath": "/api/v1/me/avatar",
-      "routes": [
-        "/account",
-        "/login",
-        "/register"
-      ]
+      "routes": ["/account", "/login", "/register"]
     },
     {
       "apiPath": "/api/v1/me/classes",
-      "routes": [
-        "/classes"
-      ]
+      "routes": ["/classes"]
     },
     {
       "apiPath": "/api/v1/me/courses",
@@ -541,27 +437,19 @@
     },
     {
       "apiPath": "/api/v1/me/password",
-      "routes": [
-        "/account"
-      ]
+      "routes": ["/account"]
     },
     {
       "apiPath": "/api/v1/me/schedule",
-      "routes": [
-        "/classes"
-      ]
+      "routes": ["/classes"]
     },
     {
       "apiPath": "/api/v1/notifications",
-      "routes": [
-        "/notifications"
-      ]
+      "routes": ["/notifications"]
     },
     {
       "apiPath": "/api/v1/notifications/:param/read",
-      "routes": [
-        "/notifications"
-      ]
+      "routes": ["/notifications"]
     },
     {
       "apiPath": "/api/v1/quizzes/:param",
@@ -573,59 +461,37 @@
     },
     {
       "apiPath": "/api/v1/quizzes/:param/attempts",
-      "routes": [
-        "/assessments/[quizId]"
-      ]
+      "routes": ["/assessments/[quizId]"]
     },
     {
       "apiPath": "/api/v1/reviews/:param",
-      "routes": [
-        "/courses/[courseId]"
-      ]
+      "routes": ["/courses/[courseId]"]
     },
     {
       "apiPath": "/api/v1/study-plan/current",
-      "routes": [
-        "/student",
-        "/student/mastery",
-        "/student/study-plan",
-        "/student/tutor"
-      ]
+      "routes": ["/student", "/student/mastery", "/student/study-plan", "/student/tutor"]
     },
     {
       "apiPath": "/api/v1/study-plan/generate",
-      "routes": [
-        "/student/study-plan"
-      ]
+      "routes": ["/student/study-plan"]
     },
     {
       "apiPath": "/api/v1/study-plan/items/:param/:param",
-      "routes": [
-        "/student/study-plan"
-      ]
+      "routes": ["/student/study-plan"]
     },
     {
       "apiPath": "/api/v1/targets/CLASS/:param/quizzes",
-      "routes": [
-        "/assessments"
-      ]
+      "routes": ["/assessments"]
     },
     {
       "apiPath": "/api/v1/targets/COURSE/:param/quizzes",
-      "routes": [
-        "/assessments",
-        "/learn/[courseId]"
-      ]
+      "routes": ["/assessments", "/learn/[courseId]"]
     }
   ],
   "routeDependencySnapshot": [
     {
       "route": "/account",
-      "apiDependencies": [
-        "/api/v1/me",
-        "/api/v1/me/avatar",
-        "/api/v1/me/password"
-      ]
+      "apiDependencies": ["/api/v1/me", "/api/v1/me/avatar", "/api/v1/me/password"]
     },
     {
       "route": "/assessments",
@@ -638,10 +504,7 @@
     },
     {
       "route": "/assessments/[quizId]",
-      "apiDependencies": [
-        "/api/v1/quizzes/:param",
-        "/api/v1/quizzes/:param/attempts"
-      ]
+      "apiDependencies": ["/api/v1/quizzes/:param", "/api/v1/quizzes/:param/attempts"]
     },
     {
       "route": "/assessments/[quizId]/attempt/[attemptId]",
@@ -653,39 +516,23 @@
     },
     {
       "route": "/assessments/[quizId]/result/[resultId]",
-      "apiDependencies": [
-        "/api/v1/attempts/:param/result",
-        "/api/v1/quizzes/:param"
-      ]
+      "apiDependencies": ["/api/v1/attempts/:param/result", "/api/v1/quizzes/:param"]
     },
     {
       "route": "/classes",
-      "apiDependencies": [
-        "/api/v1/me/attendance",
-        "/api/v1/me/classes",
-        "/api/v1/me/schedule"
-      ]
+      "apiDependencies": ["/api/v1/me/attendance", "/api/v1/me/classes", "/api/v1/me/schedule"]
     },
     {
       "route": "/classes/[classId]",
-      "apiDependencies": [
-        "/api/v1/classes/:param",
-        "/api/v1/classes/:param/sessions"
-      ]
+      "apiDependencies": ["/api/v1/classes/:param", "/api/v1/classes/:param/sessions"]
     },
     {
       "route": "/classes/[classId]/sessions/[sessionId]",
-      "apiDependencies": [
-        "/api/v1/class-sessions/:param",
-        "/api/v1/me/attendance"
-      ]
+      "apiDependencies": ["/api/v1/class-sessions/:param", "/api/v1/me/attendance"]
     },
     {
       "route": "/courses",
-      "apiDependencies": [
-        "/api/v1/courses",
-        "/api/v1/courses/search"
-      ]
+      "apiDependencies": ["/api/v1/courses", "/api/v1/courses/search"]
     },
     {
       "route": "/courses/[courseId]",
@@ -700,10 +547,7 @@
     },
     {
       "route": "/learn",
-      "apiDependencies": [
-        "/api/v1/courses/:param/progress",
-        "/api/v1/me/courses"
-      ]
+      "apiDependencies": ["/api/v1/courses/:param/progress", "/api/v1/me/courses"]
     },
     {
       "route": "/learn/[courseId]",
@@ -724,18 +568,11 @@
     },
     {
       "route": "/login",
-      "apiDependencies": [
-        "/api/v1/auth/register",
-        "/api/v1/courses/search",
-        "/api/v1/me/avatar"
-      ]
+      "apiDependencies": ["/api/v1/auth/register", "/api/v1/courses/search", "/api/v1/me/avatar"]
     },
     {
       "route": "/notifications",
-      "apiDependencies": [
-        "/api/v1/notifications",
-        "/api/v1/notifications/:param/read"
-      ]
+      "apiDependencies": ["/api/v1/notifications", "/api/v1/notifications/:param/read"]
     },
     {
       "route": "/progress",
@@ -743,11 +580,7 @@
     },
     {
       "route": "/register",
-      "apiDependencies": [
-        "/api/v1/auth/register",
-        "/api/v1/courses/search",
-        "/api/v1/me/avatar"
-      ]
+      "apiDependencies": ["/api/v1/auth/register", "/api/v1/courses/search", "/api/v1/me/avatar"]
     },
     {
       "route": "/settings",

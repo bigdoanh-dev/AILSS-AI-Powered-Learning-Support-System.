@@ -4,10 +4,7 @@ import {
   MultiTenantSearchService,
   type SearchDocument,
 } from "../../apps/learning-service/src/search/index.js";
-import {
-  GovernedRagService,
-  InMemoryRagKnowledgeRepository,
-} from "../../apps/ai-service/src/rag/index.js";
+import { GovernedRagService, InMemoryRagKnowledgeRepository } from "../../apps/ai-service/src/rag/index.js";
 import { ProductAnalyticsService } from "../../apps/learning-service/src/analytics/analytics-service.js";
 import {
   CredentialService,

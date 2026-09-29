@@ -4,10 +4,7 @@ import {
   InMemorySearchIndexRepository,
   MultiTenantSearchService,
 } from "../../apps/learning-service/src/search/index.js";
-import {
-  GovernedRagService,
-  InMemoryRagKnowledgeRepository,
-} from "../../apps/ai-service/src/rag/index.js";
+import { GovernedRagService, InMemoryRagKnowledgeRepository } from "../../apps/ai-service/src/rag/index.js";
 import {
   CredentialService,
   InMemoryCredentialRepository,

@@ -56,6 +56,7 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
   const player = useVideoPlayer(videoSource, (p) => {
     p.loop = false;
     p.muted = true;
+    p.playbackRate = 1.5;
   });
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
       }
       return;
     }
+    player.playbackRate = 1.5;
     player.play();
     return () => player.pause();
   }, [onFinish, player, reduceMotion, shouldShow, visible]);
@@ -89,7 +91,7 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
     if (!visible || reduceMotion !== false) return;
     const timer = setTimeout(() => {
       handleClose();
-    }, 16000);
+    }, 11000);
     return () => clearTimeout(timer);
   }, [reduceMotion, visible]);
 
@@ -107,12 +109,7 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
       style={[styles.container, { opacity: fadeAnim }]}
       pointerEvents={isClosing.current ? "none" : "auto"}
     >
-      <VideoView
-        player={player}
-        style={StyleSheet.absoluteFill}
-        nativeControls={false}
-        contentFit="cover"
-      />
+      <VideoView player={player} style={StyleSheet.absoluteFill} nativeControls={false} contentFit="cover" />
       <View style={styles.controlsRow}>
         <Pressable
           style={styles.controlButton}
@@ -126,9 +123,7 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
             color="#ffffff"
             style={{ marginRight: 6 }}
           />
-          <Text style={styles.controlButtonText}>
-            {isMuted ? "Bật âm thanh" : "Đang phát"}
-          </Text>
+          <Text style={styles.controlButtonText}>{isMuted ? "Bật âm thanh" : "Đang phát"}</Text>
         </Pressable>
 
         <Pressable
@@ -138,9 +133,7 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
           accessibilityRole="button"
           accessibilityLabel="Bỏ qua video giới thiệu"
         >
-          <Text style={[styles.controlButtonText, styles.skipText]}>
-            Bỏ qua
-          </Text>
+          <Text style={[styles.controlButtonText, styles.skipText]}>Bỏ qua</Text>
           <Ionicons name="close" size={16} color="#ffffff" style={{ marginLeft: 4 }} />
         </Pressable>
       </View>

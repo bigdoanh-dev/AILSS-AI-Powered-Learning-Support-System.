@@ -72,6 +72,11 @@ interface Authority {
   message: string;
   bootstrap: () => Promise<void>;
   login: (body: unknown) => Promise<void>;
+  socialLogin: (
+    provider: "google" | "apple",
+    idToken: string,
+    clientProfile?: { firstName?: string; lastName?: string },
+  ) => Promise<void>;
   logout: () => Promise<void>;
   update: (name: string, key: string) => Promise<void>;
   password: (body: unknown, key: string) => Promise<void>;
@@ -84,13 +89,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const epoch = useRef(0);
   const currentState = useRef(state);
   currentState.current = state;
-  function failure(error: unknown, bootstrap = false) {
+  function failure(error: unknown, isInitialBootstrap = false) {
     setProfile(null);
     const expired = error instanceof ApiError && error.status === 401;
     setState(expired ? "UNAUTHENTICATED" : "UNAVAILABLE");
     setMessage(
       expired
-        ? bootstrap
+        ? isInitialBootstrap
           ? ""
           : "Phiên đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại."
         : errorMessage(error),
@@ -143,6 +148,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (e instanceof ApiError && e.status === 401)
           setMessage("Email hoặc mật khẩu chưa đúng. Vui lòng kiểm tra lại.");
       }
+      throw e;
+    }
+  }
+  async function socialLogin(
+    provider: "google" | "apple",
+    idToken: string,
+    clientProfile?: { firstName?: string; lastName?: string },
+  ) {
+    const id = ++epoch.current;
+    try {
+      const p = await sessionRequest<Profile>(`auth/social/${provider}`, "POST", {
+        idToken,
+        ...(clientProfile ? { clientProfile } : {}),
+      });
+      if (id !== epoch.current) return;
+      setProfile(p);
+      setState("AUTHENTICATED");
+      setMessage("");
+    } catch (e) {
+      if (id === epoch.current) failure(e, true);
       throw e;
     }
   }
@@ -199,7 +224,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }
   return (
-    <Context.Provider value={{ state, profile, message, bootstrap, login, logout, update, password }}>
+    <Context.Provider
+      value={{ state, profile, message, bootstrap, login, socialLogin, logout, update, password }}
+    >
       {children}
     </Context.Provider>
   );

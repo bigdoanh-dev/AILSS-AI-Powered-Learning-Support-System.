@@ -1,8 +1,4 @@
-import type {
-  InstitutionalSsoConfig,
-  Organization,
-  OrganizationMembership,
-} from "./model.js";
+import type { InstitutionalSsoConfig, Organization, OrganizationMembership } from "./model.js";
 
 export interface TenantRepository {
   saveOrganization(org: Organization): Promise<void>;

@@ -82,7 +82,9 @@ export default function CourseLearningScreen() {
       const data = await session.request(`/api/v1/targets/COURSE/${encodeURIComponent(courseId)}/quizzes`);
       setCourseAssessments(quizSummaries(data).filter((quiz) => quiz.state === "PUBLISHED"));
     } catch (cause) {
-      setAssessmentsError(cause instanceof ApiError ? cause.message : "Không thể tải bài kiểm tra của khóa học.");
+      setAssessmentsError(
+        cause instanceof ApiError ? cause.message : "Không thể tải bài kiểm tra của khóa học.",
+      );
     } finally {
       setAssessmentsLoading(false);
     }
@@ -116,10 +118,16 @@ export default function CourseLearningScreen() {
         <View style={localStyles.authCard}>
           <Icon name="lock" size={36} color={tokens.color.brand} />
           <Text style={localStyles.authTitle}>Yêu cầu đăng nhập</Text>
-          <Text style={localStyles.authDesc}>Vui lòng đăng nhập tài khoản học viên để truy cập giáo trình và nội dung bài giảng.</Text>
+          <Text style={localStyles.authDesc}>
+            Vui lòng đăng nhập tài khoản học viên để truy cập giáo trình và nội dung bài giảng.
+          </Text>
           <Button label="Đăng nhập ngay" onPress={() => router.push("/login" as Href)} />
         </View>
-        <BottomNavBar currentRoute="/learn" onNavigate={(r) => router.push(r as Href)} role={snapshot.user?.role} />
+        <BottomNavBar
+          currentRoute="/learn"
+          onNavigate={(r) => router.push(r as Href)}
+          role={snapshot.user?.role}
+        />
       </Page>
     );
   }
@@ -132,7 +140,11 @@ export default function CourseLearningScreen() {
           <ActivityIndicator size="large" color={tokens.color.brand} />
           <Text style={localStyles.loadingText}>Đang chuẩn bị giáo trình bài học…</Text>
         </View>
-        <BottomNavBar currentRoute="/learn" onNavigate={(r) => router.push(r as Href)} role={snapshot.user?.role} />
+        <BottomNavBar
+          currentRoute="/learn"
+          onNavigate={(r) => router.push(r as Href)}
+          role={snapshot.user?.role}
+        />
       </Page>
     );
   }
@@ -148,10 +160,18 @@ export default function CourseLearningScreen() {
           </Text>
           <View style={localStyles.errorActions}>
             <Button label="Thử lại" onPress={() => void fetchSyllabus()} />
-            <Button label="← Quay lại khóa học của tôi" variant="outline" onPress={() => router.push("/learn" as Href)} />
+            <Button
+              label="← Quay lại khóa học của tôi"
+              variant="outline"
+              onPress={() => router.push("/learn" as Href)}
+            />
           </View>
         </View>
-        <BottomNavBar currentRoute="/learn" onNavigate={(r) => router.push(r as Href)} role={snapshot.user?.role} />
+        <BottomNavBar
+          currentRoute="/learn"
+          onNavigate={(r) => router.push(r as Href)}
+          role={snapshot.user?.role}
+        />
       </Page>
     );
   }
@@ -178,7 +198,9 @@ export default function CourseLearningScreen() {
           style={[localStyles.tabSwitchBtn, courseTab === "lessons" && localStyles.tabSwitchBtnActive]}
           onPress={() => setCourseTab("lessons")}
         >
-          <Text style={[localStyles.tabSwitchText, courseTab === "lessons" && localStyles.tabSwitchTextActive]}>
+          <Text
+            style={[localStyles.tabSwitchText, courseTab === "lessons" && localStyles.tabSwitchTextActive]}
+          >
             📖 Bài Giảng ({lessonsList.length})
           </Text>
         </ScalePressable>
@@ -189,7 +211,12 @@ export default function CourseLearningScreen() {
             if (courseAssessments === null) void fetchCourseAssessments();
           }}
         >
-          <Text style={[localStyles.tabSwitchText, courseTab === "assessments" && localStyles.tabSwitchTextActive]}>
+          <Text
+            style={[
+              localStyles.tabSwitchText,
+              courseTab === "assessments" && localStyles.tabSwitchTextActive,
+            ]}
+          >
             📝 Bài kiểm tra
           </Text>
         </ScalePressable>
@@ -305,25 +332,42 @@ export default function CourseLearningScreen() {
         </View>
       ) : assessmentsError ? (
         <View style={localStyles.errorCard}>
-          <Text accessibilityRole="alert" style={localStyles.errorText}>{assessmentsError}</Text>
+          <Text accessibilityRole="alert" style={localStyles.errorText}>
+            {assessmentsError}
+          </Text>
           <Button label="Thử lại" onPress={() => void fetchCourseAssessments()} />
         </View>
       ) : courseAssessments && courseAssessments.length > 0 ? (
         <View style={{ gap: 10 }}>
           {courseAssessments.map((quiz) => (
-            <ScalePressable key={quiz.quizId} style={localStyles.exerciseCard} onPress={() => router.push(`/assessments/${quiz.quizId}` as Href)}>
+            <ScalePressable
+              key={quiz.quizId}
+              style={localStyles.exerciseCard}
+              onPress={() => router.push(`/assessments/${quiz.quizId}` as Href)}
+            >
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                 <Badge label="ĐÃ PHÁT HÀNH" variant="success" />
-                <Text style={styles.small}>{quiz.questionCount} câu{quiz.durationSeconds ? ` · ${Math.round(quiz.durationSeconds / 60)} phút` : ""}</Text>
+                <Text style={styles.small}>
+                  {quiz.questionCount} câu
+                  {quiz.durationSeconds ? ` · ${Math.round(quiz.durationSeconds / 60)} phút` : ""}
+                </Text>
               </View>
               <Text style={localStyles.exerciseTitle}>{quiz.title}</Text>
-              {!!quiz.opensAt && <Text style={styles.small}>Mở lúc {new Date(quiz.opensAt).toLocaleString()}</Text>}
-              {!!quiz.closesAt && <Text style={styles.small}>Đóng lúc {new Date(quiz.closesAt).toLocaleString()}</Text>}
+              {!!quiz.opensAt && (
+                <Text style={styles.small}>Mở lúc {new Date(quiz.opensAt).toLocaleString()}</Text>
+              )}
+              {!!quiz.closesAt && (
+                <Text style={styles.small}>Đóng lúc {new Date(quiz.closesAt).toLocaleString()}</Text>
+              )}
             </ScalePressable>
           ))}
         </View>
       ) : courseAssessments ? (
-        <EmptyState icon="quiz" title="Chưa có bài kiểm tra" description="Khóa học hiện chưa có bài kiểm tra đã phát hành." />
+        <EmptyState
+          icon="quiz"
+          title="Chưa có bài kiểm tra"
+          description="Khóa học hiện chưa có bài kiểm tra đã phát hành."
+        />
       ) : (
         <View style={localStyles.center}>
           <Button label="Tải bài kiểm tra" onPress={() => void fetchCourseAssessments()} />
@@ -338,7 +382,11 @@ export default function CourseLearningScreen() {
         />
       </View>
 
-      <BottomNavBar currentRoute="/learn" onNavigate={(r) => router.push(r as Href)} role={snapshot.user?.role} />
+      <BottomNavBar
+        currentRoute="/learn"
+        onNavigate={(r) => router.push(r as Href)}
+        role={snapshot.user?.role}
+      />
     </Page>
   );
 }

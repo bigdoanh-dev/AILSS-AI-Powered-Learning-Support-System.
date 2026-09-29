@@ -2,10 +2,27 @@ import type { Citation } from "./model.js";
 import type { CourseMaterialSnippet } from "./tool-runner.js";
 
 export function citationIdentity(value: {
-  courseId?: string; courseVersion?: number; lessonId?: string; lessonVersion?: number; sourceObjectId?: string;
+  courseId?: string;
+  courseVersion?: number;
+  lessonId?: string;
+  lessonVersion?: number;
+  sourceObjectId?: string;
 }): string | undefined {
-  if (!value.courseId || !value.courseVersion || !value.lessonId || !value.lessonVersion || !value.sourceObjectId) return undefined;
-  return [value.courseId, value.courseVersion, value.lessonId, value.lessonVersion, value.sourceObjectId].join(":");
+  if (
+    !value.courseId ||
+    !value.courseVersion ||
+    !value.lessonId ||
+    !value.lessonVersion ||
+    !value.sourceObjectId
+  )
+    return undefined;
+  return [
+    value.courseId,
+    value.courseVersion,
+    value.lessonId,
+    value.lessonVersion,
+    value.sourceObjectId,
+  ].join(":");
 }
 
 export function enforceCitationAllowlist(

@@ -130,9 +130,7 @@ export default function AttendanceScreen() {
     return (
       <View style={at.rowCard}>
         <View style={at.rowHeader}>
-          <Text style={[styles.text, { fontWeight: "700", color: "#0F172A", flex: 1 }]}>
-            {studentLabel}
-          </Text>
+          <Text style={[styles.text, { fontWeight: "700", color: "#0F172A", flex: 1 }]}>{studentLabel}</Text>
           <View
             style={[
               at.statusChip,
@@ -151,7 +149,9 @@ export default function AttendanceScreen() {
 
         <Text style={styles.small}>
           Nguồn: {item.source} · Hiện diện: {item.presenceState}
-          {item.connectedDurationSeconds > 0 ? ` · ${Math.round(item.connectedDurationSeconds / 60)} phút` : ""}
+          {item.connectedDurationSeconds > 0
+            ? ` · ${Math.round(item.connectedDurationSeconds / 60)} phút`
+            : ""}
         </Text>
 
         <View style={at.actionButtons}>
@@ -277,7 +277,10 @@ export default function AttendanceScreen() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {error ? <Button label="Thử lại" onPress={() => setRetry((v) => v + 1)} /> : null}
 
-      <Button label="Quay lại" onPress={() => (router.canGoBack() ? router.back() : router.replace("/teaching/schedule"))} />
+      <Button
+        label="Quay lại"
+        onPress={() => (router.canGoBack() ? router.back() : router.replace("/teaching/schedule"))}
+      />
     </Page>
   );
 }

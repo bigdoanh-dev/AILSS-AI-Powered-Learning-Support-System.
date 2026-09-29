@@ -289,7 +289,13 @@ export class MasteryCalibrationRunner {
 
       // Check teacher alignment
       const grade =
-        record.masteryScore >= 90 ? "A" : record.masteryScore >= 75 ? "B" : record.masteryScore >= 40 ? "C" : "F";
+        record.masteryScore >= 90
+          ? "A"
+          : record.masteryScore >= 75
+            ? "B"
+            : record.masteryScore >= 40
+              ? "C"
+              : "F";
       if (grade === testCase.teacherExpectedGradeBand) {
         alignedGrades++;
       }

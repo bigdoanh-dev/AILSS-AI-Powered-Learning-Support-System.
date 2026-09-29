@@ -16,6 +16,7 @@
     "video": "node scripts/video.mjs"
   },
   "dependencies": {
+    "@dangnguyendota/page-mascot": "0.2.4",
     "hls.js": "1.6.19",
     "react": "19.1.1",
     "react-dom": "19.1.1",

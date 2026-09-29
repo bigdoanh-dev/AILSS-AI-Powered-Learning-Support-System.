@@ -4,7 +4,11 @@ import { router, type Href } from "expo-router";
 import { runtime } from "../../src/runtime";
 import { courses as decodeCourses, type Course } from "../../src/learning";
 import { ApiError } from "../../src/api";
-import { configuredCategoryName, isSupportedTitleSearchTerm, loadConfiguredCoursePreview } from "../../src/catalog-preview";
+import {
+  configuredCategoryName,
+  isSupportedTitleSearchTerm,
+  loadConfiguredCoursePreview,
+} from "../../src/catalog-preview";
 import { Badge, BottomNavBar, Button, Page, SearchBar, styles, tokens } from "../../src/ui";
 
 export default function CourseDiscoveryScreen() {
@@ -19,36 +23,43 @@ export default function CourseDiscoveryScreen() {
   const [inputError, setInputError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const load = useCallback(async (signal?: AbortSignal) => {
-    setLoading(true);
-    setError(null);
-    setWarning(null);
-    try {
-      if (activeQuery) {
-        const params = new URLSearchParams({ q: activeQuery, limit: "20" });
-        const result = decodeCourses(await session.api.request(`/api/v1/courses/search?${params.toString()}`, { signal }));
-        if (!signal?.aborted) setCourses(result);
-      } else {
-        const result = await loadConfiguredCoursePreview(
-          (path, options) => session.api.request(path, options),
-          signal,
-        );
-        if (!signal?.aborted) {
-          setCourses(result.courses);
-          if (result.failedCategories.length > 0) {
-            setWarning(`Chưa tải được: ${result.failedCategories.join(", ")}. Danh sách bên dưới chưa đầy đủ.`);
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoading(true);
+      setError(null);
+      setWarning(null);
+      try {
+        if (activeQuery) {
+          const params = new URLSearchParams({ q: activeQuery, limit: "20" });
+          const result = decodeCourses(
+            await session.api.request(`/api/v1/courses/search?${params.toString()}`, { signal }),
+          );
+          if (!signal?.aborted) setCourses(result);
+        } else {
+          const result = await loadConfiguredCoursePreview(
+            (path, options) => session.api.request(path, options),
+            signal,
+          );
+          if (!signal?.aborted) {
+            setCourses(result.courses);
+            if (result.failedCategories.length > 0) {
+              setWarning(
+                `Chưa tải được: ${result.failedCategories.join(", ")}. Danh sách bên dưới chưa đầy đủ.`,
+              );
+            }
           }
         }
+      } catch (cause) {
+        if (!signal?.aborted) {
+          setCourses([]);
+          setError(cause instanceof ApiError ? cause.message : "Không tải được khóa học. Vui lòng thử lại.");
+        }
+      } finally {
+        if (!signal?.aborted) setLoading(false);
       }
-    } catch (cause) {
-      if (!signal?.aborted) {
-        setCourses([]);
-        setError(cause instanceof ApiError ? cause.message : "Không tải được khóa học. Vui lòng thử lại.");
-      }
-    } finally {
-      if (!signal?.aborted) setLoading(false);
-    }
-  }, [activeQuery, session]);
+    },
+    [activeQuery, session],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -80,7 +91,10 @@ export default function CourseDiscoveryScreen() {
 
         <SearchBar
           value={query}
-          onChangeText={(value) => { setQuery(value); setInputError(null); }}
+          onChangeText={(value) => {
+            setQuery(value);
+            setInputError(null);
+          }}
           onSubmit={submitSearch}
           onClear={() => {
             setQuery("");
@@ -90,7 +104,11 @@ export default function CourseDiscoveryScreen() {
           }}
           placeholder="Một từ trong tên khóa học"
         />
-        {inputError ? <Text accessibilityRole="alert" style={styles.error}>{inputError}</Text> : null}
+        {inputError ? (
+          <Text accessibilityRole="alert" style={styles.error}>
+            {inputError}
+          </Text>
+        ) : null}
         <Button label="Tìm kiếm" onPress={submitSearch} disabled={loading} />
 
         {warning ? (
@@ -107,7 +125,9 @@ export default function CourseDiscoveryScreen() {
           </View>
         ) : error ? (
           <View style={screen.card}>
-            <Text accessibilityRole="alert" style={styles.error}>{error}</Text>
+            <Text accessibilityRole="alert" style={styles.error}>
+              {error}
+            </Text>
             <Button label="Thử lại" variant="outline" onPress={retry} />
           </View>
         ) : courses.length === 0 ? (
@@ -151,7 +171,11 @@ export default function CourseDiscoveryScreen() {
           </View>
         )}
       </Page>
-      <BottomNavBar currentRoute="/courses" onNavigate={(route) => router.push(route as Href)} role={auth.user?.role} />
+      <BottomNavBar
+        currentRoute="/courses"
+        onNavigate={(route) => router.push(route as Href)}
+        role={auth.user?.role}
+      />
     </View>
   );
 }
@@ -162,15 +186,55 @@ const screen = StyleSheet.create({
   intro: { gap: 8, paddingBottom: 4 },
   results: { gap: 12 },
   center: { minHeight: 160, alignItems: "center", justifyContent: "center", gap: 12 },
-  card: { gap: 8, padding: 16, borderRadius: 14, borderWidth: 1, borderColor: tokens.color.border, backgroundColor: "#FFFFFF" },
-  warning: { gap: 10, padding: 14, borderRadius: 14, borderWidth: 1, borderColor: "#F5D78D", backgroundColor: "#FFFBEB" },
+  card: {
+    gap: 8,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: tokens.color.border,
+    backgroundColor: "#FFFFFF",
+  },
+  warning: {
+    gap: 10,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#F5D78D",
+    backgroundColor: "#FFFBEB",
+  },
   warningText: { color: "#7A4B08", fontSize: 13, lineHeight: 20 },
   emptyTitle: { fontSize: 16, fontWeight: "700", color: tokens.color.ink },
   sectionTitle: { color: tokens.color.muted, fontSize: 13, fontWeight: "600", lineHeight: 20 },
-  courseCard: { gap: 10, padding: 16, borderRadius: 18, borderWidth: 1, borderColor: tokens.color.border, backgroundColor: "#FFFFFF", ...tokens.shadow.subtle },
-  category: { alignSelf: "flex-start", overflow: "hidden", backgroundColor: tokens.color.brandLight, color: tokens.color.brandDark, fontSize: 12, fontWeight: "700", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
+  courseCard: {
+    gap: 10,
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: tokens.color.border,
+    backgroundColor: "#FFFFFF",
+    ...tokens.shadow.subtle,
+  },
+  category: {
+    alignSelf: "flex-start",
+    overflow: "hidden",
+    backgroundColor: tokens.color.brandLight,
+    color: tokens.color.brandDark,
+    fontSize: 12,
+    fontWeight: "700",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
   courseTitle: { color: tokens.color.ink, fontSize: 17, fontWeight: "700", lineHeight: 24 },
-  courseFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, borderTopWidth: 1, borderTopColor: tokens.color.border, paddingTop: 12 },
+  courseFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: tokens.color.border,
+    paddingTop: 12,
+  },
   price: { color: tokens.color.brandDark, fontSize: 14, fontWeight: "700", flexShrink: 1 },
   link: { color: tokens.color.brand, fontSize: 13, fontWeight: "700" },
 });

@@ -1,18 +1,24 @@
 import React, { type PropsWithChildren } from "react";
 import {
+  Animated,
   StyleSheet,
   Text,
   Pressable,
   ScrollView,
   View,
   TextInput,
+  KeyboardAvoidingView,
   Platform,
   type StyleProp,
   type ViewStyle,
   type TextStyle,
+  type ViewProps,
+  type AccessibilityRole,
 } from "react-native";
-import { ScalePressable } from "./motion";
+import { ScalePressable, useReducedMotionPreference } from "./motion";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { BlurView } from "expo-blur";
+import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from "expo-glass-effect";
 
 export const tokens = {
   color: {
@@ -130,11 +136,15 @@ export type IconName =
   | "quiz"
   | "assignment"
   | "attendance"
-  | "starFilled";
+  | "starFilled"
+  | "eye"
+  | "eyeOff";
 
 type IoniconsGlyph = keyof typeof Ionicons.glyphMap;
 
 const VECTOR_ICON_MAP: Record<IconName, { outline: IoniconsGlyph; filled: IoniconsGlyph }> = {
+  eye: { outline: "eye-outline", filled: "eye" },
+  eyeOff: { outline: "eye-off-outline", filled: "eye-off" },
   home: { outline: "home-outline", filled: "home" },
   compass: { outline: "compass-outline", filled: "compass" },
   book: { outline: "book-outline", filled: "book" },
@@ -207,14 +217,7 @@ export function Icon({
       : iconConfig.outline
     : ("help-outline" as IoniconsGlyph);
 
-  return (
-    <Ionicons
-      name={glyphName}
-      size={size}
-      color={color || tokens.color.ink}
-      style={style}
-    />
-  );
+  return <Ionicons name={glyphName} size={size} color={color || tokens.color.ink} style={style} />;
 }
 
 export const styles = StyleSheet.create({
@@ -301,21 +304,81 @@ export function Page({
   style,
   scroll = true,
   testID,
-}: PropsWithChildren<{ style?: StyleProp<ViewStyle>; scroll?: boolean; testID?: string }>) {
-  if (!scroll) {
-    return <View testID={testID} style={[styles.page, { flex: 1 }, style]}>{children}</View>;
-  }
-  return (
+  keyboardOffset = Platform.OS === "ios" ? 48 : 0,
+}: PropsWithChildren<{
+  style?: StyleProp<ViewStyle>;
+  scroll?: boolean;
+  testID?: string;
+  keyboardOffset?: number;
+}>) {
+  const requestedBottomPadding = StyleSheet.flatten([styles.page, style])?.paddingBottom;
+  const scrollBottomPadding =
+    typeof requestedBottomPadding === "number" ? Math.max(requestedBottomPadding, 120) : 120;
+  const content = !scroll ? (
+    <View testID={testID} style={[styles.page, { flex: 1 }, style]}>
+      {children}
+    </View>
+  ) : (
     <ScrollView
       testID={testID}
-      contentContainerStyle={[styles.page, style]}
+      contentContainerStyle={[styles.page, style, { paddingBottom: scrollBottomPadding }]}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
     >
       {children}
     </ScrollView>
   );
+
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={keyboardOffset}
+      style={{ flex: 1 }}
+    >
+      {content}
+    </KeyboardAvoidingView>
+  );
 }
+
+export interface PasswordInputProps extends React.ComponentProps<typeof TextInput> {
+  containerStyle?: StyleProp<ViewStyle>;
+  toggleTestID?: string;
+}
+
+export const PasswordInput = React.forwardRef<TextInput, PasswordInputProps>(function PasswordInput(
+  { style, containerStyle, secureTextEntry = true, toggleTestID, ...rest },
+  ref,
+) {
+  const [showPassword, setShowPassword] = React.useState(!secureTextEntry);
+
+  return (
+    <View style={[{ position: "relative", justifyContent: "center" }, containerStyle]}>
+      <TextInput
+        ref={ref}
+        style={[styles.input, { paddingRight: 48 }, style]}
+        secureTextEntry={!showPassword}
+        autoCapitalize="none"
+        {...rest}
+      />
+      <Pressable
+        testID={toggleTestID}
+        accessibilityRole="button"
+        accessibilityLabel={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+        onPress={() => setShowPassword((prev) => !prev)}
+        style={{
+          position: "absolute",
+          right: 12,
+          padding: 8,
+          zIndex: 10,
+        }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Icon name={showPassword ? "eyeOff" : "eye"} size={20} color={tokens.color.muted} />
+      </Pressable>
+    </View>
+  );
+});
 
 export interface NonVirtualizedListProps<T> {
   data: readonly T[] | null | undefined;
@@ -470,18 +533,10 @@ export function Button({
       disabled={disabled}
       onPress={onPress}
       scaleTo={disabled ? 1 : 0.96}
-      style={[
-        styles.button,
-        vStyles.button,
-        sStyles.button,
-        disabled && { opacity: 0.5 },
-        style,
-      ]}
+      style={[styles.button, vStyles.button, sStyles.button, disabled && { opacity: 0.5 }, style]}
     >
       {icon}
-      <Text style={[styles.buttonText, vStyles.text, sStyles.text, textStyle]}>
-        {label}
-      </Text>
+      <Text style={[styles.buttonText, vStyles.text, sStyles.text, textStyle]}>{label}</Text>
     </ScalePressable>
   );
 }
@@ -531,9 +586,7 @@ export function Badge({
       }}
     >
       {icon && <Icon name={icon} size={11} color={theme.text} />}
-      <Text style={{ fontSize: 11, fontWeight: "700", color: theme.text, letterSpacing: 0.3 }}>
-        {label}
-      </Text>
+      <Text style={{ fontSize: 11, fontWeight: "700", color: theme.text, letterSpacing: 0.3 }}>{label}</Text>
     </View>
   );
 }
@@ -597,9 +650,7 @@ export function StatCard({
       ]}
     >
       {icon && <Icon name={icon} size={20} color={color} />}
-      <Text style={{ fontSize: 20, fontWeight: "800", color: tokens.color.ink }}>
-        {value}
-      </Text>
+      <Text style={{ fontSize: 20, fontWeight: "800", color: tokens.color.ink }}>{value}</Text>
       <Text
         style={{
           fontSize: 11,
@@ -806,9 +857,7 @@ export function HeaderBar({
             }}
           >
             <Icon name="flame" size={13} />
-            <Text style={{ fontSize: 12, fontWeight: "800", color: "#B45309" }}>
-              {streak} ngày
-            </Text>
+            <Text style={{ fontSize: 12, fontWeight: "800", color: "#B45309" }}>{streak} ngày</Text>
           </View>
         )}
 
@@ -849,6 +898,286 @@ export function HeaderBar({
   );
 }
 
+export interface LiquidGlassContainerProps extends ViewProps {
+  type?: "rounded" | "pill" | "circle";
+  tint?: "dark" | "light" | "default";
+  tintOpacity?: number;
+  intensity?: number;
+  style?: StyleProp<ViewStyle>;
+  children?: React.ReactNode;
+}
+
+export function LiquidGlassContainer({
+  type = "rounded",
+  tint = "dark",
+  tintOpacity = 0.22,
+  intensity,
+  style,
+  children,
+  ...props
+}: LiquidGlassContainerProps) {
+  const [nativeGlass, setNativeGlass] = React.useState(false);
+
+  React.useEffect(() => {
+    if (Platform.OS === "ios") {
+      setNativeGlass(isGlassEffectAPIAvailable() && isLiquidGlassAvailable());
+    }
+  }, []);
+
+  const radius = type === "pill" ? 9999 : type === "circle" ? 9999 : 24;
+  const isDark = tint === "dark";
+
+  return (
+    <View
+      style={[
+        {
+          borderRadius: radius,
+          overflow: "hidden",
+          borderWidth: 1,
+          borderColor: isDark ? "rgba(255, 255, 255, 0.28)" : "rgba(255, 255, 255, 0.8)",
+          shadowColor: isDark ? "#061A24" : "#0A7E85",
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isDark ? 0.28 : 0.08,
+          shadowRadius: 16,
+          elevation: 6,
+          position: "relative",
+          backgroundColor: isDark ? "rgba(6, 46, 63, 0.45)" : "rgba(255, 255, 255, 0.75)",
+        },
+        style,
+      ]}
+      {...props}
+    >
+      {nativeGlass ? (
+        <GlassView
+          pointerEvents="none"
+          glassEffectStyle={isDark ? "regular" : "clear"}
+          colorScheme={isDark ? "dark" : "light"}
+          tintColor={isDark ? "#0B2B3A" : "rgba(255, 255, 255, 0.5)"}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : (
+        <BlurView
+          pointerEvents="none"
+          intensity={intensity ?? (Platform.OS === "ios" ? 55 : 35)}
+          tint={isDark ? "dark" : "light"}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      <View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: isDark
+              ? `rgba(6, 46, 63, ${tintOpacity})`
+              : `rgba(255, 255, 255, ${tintOpacity})`,
+          },
+        ]}
+      />
+      {/* Refraction inner rim */}
+      <View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            margin: 1,
+            borderRadius: radius > 1 ? radius - 1 : radius,
+            borderWidth: 1,
+            borderColor: isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0.5)",
+          },
+        ]}
+      />
+      {/* Top specular glint */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          top: 1,
+          left: 14,
+          right: 14,
+          height: 1,
+          borderRadius: 1,
+          backgroundColor: isDark ? "rgba(255, 255, 255, 0.55)" : "rgba(255, 255, 255, 0.9)",
+        }}
+      />
+      {/* Bottom ambient glint */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          bottom: 1,
+          left: 28,
+          right: 28,
+          height: 1,
+          borderRadius: 1,
+          backgroundColor: isDark ? "rgba(255, 255, 255, 0.14)" : "rgba(255, 255, 255, 0.3)",
+        }}
+      />
+      {children}
+    </View>
+  );
+}
+
+export interface LiquidGlassPillProps extends ViewProps {
+  tint?: "dark" | "light";
+  onPress?: () => void;
+  scaleTo?: number;
+  testID?: string;
+  accessibilityLabel?: string;
+  accessibilityRole?: AccessibilityRole;
+  style?: StyleProp<ViewStyle>;
+  children?: React.ReactNode;
+}
+
+export function LiquidGlassPill({
+  tint = "dark",
+  onPress,
+  scaleTo = 0.93,
+  testID,
+  accessibilityLabel,
+  accessibilityRole = "button",
+  style,
+  children,
+  ...props
+}: LiquidGlassPillProps) {
+  const isDark = tint === "dark";
+  const content = (
+    <View
+      testID={testID}
+      style={[
+        {
+          flexDirection: "row",
+          alignItems: "center",
+          borderRadius: 9999,
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          backgroundColor: isDark ? "rgba(255, 255, 255, 0.14)" : "rgba(255, 255, 255, 0.8)",
+          borderWidth: 1,
+          borderColor: isDark ? "rgba(255, 255, 255, 0.32)" : "rgba(255, 255, 255, 0.9)",
+          overflow: "hidden",
+          position: "relative",
+          shadowColor: isDark ? "#000000" : "#0A7E85",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDark ? 0.14 : 0.06,
+          shadowRadius: 4,
+          elevation: 2,
+        },
+        style,
+      ]}
+      {...props}
+    >
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 6,
+          right: 6,
+          height: 1,
+          backgroundColor: isDark ? "rgba(255, 255, 255, 0.65)" : "rgba(255, 255, 255, 0.95)",
+        }}
+      />
+      {children}
+    </View>
+  );
+
+  if (onPress) {
+    return (
+      <ScalePressable
+        onPress={onPress}
+        scaleTo={scaleTo}
+        accessibilityRole={accessibilityRole}
+        accessibilityLabel={accessibilityLabel}
+      >
+        {content}
+      </ScalePressable>
+    );
+  }
+  return content;
+}
+
+export interface LiquidGlassCircleProps extends ViewProps {
+  size?: number;
+  tint?: "dark" | "light";
+  onPress?: () => void;
+  scaleTo?: number;
+  testID?: string;
+  accessibilityLabel?: string;
+  accessibilityRole?: AccessibilityRole;
+  style?: StyleProp<ViewStyle>;
+  children?: React.ReactNode;
+}
+
+export function LiquidGlassCircle({
+  size = 38,
+  tint = "dark",
+  onPress,
+  scaleTo = 0.92,
+  testID,
+  accessibilityLabel,
+  accessibilityRole = "button",
+  style,
+  children,
+  ...props
+}: LiquidGlassCircleProps) {
+  const isDark = tint === "dark";
+  const radius = size / 2;
+  const content = (
+    <View
+      testID={testID}
+      style={[
+        {
+          width: size,
+          height: size,
+          borderRadius: radius,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: isDark ? "rgba(14, 116, 144, 0.65)" : "rgba(255, 255, 255, 0.9)",
+          borderWidth: 1.5,
+          borderColor: isDark ? "rgba(255, 255, 255, 0.5)" : "rgba(255, 255, 255, 0.95)",
+          overflow: "hidden",
+          position: "relative",
+          shadowColor: isDark ? "#38BDF8" : "#0A7E85",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDark ? 0.25 : 0.1,
+          shadowRadius: 6,
+          elevation: 3,
+        },
+        style,
+      ]}
+      {...props}
+    >
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          top: 1,
+          left: 4,
+          right: 4,
+          height: 1,
+          borderRadius: 1,
+          backgroundColor: isDark ? "rgba(255, 255, 255, 0.7)" : "rgba(255, 255, 255, 0.95)",
+        }}
+      />
+      {children}
+    </View>
+  );
+
+  if (onPress) {
+    return (
+      <ScalePressable
+        onPress={onPress}
+        scaleTo={scaleTo}
+        accessibilityRole={accessibilityRole}
+        accessibilityLabel={accessibilityLabel}
+      >
+        {content}
+      </ScalePressable>
+    );
+  }
+  return content;
+}
+
 export function ScreenHeader({
   title,
   subtitle,
@@ -861,7 +1190,10 @@ export function ScreenHeader({
   rightElement?: React.ReactNode;
 }) {
   return (
-    <View
+    <LiquidGlassContainer
+      type="rounded"
+      tint="light"
+      tintOpacity={0.82}
       style={{
         flexDirection: "row",
         alignItems: "center",
@@ -869,40 +1201,13 @@ export function ScreenHeader({
         paddingVertical: 12,
         paddingHorizontal: 16,
         marginBottom: 10,
-        backgroundColor: "rgba(255, 255, 255, 0.88)",
-        borderRadius: 18,
-        borderWidth: 1.5,
-        borderColor: "rgba(255, 255, 255, 0.9)",
-        shadowColor: "#0A7E85",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.06,
-        shadowRadius: 12,
-        elevation: 3,
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
         {onBack && (
-          <ScalePressable
-            onPress={onBack}
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: "rgba(255, 255, 255, 0.92)",
-              alignItems: "center",
-              justifyContent: "center",
-              borderWidth: 1.5,
-              borderColor: "rgba(255, 255, 255, 0.95)",
-              shadowColor: "#0A7E85",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.12,
-              shadowRadius: 6,
-              elevation: 2,
-            }}
-            accessibilityLabel="Quay lại"
-          >
+          <LiquidGlassCircle size={40} tint="light" onPress={onBack} accessibilityLabel="Quay lại">
             <Icon name="chevronLeft" size={20} color={tokens.color.ink} />
-          </ScalePressable>
+          </LiquidGlassCircle>
         )}
         <View style={{ flex: 1 }}>
           <Text
@@ -924,9 +1229,166 @@ export function ScreenHeader({
         </View>
       </View>
       {rightElement}
-    </View>
+    </LiquidGlassContainer>
   );
 }
+
+function isBottomTabActive(key: string, currentRoute: string): boolean {
+  return (
+    (key === "attendance" && (currentRoute === "attendance" || currentRoute.includes("attendance"))) ||
+    (key === "classes" &&
+      (currentRoute === "classes" || currentRoute.includes("classes") || currentRoute === "schedule")) ||
+    (key === "home" &&
+      (currentRoute === "home" ||
+        currentRoute === "" ||
+        currentRoute === "/" ||
+        currentRoute === "/index")) ||
+    (key === "teaching" && currentRoute.includes("teaching")) ||
+    (key === "courses" && (currentRoute.includes("courses") || currentRoute === "/courses")) ||
+    (key === "admin" && (currentRoute.includes("admin") || currentRoute === "/admin")) ||
+    (key === "notifications" &&
+      (currentRoute.includes("notification") || currentRoute === "notifications")) ||
+    (key === "account" &&
+      (currentRoute.includes("account") ||
+        currentRoute === "account" ||
+        currentRoute.includes("login") ||
+        currentRoute.includes("settings")))
+  );
+}
+
+const bottomNavStyles = StyleSheet.create({
+  dock: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 20,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: Platform.OS === "ios" ? 18 : 10,
+    backgroundColor: "transparent",
+  },
+  shellShadow: {
+    borderRadius: 38,
+    shadowColor: "#111820",
+    shadowOffset: { width: 0, height: 9 },
+    shadowOpacity: 0.24,
+    shadowRadius: 20,
+    elevation: 11,
+  },
+  shell: {
+    height: 76,
+    borderRadius: 38,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.88)",
+  },
+  glassFill: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 38,
+  },
+  wash: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  innerRim: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    bottom: 2,
+    left: 2,
+    borderRadius: 36,
+    borderWidth: 1,
+    borderColor: "rgba(18,27,34,0.18)",
+  },
+  topGlint: {
+    position: "absolute",
+    top: 1,
+    left: 24,
+    right: 24,
+    height: 1,
+    borderRadius: 1,
+    backgroundColor: "rgba(255,255,255,0.7)",
+  },
+  bottomGlint: {
+    position: "absolute",
+    bottom: 2,
+    left: 40,
+    right: 40,
+    height: 1,
+    borderRadius: 1,
+    backgroundColor: "rgba(18,27,34,0.22)",
+  },
+  row: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 6,
+  },
+  selection: {
+    position: "absolute",
+    top: 6,
+    bottom: 6,
+    left: 10,
+    borderRadius: 32,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.9)",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 9,
+    elevation: 3,
+  },
+  selectionInnerRim: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    bottom: 2,
+    left: 2,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: "rgba(18,27,34,0.18)",
+  },
+  selectionGlint: {
+    position: "absolute",
+    top: 2,
+    left: 12,
+    right: 12,
+    height: 1,
+    borderRadius: 1,
+    backgroundColor: "rgba(255,255,255,0.82)",
+  },
+  tab: {
+    flex: 1,
+    height: 68,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+  },
+  label: {
+    color: "rgba(24,31,38,0.64)",
+    fontSize: 10.5,
+    fontWeight: "600",
+    lineHeight: 14,
+    textAlign: "center",
+    width: "100%",
+    paddingHorizontal: 2,
+  },
+  activeLabel: {
+    color: "#17212B",
+    fontWeight: "800",
+  },
+});
 
 export function BottomNavBar({
   currentRoute,
@@ -937,131 +1399,166 @@ export function BottomNavBar({
   onNavigate: (route: string) => void;
   role?: string;
 }) {
-  const tabs = role === "LECTURER"
-    ? [
-        { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-        { key: "teaching", label: "Giảng dạy", icon: "book" as IconName, path: "/teaching" },
-        { key: "classes", label: "Lớp học", icon: "calendar" as IconName, path: "/teaching/classes" },
-        { key: "notifications", label: "Thông báo", icon: "bell" as IconName, path: "/notifications" },
-        { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
-      ]
-    : role === "ADMIN"
-    ? [
-        { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-        { key: "admin", label: "Quản trị", icon: "shield" as IconName, path: "/admin" },
-        { key: "notifications", label: "Thông báo", icon: "bell" as IconName, path: "/notifications" },
-        { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
-      ]
-    : role === "STUDENT"
-    ? [
-        { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-        { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
-        { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/classes" },
-        { key: "attendance", label: "Điểm danh", icon: "checkCircle" as IconName, path: "/classes?tab=attendance" },
-        { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
-      ]
-    : [
-        { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-        { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
-        { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/login" },
-        { key: "account", label: "Đăng nhập", icon: "user" as IconName, path: "/login" },
-      ];
+  const tabs =
+    role === "LECTURER"
+      ? [
+          { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
+          { key: "teaching", label: "Giảng dạy", icon: "award" as IconName, path: "/teaching" },
+          { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/teaching/classes" },
+          { key: "notifications", label: "Thông báo", icon: "bell" as IconName, path: "/notifications" },
+          { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
+        ]
+      : role === "ADMIN"
+        ? [
+            { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
+            { key: "admin", label: "Quản trị", icon: "shield" as IconName, path: "/admin" },
+            { key: "notifications", label: "Thông báo", icon: "bell" as IconName, path: "/notifications" },
+            { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
+          ]
+        : role === "STUDENT"
+          ? [
+              { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
+              { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
+              { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/classes" },
+              {
+                key: "attendance",
+                label: "Điểm danh",
+                icon: "checkCircle" as IconName,
+                path: "/classes?tab=attendance",
+              },
+              { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
+            ]
+          : [
+              { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
+              { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
+              { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/login" },
+              { key: "account", label: "Đăng nhập", icon: "user" as IconName, path: "/login" },
+            ];
+
+  const [nativeGlass, setNativeGlass] = React.useState(false);
+  const [rowWidth, setRowWidth] = React.useState(0);
+  const reduceMotion = useReducedMotionPreference();
+  const indicatorX = React.useRef(new Animated.Value(0)).current;
+  const previousIndex = React.useRef<number | null>(null);
+  const activeKey = [
+    "attendance",
+    "classes",
+    "teaching",
+    "courses",
+    "admin",
+    "notifications",
+    "account",
+    "home",
+  ].find((key) => tabs.some((tab) => tab.key === key && isBottomTabActive(key, currentRoute)));
+  const activeIndex = tabs.findIndex((tab) => tab.key === activeKey);
+  const tabWidth = rowWidth > 0 ? (rowWidth - 12) / tabs.length : 0;
+
+  React.useEffect(() => {
+    if (Platform.OS === "ios") {
+      setNativeGlass(isGlassEffectAPIAvailable() && isLiquidGlassAvailable());
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (tabWidth <= 0 || activeIndex < 0) return;
+    const nextX = activeIndex * tabWidth;
+    indicatorX.stopAnimation();
+    if (previousIndex.current === null || reduceMotion !== false) {
+      indicatorX.setValue(nextX);
+    } else {
+      Animated.spring(indicatorX, {
+        toValue: nextX,
+        useNativeDriver: true,
+        speed: 19,
+        bounciness: 5,
+      }).start();
+    }
+    previousIndex.current = activeIndex;
+  }, [activeIndex, indicatorX, reduceMotion, tabWidth]);
 
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        backgroundColor: "rgba(255, 255, 255, 0.88)",
-        borderTopWidth: 1.5,
-        borderTopColor: "rgba(255, 255, 255, 0.95)",
-        borderColor: "rgba(226, 232, 240, 0.8)",
-        paddingTop: 8,
-        paddingBottom: Platform.OS === "ios" ? 22 : 10,
-        paddingHorizontal: 8,
-        alignItems: "center",
-        justifyContent: "space-between",
-        shadowColor: "#0A7E85",
-        shadowOffset: { width: 0, height: -6 },
-        shadowOpacity: 0.1,
-        shadowRadius: 18,
-        elevation: 10,
-      }}
-    >
-      {tabs.map((tab) => {
-        const isActive =
-          (tab.key === "attendance" && currentRoute === "attendance") ||
-          (tab.key === "classes" && (currentRoute === "classes" || currentRoute === "schedule")) ||
-          (tab.key === "home" && (currentRoute === "home" || currentRoute === "" || currentRoute === "/")) ||
-          (tab.key === "teaching" && currentRoute.includes("teaching")) ||
-          (tab.key === "admin" && currentRoute.includes("admin")) ||
-          (tab.key === "notifications" && currentRoute.includes("notifications")) ||
-          (tab.key === "account" && currentRoute.includes("account"));
-
-        return (
-          <ScalePressable
-            key={tab.key}
-            testID={`app-nav-${tab.key}`}
-            onPress={() => onNavigate(tab.path)}
-            scaleTo={0.92}
-            style={{
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              paddingVertical: 2,
-            }}
-            accessibilityRole="tab"
-            accessibilityLabel={tab.label}
+    <View pointerEvents="box-none" style={bottomNavStyles.dock}>
+      <View style={bottomNavStyles.shellShadow}>
+        <View style={bottomNavStyles.shell}>
+          {nativeGlass ? (
+            <GlassView
+              pointerEvents="none"
+              glassEffectStyle="clear"
+              colorScheme="light"
+              style={bottomNavStyles.glassFill}
+            />
+          ) : (
+            <BlurView
+              pointerEvents="none"
+              intensity={Platform.OS === "ios" ? 65 : 40}
+              tint="light"
+              style={bottomNavStyles.glassFill}
+            />
+          )}
+          <View pointerEvents="none" style={bottomNavStyles.wash} />
+          <View pointerEvents="none" style={bottomNavStyles.innerRim} />
+          <View pointerEvents="none" style={bottomNavStyles.topGlint} />
+          <View pointerEvents="none" style={bottomNavStyles.bottomGlint} />
+          <View
+            style={bottomNavStyles.row}
+            onLayout={(event) => setRowWidth(Math.round(event.nativeEvent.layout.width))}
           >
-            <View
-              style={{
-                width: 48,
-                height: 30,
-                borderRadius: 15,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: isActive ? "rgba(10, 126, 133, 0.12)" : "transparent",
-                borderWidth: isActive ? 1 : 0,
-                borderColor: isActive ? "rgba(10, 126, 133, 0.25)" : "transparent",
-                shadowColor: isActive ? "#0A7E85" : "transparent",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: isActive ? 0.2 : 0,
-                shadowRadius: 4,
-              }}
-            >
-              <Icon
-                name={tab.icon}
-                size={20}
-                color={isActive ? tokens.color.brand : tokens.color.muted}
-                active={isActive}
-              />
-            </View>
-            <Text
-              numberOfLines={1}
-              style={{
-                fontSize: 11,
-                fontWeight: isActive ? "800" : "500",
-                color: isActive ? tokens.color.brand : tokens.color.muted,
-                marginTop: 2,
-                textAlign: "center",
-                letterSpacing: isActive ? 0.1 : 0,
-              }}
-            >
-              {tab.label}
-            </Text>
-            {isActive && (
-              <View
-                style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: 2,
-                  backgroundColor: tokens.color.brand,
-                  marginTop: 2,
-                }}
-              />
+            {activeIndex >= 0 && tabWidth > 0 && (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  bottomNavStyles.selection,
+                  {
+                    width: tabWidth - 8,
+                    transform: [{ translateX: indicatorX }],
+                  },
+                ]}
+              >
+                {nativeGlass && (
+                  <GlassView
+                    pointerEvents="none"
+                    glassEffectStyle="clear"
+                    colorScheme="light"
+                    style={StyleSheet.absoluteFill}
+                  />
+                )}
+                <View pointerEvents="none" style={bottomNavStyles.selectionInnerRim} />
+                <View pointerEvents="none" style={bottomNavStyles.selectionGlint} />
+              </Animated.View>
             )}
-          </ScalePressable>
-        );
-      })}
+            {tabs.map((tab, index) => {
+              const isActive = index === activeIndex;
+              return (
+                <ScalePressable
+                  key={tab.key}
+                  testID={`app-nav-${tab.key}`}
+                  onPress={() => onNavigate(tab.path)}
+                  scaleTo={0.94}
+                  style={bottomNavStyles.tab}
+                  accessibilityRole="tab"
+                  accessibilityLabel={tab.label}
+                  accessibilityState={{ selected: isActive }}
+                >
+                  <Icon
+                    name={tab.icon}
+                    size={22}
+                    color={isActive ? "#17212B" : "rgba(24,31,38,0.7)"}
+                    active={isActive}
+                  />
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.86}
+                    style={[bottomNavStyles.label, isActive && bottomNavStyles.activeLabel]}
+                  >
+                    {tab.label}
+                  </Text>
+                </ScalePressable>
+              );
+            })}
+          </View>
+        </View>
+      </View>
     </View>
   );
 }
@@ -1081,8 +1578,16 @@ export function AdaptivePathCard({
 }) {
   const isReview = action === "REVIEW";
   const isPractice = action === "PRACTICE";
-  const badgeColor = isReview ? tokens.color.danger : isPractice ? tokens.color.warning : tokens.color.success;
-  const badgeBg = isReview ? tokens.color.dangerLight : isPractice ? tokens.color.warningLight : tokens.color.successLight;
+  const badgeColor = isReview
+    ? tokens.color.danger
+    : isPractice
+      ? tokens.color.warning
+      : tokens.color.success;
+  const badgeBg = isReview
+    ? tokens.color.dangerLight
+    : isPractice
+      ? tokens.color.warningLight
+      : tokens.color.successLight;
 
   return (
     <View
@@ -1096,8 +1601,17 @@ export function AdaptivePathCard({
         ...tokens.shadow.subtle,
       }}
     >
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: tokens.space.small }}>
-        <Text style={{ fontSize: 11, fontWeight: "700", color: tokens.color.brand, textTransform: "uppercase" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: tokens.space.small,
+        }}
+      >
+        <Text
+          style={{ fontSize: 11, fontWeight: "700", color: tokens.color.brand, textTransform: "uppercase" }}
+        >
           Lộ trình thích ứng
         </Text>
         <View style={{ backgroundColor: badgeBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 }}>
@@ -1159,7 +1673,11 @@ export function VersionPinningIndicator({
         <Icon name="award" size={14} color={tokens.color.muted} />
         <Text style={{ fontSize: 12, color: tokens.color.inkSecondary }}>
           Bản: <Text style={{ fontWeight: "700" }}>v{pinnedVersion}.0</Text>{" "}
-          {isPinned ? "(Đã ghim)" : latestVersion > pinnedVersion ? `(Có bản v${latestVersion}.0)` : "(Mới nhất)"}
+          {isPinned
+            ? "(Đã ghim)"
+            : latestVersion > pinnedVersion
+              ? `(Có bản v${latestVersion}.0)`
+              : "(Mới nhất)"}
         </Text>
       </View>
       {onTogglePin ? (
@@ -1235,7 +1753,13 @@ export function RefundRequestModal({
             marginBottom: 12,
           }}
         >
-          <Text style={{ fontSize: 12, fontWeight: "600", color: isEligible ? tokens.color.success : tokens.color.danger }}>
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: "600",
+              color: isEligible ? tokens.color.success : tokens.color.danger,
+            }}
+          >
             {isEligible
               ? `✓ Hợp lệ: Tiến độ ${progressPercent}% (< 20%), trong thời hạn 7 ngày từ ${purchaseDate}.`
               : `✕ Không hợp lệ: Tiến độ ${progressPercent}% (vượt ngưỡng 20% chính sách hoàn tiền).`}

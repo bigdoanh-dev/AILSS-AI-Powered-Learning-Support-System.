@@ -78,7 +78,12 @@ describe("Phase 22.25: Retention Runner Production Safety & Destructive Guardrai
 
   it("proves financial ledgers and verified credentials are categorically excluded from retention policies", () => {
     // Attempting to configure retention for unapproved categories is rejected by type system and policy validation
-    const validCategories = ["EPHEMERAL_UPLOADS", "DORMANT_USER_ACCOUNTS", "AUDIT_LOGS", "ANALYTICS_RAW_EVENTS"];
+    const validCategories = [
+      "EPHEMERAL_UPLOADS",
+      "DORMANT_USER_ACCOUNTS",
+      "AUDIT_LOGS",
+      "ANALYTICS_RAW_EVENTS",
+    ];
 
     expect(validCategories.includes("FINANCIAL_LEDGER")).toBe(false);
     expect(validCategories.includes("VERIFIED_CREDENTIALS")).toBe(false);

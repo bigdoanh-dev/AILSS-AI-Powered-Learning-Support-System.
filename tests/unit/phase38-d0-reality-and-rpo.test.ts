@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { type DurabilityOperation, DURABILITY_CONTRACTS } from "../../packages/contracts/src/critical-durability.js";
+import {
+  type DurabilityOperation,
+  DURABILITY_CONTRACTS,
+} from "../../packages/contracts/src/critical-durability.js";
 
 // ============================================================================
 // 38.6: Durable-ACK Trace & Invariant Simulator
@@ -108,7 +111,12 @@ export class RegionalEventReplicationSimulator {
   private primaryOutbox: EventStreamRecord[] = [];
   private secondaryReplicated: EventStreamRecord[] = [];
 
-  public publishD1OutboxEvent(id: string, payload: unknown, commitTime: number, replicationLagMs: number): void {
+  public publishD1OutboxEvent(
+    id: string,
+    payload: unknown,
+    commitTime: number,
+    replicationLagMs: number,
+  ): void {
     const record: EventStreamRecord = {
       id,
       payload,
@@ -130,7 +138,8 @@ export class RegionalEventReplicationSimulator {
     );
 
     const lastCommitted = committedEvents[committedEvents.length - 1]?.sourceCommittedAt ?? cutoffTimestamp;
-    const lastReplicated = replicatedEvents[replicatedEvents.length - 1]?.sourceCommittedAt ?? cutoffTimestamp;
+    const lastReplicated =
+      replicatedEvents[replicatedEvents.length - 1]?.sourceCommittedAt ?? cutoffTimestamp;
 
     const deltaMs = Math.max(0, lastCommitted - lastReplicated);
     const measuredRpoSeconds = parseFloat((deltaMs / 1000).toFixed(2));

@@ -41,7 +41,7 @@ export function createMediaMetrics(
   const suppliers: MediaOperationalSuppliers =
     typeof snapshotOrSuppliers === "function"
       ? { quotaSnapshot: snapshotOrSuppliers }
-      : snapshotOrSuppliers ?? {};
+      : (snapshotOrSuppliers ?? {});
 
   const counters = Object.fromEntries(
     mediaEvents.map((event) => [

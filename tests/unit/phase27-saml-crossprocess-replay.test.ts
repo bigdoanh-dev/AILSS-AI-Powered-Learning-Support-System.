@@ -46,10 +46,15 @@ describe("Phase 27.3: Real Cross-Process Distributed SAML Replay Defense", () =>
     const durableCluster = new DurableCrossProcessReplayCluster(tempDir);
     expect(durableCluster.backendClassification).toBe("DURABLE_CROSS_PROCESS_FS");
 
-    const distributedStore = new DistributedSamlReplayStore(durableCluster, { tenantId: "tenant-pilot-polytech" });
+    const distributedStore = new DistributedSamlReplayStore(durableCluster, {
+      tenantId: "tenant-pilot-polytech",
+    });
     expect(distributedStore.backendClassification).toBe("DURABLE_CROSS_PROCESS_FS");
 
-    const cassandraStore = new CassandraSamlReplayStore({ tenantId: "tenant-pilot-polytech", storageDir: tempDir });
+    const cassandraStore = new CassandraSamlReplayStore({
+      tenantId: "tenant-pilot-polytech",
+      storageDir: tempDir,
+    });
     expect(cassandraStore.backendClassification).toBe("CASSANDRA");
   });
 
@@ -118,10 +123,9 @@ describe("Phase 27.3: Real Cross-Process Distributed SAML Replay Defense", () =>
     const tenantId = "tenant-pilot-polytech";
 
     // Instance 1 creates durable record and consumes
-    const instance1 = new DistributedSamlReplayStore(
-      new DurableCrossProcessReplayCluster(tempDir),
-      { tenantId },
-    );
+    const instance1 = new DistributedSamlReplayStore(new DurableCrossProcessReplayCluster(tempDir), {
+      tenantId,
+    });
 
     const now = new Date();
     const record: SamlReplayRecord = {
@@ -136,10 +140,9 @@ describe("Phase 27.3: Real Cross-Process Distributed SAML Replay Defense", () =>
     expect(instance1.consume(record)).toBe(true);
 
     // Complete process shutdown / restart simulated by creating a completely fresh instance pointing to same storage
-    const restartedInstance = new DistributedSamlReplayStore(
-      new DurableCrossProcessReplayCluster(tempDir),
-      { tenantId },
-    );
+    const restartedInstance = new DistributedSamlReplayStore(new DurableCrossProcessReplayCluster(tempDir), {
+      tenantId,
+    });
 
     // The restarted instance MUST remember the assertion was consumed
     expect(restartedInstance.has(assertionId)).toBe(true);

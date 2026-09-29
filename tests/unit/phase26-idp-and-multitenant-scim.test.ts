@@ -120,7 +120,9 @@ describe("Phase 26.4: External IdP Federation — OIDC vs SAML Contract Flows", 
 
     it("verifies signed SAML assertion and stores replay record in distributed cluster", async () => {
       const replayCluster = new SharedReplayStateCluster();
-      const replayStore = new DistributedSamlReplayStore(replayCluster, { tenantId: "tenant-pilot-polytech" });
+      const replayStore = new DistributedSamlReplayStore(replayCluster, {
+        tenantId: "tenant-pilot-polytech",
+      });
 
       const authnRequest = buildSamlAuthnRequest({
         spConfig,

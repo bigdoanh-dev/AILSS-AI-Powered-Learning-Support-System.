@@ -26,12 +26,14 @@ export function InstitutionWizardPage() {
   const [domain, setDomain] = useState("polytech.edu.vn");
   const [email, setEmail] = useState("admin@polytech.edu.vn");
   const [protocol, setProtocol] = useState("OIDC");
-  const [discoveryUrl, setDiscoveryUrl] = useState("https://sso.polytech.edu.vn/.well-known/openid-configuration");
+  const [discoveryUrl, setDiscoveryUrl] = useState(
+    "https://sso.polytech.edu.vn/.well-known/openid-configuration",
+  );
   const [scimEnabled, setScimEnabled] = useState(true);
   const [ltiEnabled, setLtiEnabled] = useState(true);
   const [aiEnabled, setAiEnabled] = useState(true);
 
-  const [tests, setTests] = useState<IntegrationStatusCard[]>([
+  const [tests] = useState<IntegrationStatusCard[]>([
     {
       name: "OpenID Connect (OIDC / OAuth2 SSO)",
       type: "OIDC",
@@ -126,22 +128,28 @@ export function InstitutionWizardPage() {
 
   const handleRollback = (ver: number) => {
     if (confirm(`Bạn có chắc chắn muốn khôi phục cấu hình về phiên bản v${ver}?`)) {
-      setVersions((prev) =>
-        prev.map((v) => ({ ...v, isCurrent: v.version === ver })),
-      );
+      setVersions((prev) => prev.map((v) => ({ ...v, isCurrent: v.version === ver })));
       alert(`Đã khôi phục thành công về cấu hình v${ver}.`);
     }
   };
 
   return (
     <div className="institution-admin-container" style={{ padding: "var(--space-6) 0" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-4)" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "var(--space-4)",
+        }}
+      >
         <div>
           <h1 style={{ fontSize: "1.75rem", margin: "0 0 var(--space-2) 0", color: "var(--ink)" }}>
             Quản trị Cơ sở Đào tạo & Tích hợp (Institutional Operations V2)
           </h1>
           <p style={{ margin: 0, color: "var(--muted)" }}>
-            Quy trình khởi tạo tổ chức (Onboarding Wizard), Trung tâm Kiểm thử kết nối (Connection Test Center) và Quản lý phiên bản cấu hình.
+            Quy trình khởi tạo tổ chức (Onboarding Wizard), Trung tâm Kiểm thử kết nối (Connection Test
+            Center) và Quản lý phiên bản cấu hình.
           </p>
         </div>
         <div>
@@ -155,14 +163,14 @@ export function InstitutionWizardPage() {
                 lifecycleState === "ACTIVATED"
                   ? "#e8f5e9"
                   : lifecycleState === "VALIDATED"
-                  ? "#e3f2fd"
-                  : "#fff3cd",
+                    ? "#e3f2fd"
+                    : "#fff3cd",
               color:
                 lifecycleState === "ACTIVATED"
                   ? "#2e7d32"
                   : lifecycleState === "VALIDATED"
-                  ? "#1565c0"
-                  : "#856404",
+                    ? "#1565c0"
+                    : "#856404",
             }}
           >
             Trạng thái: {lifecycleState}
@@ -184,7 +192,8 @@ export function InstitutionWizardPage() {
           className={`segmented-tab ${activeTab === "TEST_CENTER" ? "active" : ""}`}
           onClick={() => setActiveTab("TEST_CENTER")}
         >
-          🔌 Trung tâm Kiểm thử kết nối ({tests.filter((t) => t.status === "CONNECTED").length}/{tests.length})
+          🔌 Trung tâm Kiểm thử kết nối ({tests.filter((t) => t.status === "CONNECTED").length}/{tests.length}
+          )
         </button>
         <button
           type="button"
@@ -431,18 +440,18 @@ export function InstitutionWizardPage() {
                         t.status === "CONNECTED"
                           ? "#e8f5e9"
                           : t.status === "DEGRADED"
-                          ? "#fff3cd"
-                          : t.status === "FAILED"
-                          ? "#ffebee"
-                          : "#f5f5f5",
+                            ? "#fff3cd"
+                            : t.status === "FAILED"
+                              ? "#ffebee"
+                              : "#f5f5f5",
                       color:
                         t.status === "CONNECTED"
                           ? "#2e7d32"
                           : t.status === "DEGRADED"
-                          ? "#856404"
-                          : t.status === "FAILED"
-                          ? "#c62828"
-                          : "#616161",
+                            ? "#856404"
+                            : t.status === "FAILED"
+                              ? "#c62828"
+                              : "#616161",
                     }}
                   >
                     {t.status}
@@ -474,7 +483,9 @@ export function InstitutionWizardPage() {
               <thead>
                 <tr style={{ background: "#f8fafc", textAlign: "left" }}>
                   <th style={{ padding: "10px", borderBottom: "2px solid var(--line)" }}>Phiên bản</th>
-                  <th style={{ padding: "10px", borderBottom: "2px solid var(--line)" }}>Thời điểm thay đổi</th>
+                  <th style={{ padding: "10px", borderBottom: "2px solid var(--line)" }}>
+                    Thời điểm thay đổi
+                  </th>
                   <th style={{ padding: "10px", borderBottom: "2px solid var(--line)" }}>Người thực hiện</th>
                   <th style={{ padding: "10px", borderBottom: "2px solid var(--line)" }}>Lý do thay đổi</th>
                   <th style={{ padding: "10px", borderBottom: "2px solid var(--line)" }}>Thao tác</th>
@@ -484,11 +495,24 @@ export function InstitutionWizardPage() {
                 {versions.map((v) => (
                   <tr key={v.version}>
                     <td style={{ padding: "12px 10px", borderBottom: "1px solid var(--line)" }}>
-                      <strong>v{v.version}</strong> {v.isCurrent && <span style={{ color: "#2e7d32", fontWeight: 700 }}>(Hiện tại)</span>}
+                      <strong>v{v.version}</strong>{" "}
+                      {v.isCurrent && <span style={{ color: "#2e7d32", fontWeight: 700 }}>(Hiện tại)</span>}
                     </td>
-                    <td style={{ padding: "12px 10px", borderBottom: "1px solid var(--line)", color: "var(--muted)" }}>{v.date}</td>
-                    <td style={{ padding: "12px 10px", borderBottom: "1px solid var(--line)" }}>{v.author}</td>
-                    <td style={{ padding: "12px 10px", borderBottom: "1px solid var(--line)" }}>{v.reason}</td>
+                    <td
+                      style={{
+                        padding: "12px 10px",
+                        borderBottom: "1px solid var(--line)",
+                        color: "var(--muted)",
+                      }}
+                    >
+                      {v.date}
+                    </td>
+                    <td style={{ padding: "12px 10px", borderBottom: "1px solid var(--line)" }}>
+                      {v.author}
+                    </td>
+                    <td style={{ padding: "12px 10px", borderBottom: "1px solid var(--line)" }}>
+                      {v.reason}
+                    </td>
                     <td style={{ padding: "12px 10px", borderBottom: "1px solid var(--line)" }}>
                       {!v.isCurrent && (
                         <button

@@ -1,9 +1,5 @@
 export type OrganizationRole =
-  | "INSTITUTION_ADMIN"
-  | "FACULTY_DEAN"
-  | "DEPARTMENT_HEAD"
-  | "LECTURER"
-  | "STUDENT";
+  "INSTITUTION_ADMIN" | "FACULTY_DEAN" | "DEPARTMENT_HEAD" | "LECTURER" | "STUDENT";
 
 export type TenantTier = "PLATFORM" | "ORGANIZATION" | "FACULTY" | "DEPARTMENT";
 export type OrganizationStatus = "ACTIVE" | "SUSPENDED" | "ARCHIVED";

@@ -196,7 +196,9 @@ describe("Phase 18A — Learner Protection & Safety Policy Engine", () => {
     );
 
     expect(result.result).toBeNull();
-    expect(result.error).toContain("FORBIDDEN: Role STUDENT is not permitted to execute tool generate_quiz_draft");
+    expect(result.error).toContain(
+      "FORBIDDEN: Role STUDENT is not permitted to execute tool generate_quiz_draft",
+    );
   });
 
   it("prevents IDOR: user cannot access another user's conversation", async () => {

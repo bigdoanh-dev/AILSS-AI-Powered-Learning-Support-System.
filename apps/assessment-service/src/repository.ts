@@ -855,7 +855,13 @@ export class AssessmentRepository {
     result: AssessmentResult;
     occurredAt: Date;
     correlationId: string;
-    mastery?: { tenantId: string; courseId: string; learningOutcomeId: string; conceptId: string; sourceType: "QUIZ" };
+    mastery?: {
+      tenantId: string;
+      courseId: string;
+      learningOutcomeId: string;
+      conceptId: string;
+      sourceType: "QUIZ";
+    };
   }) {
     const event = {
       specVersion: "1.0",
@@ -872,7 +878,14 @@ export class AssessmentRepository {
         score: input.result.score,
         maxScore: input.result.maxScore,
         resultVersion: input.result.resultVersion,
-        ...(input.mastery ? { ...input.mastery, sourceId: input.result.attemptId, rawScorePercent: percent(input.result.score, input.result.maxScore), schemaVersion: "1.0" } : {}),
+        ...(input.mastery
+          ? {
+              ...input.mastery,
+              sourceId: input.result.attemptId,
+              rawScorePercent: percent(input.result.score, input.result.maxScore),
+              schemaVersion: "1.0",
+            }
+          : {}),
       },
     };
     const day = types.LocalDate.fromString(input.occurredAt.toISOString().slice(0, 10)),
@@ -916,7 +929,13 @@ export class AssessmentRepository {
     occurredAt: Date;
     correlationId: string;
     actorId: string;
-    mastery?: { tenantId: string; courseId: string; learningOutcomeId: string; conceptId: string; sourceType: "MANUAL_ASSESSMENT" };
+    mastery?: {
+      tenantId: string;
+      courseId: string;
+      learningOutcomeId: string;
+      conceptId: string;
+      sourceType: "MANUAL_ASSESSMENT";
+    };
   }) {
     const event = {
       specVersion: "1.0",
@@ -939,7 +958,14 @@ export class AssessmentRepository {
         gradedBy: input.result.gradedBy,
         resultVersion: input.result.resultVersion,
         gradingStatus: input.result.gradingStatus ?? "MANUALLY_GRADED",
-        ...(input.mastery ? { ...input.mastery, sourceId: input.result.attemptId, rawScorePercent: percent(input.result.manualScore ?? input.result.score, input.result.maxScore), schemaVersion: "1.0" } : {}),
+        ...(input.mastery
+          ? {
+              ...input.mastery,
+              sourceId: input.result.attemptId,
+              rawScorePercent: percent(input.result.manualScore ?? input.result.score, input.result.maxScore),
+              schemaVersion: "1.0",
+            }
+          : {}),
       },
     };
     const day = types.LocalDate.fromString(input.occurredAt.toISOString().slice(0, 10)),

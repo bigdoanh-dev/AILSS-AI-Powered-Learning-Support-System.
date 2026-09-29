@@ -1,9 +1,6 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import {
-  GovernedRagService,
-  InMemoryRagKnowledgeRepository,
-} from "../../apps/ai-service/src/rag/index.js";
+import { GovernedRagService, InMemoryRagKnowledgeRepository } from "../../apps/ai-service/src/rag/index.js";
 
 describe("Phase 22.6 & 22.7: Search & RAG Security, Quality Evaluation & Ingestion Defenses", () => {
   const tenantAlpha = "org-evaluation-alpha";
@@ -40,9 +37,7 @@ describe("Phase 22.6 & 22.7: Search & RAG Security, Quality Evaluation & Ingesti
         courseId: "course-quantum-201",
         courseVersion: 1,
         documentId: "doc-quantum-v1",
-        chunks: [
-          "Qubits exist in superposition states represented on the Bloch sphere.",
-        ],
+        chunks: ["Qubits exist in superposition states represented on the Bloch sphere."],
       });
 
       // Quarantined source
@@ -50,9 +45,7 @@ describe("Phase 22.6 & 22.7: Search & RAG Security, Quality Evaluation & Ingesti
         courseId: "course-ml-101",
         courseVersion: 2,
         documentId: "doc-ml-quarantined",
-        chunks: [
-          "DEPRECATED: Support Vector Machines with RBF kernel are no longer tested.",
-        ],
+        chunks: ["DEPRECATED: Support Vector Machines with RBF kernel are no longer tested."],
       });
       await service.quarantineDocument("doc-ml-quarantined");
 
@@ -129,12 +122,15 @@ describe("Phase 22.6 & 22.7: Search & RAG Security, Quality Evaluation & Ingesti
 
   describe("Phase 22.7: Ingestion Security & Content Defenses", () => {
     // Sanitizes and validates untrusted learning content during RAG ingestion
-    function sanitizeAndIngestContent(rawText: string, metadata: {
-      tenantId: string;
-      courseId: string;
-      courseVersion: number;
-      documentId: string;
-    }): {
+    function sanitizeAndIngestContent(
+      rawText: string,
+      metadata: {
+        tenantId: string;
+        courseId: string;
+        courseVersion: number;
+        documentId: string;
+      },
+    ): {
       chunks: string[];
       provenance: {
         tenantId: string;

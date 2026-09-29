@@ -111,28 +111,42 @@ export class AssistantRepository {
     };
   }
 
-  public async touchConversation(conversationId: string, userId: string, title: string, now: Date): Promise<void> {
+  public async touchConversation(
+    conversationId: string,
+    userId: string,
+    title: string,
+    now: Date,
+    courseId?: string,
+  ): Promise<void> {
     const convId = uuid(conversationId);
     const uId = uuid(userId);
+    const previous = await this.getConversation(conversationId);
 
     await this.client.execute(
       `UPDATE ai_keyspace.assistant_conversation_by_id
-       SET updated_at = ?, title = ?
+       SET updated_at = ?, title = ?, course_id = ?
        WHERE conversation_id = ?`,
-      [now, title, convId],
+      [now, title, courseId ? uuid(courseId) : null, convId],
       LOCAL_QUORUM,
     );
 
-    // Also update assistant_conversations_by_user index
-    const conv = await this.getConversation(conversationId);
-    if (conv) {
+    // Move the list index row rather than accumulating one row per message.
+    if (previous) {
       await this.client.execute(
         `INSERT INTO ai_keyspace.assistant_conversations_by_user (
            user_id, updated_at, conversation_id, role, mode, title
          ) VALUES (?, ?, ?, ?, ?, ?)`,
-        [uId, now, convId, conv.role, conv.mode, title],
+        [uId, now, convId, previous.role, previous.mode, title],
         LOCAL_QUORUM,
       );
+      if (previous.updatedAt.getTime() !== now.getTime()) {
+        await this.client.execute(
+          `DELETE FROM ai_keyspace.assistant_conversations_by_user
+           WHERE user_id = ? AND updated_at = ? AND conversation_id = ?`,
+          [uId, previous.updatedAt, convId],
+          LOCAL_QUORUM,
+        );
+      }
     }
   }
 
@@ -142,23 +156,31 @@ export class AssistantRepository {
        FROM ai_keyspace.assistant_conversations_by_user
        WHERE user_id = ?
        LIMIT ?`,
-      [uuid(userId), limit],
+      [uuid(userId), Math.min(Math.max(limit * 25, 100), 500)],
       LOCAL_QUORUM,
     );
 
-    return rows.map((r) => {
-      const updatedAtVal: unknown = r.get("updated_at");
-      const date = updatedAtVal instanceof Date ? updatedAtVal : new Date(String(updatedAtVal));
-      return {
-        conversationId: String(r.get("conversation_id")),
-        userId: String(r.get("user_id")),
-        role: r.get("role") as AssistantRole,
-        mode: r.get("mode") as AssistantMode,
-        title: String(r.get("title") ?? "Untitled Conversation"),
-        createdAt: date,
-        updatedAt: date,
-      };
-    });
+    const seen = new Set<string>();
+    return rows
+      .flatMap((r) => {
+        const conversationId = String(r.get("conversation_id"));
+        if (seen.has(conversationId)) return [];
+        seen.add(conversationId);
+        const updatedAtVal: unknown = r.get("updated_at");
+        const date = updatedAtVal instanceof Date ? updatedAtVal : new Date(String(updatedAtVal));
+        return [
+          {
+            conversationId,
+            userId: String(r.get("user_id")),
+            role: r.get("role") as AssistantRole,
+            mode: r.get("mode") as AssistantMode,
+            title: String(r.get("title") ?? "Untitled Conversation"),
+            createdAt: date,
+            updatedAt: date,
+          },
+        ];
+      })
+      .slice(0, limit);
   }
 
   public async appendMessage(input: AppendMessageInput): Promise<ConversationMessage> {
@@ -201,49 +223,51 @@ export class AssistantRepository {
 
     // Cassandra stores this partition in ascending clustering order. Fetch the latest
     // rows first, then restore chronological order for the LLM and conversation UI.
-    return rows.map((r) => {
-      const createdAtVal: unknown = r.get("created_at");
-      const toolCallsRaw: unknown = r.get("tool_calls");
-      const toolResultsRaw: unknown = r.get("tool_results");
-      const citationsRaw: unknown = r.get("citations");
+    return rows
+      .map((r) => {
+        const createdAtVal: unknown = r.get("created_at");
+        const toolCallsRaw: unknown = r.get("tool_calls");
+        const toolResultsRaw: unknown = r.get("tool_results");
+        const citationsRaw: unknown = r.get("citations");
 
-      let toolCalls: readonly ToolCall[] | undefined;
-      let toolResults: readonly ToolResult[] | undefined;
-      let citations: readonly Citation[] | undefined;
+        let toolCalls: readonly ToolCall[] | undefined;
+        let toolResults: readonly ToolResult[] | undefined;
+        let citations: readonly Citation[] | undefined;
 
-      if (typeof toolCallsRaw === "string" && toolCallsRaw) {
-        try {
-          toolCalls = JSON.parse(toolCallsRaw) as readonly ToolCall[];
-        } catch {
-          toolCalls = undefined;
+        if (typeof toolCallsRaw === "string" && toolCallsRaw) {
+          try {
+            toolCalls = JSON.parse(toolCallsRaw) as readonly ToolCall[];
+          } catch {
+            toolCalls = undefined;
+          }
         }
-      }
-      if (typeof toolResultsRaw === "string" && toolResultsRaw) {
-        try {
-          toolResults = JSON.parse(toolResultsRaw) as readonly ToolResult[];
-        } catch {
-          toolResults = undefined;
+        if (typeof toolResultsRaw === "string" && toolResultsRaw) {
+          try {
+            toolResults = JSON.parse(toolResultsRaw) as readonly ToolResult[];
+          } catch {
+            toolResults = undefined;
+          }
         }
-      }
-      if (typeof citationsRaw === "string" && citationsRaw) {
-        try {
-          citations = JSON.parse(citationsRaw) as readonly Citation[];
-        } catch {
-          citations = undefined;
+        if (typeof citationsRaw === "string" && citationsRaw) {
+          try {
+            citations = JSON.parse(citationsRaw) as readonly Citation[];
+          } catch {
+            citations = undefined;
+          }
         }
-      }
 
-      return {
-        messageId: String(r.get("message_id")),
-        conversationId: String(r.get("conversation_id")),
-        sender: r.get("sender") as ConversationSender,
-        content: String(r.get("content") ?? ""),
-        ...(toolCalls ? { toolCalls } : {}),
-        ...(toolResults ? { toolResults } : {}),
-        ...(citations ? { citations } : {}),
-        createdAt: createdAtVal instanceof Date ? createdAtVal : new Date(String(createdAtVal)),
-      };
-    }).reverse();
+        return {
+          messageId: String(r.get("message_id")),
+          conversationId: String(r.get("conversation_id")),
+          sender: r.get("sender") as ConversationSender,
+          content: String(r.get("content") ?? ""),
+          ...(toolCalls ? { toolCalls } : {}),
+          ...(toolResults ? { toolResults } : {}),
+          ...(citations ? { citations } : {}),
+          createdAt: createdAtVal instanceof Date ? createdAtVal : new Date(String(createdAtVal)),
+        };
+      })
+      .reverse();
   }
 
   public async logToolInvocation(input: LogToolInvocationInput): Promise<void> {
@@ -255,7 +279,16 @@ export class AssistantRepository {
       `INSERT INTO ai_keyspace.assistant_tool_invocation (
          conversation_id, occurred_at, invocation_id, user_id, tool_name, status, execution_time_ms, error_code
        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [convId, input.now, invId, uId, input.toolName, input.status, input.executionTimeMs, input.errorCode ?? null],
+      [
+        convId,
+        input.now,
+        invId,
+        uId,
+        input.toolName,
+        input.status,
+        input.executionTimeMs,
+        input.errorCode ?? null,
+      ],
       LOCAL_QUORUM,
     );
   }

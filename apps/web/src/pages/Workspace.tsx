@@ -9,6 +9,7 @@ import { errorMessage } from "../lib/api";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Icon, type IconName } from "../components/Icon";
 import { useLanguage } from "../lib/i18n";
+import { LecturerProfileEditor } from "../lecturer/ProfileEditor";
 const StudentHome = lazy(() => import("../student/Learning").then((m) => ({ default: m.StudentHome })));
 const AdminHome = lazy(() => import("../admin/Admin").then((m) => ({ default: m.AdminHome })));
 const TeachingHome = lazy(() => import("../lecturer/Teaching").then((m) => ({ default: m.TeachingHome })));
@@ -124,13 +125,16 @@ export function AppShell() {
         replace
       />
     );
-  if (auth.state === "BOOTSTRAPPING") return <p role="status">{t("status.loadingSession", "Đang tải phiên…")}</p>;
+  if (auth.state === "BOOTSTRAPPING")
+    return <p role="status">{t("status.loadingSession", "Đang tải phiên…")}</p>;
   if (auth.state === "UNAVAILABLE" || !auth.profile)
     return (
       <>
         <SiteHeader />
         <main id="main" tabIndex={-1} className="workspace-unavailable">
-          <p role="alert">{t("status.serviceUnavailable", "Dịch vụ hiện không khả dụng. Vui lòng thử lại sau.")}</p>
+          <p role="alert">
+            {t("status.serviceUnavailable", "Dịch vụ hiện không khả dụng. Vui lòng thử lại sau.")}
+          </p>
           {auth.bootstrap && (
             <button className="button" onClick={() => void auth.bootstrap()}>
               {t("action.retry", "Thử lại")}
@@ -145,10 +149,15 @@ export function AppShell() {
       ? [
           { to: "/app", label: t("tab.overview", "Tổng quan"), icon: "home", end: true },
           { to: "/app/admin/revenue", label: t("tab.revenue", "Doanh thu"), icon: "card" },
-          { to: "/app/admin/stats", label: t("tab.stats", "Thống kê"), icon: "chart" },
+          { to: "/app/admin/stats", label: t("tab.stats", "Thống kê & AI"), icon: "chart" },
+          { to: "/app/admin/ai", label: "AI quản trị", icon: "ai" },
           { to: "/app/admin/logs", label: t("tab.logs", "Nhật ký Logs"), icon: "quiz" },
           { to: "/app/admin/users", label: t("tab.users", "Người dùng"), icon: "users" },
-          { to: "/app/admin/lecturer-applications", label: t("tab.lecturers", "Giảng viên"), icon: "graduation" },
+          {
+            to: "/app/admin/lecturer-applications",
+            label: t("tab.lecturers", "Giảng viên"),
+            icon: "graduation",
+          },
           { to: "/app/admin/courses", label: t("tab.courses", "Khóa học"), icon: "book" },
           { to: "/app/admin/moderation", label: t("tab.moderation", "Kiểm duyệt"), icon: "shield" },
           { to: "/app/admin/settings", label: t("tab.settings", "Cài đặt"), icon: "settings" },
@@ -161,6 +170,7 @@ export function AppShell() {
             { to: "/app/teaching/schedule", label: t("tab.teachingSchedule", "Lịch dạy"), icon: "calendar" },
             { to: "/app/teaching/attendance", label: t("tab.attendance", "Điểm danh"), icon: "checkCircle" },
             { to: "/app/teaching/offerings", label: t("tab.offerings", "Đợt mở bán"), icon: "target" },
+            { to: "/app/teaching/revenue", label: "Doanh thu", icon: "card" },
             { to: "/app/teaching/assessments", label: t("tab.assessments", "Bài kiểm tra"), icon: "quiz" },
             { to: "/app/teaching/grades", label: t("tab.grades", "Bảng điểm"), icon: "trophy" },
             { to: "/app/teaching/ai", label: t("tab.aiStudio", "Trợ lý AI"), icon: "sparkles" },
@@ -203,7 +213,9 @@ export function AppShell() {
           {t("action.replayIntro", "🎬 Xem lại giới thiệu")}
         </button>
         <Link to="/help">{t("nav.needHelp", "Cần hỗ trợ?")}</Link>
-        <Link to={role === "STUDENT" ? "/app/learn" : "/courses"}>{t("nav.exploreCourses", "Khám phá khóa học")}</Link>
+        <Link to={role === "STUDENT" ? "/app/learn" : "/courses"}>
+          {t("nav.exploreCourses", "Khám phá khóa học")}
+        </Link>
       </footer>
     </div>
   );
@@ -448,6 +460,7 @@ export function Account() {
           </form>
         </section>
       </div>
+      {p.role === "LECTURER" && p.lecturerVerified && <LecturerProfileEditor lecturerId={p.userId} />}
     </>
   );
 }

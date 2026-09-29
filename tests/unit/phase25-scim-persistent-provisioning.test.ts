@@ -39,7 +39,11 @@ describe("Phase 25.5: TenantAwareScimRepository — persistent provisioning", ()
     const scimRepo = new TenantAwareScimRepository("tenant-pilot-polytech", tenantRepo);
 
     const user = await scimRepo.saveUser(
-      makeScimUser({ externalId: "ext-001", userName: "nguyen@polytech.edu.vn", email: "nguyen@polytech.edu.vn" }),
+      makeScimUser({
+        externalId: "ext-001",
+        userName: "nguyen@polytech.edu.vn",
+        email: "nguyen@polytech.edu.vn",
+      }),
     );
 
     const userId = user.id ?? "";
@@ -98,7 +102,11 @@ describe("Phase 25.5: TenantAwareScimRepository — persistent provisioning", ()
     const scimRepo = new TenantAwareScimRepository("tenant-pilot-polytech", tenantRepo);
 
     const user = await scimRepo.saveUser(
-      makeScimUser({ externalId: "ext-004", userName: "deleted@polytech.edu.vn", email: "deleted@polytech.edu.vn" }),
+      makeScimUser({
+        externalId: "ext-004",
+        userName: "deleted@polytech.edu.vn",
+        email: "deleted@polytech.edu.vn",
+      }),
     );
 
     const userId = user.id ?? "";

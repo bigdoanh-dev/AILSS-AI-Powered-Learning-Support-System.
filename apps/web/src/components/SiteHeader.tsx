@@ -32,6 +32,24 @@ export function SiteHeader() {
   }, []);
   const p = auth.profile;
   const coursesPath = p?.role === "STUDENT" ? "/app/learn" : "/courses";
+  const aiPath =
+    p?.role === "STUDENT"
+      ? "/app/ai-tutor"
+      : p?.role === "ADMIN"
+        ? "/app/admin/ai"
+        : p?.role === "LECTURER"
+          ? p.lecturerVerified
+            ? "/app/teaching/ai"
+            : null
+          : "/ai-learning";
+  const aiLabel =
+    p?.role === "STUDENT"
+      ? "Gia sư AI"
+      : p?.role === "ADMIN"
+        ? "AI quản trị"
+        : p?.role === "LECTURER"
+          ? "Trợ lý soạn bài AI"
+          : t("nav.aiLearning", "Học cùng AI");
   useEffect(() => {
     setMenu(false);
     setMobile(false);
@@ -78,7 +96,7 @@ export function SiteHeader() {
   }
   const links = (
     <>
-      {aiNotice && (
+      {p?.role === "LECTURER" && aiNotice && (
         <aside className="assistant-notice" role="status">
           {aiNotice.state === "AI_DRAFT"
             ? "Bản nháp câu hỏi đã sẵn sàng."
@@ -95,12 +113,16 @@ export function SiteHeader() {
       <NavLink to={coursesPath}>{t("nav.courses", "Khóa học")}</NavLink>
       {p ? (
         <NavLink to="/app">
-          {p.role === "ADMIN" ? t("nav.admin", "Quản trị") : p.role === "LECTURER" ? t("nav.teaching", "Giảng dạy") : t("nav.classroom", "Học tập")}
+          {p.role === "ADMIN"
+            ? t("nav.admin", "Quản trị")
+            : p.role === "LECTURER"
+              ? t("nav.teaching", "Giảng dạy")
+              : t("nav.classroom", "Học tập")}
         </NavLink>
       ) : (
         <NavLink to="/lecturers">{t("nav.forLecturers", "Dành cho giảng viên")}</NavLink>
       )}
-      <NavLink to="/ai-learning">{t("nav.aiLearning", "Học cùng AI")}</NavLink>
+      {aiPath && <NavLink to={aiPath}>{aiLabel}</NavLink>}
       <NavLink to="/help">{t("nav.help", "Trợ giúp")}</NavLink>
     </>
   );
@@ -119,9 +141,7 @@ export function SiteHeader() {
             {p && (
               <NavLink
                 to="/app/notifications"
-                className={({ isActive }) =>
-                  `header-notification-btn ${isActive ? "active" : ""}`
-                }
+                className={({ isActive }) => `header-notification-btn ${isActive ? "active" : ""}`}
                 aria-label={t("nav.notifications", "Thông báo")}
                 title={t("nav.notifications", "Thông báo")}
               >
@@ -222,7 +242,11 @@ export function SiteHeader() {
         >
           {links}
           {p && <NavLink to="/app/notifications">{t("nav.notifications", "Thông báo")}</NavLink>}
-          {p ? <Link to="/app/account">{t("nav.profile", "Hồ sơ của tôi")}</Link> : <Link to="/auth/login">{t("nav.login", "Đăng nhập")}</Link>}
+          {p ? (
+            <Link to="/app/account">{t("nav.profile", "Hồ sơ của tôi")}</Link>
+          ) : (
+            <Link to="/auth/login">{t("nav.login", "Đăng nhập")}</Link>
+          )}
         </nav>
       </Dialog>
       <nav className="web-bottom-dock" aria-label={t("nav.quickNav", "Điều hướng nhanh")}>
@@ -234,12 +258,113 @@ export function SiteHeader() {
         >
           {({ isActive }) => (
             <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-              <span>{t("nav.home", "Trang chủ")}</span>
-              {isActive && <span className="dock-indicator-dot" />}
+              <div className="dock-icon-wrapper">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill={isActive ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  strokeWidth={isActive ? "0" : "2"}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  {isActive ? (
+                    <path d="M10.7 2.3a2 2 0 0 1 2.6 0l7 5.6A2 2 0 0 1 21 9.5V20a2 2 0 0 1-2 2h-4a1 1 0 0 1-1-1v-5a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v5a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V9.5a2 2 0 0 1 .7-1.6l7-5.6Z" />
+                  ) : (
+                    <>
+                      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                      <polyline points="9 22 9 12 15 12 15 22" />
+                    </>
+                  )}
+                </svg>
+              </div>
+              <span className="dock-sr-only">{t("nav.home", "Trang chủ")}</span>
+            </>
+          )}
+        </NavLink>
+        <NavLink
+          to={
+            p?.role === "LECTURER"
+              ? "/app/teaching"
+              : p?.role === "ADMIN"
+                ? "/app/admin/ai"
+                : p
+                  ? "/app/learn"
+                  : "/ai-learning"
+          }
+          className={({ isActive }) => `web-bottom-dock-item ${isActive ? "active" : ""}`}
+          aria-label={p?.role === "LECTURER" ? t("nav.teaching", "Giảng dạy") : t("nav.aiLearning", "Học AI")}
+        >
+          {({ isActive }) => (
+            <>
+              <div className="dock-icon-wrapper">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polygon points="10 8 16 12 10 16 10 8" fill={isActive ? "currentColor" : "none"} />
+                </svg>
+              </div>
+              <span className="dock-sr-only">
+                {p?.role === "LECTURER" ? t("nav.teaching", "Giảng dạy") : t("nav.aiLearning", "Học AI")}
+              </span>
+            </>
+          )}
+        </NavLink>
+        <NavLink
+          to={
+            p?.role === "LECTURER"
+              ? "/app/teaching/classes"
+              : p?.role === "ADMIN"
+                ? "/app"
+                : p
+                  ? "/app/classes"
+                  : "/courses"
+          }
+          className={({ isActive }) => `web-bottom-dock-item ${isActive ? "active" : ""}`}
+          aria-label={
+            p?.role === "LECTURER"
+              ? t("nav.teaching", "Giảng dạy")
+              : p?.role === "ADMIN"
+                ? t("nav.admin", "Quản trị")
+                : p
+                  ? t("nav.classroom", "Lớp học")
+                  : t("nav.courses", "Khóa học")
+          }
+        >
+          {() => (
+            <>
+              <div className="dock-icon-wrapper">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+              <span className="dock-sr-only">
+                {p?.role === "LECTURER"
+                  ? t("nav.teaching", "Giảng dạy")
+                  : p?.role === "ADMIN"
+                    ? t("nav.admin", "Quản trị")
+                    : p
+                      ? t("nav.classroom", "Lớp học")
+                      : t("nav.courses", "Khóa học")}
+              </span>
             </>
           )}
         </NavLink>
@@ -248,31 +373,23 @@ export function SiteHeader() {
           className={({ isActive }) => `web-bottom-dock-item ${isActive ? "active" : ""}`}
           aria-label={t("nav.courses", "Khóa học")}
         >
-          {({ isActive }) => (
+          {() => (
             <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
-                <path d="M6 6h10" />
-                <path d="M6 10h10" />
-              </svg>
-              <span>{t("nav.courses", "Khóa học")}</span>
-              {isActive && <span className="dock-indicator-dot" />}
-            </>
-          )}
-        </NavLink>
-        <NavLink
-          to={p?.role === "LECTURER" ? "/app/teaching/classes" : p?.role === "ADMIN" ? "/app" : p ? "/app/classes" : "/ai-learning"}
-          className={({ isActive }) => `web-bottom-dock-item ${isActive ? "active" : ""}`}
-          aria-label={p?.role === "LECTURER" ? t("nav.teaching", "Giảng dạy") : p?.role === "ADMIN" ? t("nav.admin", "Quản trị") : p ? t("nav.classroom", "Lớp học") : t("nav.aiLearning", "Học AI")}
-        >
-          {({ isActive }) => (
-            <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                <path d="M6 12v5c3 3 9 3 12 0v-5" />
-              </svg>
-              <span>{p?.role === "LECTURER" ? t("nav.teaching", "Giảng dạy") : p?.role === "ADMIN" ? t("nav.admin", "Quản trị") : p ? t("nav.classroom", "Lớp học") : t("nav.aiLearning", "Học AI")}</span>
-              {isActive && <span className="dock-indicator-dot" />}
+              <div className="dock-icon-wrapper">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                </svg>
+              </div>
+              <span className="dock-sr-only">{t("nav.courses", "Khóa học")}</span>
             </>
           )}
         </NavLink>
@@ -281,14 +398,25 @@ export function SiteHeader() {
           className={({ isActive }) => `web-bottom-dock-item ${isActive ? "active" : ""}`}
           aria-label={p ? t("nav.notifications", "Thông báo") : t("nav.help", "Trợ giúp")}
         >
-          {({ isActive }) => (
+          {() => (
             <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              </svg>
-              <span>{p ? t("nav.notifications", "Thông báo") : t("nav.help", "Trợ giúp")}</span>
-              {isActive && <span className="dock-indicator-dot" />}
+              <div className="dock-icon-wrapper">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                </svg>
+              </div>
+              <span className="dock-sr-only">
+                {p ? t("nav.notifications", "Thông báo") : t("nav.help", "Trợ giúp")}
+              </span>
             </>
           )}
         </NavLink>
@@ -297,14 +425,25 @@ export function SiteHeader() {
           className={({ isActive }) => `web-bottom-dock-item ${isActive ? "active" : ""}`}
           aria-label={p ? t("nav.account", "Tài khoản") : t("nav.login", "Đăng nhập")}
         >
-          {({ isActive }) => (
+          {() => (
             <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="12" cy="7" r="4" />
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              </svg>
-              <span>{p ? t("nav.account", "Tài khoản") : t("nav.login", "Đăng nhập")}</span>
-              {isActive && <span className="dock-indicator-dot" />}
+              <div className="dock-icon-wrapper">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="7" r="4" />
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                </svg>
+              </div>
+              <span className="dock-sr-only">
+                {p ? t("nav.account", "Tài khoản") : t("nav.login", "Đăng nhập")}
+              </span>
             </>
           )}
         </NavLink>

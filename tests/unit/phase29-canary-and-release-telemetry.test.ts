@@ -5,7 +5,10 @@ import {
   CANONICAL_PRODUCTION_SLOS,
   calculateWindowBurnRate,
 } from "../../packages/observability/src/slo-engine.js";
-import { CommercialGateGuard, type CommercialGateConfig } from "../../packages/contracts/src/commercial-gate.js";
+import {
+  CommercialGateGuard,
+  type CommercialGateConfig,
+} from "../../packages/contracts/src/commercial-gate.js";
 
 /**
  * Phase 29.2, 29.3, 29.4, 29.25, 29.29, 29.30:
@@ -69,25 +72,25 @@ describe("Phase 29: Canary Progression, Rollback Drill, and Canonical SLOs", () 
     // Remaining = 1 - 0.40 = 0.60 (60.0%)
     expect(learningResult.allowedBadFraction).toBeCloseTo(0.0005, 5);
     expect(learningResult.observedBadFraction).toBeCloseTo(0.0002, 5);
-    expect(learningResult.budgetConsumedFraction).toBeCloseTo(0.40, 2);
-    expect(learningResult.budgetRemainingFraction).toBeCloseTo(0.60, 2); // NOT 96.0%!
+    expect(learningResult.budgetConsumedFraction).toBeCloseTo(0.4, 2);
+    expect(learningResult.budgetRemainingFraction).toBeCloseTo(0.6, 2); // NOT 96.0%!
 
     // 2. LTI & Webhooks: Target 99.90%, Observed 99.96%
-    const ltiResult = calculateErrorBudget(0.9990, 0.9996);
+    const ltiResult = calculateErrorBudget(0.999, 0.9996);
     // Allowed bad = 0.0010 (0.10%), Observed bad = 0.0004 (0.04%)
     // Consumed = 0.0004 / 0.0010 = 0.40 (40.0%)
     // Remaining = 1 - 0.40 = 0.60 (60.0%)
-    expect(ltiResult.allowedBadFraction).toBeCloseTo(0.0010, 5);
+    expect(ltiResult.allowedBadFraction).toBeCloseTo(0.001, 5);
     expect(ltiResult.observedBadFraction).toBeCloseTo(0.0004, 5);
-    expect(ltiResult.budgetConsumedFraction).toBeCloseTo(0.40, 2);
-    expect(ltiResult.budgetRemainingFraction).toBeCloseTo(0.60, 2); // NOT 94.5%!
+    expect(ltiResult.budgetConsumedFraction).toBeCloseTo(0.4, 2);
+    expect(ltiResult.budgetRemainingFraction).toBeCloseTo(0.6, 2); // NOT 94.5%!
 
     // 3. AI Study Assistant: Target 99.00%, Observed 99.72%
-    const aiResult = calculateErrorBudget(0.9900, 0.9972);
+    const aiResult = calculateErrorBudget(0.99, 0.9972);
     // Allowed bad = 0.0100 (1.00%), Observed bad = 0.0028 (0.28%)
     // Consumed = 0.0028 / 0.0100 = 0.28 (28.0%)
     // Remaining = 1 - 0.28 = 0.72 (72.0%)
-    expect(aiResult.allowedBadFraction).toBeCloseTo(0.0100, 5);
+    expect(aiResult.allowedBadFraction).toBeCloseTo(0.01, 5);
     expect(aiResult.observedBadFraction).toBeCloseTo(0.0028, 5);
     expect(aiResult.budgetConsumedFraction).toBeCloseTo(0.28, 2);
     expect(aiResult.budgetRemainingFraction).toBeCloseTo(0.72, 2); // NOT 88.2%!

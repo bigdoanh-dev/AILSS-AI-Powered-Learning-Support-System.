@@ -73,7 +73,11 @@ describe("commercial features and role-based matrix", () => {
       expect(getSystemSettings().requireLoginOnColdStart).toBe(true);
 
       updateSystemSettings({ requireLoginOnColdStart: false });
-      await restoreColdStartLoginPreference({ read: async () => { throw new Error("Keychain unavailable"); } });
+      await restoreColdStartLoginPreference({
+        read: async () => {
+          throw new Error("Keychain unavailable");
+        },
+      });
       expect(getSystemSettings().requireLoginOnColdStart).toBe(true);
     });
 
@@ -84,7 +88,11 @@ describe("commercial features and role-based matrix", () => {
       expect(getSystemSettings().requireLoginOnColdStart).toBe(false);
 
       await expect(
-        persistColdStartLoginPreference(true, { write: async () => { throw new Error("Keychain full"); } }),
+        persistColdStartLoginPreference(true, {
+          write: async () => {
+            throw new Error("Keychain full");
+          },
+        }),
       ).rejects.toThrow("Keychain full");
       expect(getSystemSettings().requireLoginOnColdStart).toBe(false);
     });
@@ -92,7 +100,9 @@ describe("commercial features and role-based matrix", () => {
     it("restores the saved cold-start choice after simulated process recreation", async () => {
       let securePreference: string | null = null;
       await persistColdStartLoginPreference(false, {
-        write: async (value) => { securePreference = value; },
+        write: async (value) => {
+          securePreference = value;
+        },
       });
       resetSettingsForTesting();
       await restoreColdStartLoginPreference({ read: async () => securePreference });

@@ -39,8 +39,16 @@ describe("Phase 20F & 20G: Centralized Notifications & Worker Governance", () =>
 
   it.each([
     ["TRANSACTIONAL", "Xác nhận hoàn tiền 450.000 ₫", "Yêu cầu hoàn tiền khóa học CSDL đã được xử lý."],
-    ["ACADEMIC", "Điểm bài thi AI: 9.5 / 10", "Bạn đã hoàn thành xuất sắc bài kiểm tra trắc nghiệm Bloom cấp 5."],
-    ["RECOMMENDATION", "Lộ trình học mới đề xuất", "Dựa trên điểm năng lực, bạn nên ôn tập Tối ưu hóa B-Tree Index."],
+    [
+      "ACADEMIC",
+      "Điểm bài thi AI: 9.5 / 10",
+      "Bạn đã hoàn thành xuất sắc bài kiểm tra trắc nghiệm Bloom cấp 5.",
+    ],
+    [
+      "RECOMMENDATION",
+      "Lộ trình học mới đề xuất",
+      "Dựa trên điểm năng lực, bạn nên ôn tập Tối ưu hóa B-Tree Index.",
+    ],
     ["MARKETING", "Mở đăng ký kỳ học mới 2026", "Ưu đãi 20% cho học viên sớm đăng ký chuyên ngành AI."],
     ["SECURITY", "Đăng nhập mới từ thiết bị lạ", "Phát hiện đăng nhập từ IP 118.69.12.34 vào lúc 15:30."],
   ] as [NotificationCategory, string, string][])(

@@ -19,7 +19,7 @@ async function request(url, expectedStatus, options = {}) {
   assert.equal(
     res.status,
     expectedStatus,
-    `${options.method || "GET"} ${url}: expected HTTP ${expectedStatus}, got ${res.status}`
+    `${options.method || "GET"} ${url}: expected HTTP ${expectedStatus}, got ${res.status}`,
   );
   checks++;
   return res;
@@ -169,7 +169,7 @@ try {
       "+faststart",
       "/fixture/clip.mp4",
     ],
-    { stdio: ["ignore", "pipe", "pipe"] }
+    { stdio: ["ignore", "pipe", "pipe"] },
   );
   assert.ok((await stat(clipPath)).size > 0, "Generated clip file missing");
 
@@ -274,7 +274,7 @@ try {
     courseId,
     previewLesson.lessonId,
     clipPath,
-    "PUBLIC_PREVIEW"
+    "PUBLIC_PREVIEW",
   );
   assert.equal(previewAsset.visibility, "PUBLIC_PREVIEW");
 
@@ -285,7 +285,7 @@ try {
     courseId,
     protectedLesson.lessonId,
     clipPath,
-    "PROTECTED_LESSON"
+    "PROTECTED_LESSON",
   );
   assert.equal(protectedAsset.visibility, "PROTECTED_LESSON");
 
@@ -325,7 +325,7 @@ try {
       "-e",
       `UPDATE learning_keyspace.course_by_id SET state = 'PUBLISHED' WHERE course_id = ${courseId};`,
     ],
-    { stdio: ["ignore", "pipe", "pipe"] }
+    { stdio: ["ignore", "pipe", "pipe"] },
   );
 
   // -------------------------------------------------------------
@@ -359,11 +359,15 @@ try {
   assert.ok(playlistText.startsWith("#EXTM3U"), "HLS playlist should start with #EXTM3U");
 
   // 3. Anonymous user requests media session for preview lesson directly
-  const previewSessionRes = await request(`${base}/api/v1/lessons/${previewLesson.lessonId}/media-session`, 200, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: "{}",
-  });
+  const previewSessionRes = await request(
+    `${base}/api/v1/lessons/${previewLesson.lessonId}/media-session`,
+    200,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    },
+  );
   const previewSession = (await previewSessionRes.json()).data;
   assert.equal(previewSession.mediaAssetId, previewAsset.mediaAssetId);
 
@@ -375,7 +379,7 @@ try {
   });
   assert.ok(
     [401, 403].includes(protectedAnonRes.status),
-    `Anonymous request for protected lesson MUST be rejected (401 or 403), got ${protectedAnonRes.status}`
+    `Anonymous request for protected lesson MUST be rejected (401 or 403), got ${protectedAnonRes.status}`,
   );
   checks++;
 

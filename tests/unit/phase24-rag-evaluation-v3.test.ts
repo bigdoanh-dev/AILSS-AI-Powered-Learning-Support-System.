@@ -106,7 +106,7 @@ describe("Phase 24.19 & 24.20: AI / RAG Evaluation V3 Quantitative Metrics & Adv
     // Assert quantitative thresholds
     expect(metrics.precisionAtK).toBeGreaterThanOrEqual(0.85);
     expect(metrics.recallAtK).toBeGreaterThanOrEqual(0.85);
-    expect(metrics.mrr).toBeGreaterThanOrEqual(0.90);
+    expect(metrics.mrr).toBeGreaterThanOrEqual(0.9);
     expect(metrics.ndcgAtK).toBeGreaterThanOrEqual(0.85);
     expect(metrics.citationSupportRate).toBeGreaterThanOrEqual(0.95);
     expect(metrics.outOfDomainRejectionAccuracy).toBe(1.0);

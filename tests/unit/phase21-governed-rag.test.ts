@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  GovernedRagService,
-  InMemoryRagKnowledgeRepository,
-} from "../../apps/ai-service/src/rag/index.js";
+import { GovernedRagService, InMemoryRagKnowledgeRepository } from "../../apps/ai-service/src/rag/index.js";
 
 describe("Phase 21B: Governed RAG Platform V2 & Course Version Pinning", () => {
   async function createSetup() {

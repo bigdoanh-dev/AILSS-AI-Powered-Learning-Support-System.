@@ -87,7 +87,9 @@ describe("Phase 21D: Enterprise Analytics Export Projections", () => {
 
     expect(result.format).toBe("CSV");
     expect(result.recordCount).toBe(1);
-    expect(result.data).toContain("learnerId,courseId,organizationId,completedLessons,totalTimeSpentSeconds,lastActiveAt,status");
+    expect(result.data).toContain(
+      "learnerId,courseId,organizationId,completedLessons,totalTimeSpentSeconds,lastActiveAt,status",
+    );
     expect(result.data).toContain(`${learnerId},${courseId},org-hcmut,2,2700,`);
   });
 

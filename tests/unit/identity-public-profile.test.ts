@@ -54,6 +54,24 @@ describe("P7.7 public lecturer visibility and DTO privacy", () => {
     });
   });
 
+  it("exposes the uploaded photo only after the lecturer opts in", async () => {
+    const store = Object.assign(new MemoryPublicProfileStore(), {
+      getAvatar: async () => ({ contentType: "image/png", objectKey: "private/avatar" }),
+    });
+    const service = new PublicProfileService(
+      store,
+      createMetrics(`public-photo-${randomUUID().replaceAll("-", "")}`),
+      createLogger({ service: "identity-service", environment: "test", level: "silent" }),
+      { read: async () => Buffer.from("real uploaded bytes") },
+    );
+    store.projection = { ...projection, avatarPublic: false };
+    expect((await service.readPublic(userId, randomUUID())).avatarRef).toBeNull();
+    store.projection = { ...projection, avatarPublic: true };
+    expect((await service.readPublic(userId, randomUUID())).avatarRef).toBe(
+      `data:image/png;base64,${Buffer.from("real uploaded bytes").toString("base64")}`,
+    );
+  });
+
   it.each([
     ["student", { role: "STUDENT" }],
     ["unverified", { lecturerVerified: false }],

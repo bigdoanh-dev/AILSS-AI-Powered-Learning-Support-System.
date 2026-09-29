@@ -3,11 +3,7 @@ import { ZodError } from "zod";
 import { AppError, currentRequestContext } from "../../../../packages/http/src/index.js";
 import type { createMetrics } from "../../../../packages/observability/src/index.js";
 import type { ActorContext } from "../../../../packages/security/src/index.js";
-import {
-  linkSocialRequestSchema,
-  socialLoginRequestSchema,
-  type SocialLoginRequest,
-} from "./model.js";
+import { linkSocialRequestSchema, socialLoginRequestSchema, type SocialLoginRequest } from "./model.js";
 import type { IdentityExternalAuthService } from "./service.js";
 
 export type ActorContextVerifier = (token: string) => Promise<ActorContext>;

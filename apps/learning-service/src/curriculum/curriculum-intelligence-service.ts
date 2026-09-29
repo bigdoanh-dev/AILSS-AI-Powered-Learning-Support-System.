@@ -50,7 +50,9 @@ export class CurriculumIntelligenceService {
       const sourceCount = assessedMap.get(p.source) ?? 0;
       const targetCount = assessedMap.get(p.target) ?? 0;
       if (targetCount > 0 && sourceCount === 0) {
-        prerequisiteGaps.push(`Target ${p.target} assessed without verified assessment on prerequisite ${p.source}`);
+        prerequisiteGaps.push(
+          `Target ${p.target} assessed without verified assessment on prerequisite ${p.source}`,
+        );
       }
     }
 
@@ -61,7 +63,10 @@ export class CurriculumIntelligenceService {
       overAssessedOutcomes,
       courseOverlapGaps: [],
       prerequisiteGaps,
-      contentGaps: unassessedOutcomes.length > 0 ? [`Found ${String(unassessedOutcomes.length)} unassessed outcomes in curriculum`] : [],
+      contentGaps:
+        unassessedOutcomes.length > 0
+          ? [`Found ${String(unassessedOutcomes.length)} unassessed outcomes in curriculum`]
+          : [],
       summaryVerdict: unassessedOutcomes.length === 0 ? "SUFFICIENT_COVERAGE" : "ACTION_RECOMMENDED",
     };
   }

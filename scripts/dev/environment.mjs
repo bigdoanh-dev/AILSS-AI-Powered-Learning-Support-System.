@@ -40,11 +40,7 @@ const node = (script, ...args) =>
   });
 
 async function ensureEnv() {
-  try {
-    await access(".env");
-  } catch {
-    node("scripts/dev/bootstrap-dev-env.mjs");
-  }
+  node("scripts/dev/bootstrap-dev-env.mjs");
 }
 async function waitFor(url, label, timeoutMs = 180_000) {
   const deadline = Date.now() + timeoutMs;

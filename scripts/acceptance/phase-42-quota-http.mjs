@@ -202,7 +202,13 @@ try {
   let ready = false;
   while (Date.now() < deadline) {
     try {
-      docker("exec", learningName, "node", "-e", 'fetch("http://127.0.0.1:8102/health/ready").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))');
+      docker(
+        "exec",
+        learningName,
+        "node",
+        "-e",
+        'fetch("http://127.0.0.1:8102/health/ready").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))',
+      );
       const response = await fetch(`http://${published}/health/ready`, {
         signal: AbortSignal.timeout(3000),
         headers: { Connection: "close" },

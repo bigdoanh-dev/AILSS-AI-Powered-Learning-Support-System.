@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  SimulationSmsProvider,
-  SmsGovernanceGuard,
-} from "../../apps/notification-worker/src/sms/index.js";
+import { SimulationSmsProvider, SmsGovernanceGuard } from "../../apps/notification-worker/src/sms/index.js";
 
 describe("Phase 23C: SMS Governance, Anti-Toll-Fraud & Rate-Limiting", () => {
   it("blocks non-security informational SMS in production pilot", () => {

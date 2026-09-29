@@ -42,6 +42,14 @@ test("Lecturer allowlist rejects undocumented routes, duplicate query and missin
   assert.throws(() => lecturerOperation(`/web-session/lecturer/quizzes/${id}/publish`, "POST", {}, {}));
 });
 
+test("Lecturer payout account route accepts bank details and rejects card data", () => {
+  const path = "/web-session/lecturer/me/payout-account";
+  assert.equal(lecturerOperation(path, "GET", undefined, {}).path, "/me/payout-account");
+  const bank = { bankName: "Ngân hàng A", accountNumber: "1234567890", accountHolder: "NGUYEN VAN A" };
+  assert.equal(lecturerOperation(path, "POST", bank, command).path, "/me/payout-account");
+  assert.throws(() => lecturerOperation(path, "POST", { ...bank, cardNumber: "4111111111111111" }, command));
+});
+
 test("manual attendance forwards only a validated optimistic version", () => {
   const operation = lecturerOperation(
     `/web-session/lecturer/class-sessions/${id}/attendance/${id}`,

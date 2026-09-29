@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  OneRosterCsvParser,
-  type OneRosterCsvPackage,
-} from "../../packages/contracts/src/oneroster.js";
+import { OneRosterCsvParser, type OneRosterCsvPackage } from "../../packages/contracts/src/oneroster.js";
 
 describe("Phase 24.11: OneRoster 1.2 CSV Import & Delta Sync Conformance", () => {
   const organizationId = "tenant-pilot-polytech";
@@ -99,8 +96,12 @@ describe("Phase 24.11: OneRoster 1.2 CSV Import & Delta Sync Conformance", () =>
 
     expect(result.integrityViolations.length).toBeGreaterThan(0);
     // Class references unknown course
-    expect(result.integrityViolations.some((v) => v.includes("references unknown course course-phantom-999"))).toBe(true);
+    expect(
+      result.integrityViolations.some((v) => v.includes("references unknown course course-phantom-999")),
+    ).toBe(true);
     // Enrollment references unknown user
-    expect(result.integrityViolations.some((v) => v.includes("references unknown user user-ghost-404"))).toBe(true);
+    expect(result.integrityViolations.some((v) => v.includes("references unknown user user-ghost-404"))).toBe(
+      true,
+    );
   });
 });

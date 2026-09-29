@@ -13,7 +13,6 @@ import {
 import { join } from "node:path";
 import { AppError } from "../../http/src/index.js";
 
-
 export interface SamlSpConfig {
   readonly entityId: string;
   readonly assertionConsumerServiceUrl: string;
@@ -101,11 +100,7 @@ export class InMemorySamlReplayCache implements SamlReplayCache {
 }
 
 export type SamlReplayBackendClassification =
-  | "PROCESS_MEMORY"
-  | "SHARED_TEST_MEMORY"
-  | "DURABLE_CROSS_PROCESS_FS"
-  | "CASSANDRA"
-  | "REDIS";
+  "PROCESS_MEMORY" | "SHARED_TEST_MEMORY" | "DURABLE_CROSS_PROCESS_FS" | "CASSANDRA" | "REDIS";
 
 export interface SamlReplayClusterBackend {
   readonly backendClassification: SamlReplayBackendClassification;
@@ -164,7 +159,8 @@ export class DurableCrossProcessReplayCluster implements SamlReplayClusterBacken
       }
       return true;
     } catch (err: unknown) {
-      const errCode = typeof err === "object" && err !== null && "code" in err ? (err as { code: string }).code : "";
+      const errCode =
+        typeof err === "object" && err !== null && "code" in err ? (err as { code: string }).code : "";
       if (errCode === "EEXIST") {
         try {
           const raw = readFileSync(filePath, "utf8");
@@ -197,7 +193,11 @@ export class DurableCrossProcessReplayCluster implements SamlReplayClusterBacken
       const existing = JSON.parse(raw) as { expiresAt: string };
       const exp = new Date(existing.expiresAt).getTime();
       if (Date.now() > exp) {
-        try { unlinkSync(filePath); } catch { /* ignore */ }
+        try {
+          unlinkSync(filePath);
+        } catch {
+          /* ignore */
+        }
         return false;
       }
       return true;
@@ -212,10 +212,16 @@ export class DurableCrossProcessReplayCluster implements SamlReplayClusterBacken
       const files = readdirSync(this.storageDir);
       for (const file of files) {
         if (file.endsWith(".replay.json")) {
-          try { unlinkSync(join(this.storageDir, file)); } catch { /* ignore */ }
+          try {
+            unlinkSync(join(this.storageDir, file));
+          } catch {
+            /* ignore */
+          }
         }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -365,20 +371,22 @@ export class CassandraSamlReplayStore implements SamlReplayStore, SamlReplayCach
   private readonly durableFallback: DurableCrossProcessReplayCluster;
   public readonly serialConsistency: "LOCAL_SERIAL" | "SERIAL";
 
-  public constructor(options: {
-    readonly client?:
-      | {
-          execute: (
-            query: string,
-            params: unknown[],
-            options?: unknown,
-          ) => Promise<{ wasApplied?: () => boolean; rows?: Array<Record<string, unknown>> }>;
-        }
-      | undefined;
-    readonly tenantId?: string;
-    readonly storageDir?: string;
-    readonly serialConsistency?: "LOCAL_SERIAL" | "SERIAL";
-  } = {}) {
+  public constructor(
+    options: {
+      readonly client?:
+        | {
+            execute: (
+              query: string,
+              params: unknown[],
+              options?: unknown,
+            ) => Promise<{ wasApplied?: () => boolean; rows?: Array<Record<string, unknown>> }>;
+          }
+        | undefined;
+      readonly tenantId?: string;
+      readonly storageDir?: string;
+      readonly serialConsistency?: "LOCAL_SERIAL" | "SERIAL";
+    } = {},
+  ) {
     this.client = options.client;
     this.defaultTenantId = options.tenantId ?? "tenant-default";
     this.durableFallback = new DurableCrossProcessReplayCluster(options.storageDir);
@@ -590,7 +598,8 @@ export function validateSamlResponse(
   const requireCrypto =
     options.requireCryptographicVerification ??
     (Boolean(signatureValueMatch?.[1]?.trim()) ||
-      (options.idpConfig.certificate.startsWith("-----BEGIN") && options.idpConfig.certificate !== "MOCK_X509_CERTIFICATE"));
+      (options.idpConfig.certificate.startsWith("-----BEGIN") &&
+        options.idpConfig.certificate !== "MOCK_X509_CERTIFICATE"));
 
   if (requireCrypto) {
     if (!signedInfoMatch || !signatureValueMatch?.[1]?.trim()) {
@@ -661,7 +670,10 @@ export function validateSamlResponse(
       const expectedDigest = digestValueMatch[1].trim();
       // Target is either Assertion or Response
       // Strip signature block from assertion for digest verification if enveloped
-      const assertionXmlForDigest = assertionXml.replace(/<(?:ds:)?Signature[\s\S]*?<\/(?:ds:)?Signature>/u, "");
+      const assertionXmlForDigest = assertionXml.replace(
+        /<(?:ds:)?Signature[\s\S]*?<\/(?:ds:)?Signature>/u,
+        "",
+      );
       const computedDigest = createHash("sha256").update(assertionXmlForDigest).digest("base64");
       if (computedDigest !== expectedDigest) {
         throw new AppError("SAML_DIGEST_MISMATCH", 401, "SAML assertion digest mismatch");
@@ -671,7 +683,11 @@ export function validateSamlResponse(
 
   // 7. Destination check if specified in Response
   const destinationMatch = /<(?:samlp:)?Response[^>]*\bDestination="([^"]+)"/u.exec(xml);
-  if (destinationMatch?.[1] && options.expectedDestination && destinationMatch[1] !== options.expectedDestination) {
+  if (
+    destinationMatch?.[1] &&
+    options.expectedDestination &&
+    destinationMatch[1] !== options.expectedDestination
+  ) {
     throw new AppError("SAML_DESTINATION_MISMATCH", 401, "SAML response destination does not match ACS URL");
   }
 
@@ -718,7 +734,9 @@ export function validateSamlResponse(
       const notOnOrAfterStr = notOnOrAfterMatch?.[1];
       const issuedAt = notBeforeStr ? new Date(notBeforeStr) : new Date(now);
       const expiresAt = notOnOrAfterStr ? new Date(notOnOrAfterStr) : new Date(now + 300_000);
-      const idpIssuer = /<(?:saml:)?Issuer[^>]*>([^<]+)<\/(?:saml:)?Issuer>/u.exec(assertionXml)?.[1] ?? options.idpConfig.entityId;
+      const idpIssuer =
+        /<(?:saml:)?Issuer[^>]*>([^<]+)<\/(?:saml:)?Issuer>/u.exec(assertionXml)?.[1] ??
+        options.idpConfig.entityId;
 
       const record: SamlReplayRecord = {
         tenantId: options.tenantId ?? "tenant-default",
@@ -814,7 +832,12 @@ export function mapSamlRoles(rawRoles: readonly string[]): readonly string[] {
     const r = role.toLowerCase();
     if (r.includes("admin") || r.includes("manager") || r.includes("staff")) {
       roles.add("INSTITUTION_ADMIN");
-    } else if (r.includes("instructor") || r.includes("faculty") || r.includes("teacher") || r.includes("lecturer")) {
+    } else if (
+      r.includes("instructor") ||
+      r.includes("faculty") ||
+      r.includes("teacher") ||
+      r.includes("lecturer")
+    ) {
       roles.add("LECTURER");
     } else {
       roles.add("STUDENT");

@@ -175,11 +175,7 @@ export const IncidentLifecycleManager = {
 // ---------------------------------------------------------------------------
 
 export type PilotClassification =
-  | "SYNTHETIC"
-  | "INTERNAL"
-  | "EXTERNAL_SANDBOX"
-  | "EXTERNAL_LIMITED"
-  | "PRODUCTION_PILOT";
+  "SYNTHETIC" | "INTERNAL" | "EXTERNAL_SANDBOX" | "EXTERNAL_LIMITED" | "PRODUCTION_PILOT";
 
 export type PilotFeatureKey =
   | "payments"
@@ -204,7 +200,10 @@ export interface PilotRecord {
   readonly startAt: string;
   readonly plannedEndAt: string;
   readonly enabledFeatures: readonly PilotFeatureKey[];
-  readonly enabledProviders: Record<string, "SANDBOX_VERIFIED" | "EXTERNAL_PILOT_VERIFIED" | "NOT_CONFIGURED" | "SIMULATION">;
+  readonly enabledProviders: Record<
+    string,
+    "SANDBOX_VERIFIED" | "EXTERNAL_PILOT_VERIFIED" | "NOT_CONFIGURED" | "SIMULATION"
+  >;
   readonly cohortSize: number;
   readonly supportOwner: string;
   readonly incidentContact: string; // Reference only, e.g. "ref:contacts/polytech-noc"
@@ -299,7 +298,10 @@ export interface PilotAuthorizationRecord {
 }
 
 export const PilotAuthorizationValidator = {
-  validate(record: PilotAuthorizationRecord): { readonly valid: boolean; readonly errors: readonly string[] } {
+  validate(record: PilotAuthorizationRecord): {
+    readonly valid: boolean;
+    readonly errors: readonly string[];
+  } {
     const errors: string[] = [];
 
     if (record.authorizationStatus !== "EXTERNAL_PILOT_ACTIVE") {
@@ -311,7 +313,9 @@ export const PilotAuthorizationValidator = {
     }
 
     if (record.scopeConstraints.mobilePilotScope !== "NOT_IN_SCOPE") {
-      errors.push(`Mobile pilot scope must be explicitly 'NOT_IN_SCOPE', got: ${record.scopeConstraints.mobilePilotScope}`);
+      errors.push(
+        `Mobile pilot scope must be explicitly 'NOT_IN_SCOPE', got: ${record.scopeConstraints.mobilePilotScope}`,
+      );
     }
 
     if (record.scopeConstraints.paymentsScope !== "SANDBOX_ONLY") {
@@ -323,7 +327,9 @@ export const PilotAuthorizationValidator = {
     }
 
     if (record.signatories.length < 2) {
-      errors.push(`Bilateral authorization requires at least 2 signatories, got: ${record.signatories.length}`);
+      errors.push(
+        `Bilateral authorization requires at least 2 signatories, got: ${record.signatories.length}`,
+      );
     }
 
     return {
@@ -332,4 +338,3 @@ export const PilotAuthorizationValidator = {
     };
   },
 } as const;
-

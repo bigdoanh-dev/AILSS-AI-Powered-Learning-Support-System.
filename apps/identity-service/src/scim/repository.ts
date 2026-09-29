@@ -14,15 +14,8 @@
  */
 
 import { randomUUID } from "node:crypto";
-import type {
-  ScimGroup,
-  ScimRepository,
-  ScimUser,
-} from "../../../../packages/contracts/src/scim.js";
-import {
-  SCIM_GROUP_SCHEMA_URI,
-  SCIM_USER_SCHEMA_URI,
-} from "../../../../packages/contracts/src/scim.js";
+import type { ScimGroup, ScimRepository, ScimUser } from "../../../../packages/contracts/src/scim.js";
+import { SCIM_GROUP_SCHEMA_URI, SCIM_USER_SCHEMA_URI } from "../../../../packages/contracts/src/scim.js";
 import type { TenantRepository } from "../tenant/repository.js";
 import type { OrganizationMembership } from "../tenant/model.js";
 
@@ -201,11 +194,7 @@ export class TenantAwareScimRepository implements ScimRepository {
     if (!active) return; // Suspended users are not in groups
 
     const targetGroupId =
-      role === "STUDENT"
-        ? "group-students"
-        : role === "LECTURER"
-          ? "group-faculty"
-          : "group-admins";
+      role === "STUDENT" ? "group-students" : role === "LECTURER" ? "group-faculty" : "group-admins";
 
     for (const [groupId, group] of this.#groups.entries()) {
       const existingMembers = (group.members ?? []).filter((m) => m.value !== userId);

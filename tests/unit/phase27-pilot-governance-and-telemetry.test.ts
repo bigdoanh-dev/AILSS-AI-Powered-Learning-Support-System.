@@ -52,7 +52,9 @@ describe("Phase 27 Pilot Governance, Authorization & Telemetry Verification", ()
 
       const result = PilotAuthorizationValidator.validate(invalidRecord);
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("Mobile pilot scope must be explicitly 'NOT_IN_SCOPE'"))).toBe(true);
+      expect(
+        result.errors.some((e) => e.includes("Mobile pilot scope must be explicitly 'NOT_IN_SCOPE'")),
+      ).toBe(true);
       expect(result.errors.some((e) => e.includes("Payments scope must be 'SANDBOX_ONLY'"))).toBe(true);
     });
   });
@@ -90,8 +92,8 @@ describe("Phase 27 Pilot Governance, Authorization & Telemetry Verification", ()
   describe("Phase 27.20: Configurable Per-Institution Data Retention Policy", () => {
     it("should allow safe custom overrides within platform limits", () => {
       const schedule = DataRetentionPolicyEngine.createInstitutionSchedule("tenant-pilot-polytech", {
-        AI: 60,            // default 90, min 30, max 365 -> valid
-        IDENTITY: 3650,    // default 1825, min 365, max 3650 -> valid
+        AI: 60, // default 90, min 30, max 365 -> valid
+        IDENTITY: 3650, // default 1825, min 365, max 3650 -> valid
       });
 
       expect(schedule.schedules.AI).toBe(60);

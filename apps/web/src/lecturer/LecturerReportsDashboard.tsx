@@ -97,19 +97,28 @@ export function LecturerReportsDashboard() {
 
   const totalStudents = useMemo(
     () => filteredClasses.reduce((acc, c) => acc + c.studentCount, 0),
-    [filteredClasses]
+    [filteredClasses],
   );
   const avgSubmission = useMemo(
-    () => (filteredClasses.reduce((acc, c) => acc + c.submissionRate, 0) / (filteredClasses.length || 1)).toFixed(1),
-    [filteredClasses]
+    () =>
+      (filteredClasses.reduce((acc, c) => acc + c.submissionRate, 0) / (filteredClasses.length || 1)).toFixed(
+        1,
+      ),
+    [filteredClasses],
   );
   const avgScore = useMemo(
-    () => (filteredClasses.reduce((acc, c) => acc + c.averageScore, 0) / (filteredClasses.length || 1)).toFixed(1),
-    [filteredClasses]
+    () =>
+      (filteredClasses.reduce((acc, c) => acc + c.averageScore, 0) / (filteredClasses.length || 1)).toFixed(
+        1,
+      ),
+    [filteredClasses],
   );
   const avgAttendance = useMemo(
-    () => (filteredClasses.reduce((acc, c) => acc + c.attendanceRate, 0) / (filteredClasses.length || 1)).toFixed(1),
-    [filteredClasses]
+    () =>
+      (filteredClasses.reduce((acc, c) => acc + c.attendanceRate, 0) / (filteredClasses.length || 1)).toFixed(
+        1,
+      ),
+    [filteredClasses],
   );
 
   const handleExportCsv = () => {
@@ -118,17 +127,14 @@ export function LecturerReportsDashboard() {
     ];
     const rows = filteredClasses.map(
       (c) =>
-        `"${c.classId}","${c.className}","${c.courseName}",${c.studentCount},${c.submissionRate}%,${c.pendingCount},${c.averageScore},${c.attendanceRate}%,${c.passRate}%`
+        `"${c.classId}","${c.className}","${c.courseName}",${c.studentCount},${c.submissionRate}%,${c.pendingCount},${c.averageScore},${c.attendanceRate}%,${c.passRate}%`,
     );
     const content = [headers, ...rows].join("\n");
     const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `AILSS_BaoCaoGiangDay_${new Date().toISOString().slice(0, 10)}.csv`
-    );
+    link.setAttribute("download", `AILSS_BaoCaoGiangDay_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -138,7 +144,10 @@ export function LecturerReportsDashboard() {
   };
 
   return (
-    <div className="admin-dashboard-container" style={{ maxWidth: 1200, margin: "0 auto", padding: "16px 20px" }}>
+    <div
+      className="admin-dashboard-container"
+      style={{ maxWidth: 1200, margin: "0 auto", padding: "16px 20px" }}
+    >
       {/* Header */}
       <div className="dashboard-heading" style={{ marginBottom: 20 }}>
         <div>
@@ -147,7 +156,8 @@ export function LecturerReportsDashboard() {
           </p>
           <h1 style={{ margin: "4px 0 8px" }}>Báo Cáo Thống Kê Giảng Dạy &amp; Đánh Giá Sinh Viên</h1>
           <p className="lead" style={{ margin: 0, color: "var(--muted, #64748b)" }}>
-            Báo cáo tổng hợp kết quả học tập, phân phổ điểm và phân tích năng lực sinh viên theo lớp phụ trách.
+            Báo cáo tổng hợp kết quả học tập, phân phổ điểm và phân tích năng lực sinh viên theo lớp phụ
+            trách.
           </p>
         </div>
         <div className="dashboard-header-actions" style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -168,7 +178,16 @@ export function LecturerReportsDashboard() {
       )}
 
       {/* Filter Bar */}
-      <div className="dashboard-toolbar-row" style={{ marginBottom: 20, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+      <div
+        className="dashboard-toolbar-row"
+        style={{
+          marginBottom: 20,
+          display: "flex",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 12,
+        }}
+      >
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted, #64748b)" }}>Lớp học phần:</span>
           <select
@@ -192,7 +211,12 @@ export function LecturerReportsDashboard() {
             ))}
           </select>
 
-          <div className="dashboard-filter-group" role="group" aria-label="Khoảng thời gian" style={{ marginLeft: 8 }}>
+          <div
+            className="dashboard-filter-group"
+            role="group"
+            aria-label="Khoảng thời gian"
+            style={{ marginLeft: 8 }}
+          >
             {[
               { id: "30d", label: "30 ngày" },
               { id: "semester", label: "Học kỳ này" },
@@ -267,7 +291,14 @@ export function LecturerReportsDashboard() {
       </div>
 
       {/* Charts Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(460px, 1fr))", gap: 20, marginBottom: 24 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(460px, 1fr))",
+          gap: 20,
+          marginBottom: 24,
+        }}
+      >
         {/* Grade Distribution */}
         <section className="dashboard-section-card" style={{ margin: 0 }}>
           <div className="section-card-header">
@@ -283,7 +314,7 @@ export function LecturerReportsDashboard() {
                 <XAxis dataKey="bracket" tick={{ fontSize: 11, fill: "var(--muted, #64748b)" }} />
                 <YAxis tick={{ fontSize: 11, fill: "var(--muted, #64748b)" }} />
                 <Tooltip
-                  formatter={(value: any, _name: any, item: any) => [
+                  formatter={(value: unknown, _name: unknown, item: { payload?: { percent?: number } }) => [
                     `${value} sinh viên (${item?.payload?.percent ?? 0}%)`,
                     "Số lượng",
                   ]}
@@ -325,7 +356,7 @@ export function LecturerReportsDashboard() {
                   animationDuration={1200}
                   animationEasing="ease-out"
                 />
-                <Tooltip formatter={(val: any) => [`${val}% chuẩn`, "Độ chuẩn xác"]} />
+                <Tooltip formatter={(val: unknown) => [`${val}% chuẩn`, "Độ chuẩn xác"]} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
@@ -373,7 +404,15 @@ export function LecturerReportsDashboard() {
                   </td>
                   <td>
                     {c.pendingCount > 0 ? (
-                      <span className="kpi-tag" style={{ color: "#D97706", backgroundColor: "#FEF3C7", fontWeight: 700, whiteSpace: "nowrap" }}>
+                      <span
+                        className="kpi-tag"
+                        style={{
+                          color: "#D97706",
+                          backgroundColor: "#FEF3C7",
+                          fontWeight: 700,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
                         ● {c.pendingCount} bài chờ
                       </span>
                     ) : (
@@ -406,9 +445,12 @@ export function LecturerReportsDashboard() {
         <div className="section-card-header">
           <div>
             <span className="kpi-tag accent">Learning Intelligence</span>
-            <h2 style={{ fontSize: "1.15rem", marginTop: 4 }}>Chẩn Đoán Năng Lực &amp; Điểm Nghẽn Tri Thức Nhóm Học Viên (Cohort Friction)</h2>
+            <h2 style={{ fontSize: "1.15rem", marginTop: 4 }}>
+              Chẩn Đoán Năng Lực &amp; Điểm Nghẽn Tri Thức Nhóm Học Viên (Cohort Friction)
+            </h2>
             <p className="subtext">
-              Phân tích phân vị năng lực (P25 / Trung vị / P75), phát hiện điểm nghẽn học tập và cảnh báo lỗ hổng tiền đề theo chuẩn Canonical Policy (70/50).
+              Phân tích phân vị năng lực (P25 / Trung vị / P75), phát hiện điểm nghẽn học tập và cảnh báo lỗ
+              hổng tiền đề theo chuẩn Canonical Policy (70/50).
             </p>
           </div>
         </div>
@@ -429,50 +471,109 @@ export function LecturerReportsDashboard() {
             </thead>
             <tbody>
               <tr>
-                <td><strong>Tối ưu hóa B-Tree &amp; Hash Indexing</strong></td>
+                <td>
+                  <strong>Tối ưu hóa B-Tree &amp; Hash Indexing</strong>
+                </td>
                 <td>CSDL Nâng cao</td>
-                <td><span style={{ color: "#DC2626", fontWeight: 700 }}>42%</span></td>
-                <td><strong>65%</strong></td>
-                <td><span style={{ color: "#16A34A" }}>84%</span></td>
+                <td>
+                  <span style={{ color: "#DC2626", fontWeight: 700 }}>42%</span>
+                </td>
+                <td>
+                  <strong>65%</strong>
+                </td>
+                <td>
+                  <span style={{ color: "#16A34A" }}>84%</span>
+                </td>
                 <td>62%</td>
                 <td>
-                  <span style={{ padding: "3px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700, backgroundColor: "#FEF3C7", color: "#B45309" }}>
+                  <span
+                    style={{
+                      padding: "3px 8px",
+                      borderRadius: 4,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      backgroundColor: "#FEF3C7",
+                      color: "#B45309",
+                    }}
+                  >
                     ⚠ ĐIỂM NGHẼN (FRICTION)
                   </span>
                 </td>
                 <td>
-                  <button type="button" className="button button-subtle button-small" style={{ fontSize: 11 }}>
+                  <button
+                    type="button"
+                    className="button button-subtle button-small"
+                    style={{ fontSize: 11 }}
+                  >
                     Tạo đề luyện tập củng cố
                   </button>
                 </td>
               </tr>
               <tr>
-                <td><strong>Phân mảnh Dữ liệu &amp; Sharding Cassandra</strong></td>
+                <td>
+                  <strong>Phân mảnh Dữ liệu &amp; Sharding Cassandra</strong>
+                </td>
                 <td>CSDL Nâng cao</td>
-                <td><span style={{ color: "#DC2626", fontWeight: 700 }}>38%</span></td>
-                <td><strong>58%</strong></td>
-                <td><span style={{ color: "#16A34A" }}>76%</span></td>
+                <td>
+                  <span style={{ color: "#DC2626", fontWeight: 700 }}>38%</span>
+                </td>
+                <td>
+                  <strong>58%</strong>
+                </td>
+                <td>
+                  <span style={{ color: "#16A34A" }}>76%</span>
+                </td>
                 <td>52%</td>
                 <td>
-                  <span style={{ padding: "3px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700, backgroundColor: "#FEE2E2", color: "#DC2626" }}>
+                  <span
+                    style={{
+                      padding: "3px 8px",
+                      borderRadius: 4,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      backgroundColor: "#FEE2E2",
+                      color: "#DC2626",
+                    }}
+                  >
                     ● LỖ HỔNG TIỀN ĐỀ (&lt;50%)
                   </span>
                 </td>
                 <td>
-                  <button type="button" className="button button-subtle button-small" style={{ fontSize: 11 }}>
+                  <button
+                    type="button"
+                    className="button button-subtle button-small"
+                    style={{ fontSize: 11 }}
+                  >
                     Gợi ý bài học tiền đề
                   </button>
                 </td>
               </tr>
               <tr>
-                <td><strong>Thiết Kế Schema Phân Tán &amp; Wide-Row</strong></td>
+                <td>
+                  <strong>Thiết Kế Schema Phân Tán &amp; Wide-Row</strong>
+                </td>
                 <td>CSDL Nâng cao</td>
-                <td><span style={{ color: "#16A34A", fontWeight: 700 }}>72%</span></td>
-                <td><strong>85%</strong></td>
-                <td><span style={{ color: "#16A34A" }}>94%</span></td>
+                <td>
+                  <span style={{ color: "#16A34A", fontWeight: 700 }}>72%</span>
+                </td>
+                <td>
+                  <strong>85%</strong>
+                </td>
+                <td>
+                  <span style={{ color: "#16A34A" }}>94%</span>
+                </td>
                 <td>91%</td>
                 <td>
-                  <span style={{ padding: "3px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700, backgroundColor: "#DCFCE7", color: "#15803D" }}>
+                  <span
+                    style={{
+                      padding: "3px 8px",
+                      borderRadius: 4,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      backgroundColor: "#DCFCE7",
+                      color: "#15803D",
+                    }}
+                  >
                     ✓ NẮM VỮNG TỐT (EXCELLENT)
                   </span>
                 </td>

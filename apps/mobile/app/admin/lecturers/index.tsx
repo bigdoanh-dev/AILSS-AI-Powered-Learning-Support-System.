@@ -6,7 +6,7 @@ import * as Crypto from "expo-crypto";
 import { ApiError } from "../../../src/api";
 import { runtime } from "../../../src/runtime";
 import { lecturerApplications, validatePassword, type LecturerApplication } from "../../../src/admin";
-import { Page, Button, styles, tokens } from "../../../src/ui";
+import { Page, Button, PasswordInput, styles, tokens } from "../../../src/ui";
 
 export default function AdminLecturerVerificationScreen() {
   const session = runtime!;
@@ -225,8 +225,7 @@ export default function AdminLecturerVerificationScreen() {
           autoCapitalize="none"
           accessibilityLabel="Mã người dùng cần xác minh giảng viên"
         />
-        <TextInput
-          secureTextEntry
+        <PasswordInput
           placeholder="Mật khẩu quản trị viên hiện tại"
           value={directPassword}
           onChangeText={setDirectPassword}
@@ -280,8 +279,7 @@ export default function AdminLecturerVerificationScreen() {
               Nhập mật khẩu quản trị viên để xác nhận.
             </Text>
 
-            <TextInput
-              secureTextEntry
+            <PasswordInput
               placeholder="Mật khẩu quản trị viên hiện tại"
               value={decisionPassword}
               onChangeText={setDecisionPassword}

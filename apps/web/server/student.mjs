@@ -78,6 +78,8 @@ rule(
     })
     .strict(),
 );
+rule("GET", "/assistant/conversations");
+rule("GET", "/assistant/conversations/:id");
 rule(
   "PATCH",
   "/study-plan/items/:id",

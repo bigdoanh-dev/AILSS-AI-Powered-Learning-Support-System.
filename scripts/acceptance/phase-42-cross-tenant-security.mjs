@@ -15,7 +15,11 @@ async function request(url, expectedStatus, options = {}) {
     headers: { Connection: "close", ...options.headers },
     signal: AbortSignal.timeout(30_000),
   });
-  assert.equal(res.status, expectedStatus, `${options.method || "GET"} ${url}: expected HTTP ${expectedStatus}, got ${res.status}`);
+  assert.equal(
+    res.status,
+    expectedStatus,
+    `${options.method || "GET"} ${url}: expected HTTP ${expectedStatus}, got ${res.status}`,
+  );
   checks++;
   return res;
 }
@@ -115,11 +119,15 @@ try {
 }
 `;
   return JSON.parse(
-    execFileSync("docker", ["exec", "-i", "ailss-learning-service", "node", "--input-type=module", "-e", script], {
-      input: JSON.stringify(input),
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"],
-    })
+    execFileSync(
+      "docker",
+      ["exec", "-i", "ailss-learning-service", "node", "--input-type=module", "-e", script],
+      {
+        input: JSON.stringify(input),
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "pipe"],
+      },
+    ),
   );
 }
 
@@ -180,29 +188,34 @@ try {
     });
     assert.ok(
       [403, 404].includes(foreignSessionRes.status),
-      `Tenant A student request for Tenant B lesson should be denied (403 or 404), got ${foreignSessionRes.status}`
+      `Tenant A student request for Tenant B lesson should be denied (403 or 404), got ${foreignSessionRes.status}`,
     );
     checks++;
 
     // 3. Tenant A token cannot retrieve Tenant B delivery assets
     const activeLessonId = required(fixture, "PHASE42_LESSON_ID");
-    const activeSessionRes = await request(
-      `${base}/api/v1/lessons/${activeLessonId}/media-session`,
-      200,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${studentToken}`, "Content-Type": "application/json" },
-        body: "{}",
-      }
-    );
+    const activeSessionRes = await request(`${base}/api/v1/lessons/${activeLessonId}/media-session`, 200, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${studentToken}`, "Content-Type": "application/json" },
+      body: "{}",
+    });
     const activeSession = (await activeSessionRes.json()).data;
     const activeMasterUrl = new URL(activeSession.playlistUrl);
     const activeToken = activeMasterUrl.searchParams.get("token");
 
     // Attempt to access Tenant B asset with Tenant A token
-    await request(`${base}/playback/${tenantBMediaAssetId}/master.m3u8?token=${encodeURIComponent(activeToken)}`, 403);
-    await request(`${base}/playback/${tenantBMediaAssetId}/poster.jpg?token=${encodeURIComponent(activeToken)}`, 403);
-    await request(`${base}/playback/${tenantBMediaAssetId}/caption-${randomUUID()}.vtt?token=${encodeURIComponent(activeToken)}`, 403);
+    await request(
+      `${base}/playback/${tenantBMediaAssetId}/master.m3u8?token=${encodeURIComponent(activeToken)}`,
+      403,
+    );
+    await request(
+      `${base}/playback/${tenantBMediaAssetId}/poster.jpg?token=${encodeURIComponent(activeToken)}`,
+      403,
+    );
+    await request(
+      `${base}/playback/${tenantBMediaAssetId}/caption-${randomUUID()}.vtt?token=${encodeURIComponent(activeToken)}`,
+      403,
+    );
 
     // -------------------------------------------------------------
     // BF8 — CROSS-COURSE PROOF (within same tenant)
@@ -222,11 +235,19 @@ try {
     console.log("[BF9] Verifying Complete Delivery Security Matrix...");
 
     const assetId = activeSession.mediaAssetId;
-    const masterPlaylist = await (await request(`${base}/playback/${assetId}/master.m3u8?token=${encodeURIComponent(activeToken)}`, 200)).text();
-    const variantLine = masterPlaylist.split("\n").find((line) => line && !line.startsWith("#")).trim();
+    const masterPlaylist = await (
+      await request(`${base}/playback/${assetId}/master.m3u8?token=${encodeURIComponent(activeToken)}`, 200)
+    ).text();
+    const variantLine = masterPlaylist
+      .split("\n")
+      .find((line) => line && !line.startsWith("#"))
+      .trim();
     const [variantFilename] = variantLine.split("?");
     const variantPlaylist = await (await request(`${base}/playback/${assetId}/${variantLine}`, 200)).text();
-    const segmentLine = variantPlaylist.split("\n").find((line) => line && !line.startsWith("#")).trim();
+    const segmentLine = variantPlaylist
+      .split("\n")
+      .find((line) => line && !line.startsWith("#"))
+      .trim();
     const [segmentFilename] = segmentLine.split("?");
 
     // 1. Unsigned master playlist -> 403
@@ -262,7 +283,7 @@ try {
         operation: "PLAYBACK",
       },
       secret,
-      1 // 1s ttl
+      1, // 1s ttl
     );
     await new Promise((r) => setTimeout(r, 1500));
     await request(`${base}/playback/${assetId}/master.m3u8?token=${encodeURIComponent(expiredToken)}`, 403);
@@ -275,7 +296,10 @@ try {
     // 8. Wrong-media token -> 403
     const otherAssetId = required(fixture, "PHASE42_ASSET_ID");
     assert.notEqual(assetId, otherAssetId);
-    await request(`${base}/playback/${otherAssetId}/master.m3u8?token=${encodeURIComponent(activeToken)}`, 403);
+    await request(
+      `${base}/playback/${otherAssetId}/master.m3u8?token=${encodeURIComponent(activeToken)}`,
+      403,
+    );
 
     // 9. Wrong-tenant token -> 403
     const wrongTenantToken = await signMediaPlayback(
@@ -290,9 +314,12 @@ try {
         operation: "PLAYBACK",
       },
       secret,
-      120
+      120,
     );
-    await request(`${base}/playback/${assetId}/master.m3u8?token=${encodeURIComponent(wrongTenantToken)}`, 403);
+    await request(
+      `${base}/playback/${assetId}/master.m3u8?token=${encodeURIComponent(wrongTenantToken)}`,
+      403,
+    );
 
     // 10. Wrong-course entitlement -> 403 (checked in BF8)
 
@@ -311,7 +338,6 @@ try {
     await request(`${base}/playback/${assetId}/master.m3u8`, 403, {
       headers: { Authorization: `Bearer ${lecturerToken}` },
     });
-
   } finally {
     // Cleanup Tenant B fixture rows
     cassandraExec({

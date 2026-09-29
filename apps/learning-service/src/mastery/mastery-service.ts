@@ -55,7 +55,11 @@ export class InMemoryMasteryRepository implements MasteryRepository {
     return Promise.resolve();
   }
 
-  async getConceptMastery(studentId: string, courseId: string, conceptId: string): Promise<ConceptMastery | null> {
+  async getConceptMastery(
+    studentId: string,
+    courseId: string,
+    conceptId: string,
+  ): Promise<ConceptMastery | null> {
     const key = this.makeKey(studentId, courseId, conceptId);
     return Promise.resolve(this.masteryStore.get(key) ?? null);
   }
@@ -206,16 +210,18 @@ export class LearnerMasteryService {
     return gaps;
   }
 
-  async getCohortMasteryDistribution(courseId: string): Promise<{
-    conceptId: string;
-    conceptName: string;
-    averageMastery: number;
-    studentCount: number;
-    atRiskCount: number; // < 50%
-    developingCount: number; // 50-75%
-    masteredCount: number; // > 75%
-    isHighFriction: boolean;
-  }[]> {
+  async getCohortMasteryDistribution(courseId: string): Promise<
+    {
+      conceptId: string;
+      conceptName: string;
+      averageMastery: number;
+      studentCount: number;
+      atRiskCount: number; // < 50%
+      developingCount: number; // 50-75%
+      masteredCount: number; // > 75%
+      isHighFriction: boolean;
+    }[]
+  > {
     const allMastery = await this.repository.listCourseCohortMastery(courseId);
     const byConcept = new Map<string, ConceptMastery[]>();
 
@@ -556,11 +562,7 @@ export class LearnerMasteryServiceV2 {
     return record;
   }
 
-  public getMasteryHistory(
-    studentId: string,
-    courseId: string,
-    conceptId: string,
-  ): MasteryHistoryRecord[] {
+  public getMasteryHistory(studentId: string, courseId: string, conceptId: string): MasteryHistoryRecord[] {
     const key = `${studentId}:${courseId}:${conceptId}`;
     return this.historyStore.get(key) ?? [];
   }

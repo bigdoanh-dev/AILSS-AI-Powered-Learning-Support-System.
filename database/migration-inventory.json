@@ -5,19 +5,19 @@
   "baselineTag": "v6.2.0-rc.7",
   "sourceLine": "Phase 42 Revision B closure pass (not a release candidate)",
   "summary": {
-    "CANONICAL_LOGICAL_MIGRATIONS": 54,
-    "DEV_FILES": 54,
-    "RESEARCH_FILES": 54,
-    "TOTAL_CQL_FILES": 108,
-    "PAIRED_FILES": 54,
-    "IDENTICAL_PAIRS": 48,
+    "CANONICAL_LOGICAL_MIGRATIONS": 58,
+    "DEV_FILES": 58,
+    "RESEARCH_FILES": 58,
+    "TOTAL_CQL_FILES": 116,
+    "PAIRED_FILES": 58,
+    "IDENTICAL_PAIRS": 52,
     "ENVIRONMENT_SPECIFIC_PAIRS": 1,
     "SEMANTIC_EQUIVALENT_PAIRS": 5,
     "INVALID_DRIFT": 0
   },
-  "highestMigrationIndex": "088",
-  "highestMigrationFile": "088_media_output_journal.cql",
-  "reconciliationRationale": "Current Phase 42 source contains 54 paired logical migrations (108 CQL files). Migrations 086-088 are additive and were not part of immutable RC7. Registry tracks deployment evidence separately.",
+  "highestMigrationIndex": "092",
+  "highestMigrationFile": "092_platform_commission_policy.cql",
+  "reconciliationRationale": "Three additive migrations add lecturer public details, payout preparation and historical platform commission; external deployment pending.",
   "driftAnalysis": {
     "001_keyspaces.cql": {
       "classification": "ENVIRONMENT_SPECIFIC",

@@ -114,9 +114,7 @@ describe("Phase 20D & 20E: Educational Interoperability & Verified Credentials",
 
   describe("LTI 1.3 Advantage & xAPI Interoperability", () => {
     it("maps LTI 1.3 standard roles correctly", () => {
-      expect(
-        mapLtiRoles(["http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"]),
-      ).toBe("STUDENT");
+      expect(mapLtiRoles(["http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"])).toBe("STUDENT");
 
       expect(
         mapLtiRoles([
@@ -125,9 +123,9 @@ describe("Phase 20D & 20E: Educational Interoperability & Verified Credentials",
         ]),
       ).toBe("LECTURER");
 
-      expect(
-        mapLtiRoles(["http://purl.imsglobal.org/vocab/lis/v2/membership#Administrator"]),
-      ).toBe("INSTITUTION_ADMIN");
+      expect(mapLtiRoles(["http://purl.imsglobal.org/vocab/lis/v2/membership#Administrator"])).toBe(
+        "INSTITUTION_ADMIN",
+      );
     });
 
     it("constructs compliant LTI 1.3 AGS Grade Passback payload", () => {

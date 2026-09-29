@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 
 /**
  * AILSS Commercial Payment & Payout Hard Gate Guard
- * 
+ *
  * Enforces Phase 29.25, 29.26, and Phase 34.22 - 34.32:
  * Initial production operates in SANDBOX_ONLY payment mode and GATED payout mode.
  * Any inadvertent or unauthorized attempt to route real monetary transactions
@@ -46,7 +46,15 @@ export type PaymentState =
   | "RECONCILIATION_REQUIRED";
 
 export interface PaymentEvent {
-  readonly type: "CHECKOUT_INITIALIZED" | "PROVIDER_PENDING" | "PAYMENT_CONFIRMED" | "PAYMENT_FAILED" | "EXPIRED" | "REFUND_REQUESTED" | "REFUND_COMPLETED" | "ANOMALY_DETECTED";
+  readonly type:
+    | "CHECKOUT_INITIALIZED"
+    | "PROVIDER_PENDING"
+    | "PAYMENT_CONFIRMED"
+    | "PAYMENT_FAILED"
+    | "EXPIRED"
+    | "REFUND_REQUESTED"
+    | "REFUND_COMPLETED"
+    | "ANOMALY_DETECTED";
   readonly timestamp: string;
   readonly reason?: string;
 }
@@ -81,7 +89,11 @@ export class CommercialGateGuard {
    */
   public static evaluatePaymentExecution(
     config: CommercialGateConfig,
-    request: { readonly amount: number; readonly currency: string; readonly liveSettlementRequested?: boolean },
+    request: {
+      readonly amount: number;
+      readonly currency: string;
+      readonly liveSettlementRequested?: boolean;
+    },
   ): PaymentGateDecision {
     // Fail-closed condition 1: Tenant policy is explicitly SANDBOX_ONLY
     if (config.tenantCommercialPolicy === "SANDBOX_ONLY") {
@@ -204,7 +216,9 @@ export class CommercialGateGuard {
         break;
     }
 
-    throw new Error(`ILLEGAL_PAYMENT_STATE_TRANSITION: Cannot transition from ${currentState} via ${event.type}`);
+    throw new Error(
+      `ILLEGAL_PAYMENT_STATE_TRANSITION: Cannot transition from ${currentState} via ${event.type}`,
+    );
   }
 
   /**
@@ -219,12 +233,15 @@ export class CommercialGateGuard {
   ): { readonly success: boolean; readonly duplicate: boolean; readonly reason?: string } {
     // 1. Integer minor unit validation (no floats allowed)
     if (!Number.isInteger(payload.amountMinorUnits) || payload.amountMinorUnits <= 0) {
-      throw new Error(`INVALID_MONETARY_UNIT: amountMinorUnits must be positive integer, received ${payload.amountMinorUnits}`);
+      throw new Error(
+        `INVALID_MONETARY_UNIT: amountMinorUnits must be positive integer, received ${payload.amountMinorUnits}`,
+      );
     }
 
     // 2. Freshness check: timestamp must be within 300 seconds (5 minutes)
     const nowEpochSec = Math.floor(Date.now() / 1000);
-    const payloadEpochSec = payload.timestamp > 1_000_000_000_000 ? Math.floor(payload.timestamp / 1000) : payload.timestamp;
+    const payloadEpochSec =
+      payload.timestamp > 1_000_000_000_000 ? Math.floor(payload.timestamp / 1000) : payload.timestamp;
     if (Math.abs(nowEpochSec - payloadEpochSec) > 300) {
       return { success: false, duplicate: false, reason: "WEBHOOK_TIMESTAMP_EXPIRED" };
     }
@@ -257,7 +274,9 @@ export class CommercialGateGuard {
     type: "SETTLEMENT" | "REFUND_REVERSAL" = "SETTLEMENT",
   ): DoubleEntryLedgerEntry {
     if (!Number.isInteger(amountMinorUnits) || amountMinorUnits <= 0) {
-      throw new Error(`INVALID_LEDGER_AMOUNT: Must be positive integer minor units, received ${amountMinorUnits}`);
+      throw new Error(
+        `INVALID_LEDGER_AMOUNT: Must be positive integer minor units, received ${amountMinorUnits}`,
+      );
     }
 
     const recordedAt = new Date().toISOString();
@@ -293,7 +312,13 @@ export class CommercialGateGuard {
    */
   public static reconcilePaymentTransaction(
     order: { id: string; amountMinorUnits: number; currency: string; status: PaymentState },
-    providerTx: { id: string; orderId: string; amountMinorUnits: number; currency: string; status: "PAID" | "FAILED" },
+    providerTx: {
+      id: string;
+      orderId: string;
+      amountMinorUnits: number;
+      currency: string;
+      status: "PAID" | "FAILED";
+    },
     ledgerEntries: readonly DoubleEntryLedgerEntry[],
     entitlementActive: boolean,
   ): { reconciled: boolean; discrepancies: readonly string[] } {
@@ -304,14 +329,18 @@ export class CommercialGateGuard {
     }
 
     if (order.amountMinorUnits !== providerTx.amountMinorUnits) {
-      discrepancies.push(`AMOUNT_MISMATCH: order=${order.amountMinorUnits}, providerTx=${providerTx.amountMinorUnits}`);
+      discrepancies.push(
+        `AMOUNT_MISMATCH: order=${order.amountMinorUnits}, providerTx=${providerTx.amountMinorUnits}`,
+      );
     }
 
     if (order.currency !== providerTx.currency) {
       discrepancies.push(`CURRENCY_MISMATCH: order=${order.currency}, providerTx=${providerTx.currency}`);
     }
 
-    const matchingLedger = ledgerEntries.filter((e) => e.orderId === order.id && e.transactionId === providerTx.id);
+    const matchingLedger = ledgerEntries.filter(
+      (e) => e.orderId === order.id && e.transactionId === providerTx.id,
+    );
     if (providerTx.status === "PAID") {
       if (matchingLedger.length === 0) {
         discrepancies.push("MISSING_LEDGER_RECORD_FOR_PAID_TRANSACTION");

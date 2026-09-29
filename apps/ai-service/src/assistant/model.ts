@@ -2,11 +2,7 @@ import { z } from "zod";
 
 export type AssistantRole = "PUBLIC" | "STUDENT" | "LECTURER" | "ADMIN";
 
-export type AssistantMode =
-  | "STUDENT_ADVISOR"
-  | "STUDY_BUDDY"
-  | "LECTURER_COPILOT"
-  | "ADMIN_SUPPORT";
+export type AssistantMode = "STUDENT_ADVISOR" | "STUDY_BUDDY" | "LECTURER_COPILOT" | "ADMIN_SUPPORT";
 
 export type ConversationSender = "USER" | "ASSISTANT" | "SYSTEM" | "TOOL";
 
@@ -59,7 +55,9 @@ export interface ConversationSummary {
 
 export const chatRequestSchema = z.object({
   conversationId: z.string().uuid().optional(),
-  mode: z.enum(["STUDENT_ADVISOR", "STUDY_BUDDY", "LECTURER_COPILOT", "ADMIN_SUPPORT"]).default("STUDENT_ADVISOR"),
+  mode: z
+    .enum(["STUDENT_ADVISOR", "STUDY_BUDDY", "LECTURER_COPILOT", "ADMIN_SUPPORT"])
+    .default("STUDENT_ADVISOR"),
   courseId: z.string().uuid().optional(),
   message: z.string().trim().min(1).max(4000),
   historyLimit: z.number().int().min(1).max(50).optional(),

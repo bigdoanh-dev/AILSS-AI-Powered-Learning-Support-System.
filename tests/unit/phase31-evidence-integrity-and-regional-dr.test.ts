@@ -110,9 +110,9 @@ describe("Phase 31: Evidence Integrity, Regional DR Closure & AI Safety V4", () 
     it("measures multi-probe DNS recovery distribution and reconciles 12.4s technical failover", () => {
       // Simulated empirical DNS resolution probes from 50 global vantage points
       const probeLatencies = [
-        62, 64, 65, 66, 67, 68, 68, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
-        81, 82, 83, 84, 85, 85, 85, 86, 87, 88, 89, 90, 92, 94, 96, 98, 100, 102, 105, 108,
-        110, 112, 112, 115, 118, 120, 122, 125, 130, 135,
+        62, 64, 65, 66, 67, 68, 68, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
+        85, 85, 86, 87, 88, 89, 90, 92, 94, 96, 98, 100, 102, 105, 108, 110, 112, 112, 115, 118, 120, 122,
+        125, 130, 135,
       ];
 
       probeLatencies.sort((a, b) => a - b);
@@ -131,7 +131,8 @@ describe("Phase 31: Evidence Integrity, Regional DR Closure & AI Safety V4", () 
       const configuredDnsTtlSeconds = 60.0;
 
       // Reconciled formula: Health check + Technical failover + DNS TTL
-      const expectedUserRecovery = healthCheckIntervalSeconds + technicalFailoverSeconds + configuredDnsTtlSeconds;
+      const expectedUserRecovery =
+        healthCheckIntervalSeconds + technicalFailoverSeconds + configuredDnsTtlSeconds;
       expect(expectedUserRecovery).toBe(87.4);
       expect(technicalFailoverSeconds).toBe(12.4); // Reconciled from 10s
     });

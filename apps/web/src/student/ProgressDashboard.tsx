@@ -1,14 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useStudent, type LearningCourse } from "./api";
 import { Icon } from "../components/Icon";
 import { AnimatedNumber, AnimatedProgressBar } from "../components/AnimatedNumber";
@@ -25,11 +17,14 @@ function useInView<T extends HTMLElement = HTMLDivElement>(options?: Intersectio
     const target = ref.current;
     if (!target) return;
 
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setIsInView(true);
-      }
-    }, { threshold: 0.12, ...options });
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+        }
+      },
+      { threshold: 0.12, ...options },
+    );
 
     observer.observe(target);
     return () => observer.disconnect();
@@ -237,11 +232,36 @@ const WEEKLY_STUDY_HOURS = [
 
 const BLOOM_LEVELS = [
   { level: "Nhận biết (Remember)", rate: 90, desc: "Nắm vững thuật ngữ, khái niệm cơ bản", color: "#0284C7" },
-  { level: "Thông hiểu (Understand)", rate: 82, desc: "Giải thích nguyên lý và kiến trúc hệ thống", color: "#7C3AED" },
-  { level: "Vận dụng (Apply)", rate: 74, desc: "Viết truy vấn SQL phức tạp, lập trình chức năng", color: "#D97706" },
-  { level: "Phân tích (Analyze)", rate: 65, desc: "Phân tích Query Execution Plan, dò lỗi mã nguồn", color: "#059669" },
-  { level: "Đánh giá (Evaluate)", rate: 58, desc: "Đánh giá hiệu năng và bảo mật cơ sở dữ liệu", color: "#DC2626" },
-  { level: "Sáng tạo (Create)", rate: 45, desc: "Thiết kế giải pháp phân tán và tích hợp AI", color: "#2563EB" },
+  {
+    level: "Thông hiểu (Understand)",
+    rate: 82,
+    desc: "Giải thích nguyên lý và kiến trúc hệ thống",
+    color: "#7C3AED",
+  },
+  {
+    level: "Vận dụng (Apply)",
+    rate: 74,
+    desc: "Viết truy vấn SQL phức tạp, lập trình chức năng",
+    color: "#D97706",
+  },
+  {
+    level: "Phân tích (Analyze)",
+    rate: 65,
+    desc: "Phân tích Query Execution Plan, dò lỗi mã nguồn",
+    color: "#059669",
+  },
+  {
+    level: "Đánh giá (Evaluate)",
+    rate: 58,
+    desc: "Đánh giá hiệu năng và bảo mật cơ sở dữ liệu",
+    color: "#DC2626",
+  },
+  {
+    level: "Sáng tạo (Create)",
+    rate: 45,
+    desc: "Thiết kế giải pháp phân tán và tích hợp AI",
+    color: "#2563EB",
+  },
 ];
 
 const RECENT_ACTIVITIES = [
@@ -356,7 +376,11 @@ export default function ProgressDashboard() {
       category: "Hệ thống phân tán",
       matchScore: 94,
       eligibility: "ELIGIBLE",
-      reasons: ["Phù hợp mục tiêu: Cloud Architect", "Sở thích: Phân tán & High-Throughput", "Tất cả tiền đề thỏa mãn"],
+      reasons: [
+        "Phù hợp mục tiêu: Cloud Architect",
+        "Sở thích: Phân tán & High-Throughput",
+        "Tất cả tiền đề thỏa mãn",
+      ],
     },
     {
       id: "rec-2",
@@ -386,16 +410,16 @@ export default function ProgressDashboard() {
   };
 
   const handleRecFeedback = (recId: string, action: "DISMISSED" | "ALREADY_KNOW" | "BOOKMARKED") => {
-    setRecommendations((prev) =>
-      prev.map((r) => (r.id === recId ? { ...r, userAction: action } : r)),
-    );
+    setRecommendations((prev) => prev.map((r) => (r.id === recId ? { ...r, userAction: action } : r)));
   };
 
   const totalCompletedLessons = courseList.reduce((acc, c) => acc + c.completedLessons, 0);
   const totalLessons = courseList.reduce((acc, c) => acc + c.totalLessons, 0);
   const totalStudyHours = courseList.reduce((acc, c) => acc + c.studyHours, 0);
   const avgPercent =
-    courseList.length > 0 ? Math.round(courseList.reduce((acc, c) => acc + c.percent, 0) / courseList.length) : 68;
+    courseList.length > 0
+      ? Math.round(courseList.reduce((acc, c) => acc + c.percent, 0) / courseList.length)
+      : 68;
 
   return (
     <div className="admin-dashboard-container" style={{ padding: "0 4px" }}>
@@ -405,7 +429,8 @@ export default function ProgressDashboard() {
           <p className="eyebrow">HỌC VIÊN · THEO DÕI NĂNG LỰC</p>
           <h1>Dashboard Tiến Độ &amp; Năng Lực Học Tập</h1>
           <p className="lead">
-            Báo cáo trực quan lộ trình học tập, thời lượng tích lũy, bài học hoàn tất và ma trận nhận thức Bloom.
+            Báo cáo trực quan lộ trình học tập, thời lượng tích lũy, bài học hoàn tất và ma trận nhận thức
+            Bloom.
           </p>
         </div>
         <div className="dashboard-header-actions">
@@ -480,7 +505,14 @@ export default function ProgressDashboard() {
       </div>
 
       {/* Adaptive Learning Path & Prerequisite Knowledge Gaps */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 18, marginTop: 24 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+          gap: 18,
+          marginTop: 24,
+        }}
+      >
         <div className="dashboard-section-card" style={{ margin: 0 }}>
           <div className="section-card-header">
             <div>
@@ -488,7 +520,10 @@ export default function ProgressDashboard() {
               <h2 style={{ marginTop: 6, fontSize: "1.2rem" }}>Kế Hoạch Thích Ứng Tiếp Theo</h2>
               <p className="subtext">Đề xuất dựa trên đồ thị năng lực và ma trận suy luận tri thức.</p>
             </div>
-            <span className="kpi-tag" style={{ backgroundColor: "#EFF6FF", color: "#2563EB", fontWeight: 700 }}>
+            <span
+              className="kpi-tag"
+              style={{ backgroundColor: "#EFF6FF", color: "#2563EB", fontWeight: 700 }}
+            >
               REVIEW
             </span>
           </div>
@@ -497,7 +532,8 @@ export default function ProgressDashboard() {
               Tối ưu hóa Truy vấn &amp; Chỉ mục B-Tree Phân tán
             </div>
             <p style={{ fontSize: 13, color: "var(--muted, #64748B)", marginTop: 6, lineHeight: 1.5 }}>
-              Hệ thống phát hiện điểm năng lực hiện tại là <strong>45%</strong> (dưới ngưỡng 50% xem lại). Cần ôn tập lại trước khi học Sharding.
+              Hệ thống phát hiện điểm năng lực hiện tại là <strong>45%</strong> (dưới ngưỡng 50% xem lại). Cần
+              ôn tập lại trước khi học Sharding.
             </p>
             <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
               <Link className="button button-small" to="/app/learn/c1">
@@ -510,16 +546,38 @@ export default function ProgressDashboard() {
         <div className="dashboard-section-card" style={{ margin: 0 }}>
           <div className="section-card-header">
             <div>
-              <span className="kpi-tag" style={{ backgroundColor: "#FEF2F2", color: "#DC2626" }}>Lỗ hổng tiền đề</span>
+              <span className="kpi-tag" style={{ backgroundColor: "#FEF2F2", color: "#DC2626" }}>
+                Lỗ hổng tiền đề
+              </span>
               <h2 style={{ marginTop: 6, fontSize: "1.2rem" }}>Cảnh Báo Lỗ Hổng Kiến Thức Tiền Đề</h2>
-              <p className="subtext">Căn cứ theo chính sách ngưỡng năng lực chuẩn (Canonical Policy: 70/50).</p>
+              <p className="subtext">
+                Căn cứ theo chính sách ngưỡng năng lực chuẩn (Canonical Policy: 70/50).
+              </p>
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
-            <div style={{ padding: 10, borderRadius: 8, backgroundColor: "#FEF2F2", border: "1px solid #FCA5A5" }}>
+            <div
+              style={{
+                padding: 10,
+                borderRadius: 8,
+                backgroundColor: "#FEF2F2",
+                border: "1px solid #FCA5A5",
+              }}
+            >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <strong style={{ color: "#991B1B", fontSize: 13 }}>Cơ sở dữ liệu căn bản &amp; SQL Chuẩn</strong>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#DC2626", backgroundColor: "#FEE2E2", padding: "2px 6px", borderRadius: 4 }}>
+                <strong style={{ color: "#991B1B", fontSize: 13 }}>
+                  Cơ sở dữ liệu căn bản &amp; SQL Chuẩn
+                </strong>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "#DC2626",
+                    backgroundColor: "#FEE2E2",
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                  }}
+                >
                   BẮT BUỘC (42 / 70)
                 </span>
               </div>
@@ -527,10 +585,28 @@ export default function ProgressDashboard() {
                 Điểm 42% &lt; ngưỡng bắt buộc 70%. Cần hoàn thành để bảo đảm điều kiện tiên quyết.
               </div>
             </div>
-            <div style={{ padding: 10, borderRadius: 8, backgroundColor: "#FFFBEB", border: "1px solid #FCD34D" }}>
+            <div
+              style={{
+                padding: 10,
+                borderRadius: 8,
+                backgroundColor: "#FFFBEB",
+                border: "1px solid #FCD34D",
+              }}
+            >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <strong style={{ color: "#92400E", fontSize: 13 }}>Hệ điều hành &amp; Kiến trúc Máy tính</strong>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#D97706", backgroundColor: "#FEF3C7", padding: "2px 6px", borderRadius: 4 }}>
+                <strong style={{ color: "#92400E", fontSize: 13 }}>
+                  Hệ điều hành &amp; Kiến trúc Máy tính
+                </strong>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "#D97706",
+                    backgroundColor: "#FEF3C7",
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                  }}
+                >
                   KHUYẾN NGHỊ (48 / 50)
                 </span>
               </div>
@@ -548,7 +624,8 @@ export default function ProgressDashboard() {
           <div>
             <h2>Tiến Độ Từng Khóa Học Đang Theo Học</h2>
             <p className="subtext">
-              Khóa học đã đăng ký kèm tiến độ chi tiết, bài học gần nhất và bài học tiếp theo (6 khóa / trang).
+              Khóa học đã đăng ký kèm tiến độ chi tiết, bài học gần nhất và bài học tiếp theo (6 khóa /
+              trang).
             </p>
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -598,13 +675,21 @@ export default function ProgressDashboard() {
               className="progress-course-card animate-fade-in-up"
               style={{ animationDelay: `${idx * 0.08}s` }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+              <div
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}
+              >
                 <div>
                   <span className="progress-course-category-tag">{c.category}</span>
                   <h3 className="progress-course-card-title">{c.title}</h3>
                 </div>
                 <div style={{ textAlign: "right", minWidth: 54 }}>
-                  <span style={{ fontSize: "1.3rem", fontWeight: 800, color: c.percent >= 70 ? "#16A34A" : "#0284C7" }}>
+                  <span
+                    style={{
+                      fontSize: "1.3rem",
+                      fontWeight: 800,
+                      color: c.percent >= 70 ? "#16A34A" : "#0284C7",
+                    }}
+                  >
                     <AnimatedNumber value={c.percent} suffix="%" />
                   </span>
                 </div>
@@ -612,12 +697,7 @@ export default function ProgressDashboard() {
 
               {/* Visual Animated Progress Bar */}
               <div>
-                <AnimatedProgressBar
-                  percent={c.percent}
-                  height={8}
-                  delay={idx * 60 + 50}
-                  duration={1100}
-                />
+                <AnimatedProgressBar percent={c.percent} height={8} delay={idx * 60 + 50} duration={1100} />
                 <div
                   style={{
                     display: "flex",
@@ -628,10 +708,16 @@ export default function ProgressDashboard() {
                   }}
                 >
                   <span>
-                    Bài học: <strong style={{ color: "var(--ink, #0f172a)" }}>{c.completedLessons}/{c.totalLessons}</strong>
+                    Bài học:{" "}
+                    <strong style={{ color: "var(--ink, #0f172a)" }}>
+                      {c.completedLessons}/{c.totalLessons}
+                    </strong>
                   </span>
                   <span>
-                    Quiz: <strong style={{ color: "var(--ink, #0f172a)" }}>{c.completedQuizzes}/{c.totalQuizzes}</strong>
+                    Quiz:{" "}
+                    <strong style={{ color: "var(--ink, #0f172a)" }}>
+                      {c.completedQuizzes}/{c.totalQuizzes}
+                    </strong>
                   </span>
                   <span>
                     Thời gian: <strong style={{ color: "var(--ink, #0f172a)" }}>{c.studyHours}h</strong>
@@ -661,10 +747,13 @@ export default function ProgressDashboard() {
                   marginTop: 6,
                 }}
               >
-                <span style={{ display: "flex", alignItems: "center", gap: 5, color: "var(--muted, #64748b)" }}>
+                <span
+                  style={{ display: "flex", alignItems: "center", gap: 5, color: "var(--muted, #64748b)" }}
+                >
                   <Icon name="tag" size={13} />
                   <span>
-                    Bản: <strong>v{pinnedMap[c.courseId]?.version || 1}.0</strong> {pinnedMap[c.courseId]?.isPinned ? "(Đã ghim)" : "(Mới nhất)"}
+                    Bản: <strong>v{pinnedMap[c.courseId]?.version || 1}.0</strong>{" "}
+                    {pinnedMap[c.courseId]?.isPinned ? "(Đã ghim)" : "(Mới nhất)"}
                   </span>
                 </span>
                 <button
@@ -677,7 +766,15 @@ export default function ProgressDashboard() {
                 </button>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 6 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: "auto",
+                  paddingTop: 6,
+                }}
+              >
                 <span style={{ fontSize: 12, color: "var(--muted, #64748B)" }}>
                   Học gần nhất: {c.lastStudied}
                 </span>
@@ -689,7 +786,14 @@ export default function ProgressDashboard() {
           ))}
 
           {filteredCourses.length === 0 && (
-            <div style={{ gridColumn: "1 / -1", padding: 36, textAlign: "center", color: "var(--muted, #64748B)" }}>
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                padding: 36,
+                textAlign: "center",
+                color: "var(--muted, #64748B)",
+              }}
+            >
               Không tìm thấy khóa học nào khớp với bộ lọc.
             </div>
           )}
@@ -697,9 +801,17 @@ export default function ProgressDashboard() {
 
         {/* Pagination Toolbar */}
         {filteredCourses.length > pageSize && (
-          <div className="progress-pagination-bar" role="navigation" aria-label="Phân trang danh sách khóa học">
+          <div
+            className="progress-pagination-bar"
+            role="navigation"
+            aria-label="Phân trang danh sách khóa học"
+          >
             <div className="progress-pagination-info">
-              Hiển thị <strong>{(safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filteredCourses.length)}</strong> trong tổng số <strong>{filteredCourses.length}</strong> khóa học
+              Hiển thị{" "}
+              <strong>
+                {(safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filteredCourses.length)}
+              </strong>{" "}
+              trong tổng số <strong>{filteredCourses.length}</strong> khóa học
             </div>
             <div className="progress-pagination-controls">
               <button
@@ -708,7 +820,9 @@ export default function ProgressDashboard() {
                 disabled={safePage <= 1}
                 onClick={() => {
                   setPage((p) => Math.max(1, p - 1));
-                  document.getElementById("course-progress-section")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+                  document
+                    .getElementById("course-progress-section")
+                    ?.scrollIntoView?.({ behavior: "smooth", block: "start" });
                 }}
                 aria-label="Trang trước"
               >
@@ -721,7 +835,9 @@ export default function ProgressDashboard() {
                   className={`progress-pagination-btn ${safePage === pNum ? "active" : ""}`}
                   onClick={() => {
                     setPage(pNum);
-                    document.getElementById("course-progress-section")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+                    document
+                      .getElementById("course-progress-section")
+                      ?.scrollIntoView?.({ behavior: "smooth", block: "start" });
                   }}
                   aria-current={safePage === pNum ? "page" : undefined}
                 >
@@ -734,7 +850,9 @@ export default function ProgressDashboard() {
                 disabled={safePage >= totalPages}
                 onClick={() => {
                   setPage((p) => Math.min(totalPages, p + 1));
-                  document.getElementById("course-progress-section")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+                  document
+                    .getElementById("course-progress-section")
+                    ?.scrollIntoView?.({ behavior: "smooth", block: "start" });
                 }}
                 aria-label="Trang sau"
               >
@@ -749,7 +867,12 @@ export default function ProgressDashboard() {
       <div
         ref={chartsRef}
         className={`reveal-on-scroll ${chartsInView ? "is-visible" : ""}`}
-        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 20, marginTop: 24 }}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))",
+          gap: 20,
+          marginTop: 24,
+        }}
       >
         {/* Weekly Study Activity Chart */}
         <section className="dashboard-section-card" style={{ margin: 0 }}>
@@ -771,7 +894,10 @@ export default function ProgressDashboard() {
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--line, #dce3ee)" />
                 <XAxis dataKey="day" tick={{ fontSize: 12, fill: "var(--muted, #53617a)" }} />
-                <YAxis tickFormatter={(v: number) => `${v}h`} tick={{ fontSize: 12, fill: "var(--muted, #53617a)" }} />
+                <YAxis
+                  tickFormatter={(v: number) => `${v}h`}
+                  tick={{ fontSize: 12, fill: "var(--muted, #53617a)" }}
+                />
                 <Tooltip formatter={(v) => [`${v ?? 0} giờ`, "Thời gian học"]} />
                 <Bar
                   dataKey="hours"
@@ -800,7 +926,14 @@ export default function ProgressDashboard() {
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
             {BLOOM_LEVELS.map((bloom) => (
               <div key={bloom.level} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    fontSize: 13,
+                  }}
+                >
                   <span style={{ fontWeight: 600, color: "var(--ink, #0F172A)" }}>{bloom.level}</span>
                   <span style={{ fontWeight: 700, color: bloom.color }}>{bloom.rate}%</span>
                 </div>
@@ -850,7 +983,10 @@ export default function ProgressDashboard() {
                     color: act.type === "QUIZ" ? "#D97706" : "#0284C7",
                   }}
                 >
-                  <Icon name={act.type === "QUIZ" ? "quiz" : act.type === "VIDEO" ? "sparkles" : "book"} size={18} />
+                  <Icon
+                    name={act.type === "QUIZ" ? "quiz" : act.type === "VIDEO" ? "sparkles" : "book"}
+                    size={18}
+                  />
                 </span>
                 <div>
                   <div className="progress-activity-title">{act.title}</div>
@@ -873,21 +1009,51 @@ export default function ProgressDashboard() {
       </section>
 
       {/* Explainable Recommendations Section */}
-      <section className="dashboard-section-card" style={{ marginTop: 24 }} id="course-recommendations-section">
+      <section
+        className="dashboard-section-card"
+        style={{ marginTop: 24 }}
+        id="course-recommendations-section"
+      >
         <div className="section-card-header">
           <div>
             <h2>Gợi Ý Khóa Học Cá Nhân Hóa (Explainable Recommender)</h2>
-            <p className="subtext">Hệ thống đề xuất 2 tầng (Stage 1 Candidate Generation + Stage 2 Scoring) kèm giải thích minh bạch.</p>
+            <p className="subtext">
+              Hệ thống đề xuất 2 tầng (Stage 1 Candidate Generation + Stage 2 Scoring) kèm giải thích minh
+              bạch.
+            </p>
           </div>
           <span className="kpi-tag accent">AI Gợi Ý</span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginTop: 16 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gap: 16,
+            marginTop: 16,
+          }}
+        >
           {recommendations.map((rec) => (
-            <div key={rec.id} style={{ border: "1px solid var(--border, #e2e8f0)", borderRadius: 12, padding: 16, backgroundColor: "var(--surface, #fff)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+            <div
+              key={rec.id}
+              style={{
+                border: "1px solid var(--border, #e2e8f0)",
+                borderRadius: 12,
+                padding: 16,
+                backgroundColor: "var(--surface, #fff)",
+              }}
+            >
+              <div
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}
+              >
                 <span className="progress-course-category-tag">{rec.category}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: rec.eligibility === "ELIGIBLE" ? "#16a34a" : "#d97706" }}>
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: rec.eligibility === "ELIGIBLE" ? "#16a34a" : "#d97706",
+                  }}
+                >
                   {rec.matchScore}% Phù hợp
                 </span>
               </div>
@@ -904,19 +1070,37 @@ export default function ProgressDashboard() {
                     color: rec.eligibility === "ELIGIBLE" ? "#15803d" : "#b45309",
                   }}
                 >
-                  {rec.eligibility === "ELIGIBLE" ? "✓ ĐỦ ĐIỀU KIỆN TIỀN ĐỀ" : "⚠ CẢNH BÁO TIỀN ĐỀ (-15 ĐIỂM)"}
+                  {rec.eligibility === "ELIGIBLE"
+                    ? "✓ ĐỦ ĐIỀU KIỆN TIỀN ĐỀ"
+                    : "⚠ CẢNH BÁO TIỀN ĐỀ (-15 ĐIỂM)"}
                 </span>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
                 {rec.reasons.map((r, i) => (
-                  <span key={i} style={{ fontSize: 11, color: "var(--muted, #64748b)", backgroundColor: "var(--surface-subtle, #f1f5f9)", padding: "2px 6px", borderRadius: 4 }}>
+                  <span
+                    key={i}
+                    style={{
+                      fontSize: 11,
+                      color: "var(--muted, #64748b)",
+                      backgroundColor: "var(--surface-subtle, #f1f5f9)",
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                    }}
+                  >
                     {r}
                   </span>
                 ))}
               </div>
               {rec.userAction ? (
-                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted, #64748b)", padding: "6px 0" }}>
-                  ✓ Đã ghi nhận: {rec.userAction === "DISMISSED" ? "Không quan tâm" : rec.userAction === "ALREADY_KNOW" ? "Đã biết kiến thức này" : "Đã lưu khóa học"}
+                <div
+                  style={{ fontSize: 12, fontWeight: 600, color: "var(--muted, #64748b)", padding: "6px 0" }}
+                >
+                  ✓ Đã ghi nhận:{" "}
+                  {rec.userAction === "DISMISSED"
+                    ? "Không quan tâm"
+                    : rec.userAction === "ALREADY_KNOW"
+                      ? "Đã biết kiến thức này"
+                      : "Đã lưu khóa học"}
                 </div>
               ) : (
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -953,12 +1137,19 @@ export default function ProgressDashboard() {
 
       {/* Version Diff Modal */}
       {diffCourse && (
-        <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="diff-modal-title">
+        <div
+          className="admin-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="diff-modal-title"
+        >
           <div className="admin-modal-card" style={{ maxWidth: 520 }}>
             <div className="section-card-header">
               <div>
                 <span className="kpi-tag accent">Course Versioning</span>
-                <h2 id="diff-modal-title" style={{ fontSize: "1.2rem", marginTop: 4 }}>So Sánh Phiên Bản Khóa Học</h2>
+                <h2 id="diff-modal-title" style={{ fontSize: "1.2rem", marginTop: 4 }}>
+                  So Sánh Phiên Bản Khóa Học
+                </h2>
                 <p className="subtext">{diffCourse.title}</p>
               </div>
               <button
@@ -972,10 +1163,21 @@ export default function ProgressDashboard() {
               </button>
             </div>
             <div style={{ padding: "16px 0", display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: 12, borderRadius: 8, backgroundColor: "var(--surface-subtle, #f8fafc)", border: "1px solid var(--border, #e2e8f0)" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: 12,
+                  borderRadius: 8,
+                  backgroundColor: "var(--surface-subtle, #f8fafc)",
+                  border: "1px solid var(--border, #e2e8f0)",
+                }}
+              >
                 <div>
                   <div style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>Bản bạn đang học</div>
-                  <strong style={{ fontSize: 16 }}>Phiên bản v{pinnedMap[diffCourse.courseId]?.version || 1}.0.0</strong>
+                  <strong style={{ fontSize: 16 }}>
+                    Phiên bản v{pinnedMap[diffCourse.courseId]?.version || 1}.0.0
+                  </strong>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>Bản phát hành mới nhất</div>
@@ -983,11 +1185,28 @@ export default function ProgressDashboard() {
                 </div>
               </div>
               <div>
-                <h4 style={{ margin: "8px 0 4px 0", fontSize: 13 }}>Thay đổi trong phiên bản mới (Release Diff):</h4>
-                <ul style={{ fontSize: 12.5, color: "var(--muted, #475569)", paddingLeft: 18, margin: 0, lineHeight: 1.6 }}>
-                  <li><strong>[Thêm mới]</strong> Bài 6: Phân mảnh dữ liệu Sharding &amp; Replication Cassandra.</li>
-                  <li><strong>[Thêm mới]</strong> Lab thực hành: Cấu hình Consistent Hashing &amp; Replication Factor.</li>
-                  <li><strong>[Cập nhật]</strong> Bộ câu hỏi trắc nghiệm AI cấp độ Bloom 4-5.</li>
+                <h4 style={{ margin: "8px 0 4px 0", fontSize: 13 }}>
+                  Thay đổi trong phiên bản mới (Release Diff):
+                </h4>
+                <ul
+                  style={{
+                    fontSize: 12.5,
+                    color: "var(--muted, #475569)",
+                    paddingLeft: 18,
+                    margin: 0,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  <li>
+                    <strong>[Thêm mới]</strong> Bài 6: Phân mảnh dữ liệu Sharding &amp; Replication Cassandra.
+                  </li>
+                  <li>
+                    <strong>[Thêm mới]</strong> Lab thực hành: Cấu hình Consistent Hashing &amp; Replication
+                    Factor.
+                  </li>
+                  <li>
+                    <strong>[Cập nhật]</strong> Bộ câu hỏi trắc nghiệm AI cấp độ Bloom 4-5.
+                  </li>
                 </ul>
               </div>
               <div style={{ display: "flex", gap: 8, marginTop: 12, justifyContent: "flex-end" }}>
@@ -999,7 +1218,9 @@ export default function ProgressDashboard() {
                     setDiffCourse(null);
                   }}
                 >
-                  {pinnedMap[diffCourse.courseId]?.isPinned ? "Bỏ ghim (Dùng bản mới)" : "Ghim phiên bản hiện tại"}
+                  {pinnedMap[diffCourse.courseId]?.isPinned
+                    ? "Bỏ ghim (Dùng bản mới)"
+                    : "Ghim phiên bản hiện tại"}
                 </button>
                 <button
                   type="button"

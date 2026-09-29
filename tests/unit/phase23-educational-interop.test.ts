@@ -38,7 +38,9 @@ describe("Phase 23J-23M: Educational Standards Interoperability (LTI 1.3 Advanta
       };
 
       expect(response["https://purl.imsglobal.org/spec/lti-dl/claim/content_items"]).toHaveLength(1);
-      expect(response["https://purl.imsglobal.org/spec/lti-dl/claim/content_items"][0]?.lineItem?.scoreMaximum).toBe(100);
+      expect(
+        response["https://purl.imsglobal.org/spec/lti-dl/claim/content_items"][0]?.lineItem?.scoreMaximum,
+      ).toBe(100);
     });
 
     it("formats LTI AGS Score payload for grade passback", () => {

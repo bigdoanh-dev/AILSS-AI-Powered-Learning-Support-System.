@@ -1,1 +1,6 @@
-{"name":"@ailss/media-worker","version":"0.1.0","private":true,"type":"module"}
+{
+  "name": "@ailss/media-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module"
+}

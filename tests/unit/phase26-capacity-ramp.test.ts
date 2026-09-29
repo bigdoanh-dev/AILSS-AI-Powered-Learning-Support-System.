@@ -143,7 +143,10 @@ describe("Phase 26.23 & 26.24: Capacity Reproduction & Progressive Ramp", () => 
   });
 
   it("strictly prohibits unmeasured extrapolation to 50,000 capacity", () => {
-    function validateCapacityClaim(claimedCapacity: number, measuredCapacity: number): {
+    function validateCapacityClaim(
+      claimedCapacity: number,
+      measuredCapacity: number,
+    ): {
       readonly allowed: boolean;
       readonly code: string;
       readonly reason: string;

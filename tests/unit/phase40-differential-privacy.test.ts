@@ -140,14 +140,22 @@ describe("Phase 40 Final Corrective Closure: Differential Privacy Semantics & De
       queryType: "MEAN_SCORE",
       epsilonRequested: 3.0,
     });
-    expect(DifferentialPrivacyService.getRemainingBudget("researcher-persistent", "tenant-polytech")).toBe(7.0);
+    expect(DifferentialPrivacyService.getRemainingBudget("researcher-persistent", "tenant-polytech")).toBe(
+      7.0,
+    );
 
     // Session 2 (same researcher, same tenant)
-    const session2Budget = DifferentialPrivacyService.getRemainingBudget("researcher-persistent", "tenant-polytech");
+    const session2Budget = DifferentialPrivacyService.getRemainingBudget(
+      "researcher-persistent",
+      "tenant-polytech",
+    );
     expect(session2Budget).toBe(7.0);
 
     // Cross-tenant isolation (same researcher in tenant-fpt has isolated budget)
-    const otherTenantBudget = DifferentialPrivacyService.getRemainingBudget("researcher-persistent", "tenant-fpt-uni");
+    const otherTenantBudget = DifferentialPrivacyService.getRemainingBudget(
+      "researcher-persistent",
+      "tenant-fpt-uni",
+    );
     expect(otherTenantBudget).toBe(10.0);
   });
 
@@ -350,9 +358,9 @@ describe("Phase 40 Final Corrective Closure: Differential Privacy Semantics & De
   it("40.H19 — cross-course query: one student enrolled in 3 courses contributes exactly 1 bounded scalar to institution-wide export", () => {
     // Institution-wide cross-course analytics: student has scores in 3 courses
     const crossCourseRows = [
-      { userId: "u-multi-course", courseId: "math-101",  assessmentId: "m1", score: 85 },
-      { userId: "u-multi-course", courseId: "phys-201",  assessmentId: "p1", score: 72 },
-      { userId: "u-multi-course", courseId: "hist-301",  assessmentId: "h1", score: 90 },
+      { userId: "u-multi-course", courseId: "math-101", assessmentId: "m1", score: 85 },
+      { userId: "u-multi-course", courseId: "phys-201", assessmentId: "p1", score: 72 },
+      { userId: "u-multi-course", courseId: "hist-301", assessmentId: "h1", score: 90 },
       // 4 other students each in 1 course
       { userId: "u2", courseId: "math-101", assessmentId: "m1", score: 70 },
       { userId: "u3", courseId: "phys-201", assessmentId: "p1", score: 68 },
@@ -371,8 +379,9 @@ describe("Phase 40 Final Corrective Closure: Differential Privacy Semantics & De
     // Even though u-multi-course has 3 courses, they contribute 1 scalar
     expect(dpRes.rawCount).toBe(5);
     // Cross-course aggregation rule: PER_USER_MEAN_CLAMPED_TO_BOUNDING_INTERVAL
-    expect(dpRes.mechanism.contributionBounding.perUserAggregationRule)
-      .toBe("PER_USER_MEAN_CLAMPED_TO_BOUNDING_INTERVAL");
+    expect(dpRes.mechanism.contributionBounding.perUserAggregationRule).toBe(
+      "PER_USER_MEAN_CLAMPED_TO_BOUNDING_INTERVAL",
+    );
   });
 
   // ============================================================
@@ -389,7 +398,9 @@ describe("Phase 40 Final Corrective Closure: Differential Privacy Semantics & De
       queryType: "MEAN_SCORE",
       epsilonRequested: 3.0,
     });
-    expect(DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-polytech")).toBe(7.0);
+    expect(DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-polytech")).toBe(
+      7.0,
+    );
 
     // Query 2: overlapping cohort (49/50 students) — budget still decrements
     const overlappingCohort = cohort.slice(0, 19);
@@ -400,11 +411,16 @@ describe("Phase 40 Final Corrective Closure: Differential Privacy Semantics & De
       queryType: "MEAN_SCORE",
       epsilonRequested: 3.0,
     });
-    expect(DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-polytech")).toBe(4.0);
+    expect(DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-polytech")).toBe(
+      4.0,
+    );
 
     // 40.H21: Bypass attempt 1 — "new API token" (same researcher/tenant key in budget store)
     // Budget ledger is keyed by (researcherId, tenantId), not by token/session — so it's unchanged
-    const afterBypass1 = DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-polytech");
+    const afterBypass1 = DifferentialPrivacyService.getRemainingBudget(
+      "researcher-bypass-test",
+      "tenant-polytech",
+    );
     expect(afterBypass1).toBe(4.0); // Budget NOT reset
 
     // Bypass attempt 2 — "different export job ID" (still same researcher/tenant)
@@ -415,10 +431,15 @@ describe("Phase 40 Final Corrective Closure: Differential Privacy Semantics & De
       queryType: "MEAN_SCORE",
       epsilonRequested: 4.0, // try to consume remaining
     });
-    expect(DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-polytech")).toBe(0.0);
+    expect(DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-polytech")).toBe(
+      0.0,
+    );
 
     // Bypass attempt 3 — "different tenant" (isolated budget, NOT shared)
-    const crossTenantBudget = DifferentialPrivacyService.getRemainingBudget("researcher-bypass-test", "tenant-fpt-uni");
+    const crossTenantBudget = DifferentialPrivacyService.getRemainingBudget(
+      "researcher-bypass-test",
+      "tenant-fpt-uni",
+    );
     expect(crossTenantBudget).toBe(10.0); // Separate tenant = separate budget
 
     // Verify: 40.H21 budget reset policy — manual reset is blocked without explicit clearance
@@ -429,4 +450,3 @@ describe("Phase 40 Final Corrective Closure: Differential Privacy Semantics & De
     expect(policy.approvalPolicy).toBe("PRODUCT_GOVERNANCE_THRESHOLD_REQUIRING_DPO_SIGN_OFF");
   });
 });
-

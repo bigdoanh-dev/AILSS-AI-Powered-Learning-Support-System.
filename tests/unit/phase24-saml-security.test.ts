@@ -48,7 +48,11 @@ describe("Phase 24.9: SAML 2.0 Cryptographic Security & Adversarial Protocol Def
     ].join("");
   }
 
-  function wrapInResponse(assertionXml: string, signatureXml: string, responseId: string = "_resp_001"): string {
+  function wrapInResponse(
+    assertionXml: string,
+    signatureXml: string,
+    responseId: string = "_resp_001",
+  ): string {
     return [
       `<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="${responseId}">`,
       "<samlp:Status>",

@@ -47,11 +47,7 @@ export function Workflow() {
   }, [autoPlay]);
 
   return (
-    <div
-      className="workflow"
-      onMouseEnter={() => setAutoPlay(false)}
-      onMouseLeave={() => setAutoPlay(true)}
-    >
+    <div className="workflow" onMouseEnter={() => setAutoPlay(false)} onMouseLeave={() => setAutoPlay(true)}>
       <ol className="workflow-steps">
         {steps.map(([title, sub], i) => (
           <li key={title}>
@@ -71,19 +67,18 @@ export function Workflow() {
       </ol>
       <div className="workflow-detail" aria-live="polite">
         <div key={active} className="panel-motion">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 6,
+            }}
+          >
             <span className="eyebrow">Bước {active + 1} / 6</span>
             <button
               type="button"
-              className="button button-subtle button-small"
-              style={{
-                fontSize: 11,
-                padding: "2px 7px",
-                borderRadius: 6,
-                background: "rgba(255,255,255,0.06)",
-                color: "var(--muted)",
-                cursor: "pointer",
-              }}
+              className="workflow-autoplay-btn"
               onClick={() => setAutoPlay(!autoPlay)}
               title={autoPlay ? "Bấm để dừng tự động chuyển bước" : "Bấm để tiếp tục tự động chuyển bước"}
             >
@@ -122,4 +117,3 @@ export function Workflow() {
     </div>
   );
 }
-

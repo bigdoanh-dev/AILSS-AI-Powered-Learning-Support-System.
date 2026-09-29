@@ -141,22 +141,31 @@ export function ScheduleCalendar({
           ? `Ngày ${day.slice(8, 10)}/${day.slice(5, 7)}/${day.slice(0, 4)}`
           : view === "week"
             ? `${start} – ${end}`
-            : `Tháng ${day.slice(5, 7)}/${day.slice(0, 4)}`} · Giờ Việt Nam (UTC+7)
+            : `Tháng ${day.slice(5, 7)}/${day.slice(0, 4)}`}{" "}
+        · Giờ Việt Nam (UTC+7)
       </p>
       {!sorted.length && view !== "day" && <p role="status">Chưa có buổi học trong khoảng thời gian này.</p>}
       {view === "day" ? (
         <div className="calendar-day-agenda">
           <div className="calendar-day-header">
-            <h3>Lịch học ngày {day.slice(8, 10)}/{day.slice(5, 7)}/{day.slice(0, 4)}</h3>
+            <h3>
+              Lịch học ngày {day.slice(8, 10)}/{day.slice(5, 7)}/{day.slice(0, 4)}
+            </h3>
             <span className="badge">{sorted.length} buổi học</span>
           </div>
           {!sorted.length ? (
-            <div className="empty-day-box" style={{ padding: "32px 16px", textAlign: "center", color: "var(--muted)" }}>
+            <div
+              className="empty-day-box"
+              style={{ padding: "32px 16px", textAlign: "center", color: "var(--muted)" }}
+            >
               <p style={{ margin: 0, fontWeight: 600 }}>Không có buổi học nào được xếp lịch vào ngày này.</p>
               <small>Bạn có thể chọn ngày khác hoặc chuyển sang xem theo Tuần/Tháng.</small>
             </div>
           ) : (
-            <div className="day-agenda-list" style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "12px" }}>
+            <div
+              className="day-agenda-list"
+              style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "12px" }}
+            >
               {sorted.map((x) => (
                 <article key={x.sessionId} className="home-activity-card">
                   <div className="home-activity-card-top">

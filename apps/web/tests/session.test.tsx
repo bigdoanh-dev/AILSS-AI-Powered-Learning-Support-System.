@@ -21,7 +21,7 @@ function Probe() {
     <>
       <p data-testid="state">{s.state}</p>
       <p>{s.profile?.displayName}</p>
-      <p>{s.message}</p>
+      <p data-testid="message">{s.message}</p>
       <button onClick={() => void s.bootstrap()}>retry</button>
       <button
         onClick={() =>
@@ -89,6 +89,7 @@ describe("session authority", () => {
       </SessionProvider>,
     );
     await screen.findByText("UNAUTHENTICATED");
+    expect(screen.getByTestId("message").textContent).toBe("");
     fireEvent.click(screen.getByText("login"));
     await screen.findByText(/Email hoặc mật khẩu chưa đúng/);
     fireEvent.click(screen.getByText("login"));
@@ -96,6 +97,39 @@ describe("session authority", () => {
     fireEvent.click(screen.getByText("logout"));
     await screen.findByText("UNAUTHENTICATED");
     expect(screen.queryByText("Test")).toBeNull();
+  });
+  it("suppresses 401 notification on initial bootstrap but alerts on authenticated refresh failure", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(ok(profile))
+      .mockResolvedValueOnce(fail(401, "SESSION_EXPIRED"));
+    vi.stubGlobal("fetch", fetch);
+    render(
+      <SessionProvider>
+        <Probe />
+      </SessionProvider>,
+    );
+    await screen.findByText("Test");
+    expect(screen.getByTestId("state").textContent).toBe("AUTHENTICATED");
+    expect(screen.getByTestId("message").textContent).toBe("");
+
+    fireEvent.click(screen.getByText("retry"));
+    await screen.findByText("UNAUTHENTICATED");
+    expect(screen.queryByText("Test")).toBeNull();
+    expect(screen.getByTestId("message").textContent).toBe(
+      "Phiên đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.",
+    );
+  });
+  it("keeps initial bootstrap 401 silent without expired banner", async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(fail(401, "SESSION_EXPIRED"));
+    vi.stubGlobal("fetch", fetch);
+    render(
+      <SessionProvider>
+        <Probe />
+      </SessionProvider>,
+    );
+    await screen.findByText("UNAUTHENTICATED");
+    expect(screen.getByTestId("message").textContent).toBe("");
   });
   it("outage hides stale private profile and retry restores", async () => {
     vi.stubGlobal(

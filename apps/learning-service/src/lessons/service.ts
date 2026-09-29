@@ -26,7 +26,9 @@ export class LearningLessonService {
     private readonly storage:
       (Pick<ObjectStorage, "verify" | "createReadUrl"> & Partial<Pick<ObjectStorage, "stat">>) | undefined,
     private readonly secret: string,
-    private readonly media?: {lessonMedia(lessonId:string):Promise<{mediaAssetId:string;mediaStatus:string}|undefined>},
+    private readonly media?: {
+      lessonMedia(lessonId: string): Promise<{ mediaAssetId: string; mediaStatus: string } | undefined>;
+    },
   ) {}
 
   public async list(input: { courseId: string; actor?: ActorContext; requestId: string }) {
@@ -41,7 +43,12 @@ export class LearningLessonService {
     return {
       courseId: course.courseId,
       contentVersion: course.contentVersion,
-      lessons: await Promise.all(lessons.map(async (lesson) => ({...lessonDto(lesson, course.courseId, course.contentVersion),...await this.media?.lessonMedia(lesson.lessonId)}))),
+      lessons: await Promise.all(
+        lessons.map(async (lesson) => ({
+          ...lessonDto(lesson, course.courseId, course.contentVersion),
+          ...(await this.media?.lessonMedia(lesson.lessonId)),
+        })),
+      ),
     };
   }
 
@@ -59,7 +66,7 @@ export class LearningLessonService {
     if (!owner && !entitled && !preview)
       throw new AppError("LESSON_ACCESS_REQUIRED", 403, "Active Course access is required");
     const media = await this.media?.lessonMedia(lesson.lessonId);
-    if(media) return {...lessonDetailDto(lesson),...media,contentType:"application/vnd.apple.mpegurl"};
+    if (media) return { ...lessonDetailDto(lesson), ...media, contentType: "application/vnd.apple.mpegurl" };
     const contentUrl = lesson.objectKey ? await this.readUrl(lesson.objectKey) : undefined;
     const contentType =
       lesson.objectKey && this.storage?.stat

@@ -68,12 +68,7 @@ export const TestableIntegrationTypeEnum = z.enum([
 ]);
 export type TestableIntegrationType = z.infer<typeof TestableIntegrationTypeEnum>;
 
-export const ConnectionStatusEnum = z.enum([
-  "CONNECTED",
-  "DEGRADED",
-  "FAILED",
-  "NOT_CONFIGURED",
-]);
+export const ConnectionStatusEnum = z.enum(["CONNECTED", "DEGRADED", "FAILED", "NOT_CONFIGURED"]);
 export type ConnectionStatus = z.infer<typeof ConnectionStatusEnum>;
 
 export interface IntegrationConnectionTestResult {

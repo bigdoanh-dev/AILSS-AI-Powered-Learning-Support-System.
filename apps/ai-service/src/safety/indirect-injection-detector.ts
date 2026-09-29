@@ -6,7 +6,8 @@ export interface IndirectInjectionAnalysis {
 
 const INDIRECT_INJECTION_RULES: ReadonlyArray<{ readonly regex: RegExp; readonly reason: string }> = [
   {
-    regex: /(?:---|===|\*\*\*)\s*(?:END\s+CONTEXT|SYSTEM\s+(?:NOTE|PROMPT|DIRECTIVE)|BEGIN\s+SYSTEM|ADMIN\s+OVERRIDE)\s*(?:---|===|\*\*\*)/iu,
+    regex:
+      /(?:---|===|\*\*\*)\s*(?:END\s+CONTEXT|SYSTEM\s+(?:NOTE|PROMPT|DIRECTIVE)|BEGIN\s+SYSTEM|ADMIN\s+OVERRIDE)\s*(?:---|===|\*\*\*)/iu,
     reason: "DELIMITER_HIJACKING_ATTEMPT",
   },
   {
@@ -18,7 +19,8 @@ const INDIRECT_INJECTION_RULES: ReadonlyArray<{ readonly regex: RegExp; readonly
     reason: "CODEBLOCK_ROLE_INJECTION",
   },
   {
-    regex: /(?:ignore|disregard|bypass)\s+(?:all\s+)?(?:prior|previous|above)\s+(?:instructions|guidelines|system\s+prompts)/iu,
+    regex:
+      /(?:ignore|disregard|bypass)\s+(?:all\s+)?(?:prior|previous|above)\s+(?:instructions|guidelines|system\s+prompts)/iu,
     reason: "INDIRECT_INSTRUCTION_OVERRIDE",
   },
   {
@@ -26,7 +28,8 @@ const INDIRECT_INJECTION_RULES: ReadonlyArray<{ readonly regex: RegExp; readonly
     reason: "MARKDOWN_IMAGE_EXFILTRATION",
   },
   {
-    regex: /(?:print|reveal|output|exfiltrate)\s+(?:all\s+)?(?:user\s+data|api[_-]?keys?|system\s+instructions)/iu,
+    regex:
+      /(?:print|reveal|output|exfiltrate)\s+(?:all\s+)?(?:user\s+data|api[_-]?keys?|system\s+instructions)/iu,
     reason: "INDIRECT_DATA_EXFILTRATION",
   },
 ];

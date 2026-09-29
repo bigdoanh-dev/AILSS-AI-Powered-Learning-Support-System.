@@ -82,7 +82,8 @@ export interface LtiLaunchValidationResult {
 }
 
 export function validateLtiLaunch(options: LtiLaunchValidationOptions): LtiLaunchValidationResult {
-  const { claims, trustedDeployments, expectedState, actualState, consumedNonces, currentTimeSeconds } = options;
+  const { claims, trustedDeployments, expectedState, actualState, consumedNonces, currentTimeSeconds } =
+    options;
 
   if (currentTimeSeconds !== undefined && claims.exp <= currentTimeSeconds) {
     return {
@@ -101,7 +102,10 @@ export function validateLtiLaunch(options: LtiLaunchValidationOptions): LtiLaunc
   }
 
   if (consumedNonces) {
-    const hasNonce = "has" in consumedNonces ? consumedNonces.has(claims.nonce) : (consumedNonces as Set<string>).has(claims.nonce);
+    const hasNonce =
+      "has" in consumedNonces
+        ? consumedNonces.has(claims.nonce)
+        : (consumedNonces as Set<string>).has(claims.nonce);
     if (hasNonce) {
       return {
         valid: false,
@@ -240,10 +244,7 @@ export interface VerifiedCertificatePayload {
 }
 
 export type CredentialPackagingFormat =
-  | "AILSS_CREDENTIAL_V1"
-  | "AILSS_VC_V2_LEGACY"
-  | "AILSS_VC_V2"
-  | "AILSS_VC_V3";
+  "AILSS_CREDENTIAL_V1" | "AILSS_VC_V2_LEGACY" | "AILSS_VC_V2" | "AILSS_VC_V3";
 
 export interface VerifiedCertificate extends VerifiedCertificatePayload {
   readonly status: "ACTIVE" | "REVOKED";
@@ -292,10 +293,7 @@ export function canonicalizeCertificatePayload(payload: VerifiedCertificatePaylo
   ].join("|");
 }
 
-export function signCertificatePayload(
-  payload: VerifiedCertificatePayload,
-  signingKey: string,
-): string {
+export function signCertificatePayload(payload: VerifiedCertificatePayload, signingKey: string): string {
   const canonical = canonicalizeCertificatePayload(payload);
   return createHmac("sha256", signingKey).update(canonical).digest("hex");
 }
@@ -309,9 +307,7 @@ export function verifyCertificateSignature(
   return expected === signature;
 }
 
-export function packageW3CVerifiableCredentialV2(
-  cert: VerifiedCertificate,
-): W3CVerifiableCredentialV2 {
+export function packageW3CVerifiableCredentialV2(cert: VerifiedCertificate): W3CVerifiableCredentialV2 {
   return {
     "@context": [
       "https://www.w3.org/2018/credentials/v1",
@@ -341,10 +337,7 @@ export function packageW3CVerifiableCredentialV2(
   };
 }
 
-export function verifyW3CCredentialV2(
-  vc: W3CVerifiableCredentialV2,
-  signingKey: string,
-): boolean {
+export function verifyW3CCredentialV2(vc: W3CVerifiableCredentialV2, signingKey: string): boolean {
   const certificateId = vc.id.replace(/^urn:uuid:/iu, "");
   const payload: VerifiedCertificatePayload = {
     certificateId,
@@ -415,10 +408,7 @@ export function packageW3CVerifiableCredentialV3(
     : undefined;
 
   return {
-    "@context": [
-      "https://www.w3.org/ns/credentials/v2",
-      "https://w3id.org/security/data-integrity/v1",
-    ],
+    "@context": ["https://www.w3.org/ns/credentials/v2", "https://w3id.org/security/data-integrity/v1"],
     id: `urn:uuid:${cert.certificateId}`,
     type: ["VerifiableCredential", "CourseCompletionCredential"],
     issuer: {
@@ -448,10 +438,7 @@ export function packageW3CVerifiableCredentialV3(
   };
 }
 
-export function verifyW3CCredentialV3(
-  vc: W3CVerifiableCredentialV3,
-  signingKey: string,
-): boolean {
+export function verifyW3CCredentialV3(vc: W3CVerifiableCredentialV3, signingKey: string): boolean {
   const certificateId = vc.id.replace(/^urn:uuid:/iu, "");
   const payload: VerifiedCertificatePayload = {
     certificateId,
@@ -650,13 +637,16 @@ export function verifyVcInteropCredential(
   }
 
   // 3. Cryptosuite check (canonical eddsa-rdfc-2022, versioned legacy support)
-  const allowedSuites = options.allowedCryptosuites ?? (
-    options.allowLegacyProofs
+  const allowedSuites =
+    options.allowedCryptosuites ??
+    (options.allowLegacyProofs
       ? ["eddsa-rdfc-2022", "ed25519-2020", "Ed25519Signature2020"]
-      : ["eddsa-rdfc-2022"]
-  );
+      : ["eddsa-rdfc-2022"]);
   if (!allowedSuites.includes(vc.proof.cryptosuite)) {
-    return { valid: false, error: `UNSUPPORTED_CRYPTOSUITE: expected ${allowedSuites.join(" or ")}, got ${vc.proof.cryptosuite}` };
+    return {
+      valid: false,
+      error: `UNSUPPORTED_CRYPTOSUITE: expected ${allowedSuites.join(" or ")}, got ${vc.proof.cryptosuite}`,
+    };
   }
 
   // 4. Proof integrity: recompute expected proof value from canonical fields
@@ -677,7 +667,11 @@ export function verifyVcInteropCredential(
     // The issuer may have signed with their own key — for real VCs we'd verify
     // with the issuer's public key. For this interop test harness, we detect
     // tampering by checking the canonical hash matches what was signed.
-    return { valid: false, error: "PROOF_INVALID: proof does not match canonical credential hash (SUBJECT_TAMPERED or signature mismatch)" };
+    return {
+      valid: false,
+      error:
+        "PROOF_INVALID: proof does not match canonical credential hash (SUBJECT_TAMPERED or signature mismatch)",
+    };
   }
 
   return {
@@ -703,7 +697,6 @@ export function verifyBitstringStatusListByIndex(params: {
   const revoked = ((targetByte >> bitOffset) & 1) === 1;
   return { revoked, index: params.statusListIndex };
 }
-
 
 export interface BitstringStatusListEntry {
   readonly id: string;
@@ -774,10 +767,12 @@ export interface OpenBadges3Achievement {
     readonly narration?: string | undefined;
     readonly id?: string | undefined;
   };
-  readonly image?: {
-    readonly id: string;
-    readonly type: "Image";
-  } | undefined;
+  readonly image?:
+    | {
+        readonly id: string;
+        readonly type: "Image";
+      }
+    | undefined;
 }
 
 export interface OpenBadges3Credential {
@@ -905,11 +900,7 @@ export function verifyOpenBadge3Credential(
 // ---------------------------------------------------------------------------
 
 export type StandardCategory =
-  | "IDENTITY_FEDERATION"
-  | "DIRECTORY_SYNC"
-  | "LMS_SIS_INTEGRATION"
-  | "LEARNING_ANALYTICS"
-  | "CREDENTIALS";
+  "IDENTITY_FEDERATION" | "DIRECTORY_SYNC" | "LMS_SIS_INTEGRATION" | "LEARNING_ANALYTICS" | "CREDENTIALS";
 
 export interface DisaggregatedStandardEntry {
   readonly standard: string;
@@ -1186,11 +1177,7 @@ export function verifyLtiGradeIntegrity(sample: LtiGradeIntegritySample): {
 }
 
 export type CertificationClassification =
-  | "IMPLEMENTED"
-  | "INTERNAL_TESTED"
-  | "EXTERNAL_VALIDATED"
-  | "CERTIFICATION_IN_PROGRESS"
-  | "CERTIFIED";
+  "IMPLEMENTED" | "INTERNAL_TESTED" | "EXTERNAL_VALIDATED" | "CERTIFICATION_IN_PROGRESS" | "CERTIFIED";
 
 export interface ConformanceDecision {
   readonly standardFamily: "LTI_ADVANTAGE" | "OPEN_BADGES_3_0";
@@ -1215,5 +1202,3 @@ export const ONE_EDTECH_CONFORMANCE_DECISIONS: readonly ConformanceDecision[] = 
     currentConformanceState: "EXTERNAL_VALIDATED",
   },
 ];
-
-

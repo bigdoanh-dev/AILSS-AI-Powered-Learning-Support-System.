@@ -39,10 +39,10 @@ describe("Phase 18B — Finance, Double-Entry Ledger & Safe Refunds", () => {
     expect(cashEntry?.amount).toBe(1_000_000);
 
     expect(platformEntry?.direction).toBe("CREDIT");
-    expect(platformEntry?.amount).toBe(200_000); // 20% platform commission
+    expect(platformEntry?.amount).toBe(150_000); // 15% platform commission
 
     expect(lecturerEntry?.direction).toBe("CREDIT");
-    expect(lecturerEntry?.amount).toBe(800_000); // 80% lecturer share
+    expect(lecturerEntry?.amount).toBe(850_000); // 85% lecturer share
   });
 
   it("enforces double-entry ledger balance on refund settlement", () => {
@@ -71,11 +71,11 @@ describe("Phase 18B — Finance, Double-Entry Ledger & Safe Refunds", () => {
 
     const platformReversal = tx.entries.find((e) => e.entryType === "PLATFORM_COMMISSION");
     expect(platformReversal?.direction).toBe("DEBIT");
-    expect(platformReversal?.amount).toBe(100_000);
+    expect(platformReversal?.amount).toBe(75_000);
 
     const lecturerReversal = tx.entries.find((e) => e.entryType === "LECTURER_REVENUE");
     expect(lecturerReversal?.direction).toBe("DEBIT");
-    expect(lecturerReversal?.amount).toBe(400_000);
+    expect(lecturerReversal?.amount).toBe(425_000);
   });
 
   describe("CourseRefundPolicyEngine", () => {
@@ -136,6 +136,11 @@ describe("Phase 18B — Finance, Double-Entry Ledger & Safe Refunds", () => {
       const entitlements = new Map<string, CourseEntitlement>();
 
       const repo: LearningCommerceRepository = {
+        commissionAt: async () => ({
+          basisPoints: 1500,
+          effectiveAt: "2026-09-27T00:00:00.000Z",
+          updatedBy: null,
+        }),
         order: (id: string) => Promise.resolve(orders.get(id) ?? null),
         course: (id: string) => Promise.resolve(courses.get(id) ?? null),
         entitlement: (studentId: string, courseId: string) =>
@@ -263,8 +268,8 @@ describe("Phase 18B — Finance, Double-Entry Ledger & Safe Refunds", () => {
       });
 
       expect(revenue.grossRevenue).toBe(2_000_000);
-      expect(revenue.platformFee).toBe(400_000); // 20%
-      expect(revenue.netEarnings).toBe(1_600_000); // 80%
+      expect(revenue.platformFee).toBe(300_000); // 15%
+      expect(revenue.netEarnings).toBe(1_700_000); // 85%
 
       // Admin settles payout batch
       const payout = await financeService.generateLecturerPayout({
@@ -274,7 +279,7 @@ describe("Phase 18B — Finance, Double-Entry Ledger & Safe Refunds", () => {
       });
 
       expect(payout.status).toBe("SETTLED");
-      expect(payout.totalAmount).toBe(1_600_000);
+      expect(payout.totalAmount).toBe(1_700_000);
       expect(payout.ledgerRef).toBeDefined();
     });
   });

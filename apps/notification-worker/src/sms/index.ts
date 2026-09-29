@@ -39,14 +39,18 @@ export class SmsGovernanceGuard {
     this.#config = { ...DEFAULT_SMS_GOVERNANCE, ...config };
   }
 
-  public validateOutbound(sms: OutboundSms, now = Date.now()): { readonly allowed: boolean; readonly reason?: string } {
+  public validateOutbound(
+    sms: OutboundSms,
+    now = Date.now(),
+  ): { readonly allowed: boolean; readonly reason?: string } {
     const phone = sms.recipientPhone.trim();
 
     // 1. Informational SMS policy check
     if (sms.purpose === "INFORMATIONAL" && !this.#config.allowInformationalSms) {
       return {
         allowed: false,
-        reason: "SMS_INFORMATIONAL_DISABLED_IN_PILOT: SMS is restricted to security MFA only to prevent high telco costs",
+        reason:
+          "SMS_INFORMATIONAL_DISABLED_IN_PILOT: SMS is restricted to security MFA only to prevent high telco costs",
       };
     }
 
@@ -60,8 +64,9 @@ export class SmsGovernanceGuard {
     }
 
     // 3. Country code allowlist check
-    const matchedCountry = this.#config.allowedCountryCodes.some((code) =>
-      phone.startsWith(code) || (code === "+84" && (phone.startsWith("0") || phone.startsWith("84"))),
+    const matchedCountry = this.#config.allowedCountryCodes.some(
+      (code) =>
+        phone.startsWith(code) || (code === "+84" && (phone.startsWith("0") || phone.startsWith("84"))),
     );
 
     if (!matchedCountry) {
@@ -100,7 +105,10 @@ export class SmsGovernanceGuard {
     list.push(timestamp);
     // Keep only last 24 hours
     const cutoff = timestamp - 86400 * 1000;
-    this.#history.set(phone, list.filter((t) => t > cutoff));
+    this.#history.set(
+      phone,
+      list.filter((t) => t > cutoff),
+    );
   }
 }
 

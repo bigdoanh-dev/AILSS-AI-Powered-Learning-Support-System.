@@ -4,36 +4,25 @@
     {
       "Sid": "AllowBucketLocation",
       "Effect": "Allow",
-      "Action": [
-        "s3:GetBucketLocation"
-      ],
+      "Action": ["s3:GetBucketLocation"],
       "Resource": "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}"
     },
     {
       "Sid": "AllowReadOriginalSourceAndAbortExpired",
       "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:AbortMultipartUpload"
-      ],
+      "Action": ["s3:GetObject", "s3:AbortMultipartUpload"],
       "Resource": "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}/media-original/*"
     },
     {
       "Sid": "AllowDerivedHlsReadWriteDelete",
       "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject"
-      ],
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
       "Resource": "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}/media-hls/*"
     },
     {
       "Sid": "AllowCaptionRead",
       "Effect": "Allow",
-      "Action": [
-        "s3:GetObject"
-      ],
+      "Action": ["s3:GetObject"],
       "Resource": "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}/media-caption/*"
     }
   ]

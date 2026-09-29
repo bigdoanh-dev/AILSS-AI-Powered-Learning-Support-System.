@@ -18,11 +18,18 @@ function harness(request: ReturnType<typeof vi.fn>) {
   const states: Array<{ state: string; attempt?: boolean; errorCode?: string }> = [];
   const store = {
     listQueueableCompletions: vi.fn(async () => [operation]),
-    setCompletionState: vi.fn(async (user: string, id: string, state: string, options?: { incrementAttempt?: boolean; errorCode?: string }) => {
-      void user;
-      void id;
-      states.push({ state, attempt: options?.incrementAttempt, errorCode: options?.errorCode });
-    }),
+    setCompletionState: vi.fn(
+      async (
+        user: string,
+        id: string,
+        state: string,
+        options?: { incrementAttempt?: boolean; errorCode?: string },
+      ) => {
+        void user;
+        void id;
+        states.push({ state, attempt: options?.incrementAttempt, errorCode: options?.errorCode });
+      },
+    ),
   } as unknown as OfflineStore;
   const session = {
     snapshot: { state: "AUTHENTICATED", user: { userId: "student-1", role: "STUDENT" } },
@@ -81,7 +88,10 @@ describe("durable lesson completion replay", () => {
     await syncPendingLessonCompletions(h.session, "student-1", h.store);
     expect(request.mock.calls).toHaveLength(2);
     expect(request.mock.calls[0]?.[1]).toEqual(request.mock.calls[1]?.[1]);
-    expect(request.mock.calls[0]?.[1]).toMatchObject({ idempotencyKey: "same-idempotency-key", body: { completed: true } });
+    expect(request.mock.calls[0]?.[1]).toMatchObject({
+      idempotencyKey: "same-idempotency-key",
+      body: { completed: true },
+    });
     expect(h.states.at(-1)?.state).toBe("SYNCED");
   });
 });

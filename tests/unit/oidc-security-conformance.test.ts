@@ -213,10 +213,7 @@ describe("OIDC Security Conformance & SAML Reality (P1)", () => {
         .sign(privateKey);
 
       await expect(
-        verifyOidcIdToken(
-          { idToken: expiredToken },
-          { issuer, clientId, jwks: jwksLookup },
-        ),
+        verifyOidcIdToken({ idToken: expiredToken }, { issuer, clientId, jwks: jwksLookup }),
       ).rejects.toMatchObject({
         code: "OIDC_TOKEN_EXPIRED",
         status: 401,
@@ -240,10 +237,7 @@ describe("OIDC Security Conformance & SAML Reality (P1)", () => {
         .sign(privateKey);
 
       await expect(
-        verifyOidcIdToken(
-          { idToken: mismatchedKidToken },
-          { issuer, clientId, jwks: jwksLookup },
-        ),
+        verifyOidcIdToken({ idToken: mismatchedKidToken }, { issuer, clientId, jwks: jwksLookup }),
       ).rejects.toMatchObject({
         code: "OIDC_KEY_MISMATCH",
         status: 401,
@@ -295,10 +289,7 @@ describe("OIDC Security Conformance & SAML Reality (P1)", () => {
         .sign(privateKey);
 
       await expect(
-        verifyOidcIdToken(
-          { idToken: tokenWrongAud },
-          { issuer, clientId, jwks: jwksLookup },
-        ),
+        verifyOidcIdToken({ idToken: tokenWrongAud }, { issuer, clientId, jwks: jwksLookup }),
       ).rejects.toMatchObject({
         code: "OIDC_AUDIENCE_MISMATCH",
         status: 401,

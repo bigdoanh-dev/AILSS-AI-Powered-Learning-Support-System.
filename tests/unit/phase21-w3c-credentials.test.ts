@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  verifyW3CCredentialV2,
-} from "../../packages/contracts/src/interoperability.js";
+import { verifyW3CCredentialV2 } from "../../packages/contracts/src/interoperability.js";
 import {
   CredentialService,
   InMemoryCredentialRepository,

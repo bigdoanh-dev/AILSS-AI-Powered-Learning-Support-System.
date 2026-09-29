@@ -49,13 +49,23 @@ export function CourseAuthoringStudio() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", borderBottom: "1px solid #e2e8f0", paddingBottom: "16px" }}>
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "24px",
+          borderBottom: "1px solid #e2e8f0",
+          paddingBottom: "16px",
+        }}
+      >
         <div>
           <h1 style={{ fontSize: "26px", fontWeight: "700", color: "#0f172a", margin: "0 0 6px 0" }}>
             Xưởng Soạn thảo Khóa học V2 (Course Studio)
           </h1>
           <p style={{ margin: 0, color: "#64748b" }}>
-            Môn học: <strong>Cấu trúc Dữ liệu & Giải thuật (CS101)</strong> | Phiên bản hiện tại: <strong>{activeVersion}</strong>
+            Môn học: <strong>Cấu trúc Dữ liệu & Giải thuật (CS101)</strong> | Phiên bản hiện tại:{" "}
+            <strong>{activeVersion}</strong>
           </p>
         </div>
 
@@ -66,8 +76,18 @@ export function CourseAuthoringStudio() {
               borderRadius: "20px",
               fontSize: "13px",
               fontWeight: 700,
-              backgroundColor: courseStatus === "PUBLISHED" ? "#dcfce7" : courseStatus === "APPROVED" ? "#dbeafe" : "#fef9c3",
-              color: courseStatus === "PUBLISHED" ? "#166534" : courseStatus === "APPROVED" ? "#1e40af" : "#854d0e",
+              backgroundColor:
+                courseStatus === "PUBLISHED"
+                  ? "#dcfce7"
+                  : courseStatus === "APPROVED"
+                    ? "#dbeafe"
+                    : "#fef9c3",
+              color:
+                courseStatus === "PUBLISHED"
+                  ? "#166534"
+                  : courseStatus === "APPROVED"
+                    ? "#1e40af"
+                    : "#854d0e",
             }}
           >
             Trạng thái: {courseStatus}
@@ -111,8 +131,17 @@ export function CourseAuthoringStudio() {
 
       {/* Structure & Module Studio */}
       <main>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <h2 style={{ fontSize: "18px", fontWeight: "600", color: "#1e293b", margin: 0 }}>Cấu trúc Chương mục & Bài giảng</h2>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "16px",
+          }}
+        >
+          <h2 style={{ fontSize: "18px", fontWeight: "600", color: "#1e293b", margin: 0 }}>
+            Cấu trúc Chương mục & Bài giảng
+          </h2>
           <button
             onClick={() => setAiModalOpen(true)}
             style={{
@@ -209,7 +238,8 @@ export function CourseAuthoringStudio() {
               Yêu cầu AI Soạn Thảo Bản Thảo Nội Dung
             </h3>
             <p style={{ fontSize: "13px", color: "#64748b" }}>
-              Mọi nội dung do AI tạo ra đều bắt đầu ở trạng thái <strong>BẢN THẢO (DRAFT)</strong> và bắt buộc phải có sự phê duyệt của giảng viên trước khi xuất bản.
+              Mọi nội dung do AI tạo ra đều bắt đầu ở trạng thái <strong>BẢN THẢO (DRAFT)</strong> và bắt buộc
+              phải có sự phê duyệt của giảng viên trước khi xuất bản.
             </p>
 
             <button
@@ -249,21 +279,41 @@ export function CourseAuthoringStudio() {
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
               <button
                 onClick={() => setAiModalOpen(false)}
-                style={{ minHeight: "36px", padding: "0 14px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#ffffff", cursor: "pointer" }}
+                style={{
+                  minHeight: "36px",
+                  padding: "0 14px",
+                  borderRadius: "6px",
+                  border: "1px solid #cbd5e1",
+                  background: "#ffffff",
+                  cursor: "pointer",
+                }}
               >
                 Đóng
               </button>
               {aiDraftOutput && (
                 <button
                   onClick={() => {
-                    const newLesson = { id: `les-${Date.now()}`, title: "2.3 Bài tập Cây Đỏ Đen (Đã duyệt)", status: "APPROVED" };
+                    const newLesson = {
+                      id: `les-${Date.now()}`,
+                      title: "2.3 Bài tập Cây Đỏ Đen (Đã duyệt)",
+                      status: "APPROVED",
+                    };
                     const updated = [...modules];
                     updated[1]?.lessons.push(newLesson);
                     setModules(updated);
                     setAiModalOpen(false);
                     alert("Đã phê duyệt và đưa bài giảng vào Chương 2!");
                   }}
-                  style={{ minHeight: "36px", padding: "0 16px", backgroundColor: "#16a34a", color: "#ffffff", border: "none", borderRadius: "6px", fontWeight: 600, cursor: "pointer" }}
+                  style={{
+                    minHeight: "36px",
+                    padding: "0 16px",
+                    backgroundColor: "#16a34a",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "6px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
                 >
                   Phê duyệt bản thảo vào Khóa học
                 </button>

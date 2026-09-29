@@ -4,7 +4,10 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const baseline = new Map([
-  ["app/admin/stats/index.tsx", { "@typescript-eslint/no-unused-vars": 3, "@typescript-eslint/no-explicit-any": 2 }],
+  [
+    "app/admin/stats/index.tsx",
+    { "@typescript-eslint/no-unused-vars": 3, "@typescript-eslint/no-explicit-any": 2 },
+  ],
   ["app/teaching/classes/index.tsx", { "@typescript-eslint/no-unused-vars": 3 }],
   ["app/teaching/courses/[courseId]/reviews.tsx", { "@typescript-eslint/no-unused-vars": 2 }],
   ["app/teaching/index.tsx", { "@typescript-eslint/no-unused-vars": 1 }],
@@ -48,9 +51,12 @@ for (const report of reports) {
 const actualTotal = reports.reduce((sum, report) => sum + report.errorCount, 0);
 const resultSummary = {
   status: violations.length ? "FAIL" : "PASS",
-  baselineErrors: [...baseline.values()].reduce((sum, rules) => sum + Object.values(rules).reduce((a, b) => a + b, 0), 0),
+  baselineErrors: [...baseline.values()].reduce(
+    (sum, rules) => sum + Object.values(rules).reduce((a, b) => a + b, 0),
+    0,
+  ),
   actualErrors: actualTotal,
   newIssues: violations,
 };
 process.stdout.write(`${JSON.stringify(resultSummary)}\n`);
-if (violations.length || result.status !== 0 && actualTotal === 0) process.exit(1);
+if (violations.length || (result.status !== 0 && actualTotal === 0)) process.exit(1);

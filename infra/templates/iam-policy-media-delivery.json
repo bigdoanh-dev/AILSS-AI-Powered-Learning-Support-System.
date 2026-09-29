@@ -4,17 +4,13 @@
     {
       "Sid": "AllowBucketLocation",
       "Effect": "Allow",
-      "Action": [
-        "s3:GetBucketLocation"
-      ],
+      "Action": ["s3:GetBucketLocation"],
       "Resource": "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}"
     },
     {
       "Sid": "AllowPlaybackOutputRead",
       "Effect": "Allow",
-      "Action": [
-        "s3:GetObject"
-      ],
+      "Action": ["s3:GetObject"],
       "Resource": [
         "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}/media-hls/*",
         "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}/media-caption/*"

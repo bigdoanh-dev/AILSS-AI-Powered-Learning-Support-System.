@@ -22,7 +22,7 @@ describe("Phase 40 Corrective Closure: Wave 1 Security Paths & Wave 2 Feature E2
             protocol: "OIDC",
             discoveryUrlPattern: "https://auth.example.com",
             allowedDomainRules: ["example.com"],
-            ...( { client_secret: "secret-token-leak" } as unknown as object ),
+            ...({ client_secret: "secret-token-leak" } as unknown as object),
           },
           featurePolicy: {},
           aiPolicy: {
@@ -305,7 +305,7 @@ describe("Phase 40 Corrective Closure: Wave 1 Security Paths & Wave 2 Feature E2
       expect(resEasy.upperLowerDiscriminationD?.pLower).toBe(0.37); // 10/27
       expect(resEasy.upperLowerDiscriminationD?.dValue).toBe(0.63); // 1.0 - 0.37
       expect(resEasy.pointBiserialRpb).not.toBeNull();
-      expect(resEasy.pointBiserialRpb?.rPb).toBeGreaterThan(0.40); // Strong positive item-rest correlation
+      expect(resEasy.pointBiserialRpb?.rPb).toBeGreaterThan(0.4); // Strong positive item-rest correlation
       expect(resEasy.pointBiserialRpb?.scoreDefinition).toBe("CORRECTED_TOTAL_EXCLUDING_ITEM");
       expect(resEasy.pointBiserialRpb?.methodVersion).toBe("CORRECTED_ITEM_REST_PEARSON");
       expect(resEasy.correctedItemRestPointBiserial?.rPb).toBe(resEasy.pointBiserialRpb?.rPb);
@@ -551,7 +551,9 @@ describe("Phase 40 Corrective Closure: Wave 1 Security Paths & Wave 2 Feature E2
           endDate: "2026-10-21",
           status: "DRAFT",
         });
-      }).toThrow(/Security & Integrity Violation: Experimentation on GRADE_CORRECTNESS is strictly prohibited/);
+      }).toThrow(
+        /Security & Integrity Violation: Experimentation on GRADE_CORRECTNESS is strictly prohibited/,
+      );
 
       // Attempting to target PAYMENT -> BLOCKED!
       expect(() => {

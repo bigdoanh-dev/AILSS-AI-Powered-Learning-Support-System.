@@ -21,7 +21,7 @@ describe("Phase 5 binding contracts", () => {
     const api = JSON.parse(await readFile("contracts/api-registry.json", "utf8"));
     const query = JSON.parse(await readFile("contracts/query-registry.json", "utf8"));
     expect([api.public.length, api.internal.length, query.queries.length, EVENT_TYPES.length]).toEqual([
-      101, 15, 78, 22,
+      115, 15, 83, 22,
     ]);
   });
 

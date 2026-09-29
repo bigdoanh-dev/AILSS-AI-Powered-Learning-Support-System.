@@ -4,9 +4,7 @@
   "localDatabase": {
     "engine": "expo-sqlite with SQLCipher",
     "schemaVersion": 1,
-    "migrations": [
-      1
-    ],
+    "migrations": [1],
     "cacheRetentionDays": 30,
     "encryption": "SQLCipher key is generated randomly and stored in device-only SecureStore; key is applied before any database read",
     "sensitiveColumns": "No passwords, access tokens, refresh tokens, session secrets, assessment answers or lesson bodies"
@@ -52,22 +50,8 @@
       "name": "lesson completion operation",
       "classification": "QUEUEABLE_WRITE",
       "currentState": "Persisted in SQLCipher; retry on reconnect with the same idempotency key",
-      "requiredFields": [
-        "operationId",
-        "resourceId",
-        "idempotencyKey",
-        "createdAt",
-        "attemptCount",
-        "state"
-      ],
-      "syncStates": [
-        "PENDING",
-        "SYNCING",
-        "SYNCED",
-        "FAILED_RETRYABLE",
-        "FAILED_FINAL",
-        "CONFLICT"
-      ],
+      "requiredFields": ["operationId", "resourceId", "idempotencyKey", "createdAt", "attemptCount", "state"],
+      "syncStates": ["PENDING", "SYNCING", "SYNCED", "FAILED_RETRYABLE", "FAILED_FINAL", "CONFLICT"],
       "conflictPolicy": "Server completion/version wins; re-read progress before retry"
     },
     {

@@ -53,7 +53,9 @@ describe("Phase 18C — Product Intelligence, Funnels & Data Minimization", () =
       eventName: "unknown_event_name",
     };
 
-    await expect(service.ingestEvent(invalidEvent)).rejects.toThrow("Analytics event schema validation failed");
+    await expect(service.ingestEvent(invalidEvent)).rejects.toThrow(
+      "Analytics event schema validation failed",
+    );
   });
 
   it("calculates catalog, learning, and assistant funnels correctly", async () => {

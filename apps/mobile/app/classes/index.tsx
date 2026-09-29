@@ -25,7 +25,17 @@ import {
 } from "../../src/classroom";
 import { formatCurrentMonth, formatDisplayMonth } from "../../src/notifications";
 import { ApiError } from "../../src/api";
-import { Page, Button, Badge, Icon, EmptyState, ScreenHeader, BottomNavBar, styles, tokens } from "../../src/ui";
+import {
+  Page,
+  Button,
+  Badge,
+  Icon,
+  EmptyState,
+  ScreenHeader,
+  BottomNavBar,
+  styles,
+  tokens,
+} from "../../src/ui";
 import { ScalePressable, FadeSlideIn } from "../../src/motion";
 
 type ActiveTab = "classes" | "schedule" | "attendance";
@@ -36,7 +46,7 @@ export default function StudentClassesScreen() {
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>(
-    tab === "schedule" ? "schedule" : tab === "attendance" ? "attendance" : "classes"
+    tab === "schedule" ? "schedule" : tab === "attendance" ? "attendance" : "classes",
   );
   const [scheduleViewMode, setScheduleViewMode] = useState<"day" | "week" | "month">("week");
   const [selectedDateStr, setSelectedDateStr] = useState<string>(() => new Date().toISOString().slice(0, 10));
@@ -148,7 +158,8 @@ export default function StudentClassesScreen() {
   const excusedCount = attendanceList.filter((a) => a.attendanceStatus === "EXCUSED").length;
   const absentCount = attendanceList.filter((a) => a.attendanceStatus === "ABSENT").length;
   const totalRecorded = presentCount + excusedCount + absentCount;
-  const presentRate = totalRecorded > 0 ? Math.round(((presentCount + excusedCount) / totalRecorded) * 100) : 100;
+  const presentRate =
+    totalRecorded > 0 ? Math.round(((presentCount + excusedCount) / totalRecorded) * 100) : 100;
 
   return (
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
@@ -277,7 +288,9 @@ export default function StudentClassesScreen() {
                     style={localStyles.classCard}
                     onPress={() => router.push(`/classes/${item.classId}`)}
                   >
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <View
+                      style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
+                    >
                       <Badge label={kindLabel} variant="primary" />
                       {item.scheduleState === "PUBLISHED" && (
                         <Badge label="ĐÃ CÓ LỊCH" variant="success" icon="check" />
@@ -286,7 +299,14 @@ export default function StudentClassesScreen() {
 
                     <Text style={localStyles.cardTitle}>{item.name}</Text>
 
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginTop: 4,
+                      }}
+                    >
                       <Text style={styles.small}>
                         {item.maxMembers ? `Tối đa ${item.maxMembers} thành viên` : "Lớp tiêu chuẩn"}
                       </Text>
@@ -384,11 +404,22 @@ export default function StudentClassesScreen() {
                 </View>
 
                 {/* Day Agenda Header */}
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                >
                   <Text style={{ fontSize: 14, fontWeight: "700", color: tokens.color.ink }}>
-                    Lịch học ngày {selectedDateStr.slice(8, 10)}/{selectedDateStr.slice(5, 7)}/{selectedDateStr.slice(0, 4)}
+                    Lịch học ngày {selectedDateStr.slice(8, 10)}/{selectedDateStr.slice(5, 7)}/
+                    {selectedDateStr.slice(0, 4)}
                   </Text>
-                  <Badge label={`${daySessions.length} buổi học`} variant={daySessions.length > 0 ? "success" : "neutral"} />
+                  <Badge
+                    label={`${daySessions.length} buổi học`}
+                    variant={daySessions.length > 0 ? "success" : "neutral"}
+                  />
                 </View>
 
                 {/* Day Sessions List */}
@@ -417,7 +448,13 @@ export default function StudentClassesScreen() {
                         style={[localStyles.sessionCard, isOnline && localStyles.sessionCardOnline]}
                         onPress={() => router.push(`/classes/${sess.classId}/sessions/${sess.sessionId}`)}
                       >
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
                           <Badge
                             label={isOnline ? "TRỰC TUYẾN • LIVE" : "TRỰC TIẾP"}
                             variant={isOnline ? "success" : "neutral"}
@@ -431,7 +468,15 @@ export default function StudentClassesScreen() {
                         <Text style={localStyles.sessionTitle}>{sess.title}</Text>
                         <Text style={localStyles.sessionClassName}>Lớp: {sess.className}</Text>
 
-                        <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 4, marginTop: 4 }}>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "flex-end",
+                            alignItems: "center",
+                            gap: 4,
+                            marginTop: 4,
+                          }}
+                        >
                           <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
                             Vào chi tiết
                           </Text>
@@ -492,7 +537,13 @@ export default function StudentClassesScreen() {
                             style={[localStyles.sessionCard, isOnline && localStyles.sessionCardOnline]}
                             onPress={() => router.push(`/classes/${sess.classId}/sessions/${sess.sessionId}`)}
                           >
-                            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                              }}
+                            >
                               <Badge
                                 label={isOnline ? "TRỰC TUYẾN • LIVE" : "TRỰC TIẾP"}
                                 variant={isOnline ? "success" : "neutral"}
@@ -506,7 +557,15 @@ export default function StudentClassesScreen() {
                             <Text style={localStyles.sessionTitle}>{sess.title}</Text>
                             <Text style={localStyles.sessionClassName}>Lớp: {sess.className}</Text>
 
-                            <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 4, marginTop: 4 }}>
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                justifyContent: "flex-end",
+                                alignItems: "center",
+                                gap: 4,
+                                marginTop: 4,
+                              }}
+                            >
                               <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
                                 Vào chi tiết
                               </Text>
@@ -548,7 +607,13 @@ export default function StudentClassesScreen() {
                           style={[localStyles.sessionCard, isOnline && localStyles.sessionCardOnline]}
                           onPress={() => router.push(`/classes/${sess.classId}/sessions/${sess.sessionId}`)}
                         >
-                          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                            }}
+                          >
                             <Badge
                               label={isOnline ? "TRỰC TUYẾN • LIVE" : "TRỰC TIẾP"}
                               variant={isOnline ? "success" : "neutral"}
@@ -562,7 +627,15 @@ export default function StudentClassesScreen() {
                           <Text style={localStyles.sessionTitle}>{sess.title}</Text>
                           <Text style={localStyles.sessionClassName}>Lớp: {sess.className}</Text>
 
-                          <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 4, marginTop: 4 }}>
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              justifyContent: "flex-end",
+                              alignItems: "center",
+                              gap: 4,
+                              marginTop: 4,
+                            }}
+                          >
                             <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
                               Vào chi tiết
                             </Text>
@@ -659,9 +732,17 @@ export default function StudentClassesScreen() {
                   <FadeSlideIn key={item.sessionId} delay={Math.min(index * 30, 200)} fromY={8}>
                     <ScalePressable
                       style={localStyles.sessionCard}
-                      onPress={() => router.push(`/classes/${item.classId}/sessions/${item.sessionId}` as Href)}
+                      onPress={() =>
+                        router.push(`/classes/${item.classId}/sessions/${item.sessionId}` as Href)
+                      }
                     >
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
                         <Badge label={badgeLabel} variant={badgeVariant} icon="check" />
                         <Text style={styles.small}>{formatDate(parseTimestamp(item.startAt))}</Text>
                       </View>
@@ -674,7 +755,15 @@ export default function StudentClassesScreen() {
                           </Text>
                         </View>
                       )}
-                      <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 4, marginTop: 8 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "flex-end",
+                          alignItems: "center",
+                          gap: 4,
+                          marginTop: 8,
+                        }}
+                      >
                         <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
                           Chi tiết buổi học
                         </Text>

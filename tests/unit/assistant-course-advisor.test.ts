@@ -100,10 +100,8 @@ describe("Phase 17 — Student Course Advisor & Grounded Recommendations", () =>
         searchCalled = true;
         return Promise.resolve(mockCatalogCourses);
       },
-      getCourseDetails: (id) =>
-        Promise.resolve(mockCatalogCourses.find((c) => c.courseId === id) ?? null),
-      compareCourses: (ids) =>
-        Promise.resolve(mockCatalogCourses.filter((c) => ids.includes(c.courseId))),
+      getCourseDetails: (id) => Promise.resolve(mockCatalogCourses.find((c) => c.courseId === id) ?? null),
+      compareCourses: (ids) => Promise.resolve(mockCatalogCourses.filter((c) => ids.includes(c.courseId))),
       getKnowledgeGaps: () => Promise.resolve([]),
       searchCourseMaterials: () => Promise.resolve([]),
       generateQuizDraft: () => Promise.resolve({}),
@@ -114,8 +112,8 @@ describe("Phase 17 — Student Course Advisor & Grounded Recommendations", () =>
     const mockLlm: AssistantLlmProvider = {
       generate: (req) => {
         // Assert that tool execution results were fed into LLM system prompt context
-        const hasToolContext = req.messages.some((m) =>
-          m.role === "system" && m.content.includes("search_courses"),
+        const hasToolContext = req.messages.some(
+          (m) => m.role === "system" && m.content.includes("search_courses"),
         );
         expect(hasToolContext).toBe(true);
 
@@ -143,9 +141,14 @@ describe("Phase 17 — Student Course Advisor & Grounded Recommendations", () =>
     expect(searchCalled).toBe(true);
     expect(res.toolInvocations).toHaveLength(1);
     expect(res.toolInvocations[0]?.name).toBe("search_courses");
-    expect(res.catalogCourses).toEqual(mockCatalogCourses.map(({ courseId, title, priceAmount, priceCurrency }) => ({
-      courseId, title, priceAmount, priceCurrency,
-    })));
+    expect(res.catalogCourses).toEqual(
+      mockCatalogCourses.map(({ courseId, title, priceAmount, priceCurrency }) => ({
+        courseId,
+        title,
+        priceAmount,
+        priceCurrency,
+      })),
+    );
     expect(res.catalogCourses?.[0]).not.toHaveProperty("instructorName");
     expect(res.catalogCourses?.[0]).not.toHaveProperty("level");
     expect(mockRepo.toolLogs).toHaveLength(1);
@@ -174,14 +177,17 @@ describe("Phase 17 — Student Course Advisor & Grounded Recommendations", () =>
       repository: mockRepo.repo,
       toolRunner: new ToolRunner(domainClient),
       domainClient,
-      llmProvider: { generate: () => {
-        completionCount += 1;
-        return Promise.resolve({ content: "Tôi đã kiểm tra khóa học Cassandra đang được xuất bản." });
-      } },
+      llmProvider: {
+        generate: () => {
+          completionCount += 1;
+          return Promise.resolve({ content: "Tôi đã kiểm tra khóa học Cassandra đang được xuất bản." });
+        },
+      },
     });
     const student = { userId: randomUUID(), role: "STUDENT" as const };
     const greeting = await orchestrator.chat(student, {
-      mode: "STUDENT_ADVISOR", message: "Tôi không biết chọn khóa học nào",
+      mode: "STUDENT_ADVISOR",
+      message: "Tôi không biết chọn khóa học nào",
     });
     expect(greeting.content).toContain("Bạn muốn học để đạt mục tiêu gì");
     expect(greeting.toolInvocations).toHaveLength(0);
@@ -189,28 +195,37 @@ describe("Phase 17 — Student Course Advisor & Grounded Recommendations", () =>
     expect(queries).toEqual([]);
 
     const mobilePrompt = await orchestrator.chat(student, {
-      mode: "STUDENT_ADVISOR", message: "Tìm khóa học phù hợp với người mới bắt đầu",
+      mode: "STUDENT_ADVISOR",
+      message: "Tìm khóa học phù hợp với người mới bắt đầu",
     });
     expect(mobilePrompt.content).toContain("Bạn muốn học để đạt mục tiêu gì");
     expect(mobilePrompt.toolInvocations).toHaveLength(0);
     expect(queries).toEqual([]);
 
     const topic = await orchestrator.chat(student, {
-      mode: "STUDENT_ADVISOR", conversationId: greeting.conversationId, message: "Tôi muốn học Cassandra",
+      mode: "STUDENT_ADVISOR",
+      conversationId: greeting.conversationId,
+      message: "Tôi muốn học Cassandra",
     });
     expect(topic.toolInvocations.map((call) => call.name)).toEqual(["search_courses"]);
 
     const availability = await orchestrator.chat(student, {
-      mode: "STUDENT_ADVISOR", conversationId: greeting.conversationId, message: "Tôi chỉ rảnh buổi tối",
+      mode: "STUDENT_ADVISOR",
+      conversationId: greeting.conversationId,
+      message: "Tôi chỉ rảnh buổi tối",
     });
     expect(availability.toolInvocations.map((call) => call.name)).toEqual(["search_courses"]);
 
     const qualification = await orchestrator.chat(student, {
-      mode: "STUDENT_ADVISOR", conversationId: greeting.conversationId, message: "Em mới bắt đầu, mỗi tuần học 4 giờ",
+      mode: "STUDENT_ADVISOR",
+      conversationId: greeting.conversationId,
+      message: "Em mới bắt đầu, mỗi tuần học 4 giờ",
     });
     expect(qualification.toolInvocations.map((call) => call.name)).toEqual(["search_courses"]);
     const budget = await orchestrator.chat(student, {
-      mode: "STUDENT_ADVISOR", conversationId: greeting.conversationId, message: "Ngân sách dưới 500 nghìn",
+      mode: "STUDENT_ADVISOR",
+      conversationId: greeting.conversationId,
+      message: "Ngân sách dưới 500 nghìn",
     });
     expect(budget.toolInvocations.map((call) => call.name)).toEqual(["search_courses"]);
     expect(queries).toEqual(Array.from({ length: 4 }, () => "Tôi muốn học Cassandra"));
@@ -234,11 +249,19 @@ describe("Phase 17 — Student Course Advisor & Grounded Recommendations", () =>
       repository: mockRepo.repo,
       toolRunner: new ToolRunner(domainClient),
       domainClient,
-      llmProvider: { generate: () => { completionCount += 1; return Promise.resolve({ content: "fabricated offer" }); } },
+      llmProvider: {
+        generate: () => {
+          completionCount += 1;
+          return Promise.resolve({ content: "fabricated offer" });
+        },
+      },
     });
     const student = { userId: randomUUID(), role: "STUDENT" as const };
-    const empty = await orchestrator.chat(student, { mode: "STUDENT_ADVISOR", message: "Tôi muốn học Cassandra" });
-    expect(empty.content).toContain("chưa tìm thấy khóa học đã xuất bản");
+    const empty = await orchestrator.chat(student, {
+      mode: "STUDENT_ADVISOR",
+      message: "Tôi muốn học Cassandra",
+    });
+    expect(empty.content).toContain("chưa thấy khóa học đã xuất bản");
     expect(completionCount).toBe(0);
 
     const failedClient: AssistantDomainClient = {
@@ -249,9 +272,17 @@ describe("Phase 17 — Student Course Advisor & Grounded Recommendations", () =>
       repository: createMockRepo().repo,
       toolRunner: new ToolRunner(failedClient),
       domainClient: failedClient,
-      llmProvider: { generate: () => { completionCount += 1; return Promise.resolve({ content: "fabricated offer" }); } },
+      llmProvider: {
+        generate: () => {
+          completionCount += 1;
+          return Promise.resolve({ content: "fabricated offer" });
+        },
+      },
     });
-    const unavailable = await unavailableOrchestrator.chat(student, { mode: "STUDENT_ADVISOR", message: "Tôi muốn học Cassandra" });
+    const unavailable = await unavailableOrchestrator.chat(student, {
+      mode: "STUDENT_ADVISOR",
+      message: "Tôi muốn học Cassandra",
+    });
     expect(unavailable.content).toContain("tạm thời không khả dụng");
     expect(unavailable.toolInvocations).toHaveLength(1);
     expect(completionCount).toBe(0);
@@ -261,10 +292,8 @@ describe("Phase 17 — Student Course Advisor & Grounded Recommendations", () =>
     const studentId = randomUUID();
     const domainClient: AssistantDomainClient = {
       searchCourses: () => Promise.resolve([]),
-      getCourseDetails: (id) =>
-        Promise.resolve(mockCatalogCourses.find((c) => c.courseId === id) ?? null),
-      compareCourses: (ids) =>
-        Promise.resolve(mockCatalogCourses.filter((c) => ids.includes(c.courseId))),
+      getCourseDetails: (id) => Promise.resolve(mockCatalogCourses.find((c) => c.courseId === id) ?? null),
+      compareCourses: (ids) => Promise.resolve(mockCatalogCourses.filter((c) => ids.includes(c.courseId))),
       getKnowledgeGaps: () => Promise.resolve([]),
       searchCourseMaterials: () => Promise.resolve([]),
       generateQuizDraft: () => Promise.resolve({}),

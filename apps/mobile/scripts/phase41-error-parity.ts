@@ -8,8 +8,16 @@ import { ApiError as WebApiError, errorMessage, request as webRequest } from "..
 
 const features = [
   { feature: "Mastery", path: "/mastery/courses/00000000-0000-4000-8000-000000000041", method: "GET" },
-  { feature: "Study Plan", path: "/study-plan/current?courseId=00000000-0000-4000-8000-000000000041", method: "GET" },
-  { feature: "Assessment", path: "/assessments/attempts/00000000-0000-4000-8000-000000000041/submit", method: "POST" },
+  {
+    feature: "Study Plan",
+    path: "/study-plan/current?courseId=00000000-0000-4000-8000-000000000041",
+    method: "GET",
+  },
+  {
+    feature: "Assessment",
+    path: "/assessments/attempts/00000000-0000-4000-8000-000000000041/submit",
+    method: "POST",
+  },
   { feature: "Tutor", path: "/assistant/chat", method: "POST" },
 ] as const;
 
@@ -57,7 +65,8 @@ function classifyMobile(error: unknown): Classification {
   if (!(error instanceof MobileApiError))
     return { category: "UNEXPECTED_CLIENT_ERROR", message: "unexpected client error", status: null };
   if (error.kind === "cancelled") return { category: "CANCELLED", message: error.message, status: null };
-  if (error.kind === "timeout") return { category: "TRANSIENT_TIMEOUT", message: error.message, status: null };
+  if (error.kind === "timeout")
+    return { category: "TRANSIENT_TIMEOUT", message: error.message, status: null };
   return {
     category: error.status ? categoryForStatus(error.status) : "UNEXPECTED_CLIENT_ERROR",
     message: error.message,
@@ -130,8 +139,10 @@ async function main() {
         const mobile = classifyMobile(mobileError);
         const web = classifyWeb(webError);
         const semanticParity =
-          mobile.category === testCase.category && web.category === testCase.category &&
-          mobile.status === testCase.status && web.status === testCase.status;
+          mobile.category === testCase.category &&
+          web.category === testCase.category &&
+          mobile.status === testCase.status &&
+          web.status === testCase.status;
         assert.equal(
           semanticParity,
           true,
@@ -175,7 +186,8 @@ async function main() {
       assert.ok(webTimeout, `${feature.feature} Web unexpectedly accepted a delayed response`);
       const mobileTimeoutResult = classifyMobile(mobileTimeout);
       const webTimeoutResult = classifyWeb(webTimeout);
-      const timeoutParity = mobileTimeoutResult.category === "TRANSIENT_TIMEOUT" &&
+      const timeoutParity =
+        mobileTimeoutResult.category === "TRANSIENT_TIMEOUT" &&
         webTimeoutResult.category === "TRANSIENT_TIMEOUT";
       assert.equal(timeoutParity, true, `${feature.feature} timeout became an unexpected success/error`);
       rows.push({
@@ -216,8 +228,8 @@ async function main() {
       assert.ok(webCancelled, `${feature.feature} Web unexpectedly accepted a cancelled request`);
       const mobileCancelledResult = classifyMobile(mobileCancelled);
       const webCancelledResult = classifyWeb(webCancelled);
-      const cancelParity = mobileCancelledResult.category === "CANCELLED" &&
-        webCancelledResult.category === "CANCELLED";
+      const cancelParity =
+        mobileCancelledResult.category === "CANCELLED" && webCancelledResult.category === "CANCELLED";
       assert.equal(cancelParity, true, `${feature.feature} cancellation was not preserved`);
       rows.push({
         feature: feature.feature,
@@ -240,7 +252,9 @@ async function main() {
     };
     assert.equal(evidence.caseCount, 32);
     assert.equal(evidence.allSemanticParity, true);
-    const output = fileURLToPath(new URL("../docs/phase41/phase41-cross-platform-error-parity.json", import.meta.url));
+    const output = fileURLToPath(
+      new URL("../docs/phase41/phase41-cross-platform-error-parity.json", import.meta.url),
+    );
     let previousEvidence: typeof evidence | null = null;
     try {
       previousEvidence = JSON.parse(await readFile(output, "utf8")) as typeof evidence;

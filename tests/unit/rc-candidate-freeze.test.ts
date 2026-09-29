@@ -32,7 +32,6 @@ describe("RC candidate freeze", () => {
     expect(a.manifest.some((line) => /(?:^|\/)\.env$/.test(line))).toBe(false);
   }, 15000);
 
-
   it("blocks unknown dirty paths while allowing reviewed source roots", () => {
     expect(disposition("apps/web/src/App.tsx", { dirty: true })).toBe("INCLUDE");
     expect(disposition("stray-release-candidate.txt", { dirty: true })).toBe("EXCLUDE_UNRELATED");

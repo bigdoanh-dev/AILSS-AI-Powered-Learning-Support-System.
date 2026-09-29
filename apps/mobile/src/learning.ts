@@ -2,6 +2,7 @@ import { ApiError, record, string } from "./api";
 
 export interface Course {
   courseId: string;
+  lecturerId?: string;
   title: string;
   state?: string;
   priceType?: string;
@@ -14,6 +15,12 @@ export function course(value: unknown): Course {
   const rec = record(value);
   return {
     courseId: string(rec.courseId),
+    lecturerId:
+      typeof rec.lecturerId === "string"
+        ? rec.lecturerId
+        : typeof rec.ownerLecturerId === "string"
+          ? rec.ownerLecturerId
+          : undefined,
     title: string(rec.title),
     state: typeof rec.state === "string" ? rec.state : undefined,
     priceType: typeof rec.priceType === "string" ? rec.priceType : undefined,

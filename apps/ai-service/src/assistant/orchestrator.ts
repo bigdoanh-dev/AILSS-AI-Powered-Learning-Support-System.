@@ -119,6 +119,33 @@ function isTutorMetaCommentary(content: string): boolean {
   );
 }
 
+function asksForCourseRecommendation(message: string): boolean {
+  return /(?:tìm|kiếm|gợi ý|đề xuất|chọn|recommend|find|suggest).{0,45}(?:khóa học|khoá học|course)|(?:khóa học|khoá học|course).{0,45}(?:liên quan|phù hợp|nào|về|about)|(?:muốn học|nên học).{0,45}(?:khóa học|khoá học|course)/iu.test(
+    message,
+  );
+}
+
+function asksForLearningStanding(message: string): boolean {
+  return /(?:tiến độ|mức độ|năng lực|nhận thức|thành thạo|đang yếu|điểm|mastery|progress|level|hiểu bài|học đến đâu)/iu.test(
+    message,
+  );
+}
+
+function asksWhichCourse(message: string): boolean {
+  return /(?:đang học|học).{0,24}(?:khóa|khoá|môn).{0,20}(?:gì|nào)|(?:khóa|khoá|môn).{0,24}(?:đang học|của tôi)/iu.test(
+    message,
+  );
+}
+
+const MASTERY_LABELS: Record<string, string> = {
+  NOT_OBSERVED: "chưa ghi nhận",
+  INTRODUCED: "mới bắt đầu",
+  DEVELOPING: "đang phát triển",
+  PROFICIENT: "thành thạo",
+  MASTERED: "nắm vững",
+  DECAY_RISK: "cần ôn lại",
+};
+
 export interface AssistantOrchestratorOptions {
   readonly repository: AssistantRepository;
   readonly toolRunner: ToolRunner;
@@ -157,6 +184,13 @@ export class AssistantOrchestrator {
         "ASSISTANT_MODE_NOT_ALLOWED",
         403,
         `Role ${user.role} is not permitted to use mode ${request.mode}`,
+      );
+    }
+    if (user.role === "ADMIN" && request.courseId) {
+      throw new AppError(
+        "ASSISTANT_COURSE_NOT_ALLOWED",
+        403,
+        "Admin support does not use learner course context",
       );
     }
 
@@ -210,10 +244,17 @@ export class AssistantOrchestrator {
       });
     } else {
       const existing = await this.#repo.getConversation(conversationId);
-      if (existing && existing.userId !== user.userId && user.role !== "ADMIN") {
+      if (!existing) {
+        throw new AppError("CONVERSATION_NOT_FOUND", 404, "Conversation not found");
+      }
+      if (
+        existing.userId !== user.userId ||
+        existing.role !== user.role ||
+        (user.role === "ADMIN" && existing.mode !== request.mode)
+      ) {
         throw new AppError("CONVERSATION_ACCESS_DENIED", 403, "Access to conversation denied");
       }
-      await this.#repo.touchConversation(conversationId, user.userId, existing?.title ?? "Conversation", now);
+      await this.#repo.touchConversation(conversationId, user.userId, existing.title, now, request.courseId);
     }
 
     // 4. Save User Message
@@ -254,6 +295,58 @@ export class AssistantOrchestrator {
       allowedToolNames,
     );
 
+    if (request.mode === "STUDY_BUDDY" && asksWhichCourse(request.message)) {
+      const details = toolResults.find((result) => result.name === "get_course_details");
+      const course = isRecord(details?.result) ? details.result : undefined;
+      const title = typeof course?.title === "string" ? course.title : undefined;
+      const mastery = toolResults.find((result) => result.name === "get_student_mastery");
+      let content = title
+        ? `Bạn đang chọn khóa “${title}” trong Gia sư AI.`
+        : request.courseId
+          ? "Mình chưa xác minh được tên khóa học đang chọn lúc này. Bạn thử chọn lại khóa học nhé."
+          : "Bạn chưa chọn khóa học trong Gia sư AI. Chọn một khóa ở phía trên để mình trả lời đúng môn nhé.";
+      if (title && asksForLearningStanding(request.message)) {
+        const records = Array.isArray(mastery?.result) ? mastery.result.filter(isRecord) : [];
+        if (mastery?.error) {
+          content +=
+            " Dữ liệu đánh giá năng lực đang tạm thời không khả dụng, nên mình chưa thể nhận xét mức độ hiểu bài của bạn.";
+        } else if (records.length === 0) {
+          content +=
+            " Mình chưa thấy dữ liệu đánh giá năng lực của bạn trong khóa này, nên chưa thể kết luận bạn đang ở mức nào.";
+        } else {
+          const counts = new Map<string, number>();
+          for (const record of records) {
+            const state = typeof record.masteryState === "string" ? record.masteryState : "";
+            if (MASTERY_LABELS[state]) counts.set(state, (counts.get(state) ?? 0) + 1);
+          }
+          const summary = [...counts]
+            .map(([state, count]) => `${String(count)} mục ${MASTERY_LABELS[state] ?? ""}`)
+            .join(", ");
+          content += summary
+            ? ` Theo đánh giá đã ghi nhận: ${summary}. Đây là mức nắm vững kiến thức, không phải phần trăm hoàn thành khóa học.`
+            : " Hệ thống có bản ghi đánh giá nhưng chưa đủ trạng thái để mình kết luận mức hiểu bài.";
+        }
+      }
+      const messageId = randomUUID();
+      await this.#repo.appendMessage({
+        messageId,
+        conversationId,
+        sender: "ASSISTANT",
+        content,
+        ...(toolCalls.length ? { toolCalls } : {}),
+        now: this.#now(),
+      });
+      return {
+        conversationId,
+        messageId,
+        content,
+        toolInvocations: toolCalls,
+        citations: [],
+        mode: request.mode,
+        safetyBlocked: false,
+      };
+    }
+
     const materialResult = toolResults.find((result) => result.name === "search_course_materials");
     if (
       materialResult?.error ||
@@ -285,20 +378,26 @@ export class AssistantOrchestrator {
       };
     }
 
-    if (request.mode === "STUDENT_ADVISOR") {
+    const hasCatalogSearch = toolResults.some((result) => result.name === "search_courses");
+    if (request.mode === "STUDENT_ADVISOR" || (request.mode === "STUDY_BUDDY" && hasCatalogSearch)) {
       const catalogResult = toolResults.find(
         (result) => isRecord(result) && result.name === "search_courses",
       ) as { result?: unknown; error?: string } | undefined;
       let content: string | undefined;
-      if (!catalogResult) {
+      if (!catalogResult && request.mode === "STUDENT_ADVISOR") {
         content =
           "Bạn muốn học để đạt mục tiêu gì và hiện đã biết những gì? Mình sẽ hỏi tiếp về thời gian và ngân sách trước khi tìm khóa học phù hợp.";
-      } else if (catalogResult.error) {
+      } else if (catalogResult?.error) {
         content =
           "Danh mục khóa học đang tạm thời không khả dụng. Mình chưa thể xác nhận khóa học nào đang được bán; bạn có thể thử lại sau.";
-      } else if (!Array.isArray(catalogResult.result) || catalogResult.result.length === 0) {
-        content =
-          "Mình chưa tìm thấy khóa học đã xuất bản khớp chủ đề bạn quan tâm. Bạn có thể mô tả mục tiêu học hoặc dùng tên lĩnh vực khác để mình tìm lại không?";
+      } else if (
+        catalogResult &&
+        (!Array.isArray(catalogResult.result) || catalogResult.result.length === 0)
+      ) {
+        const subject = extractCatalogSearchTokens(request.message).join(" ");
+        content = subject
+          ? `Mình chưa thấy khóa học đã xuất bản khớp “${subject}” trong danh mục hiện tại. Bạn muốn thử từ khóa gần nghĩa nào?`
+          : "Mình chưa tìm thấy khóa học đã xuất bản khớp chủ đề bạn quan tâm. Bạn có thể nói rõ lĩnh vực muốn học không?";
       }
       if (content) {
         const messageId = randomUUID();
@@ -324,10 +423,9 @@ export class AssistantOrchestrator {
 
     // Expose only verified public catalog fields to the client so it can link to
     // the actual course. This is a title match, not a claim of personal fit.
-    const catalogResult =
-      request.mode === "STUDENT_ADVISOR"
-        ? toolResults.find((result) => isRecord(result) && result.name === "search_courses")
-        : undefined;
+    const catalogResult = hasCatalogSearch
+      ? toolResults.find((result) => isRecord(result) && result.name === "search_courses")
+      : undefined;
     const catalogCourses =
       isRecord(catalogResult) && !catalogResult.error && Array.isArray(catalogResult.result)
         ? catalogResult.result
@@ -404,6 +502,17 @@ export class AssistantOrchestrator {
       sender: "ASSISTANT",
       content: assistantContent,
       ...(toolCalls.length > 0 ? { toolCalls } : {}),
+      ...(catalogCourses.length > 0
+        ? {
+            toolResults: [
+              {
+                toolCallId: toolCalls.find((call) => call.name === "search_courses")?.id ?? assistantMsgId,
+                name: "search_courses",
+                result: catalogCourses,
+              },
+            ],
+          }
+        : {}),
       ...(acceptedCitations.length > 0 ? { citations: acceptedCitations } : {}),
       now: this.#now(),
     });
@@ -452,11 +561,11 @@ export class AssistantOrchestrator {
       });
     };
 
-    if (
-      allowedTools.includes("get_student_mastery") &&
-      courseId &&
-      (lower.includes("mastery") || lower.includes("mức độ thành thạo") || lower.includes("đang yếu"))
-    ) {
+    if (courseId && allowedTools.includes("get_course_details")) {
+      await execute("get_course_details", { courseId });
+    }
+
+    if (allowedTools.includes("get_student_mastery") && courseId && asksForLearningStanding(prompt)) {
       await execute("get_student_mastery", { courseId });
     }
 
@@ -479,14 +588,13 @@ export class AssistantOrchestrator {
     if (
       allowedTools.includes("search_courses") &&
       ((mode === "STUDENT_ADVISOR" && advisorQuery) ||
-        (mode !== "STUDENT_ADVISOR" &&
-          (lower.includes("tìm khóa học") ||
-            lower.includes("khóa học nào") ||
-            lower.includes("recommend") ||
-            lower.includes("gợi ý khóa"))))
+        (mode === "STUDY_BUDDY" &&
+          !asksWhichCourse(prompt) &&
+          asksForCourseRecommendation(prompt) &&
+          advisorQuery))
     ) {
       await execute("search_courses", {
-        query: (mode === "STUDENT_ADVISOR" ? advisorQuery : prompt)?.slice(0, 300),
+        query: (mode === "STUDENT_ADVISOR" ? advisorQuery : prompt).slice(0, 300),
       });
     }
 
@@ -594,12 +702,13 @@ Your mission:
     if (mode === "STUDY_BUDDY") {
       return `${base}
 Your mission:
-1. Act as a patient Socratic tutor.
-2. Ground all explanations strictly in course materials and lessons.
-3. NEVER provide direct answers to active exams or quizzes. Guide the student with questions and conceptual hints.
-4. Include lesson citations whenever referencing specific curriculum points.
-5. Keep the response concise (normally under 150 words); prioritize one clear explanation and one actionable next step.
-6. Return only the final message addressed to the learner. Never include draft notes, self-evaluation, word counts, tone assessments, or comments about whether your response meets these instructions.`;
+1. Be a patient Vietnamese learning companion. In this single conversation, help both with finding courses and with studying an enrolled course. Infer the intent of each new message from the message and conversation history; never force the student to switch modes.
+2. If get_course_details returned a course, that is the currently selected course. Use its exact title when asked which course the student is studying. Current verified tool data overrides unsupported claims in earlier assistant replies. Do not claim that you cannot access the course name when this tool result is present. Do not confuse the selected course with another subject the student mentions. If they mention a different subject and their intended course is unclear, ask one brief clarification question. If no course is selected, ask which course they mean instead of guessing.
+3. Use get_student_mastery only for measured understanding. Never invent scores, progress percentages, completed lessons, or a level. If mastery data is empty, explicitly say there is no measured mastery yet; the selected course title may still be known. The mastery tool is not a completion-progress record.
+4. For course recommendations, only name courses returned by search_courses. If the user asks about a subject and no catalog match exists, say so specifically and offer a different search term. Do not claim an exact personal fit from title alone.
+5. Ground claims about a selected course's lesson content in search_course_materials. Cite the lesson when that tool supplied relevant content. For general knowledge, explain it as general knowledge and do not pretend it came from the selected course.
+6. NEVER provide direct answers to active exams or quizzes. Guide the student with questions and conceptual hints.
+7. Reply naturally in Vietnamese to the student's actual question. Keep it concise, avoid generic scripted greetings and repeated apologies, then ask at most one useful follow-up. Return only the final learner-facing message.`;
     }
 
     if (mode === "LECTURER_COPILOT") {
@@ -607,9 +716,14 @@ Your mission:
 Your mission:
 1. Act as an academic curriculum design expert.
 2. Assist lecturers in structuring lesson modules, Bloom's cognitive taxonomy distribution (RECOGNITION, UNDERSTANDING, APPLICATION, ADVANCED_APPLICATION), and formative assessment drafting.
-3. Analyze cohort performance trends and suggest concrete pedagogical interventions.`;
+3. Suggest pedagogical interventions when the lecturer provides context. You have no access to live cohort scores, student records, private course materials, or privileged authoring actions in this chat. Never claim to have inspected them or completed an action.
+4. Treat catalog tool results as public course information only. Distinguish suggested questions from published assessments.`;
     }
 
-    return base;
+    return `${base}
+Your mission:
+1. Help the administrator understand AILSS operations, moderation workflows, and where to find the relevant dashboard in concise Vietnamese.
+2. You have no access to live user records, analytics, audit logs, payment data, or privileged actions in this chat. Never claim to have inspected them or completed an administrative action.
+3. Direct the administrator to the appropriate authorized screen for verification and decisions. Never reveal learner conversations or personal data.`;
   }
 }

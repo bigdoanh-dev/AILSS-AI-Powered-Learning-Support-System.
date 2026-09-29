@@ -71,11 +71,17 @@ try {
   const captions = page.getByLabel("Chọn phụ đề");
   await expect(captions).toBeVisible();
   await captions.selectOption({ label: "Tiếng Việt" });
-  await expect.poll(
-    () => video.evaluate((element) => Array.from(element.textTracks).some((track) =>
-      track.mode === "showing" && (track.activeCues?.length ?? 0) > 0)),
-    { timeout: 20_000 },
-  ).toBe(true);
+  await expect
+    .poll(
+      () =>
+        video.evaluate((element) =>
+          Array.from(element.textTracks).some(
+            (track) => track.mode === "showing" && (track.activeCues?.length ?? 0) > 0,
+          ),
+        ),
+      { timeout: 20_000 },
+    )
+    .toBe(true);
   assert.ok(mediaResponses.some((entry) => entry.path.endsWith(".vtt") && entry.status === 200));
   await expect(video).toHaveAttribute("poster", /poster\.jpg\?token=/);
   assert.deepEqual(errors, []);
@@ -90,7 +96,9 @@ try {
     path: fileURLToPath(new URL("student-playback-mobile.png", evidence)),
     fullPage: true,
   });
-  results.push("Entitled student plays real protected HLS and selected WebVTT captions in Chrome; playlist, segment and caption return 200");
+  results.push(
+    "Entitled student plays real protected HLS and selected WebVTT captions in Chrome; playlist, segment and caption return 200",
+  );
   await student.close();
 
   const other = await authenticated(fixture.PHASE42_OTHER_EMAIL, fixture.PHASE42_OTHER_PASSWORD);

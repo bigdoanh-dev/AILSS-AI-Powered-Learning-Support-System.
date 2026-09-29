@@ -6,17 +6,23 @@ export function TutorAvatar({
   active = false,
   decorative = false,
   size = 54,
-}: { active?: boolean; decorative?: boolean; size?: number }) {
+}: {
+  active?: boolean;
+  decorative?: boolean;
+  size?: number;
+}) {
   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
   const motion = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     let mounted = true;
-    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (mounted) setReduceMotion(enabled);
-    }).catch(() => {
-      if (mounted) setReduceMotion(true);
-    });
+    void AccessibilityInfo.isReduceMotionEnabled()
+      .then((enabled) => {
+        if (mounted) setReduceMotion(enabled);
+      })
+      .catch(() => {
+        if (mounted) setReduceMotion(true);
+      });
     const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
     return () => {
       mounted = false;

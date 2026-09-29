@@ -156,7 +156,9 @@ export default function MyLearningScreen() {
 
                   <View style={{ gap: 6, marginTop: 4 }}>
                     <ProgressBar progress={pct} color={isDone ? tokens.color.success : "#6366F1"} />
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <View
+                      style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
+                    >
                       <Text style={styles.small}>
                         {item.progress
                           ? `Đã học ${item.progress.completedCount}/${item.progress.publishedTotal} bài`
@@ -221,4 +223,3 @@ const localStyles = StyleSheet.create({
     lineHeight: 22,
   },
 });
-

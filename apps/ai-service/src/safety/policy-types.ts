@@ -1,12 +1,7 @@
 import type { AssistantMode, AssistantRole } from "../assistant/model.js";
 
 export type PolicyDecision =
-  | "ALLOW"
-  | "ALLOW_WITH_WARNING"
-  | "REQUIRE_CLARIFICATION"
-  | "RESTRICT_TOOL_ACCESS"
-  | "REFUSE"
-  | "ESCALATE";
+  "ALLOW" | "ALLOW_WITH_WARNING" | "REQUIRE_CLARIFICATION" | "RESTRICT_TOOL_ACCESS" | "REFUSE" | "ESCALATE";
 
 export interface SafetyContext {
   readonly userId: string;

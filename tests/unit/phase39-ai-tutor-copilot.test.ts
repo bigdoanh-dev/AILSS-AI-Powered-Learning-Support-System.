@@ -32,7 +32,8 @@ describe("Phase 39 Track A: AI Tutor V2 & Teacher Copilot", () => {
           sessionId: req.sessionId,
           messageId: "msg-abstained",
           pedagogicalMode: req.pedagogicalMode,
-          responseContent: "I can only assist with topics and questions directly related to your course curriculum.",
+          responseContent:
+            "I can only assist with topics and questions directly related to your course curriculum.",
           citations: [],
           guardrailsTriggered: {
             answerKeyRedacted: false,
@@ -65,7 +66,8 @@ describe("Phase 39 Track A: AI Tutor V2 & Teacher Copilot", () => {
           sessionId: req.sessionId,
           messageId: "msg-hint",
           pedagogicalMode: "HINT_ONLY",
-          responseContent: "Consider breaking down the problem into smaller subproblems. Have you identified the base cases?",
+          responseContent:
+            "Consider breaking down the problem into smaller subproblems. Have you identified the base cases?",
           citations: [],
           guardrailsTriggered: {
             answerKeyRedacted: false,
@@ -200,7 +202,9 @@ describe("Phase 39 Track A: AI Tutor V2 & Teacher Copilot", () => {
 
       expect(rejected.status).toBe("REJECTED");
       expect(rejected.rejectionReason).toContain("Question too simplistic");
-      expect(copilot.listApprovedQuestionsForBank("course-cs101").find((q) => q.draftId === draft.draftId)).toBeUndefined();
+      expect(
+        copilot.listApprovedQuestionsForBank("course-cs101").find((q) => q.draftId === draft.draftId),
+      ).toBeUndefined();
     });
 
     it("generates rubric drafts with human approval tracking", () => {
@@ -323,7 +327,10 @@ describe("Phase 39 Track A: AI Tutor V2 & Teacher Copilot", () => {
       expect(intervention.status).toBe("OPEN");
 
       // Move to CONTACTED_STUDENT
-      const updatedContact = copilot.updateInterventionStatus(intervention.interventionId, "CONTACTED_STUDENT");
+      const updatedContact = copilot.updateInterventionStatus(
+        intervention.interventionId,
+        "CONTACTED_STUDENT",
+      );
       expect(updatedContact.status).toBe("CONTACTED_STUDENT");
 
       // Resolve intervention

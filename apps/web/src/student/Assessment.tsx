@@ -184,7 +184,9 @@ export function Assessments() {
   const c = params.get("course"),
     k = params.get("class");
   const [target, setTarget] = useState(c && isUuid(c) ? "COURSE/" + c : k && isUuid(k) ? "CLASS/" + k : "");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "IN_PROGRESS" | "SUBMITTED" | "OVERDUE">("ALL");
+  const [statusFilter, setStatusFilter] = useState<
+    "ALL" | "PENDING" | "IN_PROGRESS" | "SUBMITTED" | "OVERDUE"
+  >("ALL");
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
@@ -196,7 +198,9 @@ export function Assessments() {
     if (!target) return DEFAULT_STUDENT_ASSIGNMENTS;
     const [type, id] = target.split("/");
     if (type === "COURSE") {
-      return DEFAULT_STUDENT_ASSIGNMENTS.filter((a) => a.courseId === id || a.courseTitle.toLowerCase().includes("cơ sở dữ liệu"));
+      return DEFAULT_STUDENT_ASSIGNMENTS.filter(
+        (a) => a.courseId === id || a.courseTitle.toLowerCase().includes("cơ sở dữ liệu"),
+      );
     }
     return DEFAULT_STUDENT_ASSIGNMENTS;
   }, [target]);
@@ -215,7 +219,10 @@ export function Assessments() {
           item.courseTitle.toLowerCase().includes(search.toLowerCase());
 
         // Status filter
-        const isOverdue = new Date(item.deadlineIso).getTime() < nowTime && item.status !== "SUBMITTED" && item.status !== "GRADED";
+        const isOverdue =
+          new Date(item.deadlineIso).getTime() < nowTime &&
+          item.status !== "SUBMITTED" &&
+          item.status !== "GRADED";
         let matchStatus = true;
         if (statusFilter === "PENDING") {
           matchStatus = item.status === "NOT_STARTED" || item.status === "IN_PROGRESS";
@@ -265,10 +272,14 @@ export function Assessments() {
 
   // Counts for KPIs and pills
   const nowTime = new Date("2026-09-17T05:00:00").getTime();
-  const pendingCount = baseList.filter((a) => a.status === "NOT_STARTED" || a.status === "IN_PROGRESS").length;
+  const pendingCount = baseList.filter(
+    (a) => a.status === "NOT_STARTED" || a.status === "IN_PROGRESS",
+  ).length;
   const inProgressCount = baseList.filter((a) => a.status === "IN_PROGRESS").length;
   const submittedCount = baseList.filter((a) => a.status === "SUBMITTED" || a.status === "GRADED").length;
-  const overdueCount = baseList.filter((a) => new Date(a.deadlineIso).getTime() < nowTime && a.status !== "SUBMITTED" && a.status !== "GRADED").length;
+  const overdueCount = baseList.filter(
+    (a) => new Date(a.deadlineIso).getTime() < nowTime && a.status !== "SUBMITTED" && a.status !== "GRADED",
+  ).length;
 
   return (
     <div className="admin-dashboard-container" style={{ padding: "0 4px" }}>
@@ -295,7 +306,9 @@ export function Assessments() {
       <div className="workspace-kpi-grid">
         <div className="kpi-card">
           <div className="kpi-header">
-            <span className="kpi-icon" aria-hidden="true">📋</span>
+            <span className="kpi-icon" aria-hidden="true">
+              📋
+            </span>
             <span className="kpi-tag">Toàn bộ</span>
           </div>
           <div className="kpi-value">{baseList.length} bài</div>
@@ -303,32 +316,56 @@ export function Assessments() {
           <p className="kpi-subtext">Trắc nghiệm AI, Tự luận và Đồ án</p>
         </div>
 
-        <div className="kpi-card" style={{ borderColor: pendingCount > 0 ? "rgba(217,119,6,0.3)" : undefined }}>
+        <div
+          className="kpi-card"
+          style={{ borderColor: pendingCount > 0 ? "rgba(217,119,6,0.3)" : undefined }}
+        >
           <div className="kpi-header">
-            <span className="kpi-icon" aria-hidden="true">⏳</span>
-            <span className="kpi-tag accent" style={{ backgroundColor: "#fef3c7", color: "#b45309" }}>Cần làm</span>
+            <span className="kpi-icon" aria-hidden="true">
+              ⏳
+            </span>
+            <span className="kpi-tag accent" style={{ backgroundColor: "#fef3c7", color: "#b45309" }}>
+              Cần làm
+            </span>
           </div>
-          <div className="kpi-value" style={{ color: "#d97706" }}>{pendingCount} bài</div>
+          <div className="kpi-value" style={{ color: "#d97706" }}>
+            {pendingCount} bài
+          </div>
           <div className="kpi-label">Cần làm &amp; nộp ngay</div>
           <p className="kpi-subtext">Bài tập chưa nộp hoặc đang làm</p>
         </div>
 
         <div className="kpi-card">
           <div className="kpi-header">
-            <span className="kpi-icon" aria-hidden="true">✅</span>
-            <span className="kpi-tag accent" style={{ backgroundColor: "#dcfce7", color: "#166534" }}>Đã nộp</span>
+            <span className="kpi-icon" aria-hidden="true">
+              ✅
+            </span>
+            <span className="kpi-tag accent" style={{ backgroundColor: "#dcfce7", color: "#166534" }}>
+              Đã nộp
+            </span>
           </div>
-          <div className="kpi-value" style={{ color: "#16a34a" }}>{submittedCount} bài</div>
+          <div className="kpi-value" style={{ color: "#16a34a" }}>
+            {submittedCount} bài
+          </div>
           <div className="kpi-label">Đã nộp &amp; Đã chấm điểm</div>
           <p className="kpi-subtext">Bài làm đã lưu trữ an toàn</p>
         </div>
 
-        <div className="kpi-card" style={{ borderColor: overdueCount > 0 ? "rgba(220,38,38,0.3)" : undefined }}>
+        <div
+          className="kpi-card"
+          style={{ borderColor: overdueCount > 0 ? "rgba(220,38,38,0.3)" : undefined }}
+        >
           <div className="kpi-header">
-            <span className="kpi-icon" aria-hidden="true">⏰</span>
-            <span className="kpi-tag" style={{ backgroundColor: "#fee2e2", color: "#991b1b" }}>Cảnh báo</span>
+            <span className="kpi-icon" aria-hidden="true">
+              ⏰
+            </span>
+            <span className="kpi-tag" style={{ backgroundColor: "#fee2e2", color: "#991b1b" }}>
+              Cảnh báo
+            </span>
           </div>
-          <div className="kpi-value" style={{ color: "#dc2626" }}>{overdueCount} bài</div>
+          <div className="kpi-value" style={{ color: "#dc2626" }}>
+            {overdueCount} bài
+          </div>
           <div className="kpi-label">Quá hạn nộp bài</div>
           <p className="kpi-subtext">Theo quy định hạn chót của Giảng viên</p>
         </div>
@@ -429,7 +466,16 @@ export function Assessments() {
 
       {/* Assignment List Section - With Mode Switch & Data Table */}
       <section style={{ marginTop: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 12 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 14,
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
           <div>
             <h2 style={{ margin: 0, fontSize: "1.25rem" }}>
               Danh Sách Bài Làm ({sortedAndFiltered.length} bài)
@@ -466,21 +512,44 @@ export function Assessments() {
 
         {viewMode === "table" ? (
           /* BẢNG DANH SÁCH (DATA TABLE VIEW) - MẶC ĐỊNH */
-          <div className="table-responsive" style={{ border: "1px solid var(--line, #e2e8f0)", borderRadius: 12, backgroundColor: "var(--surface, #ffffff)", overflow: "hidden" }}>
+          <div
+            className="table-responsive"
+            style={{
+              border: "1px solid var(--line, #e2e8f0)",
+              borderRadius: 12,
+              backgroundColor: "var(--surface, #ffffff)",
+              overflow: "hidden",
+            }}
+          >
             <table className="dashboard-data-table" role="table">
               <thead>
                 <tr>
-                  <th scope="col" style={{ width: 80, textAlign: "center" }}>STT</th>
-                  <th scope="col" style={{ minWidth: 280 }}>Bài Kiểm Tra &amp; Khóa Học</th>
-                  <th scope="col" style={{ minWidth: 220 }}>Lịch Hạn Nộp &amp; Đếm Ngược</th>
-                  <th scope="col" style={{ minWidth: 200 }}>Quy Định Của Giảng Viên</th>
-                  <th scope="col" style={{ minWidth: 150, textAlign: "center" }}>Trạng Thái</th>
-                  <th scope="col" style={{ minWidth: 160, textAlign: "right" }}>Thao Tác</th>
+                  <th scope="col" style={{ width: 80, textAlign: "center" }}>
+                    STT
+                  </th>
+                  <th scope="col" style={{ minWidth: 280 }}>
+                    Bài Kiểm Tra &amp; Khóa Học
+                  </th>
+                  <th scope="col" style={{ minWidth: 220 }}>
+                    Lịch Hạn Nộp &amp; Đếm Ngược
+                  </th>
+                  <th scope="col" style={{ minWidth: 200 }}>
+                    Quy Định Của Giảng Viên
+                  </th>
+                  <th scope="col" style={{ minWidth: 150, textAlign: "center" }}>
+                    Trạng Thái
+                  </th>
+                  <th scope="col" style={{ minWidth: 160, textAlign: "right" }}>
+                    Thao Tác
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {sortedAndFiltered.map((item, index) => {
-                  const isOverdue = new Date(item.deadlineIso).getTime() < nowTime && item.status !== "SUBMITTED" && item.status !== "GRADED";
+                  const isOverdue =
+                    new Date(item.deadlineIso).getTime() < nowTime &&
+                    item.status !== "SUBMITTED" &&
+                    item.status !== "GRADED";
                   const isUntaken = item.status === "NOT_STARTED";
                   const isInProgress = item.status === "IN_PROGRESS";
                   const isSubmitted = item.status === "SUBMITTED" || item.status === "GRADED";
@@ -493,8 +562,8 @@ export function Assessments() {
                         backgroundColor: isDueToday
                           ? "rgba(239, 68, 68, 0.04)"
                           : isOverdue && item.latePolicy === "BLOCK_LATE"
-                          ? "rgba(100, 116, 139, 0.04)"
-                          : "transparent",
+                            ? "rgba(100, 116, 139, 0.04)"
+                            : "transparent",
                       }}
                     >
                       {/* Cột 1: Số thứ tự STT */}
@@ -514,18 +583,31 @@ export function Assessments() {
                       <td>
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                            <span className="assessment-format-badge" style={{ fontSize: 11, padding: "2px 6px" }}>
+                            <span
+                              className="assessment-format-badge"
+                              style={{ fontSize: 11, padding: "2px 6px" }}
+                            >
                               {item.format === "OBJECTIVE"
                                 ? "⚡ Trắc nghiệm"
                                 : item.format === "ESSAY"
-                                ? "✍️ Tự luận"
-                                : "📁 Đồ án nộp file"}
+                                  ? "✍️ Tự luận"
+                                  : "📁 Đồ án nộp file"}
                             </span>
-                            <span className="assessment-course-badge" style={{ fontSize: 11, padding: "2px 6px" }}>
+                            <span
+                              className="assessment-course-badge"
+                              style={{ fontSize: 11, padding: "2px 6px" }}
+                            >
                               {item.courseTitle.split("&")[0]?.trim()}
                             </span>
                           </div>
-                          <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ink, #0f172a)", lineHeight: 1.4 }}>
+                          <div
+                            style={{
+                              fontWeight: 700,
+                              fontSize: 14,
+                              color: "var(--ink, #0f172a)",
+                              lineHeight: 1.4,
+                            }}
+                          >
                             <Link
                               to={"/app/assessments/" + item.quizId}
                               style={{ color: "inherit", textDecoration: "none" }}
@@ -534,7 +616,8 @@ export function Assessments() {
                             </Link>
                           </div>
                           <div style={{ fontSize: 11, color: "var(--muted, #64748b)" }}>
-                            {item.questionCount} câu hỏi {item.durationMinutes ? `• Thời lượng: ${item.durationMinutes} phút` : ""}
+                            {item.questionCount} câu hỏi{" "}
+                            {item.durationMinutes ? `• Thời lượng: ${item.durationMinutes} phút` : ""}
                           </div>
                         </div>
                       </td>
@@ -542,22 +625,16 @@ export function Assessments() {
                       {/* Cột 3: Hạn nộp & Đếm ngược */}
                       <td>
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600 }}>
-                            ⏱️ {item.deadlineLabel}
-                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 600 }}>⏱️ {item.deadlineLabel}</div>
                           <div>
                             {isOverdue ? (
-                              <span className="assessment-countdown-tag overdue">
-                                ⚠️ ĐÃ QUÁ HẠN
-                              </span>
+                              <span className="assessment-countdown-tag overdue">⚠️ ĐÃ QUÁ HẠN</span>
                             ) : isDueToday ? (
                               <span className="assessment-countdown-tag urgent">
                                 🔥 SẮP HẾT HẠN (Hôm nay)
                               </span>
                             ) : (
-                              <span className="assessment-countdown-tag normal">
-                                ⏳ Còn hơn 1 ngày
-                              </span>
+                              <span className="assessment-countdown-tag normal">⏳ Còn hơn 1 ngày</span>
                             )}
                           </div>
                         </div>
@@ -567,11 +644,29 @@ export function Assessments() {
                       <td>
                         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                           {item.latePolicy === "BLOCK_LATE" ? (
-                            <div style={{ color: "#dc2626", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 4 }}>
+                            <div
+                              style={{
+                                color: "#dc2626",
+                                fontWeight: 700,
+                                fontSize: 12,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
                               <span>🚫 Khóa cổng khi trễ</span>
                             </div>
                           ) : (
-                            <div style={{ color: "#d97706", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 4 }}>
+                            <div
+                              style={{
+                                color: "#d97706",
+                                fontWeight: 700,
+                                fontSize: 12,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
                               <span>🚩 Cho nộp trễ (Cờ đỏ)</span>
                             </div>
                           )}
@@ -586,7 +681,10 @@ export function Assessments() {
                       {/* Cột 5: Trạng thái & Kết quả */}
                       <td style={{ textAlign: "center" }}>
                         {isOverdue && item.latePolicy === "BLOCK_LATE" ? (
-                          <span className="status-pill" style={{ backgroundColor: "#FEE2E2", color: "#DC2626", fontSize: 12 }}>
+                          <span
+                            className="status-pill"
+                            style={{ backgroundColor: "#FEE2E2", color: "#DC2626", fontSize: 12 }}
+                          >
                             ⛔ Đã khóa nộp
                           </span>
                         ) : isOverdue && item.latePolicy === "ALLOW_LATE_WITH_FLAG" ? (
@@ -598,7 +696,10 @@ export function Assessments() {
                             ⏳ Chưa làm
                           </span>
                         ) : isInProgress ? (
-                          <span className="status-pill" style={{ backgroundColor: "#FEF3C7", color: "#B45309", fontSize: 12 }}>
+                          <span
+                            className="status-pill"
+                            style={{ backgroundColor: "#FEF3C7", color: "#B45309", fontSize: 12 }}
+                          >
                             📝 Đang làm
                           </span>
                         ) : item.isLate ? (
@@ -670,7 +771,10 @@ export function Assessments() {
           /* THẺ CHI TIẾT (CARDS VIEW) */
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {sortedAndFiltered.map((item) => {
-              const isOverdue = new Date(item.deadlineIso).getTime() < nowTime && item.status !== "SUBMITTED" && item.status !== "GRADED";
+              const isOverdue =
+                new Date(item.deadlineIso).getTime() < nowTime &&
+                item.status !== "SUBMITTED" &&
+                item.status !== "GRADED";
               const isUntaken = item.status === "NOT_STARTED";
               const isInProgress = item.status === "IN_PROGRESS";
               const isSubmitted = item.status === "SUBMITTED" || item.status === "GRADED";
@@ -682,22 +786,30 @@ export function Assessments() {
                     isOverdue && item.latePolicy === "BLOCK_LATE"
                       ? "priority-overdue"
                       : isUntaken
-                      ? "priority-untaken"
-                      : isInProgress
-                      ? "priority-in-progress"
-                      : "status-completed"
+                        ? "priority-untaken"
+                        : isInProgress
+                          ? "priority-in-progress"
+                          : "status-completed"
                   }`}
                 >
                   {/* Header Row */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      flexWrap: "wrap",
+                      gap: 10,
+                    }}
+                  >
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <span className="assessment-course-badge">{item.courseTitle}</span>
                       <span className="assessment-format-badge">
                         {item.format === "OBJECTIVE"
                           ? "⚡ Trắc nghiệm AI (Tự động chấm)"
                           : item.format === "ESSAY"
-                          ? "✍️ Tự luận (Giảng viên chấm)"
-                          : "📁 Đồ án / Nộp file (Giảng viên chấm)"}
+                            ? "✍️ Tự luận (Giảng viên chấm)"
+                            : "📁 Đồ án / Nộp file (Giảng viên chấm)"}
                       </span>
                       {item.durationMinutes && (
                         <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>
@@ -709,27 +821,25 @@ export function Assessments() {
                     {/* Status Badges */}
                     <div>
                       {isOverdue && item.latePolicy === "BLOCK_LATE" ? (
-                        <span className="assessment-countdown-tag overdue">
-                          ⛔ ĐÃ KHÓA NỘP (QUÁ HẠN)
-                        </span>
+                        <span className="assessment-countdown-tag overdue">⛔ ĐÃ KHÓA NỘP (QUÁ HẠN)</span>
                       ) : isOverdue && item.latePolicy === "ALLOW_LATE_WITH_FLAG" ? (
-                        <span className="badge-late-flag">
-                          🚩 QUÁ HẠN - CHO PHÉP NỘP MUỘN (GẮN CỜ ĐỎ)
-                        </span>
+                        <span className="badge-late-flag">🚩 QUÁ HẠN - CHO PHÉP NỘP MUỘN (GẮN CỜ ĐỎ)</span>
                       ) : isUntaken ? (
-                        <span className="assessment-countdown-tag urgent">
-                          ⏳ CHƯA LÀM (CẦN NỘP)
-                        </span>
+                        <span className="assessment-countdown-tag urgent">⏳ CHƯA LÀM (CẦN NỘP)</span>
                       ) : isInProgress ? (
-                        <span className="assessment-countdown-tag normal" style={{ backgroundColor: "#fef3c7", color: "#b45309" }}>
+                        <span
+                          className="assessment-countdown-tag normal"
+                          style={{ backgroundColor: "#fef3c7", color: "#b45309" }}
+                        >
                           📝 ĐANG LÀM DỞ
                         </span>
                       ) : item.isLate ? (
-                        <span className="badge-late-flag">
-                          ⚠️ ĐÃ NỘP MUỘN (+{item.lateMinutes} phút)
-                        </span>
+                        <span className="badge-late-flag">⚠️ ĐÃ NỘP MUỘN (+{item.lateMinutes} phút)</span>
                       ) : (
-                        <span className="assessment-countdown-tag" style={{ backgroundColor: "#dcfce7", color: "#166534" }}>
+                        <span
+                          className="assessment-countdown-tag"
+                          style={{ backgroundColor: "#dcfce7", color: "#166534" }}
+                        >
                           ✓ ĐÃ NỘP ĐÚNG HẠN
                         </span>
                       )}
@@ -757,17 +867,11 @@ export function Assessments() {
 
                     <div>
                       {isOverdue ? (
-                        <span className="assessment-countdown-tag overdue">
-                          ⚠️ Đã hết hạn nộp
-                        </span>
+                        <span className="assessment-countdown-tag overdue">⚠️ Đã hết hạn nộp</span>
                       ) : item.deadlineIso.includes("2026-09-17") ? (
-                        <span className="assessment-countdown-tag urgent">
-                          🔥 Hết hạn hôm nay!
-                        </span>
+                        <span className="assessment-countdown-tag urgent">🔥 Hết hạn hôm nay!</span>
                       ) : (
-                        <span className="assessment-countdown-tag normal">
-                          ⏳ Còn hơn 1 ngày
-                        </span>
+                        <span className="assessment-countdown-tag normal">⏳ Còn hơn 1 ngày</span>
                       )}
                     </div>
                   </div>
@@ -778,40 +882,77 @@ export function Assessments() {
                       <div className="late-banner-strict" role="alert">
                         <span style={{ fontSize: 18 }}>⛔</span>
                         <div>
-                          <strong>QUYẾT ĐỊNH CỦA GIẢNG VIÊN (KHÓA NỘP KHI QUÁ HẠN):</strong> Bài kiểm tra đã quá hạn nộp lúc{" "}
-                          <strong>{item.deadlineLabel}</strong>. Giảng viên quy định <u>học viên không được phép nộp trễ</u> và bị cảnh báo vi phạm deadline. Cổng nộp bài hiện đã bị khóa hoàn toàn.
+                          <strong>QUYẾT ĐỊNH CỦA GIẢNG VIÊN (KHÓA NỘP KHI QUÁ HẠN):</strong> Bài kiểm tra đã
+                          quá hạn nộp lúc <strong>{item.deadlineLabel}</strong>. Giảng viên quy định{" "}
+                          <u>học viên không được phép nộp trễ</u> và bị cảnh báo vi phạm deadline. Cổng nộp
+                          bài hiện đã bị khóa hoàn toàn.
                         </div>
                       </div>
                     ) : (
-                      <div style={{ fontSize: 12.5, color: "var(--muted, #64748b)", display: "flex", alignItems: "center", gap: 6, background: "rgba(2,132,199,0.04)", padding: "8px 12px", borderRadius: 8 }}>
+                      <div
+                        style={{
+                          fontSize: 12.5,
+                          color: "var(--muted, #64748b)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          background: "rgba(2,132,199,0.04)",
+                          padding: "8px 12px",
+                          borderRadius: 8,
+                        }}
+                      >
                         <span>🔒</span>
                         <span>
-                          <strong>Quy định Giảng viên:</strong> Hạn nộp nghiêm ngặt. Hệ thống sẽ <u>tự động khóa cổng nộp đúng {item.deadlineLabel}</u>, học viên quá hạn sẽ không được phép nộp.
+                          <strong>Quy định Giảng viên:</strong> Hạn nộp nghiêm ngặt. Hệ thống sẽ{" "}
+                          <u>tự động khóa cổng nộp đúng {item.deadlineLabel}</u>, học viên quá hạn sẽ không
+                          được phép nộp.
                         </span>
                       </div>
                     )
+                  ) : isOverdue && !isSubmitted ? (
+                    <div className="late-banner-allowed" role="alert">
+                      <span style={{ fontSize: 18 }}>⏰</span>
+                      <div>
+                        <strong>QUYẾT ĐỊNH CỦA GIẢNG VIÊN (CHO PHÉP NỘP MUỘN CÓ CỜ ĐỎ):</strong> Bài kiểm tra
+                        đã quá hạn lúc <strong>{item.deadlineLabel}</strong>. Bạn vẫn được phép nộp bài, tuy
+                        nhiên bài làm sẽ bị{" "}
+                        <strong style={{ color: "#dc2626" }}>ĐÁNH DẤU ĐỎ ("NỘP MUỘN")</strong> trong bảng chấm
+                        thi để Giảng viên biết và trừ điểm chuyên cần theo quy định!
+                      </div>
+                    </div>
                   ) : (
-                    isOverdue && !isSubmitted ? (
-                      <div className="late-banner-allowed" role="alert">
-                        <span style={{ fontSize: 18 }}>⏰</span>
-                        <div>
-                          <strong>QUYẾT ĐỊNH CỦA GIẢNG VIÊN (CHO PHÉP NỘP MUỘN CÓ CỜ ĐỎ):</strong> Bài kiểm tra đã quá hạn lúc{" "}
-                          <strong>{item.deadlineLabel}</strong>. Bạn vẫn được phép nộp bài, tuy nhiên bài làm sẽ bị{" "}
-                          <strong style={{ color: "#dc2626" }}>ĐÁNH DẤU ĐỎ ("NỘP MUỘN")</strong> trong bảng chấm thi để Giảng viên biết và trừ điểm chuyên cần theo quy định!
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: 12.5, color: "var(--muted, #64748b)", display: "flex", alignItems: "center", gap: 6, background: "rgba(217,119,6,0.06)", padding: "8px 12px", borderRadius: 8 }}>
-                        <span>⏱️</span>
-                        <span>
-                          <strong>Quy định Giảng viên:</strong> Cho phép nộp muộn sau {item.deadlineLabel}. Lưu ý: bài nộp trễ sẽ bị <u>đánh dấu cờ đỏ</u> để Giảng viên biết khi chấm.
-                        </span>
-                      </div>
-                    )
+                    <div
+                      style={{
+                        fontSize: 12.5,
+                        color: "var(--muted, #64748b)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        background: "rgba(217,119,6,0.06)",
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                      }}
+                    >
+                      <span>⏱️</span>
+                      <span>
+                        <strong>Quy định Giảng viên:</strong> Cho phép nộp muộn sau {item.deadlineLabel}. Lưu
+                        ý: bài nộp trễ sẽ bị <u>đánh dấu cờ đỏ</u> để Giảng viên biết khi chấm.
+                      </span>
+                    </div>
                   )}
 
                   {/* Card Footer Actions & Submission Details */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 4, flexWrap: "wrap", gap: 10 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginTop: "auto",
+                      paddingTop: 4,
+                      flexWrap: "wrap",
+                      gap: 10,
+                    }}
+                  >
                     <div>
                       {isSubmitted ? (
                         <div style={{ fontSize: 13 }}>
@@ -868,7 +1009,10 @@ export function Assessments() {
             })}
 
             {sortedAndFiltered.length === 0 && (
-              <div className="study-card" style={{ textAlign: "center", padding: 36, color: "var(--muted, #64748b)" }}>
+              <div
+                className="study-card"
+                style={{ textAlign: "center", padding: 36, color: "var(--muted, #64748b)" }}
+              >
                 Không tìm thấy bài tập nào khớp với bộ lọc hiện tại.
               </div>
             )}
@@ -904,9 +1048,15 @@ export function QuizDetail() {
           <h2>Chuẩn bị làm bài</h2>
           <p>
             {q.data?.questionCount || meta?.questionCount || 4} câu hỏi
-            {q.data?.durationSeconds ? ` · ${q.data.durationSeconds / 60} phút` : meta?.durationMinutes ? ` · ${meta.durationMinutes} phút` : ""}
+            {q.data?.durationSeconds
+              ? ` · ${q.data.durationSeconds / 60} phút`
+              : meta?.durationMinutes
+                ? ` · ${meta.durationMinutes} phút`
+                : ""}
           </p>
-          {(q.data?.opensAt || meta) && <p>Mở lúc {dateLabel(q.data?.opensAt || "2026-09-14T08:00:00Z")} · Asia/Ho_Chi_Minh</p>}
+          {(q.data?.opensAt || meta) && (
+            <p>Mở lúc {dateLabel(q.data?.opensAt || "2026-09-14T08:00:00Z")} · Asia/Ho_Chi_Minh</p>
+          )}
           {deadlineStr && (
             <div className="assessment-deadline-row" style={{ margin: "12px 0" }}>
               <div className="assessment-deadline-text">
@@ -928,29 +1078,30 @@ export function QuizDetail() {
               <div className="late-banner-strict" role="alert" style={{ margin: "14px 0" }}>
                 <span>⛔</span>
                 <div>
-                  <strong>CẢNH BÁO QUÁ HẠN NỘP:</strong> Bài kiểm tra đã đóng lúc <strong>{meta?.deadlineLabel || dateLabel(deadlineStr || "")}</strong>.
-                  Theo quy định của Giảng viên, <u>học viên không được phép nộp trễ</u>. Bạn không thể bắt đầu làm bài nữa.
+                  <strong>CẢNH BÁO QUÁ HẠN NỘP:</strong> Bài kiểm tra đã đóng lúc{" "}
+                  <strong>{meta?.deadlineLabel || dateLabel(deadlineStr || "")}</strong>. Theo quy định của
+                  Giảng viên, <u>học viên không được phép nộp trễ</u>. Bạn không thể bắt đầu làm bài nữa.
                 </div>
               </div>
             ) : (
               <div style={{ fontSize: 13, color: "var(--muted, #64748b)", margin: "10px 0" }}>
-                🔒 <strong>Quy định Giảng viên:</strong> Khóa nộp bài khi quá hạn. Hãy hoàn thành trước hạn chót.
+                🔒 <strong>Quy định Giảng viên:</strong> Khóa nộp bài khi quá hạn. Hãy hoàn thành trước hạn
+                chót.
               </div>
             )
+          ) : isOverdue ? (
+            <div className="late-banner-allowed" role="alert" style={{ margin: "14px 0" }}>
+              <span>⏰</span>
+              <div>
+                <strong>ĐÃ QUÁ HẠN NỘP BÀI:</strong> Giảng viên cho phép bạn nộp muộn, tuy nhiên lần làm bài
+                này sẽ bị <strong style={{ color: "#dc2626" }}>ĐÁNH DẤU ĐỎ ("NỘP MUỘN")</strong> để Giảng viên
+                biết và chấm điểm trừ trễ hạn.
+              </div>
+            </div>
           ) : (
-            isOverdue ? (
-              <div className="late-banner-allowed" role="alert" style={{ margin: "14px 0" }}>
-                <span>⏰</span>
-                <div>
-                  <strong>ĐÃ QUÁ HẠN NỘP BÀI:</strong> Giảng viên cho phép bạn nộp muộn, tuy nhiên lần làm bài này sẽ bị{" "}
-                  <strong style={{ color: "#dc2626" }}>ĐÁNH DẤU ĐỎ ("NỘP MUỘN")</strong> để Giảng viên biết và chấm điểm trừ trễ hạn.
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: 13, color: "var(--muted, #64748b)", margin: "10px 0" }}>
-                ⏱️ <strong>Quy định Giảng viên:</strong> Cho phép nộp muộn (bài nộp trễ sẽ bị đánh dấu đỏ).
-              </div>
-            )
+            <div style={{ fontSize: 13, color: "var(--muted, #64748b)", margin: "10px 0" }}>
+              ⏱️ <strong>Quy định Giảng viên:</strong> Cho phép nộp muộn (bài nộp trễ sẽ bị đánh dấu đỏ).
+            </div>
           )}
 
           <p>Số lần làm tối đa: {q.data?.attemptLimit ?? 1}.</p>
@@ -964,8 +1115,8 @@ export function QuizDetail() {
               <span>ℹ️</span>
               <div>
                 <strong>Nội dung giới thiệu:</strong> Bài kiểm tra này đang xuất hiện trong dữ liệu minh họa
-                nhưng chưa được giảng viên phát hành trên hệ thống. Thông tin lịch và quy định vẫn được hiển thị
-                để bạn theo dõi; chức năng bắt đầu làm bài sẽ mở sau khi nội dung được phát hành.
+                nhưng chưa được giảng viên phát hành trên hệ thống. Thông tin lịch và quy định vẫn được hiển
+                thị để bạn theo dõi; chức năng bắt đầu làm bài sẽ mở sau khi nội dung được phát hành.
               </div>
             </div>
           )}
@@ -1184,11 +1335,16 @@ function AnswerForm({ attempt, onSuccess }: { attempt: Attempt; onSuccess: () =>
                 payload: { answers: list, clientSubmittedAt: new Date().toISOString() },
               };
             try {
-              localStorage.setItem("ailss_student_submission_" + attempt.attemptId, JSON.stringify({
-                answers: list,
-                submittedAt: new Date().toISOString(),
-              }));
-            } catch {}
+              localStorage.setItem(
+                "ailss_student_submission_" + attempt.attemptId,
+                JSON.stringify({
+                  answers: list,
+                  submittedAt: new Date().toISOString(),
+                }),
+              );
+            } catch {
+              /* ignore localStorage error */
+            }
             const result = await command.run<Result>(
               "/attempts/" + attempt.attemptId + "/submit",
               "POST",
@@ -1275,7 +1431,14 @@ function QuestionInput({
     const textVal = a && "text" in a ? a.text : "";
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "8px 0" }}>
-        <div style={{ padding: 12, backgroundColor: "var(--surface-sunken, #f1f5f9)", borderRadius: 8, border: "1px dashed var(--brand, #0284c7)" }}>
+        <div
+          style={{
+            padding: 12,
+            backgroundColor: "var(--surface-sunken, #f1f5f9)",
+            borderRadius: 8,
+            border: "1px dashed var(--brand, #0284c7)",
+          }}
+        >
           <span style={{ fontSize: 13, fontWeight: 700, color: "var(--brand, #0284c7)" }}>
             📁 Nộp tệp đồ án / Báo cáo (Giảng viên chấm thủ công)
           </span>
@@ -1325,13 +1488,18 @@ function QuestionInput({
           <span style={{ fontSize: 13, fontWeight: 700, color: "#7c3aed" }}>
             ✍️ Bài làm tự luận (Giảng viên chấm thủ công)
           </span>
-          <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>
-            {textVal.length} / 500 ký tự
-          </span>
+          <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>{textVal.length} / 500 ký tự</span>
         </div>
         <textarea
           rows={5}
-          style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid var(--line, #cbd5e1)", fontFamily: "inherit", fontSize: 14 }}
+          style={{
+            width: "100%",
+            padding: 10,
+            borderRadius: 8,
+            border: "1px solid var(--line, #cbd5e1)",
+            fontFamily: "inherit",
+            fontSize: 14,
+          }}
           placeholder="Nhập nội dung bài luận, câu trả lời tự luận hoặc lời giải chi tiết..."
           maxLength={500}
           value={textVal}
@@ -1421,10 +1589,10 @@ export function ResultPage() {
   })();
 
   const isManualGraded = !!manualRecord && manualRecord.status === "GRADED";
-  const hasEssayOrProject =
-    studentSub?.answers?.some(
-      (ans: any) => ("text" in ans && ans.text && ans.text.length > 20) || "fileName" in ans
-    );
+  const hasEssayOrProject = studentSub?.answers?.some(
+    (ans: { text?: string; fileName?: string }) =>
+      ("text" in ans && ans.text && ans.text.length > 20) || "fileName" in ans,
+  );
   const isPendingManual = !isManualGraded && hasEssayOrProject;
 
   return (
@@ -1440,11 +1608,21 @@ export function ResultPage() {
                 </p>
                 <h2>Bài thi đã được ghi nhận</h2>
                 <p className="subtext">
-                  Bạn đã nộp thành công bài thi (Tự luận / Đồ án nộp file). Giảng viên phụ trách sẽ trực tiếp đọc bài làm, đánh giá và gửi điểm số cùng lời nhận xét chi tiết.
+                  Bạn đã nộp thành công bài thi (Tự luận / Đồ án nộp file). Giảng viên phụ trách sẽ trực tiếp
+                  đọc bài làm, đánh giá và gửi điểm số cùng lời nhận xét chi tiết.
                 </p>
-                <div style={{ margin: "16px 0", padding: "12px 16px", backgroundColor: "var(--surface-sunken, #f8fafc)", borderRadius: 8, border: "1px solid var(--line, #e2e8f0)" }}>
+                <div
+                  style={{
+                    margin: "16px 0",
+                    padding: "12px 16px",
+                    backgroundColor: "var(--surface-sunken, #f8fafc)",
+                    borderRadius: 8,
+                    border: "1px solid var(--line, #e2e8f0)",
+                  }}
+                >
                   <p style={{ margin: 0, fontSize: "14px", fontWeight: 600 }}>
-                    📋 Tình trạng: Đã tiếp nhận bài làm lúc {dateLabel(q.data.submittedAt)} · Đang chờ giảng viên chấm
+                    📋 Tình trạng: Đã tiếp nhận bài làm lúc {dateLabel(q.data.submittedAt)} · Đang chờ giảng
+                    viên chấm
                   </p>
                 </div>
                 <Link className="button" to="/app/learn">
@@ -1459,9 +1637,20 @@ export function ResultPage() {
                 <h2>
                   {manualRecord.manualScore ?? q.data.score} / {q.data.maxScore}
                 </h2>
-                <p>Đã nộp lúc {dateLabel(q.data.submittedAt)} · Đã chấm lúc {dateLabel(manualRecord.gradedAt)}</p>
+                <p>
+                  Đã nộp lúc {dateLabel(q.data.submittedAt)} · Đã chấm lúc {dateLabel(manualRecord.gradedAt)}
+                </p>
                 {manualRecord.teacherFeedback && (
-                  <div style={{ margin: "16px 0", padding: "14px 18px", backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8, textAlign: "left" }}>
+                  <div
+                    style={{
+                      margin: "16px 0",
+                      padding: "14px 18px",
+                      backgroundColor: "#F0FDF4",
+                      border: "1px solid #BBF7D0",
+                      borderRadius: 8,
+                      textAlign: "left",
+                    }}
+                  >
                     <p style={{ fontWeight: 700, color: "#166534", marginBottom: 4 }}>
                       💬 Nhận xét & Lời phê của Giảng viên:
                     </p>

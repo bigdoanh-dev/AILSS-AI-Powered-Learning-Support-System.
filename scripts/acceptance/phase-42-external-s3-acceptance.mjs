@@ -17,7 +17,8 @@ if (!isExternalEnabled) {
       {
         harness: "phase-42-external-s3-acceptance",
         status: "DISABLED",
-        reason: "AILSS_ACCEPTANCE_EXTERNAL_S3 is not set to 'true'. Standing by for external DevOps configuration.",
+        reason:
+          "AILSS_ACCEPTANCE_EXTERNAL_S3 is not set to 'true'. Standing by for external DevOps configuration.",
       },
       null,
       2,
@@ -41,7 +42,9 @@ const secretKey = process.env.MEDIA_STORAGE_SECRET_KEY;
 const region = process.env.OBJECT_STORAGE_REGION || "us-east-1";
 
 if (!endpoint || !bucket || !accessKey || !secretKey || !publicUrl) {
-  console.error("FAIL-CLOSED: External S3 acceptance requires explicit endpoint, bucket, credentials, and publicUrl.");
+  console.error(
+    "FAIL-CLOSED: External S3 acceptance requires explicit endpoint, bucket, credentials, and publicUrl.",
+  );
   process.exit(1);
 }
 
@@ -55,7 +58,9 @@ if (!useSSL) {
   process.exit(1);
 }
 
-console.log(`Starting External S3 Acceptance against endpoint=${endpoint}, bucket=${bucket}, region=${region}...`);
+console.log(
+  `Starting External S3 Acceptance against endpoint=${endpoint}, bucket=${bucket}, region=${region}...`,
+);
 
 const storage = new S3MediaStorage(
   bucket,

@@ -64,7 +64,8 @@ export class ExpoPushProvider implements PushProviderAdapter {
 
     // In production HTTP mode, calls https://exp.host/--/api/v2/push/send
     const ticketIds = validTokens.map(
-      (_, idx) => `expo-ticket-${Date.now().toString()}-${idx.toString()}-${Math.random().toString(36).slice(2, 8)}`,
+      (_, idx) =>
+        `expo-ticket-${Date.now().toString()}-${idx.toString()}-${Math.random().toString(36).slice(2, 8)}`,
     );
 
     return Promise.resolve({
@@ -247,4 +248,3 @@ export const PushPrivacyRedactor = {
     };
   },
 } as const;
-

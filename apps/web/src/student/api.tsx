@@ -143,6 +143,11 @@ export function studentError(e: unknown) {
     if (e.code === "SCHEDULE_CONFLICT") return "Lịch học bị trùng với một lớp bạn đã tham gia.";
     if (e.code === "LIVE_COHORT_JOIN_CODE_DENIED")
       return "Lớp theo lịch cần được tham gia qua đợt mở đăng ký.";
+    if (e.code === "AI_PROVIDER_HTTP_429")
+      return "Gia sư AI đang nhận quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.";
+    if (e.code === "AI_PROVIDER_TIMEOUT") return "Gia sư AI phản hồi quá lâu. Vui lòng thử lại.";
+    if (e.code === "AI_PROVIDER_HTTP_401" || e.code === "AI_PROVIDER_HTTP_403")
+      return "Gia sư AI chưa kết nối được dịch vụ trả lời. Vui lòng liên hệ hỗ trợ.";
     if (e.status === 503) return "Dịch vụ tạm thời không khả dụng. Hãy thử lại.";
     if (e.status === 401) return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
     if (e.status === 403) return "Bạn hiện không có quyền truy cập nội dung này.";

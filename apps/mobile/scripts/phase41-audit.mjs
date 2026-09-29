@@ -16,7 +16,19 @@ async function walk(folder) {
   }
   return files;
 }
-const codeExtensions = [".ios.tsx", ".android.tsx", ".native.tsx", ".tsx", ".ios.ts", ".android.ts", ".native.ts", ".ts", ".jsx", ".js", ".mjs"];
+const codeExtensions = [
+  ".ios.tsx",
+  ".android.tsx",
+  ".native.tsx",
+  ".tsx",
+  ".ios.ts",
+  ".android.ts",
+  ".native.ts",
+  ".ts",
+  ".jsx",
+  ".js",
+  ".mjs",
+];
 function resolveLocalImport(fromFile, specifier) {
   const base = path.resolve(path.dirname(fromFile), specifier);
   const bases = specifier.endsWith(".js")
@@ -51,14 +63,16 @@ function moduleSpecifiers(file, source) {
       (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
       node.moduleSpecifier &&
       ts.isStringLiteral(node.moduleSpecifier)
-    ) found.push(node.moduleSpecifier.text);
+    )
+      found.push(node.moduleSpecifier.text);
     if (
       ts.isCallExpression(node) &&
       (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
         (ts.isIdentifier(node.expression) && node.expression.text === "require")) &&
       node.arguments.length === 1 &&
       ts.isStringLiteral(node.arguments[0])
-    ) found.push(node.arguments[0].text);
+    )
+      found.push(node.arguments[0].text);
     ts.forEachChild(node, visit);
   };
   visit(ast);
@@ -93,7 +107,8 @@ function apiPathsInSource(file, source) {
       if (
         (ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === "request") ||
         (ts.isIdentifier(node.expression) && ["fetch", "request"].includes(node.expression.text))
-      ) hasApiRequest = true;
+      )
+        hasApiRequest = true;
     }
     if (ts.isStringLiteralLike(node)) {
       for (const match of node.text.matchAll(/\/api\/v1\/[^\s"'`]+/gu)) paths.add(normalizeApiPath(match[0]));
@@ -116,7 +131,10 @@ function normalizeApiPath(value) {
     .replace(/\/$/u, "");
 }
 function routePatternRegex(pattern) {
-  return new RegExp(`^${pattern.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&").replace(/:[A-Za-z0-9_]+/gu, "[^/]+")}/?$`, "u");
+  return new RegExp(
+    `^${pattern.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&").replace(/:[A-Za-z0-9_]+/gu, "[^/]+")}/?$`,
+    "u",
+  );
 }
 function routeFor(file) {
   if (path.basename(file) === "_layout.tsx") return null;
@@ -192,15 +210,19 @@ for (const { file, route } of routeFiles) {
       apiSources.get(apiPath).add(relative);
     }
   }
-  const fixturePattern = /\b(?:CLASS_ASSIGNMENTS|CLASS_DOCUMENTS|CLASS_MEMBERS|CATALOG_COURSES|STUDENT_BLOOM|STUDENT_COURSES|RECENT_QUIZZES|MOCK_[A-Z0-9_]*|SAMPLE_[A-Z0-9_]*|DEMO_[A-Z0-9_]*)\b|\b(?:asg|quiz)-\d+\b|(?:fixture|sample|demo|mock)\s+(?:course|student|assignment|assessment|grade|class|member|document|quiz|score|progress)/iu;
-  const mockPattern = /\b(?:MOCK_DATA|MOCK_COURSES|MOCK_STUDENTS|FIXTURE_DATA|DEMO_DATA|SAMPLE_DATA|native_(?:google|apple)_token)\b/iu;
+  const fixturePattern =
+    /\b(?:CLASS_ASSIGNMENTS|CLASS_DOCUMENTS|CLASS_MEMBERS|CATALOG_COURSES|STUDENT_BLOOM|STUDENT_COURSES|RECENT_QUIZZES|MOCK_[A-Z0-9_]*|SAMPLE_[A-Z0-9_]*|DEMO_[A-Z0-9_]*)\b|\b(?:asg|quiz)-\d+\b|(?:fixture|sample|demo|mock)\s+(?:course|student|assignment|assessment|grade|class|member|document|quiz|score|progress)/iu;
+  const mockPattern =
+    /\b(?:MOCK_DATA|MOCK_COURSES|MOCK_STUDENTS|FIXTURE_DATA|DEMO_DATA|SAMPLE_DATA|native_(?:google|apple)_token)\b/iu;
   const fixtureFiles = [...closure.sources.keys()]
     .filter((dependency) => fixturePattern.test(closure.sources.get(dependency) ?? ""))
     .map((dependency) => path.relative(root, dependency).replaceAll(path.sep, "/"));
   const mockFiles = [...closure.sources.keys()]
     .filter((dependency) => mockPattern.test(closure.sources.get(dependency) ?? ""))
     .map((dependency) => path.relative(root, dependency).replaceAll(path.sep, "/"));
-  const storageFiles = [...closure.sources.keys()].map((dependency) => path.relative(root, dependency).replaceAll(path.sep, "/"));
+  const storageFiles = [...closure.sources.keys()].map((dependency) =>
+    path.relative(root, dependency).replaceAll(path.sep, "/"),
+  );
   const localStorage = [];
   if (storageFiles.some((dependency) => dependency.endsWith("src/runtime.ts")))
     localStorage.push("Refresh credential/session secret in SecureStore; access token memory-only");
@@ -209,7 +231,9 @@ for (const { file, route } of routeFiles) {
   const component =
     source.match(/export\s+default\s+function\s+([A-Za-z0-9_]+)/u)?.[1] ?? path.basename(file, ".tsx");
   const mockUsage = mockFiles.length > 0;
-  const redirectTargets = [...source.matchAll(/<Redirect\s+href=\s*\{?["']([^"']+)["']/gu)].map((match) => match[1].split("?")[0]);
+  const redirectTargets = [...source.matchAll(/<Redirect\s+href=\s*\{?["']([^"']+)["']/gu)].map(
+    (match) => match[1].split("?")[0],
+  );
   inventory.push({
     route,
     sourceFile: path.relative(root, file).replaceAll(path.sep, "/"),
@@ -217,7 +241,9 @@ for (const { file, route } of routeFiles) {
     intendedRole: roleFor(route),
     apiDependencies: [...apiSources.keys()].sort(),
     apiDependencySources: Object.fromEntries(
-      [...apiSources].sort(([a], [b]) => a.localeCompare(b)).map(([apiPath, files]) => [apiPath, [...files].sort()]),
+      [...apiSources]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([apiPath, files]) => [apiPath, [...files].sort()]),
     ),
     localStorageDependencies: localStorage,
     fixtureUsage: fixtureFiles.length > 0,
@@ -255,7 +281,8 @@ const graph = {
       status: "DEFERRED_PROVIDER_CONFIGURATION_AND_PKCE_FLOW",
       nativeRoute: "/login",
       screen: "app/[screen].tsx",
-      apiPath: "/api/v1/auth/social/:provider (ID-token endpoint exists; native OIDC callback not configured)",
+      apiPath:
+        "/api/v1/auth/social/:provider (ID-token endpoint exists; native OIDC callback not configured)",
       gatewayPath: "API Gateway identity proxy",
       backendService: "identity-service",
       repository: "Identity session repository",
@@ -277,7 +304,8 @@ const graph = {
       tableStore: "Cassandra enrollment, mastery_v2_by_student_concept, study_plans_v2",
       featureFlag: null,
       authorization: "Authenticated STUDENT; actor and user derived by Gateway",
-      offlineBehavior: "Per-user SQLCipher cache for enrolled courses, last-synced Mastery and Study Plan; offline screens are labeled and cannot mutate plans",
+      offlineBehavior:
+        "Per-user SQLCipher cache for enrolled courses, last-synced Mastery and Study Plan; offline screens are labeled and cannot mutate plans",
     },
     {
       id: "course-lessons",
@@ -292,7 +320,8 @@ const graph = {
       tableStore: "Cassandra course, lesson, progress and completion tables; approved object storage",
       featureFlag: null,
       authorization: "Enrollment/preview entitlement enforced by Learning Service",
-      offlineBehavior: "Course metadata and progress projections may use labeled encrypted cache; lesson bodies remain online-only; completion is queued and not authoritative until server acknowledgement",
+      offlineBehavior:
+        "Course metadata and progress projections may use labeled encrypted cache; lesson bodies remain online-only; completion is queued and not authoritative until server acknowledgement",
     },
     {
       id: "mastery-v2",
@@ -306,7 +335,8 @@ const graph = {
       tableStore: "Cassandra mastery_v2_by_student_concept",
       featureFlag: null,
       authorization: "Authenticated STUDENT; backend derives actor",
-      offlineBehavior: "Last-synced projection may be read from a user-scoped SQLCipher cache with LAST_SYNCED; no local mastery calculation",
+      offlineBehavior:
+        "Last-synced projection may be read from a user-scoped SQLCipher cache with LAST_SYNCED; no local mastery calculation",
     },
     {
       id: "study-plan-v2",
@@ -320,7 +350,8 @@ const graph = {
       tableStore: "Cassandra study_plans_v2 and study_plan_items_status",
       featureFlag: null,
       authorization: "Authenticated STUDENT; ownership and transition validated server-side",
-      offlineBehavior: "Last-synced read is available from SQLCipher cache; plan mutations remain online-only and 409 reloads server state",
+      offlineBehavior:
+        "Last-synced read is available from SQLCipher cache; plan mutations remain online-only and 409 reloads server state",
     },
     {
       id: "ai-tutor-v2",
@@ -363,7 +394,8 @@ const graph = {
       tableStore: "Cassandra notification tables",
       featureFlag: null,
       authorization: "Authenticated user; server scopes by actor",
-      offlineBehavior: "In-app list/read only; push installation binding remains unavailable until trusted tenant/session contract ships",
+      offlineBehavior:
+        "In-app list/read only; push installation binding remains unavailable until trusted tenant/session contract ships",
     },
     {
       id: "account-registration",
@@ -391,14 +423,16 @@ const graph = {
       tableStore: "Cassandra identity tables",
       featureFlag: null,
       authorization: "Authenticated account; account data and logout are server-backed",
-      offlineBehavior: "Account mutation requires network; local logout always clears local credentials and cache",
+      offlineBehavior:
+        "Account mutation requires network; local logout always clears local credentials and cache",
     },
     {
       id: "public-course-catalog",
       status: "SHIP",
       nativeRoute: "/courses and /courses/:courseId",
       screen: "app/courses and app/courses/[courseId].tsx",
-      apiPath: "/api/v1/courses; /api/v1/courses/search; /api/v1/courses/:courseId; /api/v1/courses/:courseId/offerings; review APIs",
+      apiPath:
+        "/api/v1/courses; /api/v1/courses/search; /api/v1/courses/:courseId; /api/v1/courses/:courseId/offerings; review APIs",
       gatewayPath: "Learning catalog and Interaction proxies",
       backendService: "learning-service plus interaction-service",
       repository: "LearningCatalogRepository, OfferingRepository, InteractionRepository",
@@ -412,7 +446,8 @@ const graph = {
       status: "SHIP_READ_ONLY",
       nativeRoute: "/classes and /classes/:classId and /classes/:classId/sessions/:sessionId",
       screen: "app/classes",
-      apiPath: "/api/v1/me/classes; /api/v1/me/schedule; /api/v1/me/attendance; /api/v1/classes/:classId; /api/v1/classes/:classId/sessions; /api/v1/class-sessions/:sessionId",
+      apiPath:
+        "/api/v1/me/classes; /api/v1/me/schedule; /api/v1/me/attendance; /api/v1/classes/:classId; /api/v1/classes/:classId/sessions; /api/v1/class-sessions/:sessionId",
       gatewayPath: "Classroom proxy",
       backendService: "classroom-service",
       repository: "ClassroomRepository",
@@ -432,7 +467,8 @@ const graph = {
       repository: "Not applicable",
       tableStore: "Not applicable",
       featureFlag: null,
-      authorization: "No authoritative tenant-installation binding contract exists; do not register or retain a private notification token",
+      authorization:
+        "No authoritative tenant-installation binding contract exists; do not register or retain a private notification token",
       offlineBehavior: "IN_APP_ONLY; push registration and delivery are not Phase 41 product claims",
     },
   ],
@@ -475,8 +511,13 @@ const routeMappings = [
   { featureId: "ai-tutor-v2", routes: ["/student/tutor"], apiPatterns: ["/api/v1/assistant/chat"] },
   {
     featureId: "assessments",
-    routes: ["/assessments", "/assessments/:quizId", "/assessments/:quizId/attempt/:attemptId", "/assessments/:quizId/result/:resultId"],
-      apiPatterns: [
+    routes: [
+      "/assessments",
+      "/assessments/:quizId",
+      "/assessments/:quizId/attempt/:attemptId",
+      "/assessments/:quizId/result/:resultId",
+    ],
+    apiPatterns: [
       "/api/v1/me/courses",
       "/api/v1/classes",
       "/api/v1/targets/COURSE/:targetId/quizzes",
@@ -526,11 +567,7 @@ const routeMappings = [
 ];
 
 graph.routeMappings = routeMappings;
-graph.sharedApiDependencies = [
-  "/api/v1/me",
-  "/api/v1/auth/refresh",
-  "/api/v1/auth/logout",
-];
+graph.sharedApiDependencies = ["/api/v1/me", "/api/v1/auth/refresh", "/api/v1/auth/logout"];
 graph.sharedApiDependencies = [...new Set([...graph.sharedApiDependencies, ...sharedApiDependencies])].sort();
 
 function apiPatternRegex(pattern) {
@@ -553,8 +590,11 @@ for (const feature of graph.features.filter((item) => item.status.startsWith("SH
   );
   if (mappedRoutes.length === 0) routeMappingIssues.push(`FEATURE_ROUTE_NOT_FOUND:${feature.id}`);
   for (const pattern of mapping.apiPatterns) {
-    const observed = graph.sharedApiDependencies.some((apiPath) => apiPatternRegex(pattern).test(apiPath)) ||
-      mappedRoutes.some((entry) => entry.apiDependencies.some((apiPath) => apiPatternRegex(pattern).test(apiPath)));
+    const observed =
+      graph.sharedApiDependencies.some((apiPath) => apiPatternRegex(pattern).test(apiPath)) ||
+      mappedRoutes.some((entry) =>
+        entry.apiDependencies.some((apiPath) => apiPatternRegex(pattern).test(apiPath)),
+      );
     if (!observed) routeMappingIssues.push(`FEATURE_API_NOT_OBSERVED:${feature.id}:${pattern}`);
   }
 }
@@ -563,8 +603,10 @@ for (const route of inventory.filter((entry) => entry.decision === "CONNECT")) {
     mapping.routes.some((pattern) => routePatternRegex(pattern).test(route.route)),
   );
   if (matchingMappings.length === 0) routeMappingIssues.push(`CONNECT_ROUTE_UNMAPPED:${route.route}`);
-  if (route.fixtureUsage || route.mockUsage) routeMappingIssues.push(`CONNECT_ROUTE_HAS_BUSINESS_FIXTURE:${route.route}`);
-  if (route.unresolvedImports.length > 0) routeMappingIssues.push(`CONNECT_ROUTE_HAS_UNRESOLVED_IMPORT:${route.route}`);
+  if (route.fixtureUsage || route.mockUsage)
+    routeMappingIssues.push(`CONNECT_ROUTE_HAS_BUSINESS_FIXTURE:${route.route}`);
+  if (route.unresolvedImports.length > 0)
+    routeMappingIssues.push(`CONNECT_ROUTE_HAS_UNRESOLVED_IMPORT:${route.route}`);
   for (const apiPath of route.apiDependencies) {
     if (!mappedApiPatterns.some((pattern) => apiPatternRegex(pattern).test(apiPath)))
       routeMappingIssues.push(`ROUTE_API_NOT_IN_RUNTIME_GRAPH:${route.route}:${apiPath}`);
@@ -590,7 +632,9 @@ graph.inventoryConsistency = {
   violations: routeMappingIssues,
 };
 if (routeMappingIssues.length > 0) {
-  process.stderr.write(`${JSON.stringify({ stage: "phase41-route-graph-consistency", status: "FAIL", violations: routeMappingIssues }, null, 2)}\n`);
+  process.stderr.write(
+    `${JSON.stringify({ stage: "phase41-route-graph-consistency", status: "FAIL", violations: routeMappingIssues }, null, 2)}\n`,
+  );
   process.exitCode = 1;
 }
 
@@ -602,13 +646,16 @@ const policy = {
     schemaVersion: 1,
     migrations: [1],
     cacheRetentionDays: 30,
-    encryption: "SQLCipher key is generated randomly and stored in device-only SecureStore; key is applied before any database read",
-    sensitiveColumns: "No passwords, access tokens, refresh tokens, session secrets, assessment answers or lesson bodies",
+    encryption:
+      "SQLCipher key is generated randomly and stored in device-only SecureStore; key is applied before any database read",
+    sensitiveColumns:
+      "No passwords, access tokens, refresh tokens, session secrets, assessment answers or lesson bodies",
   },
   conflictRules: {
     mastery: "Server projection always wins; never calculate locally",
     studyPlan: "Server wins; reload on 409 before showing updated plan",
-    lessonCompletion: "Queueing is PENDING_SYNC only; server acknowledgement is required before authoritative completion",
+    lessonCompletion:
+      "Queueing is PENDING_SYNC only; server acknowledgement is required before authoritative completion",
     assessmentSubmission: "ONLINE_ONLY; server attempt/version and idempotency rules win",
   },
   datasets: [
@@ -622,7 +669,8 @@ const policy = {
       name: "published lesson content and approved media references",
       classification: "ONLINE_ONLY",
       currentState: "Never persisted in local database",
-      requirement: "Content remains online-only until an appropriate authorization-aware secure content design exists",
+      requirement:
+        "Content remains online-only until an appropriate authorization-aware secure content design exists",
     },
     {
       name: "last-synced Study Plan",
@@ -673,7 +721,8 @@ const policy = {
     {
       name: "plaintext credentials and session secrets",
       classification: "NEVER_PERSIST_PLAINTEXT",
-      currentState: "Never written to AsyncStorage, ordinary SQLite, logs, analytics, URL parameters or clipboard",
+      currentState:
+        "Never written to AsyncStorage, ordinary SQLite, logs, analytics, URL parameters or clipboard",
     },
     {
       name: "final grading, payment, credential issuance and security administration",
@@ -724,7 +773,9 @@ process.stdout.write(
   JSON.stringify({
     status: routeMappingIssues.length === 0 ? "PASS" : "FAIL",
     routeCount: inventory.length,
-    connectRouteFixtureCount: inventory.filter((x) => x.decision === "CONNECT" && (x.fixtureUsage || x.mockUsage)).length,
+    connectRouteFixtureCount: inventory.filter(
+      (x) => x.decision === "CONNECT" && (x.fixtureUsage || x.mockUsage),
+    ).length,
     consistency: graph.inventoryConsistency.status,
     violations: routeMappingIssues,
     summary: {

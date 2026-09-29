@@ -7,6 +7,7 @@ import { ApiError } from "../../../../src/api";
 import { runtime } from "../../../../src/runtime";
 import { lecturerCourse, type LecturerCourse, CONTRACT_LIMITED } from "../../../../src/teaching";
 import { Page, Button, ScreenHeader, styles, tokens } from "../../../../src/ui";
+import { RevenueQuote } from "../../../../src/RevenueQuote";
 
 const CATEGORY_PRESETS = [
   { id: "cat-web", name: "Web & AI" },
@@ -115,7 +116,10 @@ export default function CourseEdit() {
       )}
 
       {course && (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingBottom: 24 }}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ gap: 14, paddingBottom: 24 }}
+        >
           {/* Live Preview Card */}
           <View style={[styles.card, ed.previewBox]}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -251,6 +255,7 @@ export default function CourseEdit() {
           </View>
 
           {/* Form Card 3: Lưu ý nền tảng */}
+          <RevenueQuote price={price} currency={currency} paid={priceType === "PAID"} />
           <View style={[styles.card, ed.policyCard]}>
             <Text style={[ed.cardHeading, { fontSize: 13, color: "#92400e" }]}>📌 Lưu ý phát hành</Text>
             <Text style={ed.policyText}>• {CONTRACT_LIMITED.coursePublish}</Text>
@@ -275,7 +280,9 @@ export default function CourseEdit() {
             <Button
               label="Quay lại chi tiết"
               variant="outline"
-              onPress={() => (router.canGoBack() ? router.back() : router.replace(`/teaching/courses/${courseId}`))}
+              onPress={() =>
+                router.canGoBack() ? router.back() : router.replace(`/teaching/courses/${courseId}`)
+              }
             />
           </View>
         </ScrollView>
@@ -441,4 +448,3 @@ const ed = StyleSheet.create({
     fontWeight: "600",
   },
 });
-

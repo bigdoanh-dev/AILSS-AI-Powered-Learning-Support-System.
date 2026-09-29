@@ -432,13 +432,9 @@ export default function Comments() {
             <div className="section-card-header">
               <div>
                 <h2>
-                  {resourceType === "COURSE"
-                    ? "Thảo Luận & Câu Hỏi Của Học Viên"
-                    : "Kênh Thảo Luận Lớp Học"}
+                  {resourceType === "COURSE" ? "Thảo Luận & Câu Hỏi Của Học Viên" : "Kênh Thảo Luận Lớp Học"}
                 </h2>
-                <p className="subtext">
-                  Danh sách trao đổi, phản hồi và giải đáp chuyên môn của giảng viên.
-                </p>
+                <p className="subtext">Danh sách trao đổi, phản hồi và giải đáp chuyên môn của giảng viên.</p>
               </div>
               <span className="kpi-tag accent">{commentsList.length} bình luận</span>
             </div>
@@ -585,4 +581,3 @@ export default function Comments() {
     </div>
   );
 }
-

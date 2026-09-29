@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Navigate } from "react-router-dom";
 import { useSession } from "../auth/session";
-import { adminError, adminRequest } from "./api";
+import { adminRequest } from "./api";
 
 export type Report = {
   reportId: string;
@@ -31,7 +31,8 @@ const DEMO_REPORTS: Report[] = [
     version: 1,
     createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    contentSnippet: "Cần mua đáp án bài tập lớn và đồ án CSDL liên hệ Zalo 0987.xxx.xxx, cam kết điểm A+ bao qua môn giá rẻ!",
+    contentSnippet:
+      "Cần mua đáp án bài tập lớn và đồ án CSDL liên hệ Zalo 0987.xxx.xxx, cam kết điểm A+ bao qua môn giá rẻ!",
     authorName: "User_SpamBot_2026",
     reportedReason: "Gian lận học thuật & Spam dịch vụ làm thuê",
     severity: "HIGH",
@@ -47,7 +48,8 @@ const DEMO_REPORTS: Report[] = [
     version: 1,
     createdAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    contentSnippet: "Khóa học lừa đảo, tài liệu chép trên mạng, khuyên mọi người qua group Telegram t.me/xxx để tải miễn phí bản crack!",
+    contentSnippet:
+      "Khóa học lừa đảo, tài liệu chép trên mạng, khuyên mọi người qua group Telegram t.me/xxx để tải miễn phí bản crack!",
     authorName: "Học viên nặc danh",
     reportedReason: "Đánh giá giả mạo (Review bombing) & Kêu gọi vi phạm bản quyền",
     severity: "HIGH",
@@ -63,7 +65,8 @@ const DEMO_REPORTS: Report[] = [
     version: 1,
     createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    contentSnippet: "Bài giảng gì mà dốt thế, giảng viên nói như buồn ngủ, học phí đắt mà chất lượng như rác!",
+    contentSnippet:
+      "Bài giảng gì mà dốt thế, giảng viên nói như buồn ngủ, học phí đắt mà chất lượng như rác!",
     authorName: "Trần Minh Quân",
     reportedReason: "Ngôn từ công kích cá nhân & Xúc phạm giảng viên",
     severity: "MEDIUM",
@@ -95,7 +98,8 @@ const DEMO_REPORTS: Report[] = [
     version: 1,
     createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-    contentSnippet: "Bán tài khoản ChatGPT Plus và API Gemini Flash siêu rẻ, bảo hành 1 năm liên hệ hotline 0909.xxx.xxx",
+    contentSnippet:
+      "Bán tài khoản ChatGPT Plus và API Gemini Flash siêu rẻ, bảo hành 1 năm liên hệ hotline 0909.xxx.xxx",
     authorName: "Dịch Vụ Số 247",
     reportedReason: "Quảng cáo rác (Spam link bán hàng)",
     severity: "MEDIUM",
@@ -213,13 +217,18 @@ export default function Moderation() {
           <p className="eyebrow">ADMIN · AN NINH & CỘNG ĐỒNG</p>
           <h1>Hàng Đợi Nội Dung Bị Báo Cáo</h1>
           <p className="lead">
-            Xử lý phản ánh từ học viên về bình luận xúc phạm, đánh giá giả mạo hoặc gian lận học thuật theo thứ tự ưu tiên.
+            Xử lý phản ánh từ học viên về bình luận xúc phạm, đánh giá giả mạo hoặc gian lận học thuật theo
+            thứ tự ưu tiên.
           </p>
         </div>
 
         <div className="dashboard-header-actions">
           {isDemo && (
-            <button className="button button-subtle" onClick={handleResetDemo} title="Khôi phục danh sách báo cáo mẫu">
+            <button
+              className="button button-subtle"
+              onClick={handleResetDemo}
+              title="Khôi phục danh sách báo cáo mẫu"
+            >
               ↻ Nạp lại dữ liệu demo
             </button>
           )}
@@ -234,22 +243,30 @@ export default function Moderation() {
         </div>
         <div className="moderation-stat-item">
           <div className="moderation-stat-label">Chờ xử lý</div>
-          <div className="moderation-stat-val" style={{ color: "#d97706" }}>{openCount}</div>
+          <div className="moderation-stat-val" style={{ color: "#d97706" }}>
+            {openCount}
+          </div>
         </div>
         <div className="moderation-stat-item">
           <div className="moderation-stat-label">Mức độ nghiêm trọng</div>
-          <div className="moderation-stat-val" style={{ color: "#dc2626" }}>{highCount}</div>
+          <div className="moderation-stat-val" style={{ color: "#dc2626" }}>
+            {highCount}
+          </div>
         </div>
         <div className="moderation-stat-item">
           <div className="moderation-stat-label">Đã giải quyết</div>
-          <div className="moderation-stat-val" style={{ color: "#16a34a" }}>{resolvedCount}</div>
+          <div className="moderation-stat-val" style={{ color: "#16a34a" }}>
+            {resolvedCount}
+          </div>
         </div>
       </div>
 
       {/* Search & Filter Toolbar */}
       <div className="admin-table-toolbar">
         <div className="admin-search-input-wrap">
-          <span className="admin-search-icon" aria-hidden="true">🔍</span>
+          <span className="admin-search-icon" aria-hidden="true">
+            🔍
+          </span>
           <input
             type="search"
             placeholder="Tìm theo nội dung, người vi phạm, mã báo cáo..."
@@ -351,16 +368,24 @@ export default function Moderation() {
                   )}
 
                   {report.contentSnippet && (
-                    <div className="moderation-content-preview">
-                      "{report.contentSnippet}"
-                    </div>
+                    <div className="moderation-content-preview">"{report.contentSnippet}"</div>
                   )}
 
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginTop: "4px",
+                    }}
+                  >
                     <small className="muted" style={{ fontSize: "11px" }}>
                       Tác giả: <strong>{report.authorName || report.targetId.slice(0, 10)}</strong>
                     </small>
-                    <span className={`admin-badge ${report.state === "OPEN" ? "pending" : "active"}`} style={{ fontSize: "10.5px" }}>
+                    <span
+                      className={`admin-badge ${report.state === "OPEN" ? "pending" : "active"}`}
+                      style={{ fontSize: "10.5px" }}
+                    >
                       {report.state === "OPEN" ? "⏳ Chờ xử lý" : `✓ ${report.decision || "Đã giải quyết"}`}
                     </span>
                   </div>
@@ -385,7 +410,9 @@ export default function Moderation() {
                 setSelected((prev) =>
                   prev ? { ...prev, state: "RESOLVED", decision: action || "HIDE" } : null,
                 );
-                showToast(`✓ Đã thực thi quyết định [${action === "HIDE" ? "Ẩn nội dung" : action === "WARN" ? "Cảnh báo" : action === "DISMISS" ? "Bỏ qua" : "Khôi phục"}] thành công!`);
+                showToast(
+                  `✓ Đã thực thi quyết định [${action === "HIDE" ? "Ẩn nội dung" : action === "WARN" ? "Cảnh báo" : action === "DISMISS" ? "Bỏ qua" : "Khôi phục"}] thành công!`,
+                );
               }}
             />
           ) : (
@@ -394,7 +421,9 @@ export default function Moderation() {
         </div>
       ) : (
         <div className="study-state">
-          {search ? `Không tìm thấy báo cáo nào khớp với từ khóa "${search}".` : "Không có báo cáo nào đang mở."}
+          {search
+            ? `Không tìm thấy báo cáo nào khớp với từ khóa "${search}".`
+            : "Không có báo cáo nào đang mở."}
           <div style={{ marginTop: "14px" }}>
             <button className="button" onClick={handleResetDemo}>
               Tạo lại dữ liệu demo kiểm duyệt
@@ -437,13 +466,17 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
   const [message, setMessage] = useState("");
   const [action, setAction] = useState<string>("HIDE");
   const [reason, setReason] = useState(
-    report.reportedReason ? `Vi phạm quy chế cộng đồng: ${report.reportedReason}` : "Vi phạm quy chế cộng đồng và chuẩn mực giao tiếp học thuật AILSS.",
+    report.reportedReason
+      ? `Vi phạm quy chế cộng đồng: ${report.reportedReason}`
+      : "Vi phạm quy chế cộng đồng và chuẩn mực giao tiếp học thuật AILSS.",
   );
   const [currentPassword, setCurrentPassword] = useState("");
 
   useEffect(() => {
     setReason(
-      report.reportedReason ? `Vi phạm quy chế cộng đồng: ${report.reportedReason}` : "Vi phạm quy chế cộng đồng và chuẩn mực giao tiếp học thuật AILSS.",
+      report.reportedReason
+        ? `Vi phạm quy chế cộng đồng: ${report.reportedReason}`
+        : "Vi phạm quy chế cộng đồng và chuẩn mực giao tiếp học thuật AILSS.",
     );
     setMessage("");
   }, [report]);
@@ -482,10 +515,21 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
 
   return (
     <form className="form-panel moderation-detail" onSubmit={(e) => void submit(e)}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-        <p className="eyebrow" style={{ margin: 0 }}>THẨM ĐỊNH NỘI DUNG</p>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "8px",
+        }}
+      >
+        <p className="eyebrow" style={{ margin: 0 }}>
+          THẨM ĐỊNH NỘI DUNG
+        </p>
         <span className={`admin-badge ${report.state === "OPEN" ? "pending" : "active"}`}>
-          {report.state === "OPEN" ? "⏳ ĐANG CHỜ XỬ LÝ" : `✓ ĐÃ GIẢI QUYẾT (${report.decision || "RESOLVED"})`}
+          {report.state === "OPEN"
+            ? "⏳ ĐANG CHỜ XỬ LÝ"
+            : `✓ ĐÃ GIẢI QUYẾT (${report.decision || "RESOLVED"})`}
         </span>
       </div>
 
@@ -494,7 +538,8 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
       {/* Target Reported Content Box */}
       <div className="moderation-target-box">
         <div className="moderation-target-title">
-          ⚠️ NỘI DUNG BỊ BÁO CÁO VI PHẠM ({report.reportedCount ? `${report.reportedCount} lượt phản ánh` : "Được báo cáo"})
+          ⚠️ NỘI DUNG BỊ BÁO CÁO VI PHẠM (
+          {report.reportedCount ? `${report.reportedCount} lượt phản ánh` : "Được báo cáo"})
         </div>
         <blockquote className="moderation-target-text">
           "{report.contentSnippet || "Nội dung phản ánh từ người dùng hệ thống."}"
@@ -503,7 +548,9 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
 
       <dl style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", margin: "12px 0 16px" }}>
         <div>
-          <dt style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase" }}>Mã Báo cáo (UUID)</dt>
+          <dt style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase" }}>
+            Mã Báo cáo (UUID)
+          </dt>
           <dd style={{ fontWeight: 600, fontSize: "12px" }}>{report.reportId.slice(0, 18)}…</dd>
         </div>
         <div>
@@ -511,23 +558,24 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
           <dd style={{ fontWeight: 600, fontSize: "12px" }}>{report.targetId}</dd>
         </div>
         <div>
-          <dt style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase" }}>Môn học liên quan</dt>
-          <dd style={{ fontWeight: 600, fontSize: "12.5px", color: "var(--ink)" }}>{report.courseTitle || "Hệ thống AILSS"}</dd>
+          <dt style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase" }}>
+            Môn học liên quan
+          </dt>
+          <dd style={{ fontWeight: 600, fontSize: "12.5px", color: "var(--ink)" }}>
+            {report.courseTitle || "Hệ thống AILSS"}
+          </dd>
         </div>
         <div>
-          <dt style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase" }}>Tác giả nội dung</dt>
+          <dt style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase" }}>
+            Tác giả nội dung
+          </dt>
           <dd style={{ fontWeight: 600, fontSize: "12.5px" }}>{report.authorName || "Học viên"}</dd>
         </div>
       </dl>
 
       <label>
         Quyết định kiểm duyệt
-        <select
-          name="action"
-          value={action}
-          onChange={(e) => setAction(e.target.value)}
-          required
-        >
+        <select name="action" value={action} onChange={(e) => setAction(e.target.value)} required>
           <option value="HIDE">Ẩn nội dung khỏi hệ thống (HIDE)</option>
           <option value="WARN">Ghi nhận cảnh báo tài khoản (WARN)</option>
           <option value="DISMISS">Bỏ qua báo cáo, giữ nguyên nội dung (DISMISS)</option>
@@ -578,13 +626,19 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
           placeholder="Nhập mật khẩu admin để xác thực..."
         />
       </label>
-      <p className="muted" style={{ fontSize: "11.5px" }}>Mật khẩu được xác minh lại riêng cho mỗi quyết định kiểm duyệt.</p>
+      <p className="muted" style={{ fontSize: "11.5px" }}>
+        Mật khẩu được xác minh lại riêng cho mỗi quyết định kiểm duyệt.
+      </p>
 
       <button className="button" disabled={busy || !currentPassword} style={{ marginTop: "8px" }}>
         {busy ? "Đang xử lý…" : "Xác nhận quyết định"}
       </button>
 
-      {message && <p role="status" className="notice error">{message}</p>}
+      {message && (
+        <p role="status" className="notice error">
+          {message}
+        </p>
+      )}
     </form>
   );
 }

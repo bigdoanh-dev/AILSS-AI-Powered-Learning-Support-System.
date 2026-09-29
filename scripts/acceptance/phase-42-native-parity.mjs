@@ -11,7 +11,7 @@ function parseNativeMediaSession(data, gatewayOrigin) {
   const expiry = String(data.expiresAt);
   assert.ok(
     Number.isFinite(Date.parse(expiry)) && Date.parse(expiry) - Date.now() >= 20_000,
-    "expiresAt must be a valid future ISO string"
+    "expiresAt must be a valid future ISO string",
   );
   assert.equal(data.completionPolicy, "EXPLICIT_AUTHORITATIVE_LESSON_ACK");
 
@@ -33,7 +33,7 @@ function parseNativeMediaSession(data, gatewayOrigin) {
   const playbackAssetId = new URL(playlistUrl).pathname.split("/").at(-2);
   assert.ok(
     /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(playbackAssetId ?? ""),
-    "Asset ID in path must be UUID"
+    "Asset ID in path must be UUID",
   );
 
   return {
@@ -53,7 +53,7 @@ async function request(url, expectedStatus, options = {}) {
   assert.equal(
     res.status,
     expectedStatus,
-    `${options.method || "GET"} ${url}: expected HTTP ${expectedStatus}, got ${res.status}`
+    `${options.method || "GET"} ${url}: expected HTTP ${expectedStatus}, got ${res.status}`,
   );
   checks++;
   return res;
@@ -92,7 +92,10 @@ try {
   // Validate session through the exact native mobile parser
   const parsed = parseNativeMediaSession(rawSession.data, base);
   assert.ok(parsed.playlistUrl.startsWith(base), "Must route through gateway origin");
-  assert.ok(!parsed.playlistUrl.includes("s3.amazonaws.com") && !parsed.playlistUrl.includes("9000/"), "No permanent raw storage URL leaked");
+  assert.ok(
+    !parsed.playlistUrl.includes("s3.amazonaws.com") && !parsed.playlistUrl.includes("9000/"),
+    "No permanent raw storage URL leaked",
+  );
   assert.equal(parsed.completionPolicy, "EXPLICIT_AUTHORITATIVE_LESSON_ACK");
 
   // Fetch master playlist
@@ -157,11 +160,14 @@ try {
   console.log("[BF14, BF15, BF16] Verifying Accessibility Semantics...");
   const mediaPlayerSource = readFileSync(
     new URL("../../apps/mobile/src/MediaPlayer.tsx", import.meta.url),
-    "utf8"
+    "utf8",
   );
   assert.ok(mediaPlayerSource.includes("accessibilityRole"), "MediaPlayer must configure accessibilityRole");
-  assert.ok(mediaPlayerSource.includes("accessibilityLabel"), "MediaPlayer must configure accessibilityLabel");
-  assert.ok(mediaPlayerSource.includes("testID=\"native-media-player\""), "MediaPlayer must configure testID");
+  assert.ok(
+    mediaPlayerSource.includes("accessibilityLabel"),
+    "MediaPlayer must configure accessibilityLabel",
+  );
+  assert.ok(mediaPlayerSource.includes('testID="native-media-player"'), "MediaPlayer must configure testID");
   checks += 3;
 
   console.log(`\n======================================================`);
@@ -172,8 +178,12 @@ try {
   console.log(`ANDROID_PLAYER_STATUS = PASS_ANDROID_EMULATOR`);
   console.log(`LARGE_TEXT_STATUS = PASS_LOCAL_ACCESSIBLE`);
   console.log(`REDUCE_MOTION_STATUS = PASS_LOCAL_ACCESSIBLE`);
-  console.log(`IOS_ACCESSIBILITY_STATUS = LOCAL_SEMANTICS_LARGE_TEXT_REDUCE_MOTION_PASS_VOICEOVER_REAL_DEVICE_PENDING`);
-  console.log(`ANDROID_ACCESSIBILITY_STATUS = LOCAL_SEMANTICS_LARGE_TEXT_REDUCE_MOTION_PASS_TALKBACK_REAL_DEVICE_PENDING`);
+  console.log(
+    `IOS_ACCESSIBILITY_STATUS = LOCAL_SEMANTICS_LARGE_TEXT_REDUCE_MOTION_PASS_VOICEOVER_REAL_DEVICE_PENDING`,
+  );
+  console.log(
+    `ANDROID_ACCESSIBILITY_STATUS = LOCAL_SEMANTICS_LARGE_TEXT_REDUCE_MOTION_PASS_TALKBACK_REAL_DEVICE_PENDING`,
+  );
   console.log(`======================================================\n`);
 } catch (error) {
   console.error(`PHASE42_NATIVE_PARITY_FAIL: ${error.name}: ${error.message}`);

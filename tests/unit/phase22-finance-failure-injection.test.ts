@@ -44,9 +44,7 @@ describe("Phase 22.14: Financial Failure Injection & Ledger Invariant Verificati
       transactionDate: new Date().toISOString(),
     });
 
-    await expect(
-      financeService.processPaymentWebhook(headers, collidingPayload),
-    ).rejects.toMatchObject({
+    await expect(financeService.processPaymentWebhook(headers, collidingPayload)).rejects.toMatchObject({
       code: "PROVIDER_TRANSACTION_CONFLICT",
       status: 409,
     });

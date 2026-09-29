@@ -1,21 +1,10 @@
 import { z } from "zod";
 
-export const INTEGRATION_TYPES = [
-  "LTI_1_3",
-  "OIDC_SSO",
-  "WEBHOOK",
-  "ONEROSTER_SIS",
-  "SCORM_CLOUD",
-] as const;
+export const INTEGRATION_TYPES = ["LTI_1_3", "OIDC_SSO", "WEBHOOK", "ONEROSTER_SIS", "SCORM_CLOUD"] as const;
 
 export type IntegrationType = (typeof INTEGRATION_TYPES)[number];
 
-export const INTEGRATION_STATUSES = [
-  "ACTIVE",
-  "INACTIVE",
-  "PENDING_VERIFICATION",
-  "DEPRECATED",
-] as const;
+export const INTEGRATION_STATUSES = ["ACTIVE", "INACTIVE", "PENDING_VERIFICATION", "DEPRECATED"] as const;
 
 export type IntegrationStatus = (typeof INTEGRATION_STATUSES)[number];
 
@@ -61,8 +50,6 @@ export function assertIntegrationScope(
   }
 
   if (!integration.scopes.includes(requiredScope)) {
-    throw new Error(
-      `Integration "${integration.name}" lacks required scope "${requiredScope}"`,
-    );
+    throw new Error(`Integration "${integration.name}" lacks required scope "${requiredScope}"`);
   }
 }

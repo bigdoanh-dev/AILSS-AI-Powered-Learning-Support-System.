@@ -1,15 +1,9 @@
 import { describe, expect, it } from "vitest";
-import {
-  sanitizeScormZipEntryPath,
-  validateScormPostMessage,
-} from "../../packages/security/src/scorm.js";
+import { sanitizeScormZipEntryPath, validateScormPostMessage } from "../../packages/security/src/scorm.js";
 
 describe("Phase 21.9: SCORM Security Hardening", () => {
   const sandboxDir = "/var/data/ailss/scorm_packages/pkg-123";
-  const allowedOrigins = [
-    "https://scorm-sandbox.ailss.edu.vn",
-    "https://ailss.edu.vn",
-  ];
+  const allowedOrigins = ["https://scorm-sandbox.ailss.edu.vn", "https://ailss.edu.vn"];
 
   describe("Zip-Slip Path Traversal Protection", () => {
     it("safely resolves legitimate content files within extraction target", () => {

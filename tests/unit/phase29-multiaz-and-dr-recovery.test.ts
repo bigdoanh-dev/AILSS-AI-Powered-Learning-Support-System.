@@ -75,8 +75,10 @@ export class MultiAzQuorumSimulator {
  * Sequential identifiable write injection runner for empirical RPO measurement.
  */
 export class RpoMeasurementHarness {
-  private readonly acknowledgedWrites: Map<number, { readonly id: string; readonly payload: string }> = new Map();
-  private readonly unacknowledgedWrites: Map<number, { readonly id: string; readonly payload: string }> = new Map();
+  private readonly acknowledgedWrites: Map<number, { readonly id: string; readonly payload: string }> =
+    new Map();
+  private readonly unacknowledgedWrites: Map<number, { readonly id: string; readonly payload: string }> =
+    new Map();
 
   public injectAcknowledgedWrite(seq: number, payload: string): void {
     this.acknowledgedWrites.set(seq, { id: `write-${String(seq)}`, payload });
@@ -86,7 +88,9 @@ export class RpoMeasurementHarness {
     this.unacknowledgedWrites.set(seq, { id: `inflight-${String(seq)}`, payload });
   }
 
-  public recoverAndReconcile(recoveredStore: Map<number, { readonly id: string; readonly payload: string }>): {
+  public recoverAndReconcile(
+    recoveredStore: Map<number, { readonly id: string; readonly payload: string }>,
+  ): {
     readonly totalAcknowledged: number;
     readonly totalRecovered: number;
     readonly lostAcknowledgedCount: number;
@@ -185,12 +189,48 @@ describe("Phase 29.7 - 29.13: Multi-AZ Quorum Failure Drill & DR Recovery", () =
       { nodeId: "gw-az-a", availabilityZone: "AZ-A", rack: "rack-az-a", status: "ONLINE", role: "GATEWAY" },
       { nodeId: "gw-az-b", availabilityZone: "AZ-B", rack: "rack-az-b", status: "ONLINE", role: "GATEWAY" },
       { nodeId: "gw-az-c", availabilityZone: "AZ-C", rack: "rack-az-c", status: "ONLINE", role: "GATEWAY" },
-      { nodeId: "cas-node-1", availabilityZone: "AZ-A", rack: "rack-az-a", status: "ONLINE", role: "CASSANDRA_REPLICA" },
-      { nodeId: "cas-node-2", availabilityZone: "AZ-B", rack: "rack-az-b", status: "ONLINE", role: "CASSANDRA_REPLICA" },
-      { nodeId: "cas-node-3", availabilityZone: "AZ-C", rack: "rack-az-c", status: "ONLINE", role: "CASSANDRA_REPLICA" },
-      { nodeId: "app-az-a-1", availabilityZone: "AZ-A", rack: "rack-az-a", status: "ONLINE", role: "APP_WORKER" },
-      { nodeId: "app-az-b-1", availabilityZone: "AZ-B", rack: "rack-az-b", status: "ONLINE", role: "APP_WORKER" },
-      { nodeId: "app-az-c-1", availabilityZone: "AZ-C", rack: "rack-az-c", status: "ONLINE", role: "APP_WORKER" },
+      {
+        nodeId: "cas-node-1",
+        availabilityZone: "AZ-A",
+        rack: "rack-az-a",
+        status: "ONLINE",
+        role: "CASSANDRA_REPLICA",
+      },
+      {
+        nodeId: "cas-node-2",
+        availabilityZone: "AZ-B",
+        rack: "rack-az-b",
+        status: "ONLINE",
+        role: "CASSANDRA_REPLICA",
+      },
+      {
+        nodeId: "cas-node-3",
+        availabilityZone: "AZ-C",
+        rack: "rack-az-c",
+        status: "ONLINE",
+        role: "CASSANDRA_REPLICA",
+      },
+      {
+        nodeId: "app-az-a-1",
+        availabilityZone: "AZ-A",
+        rack: "rack-az-a",
+        status: "ONLINE",
+        role: "APP_WORKER",
+      },
+      {
+        nodeId: "app-az-b-1",
+        availabilityZone: "AZ-B",
+        rack: "rack-az-b",
+        status: "ONLINE",
+        role: "APP_WORKER",
+      },
+      {
+        nodeId: "app-az-c-1",
+        availabilityZone: "AZ-C",
+        rack: "rack-az-c",
+        status: "ONLINE",
+        role: "APP_WORKER",
+      },
     ];
 
     const cluster = new MultiAzQuorumSimulator(initialNodes);
@@ -228,8 +268,10 @@ describe("Phase 29.7 - 29.13: Multi-AZ Quorum Failure Drill & DR Recovery", () =
     };
 
     // User-facing perceived downtime during DNS switchover is not merely TTL < 60s
-    const minimumPerceivedFailover = dnsProfile.upstreamHealthCheckIntervalSeconds + dnsProfile.configuredDnsTtlSeconds;
-    const worstCaseResolverFailover = dnsProfile.upstreamHealthCheckIntervalSeconds + dnsProfile.resolverCachingVarianceSeconds;
+    const minimumPerceivedFailover =
+      dnsProfile.upstreamHealthCheckIntervalSeconds + dnsProfile.configuredDnsTtlSeconds;
+    const worstCaseResolverFailover =
+      dnsProfile.upstreamHealthCheckIntervalSeconds + dnsProfile.resolverCachingVarianceSeconds;
 
     expect(minimumPerceivedFailover).toBe(75); // 75 seconds minimum
     expect(worstCaseResolverFailover).toBe(135); // 135 seconds worst case

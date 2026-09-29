@@ -35,14 +35,31 @@ describe("SePay durable claim classification", () => {
 
   it("aggregates only reconciled VND payment and refund facts", async () => {
     const now = new Date("2026-09-22T12:00:00.000Z");
-    const execute = vi.fn(async (query: string) => {
+    const orderId = randomUUID(),
+      courseId = randomUUID(),
+      lecturerId = randomUUID();
+    const execute = vi.fn(async (query: string, params: unknown[]) => {
       if (query.includes("finance_projection_control"))
-        return [{ status: "READY", backfill_through: new Date("2026-09-22T13:00:00.000Z"), checksum: "sha256:ok" }];
+        return [
+          { status: "READY", backfill_through: new Date("2026-09-22T13:00:00.000Z"), checksum: "sha256:ok" },
+        ];
       if (query.includes("revenue_payment_facts"))
-        return query.includes("shard=?") && execute.mock.calls.length === 2
-          ? [{ gross_minor: "490000", currency: "VND" }]
+        return params[1] === 0
+          ? [
+              {
+                gross_minor: "490000",
+                currency: "VND",
+                course_id: courseId,
+                order_id: orderId,
+                occurred_at: now,
+              },
+            ]
           : [];
       if (query.includes("revenue_refund_facts")) return [];
+      if (query.includes("FROM course_by_id")) return [{ owner_lecturer_id: lecturerId, title: "Khóa học" }];
+      if (query.includes("FROM order_by_id"))
+        return [{ get: (name: string) => (name === "paid_at" ? now : undefined) }];
+      if (query.includes("commission_policy_by_effective_at")) return [];
       return [];
     });
     const repo = new LearningCommerceRepository({ execute } as unknown as CassandraClient);

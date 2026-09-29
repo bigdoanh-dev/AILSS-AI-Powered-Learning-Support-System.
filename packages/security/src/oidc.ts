@@ -39,11 +39,7 @@ export async function verifyOidcIdToken(
   // 1. Verify state if expected
   if (input.expectedState !== undefined) {
     if (!input.state || input.state !== input.expectedState) {
-      throw new AppError(
-        "OIDC_STATE_MISMATCH",
-        400,
-        "OIDC state parameter mismatch; possible CSRF detected",
-      );
+      throw new AppError("OIDC_STATE_MISMATCH", 400, "OIDC state parameter mismatch; possible CSRF detected");
     }
   }
 
@@ -57,7 +53,8 @@ export async function verifyOidcIdToken(
     payload = result.payload;
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "OIDC token verification failed";
-    const errObj = typeof error === "object" && error !== null ? (error as Record<string, unknown>) : undefined;
+    const errObj =
+      typeof error === "object" && error !== null ? (error as Record<string, unknown>) : undefined;
     const errCode = typeof errObj?.code === "string" ? errObj.code : "";
     const claim = typeof errObj?.claim === "string" ? errObj.claim : "";
 
@@ -71,7 +68,11 @@ export async function verifyOidcIdToken(
       throw new AppError("OIDC_ISSUER_MISMATCH", 401, "OIDC token issuer does not match configuration");
     }
     if (claim === "aud" || /audience|"aud"/iu.test(msg)) {
-      throw new AppError("OIDC_AUDIENCE_MISMATCH", 401, "OIDC token audience does not match configured clientId");
+      throw new AppError(
+        "OIDC_AUDIENCE_MISMATCH",
+        401,
+        "OIDC token audience does not match configured clientId",
+      );
     }
     throw new AppError("OIDC_INVALID_TOKEN", 401, `Invalid OIDC token: ${msg}`);
   }

@@ -1,9 +1,6 @@
 {
   "generatedAt": "2026-09-23T18:28:22.827Z",
-  "sourceRoots": [
-    "app",
-    "src"
-  ],
+  "sourceRoots": ["app", "src"],
   "routeCount": 61,
   "summary": {
     "connect": 22,
@@ -26,24 +23,12 @@
         "/api/v1/me/schedule"
       ],
       "apiDependencySources": {
-        "/api/v1/courses": [
-          "app/index.tsx"
-        ],
-        "/api/v1/me/avatar": [
-          "app/index.tsx"
-        ],
-        "/api/v1/me/classes": [
-          "app/index.tsx"
-        ],
-        "/api/v1/me/courses": [
-          "app/index.tsx"
-        ],
-        "/api/v1/me/owned-offerings": [
-          "app/index.tsx"
-        ],
-        "/api/v1/me/schedule": [
-          "app/index.tsx"
-        ]
+        "/api/v1/courses": ["app/index.tsx"],
+        "/api/v1/me/avatar": ["app/index.tsx"],
+        "/api/v1/me/classes": ["app/index.tsx"],
+        "/api/v1/me/courses": ["app/index.tsx"],
+        "/api/v1/me/owned-offerings": ["app/index.tsx"],
+        "/api/v1/me/schedule": ["app/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -54,9 +39,7 @@
       "mockUsage": false,
       "mockFiles": [],
       "unresolvedImports": [],
-      "redirectTargets": [
-        "/student"
-      ],
+      "redirectTargets": ["/student"],
       "productionReachable": false,
       "decision": "DEFER"
     },
@@ -65,21 +48,11 @@
       "sourceFile": "app/[screen].tsx",
       "component": "Screen",
       "intendedRole": "PUBLIC_OR_ROLE_BASED",
-      "apiDependencies": [
-        "/api/v1/auth/register",
-        "/api/v1/courses/search",
-        "/api/v1/me/avatar"
-      ],
+      "apiDependencies": ["/api/v1/auth/register", "/api/v1/courses/search", "/api/v1/me/avatar"],
       "apiDependencySources": {
-        "/api/v1/auth/register": [
-          "app/[screen].tsx"
-        ],
-        "/api/v1/courses/search": [
-          "app/[screen].tsx"
-        ],
-        "/api/v1/me/avatar": [
-          "app/[screen].tsx"
-        ]
+        "/api/v1/auth/register": ["app/[screen].tsx"],
+        "/api/v1/courses/search": ["app/[screen].tsx"],
+        "/api/v1/me/avatar": ["app/[screen].tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -99,21 +72,11 @@
       "sourceFile": "app/account.tsx",
       "component": "AccountScreen",
       "intendedRole": "AUTHENTICATED_ROLE",
-      "apiDependencies": [
-        "/api/v1/me",
-        "/api/v1/me/avatar",
-        "/api/v1/me/password"
-      ],
+      "apiDependencies": ["/api/v1/me", "/api/v1/me/avatar", "/api/v1/me/password"],
       "apiDependencySources": {
-        "/api/v1/me": [
-          "app/account.tsx"
-        ],
-        "/api/v1/me/avatar": [
-          "app/account.tsx"
-        ],
-        "/api/v1/me/password": [
-          "app/account.tsx"
-        ]
+        "/api/v1/me": ["app/account.tsx"],
+        "/api/v1/me/avatar": ["app/account.tsx"],
+        "/api/v1/me/password": ["app/account.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -133,17 +96,10 @@
       "sourceFile": "app/admin/index.tsx",
       "component": "AdminDashboard",
       "intendedRole": "ADMIN",
-      "apiDependencies": [
-        "/api/v1/admin/lecturer-applications",
-        "/api/v1/admin/moderation/reports"
-      ],
+      "apiDependencies": ["/api/v1/admin/lecturer-applications", "/api/v1/admin/moderation/reports"],
       "apiDependencySources": {
-        "/api/v1/admin/lecturer-applications": [
-          "app/admin/index.tsx"
-        ],
-        "/api/v1/admin/moderation/reports": [
-          "app/admin/index.tsx"
-        ]
+        "/api/v1/admin/lecturer-applications": ["app/admin/index.tsx"],
+        "/api/v1/admin/moderation/reports": ["app/admin/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -183,13 +139,9 @@
       "sourceFile": "app/admin/commerce/orders/[orderId].tsx",
       "component": "AdminOrderDetailScreen",
       "intendedRole": "ADMIN",
-      "apiDependencies": [
-        "/api/v1/orders/:param"
-      ],
+      "apiDependencies": ["/api/v1/orders/:param"],
       "apiDependencySources": {
-        "/api/v1/orders/:param": [
-          "app/admin/commerce/orders/[orderId].tsx"
-        ]
+        "/api/v1/orders/:param": ["app/admin/commerce/orders/[orderId].tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -215,15 +167,9 @@
         "/api/v1/admin/lecturers/:param/verify"
       ],
       "apiDependencySources": {
-        "/api/v1/admin/lecturer-applications": [
-          "app/admin/lecturers/index.tsx"
-        ],
-        "/api/v1/admin/lecturer-applications/:param/decision": [
-          "app/admin/lecturers/index.tsx"
-        ],
-        "/api/v1/admin/lecturers/:param/verify": [
-          "app/admin/lecturers/index.tsx"
-        ]
+        "/api/v1/admin/lecturer-applications": ["app/admin/lecturers/index.tsx"],
+        "/api/v1/admin/lecturer-applications/:param/decision": ["app/admin/lecturers/index.tsx"],
+        "/api/v1/admin/lecturers/:param/verify": ["app/admin/lecturers/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -243,13 +189,9 @@
       "sourceFile": "app/admin/moderation/index.tsx",
       "component": "AdminModerationQueueScreen",
       "intendedRole": "ADMIN",
-      "apiDependencies": [
-        "/api/v1/admin/reports"
-      ],
+      "apiDependencies": ["/api/v1/admin/reports"],
       "apiDependencySources": {
-        "/api/v1/admin/reports": [
-          "app/admin/moderation/index.tsx"
-        ]
+        "/api/v1/admin/reports": ["app/admin/moderation/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -269,17 +211,10 @@
       "sourceFile": "app/admin/moderation/[itemId].tsx",
       "component": "AdminModerationDetailScreen",
       "intendedRole": "ADMIN",
-      "apiDependencies": [
-        "/api/v1/admin/reports",
-        "/api/v1/admin/reports/:param/moderate"
-      ],
+      "apiDependencies": ["/api/v1/admin/reports", "/api/v1/admin/reports/:param/moderate"],
       "apiDependencySources": {
-        "/api/v1/admin/reports": [
-          "app/admin/moderation/[itemId].tsx"
-        ],
-        "/api/v1/admin/reports/:param/moderate": [
-          "app/admin/moderation/[itemId].tsx"
-        ]
+        "/api/v1/admin/reports": ["app/admin/moderation/[itemId].tsx"],
+        "/api/v1/admin/reports/:param/moderate": ["app/admin/moderation/[itemId].tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -299,13 +234,9 @@
       "sourceFile": "app/admin/revenue/index.tsx",
       "component": "AdminRevenueDashboard",
       "intendedRole": "ADMIN",
-      "apiDependencies": [
-        "/api/v1/admin/dashboard/revenue"
-      ],
+      "apiDependencies": ["/api/v1/admin/dashboard/revenue"],
       "apiDependencySources": {
-        "/api/v1/admin/dashboard/revenue": [
-          "app/admin/revenue/index.tsx"
-        ]
+        "/api/v1/admin/dashboard/revenue": ["app/admin/revenue/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -325,13 +256,9 @@
       "sourceFile": "app/admin/stats/index.tsx",
       "component": "AdminStatsDashboard",
       "intendedRole": "ADMIN",
-      "apiDependencies": [
-        "/api/v1/admin/dashboard/stats"
-      ],
+      "apiDependencies": ["/api/v1/admin/dashboard/stats"],
       "apiDependencySources": {
-        "/api/v1/admin/dashboard/stats": [
-          "app/admin/stats/index.tsx"
-        ]
+        "/api/v1/admin/dashboard/stats": ["app/admin/stats/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -351,13 +278,9 @@
       "sourceFile": "app/admin/users/index.tsx",
       "component": "AdminUsersListScreen",
       "intendedRole": "ADMIN",
-      "apiDependencies": [
-        "/api/v1/admin/users"
-      ],
+      "apiDependencies": ["/api/v1/admin/users"],
       "apiDependencySources": {
-        "/api/v1/admin/users": [
-          "app/admin/users/index.tsx"
-        ]
+        "/api/v1/admin/users": ["app/admin/users/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -383,15 +306,9 @@
         "/api/v1/admin/users/:param/status"
       ],
       "apiDependencySources": {
-        "/api/v1/admin/lecturers/:param/verify": [
-          "app/admin/users/[userId].tsx"
-        ],
-        "/api/v1/admin/users/:param": [
-          "app/admin/users/[userId].tsx"
-        ],
-        "/api/v1/admin/users/:param/status": [
-          "app/admin/users/[userId].tsx"
-        ]
+        "/api/v1/admin/lecturers/:param/verify": ["app/admin/users/[userId].tsx"],
+        "/api/v1/admin/users/:param": ["app/admin/users/[userId].tsx"],
+        "/api/v1/admin/users/:param/status": ["app/admin/users/[userId].tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -418,18 +335,10 @@
         "/api/v1/targets/COURSE/:param/quizzes"
       ],
       "apiDependencySources": {
-        "/api/v1/classes": [
-          "app/assessments/index.tsx"
-        ],
-        "/api/v1/me/courses": [
-          "app/assessments/index.tsx"
-        ],
-        "/api/v1/targets/CLASS/:param/quizzes": [
-          "app/assessments/index.tsx"
-        ],
-        "/api/v1/targets/COURSE/:param/quizzes": [
-          "app/assessments/index.tsx"
-        ]
+        "/api/v1/classes": ["app/assessments/index.tsx"],
+        "/api/v1/me/courses": ["app/assessments/index.tsx"],
+        "/api/v1/targets/CLASS/:param/quizzes": ["app/assessments/index.tsx"],
+        "/api/v1/targets/COURSE/:param/quizzes": ["app/assessments/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -449,17 +358,10 @@
       "sourceFile": "app/assessments/[quizId]/index.tsx",
       "component": "QuizDetailScreen",
       "intendedRole": "STUDENT",
-      "apiDependencies": [
-        "/api/v1/quizzes/:param",
-        "/api/v1/quizzes/:param/attempts"
-      ],
+      "apiDependencies": ["/api/v1/quizzes/:param", "/api/v1/quizzes/:param/attempts"],
       "apiDependencySources": {
-        "/api/v1/quizzes/:param": [
-          "app/assessments/[quizId]/index.tsx"
-        ],
-        "/api/v1/quizzes/:param/attempts": [
-          "app/assessments/[quizId]/index.tsx"
-        ]
+        "/api/v1/quizzes/:param": ["app/assessments/[quizId]/index.tsx"],
+        "/api/v1/quizzes/:param/attempts": ["app/assessments/[quizId]/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -485,15 +387,9 @@
         "/api/v1/quizzes/:param"
       ],
       "apiDependencySources": {
-        "/api/v1/attempts/:param": [
-          "app/assessments/[quizId]/attempt/[attemptId].tsx"
-        ],
-        "/api/v1/attempts/:param/submit": [
-          "app/assessments/[quizId]/attempt/[attemptId].tsx"
-        ],
-        "/api/v1/quizzes/:param": [
-          "app/assessments/[quizId]/attempt/[attemptId].tsx"
-        ]
+        "/api/v1/attempts/:param": ["app/assessments/[quizId]/attempt/[attemptId].tsx"],
+        "/api/v1/attempts/:param/submit": ["app/assessments/[quizId]/attempt/[attemptId].tsx"],
+        "/api/v1/quizzes/:param": ["app/assessments/[quizId]/attempt/[attemptId].tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -513,17 +409,10 @@
       "sourceFile": "app/assessments/[quizId]/result/[resultId].tsx",
       "component": "QuizResultScreen",
       "intendedRole": "STUDENT",
-      "apiDependencies": [
-        "/api/v1/attempts/:param/result",
-        "/api/v1/quizzes/:param"
-      ],
+      "apiDependencies": ["/api/v1/attempts/:param/result", "/api/v1/quizzes/:param"],
       "apiDependencySources": {
-        "/api/v1/attempts/:param/result": [
-          "app/assessments/[quizId]/result/[resultId].tsx"
-        ],
-        "/api/v1/quizzes/:param": [
-          "app/assessments/[quizId]/result/[resultId].tsx"
-        ]
+        "/api/v1/attempts/:param/result": ["app/assessments/[quizId]/result/[resultId].tsx"],
+        "/api/v1/quizzes/:param": ["app/assessments/[quizId]/result/[resultId].tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -543,21 +432,11 @@
       "sourceFile": "app/classes/index.tsx",
       "component": "StudentClassesScreen",
       "intendedRole": "STUDENT",
-      "apiDependencies": [
-        "/api/v1/me/attendance",
-        "/api/v1/me/classes",
-        "/api/v1/me/schedule"
-      ],
+      "apiDependencies": ["/api/v1/me/attendance", "/api/v1/me/classes", "/api/v1/me/schedule"],
       "apiDependencySources": {
-        "/api/v1/me/attendance": [
-          "app/classes/index.tsx"
-        ],
-        "/api/v1/me/classes": [
-          "app/classes/index.tsx"
-        ],
-        "/api/v1/me/schedule": [
-          "app/classes/index.tsx"
-        ]
+        "/api/v1/me/attendance": ["app/classes/index.tsx"],
+        "/api/v1/me/classes": ["app/classes/index.tsx"],
+        "/api/v1/me/schedule": ["app/classes/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -577,17 +456,10 @@
       "sourceFile": "app/classes/[classId]/index.tsx",
       "component": "ClassDetails",
       "intendedRole": "STUDENT",
-      "apiDependencies": [
-        "/api/v1/classes/:param",
-        "/api/v1/classes/:param/sessions"
-      ],
+      "apiDependencies": ["/api/v1/classes/:param", "/api/v1/classes/:param/sessions"],
       "apiDependencySources": {
-        "/api/v1/classes/:param": [
-          "app/classes/[classId]/index.tsx"
-        ],
-        "/api/v1/classes/:param/sessions": [
-          "app/classes/[classId]/index.tsx"
-        ]
+        "/api/v1/classes/:param": ["app/classes/[classId]/index.tsx"],
+        "/api/v1/classes/:param/sessions": ["app/classes/[classId]/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -598,10 +470,7 @@
       "mockUsage": false,
       "mockFiles": [],
       "unresolvedImports": [],
-      "redirectTargets": [
-        "/login",
-        "/"
-      ],
+      "redirectTargets": ["/login", "/"],
       "productionReachable": true,
       "decision": "CONNECT"
     },
@@ -610,17 +479,10 @@
       "sourceFile": "app/classes/[classId]/sessions/[sessionId].tsx",
       "component": "SessionDetailScreen",
       "intendedRole": "STUDENT",
-      "apiDependencies": [
-        "/api/v1/class-sessions/:param",
-        "/api/v1/me/attendance"
-      ],
+      "apiDependencies": ["/api/v1/class-sessions/:param", "/api/v1/me/attendance"],
       "apiDependencySources": {
-        "/api/v1/class-sessions/:param": [
-          "app/classes/[classId]/sessions/[sessionId].tsx"
-        ],
-        "/api/v1/me/attendance": [
-          "app/classes/[classId]/sessions/[sessionId].tsx"
-        ]
+        "/api/v1/class-sessions/:param": ["app/classes/[classId]/sessions/[sessionId].tsx"],
+        "/api/v1/me/attendance": ["app/classes/[classId]/sessions/[sessionId].tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -640,17 +502,10 @@
       "sourceFile": "app/courses/index.tsx",
       "component": "CourseDiscoveryScreen",
       "intendedRole": "PUBLIC_OR_ROLE_BASED",
-      "apiDependencies": [
-        "/api/v1/courses",
-        "/api/v1/courses/search"
-      ],
+      "apiDependencies": ["/api/v1/courses", "/api/v1/courses/search"],
       "apiDependencySources": {
-        "/api/v1/courses": [
-          "src/catalog-preview.ts"
-        ],
-        "/api/v1/courses/search": [
-          "app/courses/index.tsx"
-        ]
+        "/api/v1/courses": ["src/catalog-preview.ts"],
+        "/api/v1/courses/search": ["app/courses/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -679,24 +534,12 @@
         "/api/v1/reviews/:param"
       ],
       "apiDependencySources": {
-        "/api/v1/courses/:param": [
-          "app/courses/[courseId].tsx"
-        ],
-        "/api/v1/courses/:param/enrollments": [
-          "app/courses/[courseId].tsx"
-        ],
-        "/api/v1/courses/:param/offerings": [
-          "app/courses/[courseId].tsx"
-        ],
-        "/api/v1/courses/:param/progress": [
-          "app/courses/[courseId].tsx"
-        ],
-        "/api/v1/courses/:param/reviews": [
-          "app/courses/[courseId].tsx"
-        ],
-        "/api/v1/reviews/:param": [
-          "app/courses/[courseId].tsx"
-        ]
+        "/api/v1/courses/:param": ["app/courses/[courseId].tsx"],
+        "/api/v1/courses/:param/enrollments": ["app/courses/[courseId].tsx"],
+        "/api/v1/courses/:param/offerings": ["app/courses/[courseId].tsx"],
+        "/api/v1/courses/:param/progress": ["app/courses/[courseId].tsx"],
+        "/api/v1/courses/:param/reviews": ["app/courses/[courseId].tsx"],
+        "/api/v1/reviews/:param": ["app/courses/[courseId].tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -716,17 +559,10 @@
       "sourceFile": "app/learn/index.tsx",
       "component": "MyLearningScreen",
       "intendedRole": "STUDENT",
-      "apiDependencies": [
-        "/api/v1/courses/:param/progress",
-        "/api/v1/me/courses"
-      ],
+      "apiDependencies": ["/api/v1/courses/:param/progress", "/api/v1/me/courses"],
       "apiDependencySources": {
-        "/api/v1/courses/:param/progress": [
-          "app/learn/index.tsx"
-        ],
-        "/api/v1/me/courses": [
-          "app/learn/index.tsx"
-        ]
+        "/api/v1/courses/:param/progress": ["app/learn/index.tsx"],
+        "/api/v1/me/courses": ["app/learn/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -753,18 +589,10 @@
         "/api/v1/targets/COURSE/:param/quizzes"
       ],
       "apiDependencySources": {
-        "/api/v1/courses/:param": [
-          "app/learn/[courseId]/index.tsx"
-        ],
-        "/api/v1/courses/:param/lessons": [
-          "app/learn/[courseId]/index.tsx"
-        ],
-        "/api/v1/courses/:param/progress": [
-          "app/learn/[courseId]/index.tsx"
-        ],
-        "/api/v1/targets/COURSE/:param/quizzes": [
-          "app/learn/[courseId]/index.tsx"
-        ]
+        "/api/v1/courses/:param": ["app/learn/[courseId]/index.tsx"],
+        "/api/v1/courses/:param/lessons": ["app/learn/[courseId]/index.tsx"],
+        "/api/v1/courses/:param/progress": ["app/learn/[courseId]/index.tsx"],
+        "/api/v1/targets/COURSE/:param/quizzes": ["app/learn/[courseId]/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -794,9 +622,7 @@
           "app/learn/[courseId]/lessons/[lessonId].tsx",
           "src/lesson-sync.ts"
         ],
-        "/api/v1/lessons/:param": [
-          "app/learn/[courseId]/lessons/[lessonId].tsx"
-        ],
+        "/api/v1/lessons/:param": ["app/learn/[courseId]/lessons/[lessonId].tsx"],
         "/api/v1/lessons/:param/completion": [
           "app/learn/[courseId]/lessons/[lessonId].tsx",
           "src/lesson-sync.ts"
@@ -820,21 +646,11 @@
       "sourceFile": "app/login.tsx",
       "component": "LoginScreen",
       "intendedRole": "PUBLIC_OR_ROLE_BASED",
-      "apiDependencies": [
-        "/api/v1/auth/register",
-        "/api/v1/courses/search",
-        "/api/v1/me/avatar"
-      ],
+      "apiDependencies": ["/api/v1/auth/register", "/api/v1/courses/search", "/api/v1/me/avatar"],
       "apiDependencySources": {
-        "/api/v1/auth/register": [
-          "app/[screen].tsx"
-        ],
-        "/api/v1/courses/search": [
-          "app/[screen].tsx"
-        ],
-        "/api/v1/me/avatar": [
-          "app/[screen].tsx"
-        ]
+        "/api/v1/auth/register": ["app/[screen].tsx"],
+        "/api/v1/courses/search": ["app/[screen].tsx"],
+        "/api/v1/me/avatar": ["app/[screen].tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -854,17 +670,10 @@
       "sourceFile": "app/notifications.tsx",
       "component": "NotificationsScreen",
       "intendedRole": "STUDENT",
-      "apiDependencies": [
-        "/api/v1/notifications",
-        "/api/v1/notifications/:param/read"
-      ],
+      "apiDependencies": ["/api/v1/notifications", "/api/v1/notifications/:param/read"],
       "apiDependencySources": {
-        "/api/v1/notifications": [
-          "app/notifications.tsx"
-        ],
-        "/api/v1/notifications/:param/read": [
-          "app/notifications.tsx"
-        ]
+        "/api/v1/notifications": ["app/notifications.tsx"],
+        "/api/v1/notifications/:param/read": ["app/notifications.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -892,9 +701,7 @@
       "mockUsage": false,
       "mockFiles": [],
       "unresolvedImports": [],
-      "redirectTargets": [
-        "/student/mastery"
-      ],
+      "redirectTargets": ["/student/mastery"],
       "productionReachable": true,
       "decision": "CONNECT"
     },
@@ -903,21 +710,11 @@
       "sourceFile": "app/register.tsx",
       "component": "RegisterScreen",
       "intendedRole": "PUBLIC_OR_ROLE_BASED",
-      "apiDependencies": [
-        "/api/v1/auth/register",
-        "/api/v1/courses/search",
-        "/api/v1/me/avatar"
-      ],
+      "apiDependencies": ["/api/v1/auth/register", "/api/v1/courses/search", "/api/v1/me/avatar"],
       "apiDependencySources": {
-        "/api/v1/auth/register": [
-          "app/[screen].tsx"
-        ],
-        "/api/v1/courses/search": [
-          "app/[screen].tsx"
-        ],
-        "/api/v1/me/avatar": [
-          "app/[screen].tsx"
-        ]
+        "/api/v1/auth/register": ["app/[screen].tsx"],
+        "/api/v1/courses/search": ["app/[screen].tsx"],
+        "/api/v1/me/avatar": ["app/[screen].tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -983,24 +780,12 @@
         "/api/v1/study-plan/current"
       ],
       "apiDependencySources": {
-        "/api/v1/assistant/chat": [
-          "src/adaptive.ts"
-        ],
-        "/api/v1/courses/:param/progress": [
-          "src/lesson-sync.ts"
-        ],
-        "/api/v1/lessons/:param/completion": [
-          "src/lesson-sync.ts"
-        ],
-        "/api/v1/mastery/courses/:param": [
-          "src/use-student-learning.ts"
-        ],
-        "/api/v1/me/courses": [
-          "src/use-student-learning.ts"
-        ],
-        "/api/v1/study-plan/current": [
-          "src/use-student-learning.ts"
-        ]
+        "/api/v1/assistant/chat": ["src/adaptive.ts"],
+        "/api/v1/courses/:param/progress": ["src/lesson-sync.ts"],
+        "/api/v1/lessons/:param/completion": ["src/lesson-sync.ts"],
+        "/api/v1/mastery/courses/:param": ["src/use-student-learning.ts"],
+        "/api/v1/me/courses": ["src/use-student-learning.ts"],
+        "/api/v1/study-plan/current": ["src/use-student-learning.ts"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1011,10 +796,7 @@
       "mockUsage": false,
       "mockFiles": [],
       "unresolvedImports": [],
-      "redirectTargets": [
-        "/login",
-        "/"
-      ],
+      "redirectTargets": ["/login", "/"],
       "productionReachable": true,
       "decision": "CONNECT"
     },
@@ -1032,24 +814,12 @@
         "/api/v1/study-plan/current"
       ],
       "apiDependencySources": {
-        "/api/v1/assistant/chat": [
-          "src/adaptive.ts"
-        ],
-        "/api/v1/courses/:param/progress": [
-          "src/lesson-sync.ts"
-        ],
-        "/api/v1/lessons/:param/completion": [
-          "src/lesson-sync.ts"
-        ],
-        "/api/v1/mastery/courses/:param": [
-          "src/use-student-learning.ts"
-        ],
-        "/api/v1/me/courses": [
-          "src/use-student-learning.ts"
-        ],
-        "/api/v1/study-plan/current": [
-          "src/use-student-learning.ts"
-        ]
+        "/api/v1/assistant/chat": ["src/adaptive.ts"],
+        "/api/v1/courses/:param/progress": ["src/lesson-sync.ts"],
+        "/api/v1/lessons/:param/completion": ["src/lesson-sync.ts"],
+        "/api/v1/mastery/courses/:param": ["src/use-student-learning.ts"],
+        "/api/v1/me/courses": ["src/use-student-learning.ts"],
+        "/api/v1/study-plan/current": ["src/use-student-learning.ts"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1060,10 +830,7 @@
       "mockUsage": false,
       "mockFiles": [],
       "unresolvedImports": [],
-      "redirectTargets": [
-        "/login",
-        "/"
-      ],
+      "redirectTargets": ["/login", "/"],
       "productionReachable": true,
       "decision": "CONNECT"
     },
@@ -1083,30 +850,14 @@
         "/api/v1/study-plan/items/:param/:param"
       ],
       "apiDependencySources": {
-        "/api/v1/assistant/chat": [
-          "src/adaptive.ts"
-        ],
-        "/api/v1/courses/:param/progress": [
-          "src/lesson-sync.ts"
-        ],
-        "/api/v1/lessons/:param/completion": [
-          "src/lesson-sync.ts"
-        ],
-        "/api/v1/mastery/courses/:param": [
-          "src/use-student-learning.ts"
-        ],
-        "/api/v1/me/courses": [
-          "src/use-student-learning.ts"
-        ],
-        "/api/v1/study-plan/current": [
-          "src/use-student-learning.ts"
-        ],
-        "/api/v1/study-plan/generate": [
-          "app/student/study-plan.tsx"
-        ],
-        "/api/v1/study-plan/items/:param/:param": [
-          "app/student/study-plan.tsx"
-        ]
+        "/api/v1/assistant/chat": ["src/adaptive.ts"],
+        "/api/v1/courses/:param/progress": ["src/lesson-sync.ts"],
+        "/api/v1/lessons/:param/completion": ["src/lesson-sync.ts"],
+        "/api/v1/mastery/courses/:param": ["src/use-student-learning.ts"],
+        "/api/v1/me/courses": ["src/use-student-learning.ts"],
+        "/api/v1/study-plan/current": ["src/use-student-learning.ts"],
+        "/api/v1/study-plan/generate": ["app/student/study-plan.tsx"],
+        "/api/v1/study-plan/items/:param/:param": ["app/student/study-plan.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1117,10 +868,7 @@
       "mockUsage": false,
       "mockFiles": [],
       "unresolvedImports": [],
-      "redirectTargets": [
-        "/login",
-        "/"
-      ],
+      "redirectTargets": ["/login", "/"],
       "productionReachable": true,
       "decision": "CONNECT"
     },
@@ -1138,24 +886,12 @@
         "/api/v1/study-plan/current"
       ],
       "apiDependencySources": {
-        "/api/v1/assistant/chat": [
-          "src/adaptive.ts"
-        ],
-        "/api/v1/courses/:param/progress": [
-          "src/lesson-sync.ts"
-        ],
-        "/api/v1/lessons/:param/completion": [
-          "src/lesson-sync.ts"
-        ],
-        "/api/v1/mastery/courses/:param": [
-          "src/use-student-learning.ts"
-        ],
-        "/api/v1/me/courses": [
-          "src/use-student-learning.ts"
-        ],
-        "/api/v1/study-plan/current": [
-          "src/use-student-learning.ts"
-        ]
+        "/api/v1/assistant/chat": ["src/adaptive.ts"],
+        "/api/v1/courses/:param/progress": ["src/lesson-sync.ts"],
+        "/api/v1/lessons/:param/completion": ["src/lesson-sync.ts"],
+        "/api/v1/mastery/courses/:param": ["src/use-student-learning.ts"],
+        "/api/v1/me/courses": ["src/use-student-learning.ts"],
+        "/api/v1/study-plan/current": ["src/use-student-learning.ts"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1166,10 +902,7 @@
       "mockUsage": false,
       "mockFiles": [],
       "unresolvedImports": [],
-      "redirectTargets": [
-        "/login",
-        "/"
-      ],
+      "redirectTargets": ["/login", "/"],
       "productionReachable": true,
       "decision": "CONNECT"
     },
@@ -1178,13 +911,9 @@
       "sourceFile": "app/teaching/index.tsx",
       "component": "TeachingDashboard",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/me/owned-offerings"
-      ],
+      "apiDependencies": ["/api/v1/me/owned-offerings"],
       "apiDependencySources": {
-        "/api/v1/me/owned-offerings": [
-          "app/teaching/index.tsx"
-        ]
+        "/api/v1/me/owned-offerings": ["app/teaching/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1204,21 +933,11 @@
       "sourceFile": "app/teaching/ai/index.tsx",
       "component": "LecturerAiStudioScreen",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/ai/jobs",
-        "/api/v1/ai/quiz-jobs",
-        "/api/v1/ai/usage"
-      ],
+      "apiDependencies": ["/api/v1/ai/jobs", "/api/v1/ai/quiz-jobs", "/api/v1/ai/usage"],
       "apiDependencySources": {
-        "/api/v1/ai/jobs": [
-          "app/teaching/ai/index.tsx"
-        ],
-        "/api/v1/ai/quiz-jobs": [
-          "app/teaching/ai/index.tsx"
-        ],
-        "/api/v1/ai/usage": [
-          "app/teaching/ai/index.tsx"
-        ]
+        "/api/v1/ai/jobs": ["app/teaching/ai/index.tsx"],
+        "/api/v1/ai/quiz-jobs": ["app/teaching/ai/index.tsx"],
+        "/api/v1/ai/usage": ["app/teaching/ai/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1245,18 +964,10 @@
         "/api/v1/ai/jobs/:param/drafts"
       ],
       "apiDependencySources": {
-        "/api/v1/ai/drafts/:param/approve": [
-          "app/teaching/ai/[jobId]/index.tsx"
-        ],
-        "/api/v1/ai/jobs/:param": [
-          "app/teaching/ai/[jobId]/index.tsx"
-        ],
-        "/api/v1/ai/jobs/:param/cancel": [
-          "app/teaching/ai/[jobId]/index.tsx"
-        ],
-        "/api/v1/ai/jobs/:param/drafts": [
-          "app/teaching/ai/[jobId]/index.tsx"
-        ]
+        "/api/v1/ai/drafts/:param/approve": ["app/teaching/ai/[jobId]/index.tsx"],
+        "/api/v1/ai/jobs/:param": ["app/teaching/ai/[jobId]/index.tsx"],
+        "/api/v1/ai/jobs/:param/cancel": ["app/teaching/ai/[jobId]/index.tsx"],
+        "/api/v1/ai/jobs/:param/drafts": ["app/teaching/ai/[jobId]/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1282,15 +993,9 @@
         "/api/v1/targets/:param/:param/quizzes"
       ],
       "apiDependencySources": {
-        "/api/v1/me/owned-classes": [
-          "app/teaching/assessments/index.tsx"
-        ],
-        "/api/v1/me/owned-offerings": [
-          "app/teaching/assessments/index.tsx"
-        ],
-        "/api/v1/targets/:param/:param/quizzes": [
-          "app/teaching/assessments/index.tsx"
-        ]
+        "/api/v1/me/owned-classes": ["app/teaching/assessments/index.tsx"],
+        "/api/v1/me/owned-offerings": ["app/teaching/assessments/index.tsx"],
+        "/api/v1/targets/:param/:param/quizzes": ["app/teaching/assessments/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1310,17 +1015,10 @@
       "sourceFile": "app/teaching/assessments/[quizId]/index.tsx",
       "component": "AssessmentDetailScreen",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/quizzes/:param",
-        "/api/v1/quizzes/:param/publish"
-      ],
+      "apiDependencies": ["/api/v1/quizzes/:param", "/api/v1/quizzes/:param/publish"],
       "apiDependencySources": {
-        "/api/v1/quizzes/:param": [
-          "app/teaching/assessments/[quizId]/index.tsx"
-        ],
-        "/api/v1/quizzes/:param/publish": [
-          "app/teaching/assessments/[quizId]/index.tsx"
-        ]
+        "/api/v1/quizzes/:param": ["app/teaching/assessments/[quizId]/index.tsx"],
+        "/api/v1/quizzes/:param/publish": ["app/teaching/assessments/[quizId]/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1340,13 +1038,9 @@
       "sourceFile": "app/teaching/assessments/[quizId]/questions/index.tsx",
       "component": "QuestionsEditorScreen",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/quizzes/:param"
-      ],
+      "apiDependencies": ["/api/v1/quizzes/:param"],
       "apiDependencySources": {
-        "/api/v1/quizzes/:param": [
-          "app/teaching/assessments/[quizId]/questions/index.tsx"
-        ]
+        "/api/v1/quizzes/:param": ["app/teaching/assessments/[quizId]/questions/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1366,17 +1060,10 @@
       "sourceFile": "app/teaching/assessments/[quizId]/results/index.tsx",
       "component": "LecturerQuizResultsScreen",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/quizzes/:param/grades/:param",
-        "/api/v1/quizzes/:param/results"
-      ],
+      "apiDependencies": ["/api/v1/quizzes/:param/grades/:param", "/api/v1/quizzes/:param/results"],
       "apiDependencySources": {
-        "/api/v1/quizzes/:param/grades/:param": [
-          "app/teaching/assessments/[quizId]/results/index.tsx"
-        ],
-        "/api/v1/quizzes/:param/results": [
-          "app/teaching/assessments/[quizId]/results/index.tsx"
-        ]
+        "/api/v1/quizzes/:param/grades/:param": ["app/teaching/assessments/[quizId]/results/index.tsx"],
+        "/api/v1/quizzes/:param/results": ["app/teaching/assessments/[quizId]/results/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1396,13 +1083,9 @@
       "sourceFile": "app/teaching/assessments/create.tsx",
       "component": "CreateAssessmentScreen",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/quizzes"
-      ],
+      "apiDependencies": ["/api/v1/quizzes"],
       "apiDependencySources": {
-        "/api/v1/quizzes": [
-          "app/teaching/assessments/create.tsx"
-        ]
+        "/api/v1/quizzes": ["app/teaching/assessments/create.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1422,13 +1105,9 @@
       "sourceFile": "app/teaching/classes/index.tsx",
       "component": "OwnedClassesList",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/me/owned-classes"
-      ],
+      "apiDependencies": ["/api/v1/me/owned-classes"],
       "apiDependencySources": {
-        "/api/v1/me/owned-classes": [
-          "app/teaching/classes/index.tsx"
-        ]
+        "/api/v1/me/owned-classes": ["app/teaching/classes/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1454,15 +1133,9 @@
         "/api/v1/classes/:param/schedule/publish"
       ],
       "apiDependencySources": {
-        "/api/v1/classes/:param": [
-          "app/teaching/classes/[classId]/index.tsx"
-        ],
-        "/api/v1/classes/:param/members": [
-          "app/teaching/classes/[classId]/index.tsx"
-        ],
-        "/api/v1/classes/:param/schedule/publish": [
-          "app/teaching/classes/[classId]/index.tsx"
-        ]
+        "/api/v1/classes/:param": ["app/teaching/classes/[classId]/index.tsx"],
+        "/api/v1/classes/:param/members": ["app/teaching/classes/[classId]/index.tsx"],
+        "/api/v1/classes/:param/schedule/publish": ["app/teaching/classes/[classId]/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1482,13 +1155,9 @@
       "sourceFile": "app/teaching/classes/[classId]/announcements.tsx",
       "component": "ClassAnnouncementsScreen",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/classes/:param/announcements"
-      ],
+      "apiDependencies": ["/api/v1/classes/:param/announcements"],
       "apiDependencySources": {
-        "/api/v1/classes/:param/announcements": [
-          "app/teaching/classes/[classId]/announcements.tsx"
-        ]
+        "/api/v1/classes/:param/announcements": ["app/teaching/classes/[classId]/announcements.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1508,17 +1177,10 @@
       "sourceFile": "app/teaching/classes/[classId]/sessions/index.tsx",
       "component": "ClassSessionsList",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/classes/:param",
-        "/api/v1/classes/:param/sessions"
-      ],
+      "apiDependencies": ["/api/v1/classes/:param", "/api/v1/classes/:param/sessions"],
       "apiDependencySources": {
-        "/api/v1/classes/:param": [
-          "app/teaching/classes/[classId]/sessions/index.tsx"
-        ],
-        "/api/v1/classes/:param/sessions": [
-          "app/teaching/classes/[classId]/sessions/index.tsx"
-        ]
+        "/api/v1/classes/:param": ["app/teaching/classes/[classId]/sessions/index.tsx"],
+        "/api/v1/classes/:param/sessions": ["app/teaching/classes/[classId]/sessions/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1544,9 +1206,7 @@
         "/api/v1/classes/:param/sessions/:param"
       ],
       "apiDependencySources": {
-        "/api/v1/class-sessions/:param": [
-          "app/teaching/classes/[classId]/sessions/[sessionId]/index.tsx"
-        ],
+        "/api/v1/class-sessions/:param": ["app/teaching/classes/[classId]/sessions/[sessionId]/index.tsx"],
         "/api/v1/class-sessions/:param/presence-tickets": [
           "app/teaching/classes/[classId]/sessions/[sessionId]/index.tsx"
         ],
@@ -1606,13 +1266,9 @@
       "sourceFile": "app/teaching/classes/[classId]/sessions/create.tsx",
       "component": "CreateSessionScreen",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/classes/:param/sessions"
-      ],
+      "apiDependencies": ["/api/v1/classes/:param/sessions"],
       "apiDependencySources": {
-        "/api/v1/classes/:param/sessions": [
-          "app/teaching/classes/[classId]/sessions/create.tsx"
-        ]
+        "/api/v1/classes/:param/sessions": ["app/teaching/classes/[classId]/sessions/create.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1632,13 +1288,9 @@
       "sourceFile": "app/teaching/courses/index.tsx",
       "component": "OwnedCoursesList",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/me/owned-offerings"
-      ],
+      "apiDependencies": ["/api/v1/me/owned-offerings"],
       "apiDependencySources": {
-        "/api/v1/me/owned-offerings": [
-          "app/teaching/courses/index.tsx"
-        ]
+        "/api/v1/me/owned-offerings": ["app/teaching/courses/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1665,18 +1317,10 @@
         "/api/v1/courses/:param/reviews"
       ],
       "apiDependencySources": {
-        "/api/v1/courses/:param": [
-          "app/teaching/courses/[courseId]/index.tsx"
-        ],
-        "/api/v1/courses/:param/lessons": [
-          "app/teaching/courses/[courseId]/index.tsx"
-        ],
-        "/api/v1/courses/:param/offerings": [
-          "app/teaching/courses/[courseId]/index.tsx"
-        ],
-        "/api/v1/courses/:param/reviews": [
-          "app/teaching/courses/[courseId]/index.tsx"
-        ]
+        "/api/v1/courses/:param": ["app/teaching/courses/[courseId]/index.tsx"],
+        "/api/v1/courses/:param/lessons": ["app/teaching/courses/[courseId]/index.tsx"],
+        "/api/v1/courses/:param/offerings": ["app/teaching/courses/[courseId]/index.tsx"],
+        "/api/v1/courses/:param/reviews": ["app/teaching/courses/[courseId]/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1696,13 +1340,9 @@
       "sourceFile": "app/teaching/courses/[courseId]/edit.tsx",
       "component": "CourseEdit",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/courses/:param"
-      ],
+      "apiDependencies": ["/api/v1/courses/:param"],
       "apiDependencySources": {
-        "/api/v1/courses/:param": [
-          "app/teaching/courses/[courseId]/edit.tsx"
-        ]
+        "/api/v1/courses/:param": ["app/teaching/courses/[courseId]/edit.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1722,13 +1362,9 @@
       "sourceFile": "app/teaching/courses/[courseId]/lessons/index.tsx",
       "component": "LessonList",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/courses/:param/lessons"
-      ],
+      "apiDependencies": ["/api/v1/courses/:param/lessons"],
       "apiDependencySources": {
-        "/api/v1/courses/:param/lessons": [
-          "app/teaching/courses/[courseId]/lessons/index.tsx"
-        ]
+        "/api/v1/courses/:param/lessons": ["app/teaching/courses/[courseId]/lessons/index.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1748,13 +1384,9 @@
       "sourceFile": "app/teaching/courses/[courseId]/lessons/[lessonId].tsx",
       "component": "LessonDetailEdit",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/lessons/:param"
-      ],
+      "apiDependencies": ["/api/v1/lessons/:param"],
       "apiDependencySources": {
-        "/api/v1/lessons/:param": [
-          "app/teaching/courses/[courseId]/lessons/[lessonId].tsx"
-        ]
+        "/api/v1/lessons/:param": ["app/teaching/courses/[courseId]/lessons/[lessonId].tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1774,13 +1406,9 @@
       "sourceFile": "app/teaching/courses/[courseId]/lessons/create.tsx",
       "component": "CreateLesson",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/courses/:param/lessons"
-      ],
+      "apiDependencies": ["/api/v1/courses/:param/lessons"],
       "apiDependencySources": {
-        "/api/v1/courses/:param/lessons": [
-          "app/teaching/courses/[courseId]/lessons/create.tsx"
-        ]
+        "/api/v1/courses/:param/lessons": ["app/teaching/courses/[courseId]/lessons/create.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1806,15 +1434,9 @@
         "/api/v1/resources/COURSE/:param/comments"
       ],
       "apiDependencySources": {
-        "/api/v1/comments/:param": [
-          "app/teaching/courses/[courseId]/reviews.tsx"
-        ],
-        "/api/v1/courses/:param/reviews": [
-          "app/teaching/courses/[courseId]/reviews.tsx"
-        ],
-        "/api/v1/resources/COURSE/:param/comments": [
-          "app/teaching/courses/[courseId]/reviews.tsx"
-        ]
+        "/api/v1/comments/:param": ["app/teaching/courses/[courseId]/reviews.tsx"],
+        "/api/v1/courses/:param/reviews": ["app/teaching/courses/[courseId]/reviews.tsx"],
+        "/api/v1/resources/COURSE/:param/comments": ["app/teaching/courses/[courseId]/reviews.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1834,13 +1456,9 @@
       "sourceFile": "app/teaching/courses/create.tsx",
       "component": "CreateCourse",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/courses"
-      ],
+      "apiDependencies": ["/api/v1/courses"],
       "apiDependencySources": {
-        "/api/v1/courses": [
-          "app/teaching/courses/create.tsx"
-        ]
+        "/api/v1/courses": ["app/teaching/courses/create.tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",
@@ -1860,17 +1478,10 @@
       "sourceFile": "app/teaching/offerings/[offeringId].tsx",
       "component": "OfferingDetailScreen",
       "intendedRole": "LECTURER",
-      "apiDependencies": [
-        "/api/v1/offerings/:param",
-        "/api/v1/offerings/:param/publish"
-      ],
+      "apiDependencies": ["/api/v1/offerings/:param", "/api/v1/offerings/:param/publish"],
       "apiDependencySources": {
-        "/api/v1/offerings/:param": [
-          "app/teaching/offerings/[offeringId].tsx"
-        ],
-        "/api/v1/offerings/:param/publish": [
-          "app/teaching/offerings/[offeringId].tsx"
-        ]
+        "/api/v1/offerings/:param": ["app/teaching/offerings/[offeringId].tsx"],
+        "/api/v1/offerings/:param/publish": ["app/teaching/offerings/[offeringId].tsx"]
       },
       "localStorageDependencies": [
         "Refresh credential/session secret in SecureStore; access token memory-only",

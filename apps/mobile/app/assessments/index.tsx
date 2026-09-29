@@ -123,15 +123,23 @@ export default function AssessmentListScreen() {
           </View>
         )}
 
-        {!loading && !error && quizzes.some((quiz) => {
-          const now = Date.now();
-          return (quiz.opensAt && Date.parse(quiz.opensAt) > now) || (quiz.closesAt && Date.parse(quiz.closesAt) <= now);
-        }) && (
-          <View style={[styles.card, { gap: 6 }]}>
-            <Text style={styles.title}>Thời gian mở bài</Text>
-            <Text style={styles.small}>Một số bài đã phát hành nhưng chưa mở hoặc đã đóng; thời gian chính thức được máy chủ xác minh khi bắt đầu làm bài.</Text>
-          </View>
-        )}
+        {!loading &&
+          !error &&
+          quizzes.some((quiz) => {
+            const now = Date.now();
+            return (
+              (quiz.opensAt && Date.parse(quiz.opensAt) > now) ||
+              (quiz.closesAt && Date.parse(quiz.closesAt) <= now)
+            );
+          }) && (
+            <View style={[styles.card, { gap: 6 }]}>
+              <Text style={styles.title}>Thời gian mở bài</Text>
+              <Text style={styles.small}>
+                Một số bài đã phát hành nhưng chưa mở hoặc đã đóng; thời gian chính thức được máy chủ xác minh
+                khi bắt đầu làm bài.
+              </Text>
+            </View>
+          )}
 
         {!loading && !error && quizzes.length === 0 && (
           <EmptyState
@@ -155,16 +163,21 @@ export default function AssessmentListScreen() {
                 onPress={() => router.push(`/assessments/${item.quizId}` as Href)}
               >
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <Badge
-                    label={item.targetType === "COURSE" ? "KHÓA HỌC" : "LỚP HỌC"}
-                    variant="primary"
-                  />
+                  <Badge label={item.targetType === "COURSE" ? "KHÓA HỌC" : "LỚP HỌC"} variant="primary" />
                   <Badge label="ĐÃ XUẤT BẢN" variant="success" icon="check" />
                 </View>
 
                 <Text style={screenStyles.cardTitle}>{item.title}</Text>
-                {!!item.opensAt && <Text style={screenStyles.targetNameText}>Mở lúc: {new Date(item.opensAt).toLocaleString()}</Text>}
-                {!!item.closesAt && <Text style={screenStyles.targetNameText}>Đóng lúc: {new Date(item.closesAt).toLocaleString()}</Text>}
+                {!!item.opensAt && (
+                  <Text style={screenStyles.targetNameText}>
+                    Mở lúc: {new Date(item.opensAt).toLocaleString()}
+                  </Text>
+                )}
+                {!!item.closesAt && (
+                  <Text style={screenStyles.targetNameText}>
+                    Đóng lúc: {new Date(item.closesAt).toLocaleString()}
+                  </Text>
+                )}
                 {item.targetName && (
                   <Text style={screenStyles.targetNameText} numberOfLines={1}>
                     {item.targetName}
@@ -181,7 +194,9 @@ export default function AssessmentListScreen() {
                       <Text style={screenStyles.infoDot}>•</Text>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                         <Icon name="clock" size={13} color={tokens.color.muted} />
-                        <Text style={screenStyles.infoItem}>{Math.round(item.durationSeconds / 60)} phút</Text>
+                        <Text style={screenStyles.infoItem}>
+                          {Math.round(item.durationSeconds / 60)} phút
+                        </Text>
                       </View>
                     </>
                   )}
@@ -193,7 +208,15 @@ export default function AssessmentListScreen() {
                   )}
                 </View>
 
-                <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 4, marginTop: 4 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                    gap: 4,
+                    marginTop: 4,
+                  }}
+                >
                   <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
                     Chi tiết & Làm bài
                   </Text>

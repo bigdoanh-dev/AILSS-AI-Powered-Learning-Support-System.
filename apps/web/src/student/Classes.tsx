@@ -88,10 +88,15 @@ export function Classes() {
         {query.data?.length ? (
           <div className="study-grid">
             {query.data.map((c) => (
-              <article className="study-card study-card-rich learning-card class-learning-card" key={c.classId}>
+              <article
+                className="study-card study-card-rich learning-card class-learning-card"
+                key={c.classId}
+              >
                 <div className="learning-card-media">
                   <CourseArtwork title={c.name} />
-                  <span className="learning-card-type"><Icon name="class" size={14} /> Lớp học</span>
+                  <span className="learning-card-type">
+                    <Icon name="class" size={14} /> Lớp học
+                  </span>
                 </div>
                 <div className="learning-card-content">
                   <div className="learning-card-heading-row">
@@ -219,14 +224,86 @@ interface ClassRosterMember {
 }
 
 const MOCK_CLASS_ROSTER: ClassRosterMember[] = [
-  { studentId: "SV-202601", name: "Lê Văn Đức", role: "LEADER", roleLabel: "Lớp trưởng", attendanceRate: "100%", completedTasks: 6, totalTasks: 6, status: "ONLINE" },
-  { studentId: "SV-202602", name: "Nguyễn Mai Phương", role: "VICE_LEADER", roleLabel: "Lớp phó học tập", attendanceRate: "100%", completedTasks: 6, totalTasks: 6, status: "ONLINE" },
-  { studentId: "SV-202603", name: "Trần Anh Tuấn", role: "STUDENT", roleLabel: "Học viên", attendanceRate: "95%", completedTasks: 5, totalTasks: 6, status: "RECENTLY_ACTIVE" },
-  { studentId: "SV-202604", name: "Phạm Hoàng Long", role: "STUDENT", roleLabel: "Học viên", attendanceRate: "92%", completedTasks: 5, totalTasks: 6, status: "ONLINE" },
-  { studentId: "SV-202605", name: "Đỗ Thị Bảo Ngọc", role: "STUDENT", roleLabel: "Học viên", attendanceRate: "100%", completedTasks: 6, totalTasks: 6, status: "RECENTLY_ACTIVE" },
-  { studentId: "SV-202606", name: "Vũ Minh Quân", role: "STUDENT", roleLabel: "Học viên", attendanceRate: "90%", completedTasks: 4, totalTasks: 6, status: "RECENTLY_ACTIVE" },
-  { studentId: "SV-202607", name: "Hoàng Gia Huy", role: "STUDENT", roleLabel: "Học viên", attendanceRate: "88%", completedTasks: 4, totalTasks: 6, status: "ONLINE" },
-  { studentId: "SV-202608", name: "Ngô Thanh Thảo", role: "STUDENT", roleLabel: "Học viên", attendanceRate: "96%", completedTasks: 6, totalTasks: 6, status: "RECENTLY_ACTIVE" },
+  {
+    studentId: "SV-202601",
+    name: "Lê Văn Đức",
+    role: "LEADER",
+    roleLabel: "Lớp trưởng",
+    attendanceRate: "100%",
+    completedTasks: 6,
+    totalTasks: 6,
+    status: "ONLINE",
+  },
+  {
+    studentId: "SV-202602",
+    name: "Nguyễn Mai Phương",
+    role: "VICE_LEADER",
+    roleLabel: "Lớp phó học tập",
+    attendanceRate: "100%",
+    completedTasks: 6,
+    totalTasks: 6,
+    status: "ONLINE",
+  },
+  {
+    studentId: "SV-202603",
+    name: "Trần Anh Tuấn",
+    role: "STUDENT",
+    roleLabel: "Học viên",
+    attendanceRate: "95%",
+    completedTasks: 5,
+    totalTasks: 6,
+    status: "RECENTLY_ACTIVE",
+  },
+  {
+    studentId: "SV-202604",
+    name: "Phạm Hoàng Long",
+    role: "STUDENT",
+    roleLabel: "Học viên",
+    attendanceRate: "92%",
+    completedTasks: 5,
+    totalTasks: 6,
+    status: "ONLINE",
+  },
+  {
+    studentId: "SV-202605",
+    name: "Đỗ Thị Bảo Ngọc",
+    role: "STUDENT",
+    roleLabel: "Học viên",
+    attendanceRate: "100%",
+    completedTasks: 6,
+    totalTasks: 6,
+    status: "RECENTLY_ACTIVE",
+  },
+  {
+    studentId: "SV-202606",
+    name: "Vũ Minh Quân",
+    role: "STUDENT",
+    roleLabel: "Học viên",
+    attendanceRate: "90%",
+    completedTasks: 4,
+    totalTasks: 6,
+    status: "RECENTLY_ACTIVE",
+  },
+  {
+    studentId: "SV-202607",
+    name: "Hoàng Gia Huy",
+    role: "STUDENT",
+    roleLabel: "Học viên",
+    attendanceRate: "88%",
+    completedTasks: 4,
+    totalTasks: 6,
+    status: "ONLINE",
+  },
+  {
+    studentId: "SV-202608",
+    name: "Ngô Thanh Thảo",
+    role: "STUDENT",
+    roleLabel: "Học viên",
+    attendanceRate: "96%",
+    completedTasks: 6,
+    totalTasks: 6,
+    status: "RECENTLY_ACTIVE",
+  },
 ];
 
 export function ClassDetail() {
@@ -268,7 +345,12 @@ export function ClassDetail() {
       />
       <Heading title={q.data?.name || "Lớp học"} />
 
-      <div className="module-segmented-bar" role="tablist" aria-label="Phân hệ lớp học" style={{ marginBottom: "20px" }}>
+      <div
+        className="module-segmented-bar"
+        role="tablist"
+        aria-label="Phân hệ lớp học"
+        style={{ marginBottom: "20px" }}
+      >
         <button
           type="button"
           className={`segmented-tab ${classTab === "lessons" ? "active" : ""}`}
@@ -358,7 +440,9 @@ export function ClassDetail() {
                   <h3 className="home-activity-card-title">Thiết kế lược đồ CSDL quan hệ chuẩn hóa 3NF</h3>
                   <div className="home-activity-card-meta">
                     <span style={{ color: "#dc2626", fontWeight: 600 }}>⏰ Hạn nộp: 23:59 Hôm nay</span>
-                    <Link to={"/app/assessments?class=" + classId} className="button small">Nộp bài →</Link>
+                    <Link to={"/app/assessments?class=" + classId} className="button small">
+                      Nộp bài →
+                    </Link>
                   </div>
                 </div>
 
@@ -367,7 +451,9 @@ export function ClassDetail() {
                     <span className="badge">THỰC HÀNH</span>
                     <span className="green-badge-pill">✓ Đã nộp · 9.0/10</span>
                   </div>
-                  <h3 className="home-activity-card-title">Bài thực hành 02: Tối ưu hóa truy vấn với Index</h3>
+                  <h3 className="home-activity-card-title">
+                    Bài thực hành 02: Tối ưu hóa truy vấn với Index
+                  </h3>
                   <div className="home-activity-card-meta">
                     <span>Hạn nộp: 15/09/2026</span>
                     <span style={{ color: "#16a34a", fontWeight: 600 }}>Giảng viên đã chấm</span>
@@ -379,10 +465,14 @@ export function ClassDetail() {
                     <span className="badge">QUIZ AI THÍCH ỨNG</span>
                     <span className="red-badge-pill">● Chưa làm</span>
                   </div>
-                  <h3 className="home-activity-card-title">Kiểm tra trắc nghiệm 15 phút: Ràng buộc toàn vẹn & Trigger</h3>
+                  <h3 className="home-activity-card-title">
+                    Kiểm tra trắc nghiệm 15 phút: Ràng buộc toàn vẹn & Trigger
+                  </h3>
                   <div className="home-activity-card-meta">
                     <span>⏱️ 15 phút • 10 câu hỏi</span>
-                    <Link to={"/app/assessments?class=" + classId} className="button small">Vào thi →</Link>
+                    <Link to={"/app/assessments?class=" + classId} className="button small">
+                      Vào thi →
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -397,7 +487,8 @@ export function ClassDetail() {
               <div>
                 <h2>Tài Liệu & Học Liệu Của Lớp</h2>
                 <p className="subtext">
-                  Giáo trình, slide bài giảng, đề cương chi tiết và bộ dữ liệu thực hành do giảng viên cung cấp.
+                  Giáo trình, slide bài giảng, đề cương chi tiết và bộ dữ liệu thực hành do giảng viên cung
+                  cấp.
                 </p>
               </div>
               <div className="table-search-box">
@@ -414,12 +505,21 @@ export function ClassDetail() {
             <div className="workspace-cards" style={{ marginTop: "1rem" }}>
               {filteredDocs.map((doc) => (
                 <article key={doc.id} className="home-activity-card" style={{ padding: "1.25rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       <span className="kpi-tag accent">{doc.categoryLabel}</span>
                       <span className="badge">{doc.fileType}</span>
                     </div>
-                    <small style={{ color: "var(--muted, #64748b)" }}>{doc.fileSize} · {doc.updatedAt}</small>
+                    <small style={{ color: "var(--muted, #64748b)" }}>
+                      {doc.fileSize} · {doc.updatedAt}
+                    </small>
                   </div>
 
                   <h3 style={{ margin: "0.5rem 0 0.25rem 0", fontSize: "1.05rem" }}>{doc.title}</h3>
@@ -434,10 +534,7 @@ export function ClassDetail() {
                     >
                       <Icon name="eye" size={14} /> Xem thử
                     </button>
-                    <button
-                      className="button button-small"
-                      onClick={() => handleDownloadDoc(doc)}
-                    >
+                    <button className="button button-small" onClick={() => handleDownloadDoc(doc)}>
                       <Icon name="card" size={14} /> Tải tài liệu ({doc.fileSize})
                     </button>
                   </div>
@@ -478,7 +575,9 @@ export function ClassDetail() {
             <div className="workspace-kpi-grid" style={{ marginBottom: "1.5rem" }}>
               <div className="kpi-card">
                 <div className="kpi-header">
-                  <span className="kpi-icon"><Icon name="users" size={20} /></span>
+                  <span className="kpi-icon">
+                    <Icon name="users" size={20} />
+                  </span>
                   <span className="kpi-tag accent">Sĩ số</span>
                 </div>
                 <div className="kpi-value">48 / 50</div>
@@ -487,25 +586,35 @@ export function ClassDetail() {
 
               <div className="kpi-card">
                 <div className="kpi-header">
-                  <span className="kpi-icon"><Icon name="graduation" size={20} /></span>
+                  <span className="kpi-icon">
+                    <Icon name="graduation" size={20} />
+                  </span>
                   <span className="kpi-tag accent">Giảng viên</span>
                 </div>
-                <div className="kpi-value" style={{ fontSize: "1.1rem" }}>TS. Trần Hoàng Minh</div>
+                <div className="kpi-value" style={{ fontSize: "1.1rem" }}>
+                  TS. Trần Hoàng Minh
+                </div>
                 <div className="kpi-label">Giảng viên phụ trách môn</div>
               </div>
 
               <div className="kpi-card">
                 <div className="kpi-header">
-                  <span className="kpi-icon"><Icon name="trophy" size={20} /></span>
+                  <span className="kpi-icon">
+                    <Icon name="trophy" size={20} />
+                  </span>
                   <span className="kpi-tag accent">Ban cán sự</span>
                 </div>
-                <div className="kpi-value" style={{ fontSize: "1.1rem" }}>Lê Văn Đức</div>
+                <div className="kpi-value" style={{ fontSize: "1.1rem" }}>
+                  Lê Văn Đức
+                </div>
                 <div className="kpi-label">Lớp trưởng · Liên hệ nhóm</div>
               </div>
 
               <div className="kpi-card">
                 <div className="kpi-header">
-                  <span className="kpi-icon"><Icon name="checkCircle" size={20} /></span>
+                  <span className="kpi-icon">
+                    <Icon name="checkCircle" size={20} />
+                  </span>
                   <span className="kpi-tag accent">96.8%</span>
                 </div>
                 <div className="kpi-value">Xuất sắc</div>
@@ -531,17 +640,29 @@ export function ClassDetail() {
                   {filteredMembers.map((m, idx) => (
                     <tr key={m.studentId}>
                       <td>{idx + 1}</td>
-                      <td><code className="code-badge">{m.studentId}</code></td>
-                      <td><strong>{m.name}</strong></td>
                       <td>
-                        <span className={`status-pill ${m.role !== "STUDENT" ? "status-success" : "status-reconciled"}`}>
+                        <code className="code-badge">{m.studentId}</code>
+                      </td>
+                      <td>
+                        <strong>{m.name}</strong>
+                      </td>
+                      <td>
+                        <span
+                          className={`status-pill ${m.role !== "STUDENT" ? "status-success" : "status-reconciled"}`}
+                        >
                           {m.roleLabel}
                         </span>
                       </td>
-                      <td><strong>{m.attendanceRate}</strong></td>
-                      <td>{m.completedTasks} / {m.totalTasks} bài</td>
                       <td>
-                        <span className={`status-pill ${m.status === "ONLINE" ? "status-success" : "status-pending"}`}>
+                        <strong>{m.attendanceRate}</strong>
+                      </td>
+                      <td>
+                        {m.completedTasks} / {m.totalTasks} bài
+                      </td>
+                      <td>
+                        <span
+                          className={`status-pill ${m.status === "ONLINE" ? "status-success" : "status-pending"}`}
+                        >
                           ● {m.status === "ONLINE" ? "Đang học" : "Vừa hoạt động"}
                         </span>
                       </td>

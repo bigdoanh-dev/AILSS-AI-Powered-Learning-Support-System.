@@ -138,8 +138,12 @@ describe("Phase 19A — Course Version Pinning, Immutability & Voluntary Upgrade
       expect(diff.removedLessons).toContain("les-2");
 
       // Concept changes
-      const addedConcepts = diff.prerequisiteChanges.filter((c) => c.change === "ADDED").map((c) => c.conceptId);
-      const removedConcepts = diff.prerequisiteChanges.filter((c) => c.change === "REMOVED").map((c) => c.conceptId);
+      const addedConcepts = diff.prerequisiteChanges
+        .filter((c) => c.change === "ADDED")
+        .map((c) => c.conceptId);
+      const removedConcepts = diff.prerequisiteChanges
+        .filter((c) => c.change === "REMOVED")
+        .map((c) => c.conceptId);
 
       expect(addedConcepts).toContain("PACELC");
       expect(addedConcepts).toContain("QUORUM_REPLICATION");

@@ -13,7 +13,15 @@ export interface WebStudyPlanItem {
   priority: number;
   reasonCode: string;
   rationale: string;
-  status: "PROPOSED" | "PENDING" | "ACCEPTED" | "COMPLETED" | "SKIPPED" | "RESCHEDULED" | "ALTERNATIVE_REQUESTED" | "REPLACED";
+  status:
+    | "PROPOSED"
+    | "PENDING"
+    | "ACCEPTED"
+    | "COMPLETED"
+    | "SKIPPED"
+    | "RESCHEDULED"
+    | "ALTERNATIVE_REQUESTED"
+    | "REPLACED";
 }
 
 export interface WebMasteryGap {
@@ -40,24 +48,98 @@ export function StudyPlanPage() {
 
   const courses = useStudent<LearningCourse[]>("/me/courses");
   const [courseId, setCourseId] = useState("");
-  useEffect(() => { if (!courseId && courses.data?.[0]) setCourseId(courses.data[0].courseId); }, [courseId, courses.data]);
-  type RuntimePlan = { items: Array<{ itemId: string; title: string; conceptId: string; action: WebStudyPlanItem["action"]; scheduledDate: string; estimatedMinutes: number; priority: number; reasonCode: string; rationale: string; status: WebStudyPlanItem["status"] }>; masteryGaps: Array<{ conceptId: string; conceptName: string; currentScore: number; targetScore: number }>; upcomingAssessments: Array<{ assessmentId: string; title: string; dueDate: string }> };
-  const plan = useStudent<RuntimePlan>(courseId ? `/study-plan/current?courseId=${encodeURIComponent(courseId)}` : null);
+  useEffect(() => {
+    if (!courseId && courses.data?.[0]) setCourseId(courses.data[0].courseId);
+  }, [courseId, courses.data]);
+  type RuntimePlan = {
+    items: Array<{
+      itemId: string;
+      title: string;
+      conceptId: string;
+      action: WebStudyPlanItem["action"];
+      scheduledDate: string;
+      estimatedMinutes: number;
+      priority: number;
+      reasonCode: string;
+      rationale: string;
+      status: WebStudyPlanItem["status"];
+    }>;
+    masteryGaps: Array<{ conceptId: string; conceptName: string; currentScore: number; targetScore: number }>;
+    upcomingAssessments: Array<{ assessmentId: string; title: string; dueDate: string }>;
+  };
+  const plan = useStudent<RuntimePlan>(
+    courseId ? `/study-plan/current?courseId=${encodeURIComponent(courseId)}` : null,
+  );
   const [items, setItems] = useState<WebStudyPlanItem[]>([]);
-  useEffect(() => setItems((plan.data?.items ?? []).map((item) => ({ id: item.itemId, title: item.title, concept: item.conceptId, action: item.action, scheduledDate: item.scheduledDate, estimatedMinutes: item.estimatedMinutes, priority: item.priority, reasonCode: item.reasonCode, rationale: item.rationale, status: item.status }))), [plan.data]);
-  const gaps = useMemo<WebMasteryGap[]>(() => (plan.data?.masteryGaps ?? []).map((gap) => ({ ...gap, state: gap.currentScore < 40 ? "INTRODUCED" : gap.currentScore < 75 ? "DEVELOPING" : "DECAY_RISK", whyDeveloping: `Điểm thành thạo hiện tại là ${gap.currentScore}%; mục tiêu là ${gap.targetScore}%.` })), [plan.data]);
-  const upcoming = useMemo<WebUpcomingAssessment[]>(() => (plan.data?.upcomingAssessments ?? []).map((assessment) => ({ id: assessment.assessmentId, title: assessment.title, dueDate: assessment.dueDate, daysRemaining: Math.max(0, Math.ceil((Date.parse(assessment.dueDate) - Date.now()) / 86400000)), weightPercent: 0 })), [plan.data]);
+  useEffect(
+    () =>
+      setItems(
+        (plan.data?.items ?? []).map((item) => ({
+          id: item.itemId,
+          title: item.title,
+          concept: item.conceptId,
+          action: item.action,
+          scheduledDate: item.scheduledDate,
+          estimatedMinutes: item.estimatedMinutes,
+          priority: item.priority,
+          reasonCode: item.reasonCode,
+          rationale: item.rationale,
+          status: item.status,
+        })),
+      ),
+    [plan.data],
+  );
+  const gaps = useMemo<WebMasteryGap[]>(
+    () =>
+      (plan.data?.masteryGaps ?? []).map((gap) => ({
+        ...gap,
+        state: gap.currentScore < 40 ? "INTRODUCED" : gap.currentScore < 75 ? "DEVELOPING" : "DECAY_RISK",
+        whyDeveloping: `Điểm thành thạo hiện tại là ${gap.currentScore}%; mục tiêu là ${gap.targetScore}%.`,
+      })),
+    [plan.data],
+  );
+  const upcoming = useMemo<WebUpcomingAssessment[]>(
+    () =>
+      (plan.data?.upcomingAssessments ?? []).map((assessment) => ({
+        id: assessment.assessmentId,
+        title: assessment.title,
+        dueDate: assessment.dueDate,
+        daysRemaining: Math.max(0, Math.ceil((Date.parse(assessment.dueDate) - Date.now()) / 86400000)),
+        weightPercent: 0,
+      })),
+    [plan.data],
+  );
   const [mutationError, setMutationError] = useState("");
   const generatePlan = async () => {
     if (!courseId) return;
-    try { await studentRequest<RuntimePlan>("/study-plan/generate", new AbortController().signal, "POST", { courseId, availableHoursPerWeek: 7 }); setMutationError(""); plan.retry(); }
-    catch (error) { setMutationError(studentError(error)); }
+    try {
+      await studentRequest<RuntimePlan>("/study-plan/generate", new AbortController().signal, "POST", {
+        courseId,
+        availableHoursPerWeek: 7,
+      });
+      setMutationError("");
+      plan.retry();
+    } catch (error) {
+      setMutationError(studentError(error));
+    }
   };
   const handleStatusChange = async (itemId: string, newStatus: "COMPLETED" | "SKIPPED" | "RESCHEDULED") => {
     if (!courseId) return;
     const controller = new AbortController();
-    try { const response = await studentRequest<WebStudyPlanItem>(`/study-plan/items/${itemId}`, controller.signal, "PATCH", { courseId, status: newStatus }); setItems((previous) => previous.map((item) => item.id === itemId ? { ...item, status: response.data.status } : item)); setMutationError(""); }
-    catch (error) { setMutationError(studentError(error)); }
+    try {
+      const response = await studentRequest<WebStudyPlanItem>(
+        `/study-plan/items/${itemId}`,
+        controller.signal,
+        "PATCH",
+        { courseId, status: newStatus },
+      );
+      setItems((previous) =>
+        previous.map((item) => (item.id === itemId ? { ...item, status: response.data.status } : item)),
+      );
+      setMutationError("");
+    } catch (error) {
+      setMutationError(studentError(error));
+    }
   };
 
   const completedItems = items.filter((i) => i.status === "COMPLETED");
@@ -66,16 +148,33 @@ export function StudyPlanPage() {
   return (
     <div className="study-plan-container" style={{ padding: "var(--space-6) 0" }}>
       <Heading title="Kế hoạch học tập cá nhân hóa (Adaptive Study Plan V2)">
-        Lộ trình tối ưu hóa dựa trên điểm thành thạo thực tế, khoảng trống kiến thức tiên quyết và kỳ thi sắp tới.
+        Lộ trình tối ưu hóa dựa trên điểm thành thạo thực tế, khoảng trống kiến thức tiên quyết và kỳ thi sắp
+        tới.
       </Heading>
-      <label style={{ display: "block", marginBottom: "var(--space-4)" }}>Khóa học:{" "}
+      <label style={{ display: "block", marginBottom: "var(--space-4)" }}>
+        Khóa học:{" "}
         <select value={courseId} onChange={(event) => setCourseId(event.target.value)}>
-          {(courses.data ?? []).map((course) => <option key={course.courseId} value={course.courseId}>{course.title}</option>)}
+          {(courses.data ?? []).map((course) => (
+            <option key={course.courseId} value={course.courseId}>
+              {course.title}
+            </option>
+          ))}
         </select>
       </label>
-      <button type="button" disabled={!courseId} onClick={() => void generatePlan()} style={{ marginBottom: "var(--space-4)" }}>Tạo lại kế hoạch từ dữ liệu thành thạo</button>
+      <button
+        type="button"
+        disabled={!courseId}
+        onClick={() => void generatePlan()}
+        style={{ marginBottom: "var(--space-4)" }}
+      >
+        Tạo lại kế hoạch từ dữ liệu thành thạo
+      </button>
       {(courses.pending || plan.pending) && <p>Đang tải dữ liệu kế hoạch học tập…</p>}
-      {(courses.error || plan.error || mutationError) && <p role="alert" style={{ color: "var(--danger, #b42318)" }}>{mutationError || studentError(courses.error ?? plan.error)}</p>}
+      {(courses.error || plan.error || mutationError) && (
+        <p role="alert" style={{ color: "var(--danger, #b42318)" }}>
+          {mutationError || studentError(courses.error ?? plan.error)}
+        </p>
+      )}
 
       {/* Tab Navigation */}
       <div
@@ -124,12 +223,28 @@ export function StudyPlanPage() {
       {/* THIS WEEK TAB */}
       {activeTab === "THIS_WEEK" && (
         <section aria-labelledby="this-week-heading">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-4)" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "var(--space-4)",
+            }}
+          >
             <h2 id="this-week-heading" style={{ fontSize: "1.25rem", color: "var(--ink)", margin: 0 }}>
               Các hoạt động được đề xuất tuần này
             </h2>
             <span style={{ fontSize: "0.9rem", color: "var(--muted)" }}>
-              Tổng thời lượng dự kiến: {items.reduce((s, i) => s + (["PROPOSED", "PENDING", "ACCEPTED", "RESCHEDULED"].includes(i.status) ? i.estimatedMinutes : 0), 0)} phút
+              Tổng thời lượng dự kiến:{" "}
+              {items.reduce(
+                (s, i) =>
+                  s +
+                  (["PROPOSED", "PENDING", "ACCEPTED", "RESCHEDULED"].includes(i.status)
+                    ? i.estimatedMinutes
+                    : 0),
+                0,
+              )}{" "}
+              phút
             </span>
           </div>
 
@@ -210,49 +325,59 @@ export function StudyPlanPage() {
       {/* RECOMMENDED NEXT STEP TAB */}
       {activeTab === "RECOMMENDED" && (
         <section aria-labelledby="recommended-heading">
-          <h2 id="recommended-heading" style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}>
+          <h2
+            id="recommended-heading"
+            style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}
+          >
             Hành động được cá nhân hóa ưu tiên cao nhất
           </h2>
-          {items[0] ? <div
-            style={{
-              padding: "var(--space-5)",
-              background: "linear-gradient(135deg, #1760ef10, #77dfff15)",
-              border: "2px solid var(--blue)",
-              borderRadius: "var(--radius)",
-            }}
-          >
-            <span style={{ fontWeight: 700, color: "var(--blue)", fontSize: "0.9rem" }}>
-              ⚡ HÀNH ĐỘNG KHUYÊN DÙNG NGAY (Next-Action Engine)
-            </span>
-            <h3 style={{ margin: "var(--space-2) 0", fontSize: "1.3rem" }}>
-              {items[0].title}
-            </h3>
-            <p style={{ color: "var(--ink)", fontSize: "1rem", lineHeight: 1.5 }}>
-              Lý do: {items[0].rationale}
-            </p>
-            <div style={{ marginTop: "var(--space-4)", display: "flex", gap: "var(--space-3)" }}>
-              <Link
-                to={`/app/ai-tutor?concept=${encodeURIComponent(items[0].concept)}&mode=SOCRATIC`}
-                style={{
-                  padding: "10px 20px",
-                  background: "var(--blue)",
-                  color: "#fff",
-                  borderRadius: "var(--radius-sm)",
-                  textDecoration: "none",
-                  fontWeight: 600,
-                }}
-              >
-                Bắt đầu học với AI Tutor ngay →
-              </Link>
+          {items[0] ? (
+            <div
+              style={{
+                padding: "var(--space-5)",
+                background: "linear-gradient(135deg, #1760ef10, #77dfff15)",
+                border: "2px solid var(--blue)",
+                borderRadius: "var(--radius)",
+              }}
+            >
+              <span style={{ fontWeight: 700, color: "var(--blue)", fontSize: "0.9rem" }}>
+                ⚡ HÀNH ĐỘNG KHUYÊN DÙNG NGAY (Next-Action Engine)
+              </span>
+              <h3 style={{ margin: "var(--space-2) 0", fontSize: "1.3rem" }}>{items[0].title}</h3>
+              <p style={{ color: "var(--ink)", fontSize: "1rem", lineHeight: 1.5 }}>
+                Lý do: {items[0].rationale}
+              </p>
+              <div style={{ marginTop: "var(--space-4)", display: "flex", gap: "var(--space-3)" }}>
+                <Link
+                  to={`/app/ai-tutor?concept=${encodeURIComponent(items[0].concept)}&mode=SOCRATIC`}
+                  style={{
+                    padding: "10px 20px",
+                    background: "var(--blue)",
+                    color: "#fff",
+                    borderRadius: "var(--radius-sm)",
+                    textDecoration: "none",
+                    fontWeight: 600,
+                  }}
+                >
+                  Bắt đầu học với AI Tutor ngay →
+                </Link>
+              </div>
             </div>
-          </div> : <p>Chưa có hành động khuyên dùng. Hãy tạo kế hoạch sau khi hệ thống ghi nhận bằng chứng học tập.</p>}
+          ) : (
+            <p>
+              Chưa có hành động khuyên dùng. Hãy tạo kế hoạch sau khi hệ thống ghi nhận bằng chứng học tập.
+            </p>
+          )}
         </section>
       )}
 
       {/* MASTERY GAPS TAB */}
       {activeTab === "GAPS" && (
         <section aria-labelledby="gaps-heading">
-          <h2 id="gaps-heading" style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}>
+          <h2
+            id="gaps-heading"
+            style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}
+          >
             Khoảng trống kiến thức và giải trình tính minh bạch
           </h2>
           <div style={{ display: "grid", gap: "var(--space-4)" }}>
@@ -284,8 +409,23 @@ export function StudyPlanPage() {
                 <p style={{ margin: "var(--space-2) 0", color: "var(--muted)" }}>
                   <strong>Tại sao khái niệm này ở trạng thái này:</strong> {gap.whyDeveloping}
                 </p>
-                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginTop: "var(--space-3)" }}>
-                  <div style={{ flex: 1, height: "8px", background: "var(--line)", borderRadius: "4px", overflow: "hidden" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "var(--space-3)",
+                    marginTop: "var(--space-3)",
+                  }}
+                >
+                  <div
+                    style={{
+                      flex: 1,
+                      height: "8px",
+                      background: "var(--line)",
+                      borderRadius: "4px",
+                      overflow: "hidden",
+                    }}
+                  >
                     <div
                       style={{
                         width: `${gap.currentScore}%`,
@@ -307,7 +447,10 @@ export function StudyPlanPage() {
       {/* UPCOMING ASSESSMENTS TAB */}
       {activeTab === "UPCOMING" && (
         <section aria-labelledby="upcoming-heading">
-          <h2 id="upcoming-heading" style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}>
+          <h2
+            id="upcoming-heading"
+            style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}
+          >
             Lịch kiểm tra & đánh giá sắp diễn ra
           </h2>
           <div style={{ display: "grid", gap: "var(--space-4)" }}>
@@ -323,7 +466,8 @@ export function StudyPlanPage() {
               >
                 <h3 style={{ margin: "0 0 var(--space-2) 0" }}>{a.title}</h3>
                 <p style={{ margin: 0, color: "var(--muted)" }}>
-                  Hạn hoàn thành: <strong>{a.dueDate}</strong> (Còn {a.daysRemaining} ngày) · Trọng số: {a.weightPercent}%
+                  Hạn hoàn thành: <strong>{a.dueDate}</strong> (Còn {a.daysRemaining} ngày) · Trọng số:{" "}
+                  {a.weightPercent}%
                 </p>
               </div>
             ))}
@@ -334,11 +478,16 @@ export function StudyPlanPage() {
       {/* COMPLETED TAB */}
       {activeTab === "COMPLETED" && (
         <section aria-labelledby="completed-heading">
-          <h2 id="completed-heading" style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}>
+          <h2
+            id="completed-heading"
+            style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}
+          >
             Hoạt động đã hoàn thành
           </h2>
           {completedItems.length === 0 ? (
-            <p style={{ color: "var(--muted)" }}>Chưa có hoạt động nào được đánh dấu hoàn thành trong tuần này.</p>
+            <p style={{ color: "var(--muted)" }}>
+              Chưa có hoạt động nào được đánh dấu hoàn thành trong tuần này.
+            </p>
           ) : (
             <ul style={{ listStyle: "none", padding: 0 }}>
               {completedItems.map((c) => (

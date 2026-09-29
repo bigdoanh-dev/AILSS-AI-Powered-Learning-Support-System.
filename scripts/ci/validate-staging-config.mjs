@@ -82,7 +82,11 @@ export function validateStagingConfig(values, mode = "fixture") {
   if (values.OBJECT_STORAGE_ENDPOINT && ["127.0.0.1", "localhost"].includes(values.OBJECT_STORAGE_ENDPOINT)) {
     errors.push("OBJECT_STORAGE_ENDPOINT must not point to localhost in staging/production");
   }
-  if (values.OBJECT_STORAGE_PORT && Number(values.OBJECT_STORAGE_PORT) !== 443 && values.OBJECT_STORAGE_USE_SSL === "true") {
+  if (
+    values.OBJECT_STORAGE_PORT &&
+    Number(values.OBJECT_STORAGE_PORT) !== 443 &&
+    values.OBJECT_STORAGE_USE_SSL === "true"
+  ) {
     // When using standard cloud S3 with SSL, port is typically 443
     if (isNaN(Number(values.OBJECT_STORAGE_PORT))) {
       errors.push("OBJECT_STORAGE_PORT must be a valid integer");
@@ -131,7 +135,14 @@ export function validateStagingConfig(values, mode = "fixture") {
   if (values.MEDIA_QUOTA_LIMITS && values.MEDIA_QUOTA_LIMITS !== "<INJECTED>") {
     try {
       const parsed = JSON.parse(values.MEDIA_QUOTA_LIMITS);
-      const keys = ["tenantOriginalBytes", "tenantDerivedBytes", "courseOriginalBytes", "courseDerivedBytes", "tenantAssets", "courseAssets"];
+      const keys = [
+        "tenantOriginalBytes",
+        "tenantDerivedBytes",
+        "courseOriginalBytes",
+        "courseDerivedBytes",
+        "tenantAssets",
+        "courseAssets",
+      ];
       for (const k of keys) {
         if (typeof parsed[k] !== "number" || parsed[k] <= 0) {
           errors.push(`MEDIA_QUOTA_LIMITS missing positive numeric key: ${k}`);
@@ -184,7 +195,9 @@ async function main() {
     return;
   }
 
-  console.log(JSON.stringify({ stage: "staging-config", status: "PASS", mode, redacted: mode === "fixture" }));
+  console.log(
+    JSON.stringify({ stage: "staging-config", status: "PASS", mode, redacted: mode === "fixture" }),
+  );
 }
 
 if (process.argv[1] && process.argv[1].endsWith("validate-staging-config.mjs")) {

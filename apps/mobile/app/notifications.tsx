@@ -12,17 +12,7 @@ import {
   type NotificationItem,
 } from "../src/notifications";
 import { ApiError } from "../src/api";
-import {
-  Page,
-  Button,
-  Badge,
-  Icon,
-  EmptyState,
-  ScreenHeader,
-  BottomNavBar,
-  styles,
-  tokens,
-} from "../src/ui";
+import { Page, Button, Badge, Icon, EmptyState, ScreenHeader, BottomNavBar, styles, tokens } from "../src/ui";
 import { ScalePressable, FadeSlideIn } from "../src/motion";
 
 export default function NotificationsScreen() {
@@ -217,24 +207,12 @@ export default function NotificationsScreen() {
               const read = isRead(item);
               const targetRoute = resolveNotificationRoute(item, snapshot.user?.role);
               return (
-                <FadeSlideIn
-                  key={item.notificationId}
-                  delay={Math.min(index * 30, 200)}
-                  fromY={8}
-                >
-                  <View
-                    style={[
-                      styles.card,
-                      !read && localStyles.unreadCard,
-                    ]}
-                  >
+                <FadeSlideIn key={item.notificationId} delay={Math.min(index * 30, 200)} fromY={8}>
+                  <View style={[styles.card, !read && localStyles.unreadCard]}>
                     <View style={localStyles.cardHeader}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                         {!read && <View style={localStyles.unreadDot} />}
-                        <Badge
-                          label={read ? "ĐÃ ĐỌC" : "MỚI"}
-                          variant={read ? "neutral" : "primary"}
-                        />
+                        <Badge label={read ? "ĐÃ ĐỌC" : "MỚI"} variant={read ? "neutral" : "primary"} />
                       </View>
                       <Text style={styles.small}>
                         {new Date(item.createdAt).toLocaleDateString("vi-VN", {

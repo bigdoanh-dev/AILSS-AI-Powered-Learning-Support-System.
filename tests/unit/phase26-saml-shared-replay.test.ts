@@ -48,7 +48,11 @@ describe("Phase 26.3: Multi-Instance SAML Replay State Productionization", () =>
     instanceB = new DistributedSamlReplayStore(cluster, { tenantId: "tenant-pilot-polytech" });
   });
 
-  function makeRecord(assertionId: string, tenantId = "tenant-pilot-polytech", offsetMs = 300_000): SamlReplayRecord {
+  function makeRecord(
+    assertionId: string,
+    tenantId = "tenant-pilot-polytech",
+    offsetMs = 300_000,
+  ): SamlReplayRecord {
     const now = new Date();
     return {
       tenantId,

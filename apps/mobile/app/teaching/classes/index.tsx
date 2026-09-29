@@ -47,7 +47,7 @@ export default function OwnedClassesList() {
         if (!signal?.aborted) setRefreshing(false);
       }
     },
-    [session, snapshot.user?.role]
+    [session, snapshot.user?.role],
   );
 
   useEffect(() => {
@@ -103,7 +103,9 @@ export default function OwnedClassesList() {
           {/* Quick Stats Strip */}
           <View style={cs.statsStrip}>
             <View style={cs.statItem}>
-              <Text style={cs.statNum}>{displayClasses.reduce((sum, item) => sum + item.studentCount, 0)}</Text>
+              <Text style={cs.statNum}>
+                {displayClasses.reduce((sum, item) => sum + item.studentCount, 0)}
+              </Text>
               <Text style={cs.statLabel}>Tổng SV</Text>
             </View>
             <View style={cs.statDivider} />
@@ -152,9 +154,7 @@ export default function OwnedClassesList() {
               style={[cs.tabBtn, tab === "COMPLETED" && cs.tabBtnActive]}
               onPress={() => setTab("COMPLETED")}
             >
-              <Text style={[cs.tabText, tab === "COMPLETED" && cs.tabTextActive]}>
-                Đã kết thúc (0)
-              </Text>
+              <Text style={[cs.tabText, tab === "COMPLETED" && cs.tabTextActive]}>Đã kết thúc (0)</Text>
             </ScalePressable>
           </ScrollView>
 
@@ -185,9 +185,7 @@ export default function OwnedClassesList() {
                   </View>
                   <View style={cs.infoLine}>
                     <Icon name="mapPin" size={14} color="#059669" />
-                    <Text style={[cs.infoText, { color: "#059669", fontWeight: "600" }]}>
-                      {item.room}
-                    </Text>
+                    <Text style={[cs.infoText, { color: "#059669", fontWeight: "600" }]}>{item.room}</Text>
                   </View>
                 </View>
 

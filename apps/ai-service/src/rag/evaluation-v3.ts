@@ -111,12 +111,14 @@ export const RagEvaluationV3Runner = {
       }
 
       // Precision@K
-      const precision = retrieved.length > 0 ? relevantRetrieved.length / retrieved.length : (q.isOutOfDomain ? 1.0 : 0.0);
+      const precision =
+        retrieved.length > 0 ? relevantRetrieved.length / retrieved.length : q.isOutOfDomain ? 1.0 : 0.0;
       sumPrecision += precision;
 
       // Recall@K
       const totalRelevant = q.relevantDocumentIds.length;
-      const recall = totalRelevant > 0 ? relevantRetrieved.length / totalRelevant : (q.isOutOfDomain ? 1.0 : 0.0);
+      const recall =
+        totalRelevant > 0 ? relevantRetrieved.length / totalRelevant : q.isOutOfDomain ? 1.0 : 0.0;
       sumRecall += recall;
 
       // Reciprocal Rank
@@ -144,7 +146,7 @@ export const RagEvaluationV3Runner = {
       for (let i = 0; i < Math.min(k, totalRelevant); i++) {
         idcg += 1 / Math.log2(i + 2);
       }
-      const ndcg = idcg > 0 ? dcg / idcg : (q.isOutOfDomain ? 1.0 : 0.0);
+      const ndcg = idcg > 0 ? dcg / idcg : q.isOutOfDomain ? 1.0 : 0.0;
       sumNdcg += ndcg;
     }
 
@@ -154,17 +156,19 @@ export const RagEvaluationV3Runner = {
     const mrr = sumRr / n;
     const ndcgAtK = sumNdcg / n;
 
-    const citationSupportRate = totalRetrievedChunks > 0 ? totalSupportedCitations / totalRetrievedChunks : 1.0;
-    const falsePositiveRate = (totalFalsePositives + totalTrueNegatives) > 0
-      ? totalFalsePositives / (totalFalsePositives + Math.max(1, totalTrueNegatives))
-      : 0;
-    const falseNegativeRate = (totalFalseNegatives + totalTruePositives) > 0
-      ? totalFalseNegatives / (totalFalseNegatives + totalTruePositives)
-      : 0;
+    const citationSupportRate =
+      totalRetrievedChunks > 0 ? totalSupportedCitations / totalRetrievedChunks : 1.0;
+    const falsePositiveRate =
+      totalFalsePositives + totalTrueNegatives > 0
+        ? totalFalsePositives / (totalFalsePositives + Math.max(1, totalTrueNegatives))
+        : 0;
+    const falseNegativeRate =
+      totalFalseNegatives + totalTruePositives > 0
+        ? totalFalseNegatives / (totalFalseNegatives + totalTruePositives)
+        : 0;
 
-    const outOfDomainRejectionAccuracy = outOfDomainCount > 0
-      ? outOfDomainRejectedCorrectly / outOfDomainCount
-      : 1.0;
+    const outOfDomainRejectionAccuracy =
+      outOfDomainCount > 0 ? outOfDomainRejectedCorrectly / outOfDomainCount : 1.0;
 
     const isPilotGrade =
       crossTenantLeakage === 0 &&
@@ -172,7 +176,7 @@ export const RagEvaluationV3Runner = {
       quarantinedLeakage === 0 &&
       precisionAtK >= 0.85 &&
       recallAtK >= 0.85 &&
-      mrr >= 0.90 &&
+      mrr >= 0.9 &&
       citationSupportRate >= 0.95 &&
       outOfDomainRejectionAccuracy === 1.0;
 
@@ -196,13 +200,19 @@ export const RagEvaluationV3Runner = {
 
   assertPilotReadiness(metrics: EvaluationV3Metrics): void {
     if (metrics.crossTenantLeakageCount > 0) {
-      throw new Error(`VIOLATION: Cross-tenant leakage observed (${String(metrics.crossTenantLeakageCount)})`);
+      throw new Error(
+        `VIOLATION: Cross-tenant leakage observed (${String(metrics.crossTenantLeakageCount)})`,
+      );
     }
     if (metrics.crossVersionLeakageCount > 0) {
-      throw new Error(`VIOLATION: Cross-version leakage observed (${String(metrics.crossVersionLeakageCount)})`);
+      throw new Error(
+        `VIOLATION: Cross-version leakage observed (${String(metrics.crossVersionLeakageCount)})`,
+      );
     }
     if (metrics.quarantinedLeakageCount > 0) {
-      throw new Error(`VIOLATION: Quarantined document leakage observed (${String(metrics.quarantinedLeakageCount)})`);
+      throw new Error(
+        `VIOLATION: Quarantined document leakage observed (${String(metrics.quarantinedLeakageCount)})`,
+      );
     }
     if (metrics.precisionAtK < 0.85) {
       throw new Error(`VIOLATION: Precision@K (${String(metrics.precisionAtK)}) below threshold 0.85`);
@@ -210,14 +220,16 @@ export const RagEvaluationV3Runner = {
     if (metrics.recallAtK < 0.85) {
       throw new Error(`VIOLATION: Recall@K (${String(metrics.recallAtK)}) below threshold 0.85`);
     }
-    if (metrics.mrr < 0.90) {
+    if (metrics.mrr < 0.9) {
       throw new Error(`VIOLATION: MRR (${String(metrics.mrr)}) below threshold 0.90`);
     }
     if (metrics.citationSupportRate < 0.95) {
       throw new Error(`VIOLATION: Citation Support Rate (${String(metrics.citationSupportRate)}) below 0.95`);
     }
     if (metrics.outOfDomainRejectionAccuracy < 1.0) {
-      throw new Error(`VIOLATION: Out of domain rejection accuracy (${String(metrics.outOfDomainRejectionAccuracy)}) must be 1.0`);
+      throw new Error(
+        `VIOLATION: Out of domain rejection accuracy (${String(metrics.outOfDomainRejectionAccuracy)}) must be 1.0`,
+      );
     }
   },
 } as const;
@@ -246,16 +258,17 @@ export interface RagBenchmarkMethodology {
   };
 }
 
-export function computeBootstrapConfidenceInterval(
-  sampleValues: readonly number[],
-): { readonly mean: number; readonly ci95Lower: number; readonly ci95Upper: number } {
+export function computeBootstrapConfidenceInterval(sampleValues: readonly number[]): {
+  readonly mean: number;
+  readonly ci95Lower: number;
+  readonly ci95Upper: number;
+} {
   if (sampleValues.length === 0) {
     return { mean: 0, ci95Lower: 0, ci95Upper: 0 };
   }
   const mean = sampleValues.reduce((acc, v) => acc + v, 0) / sampleValues.length;
   const variance =
-    sampleValues.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) /
-    Math.max(1, sampleValues.length - 1);
+    sampleValues.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / Math.max(1, sampleValues.length - 1);
   const stdError = Math.sqrt(variance / sampleValues.length);
   const z = 1.96; // 95% confidence interval
   const margin = z * stdError;
@@ -356,10 +369,23 @@ export const RagEvaluationV4Runner = {
     };
   },
 
-  compareDrift(previous: EvaluationV3Metrics, current: EvaluationV4Metrics): readonly QualityDriftComparison[] {
+  compareDrift(
+    previous: EvaluationV3Metrics,
+    current: EvaluationV4Metrics,
+  ): readonly QualityDriftComparison[] {
     const metricsToTrack = [
-      { name: "Citation Support Rate", prev: previous.citationSupportRate, curr: current.citationSupportRate, higherIsBetter: true },
-      { name: "Out-of-Domain Abstention", prev: previous.outOfDomainRejectionAccuracy, curr: current.outOfDomainRejectionAccuracy, higherIsBetter: true },
+      {
+        name: "Citation Support Rate",
+        prev: previous.citationSupportRate,
+        curr: current.citationSupportRate,
+        higherIsBetter: true,
+      },
+      {
+        name: "Out-of-Domain Abstention",
+        prev: previous.outOfDomainRejectionAccuracy,
+        curr: current.outOfDomainRejectionAccuracy,
+        higherIsBetter: true,
+      },
       { name: "Precision@5", prev: previous.precisionAtK, curr: current.precisionAtK, higherIsBetter: true },
       { name: "Recall@5", prev: previous.recallAtK, curr: current.recallAtK, higherIsBetter: true },
       { name: "MRR", prev: previous.mrr, curr: current.mrr, higherIsBetter: true },

@@ -58,7 +58,7 @@ export function gradeSubmission(
   attemptId: string,
   score: string,
   feedback: string,
-  lecturerName = "Giảng viên AILSS"
+  lecturerName = "Giảng viên AILSS",
 ): StudentSubmissionData | null {
   const existing = submissionsStore.get(attemptId);
   if (!existing) return null;
@@ -106,9 +106,7 @@ export function syncSubmissionsFromApi(
       studentName: existing?.studentName ?? `Học viên ${item.studentId.slice(0, 8)}`,
       quizId,
       format: existing?.format ?? "OBJECTIVE_QUIZ",
-      status:
-        (item.gradingStatus as GradingStatus) ||
-        (item.manualScore ? "MANUALLY_GRADED" : "AUTO_GRADED"),
+      status: (item.gradingStatus as GradingStatus) || (item.manualScore ? "MANUALLY_GRADED" : "AUTO_GRADED"),
       submittedAt: item.submittedAt,
       autoScore: item.score,
       manualScore: item.manualScore ?? existing?.manualScore,

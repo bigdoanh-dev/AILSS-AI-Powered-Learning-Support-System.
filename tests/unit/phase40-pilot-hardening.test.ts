@@ -273,7 +273,9 @@ describe("Phase 40 Track 1: Pilot Hardening Verification", () => {
         updatedAt: "2026-09-21T00:00:00Z",
       });
       expect(resolver.isEnabled("AI_TUTOR_V2", { tenantId: "tenant-prod-hcm" })).toBe(false);
-      expect(resolver.isEnabled("AI_TUTOR_V2", { tenantId: "tenant-internal-dev", isInternalTenant: true })).toBe(true);
+      expect(
+        resolver.isEnabled("AI_TUTOR_V2", { tenantId: "tenant-internal-dev", isInternalTenant: true }),
+      ).toBe(true);
 
       // 4. PILOT_TENANTS
       resolver.setPolicy({

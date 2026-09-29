@@ -131,7 +131,9 @@ describe("Phase 35.7 - 35.16: D0 Backend Verification, Raw Operation Traces, and
       expect(allTraces.length).toBe(totalOps);
 
       for (const trace of allTraces) {
-        const secondaryRecord = coordinator.inspectSecondaryRecord<{ id: string; testPayloadHash: string }>(trace.operationId);
+        const secondaryRecord = coordinator.inspectSecondaryRecord<{ id: string; testPayloadHash: string }>(
+          trace.operationId,
+        );
         expect(secondaryRecord).toBeDefined();
         expect(secondaryRecord?.id).toBe(trace.operationId);
         expect(secondaryRecord?.testPayloadHash).toBe(`hash-${trace.operationId}`);
@@ -155,7 +157,11 @@ describe("Phase 35.7 - 35.16: D0 Backend Verification, Raw Operation Traces, and
       for (const op of operations) {
         const latencies: number[] = [];
         for (let i = 0; i < 10; i++) {
-          const res = await coordinator.executeWrite(op, { id: `lat-${op}-${i}` }, { latencyOffsetMs: 26 + (i % 5) });
+          const res = await coordinator.executeWrite(
+            op,
+            { id: `lat-${op}-${i}` },
+            { latencyOffsetMs: 26 + (i % 5) },
+          );
           latencies.push(res.executionLatencyMs);
         }
         latencies.sort((a, b) => a - b);

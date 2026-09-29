@@ -233,6 +233,12 @@ export default function Home() {
   if (snapshot.state === "OFFLINE_CACHE" && snapshot.user?.role === "STUDENT") {
     return <Redirect href="/student" />;
   }
+  if (snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "LECTURER") {
+    return <Redirect href="/teaching" />;
+  }
+  if (snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "ADMIN") {
+    return <Redirect href="/admin" />;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
@@ -244,9 +250,9 @@ export default function Home() {
       <ScrollView
         testID="student-home"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT" ? 116 : 28 }}
+        contentContainerStyle={{ paddingBottom: 116 }}
       >
-        {/* Top Deep Navy/Teal Banner matching Screenshot */}
+        {/* Top Deep Navy/Teal Banner */}
         <FadeSlideIn delay={0} duration={400} fromY={-12}>
           <View style={hStyles.topBanner}>
             <View style={[hStyles.headerRow, largeText && hStyles.headerRowLarge]}>
@@ -272,9 +278,9 @@ export default function Home() {
                     <Icon name="user" size={20} color="#FFFFFF" />
                   )}
                 </View>
-                <View style={{ gap: 2 }}>
+                <View style={hStyles.greetingTextWrap}>
                   <Text style={hStyles.greetingSub}>{t("header.greeting")}</Text>
-                  <Text style={hStyles.greetingName} numberOfLines={largeText ? 2 : 1}>
+                  <Text style={hStyles.greetingName} numberOfLines={1} ellipsizeMode="tail">
                     {snapshot.state === "AUTHENTICATED"
                       ? displayName.toUpperCase()
                       : t("header.guest").toUpperCase()}
@@ -282,7 +288,7 @@ export default function Home() {
                 </View>
               </ScalePressable>
 
-              {/* Right Side: Language Switcher and Auth Buttons or Bell Notification */}
+              {/* Right Side: Language Switcher and Bell Notification */}
               <View style={[hStyles.headerActions, largeText && hStyles.headerActionsLarge]}>
                 <ScalePressable
                   style={hStyles.langButton}
@@ -295,30 +301,7 @@ export default function Home() {
                   <Text style={hStyles.langText}>{currentLang.code.toUpperCase()}</Text>
                 </ScalePressable>
 
-                {snapshot.state !== "AUTHENTICATED" ? (
-                  <>
-                    <ScalePressable
-                      testID="student-login-entry"
-                      style={hStyles.loginPillBtn}
-                      scaleTo={0.92}
-                      onPress={() => router.push("/login" as Href)}
-                      accessibilityRole="button"
-                      accessibilityLabel={t("action.login")}
-                    >
-                      <Icon name="user" size={13} color="#FFFFFF" />
-                      <Text style={hStyles.loginPillText}>{t("action.login")}</Text>
-                    </ScalePressable>
-                    <ScalePressable
-                      style={hStyles.registerPillBtn}
-                      scaleTo={0.92}
-                      onPress={() => router.push("/register" as Href)}
-                      accessibilityRole="button"
-                      accessibilityLabel={t("action.register")}
-                    >
-                      <Text style={hStyles.registerPillText}>{t("action.register")}</Text>
-                    </ScalePressable>
-                  </>
-                ) : (
+                {snapshot.state === "AUTHENTICATED" && (
                   <ScalePressable
                     style={hStyles.bellButton}
                     scaleTo={0.88}
@@ -326,7 +309,7 @@ export default function Home() {
                     accessibilityRole="button"
                     accessibilityLabel={t("nav.notifications")}
                   >
-                    <Icon name="bell" size={19} color="#FFFFFF" />
+                    <Icon name="bell" size={18} color="#FFFFFF" />
                     <PulseBadge style={hStyles.bellDotWrapper}>
                       <View style={hStyles.bellDot} />
                     </PulseBadge>
@@ -357,7 +340,7 @@ export default function Home() {
               </View>
               <View style={hStyles.guestHeroActions}>
                 <ScalePressable
-                  testID="student-login-entry-primary"
+                  testID="student-login-entry"
                   style={hStyles.guestBtnPrimary}
                   scaleTo={0.95}
                   onPress={() => router.push("/login" as Href)}
@@ -1919,8 +1902,8 @@ const hStyles = StyleSheet.create({
   topBanner: {
     backgroundColor: "#062E3F",
     paddingTop: 52,
-    paddingHorizontal: 20,
-    paddingBottom: 44,
+    paddingHorizontal: 16,
+    paddingBottom: 42,
   },
   headerRow: {
     flexDirection: "row",
@@ -1930,22 +1913,46 @@ const hStyles = StyleSheet.create({
   headerRowLarge: {
     flexDirection: "column",
     alignItems: "stretch",
-    gap: 14,
+    gap: 12,
   },
   userProfile: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
     flex: 1,
+    minWidth: 0,
+    marginRight: 10,
   },
   userProfileLarge: {
     flex: 0,
     alignSelf: "stretch",
+    marginRight: 0,
+  },
+  greetingTextWrap: {
+    gap: 1,
+    flex: 1,
+    minWidth: 0,
+    justifyContent: "center",
+  },
+  greetingSub: {
+    fontSize: 11,
+    color: "#94A3B8",
+    fontWeight: "500",
+    lineHeight: 14,
+  },
+  greetingName: {
+    fontSize: 13.5,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    letterSpacing: 0.3,
+    lineHeight: 17,
   },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    flexShrink: 0,
+    justifyContent: "flex-end",
   },
   headerActionsLarge: {
     width: "100%",
@@ -1953,57 +1960,69 @@ const hStyles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   avatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(14, 116, 144, 0.85)",
-    borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.65)",
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(14, 116, 144, 0.75)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.55)",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
     shadowColor: "#38BDF8",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
+    flexShrink: 0,
   },
   avatarImg: {
     width: "100%",
     height: "100%",
-    borderRadius: 22,
-  },
-  greetingSub: {
-    fontSize: 12,
-    color: "#94A3B8",
-    fontWeight: "500",
-  },
-  greetingName: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    letterSpacing: 0.3,
+    borderRadius: 19,
   },
   langButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    height: 38,
-    paddingHorizontal: 12,
-    borderRadius: 19,
-    backgroundColor: "rgba(255, 255, 255, 0.16)",
-    borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.32)",
+    gap: 4,
+    height: 32,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.28)",
     justifyContent: "center",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
   },
   langFlag: {
-    fontSize: 15,
+    fontSize: 13,
   },
   langText: {
-    fontSize: 12,
+    fontSize: 10.5,
     fontWeight: "800",
     color: "#FFFFFF",
     letterSpacing: 0.5,
+  },
+  bellButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.28)",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
+    flexShrink: 0,
   },
   langListContainer: {
     gap: 10,
@@ -2045,26 +2064,15 @@ const hStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  bellButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.16)",
-    borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.3)",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-  },
   bellDotWrapper: {
     position: "absolute",
-    top: 8,
-    right: 9,
+    top: 6,
+    right: 7,
   },
   bellDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: "#38BDF8",
     borderWidth: 1.5,
     borderColor: "#062E3F",
@@ -2072,35 +2080,43 @@ const hStyles = StyleSheet.create({
   loginPillBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 18,
-    backgroundColor: "#0284C7",
+    gap: 4,
+    height: 32,
+    paddingHorizontal: 9,
+    borderRadius: 16,
+    backgroundColor: "rgba(2, 132, 199, 0.88)",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.4)",
+    borderColor: "rgba(255, 255, 255, 0.40)",
     shadowColor: "#0284C7",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 2,
+    justifyContent: "center",
   },
   loginPillText: {
     color: "#FFFFFF",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
   },
   registerPillBtn: {
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.18)",
+    height: 32,
+    paddingHorizontal: 9,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.35)",
+    borderColor: "rgba(255, 255, 255, 0.28)",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
   },
   registerPillText: {
     color: "#FFFFFF",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
   },
   guestHeroCard: {

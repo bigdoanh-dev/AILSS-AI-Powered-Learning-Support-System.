@@ -59,7 +59,10 @@ describe("Phase 31.15: Black-Box HTTP Tenant Penetration Suite", () => {
   beforeAll(async () => {
     // Generate Ed25519 keypair
     const pair = generateKeyPairSync("ed25519");
-    privateKey = await importPKCS8(pair.privateKey.export({ type: "pkcs8", format: "pem" }).toString(), "EdDSA");
+    privateKey = await importPKCS8(
+      pair.privateKey.export({ type: "pkcs8", format: "pem" }).toString(),
+      "EdDSA",
+    );
     publicKey = await importSPKI(pair.publicKey.export({ type: "spki", format: "pem" }).toString(), "EdDSA");
 
     alphaStudentToken = await issueToken(
@@ -100,7 +103,9 @@ describe("Phase 31.15: Black-Box HTTP Tenant Penetration Suite", () => {
         });
         (request as any).user = payload;
       } catch {
-        return response.status(401).json({ error: { code: "INVALID_TOKEN", message: "Token verification failed" } });
+        return response
+          .status(401)
+          .json({ error: { code: "INVALID_TOKEN", message: "Token verification failed" } });
       }
       next();
     });
@@ -129,7 +134,9 @@ describe("Phase 31.15: Black-Box HTTP Tenant Penetration Suite", () => {
 
       const roles: string[] = user.roles || [];
       if (!roles.includes("PLATFORM_ADMIN") && !roles.includes("INSTITUTION_ADMIN")) {
-        return response.status(403).json({ error: { code: "FORBIDDEN_ROLE", message: "Admin role required" } });
+        return response
+          .status(403)
+          .json({ error: { code: "FORBIDDEN_ROLE", message: "Admin role required" } });
       }
 
       const requestedTenant = request.query.tenantId as string;
@@ -184,7 +191,9 @@ describe("Phase 31.15: Black-Box HTTP Tenant Penetration Suite", () => {
           },
         });
       }
-      return response.status(200).json({ data: { checkoutUrl: "https://sandbox.provider.example/checkout" } });
+      return response
+        .status(200)
+        .json({ data: { checkoutUrl: "https://sandbox.provider.example/checkout" } });
     });
 
     app.post("/api/v1/commerce/payout", (request, response) => {
@@ -212,7 +221,9 @@ describe("Phase 31.15: Black-Box HTTP Tenant Penetration Suite", () => {
 
   afterAll(async () => {
     if (server) {
-      await new Promise<void>((resolve, reject) => server.close((err: any) => (err ? reject(err) : resolve())));
+      await new Promise<void>((resolve, reject) =>
+        server.close((err: any) => (err ? reject(err) : resolve())),
+      );
     }
   });
 

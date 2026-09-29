@@ -31,7 +31,11 @@ export function mediaDeliveryRouter(
     const filename = req.params.filename,
       assetId = req.params.assetId,
       token = typeof req.query.token === "string" ? req.query.token : "";
-    if (!/^(master|variant|variant-\d+)\.m3u8$|^segment-(?:\d+-)?\d{5}\.ts$|^poster\.jpg$|^caption-[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\.vtt$/i.test(filename)) {
+    if (
+      !/^(master|variant|variant-\d+)\.m3u8$|^segment-(?:\d+-)?\d{5}\.ts$|^poster\.jpg$|^caption-[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\.vtt$/i.test(
+        filename,
+      )
+    ) {
       res.status(404).end();
       return;
     }
@@ -44,8 +48,8 @@ export function mediaDeliveryRouter(
     }
     try {
       const key = filename.endsWith(".vtt")
-        ? `media-caption/${scope.tenantId}/${scope.mediaAssetId}/${filename.slice(8)}`
-        : `media-hls/${scope.outputPrefix}/${filename}`,
+          ? `media-caption/${scope.tenantId}/${scope.mediaAssetId}/${filename.slice(8)}`
+          : `media-hls/${scope.outputPrefix}/${filename}`,
         stream = await storage.readStream(key);
       if (filename.endsWith(".m3u8")) {
         let text = "";
@@ -69,12 +73,20 @@ export function mediaDeliveryRouter(
         res.once("finish", () => metrics?.deliveryBytes.inc(Buffer.byteLength(signed)));
         res.type("application/vnd.apple.mpegurl").send(signed);
       } else {
-        res.type(filename.endsWith(".jpg") ? "image/jpeg" : filename.endsWith(".vtt") ? "text/vtt; charset=utf-8" : "video/mp2t");
+        res.type(
+          filename.endsWith(".jpg")
+            ? "image/jpeg"
+            : filename.endsWith(".vtt")
+              ? "text/vtt; charset=utf-8"
+              : "video/mp2t",
+        );
         let delivered = 0;
-        const meter = new Transform({ transform(chunk: Buffer, _encoding, callback) {
-          delivered += chunk.length;
-          callback(null, chunk);
-        } });
+        const meter = new Transform({
+          transform(chunk: Buffer, _encoding, callback) {
+            delivered += chunk.length;
+            callback(null, chunk);
+          },
+        });
         await pipeline(stream, meter, res);
         metrics?.deliveryBytes.inc(delivered);
       }

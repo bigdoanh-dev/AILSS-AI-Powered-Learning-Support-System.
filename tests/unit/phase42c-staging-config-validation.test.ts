@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
+// prettier-ignore
 // @ts-ignore
 import { parseEnv, requiredStagingSecrets, validateStagingConfig } from "../../scripts/ci/validate-staging-config.mjs";
 
@@ -43,9 +44,7 @@ describe("Phase 42 Revision C: Staging configuration validation", () => {
     const values = parseEnv(content);
     values.OBJECT_STORAGE_ENDPOINT = "127.0.0.1";
     const errors = validateStagingConfig(values, "fixture");
-    expect(errors).toContain(
-      "OBJECT_STORAGE_ENDPOINT must not point to localhost in staging/production",
-    );
+    expect(errors).toContain("OBJECT_STORAGE_ENDPOINT must not point to localhost in staging/production");
   });
 
   it("rejects test crash boundary flags in staging/production configuration", async () => {
@@ -53,8 +52,6 @@ describe("Phase 42 Revision C: Staging configuration validation", () => {
     const values = parseEnv(content);
     values.AILSS_TEST_CRASH_BOUNDARY = "TRUE";
     const errors = validateStagingConfig(values, "fixture");
-    expect(errors).toContain(
-      "AILSS_TEST_CRASH_BOUNDARY is forbidden in staging/production configuration",
-    );
+    expect(errors).toContain("AILSS_TEST_CRASH_BOUNDARY is forbidden in staging/production configuration");
   });
 });

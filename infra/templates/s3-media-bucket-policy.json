@@ -6,10 +6,7 @@
       "Effect": "Deny",
       "Principal": "*",
       "Action": "s3:*",
-      "Resource": [
-        "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}",
-        "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}/*"
-      ],
+      "Resource": ["arn:aws:s3:::${MEDIA_STORAGE_BUCKET}", "arn:aws:s3:::${MEDIA_STORAGE_BUCKET}/*"],
       "Condition": {
         "Bool": {
           "aws:SecureTransport": "false"

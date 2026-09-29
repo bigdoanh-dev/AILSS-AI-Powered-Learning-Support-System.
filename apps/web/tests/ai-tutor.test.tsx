@@ -28,28 +28,34 @@ function setup(initialEntry = "/app/ai-tutor") {
     if (url.endsWith("/student/me/courses")) return Promise.resolve(ok([course]));
     if (url.endsWith("/student/assistant/chat")) {
       const request = JSON.parse(String(init?.body ?? "{}")) as { mode?: string };
-      return Promise.resolve(ok(request.mode === "STUDENT_ADVISOR"
-        ? {
-            conversationId: "00000000-0000-4000-8000-000000000011",
-            messageId: "00000000-0000-4000-8000-000000000012",
-            content: "Mình sẽ hỏi thêm một chút để hiểu mục tiêu học của bạn.",
-            citations: [],
-            catalogCourses: [{ courseId, title: course.title, priceAmount: 0, priceCurrency: "VND" }],
-          }
-        : {
-            conversationId: "00000000-0000-4000-8000-000000000021",
-            messageId: "00000000-0000-4000-8000-000000000022",
-            content: "Phân vùng giúp Cassandra phân phối dữ liệu theo partition key.",
-            citations: [{
-              sourceId: "lesson-source",
-              title: "Phân vùng dữ liệu",
-              courseId,
-              lessonId,
-              courseVersion: 3,
-              lessonVersion: 2,
-              snippet: "Mỗi partition được xác định bởi partition key.",
-            }],
-          }));
+      return Promise.resolve(
+        ok(
+          request.mode === "STUDENT_ADVISOR"
+            ? {
+                conversationId: "00000000-0000-4000-8000-000000000011",
+                messageId: "00000000-0000-4000-8000-000000000012",
+                content: "Mình sẽ hỏi thêm một chút để hiểu mục tiêu học của bạn.",
+                citations: [],
+                catalogCourses: [{ courseId, title: course.title, priceAmount: 0, priceCurrency: "VND" }],
+              }
+            : {
+                conversationId: "00000000-0000-4000-8000-000000000021",
+                messageId: "00000000-0000-4000-8000-000000000022",
+                content: "Phân vùng giúp Cassandra phân phối dữ liệu theo partition key.",
+                citations: [
+                  {
+                    sourceId: "lesson-source",
+                    title: "Phân vùng dữ liệu",
+                    courseId,
+                    lessonId,
+                    courseVersion: 3,
+                    lessonVersion: 2,
+                    snippet: "Mỗi partition được xác định bởi partition key.",
+                  },
+                ],
+              },
+        ),
+      );
     }
     return Promise.resolve(ok([]));
   });
@@ -81,8 +87,9 @@ describe("Web AI Tutor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Mình chưa biết nên chọn khóa học nào" }));
 
     expect(await screen.findByText("Mình sẽ hỏi thêm một chút để hiểu mục tiêu học của bạn.")).toBeTruthy();
-    expect(screen.getByRole("link", { name: /Cơ sở dữ liệu phân tán/ }).getAttribute("href"))
-      .toBe(`/courses/${courseId}`);
+    expect(screen.getByRole("link", { name: /Cơ sở dữ liệu phân tán/ }).getAttribute("href")).toBe(
+      `/courses/${courseId}`,
+    );
     await waitFor(() => {
       const chatCall = fetchMock.mock.calls.find(([url]) => url.endsWith("/student/assistant/chat"));
       expect(chatCall).toBeTruthy();
@@ -104,8 +111,9 @@ describe("Web AI Tutor", () => {
 
     expect(await screen.findByText(/Phân vùng giúp Cassandra/)).toBeTruthy();
     expect(screen.getByText("Nguồn 1: Phân vùng dữ liệu")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Mở bài học" }).getAttribute("href"))
-      .toBe(`/app/learn/${courseId}/lessons/${lessonId}`);
+    expect(screen.getByRole("link", { name: "Mở bài học" }).getAttribute("href")).toBe(
+      `/app/learn/${courseId}/lessons/${lessonId}`,
+    );
     await waitFor(() => {
       const chatCall = fetchMock.mock.calls.find(([url]) => url.endsWith("/student/assistant/chat"));
       expect(JSON.parse(String(chatCall?.[1]?.body))).toMatchObject({

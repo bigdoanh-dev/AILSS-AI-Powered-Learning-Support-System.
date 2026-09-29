@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 /**
  * Phase 30.20: Property-Based Fuzz Testing for Tenant & RBAC Invariants
- * 
+ *
  * Verifies that under pseudo-randomized property permutations
  * (random tenant IDs, ancestor chains, multi-memberships, revoked roles, suspended orgs),
  * NO unauthorized resource is ever returned.
@@ -103,7 +103,7 @@ describe("Phase 30.20: Property-Based Fuzz Testing for Tenant & RBAC Invariants"
       const requiredRole = roles[(i + 1) % roles.length] ?? "LECTURER";
       const instStatus = statuses[i % statuses.length] ?? "ACTIVE";
 
-      const hasMembershipInTarget = (i % 3 === 0) && userHomeTenant === targetResourceTenant;
+      const hasMembershipInTarget = i % 3 === 0 && userHomeTenant === targetResourceTenant;
       const isMembershipRevoked = i % 4 === 0;
 
       const user: FuzzUserContext = {

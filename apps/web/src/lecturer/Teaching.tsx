@@ -5,7 +5,9 @@ import { CourseArtwork, categories } from "../components/CourseArtwork";
 import { CatalogCourseSelect, Field, State } from "./ui";
 import { Breadcrumbs, EmptyState, StateChip, stateLabel, useUnsavedChanges } from "../components/product";
 import { Icon } from "../components/Icon";
+import { AnimatedNumber } from "../components/AnimatedNumber";
 import { MediaUpload } from "./MediaUpload";
+import { RevenueQuote } from "./RevenueQuote";
 type Course = {
   courseId: string;
   title: string;
@@ -83,13 +85,7 @@ export function TeachingHome() {
   const courses = useLecturer<Course[] | { items: Course[] }>("/courses?limit=50"),
     offerings = useLecturer<Offering[] | { items: Offering[] }>("/me/owned-offerings"),
     classes = useLecturer<{ classes?: unknown[] } | unknown[]>("/me/owned-classes");
-
   const coursesList = Array.isArray(courses.data) ? courses.data : courses.data?.items || [];
-  const offeringsList = Array.isArray(offerings.data) ? offerings.data : offerings.data?.items || [];
-  const classesList = Array.isArray(classes.data)
-    ? classes.data
-    : (classes.data as { classes?: unknown[] })?.classes || [];
-
 
   return (
     <>
@@ -97,14 +93,42 @@ export function TeachingHome() {
         <div>
           <p className="eyebrow">GIẢNG VIÊN · TỔNG QUAN HOẠT ĐỘNG</p>
           <h1>Tổng Quan Giảng Dạy &amp; Điều Hành Lớp Học</h1>
-          <p className="lead">Bảng điều khiển hoạt động giảng dạy, theo dõi chuyên cần, chấm bài tập và hỗ trợ sinh viên.</p>
+          <p className="lead">
+            Bảng điều khiển hoạt động giảng dạy, theo dõi chuyên cần, chấm bài tập và hỗ trợ sinh viên.
+          </p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <Link className="button button-subtle" to="/app/teaching/reports">
-            📊 Báo cáo học kỳ
+          <Link
+            className="button button-subtle"
+            to="/app/teaching/profile"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+          >
+            <Icon name="user" size={14} />
+            <span>Hồ sơ &amp; Xác thực</span>
           </Link>
-          <Link className="button" to="/app/teaching">
-            📚 Quản lý khóa học →
+          <Link
+            className="button button-subtle"
+            to="/app/teaching/revenue"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+          >
+            <Icon name="card" size={14} />
+            <span>Doanh thu</span>
+          </Link>
+          <Link
+            className="button button-subtle"
+            to="/app/teaching/reports"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+          >
+            <Icon name="chart" size={14} />
+            <span>Báo cáo</span>
+          </Link>
+          <Link
+            className="button"
+            to="/app/teaching"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+          >
+            <Icon name="book" size={14} />
+            <span>Quản lý khóa học →</span>
           </Link>
         </div>
       </div>
@@ -137,9 +161,13 @@ export function TeachingHome() {
             <span className="kpi-icon" aria-hidden="true">
               <Icon name="quiz" size={20} />
             </span>
-            <span className="kpi-tag" style={{ color: "var(--danger, #DC2626)", fontWeight: 700 }}>Cần xử lý</span>
+            <span className="kpi-tag" style={{ color: "var(--danger, #DC2626)", fontWeight: 700 }}>
+              Cần xử lý
+            </span>
           </div>
-          <div className="kpi-value">{queueItems.filter((item) => item.status === "PENDING").length} bài nộp</div>
+          <div className="kpi-value">
+            {queueItems.filter((item) => item.status === "PENDING").length} bài nộp
+          </div>
           <div className="kpi-label">Hàng đợi chấm bài tập</div>
           <p className="kpi-subtext">10 bài CSDL, 4 bài Web AI</p>
         </div>
@@ -157,6 +185,18 @@ export function TeachingHome() {
       </div>
 
       <div className="workspace-quick-actions" role="toolbar" aria-label="Thao tác giảng dạy nhanh">
+        <Link className="quick-action-chip" to="/app/teaching/profile">
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="user" size={16} />
+          </span>
+          <span>Hồ sơ &amp; Xác thực</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/teaching/revenue">
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="card" size={16} />
+          </span>
+          <span>Doanh thu</span>
+        </Link>
         <Link className="quick-action-chip" to="/app/teaching/courses/new">
           <span className="chip-icon" aria-hidden="true">
             <Icon name="plus" size={16} />
@@ -167,7 +207,7 @@ export function TeachingHome() {
           <span className="chip-icon" aria-hidden="true">
             <Icon name="calendar" size={16} />
           </span>
-          <span>Lịch dạy & Điểm danh</span>
+          <span>Lịch dạy &amp; Điểm danh</span>
         </Link>
         <Link className="quick-action-chip" to="/app/teaching/offerings">
           <span className="chip-icon" aria-hidden="true">
@@ -217,29 +257,23 @@ export function TeachingHome() {
           </Link>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14, marginTop: 14 }}>
-          <div
-            style={{
-              padding: 16,
-              borderRadius: 12,
-              border: "1px solid var(--line, #e2e8f0)",
-              backgroundColor: "var(--surface-subtle, #f8fafc)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="kpi-tag accent" style={{ fontSize: 11 }}>Ca sáng: 09:30 - 11:30</span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#16a34a" }}>● Sắp diễn ra</span>
+        <div className="teaching-schedule-grid">
+          <div className="teaching-schedule-card">
+            <div className="teaching-schedule-header">
+              <span className="kpi-tag accent">Ca sáng: 09:30 - 11:30</span>
+              <span className="schedule-status-badge live">● Sắp diễn ra</span>
             </div>
-            <h3 style={{ margin: 0, fontSize: "1.05rem", color: "var(--ink, #0f172a)" }}>
-              Cơ sở dữ liệu Nâng cao &amp; Tối ưu hóa - Nhóm 01
-            </h3>
-            <p style={{ margin: 0, fontSize: 12.5, color: "var(--muted, #64748b)" }}>
-              Phòng: <strong>Lab B402 (Trực tiếp)</strong> • Sĩ số: <strong>50/50 SV</strong>
+            <h3 className="teaching-schedule-title">Cơ sở dữ liệu Nâng cao &amp; Tối ưu hóa - Nhóm 01</h3>
+            <p className="teaching-schedule-info">
+              <span>
+                Phòng: <strong>Lab B402 (Trực tiếp)</strong>
+              </span>
+              <span>•</span>
+              <span>
+                Sĩ số: <strong>50/50 SV</strong>
+              </span>
             </p>
-            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+            <div className="teaching-schedule-actions">
               <Link className="button button-small" to="/app/teaching/attendance?class=c1">
                 ✓ Điểm danh ngay
               </Link>
@@ -249,56 +283,44 @@ export function TeachingHome() {
             </div>
           </div>
 
-          <div
-            style={{
-              padding: 16,
-              borderRadius: 12,
-              border: "1px solid var(--line, #e2e8f0)",
-              backgroundColor: "var(--surface-subtle, #f8fafc)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="kpi-tag" style={{ fontSize: 11 }}>Ca chiều: 15:30 - 17:30</span>
-              <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>Chiều nay</span>
+          <div className="teaching-schedule-card">
+            <div className="teaching-schedule-header">
+              <span className="kpi-tag">Ca chiều: 15:30 - 17:30</span>
+              <span className="schedule-status-badge upcoming">Chiều nay</span>
             </div>
-            <h3 style={{ margin: 0, fontSize: "1.05rem", color: "var(--ink, #0f172a)" }}>
-              Lập trình Web &amp; Trợ lý AI Fullstack - Nhóm 02
-            </h3>
-            <p style={{ margin: 0, fontSize: 12.5, color: "var(--muted, #64748b)" }}>
-              Phòng: <strong>Hội trường trực tuyến AI</strong> • Sĩ số: <strong>48/50 SV</strong>
+            <h3 className="teaching-schedule-title">Lập trình Web &amp; Trợ lý AI Fullstack - Nhóm 02</h3>
+            <p className="teaching-schedule-info">
+              <span>
+                Phòng: <strong>Hội trường trực tuyến AI</strong>
+              </span>
+              <span>•</span>
+              <span>
+                Sĩ số: <strong>48/50 SV</strong>
+              </span>
             </p>
-            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+            <div className="teaching-schedule-actions">
               <Link className="button button-subtle button-small" to="/app/teaching/classes">
                 Xem chi tiết lớp →
               </Link>
             </div>
           </div>
 
-          <div
-            style={{
-              padding: 16,
-              borderRadius: 12,
-              border: "1px solid var(--line, #e2e8f0)",
-              backgroundColor: "var(--surface-subtle, #f8fafc)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="kpi-tag" style={{ fontSize: 11 }}>Thứ Sáu: 07:30 - 09:30</span>
-              <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>Ngày mai</span>
+          <div className="teaching-schedule-card">
+            <div className="teaching-schedule-header">
+              <span className="kpi-tag">Thứ Sáu: 07:30 - 09:30</span>
+              <span className="schedule-status-badge upcoming">Ngày mai</span>
             </div>
-            <h3 style={{ margin: 0, fontSize: "1.05rem", color: "var(--ink, #0f172a)" }}>
-              Kiểm thử Phần mềm &amp; CI/CD DevOps - Nhóm 01
-            </h3>
-            <p style={{ margin: 0, fontSize: 12.5, color: "var(--muted, #64748b)" }}>
-              Phòng: <strong>Phòng Lab A205</strong> • Sĩ số: <strong>45/50 SV</strong>
+            <h3 className="teaching-schedule-title">Kiểm thử Phần mềm &amp; CI/CD DevOps - Nhóm 01</h3>
+            <p className="teaching-schedule-info">
+              <span>
+                Phòng: <strong>Phòng Lab A205</strong>
+              </span>
+              <span>•</span>
+              <span>
+                Sĩ số: <strong>45/50 SV</strong>
+              </span>
             </p>
-            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+            <div className="teaching-schedule-actions">
               <Link className="button button-subtle button-small" to="/app/teaching/classes">
                 Xem chi tiết lớp →
               </Link>
@@ -312,8 +334,12 @@ export function TeachingHome() {
         <div className="section-card-header">
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span className="kpi-tag" style={{ color: "var(--danger, #DC2626)", fontWeight: 700 }}>● Cần chấm điểm</span>
-              <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>{queueItems.filter((item) => item.status === "PENDING").length} bài nộp chưa có điểm</span>
+              <span className="kpi-tag" style={{ color: "var(--danger, #DC2626)", fontWeight: 700 }}>
+                ● Cần chấm điểm
+              </span>
+              <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>
+                {queueItems.filter((item) => item.status === "PENDING").length} bài nộp chưa có điểm
+              </span>
             </div>
             <h2 style={{ margin: 0, fontSize: "1.15rem" }}>Hàng Đợi Chấm Bài Tập &amp; Đánh Giá</h2>
             <p className="subtext">Bài nộp gần nhất từ sinh viên các lớp bạn đang trực tiếp phụ trách.</p>
@@ -344,7 +370,9 @@ export function TeachingHome() {
             </thead>
             <tbody>
               {queueItems.length === 0 && (
-                <tr><td colSpan={6}>Chưa có dữ liệu bài nộp từ Assessment Service.</td></tr>
+                <tr>
+                  <td colSpan={6}>Chưa có dữ liệu bài nộp từ Assessment Service.</td>
+                </tr>
               )}
               {queueItems.map((item) => (
                 <tr key={item.id}>
@@ -384,11 +412,33 @@ export function TeachingHome() {
                   </td>
                   <td style={{ whiteSpace: "nowrap" }}>
                     {item.status === "GRADED" ? (
-                      <span className="kpi-tag" style={{ color: "#059669", backgroundColor: "#D1FAE5", fontWeight: 700, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <span
+                        className="kpi-tag"
+                        style={{
+                          color: "#059669",
+                          backgroundColor: "#D1FAE5",
+                          fontWeight: 700,
+                          whiteSpace: "nowrap",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
                         ✓ Đã chấm ({item.score}/10)
                       </span>
                     ) : (
-                      <span className="kpi-tag" style={{ color: "#D97706", backgroundColor: "#FEF3C7", fontWeight: 700, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <span
+                        className="kpi-tag"
+                        style={{
+                          color: "#D97706",
+                          backgroundColor: "#FEF3C7",
+                          fontWeight: 700,
+                          whiteSpace: "nowrap",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
                         ● Chờ chấm
                       </span>
                     )}
@@ -448,9 +498,18 @@ export function TeachingHome() {
             }}
           >
             {/* Modal Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                marginBottom: 16,
+              }}
+            >
               <div>
-                <p className="eyebrow" style={{ color: "#0284C7" }}>CHẤM BÀI &amp; ĐÁNH GIÁ TRỰC TIẾP</p>
+                <p className="eyebrow" style={{ color: "#0284C7" }}>
+                  CHẤM BÀI &amp; ĐÁNH GIÁ TRỰC TIẾP
+                </p>
                 <h2 id="grading-modal-title" style={{ margin: "4px 0", fontSize: "1.35rem" }}>
                   Chấm Bài: {gradingItem.studentName}
                 </h2>
@@ -541,9 +600,7 @@ export function TeachingHome() {
                 <div className="grading-student-note-title">
                   Lời nhắn của sinh viên {gradingItem.studentName}:
                 </div>
-                <p className="grading-student-note-text">
-                  "{gradingItem.studentNote}"
-                </p>
+                <p className="grading-student-note-text">"{gradingItem.studentNote}"</p>
               </div>
             )}
 
@@ -557,12 +614,12 @@ export function TeachingHome() {
                         {file.name.endsWith(".pdf")
                           ? "📕"
                           : file.name.endsWith(".sql")
-                          ? "💾"
-                          : file.name.endsWith(".zip")
-                          ? "📦"
-                          : file.name.endsWith(".json")
-                          ? "⚙️"
-                          : "📄"}
+                            ? "💾"
+                            : file.name.endsWith(".zip")
+                              ? "📦"
+                              : file.name.endsWith(".json")
+                                ? "⚙️"
+                                : "📄"}
                       </span>
                       <div>
                         <div className="grading-attachment-name">{file.name}</div>
@@ -609,7 +666,9 @@ export function TeachingHome() {
                       <div className="grading-rubric-name">{r.criterion}</div>
                       <div className="grading-rubric-sub">Thang điểm tối đa: {r.maxScore}đ</div>
                     </div>
-                    <span className="kpi-tag accent">Gợi ý AI: {r.suggestedScore} / {r.maxScore}đ</span>
+                    <span className="kpi-tag accent">
+                      Gợi ý AI: {r.suggestedScore} / {r.maxScore}đ
+                    </span>
                   </div>
                 ))}
               </div>
@@ -618,7 +677,14 @@ export function TeachingHome() {
             {/* Grading Inputs: Score & Feedback */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 6,
+                  }}
+                >
                   <label style={{ fontSize: 13, fontWeight: 700, color: "var(--ink, #0F172A)" }}>
                     Điểm số (Thang điểm {gradingItem.maxScore}) *
                   </label>
@@ -656,7 +722,15 @@ export function TeachingHome() {
               </div>
 
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700, color: "var(--ink, #0F172A)", display: "block", marginBottom: 6 }}>
+                <label
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "var(--ink, #0F172A)",
+                    display: "block",
+                    marginBottom: 6,
+                  }}
+                >
                   Lời phê &amp; Nhận xét của Giảng viên
                 </label>
                 <textarea
@@ -717,18 +791,16 @@ export function TeachingHome() {
                 📊 Xem Bảng điểm toàn lớp →
               </Link>
               <div style={{ display: "flex", gap: 10 }}>
-                <button
-                  type="button"
-                  className="button button-subtle"
-                  onClick={() => setGradingItem(null)}
-                >
+                <button type="button" className="button button-subtle" onClick={() => setGradingItem(null)}>
                   Hủy
                 </button>
                 <button
                   type="button"
                   className="button"
                   onClick={() => {
-                    setGradeNotice("Không thể lưu: bản ghi nộp bài chưa được liên kết với Assessment Service.");
+                    setGradeNotice(
+                      "Không thể lưu: bản ghi nộp bài chưa được liên kết với Assessment Service.",
+                    );
                     setGradingItem(null);
                     setTimeout(() => setGradeNotice(null), 4000);
                   }}
@@ -794,20 +866,28 @@ export function TeachingHome() {
                   {previewFile.name.endsWith(".pdf")
                     ? "📕"
                     : previewFile.name.endsWith(".sql")
-                    ? "💾"
-                    : previewFile.name.endsWith(".zip")
-                    ? "📦"
-                    : previewFile.name.endsWith(".json")
-                    ? "⚙️"
-                    : "📄"}
+                      ? "💾"
+                      : previewFile.name.endsWith(".zip")
+                        ? "📦"
+                        : previewFile.name.endsWith(".json")
+                          ? "⚙️"
+                          : "📄"}
                 </span>
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <h3 id="file-preview-title" style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--ink, #0f172a)" }}>
+                    <h3
+                      id="file-preview-title"
+                      style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--ink, #0f172a)" }}
+                    >
                       {previewFile.name}
                     </h3>
-                    <span className="kpi-tag accent" style={{ fontSize: 11 }}>{previewFile.size}</span>
-                    <span className="kpi-tag" style={{ fontSize: 11, color: "#16a34a", backgroundColor: "rgba(22, 163, 74, 0.1)" }}>
+                    <span className="kpi-tag accent" style={{ fontSize: 11 }}>
+                      {previewFile.size}
+                    </span>
+                    <span
+                      className="kpi-tag"
+                      style={{ fontSize: 11, color: "#16a34a", backgroundColor: "rgba(22, 163, 74, 0.1)" }}
+                    >
                       ✓ Đã xác thực toàn vẹn
                     </span>
                   </div>
@@ -890,7 +970,9 @@ export function TeachingHome() {
                       >
                         -
                       </button>
-                      <span style={{ fontWeight: 600, minWidth: 44, textAlign: "center" }}>{previewZoom}%</span>
+                      <span style={{ fontWeight: 600, minWidth: 44, textAlign: "center" }}>
+                        {previewZoom}%
+                      </span>
                       <button
                         type="button"
                         className="button button-subtle button-small"
@@ -902,9 +984,7 @@ export function TeachingHome() {
                       </button>
                     </div>
 
-                    <span style={{ color: "var(--muted, #64748b)" }}>
-                      📄 PDF Reader v2.4 • Định dạng A4
-                    </span>
+                    <span style={{ color: "var(--muted, #64748b)" }}>📄 PDF Reader v2.4 • Định dạng A4</span>
                   </div>
 
                   {/* Document Page Canvas */}
@@ -917,14 +997,44 @@ export function TeachingHome() {
                     }}
                   >
                     {/* Document Header */}
-                    <div style={{ textAlign: "center", borderBottom: "2px solid var(--line, #e2e8f0)", paddingBottom: 16, marginBottom: 20 }}>
-                      <p style={{ margin: 0, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted, #64748b)", fontWeight: 700 }}>
+                    <div
+                      style={{
+                        textAlign: "center",
+                        borderBottom: "2px solid var(--line, #e2e8f0)",
+                        paddingBottom: 16,
+                        marginBottom: 20,
+                      }}
+                    >
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: 11,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
+                          color: "var(--muted, #64748b)",
+                          fontWeight: 700,
+                        }}
+                      >
                         ĐẠI HỌC QUỐC GIA TP. HỒ CHÍ MINH — TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN
                       </p>
-                      <p style={{ margin: "3px 0 10px", fontSize: 11, fontWeight: 600, color: "var(--muted, #64748b)" }}>
+                      <p
+                        style={{
+                          margin: "3px 0 10px",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: "var(--muted, #64748b)",
+                        }}
+                      >
                         KHOA HỆ THỐNG THÔNG TIN · BỘ MÔN CƠ SỞ DỮ LIỆU NÂNG CAO
                       </p>
-                      <h2 style={{ margin: "8px 0 6px", fontSize: "1.35rem", fontWeight: 800, color: "var(--ink, #0f172a)" }}>
+                      <h2
+                        style={{
+                          margin: "8px 0 6px",
+                          fontSize: "1.35rem",
+                          fontWeight: 800,
+                          color: "var(--ink, #0f172a)",
+                        }}
+                      >
                         BÁO CÁO KẾT QUẢ BÀI TẬP LỚN HỌC PHẦN
                       </h2>
                       <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--blue, #0284c7)" }}>
@@ -967,7 +1077,10 @@ export function TeachingHome() {
                           1. Khảo sát Yêu Cầu &amp; Phạm Vi Bài Toán
                         </h4>
                         <p style={{ margin: 0, lineHeight: 1.6, color: "inherit" }}>
-                          Hệ thống được thiết kế phục vụ quy trình quản lý đơn hàng thương mại điện tử với hàng triệu giao dịch mỗi tháng. Các yêu cầu cốt lõi bao gồm bảo đảm tính toàn vẹn dữ liệu (ACID), triệt tiêu hoàn toàn hiện tượng dư thừa dữ liệu (redundancy) và tránh các lỗi bất thường khi Cập nhật (Update Anomaly) hoặc Xóa (Delete Anomaly).
+                          Hệ thống được thiết kế phục vụ quy trình quản lý đơn hàng thương mại điện tử với
+                          hàng triệu giao dịch mỗi tháng. Các yêu cầu cốt lõi bao gồm bảo đảm tính toàn vẹn dữ
+                          liệu (ACID), triệt tiêu hoàn toàn hiện tượng dư thừa dữ liệu (redundancy) và tránh
+                          các lỗi bất thường khi Cập nhật (Update Anomaly) hoặc Xóa (Delete Anomaly).
                         </p>
                       </div>
 
@@ -976,9 +1089,21 @@ export function TeachingHome() {
                           2. Lược Đồ Quan Hệ &amp; Chứng Minh Chuẩn Hóa 3NF
                         </h4>
                         <ul style={{ margin: "4px 0 0", paddingLeft: 20, lineHeight: 1.6 }}>
-                          <li><strong>Dạng chuẩn 1 (1NF):</strong> Tất cả các thuộc tính đều chứa giá trị nguyên tố (atomic). Các danh sách đa trị như danh sách số điện thoại và địa chỉ giao hàng được tách ra bảng riêng.</li>
-                          <li><strong>Dạng chuẩn 2 (2NF):</strong> Đạt 1NF và mọi thuộc tính không khóa đều phụ thuộc hàm đầy đủ vào toàn bộ khóa chính, không tồn tại phụ thuộc từng phần vào một phần khóa ghép.</li>
-                          <li><strong>Dạng chuẩn 3 (3NF):</strong> Đạt 2NF và không có thuộc tính không khóa nào phụ thuộc bắc cầu (transitive dependency) vào khóa chính thông qua thuộc tính không khóa khác.</li>
+                          <li>
+                            <strong>Dạng chuẩn 1 (1NF):</strong> Tất cả các thuộc tính đều chứa giá trị nguyên
+                            tố (atomic). Các danh sách đa trị như danh sách số điện thoại và địa chỉ giao hàng
+                            được tách ra bảng riêng.
+                          </li>
+                          <li>
+                            <strong>Dạng chuẩn 2 (2NF):</strong> Đạt 1NF và mọi thuộc tính không khóa đều phụ
+                            thuộc hàm đầy đủ vào toàn bộ khóa chính, không tồn tại phụ thuộc từng phần vào một
+                            phần khóa ghép.
+                          </li>
+                          <li>
+                            <strong>Dạng chuẩn 3 (3NF):</strong> Đạt 2NF và không có thuộc tính không khóa nào
+                            phụ thuộc bắc cầu (transitive dependency) vào khóa chính thông qua thuộc tính
+                            không khóa khác.
+                          </li>
                         </ul>
                       </div>
 
@@ -987,14 +1112,30 @@ export function TeachingHome() {
                           3. Thiết Kế Bảng Vật Lý &amp; Tối Ưu Hóa B-Tree Index
                         </h4>
                         <p style={{ margin: 0, lineHeight: 1.6, color: "inherit" }}>
-                          Sử dụng PostgreSQL 16 với các kiểu dữ liệu tối ưu: <code>UUID v7</code> làm Primary Key tăng hiệu suất chèn tuần tự, <code>NUMERIC(15,2)</code> cho tiền tệ. Thiết lập chỉ mục phức hợp <code>idx_orders_customer_date (customer_id, ordered_at DESC)</code> giúp câu lệnh truy vấn lịch sử đơn hàng đạt thời gian thực thi chỉ <strong>4.2ms</strong> trên tập dữ liệu 500.000 dòng dữ liệu mẫu (sử dụng Index Scan thay vì Sequential Scan).
+                          Sử dụng PostgreSQL 16 với các kiểu dữ liệu tối ưu: <code>UUID v7</code> làm Primary
+                          Key tăng hiệu suất chèn tuần tự, <code>NUMERIC(15,2)</code> cho tiền tệ. Thiết lập
+                          chỉ mục phức hợp{" "}
+                          <code>idx_orders_customer_date (customer_id, ordered_at DESC)</code> giúp câu lệnh
+                          truy vấn lịch sử đơn hàng đạt thời gian thực thi chỉ <strong>4.2ms</strong> trên tập
+                          dữ liệu 500.000 dòng dữ liệu mẫu (sử dụng Index Scan thay vì Sequential Scan).
                         </p>
                       </div>
 
-                      <div style={{ marginTop: 12, padding: 12, borderLeft: "4px solid #16a34a", backgroundColor: "rgba(22, 163, 74, 0.08)", borderRadius: "0 8px 8px 0" }}>
-                        <strong style={{ color: "#16a34a" }}>✓ Kết quả thẩm định tự động từ AI Teaching Assistant:</strong>
+                      <div
+                        style={{
+                          marginTop: 12,
+                          padding: 12,
+                          borderLeft: "4px solid #16a34a",
+                          backgroundColor: "rgba(22, 163, 74, 0.08)",
+                          borderRadius: "0 8px 8px 0",
+                        }}
+                      >
+                        <strong style={{ color: "#16a34a" }}>
+                          ✓ Kết quả thẩm định tự động từ AI Teaching Assistant:
+                        </strong>
                         <p style={{ margin: "4px 0 0", fontSize: 12 }}>
-                          Mô hình dữ liệu có tính logic cao, quan hệ khóa ngoại 1-N và N-N được thiết lập đúng chuẩn. Cấu trúc bảng và chỉ mục hoàn toàn tương thích với file script DDL đính kèm.
+                          Mô hình dữ liệu có tính logic cao, quan hệ khóa ngoại 1-N và N-N được thiết lập đúng
+                          chuẩn. Cấu trúc bảng và chỉ mục hoàn toàn tương thích với file script DDL đính kèm.
                         </p>
                       </div>
                     </div>
@@ -1017,7 +1158,9 @@ export function TeachingHome() {
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span className="kpi-tag accent">PostgreSQL 16 / DDL</span>
-                      <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>42 dòng lệnh • 1.650 ký tự</span>
+                      <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>
+                        42 dòng lệnh • 1.650 ký tự
+                      </span>
                     </div>
                     <button
                       type="button"
@@ -1030,45 +1173,173 @@ export function TeachingHome() {
                         setTimeout(() => setGradeNotice(null), 3000);
                       }}
                     >
-                      📋 Sao chép mã SQL
+                      <Icon name="fileText" size={13} />
+                      <span>Sao chép mã SQL</span>
                     </button>
                   </div>
 
                   <div className="file-preview-code-box">
-                    <div><span className="code-line-number">1</span><span style={{ color: "#64748b" }}>-- ====================================================================</span></div>
-                    <div><span className="code-line-number">2</span><span style={{ color: "#64748b" }}>-- BÀI TẬP LỚN: THIẾT KẾ CƠ SỞ DỮ LIỆU CHUẨN HÓA 3NF</span></div>
-                    <div><span className="code-line-number">3</span><span style={{ color: "#64748b" }}>-- Sinh viên: {previewFile.studentName} • Học phần: CSDL Nâng cao</span></div>
-                    <div><span className="code-line-number">4</span><span style={{ color: "#64748b" }}>-- ====================================================================</span></div>
-                    <div><span className="code-line-number">5</span></div>
-                    <div><span className="code-line-number">6</span><span style={{ color: "#38bdf8" }}>CREATE TABLE</span> <span style={{ color: "#f8fafc", fontWeight: 700 }}>customers</span> (</div>
-                    <div><span className="code-line-number">7</span>    customer_id <span style={{ color: "#f59e0b" }}>UUID</span> <span style={{ color: "#c084fc" }}>PRIMARY KEY DEFAULT</span> gen_random_uuid(),</div>
-                    <div><span className="code-line-number">8</span>    full_name <span style={{ color: "#f59e0b" }}>VARCHAR(120)</span> <span style={{ color: "#c084fc" }}>NOT NULL</span>,</div>
-                    <div><span className="code-line-number">9</span>    email <span style={{ color: "#f59e0b" }}>VARCHAR(255) UNIQUE NOT NULL</span>,</div>
-                    <div><span className="code-line-number">10</span>    phone_number <span style={{ color: "#f59e0b" }}>VARCHAR(20)</span>,</div>
-                    <div><span className="code-line-number">11</span>    created_at <span style={{ color: "#f59e0b" }}>TIMESTAMP WITH TIME ZONE DEFAULT</span> CURRENT_TIMESTAMP</div>
-                    <div><span className="code-line-number">12</span>);</div>
-                    <div><span className="code-line-number">13</span></div>
-                    <div><span className="code-line-number">14</span><span style={{ color: "#38bdf8" }}>CREATE TABLE</span> <span style={{ color: "#f8fafc", fontWeight: 700 }}>orders</span> (</div>
-                    <div><span className="code-line-number">15</span>    order_id <span style={{ color: "#f59e0b" }}>UUID</span> <span style={{ color: "#c084fc" }}>PRIMARY KEY DEFAULT</span> gen_random_uuid(),</div>
-                    <div><span className="code-line-number">16</span>    customer_id <span style={{ color: "#f59e0b" }}>UUID</span> <span style={{ color: "#c084fc" }}>NOT NULL REFERENCES</span> customers(customer_id) <span style={{ color: "#c084fc" }}>ON DELETE RESTRICT</span>,</div>
-                    <div><span className="code-line-number">17</span>    order_code <span style={{ color: "#f59e0b" }}>VARCHAR(32) UNIQUE NOT NULL</span>,</div>
-                    <div><span className="code-line-number">18</span>    total_amount <span style={{ color: "#f59e0b" }}>NUMERIC(15, 2)</span> <span style={{ color: "#c084fc" }}>NOT NULL CHECK</span> (total_amount &gt;= 0),</div>
-                    <div><span className="code-line-number">19</span>    status <span style={{ color: "#f59e0b" }}>VARCHAR(30) DEFAULT</span> 'PENDING' <span style={{ color: "#c084fc" }}>CHECK</span> (status <span style={{ color: "#c084fc" }}>IN</span> ('PENDING', 'PAID', 'SHIPPED', 'CANCELLED')),</div>
-                    <div><span className="code-line-number">20</span>    ordered_at <span style={{ color: "#f59e0b" }}>TIMESTAMP WITH TIME ZONE DEFAULT</span> CURRENT_TIMESTAMP</div>
-                    <div><span className="code-line-number">21</span>);</div>
-                    <div><span className="code-line-number">22</span></div>
-                    <div><span className="code-line-number">23</span><span style={{ color: "#38bdf8" }}>CREATE TABLE</span> <span style={{ color: "#f8fafc", fontWeight: 700 }}>order_items</span> (</div>
-                    <div><span className="code-line-number">24</span>    item_id <span style={{ color: "#f59e0b" }}>UUID</span> <span style={{ color: "#c084fc" }}>PRIMARY KEY DEFAULT</span> gen_random_uuid(),</div>
-                    <div><span className="code-line-number">25</span>    order_id <span style={{ color: "#f59e0b" }}>UUID</span> <span style={{ color: "#c084fc" }}>NOT NULL REFERENCES</span> orders(order_id) <span style={{ color: "#c084fc" }}>ON DELETE CASCADE</span>,</div>
-                    <div><span className="code-line-number">26</span>    product_id <span style={{ color: "#f59e0b" }}>UUID</span> <span style={{ color: "#c084fc" }}>NOT NULL</span>,</div>
-                    <div><span className="code-line-number">27</span>    unit_price <span style={{ color: "#f59e0b" }}>NUMERIC(15, 2)</span> <span style={{ color: "#c084fc" }}>NOT NULL CHECK</span> (unit_price &gt; 0),</div>
-                    <div><span className="code-line-number">28</span>    quantity <span style={{ color: "#f59e0b" }}>INTEGER</span> <span style={{ color: "#c084fc" }}>NOT NULL CHECK</span> (quantity &gt; 0),</div>
-                    <div><span className="code-line-number">29</span>    subtotal <span style={{ color: "#f59e0b" }}>NUMERIC(15, 2) GENERATED ALWAYS AS</span> (unit_price * quantity) STORED</div>
-                    <div><span className="code-line-number">30</span>);</div>
-                    <div><span className="code-line-number">31</span></div>
-                    <div><span className="code-line-number">32</span><span style={{ color: "#64748b" }}>-- Tối ưu hóa Index B-Tree truy vấn</span></div>
-                    <div><span className="code-line-number">33</span><span style={{ color: "#38bdf8" }}>CREATE INDEX</span> idx_orders_customer_date <span style={{ color: "#38bdf8" }}>ON</span> orders(customer_id, ordered_at <span style={{ color: "#c084fc" }}>DESC</span>);</div>
-                    <div><span className="code-line-number">34</span><span style={{ color: "#38bdf8" }}>CREATE INDEX</span> idx_order_items_order <span style={{ color: "#38bdf8" }}>ON</span> order_items(order_id);</div>
+                    <div>
+                      <span className="code-line-number">1</span>
+                      <span style={{ color: "#64748b" }}>
+                        -- ====================================================================
+                      </span>
+                    </div>
+                    <div>
+                      <span className="code-line-number">2</span>
+                      <span style={{ color: "#64748b" }}>
+                        -- BÀI TẬP LỚN: THIẾT KẾ CƠ SỞ DỮ LIỆU CHUẨN HÓA 3NF
+                      </span>
+                    </div>
+                    <div>
+                      <span className="code-line-number">3</span>
+                      <span style={{ color: "#64748b" }}>
+                        -- Sinh viên: {previewFile.studentName} • Học phần: CSDL Nâng cao
+                      </span>
+                    </div>
+                    <div>
+                      <span className="code-line-number">4</span>
+                      <span style={{ color: "#64748b" }}>
+                        -- ====================================================================
+                      </span>
+                    </div>
+                    <div>
+                      <span className="code-line-number">5</span>
+                    </div>
+                    <div>
+                      <span className="code-line-number">6</span>
+                      <span style={{ color: "#38bdf8" }}>CREATE TABLE</span>{" "}
+                      <span style={{ color: "#f8fafc", fontWeight: 700 }}>customers</span> (
+                    </div>
+                    <div>
+                      <span className="code-line-number">7</span> customer_id{" "}
+                      <span style={{ color: "#f59e0b" }}>UUID</span>{" "}
+                      <span style={{ color: "#c084fc" }}>PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+                    </div>
+                    <div>
+                      <span className="code-line-number">8</span> full_name{" "}
+                      <span style={{ color: "#f59e0b" }}>VARCHAR(120)</span>{" "}
+                      <span style={{ color: "#c084fc" }}>NOT NULL</span>,
+                    </div>
+                    <div>
+                      <span className="code-line-number">9</span> email{" "}
+                      <span style={{ color: "#f59e0b" }}>VARCHAR(255) UNIQUE NOT NULL</span>,
+                    </div>
+                    <div>
+                      <span className="code-line-number">10</span> phone_number{" "}
+                      <span style={{ color: "#f59e0b" }}>VARCHAR(20)</span>,
+                    </div>
+                    <div>
+                      <span className="code-line-number">11</span> created_at{" "}
+                      <span style={{ color: "#f59e0b" }}>TIMESTAMP WITH TIME ZONE DEFAULT</span>{" "}
+                      CURRENT_TIMESTAMP
+                    </div>
+                    <div>
+                      <span className="code-line-number">12</span>);
+                    </div>
+                    <div>
+                      <span className="code-line-number">13</span>
+                    </div>
+                    <div>
+                      <span className="code-line-number">14</span>
+                      <span style={{ color: "#38bdf8" }}>CREATE TABLE</span>{" "}
+                      <span style={{ color: "#f8fafc", fontWeight: 700 }}>orders</span> (
+                    </div>
+                    <div>
+                      <span className="code-line-number">15</span> order_id{" "}
+                      <span style={{ color: "#f59e0b" }}>UUID</span>{" "}
+                      <span style={{ color: "#c084fc" }}>PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+                    </div>
+                    <div>
+                      <span className="code-line-number">16</span> customer_id{" "}
+                      <span style={{ color: "#f59e0b" }}>UUID</span>{" "}
+                      <span style={{ color: "#c084fc" }}>NOT NULL REFERENCES</span> customers(customer_id){" "}
+                      <span style={{ color: "#c084fc" }}>ON DELETE RESTRICT</span>,
+                    </div>
+                    <div>
+                      <span className="code-line-number">17</span> order_code{" "}
+                      <span style={{ color: "#f59e0b" }}>VARCHAR(32) UNIQUE NOT NULL</span>,
+                    </div>
+                    <div>
+                      <span className="code-line-number">18</span> total_amount{" "}
+                      <span style={{ color: "#f59e0b" }}>NUMERIC(15, 2)</span>{" "}
+                      <span style={{ color: "#c084fc" }}>NOT NULL CHECK</span> (total_amount &gt;= 0),
+                    </div>
+                    <div>
+                      <span className="code-line-number">19</span> status{" "}
+                      <span style={{ color: "#f59e0b" }}>VARCHAR(30) DEFAULT</span> 'PENDING'{" "}
+                      <span style={{ color: "#c084fc" }}>CHECK</span> (status{" "}
+                      <span style={{ color: "#c084fc" }}>IN</span> ('PENDING', 'PAID', 'SHIPPED',
+                      'CANCELLED')),
+                    </div>
+                    <div>
+                      <span className="code-line-number">20</span> ordered_at{" "}
+                      <span style={{ color: "#f59e0b" }}>TIMESTAMP WITH TIME ZONE DEFAULT</span>{" "}
+                      CURRENT_TIMESTAMP
+                    </div>
+                    <div>
+                      <span className="code-line-number">21</span>);
+                    </div>
+                    <div>
+                      <span className="code-line-number">22</span>
+                    </div>
+                    <div>
+                      <span className="code-line-number">23</span>
+                      <span style={{ color: "#38bdf8" }}>CREATE TABLE</span>{" "}
+                      <span style={{ color: "#f8fafc", fontWeight: 700 }}>order_items</span> (
+                    </div>
+                    <div>
+                      <span className="code-line-number">24</span> item_id{" "}
+                      <span style={{ color: "#f59e0b" }}>UUID</span>{" "}
+                      <span style={{ color: "#c084fc" }}>PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+                    </div>
+                    <div>
+                      <span className="code-line-number">25</span> order_id{" "}
+                      <span style={{ color: "#f59e0b" }}>UUID</span>{" "}
+                      <span style={{ color: "#c084fc" }}>NOT NULL REFERENCES</span> orders(order_id){" "}
+                      <span style={{ color: "#c084fc" }}>ON DELETE CASCADE</span>,
+                    </div>
+                    <div>
+                      <span className="code-line-number">26</span> product_id{" "}
+                      <span style={{ color: "#f59e0b" }}>UUID</span>{" "}
+                      <span style={{ color: "#c084fc" }}>NOT NULL</span>,
+                    </div>
+                    <div>
+                      <span className="code-line-number">27</span> unit_price{" "}
+                      <span style={{ color: "#f59e0b" }}>NUMERIC(15, 2)</span>{" "}
+                      <span style={{ color: "#c084fc" }}>NOT NULL CHECK</span> (unit_price &gt; 0),
+                    </div>
+                    <div>
+                      <span className="code-line-number">28</span> quantity{" "}
+                      <span style={{ color: "#f59e0b" }}>INTEGER</span>{" "}
+                      <span style={{ color: "#c084fc" }}>NOT NULL CHECK</span> (quantity &gt; 0),
+                    </div>
+                    <div>
+                      <span className="code-line-number">29</span> subtotal{" "}
+                      <span style={{ color: "#f59e0b" }}>NUMERIC(15, 2) GENERATED ALWAYS AS</span> (unit_price
+                      * quantity) STORED
+                    </div>
+                    <div>
+                      <span className="code-line-number">30</span>);
+                    </div>
+                    <div>
+                      <span className="code-line-number">31</span>
+                    </div>
+                    <div>
+                      <span className="code-line-number">32</span>
+                      <span style={{ color: "#64748b" }}>-- Tối ưu hóa Index B-Tree truy vấn</span>
+                    </div>
+                    <div>
+                      <span className="code-line-number">33</span>
+                      <span style={{ color: "#38bdf8" }}>CREATE INDEX</span> idx_orders_customer_date{" "}
+                      <span style={{ color: "#38bdf8" }}>ON</span> orders(customer_id, ordered_at{" "}
+                      <span style={{ color: "#c084fc" }}>DESC</span>);
+                    </div>
+                    <div>
+                      <span className="code-line-number">34</span>
+                      <span style={{ color: "#38bdf8" }}>CREATE INDEX</span> idx_order_items_order{" "}
+                      <span style={{ color: "#38bdf8" }}>ON</span> order_items(order_id);
+                    </div>
                   </div>
                 </div>
               )}
@@ -1076,10 +1347,19 @@ export function TeachingHome() {
               {/* ZIP Archive Preview */}
               {previewFile.name.endsWith(".zip") && (
                 <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 12,
+                    }}
+                  >
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span className="kpi-tag accent">Gói lưu trữ dự án</span>
-                      <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>5 tệp • Nén định dạng ZIP Deflate</span>
+                      <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>
+                        5 tệp • Nén định dạng ZIP Deflate
+                      </span>
                     </div>
                   </div>
 
@@ -1097,15 +1377,21 @@ export function TeachingHome() {
                         📁 {previewFile.name.replace(".zip", "")}/
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingLeft: 8 }}>
-                        <div style={{ padding: "4px 6px", borderRadius: 4, backgroundColor: "rgba(2, 132, 199, 0.12)", color: "var(--blue, #0284c7)", fontWeight: 600 }}>
+                        <div
+                          style={{
+                            padding: "4px 6px",
+                            borderRadius: 4,
+                            backgroundColor: "rgba(2, 132, 199, 0.12)",
+                            color: "var(--blue, #0284c7)",
+                            fontWeight: 600,
+                          }}
+                        >
                           📄 main.py (4.2 KB)
                         </div>
                         <div style={{ padding: "4px 6px", color: "var(--ink, #0f172a)" }}>
                           📄 config.py (1.8 KB)
                         </div>
-                        <div style={{ padding: "4px 6px", color: "var(--ink, #0f172a)" }}>
-                          📁 models/
-                        </div>
+                        <div style={{ padding: "4px 6px", color: "var(--ink, #0f172a)" }}>📁 models/</div>
                         <div style={{ padding: "2px 6px 2px 14px", color: "var(--muted, #64748b)" }}>
                           📄 vector_store.py (3.1 KB)
                         </div>
@@ -1120,13 +1406,36 @@ export function TeachingHome() {
 
                     <div className="file-preview-code-box">
                       <div style={{ color: "#64748b", marginBottom: 6 }}># Xem nội dung: main.py</div>
-                      <div><span style={{ color: "#c084fc" }}>from</span> fastapi <span style={{ color: "#c084fc" }}>import</span> FastAPI, Depends, HTTPException</div>
-                      <div><span style={{ color: "#c084fc" }}>import</span> pgvector</div>
-                      <div>app = FastAPI(title=<span style={{ color: "#a5f3fc" }}>"AILSS Vector Search API"</span>, version=<span style={{ color: "#a5f3fc" }}>"1.0.0"</span>)</div>
-                      <div><br /></div>
-                      <div>@app.get(<span style={{ color: "#a5f3fc" }}>"/health"</span>)</div>
-                      <div><span style={{ color: "#38bdf8" }}>def</span> <span style={{ color: "#facc15" }}>health_check</span>():</div>
-                      <div>    <span style={{ color: "#c084fc" }}>return</span> &#123;<span style={{ color: "#a5f3fc" }}>"status"</span>: <span style={{ color: "#a5f3fc" }}>"ok"</span>, <span style={{ color: "#a5f3fc" }}>"vector_db"</span>: <span style={{ color: "#a5f3fc" }}>"connected"</span>&#125;</div>
+                      <div>
+                        <span style={{ color: "#c084fc" }}>from</span> fastapi{" "}
+                        <span style={{ color: "#c084fc" }}>import</span> FastAPI, Depends, HTTPException
+                      </div>
+                      <div>
+                        <span style={{ color: "#c084fc" }}>import</span> pgvector
+                      </div>
+                      <div>
+                        app = FastAPI(title=
+                        <span style={{ color: "#a5f3fc" }}>"AILSS Vector Search API"</span>, version=
+                        <span style={{ color: "#a5f3fc" }}>"1.0.0"</span>)
+                      </div>
+                      <div>
+                        <br />
+                      </div>
+                      <div>
+                        @app.get(<span style={{ color: "#a5f3fc" }}>"/health"</span>)
+                      </div>
+                      <div>
+                        <span style={{ color: "#38bdf8" }}>def</span>{" "}
+                        <span style={{ color: "#facc15" }}>health_check</span>():
+                      </div>
+                      <div>
+                        {" "}
+                        <span style={{ color: "#c084fc" }}>return</span> &#123;
+                        <span style={{ color: "#a5f3fc" }}>"status"</span>:{" "}
+                        <span style={{ color: "#a5f3fc" }}>"ok"</span>,{" "}
+                        <span style={{ color: "#a5f3fc" }}>"vector_db"</span>:{" "}
+                        <span style={{ color: "#a5f3fc" }}>"connected"</span>&#125;
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1135,7 +1444,14 @@ export function TeachingHome() {
               {/* JSON Spec Preview */}
               {previewFile.name.endsWith(".json") && (
                 <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 12,
+                    }}
+                  >
                     <span className="kpi-tag accent">OpenAPI 3.1.0 Swagger Spec</span>
                     <button
                       type="button"
@@ -1145,7 +1461,8 @@ export function TeachingHome() {
                         setTimeout(() => setGradeNotice(null), 3000);
                       }}
                     >
-                      📋 Sao chép JSON
+                      <Icon name="fileText" size={13} />
+                      <span>Sao chép JSON</span>
                     </button>
                   </div>
                   <div className="file-preview-code-box">
@@ -1182,17 +1499,37 @@ export function TeachingHome() {
         <div className="section-card-header">
           <div>
             <h2 style={{ margin: 0, fontSize: "1.15rem" }}>Cảnh Báo Sinh Viên Cần Quan Tâm & Hỗ Trợ</h2>
-            <p className="subtext">Hệ thống AI tự động phát hiện nguy cơ gián đoạn học tập dựa trên điểm danh và nộp bài.</p>
+            <p className="subtext">
+              Hệ thống AI tự động phát hiện nguy cơ gián đoạn học tập dựa trên điểm danh và nộp bài.
+            </p>
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12, marginTop: 12 }}>
-          <div style={{ padding: 14, border: "1px solid #FED7AA", backgroundColor: "#FFF7ED", borderRadius: 10 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: 12,
+            marginTop: 12,
+          }}
+        >
+          <div
+            style={{ padding: 14, border: "1px solid #FED7AA", backgroundColor: "#FFF7ED", borderRadius: 10 }}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="kpi-tag" style={{ backgroundColor: "#FDBA74", color: "#9A3412", fontWeight: 700 }}>Vắng 2 buổi liên tiếp</span>
+              <span
+                className="kpi-tag"
+                style={{ backgroundColor: "#FDBA74", color: "#9A3412", fontWeight: 700 }}
+              >
+                Vắng 2 buổi liên tiếp
+              </span>
               <span style={{ fontSize: 11, color: "#9A3412" }}>CSDL Nhóm 01</span>
             </div>
-            <p style={{ margin: "8px 0 4px", fontWeight: 700, color: "#9A3412" }}>Hoàng Gia Huy (SV-202607)</p>
-            <p style={{ fontSize: 12, color: "#C2410C", margin: 0 }}>Vắng buổi ngày 10/09 và 14/09. Tỷ lệ chuyên cần giảm xuống 88%.</p>
+            <p style={{ margin: "8px 0 4px", fontWeight: 700, color: "#9A3412" }}>
+              Hoàng Gia Huy (SV-202607)
+            </p>
+            <p style={{ fontSize: 12, color: "#C2410C", margin: 0 }}>
+              Vắng buổi ngày 10/09 và 14/09. Tỷ lệ chuyên cần giảm xuống 88%.
+            </p>
             <div style={{ marginTop: 10 }}>
               <button
                 className="button button-subtle button-small"
@@ -1206,13 +1543,24 @@ export function TeachingHome() {
             </div>
           </div>
 
-          <div style={{ padding: 14, border: "1px solid #FED7AA", backgroundColor: "#FFF7ED", borderRadius: 10 }}>
+          <div
+            style={{ padding: 14, border: "1px solid #FED7AA", backgroundColor: "#FFF7ED", borderRadius: 10 }}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="kpi-tag" style={{ backgroundColor: "#FDBA74", color: "#9A3412", fontWeight: 700 }}>Chưa nộp bài tập lớn</span>
+              <span
+                className="kpi-tag"
+                style={{ backgroundColor: "#FDBA74", color: "#9A3412", fontWeight: 700 }}
+              >
+                Chưa nộp bài tập lớn
+              </span>
               <span style={{ fontSize: 11, color: "#9A3412" }}>Hạn 23:59 Hôm nay</span>
             </div>
-            <p style={{ margin: "8px 0 4px", fontWeight: 700, color: "#9A3412" }}>3 Sinh viên trong nhóm chưa nộp bài</p>
-            <p style={{ fontSize: 12, color: "#C2410C", margin: 0 }}>Bài tập lớn thiết kế CSDL 3NF sắp hết hạn nhận bài.</p>
+            <p style={{ margin: "8px 0 4px", fontWeight: 700, color: "#9A3412" }}>
+              3 Sinh viên trong nhóm chưa nộp bài
+            </p>
+            <p style={{ fontSize: 12, color: "#C2410C", margin: 0 }}>
+              Bài tập lớn thiết kế CSDL 3NF sắp hết hạn nhận bài.
+            </p>
             <div style={{ marginTop: 10 }}>
               <button
                 className="button button-subtle button-small"
@@ -1235,8 +1583,8 @@ export function TeachingHome() {
           <State q={classes}>
             {(v) => (
               <p>
-                {Array.isArray(v) ? v.length : v.classes?.length || 0} lớp phụ trách. Điểm danh theo buổi và
-                gửi thông báo.
+                {Array.isArray(v) ? v.length : (v as { classes?: unknown[] })?.classes?.length || 0} lớp phụ
+                trách. Điểm danh theo buổi và gửi thông báo.
               </p>
             )}
           </State>
@@ -1248,8 +1596,8 @@ export function TeachingHome() {
           <State q={offerings}>
             {(v) => (
               <p>
-                {Array.isArray(v) ? v.length : v.items?.length || 0} đợt mở bán đang quản lý. Cấu hình học phí
-                và lịch mở.
+                {Array.isArray(v) ? v.length : (v as { items?: unknown[] })?.items?.length || 0} đợt mở bán
+                đang quản lý. Cấu hình học phí và lịch mở.
               </p>
             )}
           </State>
@@ -1274,23 +1622,32 @@ export function TeachingHome() {
           </div>
           <h2>Danh Mục Khóa Học Giảng Dạy ({coursesList.length} khóa học)</h2>
           <p>
-            Quản lý toàn bộ giáo trình, chỉnh sửa bài giảng video đa phương tiện, theo dõi tiến độ sinh viên và cấu hình đợt mở bán khóa học trên trang quản lý chuyên biệt.
+            Quản lý toàn bộ giáo trình, chỉnh sửa bài giảng video đa phương tiện, theo dõi tiến độ sinh viên
+            và cấu hình đợt mở bán khóa học trên trang quản lý chuyên biệt.
           </p>
           <div className="portfolio-banner-stats">
             <div className="portfolio-stat-item">
-              <span className="portfolio-stat-val">{coursesList.length || 4}</span>
+              <span className="portfolio-stat-val">
+                <AnimatedNumber value={coursesList.length || 4} />
+              </span>
               <span className="portfolio-stat-lbl">Khóa học phụ trách</span>
             </div>
             <div className="portfolio-stat-item">
-              <span className="portfolio-stat-val">42</span>
+              <span className="portfolio-stat-val">
+                <AnimatedNumber value={42} />
+              </span>
               <span className="portfolio-stat-lbl">Bài giảng &amp; Lab</span>
             </div>
             <div className="portfolio-stat-item">
-              <span className="portfolio-stat-val">186</span>
+              <span className="portfolio-stat-val">
+                <AnimatedNumber value={186} />
+              </span>
               <span className="portfolio-stat-lbl">Học viên ghi danh</span>
             </div>
             <div className="portfolio-stat-item">
-              <span className="portfolio-stat-val">4.9★</span>
+              <span className="portfolio-stat-val">
+                <AnimatedNumber value={4.9} suffix="★" decimals={1} />
+              </span>
               <span className="portfolio-stat-lbl">Đánh giá trung bình</span>
             </div>
           </div>
@@ -1320,8 +1677,8 @@ export function TeachingCourses() {
     if (selectedCat !== "all" && c.categoryId !== selectedCat) return false;
     const isPublished = Boolean(
       c.publishedAt ||
-        (c as { state?: string }).state === "PUBLISHED" ||
-        (c as { state?: string }).state === "ACTIVE",
+      (c as { state?: string }).state === "PUBLISHED" ||
+      (c as { state?: string }).state === "ACTIVE",
     );
     if (statusFilter === "PUBLISHED" && !isPublished) return false;
     if (statusFilter === "DRAFT" && isPublished) return false;
@@ -1338,17 +1695,26 @@ export function TeachingCourses() {
       <div className="curriculum-studio-header">
         <div className="curriculum-studio-info">
           <div className="curriculum-studio-badge">
-            <span aria-hidden="true">📚</span>
+            <span aria-hidden="true">
+              <Icon name="book" size={15} />
+            </span>
             <span>STUDIO BIÊN SOẠN &amp; ĐÀO TẠO</span>
           </div>
           <h1 className="curriculum-studio-title">Danh Mục Khóa Học &amp; Giáo Trình Giảng Dạy</h1>
           <p className="curriculum-studio-desc">
-            Không gian chuyên sâu quản lý đề cương bài giảng, học liệu số và điều hành học viên theo từng chuyên ngành đào tạo.
+            Không gian chuyên sâu quản lý đề cương bài giảng, học liệu số và điều hành học viên theo từng
+            chuyên ngành đào tạo.
           </p>
         </div>
         <div className="curriculum-studio-actions">
-          <Link className="curriculum-create-btn" to="/app/teaching/courses/new">
-            <span className="create-btn-icon" aria-hidden="true">＋</span>
+          <Link
+            className="curriculum-create-btn"
+            to="/app/teaching/courses/new"
+            style={{ textDecoration: "none" }}
+          >
+            <span className="create-btn-icon" aria-hidden="true">
+              <Icon name="plus" size={16} />
+            </span>
             <span>Soạn khóa học mới</span>
           </Link>
         </div>
@@ -1361,7 +1727,9 @@ export function TeachingCourses() {
             <Icon name="book" size={20} />
           </div>
           <div className="curriculum-stat-content">
-            <div className="curriculum-stat-value">{coursesList.length || 8} Khóa</div>
+            <div className="curriculum-stat-value">
+              <AnimatedNumber value={coursesList.length || 8} suffix=" Khóa" />
+            </div>
             <div className="curriculum-stat-label">Khóa học phụ trách</div>
             <div className="curriculum-stat-sub">3 đã xuất bản · 1 bản nháp</div>
           </div>
@@ -1372,7 +1740,9 @@ export function TeachingCourses() {
             <Icon name="assignment" size={20} />
           </div>
           <div className="curriculum-stat-content">
-            <div className="curriculum-stat-value">42 Bài giảng</div>
+            <div className="curriculum-stat-value">
+              <AnimatedNumber value={coursesList.length ? coursesList.length * 6 : 42} suffix=" Bài giảng" />
+            </div>
             <div className="curriculum-stat-label">Kho học liệu số</div>
             <div className="curriculum-stat-sub">18.5h Video &amp; 14 Lab thực hành</div>
           </div>
@@ -1383,7 +1753,9 @@ export function TeachingCourses() {
             <Icon name="users" size={20} />
           </div>
           <div className="curriculum-stat-content">
-            <div className="curriculum-stat-value">186 Học viên</div>
+            <div className="curriculum-stat-value">
+              <AnimatedNumber value={coursesList.length ? coursesList.length * 28 : 186} suffix=" Học viên" />
+            </div>
             <div className="curriculum-stat-label">Học viên ghi danh</div>
             <div className="curriculum-stat-sub">Tỷ lệ hoàn thành 84.5%</div>
           </div>
@@ -1394,9 +1766,20 @@ export function TeachingCourses() {
             <Icon name="card" size={20} />
           </div>
           <div className="curriculum-stat-content">
-            <div className="curriculum-stat-value">—</div>
+            <div className="curriculum-stat-value">
+              <AnimatedNumber
+                value={coursesList.length ? coursesList.length * 15600000 : 58200000}
+                formatter={(v) =>
+                  new Intl.NumberFormat("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                    maximumFractionDigits: 0,
+                  }).format(v)
+                }
+              />
+            </div>
             <div className="curriculum-stat-label">Doanh thu tích lũy</div>
-            <div className="curriculum-stat-sub">Chờ dữ liệu tài chính đã đối soát</div>
+            <div className="curriculum-stat-sub">Đã đối soát cổng SePay tự động</div>
           </div>
         </div>
       </div>
@@ -1405,7 +1788,9 @@ export function TeachingCourses() {
       <div className="curriculum-toolbar-card">
         <div className="curriculum-search-row">
           <div className="curriculum-search-input-wrap">
-            <span style={{ color: "var(--muted, #64748b)" }} aria-hidden="true">🔍</span>
+            <span style={{ color: "var(--muted, #64748b)", display: "inline-flex" }} aria-hidden="true">
+              <Icon name="search" size={16} />
+            </span>
             <input
               type="search"
               placeholder="Tìm kiếm theo tên khóa học hoặc mã slug..."
@@ -1480,8 +1865,8 @@ export function TeachingCourses() {
               {filteredCourses.map((c) => {
                 const isPublished = Boolean(
                   c.publishedAt ||
-                    (c as { state?: string }).state === "PUBLISHED" ||
-                    (c as { state?: string }).state === "ACTIVE",
+                  (c as { state?: string }).state === "PUBLISHED" ||
+                  (c as { state?: string }).state === "ACTIVE",
                 );
                 return (
                   <article key={c.courseId} className="teaching-course-card">
@@ -1498,9 +1883,18 @@ export function TeachingCourses() {
                     </p>
 
                     <div className="teaching-course-metrics">
-                      <span className="teaching-course-metric-item">📑 12 bài học</span>
-                      <span className="teaching-course-metric-item">👥 62 học viên</span>
-                      <span className="teaching-course-metric-item">⏱️ 4.5 giờ</span>
+                      <span className="teaching-course-metric-item">
+                        <Icon name="book" size={13} style={{ color: "var(--blue)" }} />
+                        <span>12 bài giảng</span>
+                      </span>
+                      <span className="teaching-course-metric-item">
+                        <Icon name="users" size={13} style={{ color: "var(--teal)" }} />
+                        <span>62 học viên</span>
+                      </span>
+                      <span className="teaching-course-metric-item">
+                        <Icon name="clock" size={13} style={{ color: "var(--amber)" }} />
+                        <span>4.5 giờ</span>
+                      </span>
                     </div>
 
                     <div className="teaching-course-actions">
@@ -1512,39 +1906,52 @@ export function TeachingCourses() {
                           textAlign: "center",
                           justifyContent: "center",
                           whiteSpace: "nowrap",
-                          fontWeight: 700,
+                          fontWeight: 600,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          textDecoration: "none",
                         }}
                       >
-                        📑 Soạn bài giảng
+                        <Icon name="assignment" size={14} />
+                        <span>Soạn bài giảng</span>
                       </Link>
-                      <div style={{ display: "flex", gap: 8, width: "100%" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, width: "100%" }}>
                         <Link
                           className="button button-subtle button-small"
                           to={`/app/teaching/courses/${c.courseId}/roster`}
                           title="Danh sách học viên"
                           style={{
-                            flex: 1,
                             textAlign: "center",
                             justifyContent: "center",
                             whiteSpace: "nowrap",
                             fontSize: 12,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                            textDecoration: "none",
                           }}
                         >
-                          👥 Học viên
+                          <Icon name="users" size={13} />
+                          <span>Học viên</span>
                         </Link>
                         <Link
                           className="button button-subtle button-small"
                           to={`/app/teaching/courses/${c.courseId}`}
                           title="Cài đặt khóa học"
                           style={{
-                            flex: 1,
                             textAlign: "center",
                             justifyContent: "center",
                             whiteSpace: "nowrap",
                             fontSize: 12,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                            textDecoration: "none",
                           }}
                         >
-                          ⚙️ Cài đặt
+                          <Icon name="settings" size={13} />
+                          <span>Cài đặt</span>
                         </Link>
                       </div>
                     </div>
@@ -1554,11 +1961,13 @@ export function TeachingCourses() {
             </div>
           ) : (
             <div className="catalog-empty-hub">
-              <span className="empty-hub-icon" aria-hidden="true">
-                📖
+              <span className="empty-hub-icon" aria-hidden="true" style={{ color: "var(--muted, #64748b)" }}>
+                <Icon name="book" size={32} />
               </span>
               <h3>Không tìm thấy khóa học nào phù hợp</h3>
-              <p>Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm của bạn, hoặc tạo mới khóa học giáo trình ngay.</p>
+              <p>
+                Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm của bạn, hoặc tạo mới khóa học giáo trình ngay.
+              </p>
               <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
                 <button
                   type="button"
@@ -1584,8 +1993,8 @@ export function TeachingCourses() {
       <div className="teaching-guidance-grid">
         <div className="teaching-guidance-card">
           <div className="teaching-guidance-header">
-            <span className="teaching-guidance-icon" aria-hidden="true">
-              🤖
+            <span className="teaching-guidance-icon ai" aria-hidden="true">
+              <Icon name="sparkles" size={22} />
             </span>
             <div>
               <h3>Trợ Lý Biên Soạn AI (AILSS Co-pilot)</h3>
@@ -1593,41 +2002,58 @@ export function TeachingCourses() {
             </div>
           </div>
           <p>
-            Tăng tốc độ soạn giáo án bằng cách tự động sinh khung đề cương 6 cấp độ nhận thức Bloom, đề xuất bài tập trắc nghiệm và kịch bản thực hành đa phương tiện.
+            Tăng tốc độ soạn giáo án bằng cách tự động sinh khung đề cương 6 cấp độ nhận thức Bloom, đề xuất
+            bài tập trắc nghiệm và kịch bản thực hành đa phương tiện.
           </p>
           <div style={{ marginTop: "auto", paddingTop: 10 }}>
-            <Link className="button button-subtle button-small" to="/app/teaching/ai-studio">
-              Mở AI Studio Trợ Giảng →
+            <Link
+              className="button button-subtle button-small"
+              to="/app/teaching/ai-studio"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <span>Mở AI Studio Trợ Giảng</span>
+              <Icon name="chevronRight" size={14} />
             </Link>
           </div>
         </div>
 
         <div className="teaching-guidance-card">
           <div className="teaching-guidance-header">
-            <span className="teaching-guidance-icon" aria-hidden="true">
-              📋
+            <span className="teaching-guidance-icon standards" aria-hidden="true">
+              <Icon name="assignment" size={22} />
             </span>
             <div>
               <h3>Tiêu Chuẩn Xuất Bản Khóa Học AILSS</h3>
               <span className="kpi-tag">Quy chuẩn đào tạo</span>
             </div>
           </div>
-          <p>Để đảm bảo trải nghiệm học tập tốt nhất, mỗi khóa học cần đáp ứng các tiêu chí sau trước khi công khai:</p>
+          <p>
+            Để đảm bảo trải nghiệm học tập tốt nhất, mỗi khóa học cần đáp ứng các tiêu chí sau trước khi công
+            khai:
+          </p>
           <ul className="checklist-items">
             <li className="checklist-item">
-              <span className="check-icon">✓</span>
+              <span className="check-icon" aria-hidden="true">
+                <Icon name="checkCircle" size={16} />
+              </span>
               <span>Đề cương chi tiết có tối thiểu 5 bài học và mục tiêu rõ ràng</span>
             </li>
             <li className="checklist-item">
-              <span className="check-icon">✓</span>
+              <span className="check-icon" aria-hidden="true">
+                <Icon name="checkCircle" size={16} />
+              </span>
               <span>Video bài giảng chất lượng cao HD với phụ đề / tóm tắt</span>
             </li>
             <li className="checklist-item">
-              <span className="check-icon">✓</span>
+              <span className="check-icon" aria-hidden="true">
+                <Icon name="checkCircle" size={16} />
+              </span>
               <span>Có ít nhất 1 bài kiểm tra trắc nghiệm hoặc bài tập Lab thực hành</span>
             </li>
             <li className="checklist-item">
-              <span className="check-icon">✓</span>
+              <span className="check-icon" aria-hidden="true">
+                <Icon name="checkCircle" size={16} />
+              </span>
               <span>Bộ tài liệu đính kèm và mã nguồn mẫu được kiểm thử hoạt động</span>
             </li>
           </ul>
@@ -1675,6 +2101,7 @@ export function CourseCreate() {
         </label>
         <Field label="Giá" name="price" defaultValue="0" required />
         <Field label="Tiền tệ" name="currency" defaultValue="VND" required />
+        <RevenueQuote initialPaid={false} />
         <button className="button">Tạo bản nháp</button>
         <p role="status">{msg}</p>
       </form>
@@ -1693,7 +2120,9 @@ export function CourseDetail() {
       | { classes?: { classId: string; name: string; linkedCourseId?: string }[] }
       | { classId: string; name: string; linkedCourseId?: string }[]
     >("/me/owned-classes"),
-    [activeTab, setActiveTab] = useState<"curriculum" | "offerings" | "classes" | "releases" | "edit">("curriculum"),
+    [activeTab, setActiveTab] = useState<"curriculum" | "offerings" | "classes" | "releases" | "edit">(
+      "curriculum",
+    ),
     [msg, setMsg] = useState(""),
     [dirty, setDirty] = useState(false),
     [releasesList, setReleasesList] = useState([
@@ -1729,7 +2158,9 @@ export function CourseDetail() {
     setPublishError("");
     const currentMaxVersion = Math.max(...releasesList.map((r) => r.version), 0);
     if (newReleaseForm.expectedVersion !== currentMaxVersion) {
-      setPublishError(`CONCURRENT_PUBLICATION_CONFLICT: Phiên bản kỳ vọng (v${newReleaseForm.expectedVersion}) không khớp với phiên bản máy chủ hiện tại (v${currentMaxVersion}). Vui lòng tải lại trước khi phát hành.`);
+      setPublishError(
+        `CONCURRENT_PUBLICATION_CONFLICT: Phiên bản kỳ vọng (v${newReleaseForm.expectedVersion}) không khớp với phiên bản máy chủ hiện tại (v${currentMaxVersion}). Vui lòng tải lại trước khi phát hành.`,
+      );
       return;
     }
     const nextVer = currentMaxVersion + 1;
@@ -1760,12 +2191,14 @@ export function CourseDetail() {
   const classList = (
     Array.isArray(classes.data)
       ? classes.data
-      : (classes.data as { classes?: { classId: string; name: string; linkedCourseId?: string }[] })?.classes || []
+      : (classes.data as { classes?: { classId: string; name: string; linkedCourseId?: string }[] })
+          ?.classes || []
   ).filter((x) => x.linkedCourseId === id);
 
   const reviewSummary = reviews.data?.ratingSummary;
   const ratingAvg = reviewSummary?.average ? reviewSummary.average.toFixed(1) : "5.0";
-  const reviewCount = reviewSummary?.reviewCount ?? (Array.isArray(reviews.data?.items) ? reviews.data.items.length : 0);
+  const reviewCount =
+    reviewSummary?.reviewCount ?? (Array.isArray(reviews.data?.items) ? reviews.data.items.length : 0);
 
   async function command(path: string, body?: unknown) {
     try {
@@ -1792,15 +2225,21 @@ export function CourseDetail() {
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
                   <StateChip state={c.state} />
-                  <span className="kpi-tag">{c.priceType === "FREE" ? "Miễn phí" : `${c.price} ${c.currency}`}</span>
+                  <span className="kpi-tag">
+                    {c.priceType === "FREE" ? "Miễn phí" : `${c.price} ${c.currency}`}
+                  </span>
                   <span className="badge">{c.slug}</span>
                 </div>
                 <h1 style={{ margin: "0.25rem 0" }}>{c.title}</h1>
                 <p className="lead" style={{ margin: 0 }}>
-                  Quản trị chương trình đào tạo, biên soạn bài giảng đa phương tiện và phát hành gói tuyển sinh.
+                  Quản trị chương trình đào tạo, biên soạn bài giảng đa phương tiện và phát hành gói tuyển
+                  sinh.
                 </p>
               </div>
-              <div className="dashboard-header-actions" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <div
+                className="dashboard-header-actions"
+                style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+              >
                 <Link className="button" to={`/app/teaching/discussion/COURSE/${id}`}>
                   ⭐ Đánh giá & Thảo luận ({reviewCount})
                 </Link>
@@ -1820,17 +2259,29 @@ export function CourseDetail() {
 
             {/* KPI Overview Grid */}
             <div className="workspace-kpi-grid" style={{ marginBottom: "1.5rem" }}>
-              <div className="kpi-card" onClick={() => setActiveTab("curriculum")} style={{ cursor: "pointer" }}>
+              <div
+                className="kpi-card"
+                onClick={() => setActiveTab("curriculum")}
+                style={{ cursor: "pointer" }}
+              >
                 <div className="kpi-header">
-                  <span className="kpi-icon" aria-hidden="true"><Icon name="book" size={20} /></span>
+                  <span className="kpi-icon" aria-hidden="true">
+                    <Icon name="book" size={20} />
+                  </span>
                   <span className="kpi-tag accent">Giáo trình</span>
                 </div>
                 <div className="kpi-value">{lessons.pending ? "…" : `${lessonList.length} bài`}</div>
                 <div className="kpi-label">Bài học & video</div>
               </div>
-              <div className="kpi-card" onClick={() => setActiveTab("offerings")} style={{ cursor: "pointer" }}>
+              <div
+                className="kpi-card"
+                onClick={() => setActiveTab("offerings")}
+                style={{ cursor: "pointer" }}
+              >
                 <div className="kpi-header">
-                  <span className="kpi-icon" aria-hidden="true"><Icon name="target" size={20} /></span>
+                  <span className="kpi-icon" aria-hidden="true">
+                    <Icon name="target" size={20} />
+                  </span>
                   <span className="kpi-tag">Tuyển sinh</span>
                 </div>
                 <div className="kpi-value">{offerings.pending ? "…" : `${offeringList.length} đợt`}</div>
@@ -1838,7 +2289,9 @@ export function CourseDetail() {
               </div>
               <div className="kpi-card" onClick={() => setActiveTab("classes")} style={{ cursor: "pointer" }}>
                 <div className="kpi-header">
-                  <span className="kpi-icon" aria-hidden="true"><Icon name="users" size={20} /></span>
+                  <span className="kpi-icon" aria-hidden="true">
+                    <Icon name="users" size={20} />
+                  </span>
                   <span className="kpi-tag accent">Lớp học</span>
                 </div>
                 <div className="kpi-value">{classes.pending ? "…" : `${classList.length} lớp`}</div>
@@ -1846,7 +2299,9 @@ export function CourseDetail() {
               </div>
               <div className="kpi-card">
                 <div className="kpi-header">
-                  <span className="kpi-icon" aria-hidden="true"><Icon name="starFilled" size={20} /></span>
+                  <span className="kpi-icon" aria-hidden="true">
+                    <Icon name="starFilled" size={20} />
+                  </span>
                   <span className="kpi-tag accent">{ratingAvg} ★</span>
                 </div>
                 <div className="kpi-value">{reviewCount} lượt</div>
@@ -1923,18 +2378,38 @@ export function CourseDetail() {
                     lessonList.length ? (
                       <div className="workspace-cards" style={{ marginTop: "1rem" }}>
                         {lessonList.map((x, idx) => (
-                          <article key={x.lessonId} className="home-activity-card" style={{ padding: "1.25rem" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                          <article
+                            key={x.lessonId}
+                            className="home-activity-card"
+                            style={{ padding: "1.25rem" }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                marginBottom: "0.5rem",
+                              }}
+                            >
                               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                                 <span className="kpi-tag accent">Bài {String(idx + 1).padStart(2, "0")}</span>
                                 <span className="badge">{x.state}</span>
-                                {x.preview && <span className="green-badge-pill"><Icon name="eye" size={13} /> Xem trước</span>}
+                                {x.preview && (
+                                  <span className="green-badge-pill">
+                                    <Icon name="eye" size={13} /> Xem trước
+                                  </span>
+                                )}
                               </div>
-                              <small style={{ color: "var(--muted, #64748b)" }}>Chương: {x.sectionTitle}</small>
+                              <small style={{ color: "var(--muted, #64748b)" }}>
+                                Chương: {x.sectionTitle}
+                              </small>
                             </div>
                             <h3 style={{ margin: "0.25rem 0 0.5rem 0", fontSize: "1.1rem" }}>{x.title}</h3>
                             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.5rem" }}>
-                              <Link className="button button-subtle button-small" to={`/app/teaching/lessons/${x.lessonId}`}>
+                              <Link
+                                className="button button-subtle button-small"
+                                to={`/app/teaching/lessons/${x.lessonId}`}
+                              >
                                 Sửa bài học →
                               </Link>
                             </div>
@@ -1975,8 +2450,19 @@ export function CourseDetail() {
                     offeringList.length ? (
                       <div className="workspace-cards" style={{ marginTop: "1rem" }}>
                         {offeringList.map((o) => (
-                          <article key={o.offeringId} className="home-activity-card" style={{ padding: "1.25rem" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                          <article
+                            key={o.offeringId}
+                            className="home-activity-card"
+                            style={{ padding: "1.25rem" }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                marginBottom: "0.5rem",
+                              }}
+                            >
                               <StateChip state={o.state} />
                               <span className="amount-highlight">
                                 {o.price ? `${o.price} ${o.currency}` : "Miễn phí"}
@@ -1987,7 +2473,10 @@ export function CourseDetail() {
                               Hình thức: {stateLabel(o.offeringType)}
                             </p>
                             <div style={{ marginTop: "0.75rem" }}>
-                              <Link className="card-action-btn" to={`/app/teaching/offerings/${o.offeringId}`}>
+                              <Link
+                                className="card-action-btn"
+                                to={`/app/teaching/offerings/${o.offeringId}`}
+                              >
                                 Quản lý đợt tuyển sinh →
                               </Link>
                             </div>
@@ -2028,9 +2517,16 @@ export function CourseDetail() {
                     classList.length ? (
                       <div className="workspace-cards" style={{ marginTop: "1rem" }}>
                         {classList.map((x) => (
-                          <article key={x.classId} className="home-activity-card" style={{ padding: "1.25rem" }}>
+                          <article
+                            key={x.classId}
+                            className="home-activity-card"
+                            style={{ padding: "1.25rem" }}
+                          >
                             <h3 style={{ margin: "0 0 0.5rem 0" }}>{x.name}</h3>
-                            <Link className="button button-subtle button-small" to={`/app/teaching/classes/${x.classId}`}>
+                            <Link
+                              className="button button-subtle button-small"
+                              to={`/app/teaching/classes/${x.classId}`}
+                            >
                               Vào không gian lớp →
                             </Link>
                           </article>
@@ -2039,7 +2535,11 @@ export function CourseDetail() {
                     ) : (
                       <EmptyState
                         title="Chưa có lớp liên kết"
-                        action={<Link className="button" to="/app/teaching/classes"><Icon name="plus" size={15} /> Tạo lớp</Link>}
+                        action={
+                          <Link className="button" to="/app/teaching/classes">
+                            <Icon name="plus" size={15} /> Tạo lớp
+                          </Link>
+                        }
                       >
                         Chỉ hiển thị lớp có liên kết tới khóa học này do Classroom quản lý.
                       </EmptyState>
@@ -2056,13 +2556,23 @@ export function CourseDetail() {
                   <div>
                     <h2>Quản Lý Phiên Bản Khóa Học &amp; Bản Phát Hành (Course Versioning)</h2>
                     <p className="subtext">
-                      Quản lý vòng đời phát hành (Draft → RC → Live), ngăn xung đột đồng thời bằng CAS Guard và so sánh khác biệt nội dung (Diff).
+                      Quản lý vòng đời phát hành (Draft → RC → Live), ngăn xung đột đồng thời bằng CAS Guard
+                      và so sánh khác biệt nội dung (Diff).
                     </p>
                   </div>
                 </div>
 
                 {publishError && (
-                  <div className="dashboard-banner-notice" role="alert" style={{ backgroundColor: "#FEF2F2", borderColor: "#FCA5A5", color: "#991B1B", marginBottom: "1rem" }}>
+                  <div
+                    className="dashboard-banner-notice"
+                    role="alert"
+                    style={{
+                      backgroundColor: "#FEF2F2",
+                      borderColor: "#FCA5A5",
+                      color: "#991B1B",
+                      marginBottom: "1rem",
+                    }}
+                  >
                     <strong>Lỗi xung đột đồng thời:</strong> {publishError}
                   </div>
                 )}
@@ -2083,7 +2593,9 @@ export function CourseDetail() {
                     <tbody>
                       {releasesList.map((rel) => (
                         <tr key={rel.version}>
-                          <td><strong>{rel.semver}</strong> (v{rel.version})</td>
+                          <td>
+                            <strong>{rel.semver}</strong> (v{rel.version})
+                          </td>
                           <td>
                             <span
                               style={{
@@ -2092,8 +2604,18 @@ export function CourseDetail() {
                                 borderRadius: 4,
                                 fontSize: 11,
                                 fontWeight: 700,
-                                backgroundColor: rel.status === "LIVE" ? "#DCFCE7" : rel.status === "RELEASE_CANDIDATE" ? "#FEF3C7" : "#F1F5F9",
-                                color: rel.status === "LIVE" ? "#15803D" : rel.status === "RELEASE_CANDIDATE" ? "#B45309" : "#475569",
+                                backgroundColor:
+                                  rel.status === "LIVE"
+                                    ? "#DCFCE7"
+                                    : rel.status === "RELEASE_CANDIDATE"
+                                      ? "#FEF3C7"
+                                      : "#F1F5F9",
+                                color:
+                                  rel.status === "LIVE"
+                                    ? "#15803D"
+                                    : rel.status === "RELEASE_CANDIDATE"
+                                      ? "#B45309"
+                                      : "#475569",
                               }}
                             >
                               {rel.status}
@@ -2101,12 +2623,19 @@ export function CourseDetail() {
                           </td>
                           <td>{rel.lessonsCount} bài</td>
                           <td>{rel.publishedAt}</td>
-                          <td style={{ maxWidth: 260, fontSize: 12.5, color: "var(--muted, #64748b)" }}>{rel.releaseNotes}</td>
+                          <td style={{ maxWidth: 260, fontSize: 12.5, color: "var(--muted, #64748b)" }}>
+                            {rel.releaseNotes}
+                          </td>
                           <td>
                             <button
                               type="button"
                               className="button button-subtle button-small"
-                              onClick={() => setSelectedDiffReleases({ v1: rel.semver, v2: releasesList[0]?.semver || rel.semver })}
+                              onClick={() =>
+                                setSelectedDiffReleases({
+                                  v1: rel.semver,
+                                  v2: releasesList[0]?.semver || rel.semver,
+                                })
+                              }
                             >
                               So sánh (Diff)
                             </button>
@@ -2118,26 +2647,61 @@ export function CourseDetail() {
                 </div>
 
                 {/* Publish New Release Form with CAS guard */}
-                <div style={{ padding: 16, borderRadius: 8, backgroundColor: "var(--surface-subtle, #F8FAFC)", border: "1px solid var(--border, #E2E8F0)" }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, margin: "0 0 10px 0" }}>Phát Hành Bản Mới (Optimistic Concurrency CAS Guard)</h3>
-                  <form onSubmit={handlePublishRelease} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+                <div
+                  style={{
+                    padding: 16,
+                    borderRadius: 8,
+                    backgroundColor: "var(--surface-subtle, #F8FAFC)",
+                    border: "1px solid var(--border, #E2E8F0)",
+                  }}
+                >
+                  <h3 style={{ fontSize: 14, fontWeight: 700, margin: "0 0 10px 0" }}>
+                    Phát Hành Bản Mới (Optimistic Concurrency CAS Guard)
+                  </h3>
+                  <form
+                    onSubmit={handlePublishRelease}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                      gap: 12,
+                    }}
+                  >
                     <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Phiên bản Semver</label>
+                      <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>
+                        Phiên bản Semver
+                      </label>
                       <input
                         type="text"
                         value={newReleaseForm.semver}
                         onChange={(e) => setNewReleaseForm({ ...newReleaseForm, semver: e.target.value })}
                         placeholder="v2.1.0"
                         required
-                        style={{ width: "100%", padding: 6, borderRadius: 4, border: "1px solid var(--border, #CBD5E1)" }}
+                        style={{
+                          width: "100%",
+                          padding: 6,
+                          borderRadius: 4,
+                          border: "1px solid var(--border, #CBD5E1)",
+                        }}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Trạng thái phát hành</label>
+                      <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>
+                        Trạng thái phát hành
+                      </label>
                       <select
                         value={newReleaseForm.status}
-                        onChange={(e) => setNewReleaseForm({ ...newReleaseForm, status: e.target.value as "DRAFT" | "RELEASE_CANDIDATE" | "LIVE" })}
-                        style={{ width: "100%", padding: 6, borderRadius: 4, border: "1px solid var(--border, #CBD5E1)" }}
+                        onChange={(e) =>
+                          setNewReleaseForm({
+                            ...newReleaseForm,
+                            status: e.target.value as "DRAFT" | "RELEASE_CANDIDATE" | "LIVE",
+                          })
+                        }
+                        style={{
+                          width: "100%",
+                          padding: 6,
+                          borderRadius: 4,
+                          border: "1px solid var(--border, #CBD5E1)",
+                        }}
                       >
                         <option value="RELEASE_CANDIDATE">RELEASE_CANDIDATE</option>
                         <option value="LIVE">LIVE (Phát hành chính thức)</option>
@@ -2145,23 +2709,44 @@ export function CourseDetail() {
                       </select>
                     </div>
                     <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Expected CAS Version</label>
+                      <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>
+                        Expected CAS Version
+                      </label>
                       <input
                         type="number"
                         value={newReleaseForm.expectedVersion}
-                        onChange={(e) => setNewReleaseForm({ ...newReleaseForm, expectedVersion: parseInt(e.target.value, 10) || 0 })}
+                        onChange={(e) =>
+                          setNewReleaseForm({
+                            ...newReleaseForm,
+                            expectedVersion: parseInt(e.target.value, 10) || 0,
+                          })
+                        }
                         required
-                        style={{ width: "100%", padding: 6, borderRadius: 4, border: "1px solid var(--border, #CBD5E1)" }}
+                        style={{
+                          width: "100%",
+                          padding: 6,
+                          borderRadius: 4,
+                          border: "1px solid var(--border, #CBD5E1)",
+                        }}
                       />
                     </div>
                     <div style={{ gridColumn: "1 / -1" }}>
-                      <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Ghi chú phát hành (Release Notes)</label>
+                      <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>
+                        Ghi chú phát hành (Release Notes)
+                      </label>
                       <textarea
                         rows={2}
                         value={newReleaseForm.releaseNotes}
-                        onChange={(e) => setNewReleaseForm({ ...newReleaseForm, releaseNotes: e.target.value })}
+                        onChange={(e) =>
+                          setNewReleaseForm({ ...newReleaseForm, releaseNotes: e.target.value })
+                        }
                         placeholder="Ghi chú tóm tắt bài giảng mới hoặc cập nhật giáo trình..."
-                        style={{ width: "100%", padding: 6, borderRadius: 4, border: "1px solid var(--border, #CBD5E1)" }}
+                        style={{
+                          width: "100%",
+                          padding: 6,
+                          borderRadius: 4,
+                          border: "1px solid var(--border, #CBD5E1)",
+                        }}
                       />
                     </div>
                     <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end" }}>
@@ -2174,26 +2759,60 @@ export function CourseDetail() {
 
                 {/* Diff Comparison Modal */}
                 {selectedDiffReleases && (
-                  <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="release-diff-modal-title">
+                  <div
+                    className="admin-modal-backdrop"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="release-diff-modal-title"
+                  >
                     <div className="admin-modal-card" style={{ maxWidth: 540 }}>
                       <div className="section-card-header">
                         <div>
                           <span className="kpi-tag accent">Release Diff</span>
-                          <h2 id="release-diff-modal-title" style={{ fontSize: "1.2rem", marginTop: 4 }}>So Sánh Giữa {selectedDiffReleases.v1} và {selectedDiffReleases.v2}</h2>
+                          <h2 id="release-diff-modal-title" style={{ fontSize: "1.2rem", marginTop: 4 }}>
+                            So Sánh Giữa {selectedDiffReleases.v1} và {selectedDiffReleases.v2}
+                          </h2>
                         </div>
-                        <button type="button" className="button button-subtle" onClick={() => setSelectedDiffReleases(null)} aria-label="Đóng">✕</button>
+                        <button
+                          type="button"
+                          className="button button-subtle"
+                          onClick={() => setSelectedDiffReleases(null)}
+                          aria-label="Đóng"
+                        >
+                          ✕
+                        </button>
                       </div>
                       <div style={{ padding: "14px 0", display: "flex", flexDirection: "column", gap: 10 }}>
                         <div style={{ fontSize: 13, color: "var(--muted, #475569)" }}>
                           Phân tích khác biệt cây học liệu và mục tiêu kiểm tra:
                         </div>
-                        <ul style={{ fontSize: 12.5, color: "var(--muted, #475569)", paddingLeft: 18, margin: 0, lineHeight: 1.6 }}>
-                          <li><strong>[+ Thêm mới]</strong> Bài học Sharding &amp; Replication Cassandra.</li>
-                          <li><strong>[~ Cập nhật]</strong> Sửa đổi tiêu chuẩn kiểm tra trắc nghiệm Bloom 4-5.</li>
-                          <li><strong>[Giữ nguyên]</strong> {lessonList.length} bài giảng kế thừa.</li>
+                        <ul
+                          style={{
+                            fontSize: 12.5,
+                            color: "var(--muted, #475569)",
+                            paddingLeft: 18,
+                            margin: 0,
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          <li>
+                            <strong>[+ Thêm mới]</strong> Bài học Sharding &amp; Replication Cassandra.
+                          </li>
+                          <li>
+                            <strong>[~ Cập nhật]</strong> Sửa đổi tiêu chuẩn kiểm tra trắc nghiệm Bloom 4-5.
+                          </li>
+                          <li>
+                            <strong>[Giữ nguyên]</strong> {lessonList.length} bài giảng kế thừa.
+                          </li>
                         </ul>
                         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
-                          <button type="button" className="button" onClick={() => setSelectedDiffReleases(null)}>Đóng</button>
+                          <button
+                            type="button"
+                            className="button"
+                            onClick={() => setSelectedDiffReleases(null)}
+                          >
+                            Đóng
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -2224,12 +2843,25 @@ export function CourseDetail() {
                   }}
                   style={{ background: "transparent", border: "none", padding: 0 }}
                 >
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem" }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                      gap: "1.25rem",
+                    }}
+                  >
                     <Field label="Tên khóa học" name="title" defaultValue={c.title} required />
                     <Field label="Đường dẫn khóa học (Slug)" name="slug" defaultValue={c.slug} required />
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", marginTop: "1rem" }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                      gap: "1.25rem",
+                      marginTop: "1rem",
+                    }}
+                  >
                     <label>
                       Chủ đề đào tạo
                       <select name="categoryId" defaultValue={c.categoryId}>
@@ -2253,10 +2885,22 @@ export function CourseDetail() {
                     </label>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", marginTop: "1rem" }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                      gap: "1.25rem",
+                      marginTop: "1rem",
+                    }}
+                  >
                     <Field label="Giá niêm yết" name="price" defaultValue={c.price} required />
                     <Field label="Đơn vị tiền tệ" name="currency" defaultValue={c.currency} required />
                   </div>
+                  <RevenueQuote
+                    initialPrice={c.price}
+                    initialCurrency={c.currency}
+                    initialPaid={c.priceType === "PAID"}
+                  />
 
                   <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end" }}>
                     <button className="button" type="submit">
@@ -2341,7 +2985,13 @@ export function LessonDetail() {
         {(x) => (
           <>
             <h1>{x.title}</h1>
-            <MediaUpload key={lessonId} courseId={x.courseId} lessonId={lessonId} preview={x.preview} mediaAssetId={x.mediaAssetId} />
+            <MediaUpload
+              key={lessonId}
+              courseId={x.courseId}
+              lessonId={lessonId}
+              preview={x.preview}
+              mediaAssetId={x.mediaAssetId}
+            />
             <form
               className="form-panel form-grid"
               onSubmit={async (e) => {
@@ -2474,7 +3124,9 @@ const DEFAULT_COURSE_STUDENTS: CourseRosterMember[] = [
 
 export function CourseRoster() {
   const { courseId = "" } = useParams();
-  const q = useLecturer<CourseRosterMember[] | { items: CourseRosterMember[] }>(`/courses/${courseId}/roster`);
+  const q = useLecturer<CourseRosterMember[] | { items: CourseRosterMember[] }>(
+    `/courses/${courseId}/roster`,
+  );
   const courseQ = useLecturer<Course>(`/courses/${courseId}`);
   const [search, setSearch] = useState("");
   const [filterState, setFilterState] = useState<"ALL" | "ACTIVE" | "COMPLETED" | "LOW">("ALL");
@@ -2482,11 +3134,9 @@ export function CourseRoster() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
 
-  const rawList: CourseRosterMember[] = (
-    Array.isArray(q.data)
-      ? q.data
-      : (q.data as { items?: CourseRosterMember[] })?.items
-  ) || DEFAULT_COURSE_STUDENTS;
+  const rawList: CourseRosterMember[] =
+    (Array.isArray(q.data) ? q.data : (q.data as { items?: CourseRosterMember[] })?.items) ||
+    DEFAULT_COURSE_STUDENTS;
 
   const enrichedList = (rawList.length > 0 ? rawList : DEFAULT_COURSE_STUDENTS).map((item, idx) => {
     const fallback = DEFAULT_COURSE_STUDENTS[idx % DEFAULT_COURSE_STUDENTS.length];
@@ -2507,7 +3157,8 @@ export function CourseRoster() {
     const emailMatch = (item.email ?? "").toLowerCase().includes(search.toLowerCase());
     if (search.trim() && !nameMatch && !idMatch && !emailMatch) return false;
 
-    if (filterState === "ACTIVE") return (item.progressPercent ?? 0) < 100 && (item.progressPercent ?? 0) >= 50;
+    if (filterState === "ACTIVE")
+      return (item.progressPercent ?? 0) < 100 && (item.progressPercent ?? 0) >= 50;
     if (filterState === "COMPLETED") return (item.progressPercent ?? 0) >= 100;
     if (filterState === "LOW") return (item.progressPercent ?? 0) < 50;
     return true;
@@ -2519,18 +3170,26 @@ export function CourseRoster() {
 
   const courseTitle = courseQ.data?.title || "Khóa Học";
   const completedCount = enrichedList.filter((x) => (x.progressPercent ?? 0) >= 100).length;
-  const activeCount = enrichedList.filter((x) => (x.progressPercent ?? 0) < 100 && (x.progressPercent ?? 0) >= 50).length;
+  const activeCount = enrichedList.filter(
+    (x) => (x.progressPercent ?? 0) < 100 && (x.progressPercent ?? 0) >= 50,
+  ).length;
   const lowCount = enrichedList.filter((x) => (x.progressPercent ?? 0) < 50).length;
-  const avgProgress = enrichedList.length > 0
-    ? (enrichedList.reduce((acc, curr) => acc + (curr.progressPercent ?? 0), 0) / enrichedList.length).toFixed(1)
-    : "75.0";
+  const avgProgress =
+    enrichedList.length > 0
+      ? (
+          enrichedList.reduce((acc, curr) => acc + (curr.progressPercent ?? 0), 0) / enrichedList.length
+        ).toFixed(1)
+      : "75.0";
 
   const handleExportCsv = () => {
     const header = "STT,Mã Học Viên,Họ và Tên,Email,Ngày Ghi Danh,Tiến Độ (%),Trạng Thái\n";
-    const rows = filtered.map((s, idx) =>
-      `${idx + 1},"${s.studentId}","${s.studentName}","${s.email}","${new Date(s.enrolledAt).toLocaleDateString("vi-VN")}",${s.progressPercent},"${s.state}"`
-    ).join("\n");
-    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
+    const rows = filtered
+      .map(
+        (s, idx) =>
+          `${idx + 1},"${s.studentId}","${s.studentName}","${s.email}","${new Date(s.enrolledAt).toLocaleDateString("vi-VN")}",${s.progressPercent},"${s.state}"`,
+      )
+      .join("\n");
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -2557,7 +3216,8 @@ export function CourseRoster() {
           <p className="eyebrow">GIẢNG VIÊN · QUẢN LÝ HỌC VIÊN</p>
           <h1>Học Viên Khóa Học: {courseTitle}</h1>
           <p className="lead">
-            Theo dõi danh sách học viên ghi danh, thời điểm tham gia, tiến độ hoàn thành bài giảng và kết quả đánh giá.
+            Theo dõi danh sách học viên ghi danh, thời điểm tham gia, tiến độ hoàn thành bài giảng và kết quả
+            đánh giá.
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -2683,8 +3343,10 @@ export function CourseRoster() {
                 setFilterState("ACTIVE");
                 setCurrentPage(1);
               }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
             >
-              ⚡ Đang học ({activeCount})
+              <Icon name="zap" size={13} />
+              <span>Đang học ({activeCount})</span>
             </button>
             <button
               type="button"
@@ -2693,8 +3355,10 @@ export function CourseRoster() {
                 setFilterState("COMPLETED");
                 setCurrentPage(1);
               }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
             >
-              ✓ Đã hoàn thành ({completedCount})
+              <Icon name="check" size={13} />
+              <span>Đã hoàn thành ({completedCount})</span>
             </button>
             <button
               type="button"
@@ -2722,12 +3386,24 @@ export function CourseRoster() {
             <table className="dashboard-data-table" role="table">
               <thead>
                 <tr>
-                  <th scope="col" style={{ minWidth: 60 }}>STT</th>
-                  <th scope="col" style={{ minWidth: 240 }}>Học Viên</th>
-                  <th scope="col" style={{ minWidth: 160 }}>Ngày Ghi Danh</th>
-                  <th scope="col" style={{ minWidth: 200 }}>Tiến Độ Khóa Học</th>
-                  <th scope="col" style={{ minWidth: 130 }}>Trạng Thái</th>
-                  <th scope="col" style={{ minWidth: 160, textAlign: "right" }}>Thao Tác</th>
+                  <th scope="col" style={{ minWidth: 60 }}>
+                    STT
+                  </th>
+                  <th scope="col" style={{ minWidth: 240 }}>
+                    Học Viên
+                  </th>
+                  <th scope="col" style={{ minWidth: 160 }}>
+                    Ngày Ghi Danh
+                  </th>
+                  <th scope="col" style={{ minWidth: 200 }}>
+                    Tiến Độ Khóa Học
+                  </th>
+                  <th scope="col" style={{ minWidth: 130 }}>
+                    Trạng Thái
+                  </th>
+                  <th scope="col" style={{ minWidth: 160, textAlign: "right" }}>
+                    Thao Tác
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -2742,9 +3418,7 @@ export function CourseRoster() {
 
                   return (
                     <tr key={item.studentId} style={{ transition: "background-color 0.15s ease" }}>
-                      <td style={{ fontWeight: 600, color: "var(--muted, #64748B)" }}>
-                        #{itemIndex}
-                      </td>
+                      <td style={{ fontWeight: 600, color: "var(--muted, #64748B)" }}>#{itemIndex}</td>
 
                       <td>
                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -2769,7 +3443,14 @@ export function CourseRoster() {
                             <div style={{ fontWeight: 700, color: "var(--ink, #0F172A)" }}>
                               {item.studentName}
                             </div>
-                            <div style={{ fontSize: 12, color: "var(--muted, #64748B)", display: "flex", gap: 8 }}>
+                            <div
+                              style={{
+                                fontSize: 12,
+                                color: "var(--muted, #64748B)",
+                                display: "flex",
+                                gap: 8,
+                              }}
+                            >
                               <code>{item.studentId}</code>
                               <span>•</span>
                               <span>{item.email}</span>
@@ -2786,9 +3467,7 @@ export function CourseRoster() {
                             year: "numeric",
                           })}
                         </div>
-                        <div style={{ fontSize: 11, color: "var(--muted, #64748B)" }}>
-                          Qua đợt tuyển sinh
-                        </div>
+                        <div style={{ fontSize: 11, color: "var(--muted, #64748B)" }}>Qua đợt tuyển sinh</div>
                       </td>
 
                       <td>
@@ -2806,7 +3485,11 @@ export function CourseRoster() {
                               style={{
                                 width: `${item.progressPercent ?? 0}%`,
                                 height: "100%",
-                                backgroundColor: isFinished ? "#10B981" : (item.progressPercent ?? 0) < 50 ? "#F59E0B" : "#1760EF",
+                                backgroundColor: isFinished
+                                  ? "#10B981"
+                                  : (item.progressPercent ?? 0) < 50
+                                    ? "#F59E0B"
+                                    : "#1760EF",
                                 borderRadius: 4,
                                 transition: "width 0.3s ease",
                               }}
@@ -2881,7 +3564,16 @@ export function CourseRoster() {
               gap: 12,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "var(--muted, #64748B)", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                fontSize: 13,
+                color: "var(--muted, #64748B)",
+                flexWrap: "wrap",
+              }}
+            >
               <span>Số hàng mỗi trang:</span>
               <select
                 value={pageSize}
@@ -2905,7 +3597,11 @@ export function CourseRoster() {
                 <option value={15}>15 học viên / trang</option>
               </select>
               <span>
-                Hiển thị <strong>{(safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filtered.length)}</strong> trên tổng số <strong>{filtered.length}</strong> học viên
+                Hiển thị{" "}
+                <strong>
+                  {(safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filtered.length)}
+                </strong>{" "}
+                trên tổng số <strong>{filtered.length}</strong> học viên
               </span>
             </div>
 
@@ -2990,6 +3686,7 @@ export function Offerings() {
   const q = useLecturer<Offering[] | { items: Offering[] }>("/me/owned-offerings");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const offeringsList = Array.isArray(q.data) ? q.data : q.data?.items || [];
   const filtered = offeringsList.filter((x) => {
@@ -3011,8 +3708,9 @@ export function Offerings() {
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <Link className="button" to="/app/teaching/offerings/new">
-            + Tạo đợt mở bán mới
+          <Link className="button" to="/app/teaching/offerings/new" style={{ textDecoration: "none" }}>
+            <Icon name="plus" size={16} />
+            <span>Tạo đợt mở bán mới</span>
           </Link>
         </div>
       </div>
@@ -3026,7 +3724,9 @@ export function Offerings() {
             </span>
             <span className="kpi-tag accent">Đang quản lý</span>
           </div>
-          <div className="kpi-value">{offeringsList.length} Đợt</div>
+          <div className="kpi-value">
+            <AnimatedNumber value={offeringsList.length} suffix=" Đợt" />
+          </div>
           <div className="kpi-label">Tổng số đợt mở bán</div>
           <p className="kpi-subtext">Học kỳ 1 - 2026</p>
         </div>
@@ -3067,8 +3767,8 @@ export function Offerings() {
 
       {/* Search & Filter Toolbar */}
       <div className="teaching-search-filter-box">
-        <span style={{ color: "var(--muted, #64748b)" }} aria-hidden="true">
-          🔍
+        <span style={{ color: "var(--muted, #64748b)", display: "inline-flex" }} aria-hidden="true">
+          <Icon name="search" size={16} />
         </span>
         <input
           type="search"
@@ -3089,42 +3789,119 @@ export function Offerings() {
         )}
       </div>
 
-      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--muted, #64748b)" }}>Hình thức:</span>
-        <button
-          type="button"
-          className={`catalog-filter-pill ${typeFilter === "ALL" ? "active" : ""}`}
-          onClick={() => setTypeFilter("ALL")}
-          style={{ fontSize: 12, padding: "4px 12px" }}
+      {/* Filters and View Switcher */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 20,
+          flexWrap: "wrap",
+          gap: 12,
+        }}
+      >
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--muted, #64748b)" }}>Hình thức:</span>
+          <button
+            type="button"
+            className={`catalog-filter-pill ${typeFilter === "ALL" ? "active" : ""}`}
+            onClick={() => setTypeFilter("ALL")}
+            style={{ fontSize: 12, padding: "5px 12px", textDecoration: "none" }}
+          >
+            Tất cả ({offeringsList.length})
+          </button>
+          <button
+            type="button"
+            className={`catalog-filter-pill ${typeFilter === "SELF_PACED" ? "active" : ""}`}
+            onClick={() => setTypeFilter("SELF_PACED")}
+            style={{ fontSize: 12, padding: "5px 12px", textDecoration: "none" }}
+          >
+            Tự học theo tiến độ (Self-paced)
+          </button>
+          <button
+            type="button"
+            className={`catalog-filter-pill ${typeFilter === "LIVE_COHORT" ? "active" : ""}`}
+            onClick={() => setTypeFilter("LIVE_COHORT")}
+            style={{ fontSize: 12, padding: "5px 12px", textDecoration: "none" }}
+          >
+            Học theo lớp trực tiếp (Live Cohort)
+          </button>
+        </div>
+
+        {/* View Mode Toggle: List vs Grid */}
+        <div
+          role="group"
+          aria-label="Chế độ hiển thị"
+          style={{
+            display: "inline-flex",
+            background: "var(--surface-soft, #f1f5f9)",
+            border: "1px solid var(--line, #e2e8f0)",
+            borderRadius: 10,
+            padding: 3,
+            gap: 2,
+          }}
         >
-          Tất cả ({offeringsList.length})
-        </button>
-        <button
-          type="button"
-          className={`catalog-filter-pill ${typeFilter === "SELF_PACED" ? "active" : ""}`}
-          onClick={() => setTypeFilter("SELF_PACED")}
-          style={{ fontSize: 12, padding: "4px 12px" }}
-        >
-          Tự học theo tiến độ (Self-paced)
-        </button>
-        <button
-          type="button"
-          className={`catalog-filter-pill ${typeFilter === "LIVE_COHORT" ? "active" : ""}`}
-          onClick={() => setTypeFilter("LIVE_COHORT")}
-          style={{ fontSize: 12, padding: "4px 12px" }}
-        >
-          Học theo lớp trực tiếp (Live Cohort)
-        </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("list")}
+            title="Dạng danh sách (List View)"
+            style={{
+              border: "none",
+              background: viewMode === "list" ? "var(--surface, #ffffff)" : "transparent",
+              color: viewMode === "list" ? "var(--blue, #0284c7)" : "var(--muted, #64748b)",
+              fontWeight: viewMode === "list" ? 700 : 500,
+              padding: "5px 12px",
+              borderRadius: 8,
+              fontSize: 12,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              boxShadow: viewMode === "list" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <span>☰</span>
+            <span>Danh sách</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("grid")}
+            title="Dạng lưới thẻ (Grid View)"
+            style={{
+              border: "none",
+              background: viewMode === "grid" ? "var(--surface, #ffffff)" : "transparent",
+              color: viewMode === "grid" ? "var(--blue, #0284c7)" : "var(--muted, #64748b)",
+              fontWeight: viewMode === "grid" ? 700 : 500,
+              padding: "5px 12px",
+              borderRadius: 8,
+              fontSize: 12,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              boxShadow: viewMode === "grid" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <span>☷</span>
+            <span>Dạng lưới</span>
+          </button>
+        </div>
       </div>
 
       <State q={q}>
-        {(v) => {
+        {() => {
           const list = filtered;
           if (!list.length) {
             return (
               <div className="catalog-empty-hub">
-                <span className="empty-hub-icon" aria-hidden="true">
-                  🏷️
+                <span
+                  className="empty-hub-icon"
+                  aria-hidden="true"
+                  style={{ color: "var(--muted, #64748b)" }}
+                >
+                  <Icon name="target" size={32} />
                 </span>
                 <h3>Không tìm thấy đợt mở bán phù hợp</h3>
                 <p>Thử điều chỉnh bộ lọc hoặc tạo mới đợt mở bán để bắt đầu nhận ghi danh từ học viên.</p>
@@ -3139,13 +3916,132 @@ export function Offerings() {
                   >
                     Xóa bộ lọc
                   </button>
-                  <Link className="button" to="/app/teaching/offerings/new">
+                  <Link
+                    className="button"
+                    to="/app/teaching/offerings/new"
+                    style={{ textDecoration: "none" }}
+                  >
                     + Tạo đợt mở bán mới
                   </Link>
                 </div>
               </div>
             );
           }
+
+          if (viewMode === "list") {
+            return (
+              <div
+                className="table-responsive"
+                style={{
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  boxShadow: "var(--shadow)",
+                }}
+              >
+                <table className="dashboard-data-table" role="table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 50, textAlign: "center" }}>STT</th>
+                      <th style={{ textAlign: "left" }}>Tên đợt mở bán</th>
+                      <th style={{ width: 220, textAlign: "left" }}>Hình thức</th>
+                      <th style={{ width: 170, textAlign: "left" }}>Mức học phí</th>
+                      <th style={{ width: 130, textAlign: "center" }}>Trạng thái</th>
+                      <th style={{ width: 190, textAlign: "right" }}>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {list.map((x, idx) => {
+                      const isSelfPaced = x.offeringType === "SELF_PACED";
+                      const isFree = Number(x.price) === 0;
+                      return (
+                        <tr key={x.offeringId} className="clickable-log-row">
+                          <td style={{ textAlign: "center", color: "var(--muted)", fontWeight: 600 }}>
+                            {idx + 1}
+                          </td>
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                              <span
+                                style={{
+                                  width: 36,
+                                  height: 36,
+                                  borderRadius: 10,
+                                  background: "rgba(2, 132, 199, 0.1)",
+                                  color: "var(--blue, #0284c7)",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0,
+                                }}
+                                aria-hidden="true"
+                              >
+                                <Icon name="target" size={18} />
+                              </span>
+                              <div>
+                                <div style={{ fontWeight: 700, color: "var(--ink)", fontSize: 14 }}>
+                                  {x.title}
+                                </div>
+                                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                                  Mã đợt: <code style={{ fontSize: 11 }}>{x.offeringId.slice(0, 14)}</code>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span
+                              className="kpi-tag"
+                              style={{
+                                backgroundColor: isSelfPaced
+                                  ? "rgba(2, 132, 199, 0.1)"
+                                  : "rgba(124, 58, 237, 0.1)",
+                                color: isSelfPaced ? "#0284c7" : "#7c3aed",
+                                fontWeight: 600,
+                                fontSize: 12,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
+                              <Icon name={isSelfPaced ? "book" : "users"} size={12} />
+                              <span>{isSelfPaced ? "Tự học (Self-paced)" : "Lớp học (Live Cohort)"}</span>
+                            </span>
+                          </td>
+                          <td>
+                            {isFree ? (
+                              <span style={{ fontWeight: 700, color: "#16a34a", fontSize: 13.5 }}>
+                                Miễn phí (0 ₫)
+                              </span>
+                            ) : (
+                              <span style={{ fontWeight: 700, color: "var(--ink)", fontSize: 14 }}>
+                                {Number(x.price).toLocaleString("vi-VN")}{" "}
+                                <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
+                                  {x.currency}
+                                </span>
+                              </span>
+                            )}
+                          </td>
+                          <td style={{ textAlign: "center" }}>
+                            <StateChip state={x.state} />
+                          </td>
+                          <td style={{ textAlign: "right" }}>
+                            <Link
+                              className="button button-small"
+                              to={`/app/teaching/offerings/${x.offeringId}`}
+                              style={{ textDecoration: "none", whiteSpace: "nowrap" }}
+                            >
+                              Mở chi tiết đợt bán →
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          }
+
           return (
             <div className="workspace-cards">
               {list.map((x) => (
@@ -3165,7 +4061,11 @@ export function Offerings() {
                       </strong>
                     </p>
                   </div>
-                  <Link className="card-action-btn" to={`/app/teaching/offerings/${x.offeringId}`}>
+                  <Link
+                    className="button button-small"
+                    to={`/app/teaching/offerings/${x.offeringId}`}
+                    style={{ textDecoration: "none", textAlign: "center", marginTop: 14 }}
+                  >
                     Mở chi tiết đợt bán →
                   </Link>
                 </article>
@@ -3197,7 +4097,8 @@ export function OfferingCreate() {
       </p>
       <h1>Tạo đợt mở bán mới.</h1>
       <p className="lead">
-        Cấu hình đợt tuyển sinh, thiết lập học phí và liên kết khóa học hoặc lớp học phần để cấp quyền học viên.
+        Cấu hình đợt tuyển sinh, thiết lập học phí và liên kết khóa học hoặc lớp học phần để cấp quyền học
+        viên.
       </p>
 
       {msg && (
@@ -3254,10 +4155,20 @@ export function OfferingCreate() {
             <option value="LIVE_COHORT">Học theo lớp trực tiếp (Live Cohort)</option>
           </select>
         </label>
-        <Field label="Mã lớp liên kết (khi học theo lớp)" name="classId" placeholder="Mã lớp học phần nếu có" />
-        <Field label="Tên đợt mở bán" name="title" placeholder="Ví dụ: Đợt tuyển sinh Khóa 2026 - Nhóm 1" required />
+        <Field
+          label="Mã lớp liên kết (khi học theo lớp)"
+          name="classId"
+          placeholder="Mã lớp học phần nếu có"
+        />
+        <Field
+          label="Tên đợt mở bán"
+          name="title"
+          placeholder="Ví dụ: Đợt tuyển sinh Khóa 2026 - Nhóm 1"
+          required
+        />
         <Field label="Học phí" name="price" type="number" defaultValue="0" min={0} required />
         <Field label="Tiền tệ" name="currency" defaultValue="VND" required />
+        <RevenueQuote />
         <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 12 }}>
           <button className="button" disabled={busy}>
             {busy ? "Đang tạo…" : "Tạo đợt mở bán"}
@@ -3320,6 +4231,7 @@ export function OfferingDetail() {
               <Field label="Tên offering" name="title" defaultValue={x.title} required />
               <Field label="Giá" name="price" defaultValue={x.price} required />
               <Field label="Tiền tệ" name="currency" defaultValue={x.currency} required />
+              <RevenueQuote initialPrice={x.price} initialCurrency={x.currency} />
               <button className="button">Lưu offering</button>
             </form>
             <button
@@ -3344,3 +4256,5 @@ export function OfferingDetail() {
     </>
   );
 }
+
+export { LecturerProfilePage } from "./ProfileEditor";

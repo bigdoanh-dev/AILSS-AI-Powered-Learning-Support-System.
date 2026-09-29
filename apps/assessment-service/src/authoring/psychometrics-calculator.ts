@@ -16,10 +16,7 @@ export interface StudentAttemptRecord {
 /**
  * Upper/Lower Discrimination D = P_upper - P_lower (Kelley's 27% upper/lower tails)
  */
-export function computeUpperLowerDiscrimination(
-  records: StudentAttemptRecord[],
-  total: number,
-) {
+export function computeUpperLowerDiscrimination(records: StudentAttemptRecord[], total: number) {
   const sorted = [...records].sort((a, b) => b.totalExamScore - a.totalExamScore);
   const upperSize = Math.max(1, Math.floor(total * 0.27));
   const upperGroup = sorted.slice(0, upperSize);
@@ -49,10 +46,7 @@ export function computeUpperLowerDiscrimination(
  * If var(y) == 0 (all correct / all incorrect) or var(X') == 0 (one-item assessment),
  * returns 0.0 safely without NaN leakage.
  */
-export function computePointBiserial(
-  records: StudentAttemptRecord[],
-  total: number,
-) {
+export function computePointBiserial(records: StudentAttemptRecord[], total: number) {
   if (total <= 1) {
     return {
       rPb: 0.0,
@@ -133,10 +127,7 @@ export function deriveAdvisoryFlags(
   distractorEfficiency: { isCorrect: boolean; isFunctioning: boolean }[],
 ) {
   const flags: (
-    | "LOW_DISCRIMINATION"
-    | "NEGATIVE_DISCRIMINATION"
-    | "EXTREME_DIFFICULTY"
-    | "NON_FUNCTIONING_DISTRACTOR"
+    "LOW_DISCRIMINATION" | "NEGATIVE_DISCRIMINATION" | "EXTREME_DIFFICULTY" | "NON_FUNCTIONING_DISTRACTOR"
   )[] = [];
 
   if (dValue < 0 || rPb < 0) {

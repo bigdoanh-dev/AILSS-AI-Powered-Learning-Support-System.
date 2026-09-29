@@ -65,14 +65,17 @@ export function mediaRouter(
     try {
       const c = await context(req, "learning.media.write");
       const body = captionUploadSchema.safeParse(req.body);
-      if (!body.success) throw new AppError("MEDIA_CAPTION_INVALID", 422, "Invalid WebVTT caption declaration");
+      if (!body.success)
+        throw new AppError("MEDIA_CAPTION_INVALID", 422, "Invalid WebVTT caption declaration");
       let key: string;
       try {
         key = validateIdempotencyKey(req.header("idempotency-key"));
       } catch {
         throw new AppError("INVALID_IDEMPOTENCY_KEY", 400, "Idempotency-Key required");
       }
-      res.status(201).json({ data: await service.uploadCaption(id(req.params.assetId), c.actor, body.data, key) });
+      res
+        .status(201)
+        .json({ data: await service.uploadCaption(id(req.params.assetId), c.actor, body.data, key) });
     } catch (e) {
       next(e);
     }

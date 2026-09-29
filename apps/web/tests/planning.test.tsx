@@ -38,6 +38,19 @@ it("keeps receipt visible until the user explicitly continues", () => {
   fireEvent.click(screen.getByRole("button", { name: "Tiếp tục" }));
   expect(done).toHaveBeenCalledTimes(1);
 });
+it("auto redirects on success when autoRedirect is explicitly enabled", () => {
+  vi.useFakeTimers();
+  const done = vi.fn();
+  render(
+    <OperationResult success autoRedirect redirectDelayMs={2200} title="Thành công" onComplete={done}>
+      Chuyển trang tự động.
+    </OperationResult>,
+  );
+  act(() => vi.advanceTimersByTime(2199));
+  expect(done).not.toHaveBeenCalled();
+  act(() => vi.advanceTimersByTime(1));
+  expect(done).toHaveBeenCalledTimes(1);
+});
 it("cancels navigation if the notification unmounts", () => {
   vi.useFakeTimers();
   const done = vi.fn();

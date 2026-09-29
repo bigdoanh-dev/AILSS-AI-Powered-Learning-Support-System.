@@ -39,7 +39,9 @@ const server = http.createServer(async (req, res) => {
         response.pipe(res);
       },
     );
-    upstream.setTimeout(req.url?.startsWith("/api/v1/assistant/chat") ? 60000 : 15000, () => upstream.destroy());
+    upstream.setTimeout(req.url?.startsWith("/api/v1/assistant/chat") ? 60000 : 15000, () =>
+      upstream.destroy(),
+    );
     upstream.on("error", () => {
       if (!res.headersSent) res.writeHead(502, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: { code: "GATEWAY_UNAVAILABLE" } }));
@@ -79,7 +81,8 @@ const server = http.createServer(async (req, res) => {
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "strict-origin-when-cross-origin",
       "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-      "Content-Security-Policy": `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://qr.sepay.vn; media-src 'self' ${contentOrigin}; frame-src 'self' ${contentOrigin} https://www.youtube-nocookie.com https://drive.google.com; connect-src 'self' ${contentOrigin}; object-src 'none'; base-uri 'self'; frame-ancestors 'none'`,
+      "Content-Security-Policy": `default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client https://appleid.cdn-apple.com; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; img-src 'self' data: https://qr.sepay.vn; media-src 'self' ${contentOrigin}; frame-src 'self' ${contentOrigin} https://www.youtube-nocookie.com https://drive.google.com https://accounts.google.com/gsi/ https://appleid.apple.com; connect-src 'self' ${contentOrigin} https://accounts.google.com/gsi/ https://appleid.apple.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'`,
+      "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
       "Cache-Control": /-[A-Za-z0-9_-]{8,}\.(js|css)$/.test(file)
         ? "public, max-age=31536000, immutable"
         : "no-cache",

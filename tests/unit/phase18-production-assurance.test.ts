@@ -28,6 +28,11 @@ describe("Phase 18D — Production Assurance & E2E Verification", () => {
       const entitlements = new Map<string, CourseEntitlement>();
 
       const repo: LearningCommerceRepository = {
+        commissionAt: async () => ({
+          basisPoints: 1500,
+          effectiveAt: "2026-09-27T00:00:00.000Z",
+          updatedBy: null,
+        }),
         order: (id: string) => Promise.resolve(orders.get(id) ?? null),
         course: (id: string) => Promise.resolve(courses.get(id) ?? null),
         entitlement: (studentId: string, courseId: string) =>
@@ -114,8 +119,8 @@ describe("Phase 18D — Production Assurance & E2E Verification", () => {
       });
 
       expect(paymentTx.balanced).toBe(true);
-      expect(paymentTx.entries.find((e) => e.entryType === "PLATFORM_COMMISSION")?.amount).toBe(500_000);
-      expect(paymentTx.entries.find((e) => e.entryType === "LECTURER_REVENUE")?.amount).toBe(2_000_000);
+      expect(paymentTx.entries.find((e) => e.entryType === "PLATFORM_COMMISSION")?.amount).toBe(375_000);
+      expect(paymentTx.entries.find((e) => e.entryType === "LECTURER_REVENUE")?.amount).toBe(2_125_000);
 
       // 2. Student requests refund
       const refund = await financeService.requestRefund({
@@ -283,7 +288,8 @@ describe("Phase 18D — Production Assurance & E2E Verification", () => {
           expect(sys).toContain("STUDENT_ADVISOR");
           expect(sys).toContain("DO NOT hallucinate nonexistent courses");
           return Promise.resolve({
-            content: "Dựa trên danh mục AILSS, khóa học Advanced Distributed Systems phù hợp với bạn với mức học phí 1,200,000 VND.",
+            content:
+              "Dựa trên danh mục AILSS, khóa học Advanced Distributed Systems phù hợp với bạn với mức học phí 1,200,000 VND.",
           });
         },
       };

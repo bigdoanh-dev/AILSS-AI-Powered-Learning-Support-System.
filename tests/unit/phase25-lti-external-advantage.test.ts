@@ -46,7 +46,9 @@ describe("Phase 25.18: LTI 1.3 Advantage External Interoperability", () => {
     };
 
     expect(launchClaims.iss).toBe("https://canvas.polytech.edu.vn");
-    expect(launchClaims["https://purl.imsglobal.org/spec/lti/claim/deployment_id"]).toBe("deployment-polytech-01");
+    expect(launchClaims["https://purl.imsglobal.org/spec/lti/claim/deployment_id"]).toBe(
+      "deployment-polytech-01",
+    );
     // Verify instructor role is present
     const isInstructor = launchClaims["https://purl.imsglobal.org/spec/lti/claim/roles"].some((r) =>
       r.includes("Instructor"),

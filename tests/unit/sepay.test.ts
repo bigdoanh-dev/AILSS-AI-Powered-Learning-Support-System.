@@ -344,18 +344,15 @@ it("HTTP revenue dashboard propagates the retryable fail-closed response", async
   const app = express();
   app.use(requestContextMiddleware(), express.json({ limit: "16kb" }));
   app.use(
-    learningCommerceRouter(
-      { revenueDashboard } as unknown as LearningCommerceService,
-      {
-        enroll: verify,
-        myCourses: verify,
-        roster: verify,
-        orderCreate: verify,
-        orderRead: verify,
-        payment: verify,
-        dashboardRevenue: verify,
-      },
-    ),
+    learningCommerceRouter({ revenueDashboard } as unknown as LearningCommerceService, {
+      enroll: verify,
+      myCourses: verify,
+      roster: verify,
+      orderCreate: verify,
+      orderRead: verify,
+      payment: verify,
+      dashboardRevenue: verify,
+    }),
   );
   app.use(errorMiddleware);
   const server = app.listen(0, "127.0.0.1");

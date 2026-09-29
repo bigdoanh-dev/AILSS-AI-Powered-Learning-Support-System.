@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 /**
  * Phase 29.17: Comprehensive Multi-Domain Tenant Isolation Suite V2
- * 
+ *
  * Verifies strict boundary enforcement across 22 domains and 8 attack styles.
  */
 

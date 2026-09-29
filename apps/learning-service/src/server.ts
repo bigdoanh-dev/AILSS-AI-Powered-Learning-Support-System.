@@ -43,7 +43,12 @@ import { LearningProgressRepository } from "./progress/repository.js";
 import { LearningProgressService } from "./progress/service.js";
 import { learningProgressRouter } from "./progress/router.js";
 import { learningAiContextRouter } from "./ai-context-router.js";
-import { CassandraFinanceRepository, LearningFinanceService, learningFinanceRouter, resolvePaymentProvider } from "./finance/index.js";
+import {
+  CassandraFinanceRepository,
+  LearningFinanceService,
+  learningFinanceRouter,
+  resolvePaymentProvider,
+} from "./finance/index.js";
 import { AdaptiveRuntimeRepository } from "./adaptive/runtime-repository.js";
 import { adaptiveRuntimeRouter } from "./adaptive/runtime-router.js";
 import { MasteryIngestionRepository } from "./adaptive/mastery-ingestion-repository.js";
@@ -76,7 +81,12 @@ const manifest: ServiceManifest = {
     "system.projection.reconcile.v1",
     "system.audit.requested.v1",
   ],
-  consumedQueues: ["learning.entitlement.fulfill.q", "assessment.quiz.submitted.mastery.q", "assessment.quiz.graded.mastery.q", "learning.lesson.completed.mastery.q"],
+  consumedQueues: [
+    "learning.entitlement.fulfill.q",
+    "assessment.quiz.submitted.mastery.q",
+    "assessment.quiz.graded.mastery.q",
+    "learning.lesson.completed.mastery.q",
+  ],
 };
 await startService(manifest, {
   configure: async (app, config, context) => {
@@ -198,19 +208,34 @@ await startService(manifest, {
         clockToleranceSeconds: config.JWT_CLOCK_SKEW_SECONDS,
       });
     const mediaSettings = mediaRuntime(config);
-    const mediaReferences = new MediaReferences(new CassandraMediaRepository(cassandra),new LearningLessonRepository(cassandra),config.PLATFORM_TENANT_ID);
-    const mediaQuota = mediaSettings ? new MediaQuota(new CassandraQuotaStore(cassandra), mediaSettings.quotaLimits) : undefined;
-    const mediaMetrics = mediaQuota ? createMediaMetrics(context.metrics.registry, () => mediaQuota.snapshot(config.PLATFORM_TENANT_ID)) : undefined;
-    const media = mediaSettings ? new MediaService(
-      new CassandraMediaRepository(cassandra), new LearningLessonRepository(cassandra),
-      mediaSettings.storage, async (studentId, courseId) => (await commerceRepository.entitlement(studentId,courseId))?.state === "ACTIVE",
-      config.PLATFORM_TENANT_ID, mediaSettings.secret, mediaSettings.policy,
-      (userId,requestId) => identity.get(userId,requestId),
-      mediaMetrics?.event,
-      mediaQuota,
-      (bytes) => mediaMetrics?.uploadBytes.inc(bytes),
-    ) : undefined;
-    if(media) app.use(mediaRouter(media,(token,purpose)=>verifier(purpose)(token)));
+    const mediaReferences = new MediaReferences(
+      new CassandraMediaRepository(cassandra),
+      new LearningLessonRepository(cassandra),
+      config.PLATFORM_TENANT_ID,
+    );
+    const mediaQuota = mediaSettings
+      ? new MediaQuota(new CassandraQuotaStore(cassandra), mediaSettings.quotaLimits)
+      : undefined;
+    const mediaMetrics = mediaQuota
+      ? createMediaMetrics(context.metrics.registry, () => mediaQuota.snapshot(config.PLATFORM_TENANT_ID))
+      : undefined;
+    const media = mediaSettings
+      ? new MediaService(
+          new CassandraMediaRepository(cassandra),
+          new LearningLessonRepository(cassandra),
+          mediaSettings.storage,
+          async (studentId, courseId) =>
+            (await commerceRepository.entitlement(studentId, courseId))?.state === "ACTIVE",
+          config.PLATFORM_TENANT_ID,
+          mediaSettings.secret,
+          mediaSettings.policy,
+          (userId, requestId) => identity.get(userId, requestId),
+          mediaMetrics?.event,
+          mediaQuota,
+          (bytes) => mediaMetrics?.uploadBytes.inc(bytes),
+        )
+      : undefined;
+    if (media) app.use(mediaRouter(media, (token, purpose) => verifier(purpose)(token)));
     app.use(
       learningAuthoringRouter(
         authoring,
@@ -230,7 +255,7 @@ await startService(manifest, {
       identity,
       (input) => adminProof.verify(input),
       config.LEARNING_CURSOR_HMAC_KEY,
-      (courseId,contentVersion) => mediaReferences.requireReady(courseId,contentVersion),
+      (courseId, contentVersion) => mediaReferences.requireReady(courseId, contentVersion),
     );
     app.use(
       learningLifecycleRouter(
@@ -310,6 +335,11 @@ await startService(manifest, {
         orderRead: verifier("learning.order.read"),
         payment: verifier("learning.order.payment"),
         dashboardRevenue: verifier("learning.admin.dashboard.revenue"),
+        lecturerRevenue: verifier("learning.lecturer.dashboard.revenue"),
+        payoutAccount: verifier("learning.lecturer.payout-account"),
+        adminPayouts: verifier("learning.admin.payouts"),
+        commissionRead: verifier("learning.lecturer.commission"),
+        commissionAdmin: verifier("learning.admin.commission"),
       }),
     );
     const finance = new LearningFinanceService({
@@ -340,33 +370,32 @@ await startService(manifest, {
       config.SERVICE_TOKEN_KID,
       config.INTERNAL_HTTP_TIMEOUT_MS,
     );
+    app.use(adaptiveRuntimeRouter(adaptiveRepository, verifier("learning.adaptive.student"), planContext));
     app.use(
-      adaptiveRuntimeRouter(
+      adaptiveInternalRouter(
         adaptiveRepository,
-        verifier("learning.adaptive.student"),
-        planContext,
-      ),
-    );
-    app.use(
-      adaptiveInternalRouter(adaptiveRepository, (token) =>
-        verifyServiceToken(token, aiServiceKey, {
-          issuer: config.SERVICE_TOKEN_ISSUER,
-          audience: "learning-service",
-          purpose: "learning.adaptive.ai.read",
-          kid: config.AI_SERVICE_TOKEN_KID,
-        }), async (studentId, courseId) => (await commerceRepository.entitlement(studentId, courseId))?.state === "ACTIVE",
+        (token) =>
+          verifyServiceToken(token, aiServiceKey, {
+            issuer: config.SERVICE_TOKEN_ISSUER,
+            audience: "learning-service",
+            purpose: "learning.adaptive.ai.read",
+            kid: config.AI_SERVICE_TOKEN_KID,
+          }),
+        async (studentId, courseId) =>
+          (await commerceRepository.entitlement(studentId, courseId))?.state === "ACTIVE",
       ),
     );
     app.use(
       learningMaterialsInternalRouter(
         new LearningLessonRepository(context.cassandra),
         objectStorage,
-        (token) => verifyServiceToken(token, aiServiceKey, {
-          issuer: config.SERVICE_TOKEN_ISSUER,
-          audience: "learning-service",
-          purpose: "learning.materials.read",
-          kid: config.AI_SERVICE_TOKEN_KID,
-        }),
+        (token) =>
+          verifyServiceToken(token, aiServiceKey, {
+            issuer: config.SERVICE_TOKEN_ISSUER,
+            audience: "learning-service",
+            purpose: "learning.materials.read",
+            kid: config.AI_SERVICE_TOKEN_KID,
+          }),
         async (studentId, courseId) =>
           (await commerceRepository.entitlement(studentId, courseId))?.state === "ACTIVE",
       ),
@@ -396,7 +425,14 @@ await startService(manifest, {
       : undefined;
     await fulfillment?.start();
     const masteryConsumer = config.ENABLE_RABBITMQ
-      ? new MasteryRecalculationConsumer(authenticatedRabbitUrl(config), new MasteryIngestionRepository(context.cassandra), new AdaptiveRuntimeRepository(context.cassandra), context.logger, context.metrics, planContext)
+      ? new MasteryRecalculationConsumer(
+          authenticatedRabbitUrl(config),
+          new MasteryIngestionRepository(context.cassandra),
+          new AdaptiveRuntimeRepository(context.cassandra),
+          context.logger,
+          context.metrics,
+          planContext,
+        )
       : undefined;
     await masteryConsumer?.start();
     return async () => {

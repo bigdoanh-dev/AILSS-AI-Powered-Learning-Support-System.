@@ -70,7 +70,8 @@ export class AITutorEvaluatorV3 {
         confidenceScore: 0.45,
         classification: "WRONG_SECTION",
         shouldAbstain: false,
-        remediationAction: "Qualify response: refer learner to overarching chapter rather than specific subsection.",
+        remediationAction:
+          "Qualify response: refer learner to overarching chapter rather than specific subsection.",
       };
     }
     if (citation.isStale) {

@@ -4,7 +4,9 @@ export interface SearchIndexRepository {
   index(document: SearchDocument): Promise<void>;
   delete(id: string): Promise<void>;
   findDocument(id: string): Promise<SearchDocument | null>;
-  search(query: SearchQueryInput): Promise<readonly { document: SearchDocument; score: number; snippet: string }[]>;
+  search(
+    query: SearchQueryInput,
+  ): Promise<readonly { document: SearchDocument; score: number; snippet: string }[]>;
 }
 
 export class InMemorySearchIndexRepository implements SearchIndexRepository {
@@ -24,8 +26,13 @@ export class InMemorySearchIndexRepository implements SearchIndexRepository {
     return Promise.resolve(this.#docs.get(id) ?? null);
   }
 
-  public search(query: SearchQueryInput): Promise<readonly { document: SearchDocument; score: number; snippet: string }[]> {
-    const rawTokens = query.query.toLowerCase().split(/\s+/u).filter((t) => t.length > 1);
+  public search(
+    query: SearchQueryInput,
+  ): Promise<readonly { document: SearchDocument; score: number; snippet: string }[]> {
+    const rawTokens = query.query
+      .toLowerCase()
+      .split(/\s+/u)
+      .filter((t) => t.length > 1);
     const results: { document: SearchDocument; score: number; snippet: string }[] = [];
 
     for (const doc of this.#docs.values()) {
@@ -66,7 +73,10 @@ export class InMemorySearchIndexRepository implements SearchIndexRepository {
           if (matchIdx !== -1) {
             const start = Math.max(0, matchIdx - 40);
             const end = Math.min(doc.content.length, matchIdx + 120);
-            snippet = (start > 0 ? "..." : "") + doc.content.slice(start, end) + (end < doc.content.length ? "..." : "");
+            snippet =
+              (start > 0 ? "..." : "") +
+              doc.content.slice(start, end) +
+              (end < doc.content.length ? "..." : "");
           }
         }
 

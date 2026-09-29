@@ -71,7 +71,9 @@ describe("Phase 19I/J — Finance Policy Hardening, Payout State Machine & Recon
       expect(paymentTx.balanced).toBe(true);
 
       const cashEntry = paymentTx.entries.find((e) => e.accountId === "00000000-0000-4000-8000-000000000001");
-      const platformEntry = paymentTx.entries.find((e) => e.accountId === "00000000-0000-4000-8000-000000000002");
+      const platformEntry = paymentTx.entries.find(
+        (e) => e.accountId === "00000000-0000-4000-8000-000000000002",
+      );
       const lecturerEntry = paymentTx.entries.find((e) => e.accountId === lecturerActor.userId);
 
       expect(cashEntry).toBeDefined();
@@ -116,7 +118,7 @@ describe("Phase 19I/J — Finance Policy Hardening, Payout State Machine & Recon
       });
 
       expect(createdBatch.status).toBe("CREATED");
-      expect(createdBatch.totalAmount).toBe(4_000_000); // 80% of 5,000,000
+      expect(createdBatch.totalAmount).toBe(4_250_000); // 85% of 5,000,000
       expect(createdBatch.settledAt).toBeUndefined();
 
       // Attempting to submit without approval must fail

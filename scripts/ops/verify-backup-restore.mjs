@@ -32,7 +32,8 @@ const backupPlan = {
       originalAssets: {
         prefix: "media-original/",
         versioning: "ENABLED",
-        lifecycle: "Retain current version indefinitely; transition noncurrent versions to Glacier/Archive after 90 days; delete noncurrent after 365 days",
+        lifecycle:
+          "Retain current version indefinitely; transition noncurrent versions to Glacier/Archive after 90 days; delete noncurrent after 365 days",
         reproducibility: "CRITICAL (Irreplaceable source bytes)",
       },
       derivedHls: {

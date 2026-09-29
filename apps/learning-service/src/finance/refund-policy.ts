@@ -25,12 +25,15 @@ export interface FinancePolicyConfig {
 }
 
 export const DEFAULT_FINANCE_POLICY: FinancePolicyConfig = {
-  policyVersion: 1,
+  policyVersion: 2,
   maxRefundDays: 7,
   maxProgressPercentForRefund: 20.0,
-  platformFeeBasisPoints: 2000,
-  lecturerShareBasisPoints: 8000,
+  platformFeeBasisPoints: 1500,
+  lecturerShareBasisPoints: 8500,
 };
+export function platformFeeBasisPointsAt(paidAt: Date): number {
+  return paidAt.getTime() >= Date.UTC(2026, 8, 27) ? 1500 : 2000;
+}
 
 export class FinancePolicyRegistry {
   private readonly versions = new Map<number, FinancePolicyVersion>();
@@ -44,10 +47,21 @@ export class FinancePolicyRegistry {
       this.registerVersion({
         policyVersion: 1,
         effectiveFrom: new Date("2026-01-01T00:00:00Z"),
+        effectiveTo: new Date("2026-09-27T00:00:00Z"),
         refundWindowDays: 7,
         maxProgressBasisPoints: 2000,
         lecturerRevenueBasisPoints: 8000,
         platformRevenueBasisPoints: 2000,
+        currencyRules: [{ currency: "VND", allowFractional: false, minimumAmountMinor: 10000 }],
+        status: "ACTIVE",
+      });
+      this.registerVersion({
+        policyVersion: 2,
+        effectiveFrom: new Date("2026-09-27T00:00:00Z"),
+        refundWindowDays: 7,
+        maxProgressBasisPoints: 2000,
+        lecturerRevenueBasisPoints: 8500,
+        platformRevenueBasisPoints: 1500,
         currencyRules: [{ currency: "VND", allowFractional: false, minimumAmountMinor: 10000 }],
         status: "ACTIVE",
       });
@@ -64,7 +78,10 @@ export class FinancePolicyRegistry {
 
   public getActiveVersion(atDate: Date = new Date()): FinancePolicyVersion {
     const active = Array.from(this.versions.values())
-      .filter((v) => v.status === "ACTIVE" && v.effectiveFrom <= atDate && (!v.effectiveTo || v.effectiveTo > atDate))
+      .filter(
+        (v) =>
+          v.status === "ACTIVE" && v.effectiveFrom <= atDate && (!v.effectiveTo || v.effectiveTo > atDate),
+      )
       .sort((a, b) => b.policyVersion - a.policyVersion);
 
     const latest = active[0];

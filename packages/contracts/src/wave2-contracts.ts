@@ -30,13 +30,15 @@ export interface TodayViewData {
   studentId: string;
   tenantId: string;
   date: string; // YYYY-MM-DD
-  continueLearningItem?: {
-    courseId: string;
-    courseTitle: string;
-    lessonId: string;
-    lessonTitle: string;
-    progressPercent: number;
-  } | undefined;
+  continueLearningItem?:
+    | {
+        courseId: string;
+        courseTitle: string;
+        lessonId: string;
+        lessonTitle: string;
+        progressPercent: number;
+      }
+    | undefined;
   dueItems: {
     id: string;
     type: "ASSESSMENT" | "PRACTICE" | "SURVEY";
@@ -72,13 +74,7 @@ export interface TodayViewData {
 // ============================================================================
 // 40.29 - 40.33: Curriculum & Course Authoring Studio V2 Contracts
 // ============================================================================
-export const ContentLifecycleStateEnum = z.enum([
-  "DRAFT",
-  "IN_REVIEW",
-  "APPROVED",
-  "PUBLISHED",
-  "ARCHIVED",
-]);
+export const ContentLifecycleStateEnum = z.enum(["DRAFT", "IN_REVIEW", "APPROVED", "PUBLISHED", "ARCHIVED"]);
 export type ContentLifecycleState = z.infer<typeof ContentLifecycleStateEnum>;
 
 export interface CourseModuleV2 {
@@ -116,11 +112,7 @@ export interface AiAuthoringDraftRequest {
   lessonId?: string | undefined;
   learningOutcomeId: string;
   draftType:
-    | "LESSON_OUTLINE"
-    | "SUMMARY"
-    | "PRACTICE_ACTIVITY"
-    | "QUESTION_SUGGESTIONS"
-    | "OUTCOME_SUGGESTIONS";
+    "LESSON_OUTLINE" | "SUMMARY" | "PRACTICE_ACTIVITY" | "QUESTION_SUGGESTIONS" | "OUTCOME_SUGGESTIONS";
   sourceMaterialReferences: {
     documentId: string;
     documentTitle: string;
@@ -143,12 +135,7 @@ export interface AiAuthoringDraftResponse {
 // ============================================================================
 // 40.34 - 40.37: Assessment Authoring V2 Contracts
 // ============================================================================
-export const QuestionQualityStatusEnum = z.enum([
-  "DRAFT",
-  "REVIEW_REQUIRED",
-  "APPROVED",
-  "RETIRED",
-]);
+export const QuestionQualityStatusEnum = z.enum(["DRAFT", "REVIEW_REQUIRED", "APPROVED", "RETIRED"]);
 export type QuestionQualityStatus = z.infer<typeof QuestionQualityStatusEnum>;
 
 export interface QuestionBankItemV2 {
@@ -243,10 +230,7 @@ export interface ItemAnalysisMetrics {
   optionSelectionDistribution: Record<string, number>;
   // Advisory review rules (advisory only, never auto-delete)
   advisoryFlags: (
-    | "LOW_DISCRIMINATION"
-    | "NEGATIVE_DISCRIMINATION"
-    | "EXTREME_DIFFICULTY"
-    | "NON_FUNCTIONING_DISTRACTOR"
+    "LOW_DISCRIMINATION" | "NEGATIVE_DISCRIMINATION" | "EXTREME_DIFFICULTY" | "NON_FUNCTIONING_DISTRACTOR"
   )[];
   reviewVerdict: "NORMAL" | "REVIEW_RECOMMENDED" | "INSUFFICIENT_SAMPLE";
   commonMisconceptionsDetected: string[];
@@ -360,10 +344,7 @@ export interface ExperimentDefinition {
   name: string;
   hypothesis: string;
   experimentDomain:
-    | "RECOMMENDATION_RANKING"
-    | "STUDY_PLAN_UI"
-    | "TUTOR_PEDAGOGICAL_MODES"
-    | "NOTIFICATION_TIMING";
+    "RECOMMENDATION_RANKING" | "STUDY_PLAN_UI" | "TUTOR_PEDAGOGICAL_MODES" | "NOTIFICATION_TIMING";
   variants: ("CONTROL" | "TREATMENT_A" | "TREATMENT_B")[];
   tenantAllowlist: string[];
   startDate: string;

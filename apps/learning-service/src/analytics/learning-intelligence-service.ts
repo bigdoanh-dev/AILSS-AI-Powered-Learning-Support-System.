@@ -44,9 +44,7 @@ export class LearningIntelligenceService {
 
       const avgAssessment =
         input.assessmentScores.length > 0
-          ? Math.round(
-              input.assessmentScores.reduce((a, b) => a + b, 0) / input.assessmentScores.length,
-            )
+          ? Math.round(input.assessmentScores.reduce((a, b) => a + b, 0) / input.assessmentScores.length)
           : 0;
 
       return {
@@ -78,9 +76,7 @@ export class LearningIntelligenceService {
     return input.outcomes.map((o) => {
       const proficientCount = o.studentScores.filter((s) => s >= 75).length;
       const attainmentPercent =
-        o.studentScores.length > 0
-          ? Math.round((proficientCount / o.studentScores.length) * 100)
-          : 0;
+        o.studentScores.length > 0 ? Math.round((proficientCount / o.studentScores.length) * 100) : 0;
       const isCurriculumGap = o.studentScores.length === 0 || attainmentPercent < 50;
 
       return {
@@ -99,7 +95,10 @@ export class LearningIntelligenceService {
   /**
    * Evaluates if a query attempts a singling-out / reconstruction attack against small cohorts
    */
-  public evaluateSinglingOutRisk(cohortSize: number, predicatesCount: number): {
+  public evaluateSinglingOutRisk(
+    cohortSize: number,
+    predicatesCount: number,
+  ): {
     isVulnerableToSinglingOut: boolean;
     recommendedAction: "ALLOW" | "SUPPRESS" | "APPLY_DP_NOISE";
   } {
@@ -125,7 +124,9 @@ export class LearningIntelligenceService {
     remainingBudget: number,
   ): DifferentialPrivacyResult<number> {
     if (remainingBudget < config.epsilon) {
-      throw new Error(`Insufficient differential privacy budget: required ${String(config.epsilon)}, available ${String(remainingBudget)}`);
+      throw new Error(
+        `Insufficient differential privacy budget: required ${String(config.epsilon)}, available ${String(remainingBudget)}`,
+      );
     }
 
     const noise = LaplaceNoiseMechanism.sample(config.sensitivity, config.epsilon);
@@ -154,9 +155,7 @@ export class LearningIntelligenceService {
     auditRecord: AnalyticsExportAuditRecord;
   } {
     if (policy.tenantIsolation && dataset.length > 0) {
-      const crossTenant = dataset.some(
-        (row) => "tenantId" in row && row["tenantId"] !== context.tenantId,
-      );
+      const crossTenant = dataset.some((row) => "tenantId" in row && row["tenantId"] !== context.tenantId);
       if (crossTenant) {
         throw new Error("Cross-tenant analytics export rejected by tenant isolation policy");
       }

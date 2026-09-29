@@ -142,7 +142,7 @@ describe("Production Startup Guard (P1)", () => {
 
     const result = validateProductionSecrets(shortSecrets, { isProduction: true, minSecretLength: 16 });
     expect(result.valid).toBe(false);
-    expect(result.violations[0]).toContain('does not meet minimum length requirement (16 characters)');
+    expect(result.violations[0]).toContain("does not meet minimum length requirement (16 characters)");
   });
 
   it("approves strong, high-entropy secrets in production", () => {
@@ -157,6 +157,8 @@ describe("Production Startup Guard (P1)", () => {
     expect(result.valid).toBe(true);
     expect(result.violations).toHaveLength(0);
 
-    expect(() => assertProductionSecretsSafe(strongSecrets, { isProduction: true, minSecretLength: 16 })).not.toThrow();
+    expect(() =>
+      assertProductionSecretsSafe(strongSecrets, { isProduction: true, minSecretLength: 16 }),
+    ).not.toThrow();
   });
 });

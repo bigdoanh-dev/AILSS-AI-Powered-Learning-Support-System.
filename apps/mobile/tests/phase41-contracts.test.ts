@@ -85,11 +85,22 @@ describe("Phase 41 mobile DTO parity", () => {
     });
     expect(reply.catalogCourses).toHaveLength(3);
     expect(reply.catalogCourses[0]).toEqual({
-      courseId: "course-0", title: "Khóa 0", priceAmount: 450000, priceCurrency: "VND",
+      courseId: "course-0",
+      title: "Khóa 0",
+      priceAmount: 450000,
+      priceCurrency: "VND",
     });
-    expect(tutorReply({ conversationId: "another", content: "Chưa có kết quả", citations: [] }).catalogCourses).toEqual([]);
-    expect(() => tutorReply({ conversationId: "invalid", content: "x", citations: [], catalogCourses: [{ title: "Không có giá" }] }))
-      .toThrow(ApiError);
+    expect(
+      tutorReply({ conversationId: "another", content: "Chưa có kết quả", citations: [] }).catalogCourses,
+    ).toEqual([]);
+    expect(() =>
+      tutorReply({
+        conversationId: "invalid",
+        content: "x",
+        citations: [],
+        catalogCourses: [{ title: "Không có giá" }],
+      }),
+    ).toThrow(ApiError);
   });
 
   it("accepts an authoritative no-result Tutor response without inventing citations", async () => {
@@ -125,14 +136,17 @@ describe("Phase 41 mobile DTO parity", () => {
     expect(sentBody).not.toHaveProperty("courseId");
   });
 
-  it.each([403, 429, 503])("propagates Tutor backend failure %i without creating a response", async (status) => {
-    const request = async () => {
-      throw new ApiError("backend failure", status);
-    };
-    await expect(
-      askTutor({ request }, { message: "Explain this", signal: new AbortController().signal }),
-    ).rejects.toMatchObject({ status });
-  });
+  it.each([403, 429, 503])(
+    "propagates Tutor backend failure %i without creating a response",
+    async (status) => {
+      const request = async () => {
+        throw new ApiError("backend failure", status);
+      };
+      await expect(
+        askTutor({ request }, { message: "Explain this", signal: new AbortController().signal }),
+      ).rejects.toMatchObject({ status });
+    },
+  );
 
   it("passes cancellation to the live Tutor request and preserves abort failure", async () => {
     const controller = new AbortController();

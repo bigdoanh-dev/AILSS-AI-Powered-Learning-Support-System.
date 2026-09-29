@@ -4,6 +4,7 @@ import type { Logger } from "pino";
 import {
   verifyAppleIdToken,
   verifyGoogleIdToken,
+  SocialAuthError,
   type SocialProvider,
   type SocialVerificationConfig,
   type VerifiedSocialIdentity,
@@ -12,10 +13,7 @@ import type { LoginSession } from "../login/model.js";
 import type { IdentityLoginStore } from "../login/service.js";
 import { newLoginIdentifiers, SESSION_INITIAL_STATE } from "../login/model.js";
 import { newRefreshCredential } from "../login/tokens.js";
-import type {
-  SocialLoginResult,
-  UserIdentitiesSummary,
-} from "./model.js";
+import type { SocialLoginResult, UserIdentitiesSummary } from "./model.js";
 import type { IdentityExternalAuthRepository, StoredUser } from "./repository.js";
 
 export interface IdentityExternalAuthServiceOptions {
@@ -61,10 +59,21 @@ export class IdentityExternalAuthService {
     idToken: string,
     clientProfile?: { readonly firstName?: string; readonly lastName?: string },
   ): Promise<VerifiedSocialIdentity> {
-    if (provider === "GOOGLE") {
-      return verifyGoogleIdToken(idToken, this.#verificationConfig);
+    try {
+      if (provider === "GOOGLE") {
+        return await verifyGoogleIdToken(idToken, this.#verificationConfig);
+      }
+      return await verifyAppleIdToken(idToken, this.#verificationConfig, clientProfile);
+    } catch (error) {
+      if (!(error instanceof SocialAuthError)) throw error;
+      const notConfigured = error.code === "PROVIDER_NOT_CONFIGURED";
+      throw new AppError(
+        notConfigured ? "SOCIAL_PROVIDER_NOT_CONFIGURED" : error.code,
+        notConfigured ? 503 : 401,
+        error.message,
+        notConfigured,
+      );
     }
-    return verifyAppleIdToken(idToken, this.#verificationConfig, clientProfile);
   }
 
   public async socialLogin(

@@ -40,6 +40,103 @@ export class LearningCommerceService {
     return this.repo.revenueDashboard(range);
   }
 
+  async lecturerRevenueDashboard(actor: ActorContext, range: string) {
+    if (!actor.roles.includes("LECTURER"))
+      throw new AppError("LECTURER_REQUIRED", 403, "Lecturer authorization is required");
+    if (range !== "today" && range !== "7d" && range !== "30d")
+      throw new AppError("INVALID_REVENUE_RANGE", 422, "Revenue range must be today, 7d, or 30d");
+    const report = await this.repo.revenueDashboard(range);
+    return {
+      dataSource: report.dataSource,
+      range: report.range,
+      currency: report.currency,
+      lecturer: report.lecturers.find((item) => item.lecturerId === actor.userId) ?? {
+        lecturerId: actor.userId,
+        grossMinor: "0",
+        refundMinor: "0",
+        netMinor: "0",
+        estimatedPlatformMinor: "0",
+        estimatedEarningsMinor: "0",
+        orders: 0,
+        courses: [],
+      },
+      completeness: report.completeness,
+    };
+  }
+
+  async commission(actor: ActorContext) {
+    if (!actor.roles.includes("ADMIN") && !actor.roles.includes("LECTURER"))
+      throw new AppError("COMMISSION_ROLE_REQUIRED", 403, "Admin or lecturer authorization is required");
+    return this.repo.currentCommission();
+  }
+
+  async changeCommission(actor: ActorContext, basisPoints: number, expectedEffectiveAt: string) {
+    if (!actor.roles.includes("ADMIN"))
+      throw new AppError("ADMIN_REQUIRED", 403, "Admin authorization is required");
+    return this.repo.changeCommission(basisPoints, actor.userId, expectedEffectiveAt);
+  }
+
+  async payoutAccount(actor: ActorContext) {
+    if (!actor.roles.includes("LECTURER")) throw new AppError("LECTURER_REQUIRED", 403, "Lecturer required");
+    return this.repo.payoutAccount(actor.userId);
+  }
+
+  async savePayoutAccount(
+    actor: ActorContext,
+    input: { bankName: string; accountNumber: string; accountHolder: string },
+  ) {
+    if (!actor.roles.includes("LECTURER")) throw new AppError("LECTURER_REQUIRED", 403, "Lecturer required");
+    return this.repo.savePayoutAccount(actor.userId, input);
+  }
+
+  async payoutInstructions(actor: ActorContext) {
+    if (!actor.roles.includes("ADMIN")) throw new AppError("ADMIN_REQUIRED", 403, "Admin required");
+    const month = previousMonth();
+    const report = await this.repo.revenueDashboard("previousMonth");
+    const candidates = await Promise.all(
+      report.lecturers.map(async (item) => ({
+        lecturerId: item.lecturerId,
+        estimatedEarningsMinor: item.estimatedEarningsMinor,
+        accountConfigured: !!(await this.repo.payoutAccount(item.lecturerId)),
+      })),
+    );
+    return {
+      month,
+      canPrepare: new Date().getUTCDate() > 7,
+      candidates,
+      instructions: await this.repo.payoutInstructions(month),
+    };
+  }
+
+  async preparePayouts(actor: ActorContext, lecturerId?: string) {
+    if (!actor.roles.includes("ADMIN")) throw new AppError("ADMIN_REQUIRED", 403, "Admin required");
+    if (new Date().getUTCDate() <= 7)
+      throw new AppError(
+        "PAYOUT_REFUND_WINDOW_OPEN",
+        409,
+        "Previous month payout can be prepared after the refund window closes",
+      );
+    const month = previousMonth();
+    const report = await this.repo.revenueDashboard("previousMonth");
+    const selected = lecturerId
+      ? report.lecturers.filter((item) => item.lecturerId === lecturerId)
+      : report.lecturers;
+    const skipped: Array<{ lecturerId: string; reason: string }> = [];
+    for (const item of selected) {
+      if (BigInt(item.estimatedEarningsMinor) <= 0n) {
+        skipped.push({ lecturerId: item.lecturerId, reason: "NO_POSITIVE_BALANCE" });
+        continue;
+      }
+      const account = await this.repo.payoutAccount(item.lecturerId);
+      if (!account) {
+        skipped.push({ lecturerId: item.lecturerId, reason: "PAYOUT_ACCOUNT_MISSING" });
+        continue;
+      }
+      await this.repo.preparePayoutInstruction(month, item.lecturerId, item.estimatedEarningsMinor, account);
+    }
+    return { month, instructions: await this.repo.payoutInstructions(month), skipped };
+  }
+
   async freeEnroll(input: { courseId: string; actor: ActorContext; key: string; correlationId: string }) {
     student(input.actor);
     const offeringId = defaultOfferingId(input.courseId),
@@ -313,10 +410,7 @@ export class LearningCommerceService {
     if (typeof this.recovery.get === "function") {
       const existing = await this.recovery.get(String(transaction.id));
       if (existing) {
-        if (
-          existing.orderId !== orderId ||
-          existing.amount !== transaction.transferAmount
-        ) {
+        if (existing.orderId !== orderId || existing.amount !== transaction.transferAmount) {
           console.warn(
             JSON.stringify({
               eventType: "APPSEC_AUDIT_PAYLOAD_COLLISION",
@@ -876,4 +970,7 @@ function unavailable() {
     "Learning command is temporarily unavailable",
     true,
   );
+}
+function previousMonth(now = new Date()) {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
 }

@@ -144,7 +144,11 @@ describe("Phase 34.5 - 34.10: Critical-Write Durability Implementation & Raw Fai
       localLatencies.push(d2Res.executionLatencyMs);
 
       // D0 Synchronous secondary commit write (with simulated 26ms cross-region network lag)
-      const d0Res = await coordinator.executeWrite("ASSESSMENT_SUBMIT", { id: `assess-${i}`, answer: i }, { latencyOffsetMs: 26 });
+      const d0Res = await coordinator.executeWrite(
+        "ASSESSMENT_SUBMIT",
+        { id: `assess-${i}`, answer: i },
+        { latencyOffsetMs: 26 },
+      );
       d0Latencies.push(d0Res.executionLatencyMs);
     }
 

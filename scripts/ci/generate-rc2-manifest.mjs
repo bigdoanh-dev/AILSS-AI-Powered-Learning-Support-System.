@@ -82,29 +82,146 @@ async function main() {
 
   // 2. Web suites (17 vitest + 6 node:test = 23 suites)
   const webFiles = [
-    { path: "apps/web/server/admin.test.mjs", count: 5, runner: "node:test", reason: "Explicitly listed in apps/web test script (Admin moderation and governance BFF allowlist tests)" },
-    { path: "apps/web/server/lecturer.test.mjs", count: 6, runner: "node:test", reason: "Explicitly listed in apps/web test script (Lecturer allowlist and attendance forwarding tests)" },
-    { path: "apps/web/server/local-library.test.mjs", count: 4, runner: "node:test", reason: "Explicitly listed in apps/web test script (Video range requests and local media tests)" },
-    { path: "apps/web/server/realtime.test.mjs", count: 3, runner: "node:test", reason: "Explicitly listed in apps/web test script (WebSocket and realtime AI proxy tests)" },
-    { path: "apps/web/server/session.test.mjs", count: 11, runner: "node:test", reason: "Explicitly listed in apps/web test script (Session authentication and CSRF token tests)" },
-    { path: "apps/web/server/student-commerce.test.mjs", count: 5, runner: "node:test", reason: "Explicitly listed in apps/web test script (Student commerce allowlist and simulation tests)" },
-    { path: "apps/web/tests/admin-dashboards.test.tsx", count: 5, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/ai-distribution.test.tsx", count: 1, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/ai-usage.test.tsx", count: 2, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/attendance.test.tsx", count: 2, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/dark-mode.test.tsx", count: 3, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/e2e-browser-journeys.test.tsx", count: 5, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx) - Phase 40 E2E Journeys" },
-    { path: "apps/web/tests/i18n.test.tsx", count: 4, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/motion-auth.test.tsx", count: 7, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/navigation-theme.test.tsx", count: 5, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/planning.test.tsx", count: 5, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/product.test.tsx", count: 1, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/public.test.tsx", count: 13, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/session-hydration.test.tsx", count: 1, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/session.test.tsx", count: 6, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/student-marketplace.test.tsx", count: 3, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/student-progress.test.tsx", count: 4, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
-    { path: "apps/web/tests/student.test.tsx", count: 14, runner: "vitest", reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)" },
+    {
+      path: "apps/web/server/admin.test.mjs",
+      count: 5,
+      runner: "node:test",
+      reason:
+        "Explicitly listed in apps/web test script (Admin moderation and governance BFF allowlist tests)",
+    },
+    {
+      path: "apps/web/server/lecturer.test.mjs",
+      count: 6,
+      runner: "node:test",
+      reason:
+        "Explicitly listed in apps/web test script (Lecturer allowlist and attendance forwarding tests)",
+    },
+    {
+      path: "apps/web/server/local-library.test.mjs",
+      count: 4,
+      runner: "node:test",
+      reason: "Explicitly listed in apps/web test script (Video range requests and local media tests)",
+    },
+    {
+      path: "apps/web/server/realtime.test.mjs",
+      count: 3,
+      runner: "node:test",
+      reason: "Explicitly listed in apps/web test script (WebSocket and realtime AI proxy tests)",
+    },
+    {
+      path: "apps/web/server/session.test.mjs",
+      count: 11,
+      runner: "node:test",
+      reason: "Explicitly listed in apps/web test script (Session authentication and CSRF token tests)",
+    },
+    {
+      path: "apps/web/server/student-commerce.test.mjs",
+      count: 5,
+      runner: "node:test",
+      reason: "Explicitly listed in apps/web test script (Student commerce allowlist and simulation tests)",
+    },
+    {
+      path: "apps/web/tests/admin-dashboards.test.tsx",
+      count: 5,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/ai-distribution.test.tsx",
+      count: 1,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/ai-usage.test.tsx",
+      count: 2,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/attendance.test.tsx",
+      count: 2,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/dark-mode.test.tsx",
+      count: 3,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/e2e-browser-journeys.test.tsx",
+      count: 5,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx) - Phase 40 E2E Journeys",
+    },
+    {
+      path: "apps/web/tests/i18n.test.tsx",
+      count: 4,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/motion-auth.test.tsx",
+      count: 7,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/navigation-theme.test.tsx",
+      count: 5,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/planning.test.tsx",
+      count: 5,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/product.test.tsx",
+      count: 1,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/public.test.tsx",
+      count: 13,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/session-hydration.test.tsx",
+      count: 1,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/session.test.tsx",
+      count: 6,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/student-marketplace.test.tsx",
+      count: 3,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/student-progress.test.tsx",
+      count: 4,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
+    {
+      path: "apps/web/tests/student.test.tsx",
+      count: 14,
+      runner: "vitest",
+      reason: "Matched apps/web vitest pattern (tests/**/*.test.tsx)",
+    },
   ];
 
   for (const wf of webFiles) {
@@ -246,8 +363,14 @@ async function main() {
     suites,
   };
 
-  await writeFile("artifacts/release-evidence/release620rc2-test-manifest.json", JSON.stringify(manifest, null, 2), "utf8");
-  console.log(`Generated artifacts/release-evidence/release620rc2-test-manifest.json with ${suites.length} suites.`);
+  await writeFile(
+    "artifacts/release-evidence/release620rc2-test-manifest.json",
+    JSON.stringify(manifest, null, 2),
+    "utf8",
+  );
+  console.log(
+    `Generated artifacts/release-evidence/release620rc2-test-manifest.json with ${suites.length} suites.`,
+  );
 }
 
 main().catch((err) => {

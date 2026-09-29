@@ -60,7 +60,10 @@ describe("Phase 32.13 & 32.27: Black-Box Security V2 & Payment Redirect Assuranc
 
   beforeAll(async () => {
     const pair = generateKeyPairSync("ed25519");
-    privateKey = await importPKCS8(pair.privateKey.export({ type: "pkcs8", format: "pem" }).toString(), "EdDSA");
+    privateKey = await importPKCS8(
+      pair.privateKey.export({ type: "pkcs8", format: "pem" }).toString(),
+      "EdDSA",
+    );
     publicKey = await importSPKI(pair.publicKey.export({ type: "spki", format: "pem" }).toString(), "EdDSA");
 
     alphaUserToken = await issueToken(
@@ -111,7 +114,10 @@ describe("Phase 32.13 & 32.27: Black-Box Security V2 & Payment Redirect Assuranc
       if (!order) return response.status(404).json({ error: { code: "NOT_FOUND" } });
 
       // Enforce both tenant isolation and object ownership (BOLA prevention)
-      if (order.tenantId !== user.tenantId || (order.userId !== user.sub && !user.roles.includes("INSTITUTION_ADMIN"))) {
+      if (
+        order.tenantId !== user.tenantId ||
+        (order.userId !== user.sub && !user.roles.includes("INSTITUTION_ADMIN"))
+      ) {
         return response.status(403).json({ error: { code: "BOLA_ACCESS_DENIED" } });
       }
 
@@ -225,7 +231,9 @@ describe("Phase 32.13 & 32.27: Black-Box Security V2 & Payment Redirect Assuranc
 
   afterAll(async () => {
     if (server) {
-      await new Promise<void>((resolve, reject) => server.close((err: any) => (err ? reject(err) : resolve())));
+      await new Promise<void>((resolve, reject) =>
+        server.close((err: any) => (err ? reject(err) : resolve())),
+      );
     }
   });
 
@@ -355,9 +363,7 @@ describe("Phase 32.13 & 32.27: Black-Box Security V2 & Payment Redirect Assuranc
     const payload = { transactionId: "tx-sepay-001", orderId: "ord-alpha-01", amount: 500000 };
     const rawPayload = JSON.stringify(payload);
 
-    const signature = createHmac("sha256", webhookSecret)
-      .update(`${timestamp}.${rawPayload}`)
-      .digest("hex");
+    const signature = createHmac("sha256", webhookSecret).update(`${timestamp}.${rawPayload}`).digest("hex");
 
     // Replay the same transaction ID
     const replayResponse = await fetch(`${baseUrl}/api/v1/payments/sepay/webhook`, {
@@ -404,9 +410,7 @@ describe("Phase 32.13 & 32.27: Black-Box Security V2 & Payment Redirect Assuranc
     const payload = { transactionId: "tx-sepay-003", orderId: "ord-alpha-01", amount: 10000 };
     const rawPayload = JSON.stringify(payload);
 
-    const signature = createHmac("sha256", webhookSecret)
-      .update(`${timestamp}.${rawPayload}`)
-      .digest("hex");
+    const signature = createHmac("sha256", webhookSecret).update(`${timestamp}.${rawPayload}`).digest("hex");
 
     const response = await fetch(`${baseUrl}/api/v1/payments/sepay/webhook`, {
       method: "POST",

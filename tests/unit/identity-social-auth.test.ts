@@ -164,7 +164,10 @@ describe("Phase 16A — Social Authentication & Account Linking", () => {
       const credentialsByEmail = new Map<string, { userId: string; status: string }>();
 
       const repo = {
-        findExternalIdentity: (provider: SocialProvider, subject: string): Promise<ExternalIdentityRecord | null> => {
+        findExternalIdentity: (
+          provider: SocialProvider,
+          subject: string,
+        ): Promise<ExternalIdentityRecord | null> => {
           return Promise.resolve(externalIdentities.get(`${provider}:${subject}`) ?? null);
         },
         findExternalIdentitiesByUser: (userId: string): Promise<UserLinkedProvider[]> => {

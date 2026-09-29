@@ -232,7 +232,6 @@ export function AdminHome() {
           </Card>
         </div>
       </div>
-
     </>
   );
 }
@@ -341,7 +340,9 @@ export function Users() {
         currentPassword: quickPassword,
         ...(quickReason.trim() ? { reason: quickReason.trim() } : {}),
       });
-      showToast(`Đã đổi trạng thái tài khoản ${quickUser.displayName} thành ${quickStatus === "ACTIVE" ? "Hoạt động" : "Tạm khóa"}`);
+      showToast(
+        `Đã đổi trạng thái tài khoản ${quickUser.displayName} thành ${quickStatus === "ACTIVE" ? "Hoạt động" : "Tạm khóa"}`,
+      );
       setQuickUser(null);
       await load();
     } catch (err) {
@@ -365,7 +366,10 @@ export function Users() {
     <>
       <p className="eyebrow">ADMIN · QUẢN LÝ NGƯỜI DÙNG</p>
       <h1>Danh sách tài khoản & phân quyền.</h1>
-      <p className="lead">Tra cứu danh sách sinh viên, giảng viên và quản trị viên; kiểm soát trạng thái hoạt động và thẩm định danh tính.</p>
+      <p className="lead">
+        Tra cứu danh sách sinh viên, giảng viên và quản trị viên; kiểm soát trạng thái hoạt động và thẩm định
+        danh tính.
+      </p>
 
       {/* Filter Row */}
       <div className="admin-filters">
@@ -402,7 +406,9 @@ export function Users() {
       {/* Toolbar: Search & View Toggle */}
       <div className="admin-table-toolbar">
         <div className="admin-search-input-wrap">
-          <span className="admin-search-icon" aria-hidden="true">🔍</span>
+          <span className="admin-search-icon" aria-hidden="true">
+            🔍
+          </span>
           <input
             type="search"
             placeholder="Tìm kiếm theo họ tên, ID hoặc email..."
@@ -449,7 +455,9 @@ export function Users() {
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="study-state">
-          {search ? `Không tìm thấy người dùng nào phù hợp với từ khóa "${search}".` : "Không có người dùng phù hợp."}
+          {search
+            ? `Không tìm thấy người dùng nào phù hợp với từ khóa "${search}".`
+            : "Không có người dùng phù hợp."}
         </div>
       ) : viewMode === "list" ? (
         /* TABLE LIST VIEW */
@@ -463,26 +471,33 @@ export function Users() {
                 <th scope="col">Trạng thái</th>
                 <th scope="col">Xác minh GV</th>
                 <th scope="col">Cập nhật</th>
-                <th scope="col" style={{ textAlign: "right" }}>Thao tác</th>
+                <th scope="col" style={{ textAlign: "right" }}>
+                  Thao tác
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredItems.map((u) => {
                 const roleClass = u.role.toLowerCase();
                 const monogram = u.displayName
-                  ? u.displayName.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase()
+                  ? u.displayName
+                      .split(" ")
+                      .slice(-2)
+                      .map((w) => w[0])
+                      .join("")
+                      .toUpperCase()
                   : "U";
                 return (
                   <tr key={u.userId}>
                     <td>
                       <div className="user-avatar-cell">
-                        <div className={`user-monogram ${roleClass}`}>
-                          {monogram}
-                        </div>
+                        <div className={`user-monogram ${roleClass}`}>{monogram}</div>
                         <div>
                           <div className="user-name-title">{u.displayName}</div>
                           <div className="user-id-code">
-                            <span>ID: {u.userId.slice(0, 8)}…{u.userId.slice(-4)}</span>
+                            <span>
+                              ID: {u.userId.slice(0, 8)}…{u.userId.slice(-4)}
+                            </span>
                             <button
                               type="button"
                               className="copy-id-btn"
@@ -502,7 +517,11 @@ export function Users() {
                     </td>
                     <td>
                       <span className={`admin-badge role-${roleClass}`}>
-                        {u.role === "LECTURER" ? "👨‍🏫 Giảng viên" : u.role === "ADMIN" ? "🛡️ Quản trị" : "🎓 Sinh viên"}
+                        {u.role === "LECTURER"
+                          ? "👨‍🏫 Giảng viên"
+                          : u.role === "ADMIN"
+                            ? "🛡️ Quản trị"
+                            : "🎓 Sinh viên"}
                       </span>
                     </td>
                     <td>
@@ -516,7 +535,9 @@ export function Users() {
                           {u.lecturerVerified ? "✓ Đã xác minh" : "⏳ Chưa xác minh"}
                         </span>
                       ) : (
-                        <span className="muted" style={{ fontSize: "12px" }}>—</span>
+                        <span className="muted" style={{ fontSize: "12px" }}>
+                          —
+                        </span>
                       )}
                     </td>
                     <td>
@@ -553,7 +574,10 @@ export function Users() {
               <div>
                 <div className="study-card-top">
                   <span className="study-card-icon" aria-hidden="true">
-                    <Icon name={u.role === "LECTURER" ? "graduation" : u.role === "ADMIN" ? "shield" : "user"} size={20} />
+                    <Icon
+                      name={u.role === "LECTURER" ? "graduation" : u.role === "ADMIN" ? "shield" : "user"}
+                      size={20}
+                    />
                   </span>
                   <span className={`badge ${u.status === "ACTIVE" ? "status-success" : "status-pending"}`}>
                     {u.role === "LECTURER" ? "Giảng viên" : u.role === "ADMIN" ? "Quản trị" : "Sinh viên"} ·{" "}
@@ -610,11 +634,18 @@ export function Users() {
 
       {/* Quick Status Change Modal */}
       {quickUser && (
-        <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="quick-status-title">
+        <div
+          className="admin-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="quick-status-title"
+        >
           <div className="admin-modal-card">
             <div className="admin-modal-header">
               <div>
-                <p className="eyebrow" style={{ margin: 0 }}>THAO TÁC NHANH QUẢN TRỊ</p>
+                <p className="eyebrow" style={{ margin: 0 }}>
+                  THAO TÁC NHANH QUẢN TRỊ
+                </p>
                 <h2 id="quick-status-title">Đổi trạng thái người dùng</h2>
               </div>
               <button
@@ -627,11 +658,21 @@ export function Users() {
               </button>
             </div>
 
-            <div style={{ marginBottom: "18px", padding: "12px", background: "var(--surface-soft, rgba(0,0,0,0.03))", borderRadius: "10px" }}>
-              <div style={{ fontWeight: 600, fontSize: "14.5px", marginBottom: "4px" }}>{quickUser.displayName}</div>
+            <div
+              style={{
+                marginBottom: "18px",
+                padding: "12px",
+                background: "var(--surface-soft, rgba(0,0,0,0.03))",
+                borderRadius: "10px",
+              }}
+            >
+              <div style={{ fontWeight: 600, fontSize: "14.5px", marginBottom: "4px" }}>
+                {quickUser.displayName}
+              </div>
               <div style={{ fontSize: "12px", color: "var(--muted)" }}>ID: {quickUser.userId}</div>
               <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
-                Trạng thái hiện tại: <strong>{quickUser.status === "ACTIVE" ? "Đang hoạt động" : "Tạm khóa"}</strong>
+                Trạng thái hiện tại:{" "}
+                <strong>{quickUser.status === "ACTIVE" ? "Đang hoạt động" : "Tạm khóa"}</strong>
               </div>
             </div>
 
@@ -910,19 +951,70 @@ const SYSTEM_COURSES: GovernanceCourse[] = [
     nextLesson: "Bài 5 - Kỹ thuật Sharding & Replication trong CSDL Phân tán",
     updatedAt: "Hôm nay 15:30",
     documents: [
-      { name: "Giao-trinh-CSDL-Nang-Cao-2026.pdf", type: "PDF", size: "6.8 MB", desc: "Giáo trình hoàn chỉnh 12 chương tối ưu hóa câu truy vấn" },
-      { name: "Slide-Bai-giang-Sharding-Replication.pptx", type: "PPTX", size: "14.2 MB", desc: "Slide bài giảng chuyên đề kiến trúc phân tán" },
-      { name: "De-cuong-thuc-hanh-va-Database-dump.zip", type: "ZIP", size: "22.5 MB", desc: "Tệp dữ liệu mẫu 500.000 bản ghi phục vụ đo lường chỉ mục EXPLAIN" },
-      { name: "Tong-hop-cheat-sheet-Index-PostgreSQL.pdf", type: "PDF", size: "2.1 MB", desc: "Sổ tay tra cứu nhanh B-Tree, GiST, GIN Index" },
+      {
+        name: "Giao-trinh-CSDL-Nang-Cao-2026.pdf",
+        type: "PDF",
+        size: "6.8 MB",
+        desc: "Giáo trình hoàn chỉnh 12 chương tối ưu hóa câu truy vấn",
+      },
+      {
+        name: "Slide-Bai-giang-Sharding-Replication.pptx",
+        type: "PPTX",
+        size: "14.2 MB",
+        desc: "Slide bài giảng chuyên đề kiến trúc phân tán",
+      },
+      {
+        name: "De-cuong-thuc-hanh-va-Database-dump.zip",
+        type: "ZIP",
+        size: "22.5 MB",
+        desc: "Tệp dữ liệu mẫu 500.000 bản ghi phục vụ đo lường chỉ mục EXPLAIN",
+      },
+      {
+        name: "Tong-hop-cheat-sheet-Index-PostgreSQL.pdf",
+        type: "PDF",
+        size: "2.1 MB",
+        desc: "Sổ tay tra cứu nhanh B-Tree, GiST, GIN Index",
+      },
     ],
     reviews: [
-      { id: "rv-1", author: "Lê Văn Hùng (Sinh viên)", rating: 5, date: "15/09/2026", comment: "Khóa học rất sâu sắc, phần giải thích cơ chế Locking và MVCC của PostgreSQL cực kỳ dễ hiểu!" },
-      { id: "rv-2", author: "Phạm Thùy Dương (Sinh viên)", rating: 5, date: "14/09/2026", comment: "Bài tập thực tế, hệ thống chấm điểm tự động phản hồi ngay khi nộp bài." },
-      { id: "rv-3", author: "Trần Bảo Nam (Học viên)", rating: 4, date: "12/09/2026", comment: "Nội dung chất lượng, hy vọng thầy bổ sung thêm chuyên đề về TimeSeries DB." },
+      {
+        id: "rv-1",
+        author: "Lê Văn Hùng (Sinh viên)",
+        rating: 5,
+        date: "15/09/2026",
+        comment:
+          "Khóa học rất sâu sắc, phần giải thích cơ chế Locking và MVCC của PostgreSQL cực kỳ dễ hiểu!",
+      },
+      {
+        id: "rv-2",
+        author: "Phạm Thùy Dương (Sinh viên)",
+        rating: 5,
+        date: "14/09/2026",
+        comment: "Bài tập thực tế, hệ thống chấm điểm tự động phản hồi ngay khi nộp bài.",
+      },
+      {
+        id: "rv-3",
+        author: "Trần Bảo Nam (Học viên)",
+        rating: 4,
+        date: "12/09/2026",
+        comment: "Nội dung chất lượng, hy vọng thầy bổ sung thêm chuyên đề về TimeSeries DB.",
+      },
     ],
     comments: [
-      { id: "cm-1", author: "Vũ Đình Trọng", date: "Hôm qua 18:20", content: "Thưa thầy, cho em hỏi khi đánh Composite Index thì thứ tự các cột ảnh hưởng thế nào đến index scan ạ?" },
-      { id: "cm-2", author: "TS. Nguyễn Minh Trí", date: "Hôm qua 19:05", content: "Chào em, quy tắc Leftmost Prefix quyết định: cột lọc có tính chọn lọc cao nhất (high cardinality) nên đặt trước." },
+      {
+        id: "cm-1",
+        author: "Vũ Đình Trọng",
+        date: "Hôm qua 18:20",
+        content:
+          "Thưa thầy, cho em hỏi khi đánh Composite Index thì thứ tự các cột ảnh hưởng thế nào đến index scan ạ?",
+      },
+      {
+        id: "cm-2",
+        author: "TS. Nguyễn Minh Trí",
+        date: "Hôm qua 19:05",
+        content:
+          "Chào em, quy tắc Leftmost Prefix quyết định: cột lọc có tính chọn lọc cao nhất (high cardinality) nên đặt trước.",
+      },
     ],
   },
   {
@@ -944,16 +1036,48 @@ const SYSTEM_COURSES: GovernanceCourse[] = [
     nextLesson: "Bài 4 - Tích hợp Vector Database & LLM với LangChain",
     updatedAt: "Hôm qua 20:15",
     documents: [
-      { name: "Fullstack-AI-Assistant-Curriculum.pdf", type: "PDF", size: "5.4 MB", desc: "Lộ trình đào tạo React 19, FastAPI và tích hợp mô hình ngôn ngữ" },
-      { name: "Source-code-Frontend-Backend-Boilerplate.zip", type: "ZIP", size: "31.8 MB", desc: "Khung dự án chuẩn Production tích hợp xác thực JWT và streaming SSR" },
-      { name: "Kien-truc-RAG-Vector-Embeddings.pdf", type: "PDF", size: "4.1 MB", desc: "Sơ đồ kiến trúc Pipeline truy xuất tri thức bổ trợ (RAG)" },
+      {
+        name: "Fullstack-AI-Assistant-Curriculum.pdf",
+        type: "PDF",
+        size: "5.4 MB",
+        desc: "Lộ trình đào tạo React 19, FastAPI và tích hợp mô hình ngôn ngữ",
+      },
+      {
+        name: "Source-code-Frontend-Backend-Boilerplate.zip",
+        type: "ZIP",
+        size: "31.8 MB",
+        desc: "Khung dự án chuẩn Production tích hợp xác thực JWT và streaming SSR",
+      },
+      {
+        name: "Kien-truc-RAG-Vector-Embeddings.pdf",
+        type: "PDF",
+        size: "4.1 MB",
+        desc: "Sơ đồ kiến trúc Pipeline truy xuất tri thức bổ trợ (RAG)",
+      },
     ],
     reviews: [
-      { id: "rv-4", author: "Đỗ Thành Long (Kỹ sư phần mềm)", rating: 5, date: "16/09/2026", comment: "Rất thực chiến! Sau khóa học mình đã tự deploy được Chatbot AI nội bộ cho doanh nghiệp." },
-      { id: "rv-5", author: "Nguyễn Thị Ngọc", rating: 5, date: "13/09/2026", comment: "Giảng viên hỗ trợ nhiệt tình, giải đáp bug nhanh chóng trong cộng đồng." },
+      {
+        id: "rv-4",
+        author: "Đỗ Thành Long (Kỹ sư phần mềm)",
+        rating: 5,
+        date: "16/09/2026",
+        comment: "Rất thực chiến! Sau khóa học mình đã tự deploy được Chatbot AI nội bộ cho doanh nghiệp.",
+      },
+      {
+        id: "rv-5",
+        author: "Nguyễn Thị Ngọc",
+        rating: 5,
+        date: "13/09/2026",
+        comment: "Giảng viên hỗ trợ nhiệt tình, giải đáp bug nhanh chóng trong cộng đồng.",
+      },
     ],
     comments: [
-      { id: "cm-3", author: "Hoàng Tuấn Anh", date: "Hôm nay 09:12", content: "Có bạn nào gặp lỗi CORS khi kết nối backend FastAPI với Vite dev server không ạ?" },
+      {
+        id: "cm-3",
+        author: "Hoàng Tuấn Anh",
+        date: "Hôm nay 09:12",
+        content: "Có bạn nào gặp lỗi CORS khi kết nối backend FastAPI với Vite dev server không ạ?",
+      },
     ],
   },
   {
@@ -975,12 +1099,34 @@ const SYSTEM_COURSES: GovernanceCourse[] = [
     nextLesson: "Bài 6 - Thiết lập Automated Pipeline với GitHub Actions & ArgoCD",
     updatedAt: "14/09/2026",
     documents: [
-      { name: "Giao-trinh-DevOps-Kubernetes.pdf", type: "PDF", size: "8.2 MB", desc: "Tài liệu thực hành Containerization và Orchestration" },
-      { name: "Kubernetes-Manifests-Va-Helm-Charts.zip", type: "ZIP", size: "12.0 MB", desc: "Tập hợp file YAML mẫu triển khai Microservices lên Kube cluster" },
+      {
+        name: "Giao-trinh-DevOps-Kubernetes.pdf",
+        type: "PDF",
+        size: "8.2 MB",
+        desc: "Tài liệu thực hành Containerization và Orchestration",
+      },
+      {
+        name: "Kubernetes-Manifests-Va-Helm-Charts.zip",
+        type: "ZIP",
+        size: "12.0 MB",
+        desc: "Tập hợp file YAML mẫu triển khai Microservices lên Kube cluster",
+      },
     ],
     reviews: [
-      { id: "rv-6", author: "Lê Quang Khải", rating: 5, date: "11/09/2026", comment: "Giải thích tường tận về Ingress Controller và Rolling Update không gián đoạn dịch vụ." },
-      { id: "rv-7", author: "Ngô Nhật Minh", rating: 4, date: "09/09/2026", comment: "Khóa học hay, đề nghị cập nhật thêm bài giảng về Istio Service Mesh." },
+      {
+        id: "rv-6",
+        author: "Lê Quang Khải",
+        rating: 5,
+        date: "11/09/2026",
+        comment: "Giải thích tường tận về Ingress Controller và Rolling Update không gián đoạn dịch vụ.",
+      },
+      {
+        id: "rv-7",
+        author: "Ngô Nhật Minh",
+        rating: 4,
+        date: "09/09/2026",
+        comment: "Khóa học hay, đề nghị cập nhật thêm bài giảng về Istio Service Mesh.",
+      },
     ],
     comments: [],
   },
@@ -1003,15 +1149,43 @@ const SYSTEM_COURSES: GovernanceCourse[] = [
     nextLesson: "Bài 3 - Kỹ thuật Few-Shot & Chain-of-Thought trong giải toán",
     updatedAt: "10/09/2026",
     documents: [
-      { name: "Prompt-Engineering-Cheatsheet-2026.pdf", type: "PDF", size: "3.2 MB", desc: "Bảng tổng hợp mẫu câu lệnh gợi ý cho các tác vụ NLP" },
+      {
+        name: "Prompt-Engineering-Cheatsheet-2026.pdf",
+        type: "PDF",
+        size: "3.2 MB",
+        desc: "Bảng tổng hợp mẫu câu lệnh gợi ý cho các tác vụ NLP",
+      },
     ],
     reviews: [
-      { id: "rv-8", author: "Trần Đức Thắng (Sinh viên)", rating: 3, date: "08/09/2026", comment: "Nội dung hơi sơ sài, nhiều ví dụ còn chung chung chưa đi sâu vào Fine-tuning mô hình." },
-      { id: "rv-9", author: "Bùi Mai Phương (Học viên)", rating: 4, date: "06/09/2026", comment: "Bài giảng âm thanh có một số đoạn bị rè, mong thầy cô lọc âm tốt hơn." },
-      { id: "rv-10", author: "Vũ Huy Hoàng", rating: 3, date: "05/09/2026", comment: "Cần cập nhật các kỹ thuật mới của các mô hình năm 2026." },
+      {
+        id: "rv-8",
+        author: "Trần Đức Thắng (Sinh viên)",
+        rating: 3,
+        date: "08/09/2026",
+        comment: "Nội dung hơi sơ sài, nhiều ví dụ còn chung chung chưa đi sâu vào Fine-tuning mô hình.",
+      },
+      {
+        id: "rv-9",
+        author: "Bùi Mai Phương (Học viên)",
+        rating: 4,
+        date: "06/09/2026",
+        comment: "Bài giảng âm thanh có một số đoạn bị rè, mong thầy cô lọc âm tốt hơn.",
+      },
+      {
+        id: "rv-10",
+        author: "Vũ Huy Hoàng",
+        rating: 3,
+        date: "05/09/2026",
+        comment: "Cần cập nhật các kỹ thuật mới của các mô hình năm 2026.",
+      },
     ],
     comments: [
-      { id: "cm-4", author: "Trần Đức Thắng", date: "08/09/2026", content: "Thầy cho em xin tài liệu tham khảo thêm về LoRA và QLoRA được không ạ?" },
+      {
+        id: "cm-4",
+        author: "Trần Đức Thắng",
+        date: "08/09/2026",
+        content: "Thầy cho em xin tài liệu tham khảo thêm về LoRA và QLoRA được không ạ?",
+      },
     ],
   },
   {
@@ -1033,11 +1207,28 @@ const SYSTEM_COURSES: GovernanceCourse[] = [
     nextLesson: "Bài 2 - Viết kịch bản kiểm thử tự động với Playwright & Vitest",
     updatedAt: "05/09/2026",
     documents: [
-      { name: "Giao-trinh-Kiem-thu-Phan-mem-Co-ban.pdf", type: "PDF", size: "4.1 MB", desc: "Khái niệm hộp đen, hộp trắng và quy trình kiểm thử" },
+      {
+        name: "Giao-trinh-Kiem-thu-Phan-mem-Co-ban.pdf",
+        type: "PDF",
+        size: "4.1 MB",
+        desc: "Khái niệm hộp đen, hộp trắng và quy trình kiểm thử",
+      },
     ],
     reviews: [
-      { id: "rv-11", author: "Đoàn Nhật Quang", rating: 3, date: "04/09/2026", comment: "Nội dung cơ bản, mong sớm có phần thực hành Playwright nâng cao." },
-      { id: "rv-12", author: "Phạm Hải Đăng", rating: 3, date: "02/09/2026", comment: "Cần bổ sung thêm bài kiểm tra trắc nghiệm cuối chương." },
+      {
+        id: "rv-11",
+        author: "Đoàn Nhật Quang",
+        rating: 3,
+        date: "04/09/2026",
+        comment: "Nội dung cơ bản, mong sớm có phần thực hành Playwright nâng cao.",
+      },
+      {
+        id: "rv-12",
+        author: "Phạm Hải Đăng",
+        rating: 3,
+        date: "02/09/2026",
+        comment: "Cần bổ sung thêm bài kiểm tra trắc nghiệm cuối chương.",
+      },
     ],
     comments: [],
   },
@@ -1060,16 +1251,48 @@ const SYSTEM_COURSES: GovernanceCourse[] = [
     nextLesson: "Bài 8 - Thiết kế Mô hình Lớp (OOP) và Xử lý ngoại lệ chuẩn",
     updatedAt: "Hôm nay 11:20",
     documents: [
-      { name: "Giao-trinh-Python-Toan-dien-Doanh-Nguyen.pdf", type: "PDF", size: "9.5 MB", desc: "Bộ giáo trình Python nhập môn chuẩn đại học" },
-      { name: "Slide-Bai-giang-OOP-Python.pptx", type: "PPTX", size: "16.8 MB", desc: "Bài giảng lập trình hướng đối tượng có minh họa trực quan" },
-      { name: "Ngan-hang-100-bai-tap-code-Python.zip", type: "ZIP", size: "8.4 MB", desc: "Bộ bài tập kèm testcase chấm điểm tự động" },
+      {
+        name: "Giao-trinh-Python-Toan-dien-Doanh-Nguyen.pdf",
+        type: "PDF",
+        size: "9.5 MB",
+        desc: "Bộ giáo trình Python nhập môn chuẩn đại học",
+      },
+      {
+        name: "Slide-Bai-giang-OOP-Python.pptx",
+        type: "PPTX",
+        size: "16.8 MB",
+        desc: "Bài giảng lập trình hướng đối tượng có minh họa trực quan",
+      },
+      {
+        name: "Ngan-hang-100-bai-tap-code-Python.zip",
+        type: "ZIP",
+        size: "8.4 MB",
+        desc: "Bộ bài tập kèm testcase chấm điểm tự động",
+      },
     ],
     reviews: [
-      { id: "rv-13", author: "Nguyễn Minh Châu (Học viên)", rating: 5, date: "16/09/2026", comment: "Thầy dạy cực kỳ dễ hiểu và truyền cảm hứng! Bài tập gắn liền với thực tế." },
-      { id: "rv-14", author: "Lê Hoàng Yến", rating: 5, date: "15/09/2026", comment: "Khóa học miễn phí nhưng chất lượng còn vượt trội hơn nhiều khóa trả phí khác." },
+      {
+        id: "rv-13",
+        author: "Nguyễn Minh Châu (Học viên)",
+        rating: 5,
+        date: "16/09/2026",
+        comment: "Thầy dạy cực kỳ dễ hiểu và truyền cảm hứng! Bài tập gắn liền với thực tế.",
+      },
+      {
+        id: "rv-14",
+        author: "Lê Hoàng Yến",
+        rating: 5,
+        date: "15/09/2026",
+        comment: "Khóa học miễn phí nhưng chất lượng còn vượt trội hơn nhiều khóa trả phí khác.",
+      },
     ],
     comments: [
-      { id: "cm-5", author: "Phạm Hùng Cường", date: "Hôm qua 14:10", content: "Em cảm ơn thầy vì bài giảng OOP rất rõ ràng, nhất là phần Đa kế thừa và MRO!" },
+      {
+        id: "cm-5",
+        author: "Phạm Hùng Cường",
+        date: "Hôm qua 14:10",
+        content: "Em cảm ơn thầy vì bài giảng OOP rất rõ ràng, nhất là phần Đa kế thừa và MRO!",
+      },
     ],
   },
 ];
@@ -1082,7 +1305,6 @@ export function CourseGovernance() {
   const [modalTab, setModalTab] = useState<"overview" | "reviews" | "docs" | "gov">("overview");
 
   // Form states
-  const [manualCourseId, setManualCourseId] = useState("");
   const [selectedAction, setSelectedAction] = useState<"publish" | "archive">("publish");
   const [adminPassword, setAdminPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -1116,9 +1338,7 @@ export function CourseGovernance() {
       // Update local state if matched
       setCourses((prev) =>
         prev.map((c) =>
-          c.courseId === courseId
-            ? { ...c, state: action === "publish" ? "PUBLISHED" : "ARCHIVED" }
-            : c,
+          c.courseId === courseId ? { ...c, state: action === "publish" ? "PUBLISHED" : "ARCHIVED" } : c,
         ),
       );
       if (selectedCourse && selectedCourse.courseId === courseId) {
@@ -1147,9 +1367,7 @@ export function CourseGovernance() {
       setMessage(successText);
       showToast(successText);
       setAdminPassword("");
-      setCourses((prev) =>
-        prev.map((c) => (c.courseId === courseId ? { ...c, state: nextState } : c)),
-      );
+      setCourses((prev) => prev.map((c) => (c.courseId === courseId ? { ...c, state: nextState } : c)));
       if (selectedCourse && selectedCourse.courseId === courseId) {
         setSelectedCourse({ ...selectedCourse, state: nextState });
       }
@@ -1208,7 +1426,8 @@ export function CourseGovernance() {
           <p className="eyebrow">QUẢN TRỊ HỌC THUẬT & KHÓA HỌC</p>
           <h1>Quản Lý & Kiểm Duyệt Khóa Học Hệ Thống</h1>
           <p className="lead">
-            Kiểm soát chất lượng đào tạo, xếp hạng sao, tài liệu bài giảng và phê duyệt xuất bản trên toàn hệ sinh thái AILSS.
+            Kiểm soát chất lượng đào tạo, xếp hạng sao, tài liệu bài giảng và phê duyệt xuất bản trên toàn hệ
+            sinh thái AILSS.
           </p>
         </div>
       </div>
@@ -1216,7 +1435,9 @@ export function CourseGovernance() {
       {/* Toolbar: Search & Filter Pills matching media_1789593776396.png */}
       <div className="admin-table-toolbar">
         <div className="admin-search-input-wrap">
-          <span className="admin-search-icon" aria-hidden="true">🔍</span>
+          <span className="admin-search-icon" aria-hidden="true">
+            🔍
+          </span>
           <input
             type="search"
             placeholder="Tìm kiếm môn học theo tên, mã khóa, giảng viên..."
@@ -1288,7 +1509,11 @@ export function CourseGovernance() {
                 {/* Rating Rule: < 4.0 -> RED, >= 4.0 -> GREEN */}
                 <div
                   className={`course-rating-pill ${isLow ? "low-rating" : "high-rating"}`}
-                  title={isLow ? "Điểm đánh giá thấp: Cần cải thiện nội dung hoặc kiểm duyệt" : "Điểm đánh giá tốt: Đạt chuẩn đào tạo AILSS"}
+                  title={
+                    isLow
+                      ? "Điểm đánh giá thấp: Cần cải thiện nội dung hoặc kiểm duyệt"
+                      : "Điểm đánh giá tốt: Đạt chuẩn đào tạo AILSS"
+                  }
                 >
                   <span aria-hidden="true">{isLow ? "⚠️" : "⭐"}</span>
                   <span>{c.rating.toFixed(1)}★</span>
@@ -1311,8 +1536,12 @@ export function CourseGovernance() {
 
               {/* Course Meta Info */}
               <div className="course-meta-pills-row">
-                <span>📚 Bài học: <strong>{c.lessonsCount}</strong></span>
-                <span>📝 Quiz: <strong>{c.quizzesCount}</strong></span>
+                <span>
+                  📚 Bài học: <strong>{c.lessonsCount}</strong>
+                </span>
+                <span>
+                  📝 Quiz: <strong>{c.quizzesCount}</strong>
+                </span>
                 <span>⏱️ {c.totalHours}</span>
                 <span>👥 {c.studentsCount.toLocaleString()}</span>
               </div>
@@ -1328,7 +1557,9 @@ export function CourseGovernance() {
               {/* Card Bottom Row */}
               <div className="course-card-bottom-row">
                 <div>
-                  <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink)" }}>{c.lecturerName}</div>
+                  <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink)" }}>
+                    {c.lecturerName}
+                  </div>
                   <div className="course-updated-text">{c.updatedAt}</div>
                 </div>
 
@@ -1372,7 +1603,10 @@ export function CourseGovernance() {
 
         {/* Inline password bar */}
         <div className="course-approval-pwd-bar">
-          <label htmlFor="gov-password" style={{ fontSize: "13px", color: "var(--ink-muted)", whiteSpace: "nowrap" }}>
+          <label
+            htmlFor="gov-password"
+            style={{ fontSize: "13px", color: "var(--ink-muted)", whiteSpace: "nowrap" }}
+          >
             🔐 Mật khẩu quản trị
           </label>
           <input
@@ -1385,7 +1619,11 @@ export function CourseGovernance() {
             onChange={(e) => setAdminPassword(e.target.value)}
             className="course-approval-pwd-input"
           />
-          {message && <p role="status" className="course-approval-status">{message}</p>}
+          {message && (
+            <p role="status" className="course-approval-status">
+              {message}
+            </p>
+          )}
         </div>
 
         <div className="table-responsive">
@@ -1397,30 +1635,59 @@ export function CourseGovernance() {
                 <th scope="col">Giảng viên</th>
                 <th scope="col">Đánh giá</th>
                 <th scope="col">Trạng thái</th>
-                <th scope="col" style={{ textAlign: "right" }}>Thao tác</th>
+                <th scope="col" style={{ textAlign: "right" }}>
+                  Thao tác
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredCourses.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "32px 16px", color: "var(--ink-muted)" }}>
+                  <td
+                    colSpan={6}
+                    style={{ textAlign: "center", padding: "32px 16px", color: "var(--ink-muted)" }}
+                  >
                     Không tìm thấy khóa học nào phù hợp.
                   </td>
                 </tr>
               ) : (
                 filteredCourses.map((c) => {
                   const isLocked = c.state === "LOCKED";
-                  const badgeClass = c.state === "PUBLISHED" ? "active" : c.state === "DRAFT" ? "pending" : c.state === "LOCKED" ? "suspended" : "suspended";
-                  const badgeLabel = c.state === "PUBLISHED" ? "● Xuất bản" : c.state === "DRAFT" ? "⏳ Bản nháp" : c.state === "LOCKED" ? "🔒 Đã khóa" : "🗄 Lưu trữ";
+                  const badgeClass =
+                    c.state === "PUBLISHED"
+                      ? "active"
+                      : c.state === "DRAFT"
+                        ? "pending"
+                        : c.state === "LOCKED"
+                          ? "suspended"
+                          : "suspended";
+                  const badgeLabel =
+                    c.state === "PUBLISHED"
+                      ? "● Xuất bản"
+                      : c.state === "DRAFT"
+                        ? "⏳ Bản nháp"
+                        : c.state === "LOCKED"
+                          ? "🔒 Đã khóa"
+                          : "🗄 Lưu trữ";
                   return (
                     <tr key={c.courseId}>
                       <td>
                         <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                          <span className="user-name-title" style={{ maxWidth: "280px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <span
+                            className="user-name-title"
+                            style={{
+                              maxWidth: "280px",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
                             {c.title}
                           </span>
                           <div className="user-id-code">
-                            <span>ID: {c.courseId.slice(0, 8)}…{c.courseId.slice(-4)}</span>
+                            <span>
+                              ID: {c.courseId.slice(0, 8)}…{c.courseId.slice(-4)}
+                            </span>
                             <button
                               type="button"
                               className="copy-id-btn"
@@ -1433,13 +1700,19 @@ export function CourseGovernance() {
                         </div>
                       </td>
                       <td>
-                        <span className="course-category-tag" style={{ fontSize: "12px" }}>{c.categoryName}</span>
+                        <span className="course-category-tag" style={{ fontSize: "12px" }}>
+                          {c.categoryName}
+                        </span>
                       </td>
                       <td>
-                        <span className="muted" style={{ fontSize: "13px" }}>{c.lecturerName}</span>
+                        <span className="muted" style={{ fontSize: "13px" }}>
+                          {c.lecturerName}
+                        </span>
                       </td>
                       <td>
-                        <span className={`course-rating-pill ${c.rating < 4.0 ? "low-rating" : "high-rating"}`}>
+                        <span
+                          className={`course-rating-pill ${c.rating < 4.0 ? "low-rating" : "high-rating"}`}
+                        >
                           {c.rating < 4.0 ? "⚠️" : "⭐"} {c.rating.toFixed(1)}
                         </span>
                       </td>
@@ -1447,13 +1720,22 @@ export function CourseGovernance() {
                         <span className={`admin-badge ${badgeClass}`}>{badgeLabel}</span>
                       </td>
                       <td style={{ textAlign: "right" }}>
-                        <div style={{ display: "inline-flex", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            gap: "6px",
+                            flexWrap: "wrap",
+                            justifyContent: "flex-end",
+                          }}
+                        >
                           {c.state !== "PUBLISHED" && c.state !== "LOCKED" && (
                             <button
                               type="button"
                               className="button button-small"
                               disabled={busy || !adminPassword}
-                              title={!adminPassword ? "Nhập mật khẩu quản trị trước" : "Phê duyệt và xuất bản"}
+                              title={
+                                !adminPassword ? "Nhập mật khẩu quản trị trước" : "Phê duyệt và xuất bản"
+                              }
                               onClick={() => void handleExecuteAction(c.courseId, "publish", adminPassword)}
                             >
                               ✅ Xuất bản
@@ -1474,9 +1756,23 @@ export function CourseGovernance() {
                             type="button"
                             className={`button button-small ${isLocked ? "" : "button-warning"}`}
                             disabled={busy || !adminPassword}
-                            title={!adminPassword ? "Nhập mật khẩu quản trị trước" : isLocked ? "Mở khóa khóa học" : "Khóa khóa học (tạm ngừng truy cập)"}
+                            title={
+                              !adminPassword
+                                ? "Nhập mật khẩu quản trị trước"
+                                : isLocked
+                                  ? "Mở khóa khóa học"
+                                  : "Khóa khóa học (tạm ngừng truy cập)"
+                            }
                             onClick={() => void handleLockCourse(c.courseId, isLocked, adminPassword)}
-                            style={isLocked ? {} : { background: "var(--color-warning, #d97706)", color: "#fff", borderColor: "transparent" }}
+                            style={
+                              isLocked
+                                ? {}
+                                : {
+                                    background: "var(--color-warning, #d97706)",
+                                    color: "#fff",
+                                    borderColor: "transparent",
+                                  }
+                            }
                           >
                             {isLocked ? "🔓 Mở khóa" : "🔒 Khóa"}
                           </button>
@@ -1486,7 +1782,11 @@ export function CourseGovernance() {
                             disabled={busy || !adminPassword}
                             title={!adminPassword ? "Nhập mật khẩu quản trị trước" : "Xóa vĩnh viễn khóa học"}
                             onClick={() => setDeleteConfirm(c)}
-                            style={{ background: "var(--color-danger, #dc2626)", color: "#fff", borderColor: "transparent" }}
+                            style={{
+                              background: "var(--color-danger, #dc2626)",
+                              color: "#fff",
+                              borderColor: "transparent",
+                            }}
                           >
                             🗑️ Xóa
                           </button>
@@ -1510,10 +1810,18 @@ export function CourseGovernance() {
 
       {/* DELETE CONFIRM DIALOG */}
       {deleteConfirm && (
-        <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
+        <div
+          className="admin-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-confirm-title"
+        >
           <div className="admin-modal-card" style={{ maxWidth: "480px" }}>
             <div className="admin-modal-header">
-              <h2 id="delete-confirm-title" style={{ fontSize: "18px", color: "var(--color-danger, #dc2626)" }}>
+              <h2
+                id="delete-confirm-title"
+                style={{ fontSize: "18px", color: "var(--color-danger, #dc2626)" }}
+              >
                 🗑️ Xác nhận xóa khóa học
               </h2>
               <button
@@ -1521,7 +1829,9 @@ export function CourseGovernance() {
                 className="admin-modal-close-btn"
                 onClick={() => setDeleteConfirm(null)}
                 aria-label="Đóng"
-              >✕</button>
+              >
+                ✕
+              </button>
             </div>
             <div style={{ padding: "16px 24px 8px" }}>
               <p style={{ marginBottom: "8px" }}>
@@ -1532,7 +1842,8 @@ export function CourseGovernance() {
                 ID: {deleteConfirm.courseId}
               </p>
               <p style={{ color: "var(--color-danger, #dc2626)", fontSize: "13px", marginBottom: "20px" }}>
-                ⚠️ Hành động này <strong>không thể hoàn tác</strong>. Toàn bộ bài học, bài tập và dữ liệu học viên liên quan sẽ bị xóa.
+                ⚠️ Hành động này <strong>không thể hoàn tác</strong>. Toàn bộ bài học, bài tập và dữ liệu học
+                viên liên quan sẽ bị xóa.
               </p>
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
                 <button
@@ -1549,7 +1860,11 @@ export function CourseGovernance() {
                   disabled={busy || !adminPassword}
                   title={!adminPassword ? "Nhập mật khẩu trong thanh phía trên trước" : ""}
                   onClick={() => void handleDeleteCourse(deleteConfirm.courseId, adminPassword)}
-                  style={{ background: "var(--color-danger, #dc2626)", borderColor: "transparent", color: "#fff" }}
+                  style={{
+                    background: "var(--color-danger, #dc2626)",
+                    borderColor: "transparent",
+                    color: "#fff",
+                  }}
                 >
                   {busy ? "Đang xóa…" : "Xác nhận xóa vĩnh viễn"}
                 </button>
@@ -1561,21 +1876,38 @@ export function CourseGovernance() {
 
       {/* COMPREHENSIVE COURSE DETAIL MODAL */}
       {selectedCourse && (
-        <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="course-modal-title">
+        <div
+          className="admin-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="course-modal-title"
+        >
           <div className="admin-modal-card large">
             <div className="admin-modal-header">
               <div style={{ flex: 1, paddingRight: "16px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
                   <span className="course-category-tag">{selectedCourse.categoryName}</span>
-                  <span className={`admin-badge ${selectedCourse.state === "PUBLISHED" ? "active" : selectedCourse.state === "DRAFT" ? "pending" : "suspended"}`}>
-                    {selectedCourse.state === "PUBLISHED" ? "ĐÃ XUẤT BẢN" : selectedCourse.state === "DRAFT" ? "BẢN NHÁP" : selectedCourse.state === "LOCKED" ? "🔒 ĐÃ KHÓA" : "ĐÃ LƯU TRỮ"}
+                  <span
+                    className={`admin-badge ${selectedCourse.state === "PUBLISHED" ? "active" : selectedCourse.state === "DRAFT" ? "pending" : "suspended"}`}
+                  >
+                    {selectedCourse.state === "PUBLISHED"
+                      ? "ĐÃ XUẤT BẢN"
+                      : selectedCourse.state === "DRAFT"
+                        ? "BẢN NHÁP"
+                        : selectedCourse.state === "LOCKED"
+                          ? "🔒 ĐÃ KHÓA"
+                          : "ĐÃ LƯU TRỮ"}
                   </span>
                   {/* Rating Badge */}
-                  <span className={`course-rating-pill ${selectedCourse.rating < 4.0 ? "low-rating" : "high-rating"}`}>
+                  <span
+                    className={`course-rating-pill ${selectedCourse.rating < 4.0 ? "low-rating" : "high-rating"}`}
+                  >
                     {selectedCourse.rating < 4.0 ? "⚠️" : "⭐"} {selectedCourse.rating.toFixed(1)} / 5
                   </span>
                 </div>
-                <h2 id="course-modal-title" style={{ fontSize: "21px", lineHeight: "1.3" }}>{selectedCourse.title}</h2>
+                <h2 id="course-modal-title" style={{ fontSize: "21px", lineHeight: "1.3" }}>
+                  {selectedCourse.title}
+                </h2>
                 <div className="user-id-code" style={{ marginTop: "6px" }}>
                   <span>UUID: {selectedCourse.courseId}</span>
                   <button
@@ -1634,24 +1966,61 @@ export function CourseGovernance() {
             {/* TAB 1: OVERVIEW & RATING */}
             {modalTab === "overview" && (
               <div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "14px", marginBottom: "22px" }}>
-                  <div style={{ padding: "14px", background: "var(--surface-soft, rgba(0,0,0,0.03))", borderRadius: "12px", border: "1px solid var(--line)" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                    gap: "14px",
+                    marginBottom: "22px",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "14px",
+                      background: "var(--surface-soft, rgba(0,0,0,0.03))",
+                      borderRadius: "12px",
+                      border: "1px solid var(--line)",
+                    }}
+                  >
                     <div style={{ fontSize: "12px", color: "var(--muted)" }}>Giảng viên phụ trách</div>
-                    <div style={{ fontWeight: 700, fontSize: "15px", marginTop: "4px", color: "var(--ink)" }}>{selectedCourse.lecturerName}</div>
+                    <div style={{ fontWeight: 700, fontSize: "15px", marginTop: "4px", color: "var(--ink)" }}>
+                      {selectedCourse.lecturerName}
+                    </div>
                   </div>
-                  <div style={{ padding: "14px", background: "var(--surface-soft, rgba(0,0,0,0.03))", borderRadius: "12px", border: "1px solid var(--line)" }}>
+                  <div
+                    style={{
+                      padding: "14px",
+                      background: "var(--surface-soft, rgba(0,0,0,0.03))",
+                      borderRadius: "12px",
+                      border: "1px solid var(--line)",
+                    }}
+                  >
                     <div style={{ fontSize: "12px", color: "var(--muted)" }}>Học phí</div>
                     <div style={{ fontWeight: 700, fontSize: "15px", marginTop: "4px", color: "#16a34a" }}>
                       {selectedCourse.priceType === "FREE" ? "Miễn phí (FREE)" : selectedCourse.price}
                     </div>
                   </div>
-                  <div style={{ padding: "14px", background: "var(--surface-soft, rgba(0,0,0,0.03))", borderRadius: "12px", border: "1px solid var(--line)" }}>
+                  <div
+                    style={{
+                      padding: "14px",
+                      background: "var(--surface-soft, rgba(0,0,0,0.03))",
+                      borderRadius: "12px",
+                      border: "1px solid var(--line)",
+                    }}
+                  >
                     <div style={{ fontSize: "12px", color: "var(--muted)" }}>Tổng bài học & Thời lượng</div>
                     <div style={{ fontWeight: 700, fontSize: "15px", marginTop: "4px", color: "var(--ink)" }}>
                       {selectedCourse.lessonsCount} bài · {selectedCourse.totalHours}
                     </div>
                   </div>
-                  <div style={{ padding: "14px", background: "var(--surface-soft, rgba(0,0,0,0.03))", borderRadius: "12px", border: "1px solid var(--line)" }}>
+                  <div
+                    style={{
+                      padding: "14px",
+                      background: "var(--surface-soft, rgba(0,0,0,0.03))",
+                      borderRadius: "12px",
+                      border: "1px solid var(--line)",
+                    }}
+                  >
                     <div style={{ fontSize: "12px", color: "var(--muted)" }}>Học viên ghi danh</div>
                     <div style={{ fontWeight: 700, fontSize: "15px", marginTop: "4px", color: "var(--ink)" }}>
                       {selectedCourse.studentsCount.toLocaleString()} học viên
@@ -1660,28 +2029,37 @@ export function CourseGovernance() {
                 </div>
 
                 {/* Rating Highlight Section */}
-                <div style={{
-                  padding: "18px",
-                  borderRadius: "14px",
-                  marginBottom: "20px",
-                  border: selectedCourse.rating < 4.0 ? "1.5px solid #dc2626" : "1.5px solid #16a34a",
-                  background: selectedCourse.rating < 4.0 ? "rgba(220, 38, 38, 0.06)" : "rgba(22, 163, 74, 0.06)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: "16px",
-                }}>
+                <div
+                  style={{
+                    padding: "18px",
+                    borderRadius: "14px",
+                    marginBottom: "20px",
+                    border: selectedCourse.rating < 4.0 ? "1.5px solid #dc2626" : "1.5px solid #16a34a",
+                    background:
+                      selectedCourse.rating < 4.0 ? "rgba(220, 38, 38, 0.06)" : "rgba(22, 163, 74, 0.06)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "16px",
+                  }}
+                >
                   <div>
-                    <div style={{
-                      fontWeight: 700,
-                      fontSize: "18px",
-                      color: selectedCourse.rating < 4.0 ? "#dc2626" : "#16a34a",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}>
-                      <span>{selectedCourse.rating < 4.0 ? "⚠️ Cảnh báo chất lượng: Điểm đánh giá thấp" : "✓ Chất lượng đạt chuẩn đào tạo"}</span>
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        fontSize: "18px",
+                        color: selectedCourse.rating < 4.0 ? "#dc2626" : "#16a34a",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <span>
+                        {selectedCourse.rating < 4.0
+                          ? "⚠️ Cảnh báo chất lượng: Điểm đánh giá thấp"
+                          : "✓ Chất lượng đạt chuẩn đào tạo"}
+                      </span>
                     </div>
                     <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--ink)" }}>
                       {selectedCourse.rating < 4.0
@@ -1689,15 +2067,17 @@ export function CourseGovernance() {
                         : `Khóa học đạt ${selectedCourse.rating.toFixed(1)} / 5 sao (≥ 4.0★). Phản hồi từ học viên rất tích cực, đạt tiêu chuẩn chất lượng cao của AILSS.`}
                     </p>
                   </div>
-                  <div style={{
-                    fontSize: "32px",
-                    fontWeight: 800,
-                    color: selectedCourse.rating < 4.0 ? "#dc2626" : "#16a34a",
-                    padding: "8px 18px",
-                    borderRadius: "12px",
-                    background: "var(--surface)",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                  }}>
+                  <div
+                    style={{
+                      fontSize: "32px",
+                      fontWeight: 800,
+                      color: selectedCourse.rating < 4.0 ? "#dc2626" : "#16a34a",
+                      padding: "8px 18px",
+                      borderRadius: "12px",
+                      background: "var(--surface)",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                    }}
+                  >
                     {selectedCourse.rating.toFixed(1)}★
                   </div>
                 </div>
@@ -1715,14 +2095,19 @@ export function CourseGovernance() {
             {/* TAB 2: REVIEWS & COMMENTS */}
             {modalTab === "reviews" && (
               <div>
-                <h3 style={{ fontSize: "16px", marginBottom: "14px" }}>Đánh giá từ học viên ({selectedCourse.reviews.length})</h3>
+                <h3 style={{ fontSize: "16px", marginBottom: "14px" }}>
+                  Đánh giá từ học viên ({selectedCourse.reviews.length})
+                </h3>
                 <div className="course-reviews-container" style={{ marginBottom: "24px" }}>
                   {selectedCourse.reviews.map((r) => (
                     <div key={r.id} className="course-review-item">
                       <div className="course-review-header">
                         <div className="course-review-user">{r.author}</div>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <span className="course-review-stars">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
+                          <span className="course-review-stars">
+                            {"★".repeat(r.rating)}
+                            {"☆".repeat(5 - r.rating)}
+                          </span>
                           <span className="time-sub">{r.date}</span>
                         </div>
                       </div>
@@ -1734,7 +2119,9 @@ export function CourseGovernance() {
                   )}
                 </div>
 
-                <h3 style={{ fontSize: "16px", marginBottom: "14px" }}>Thảo luận & Bình luận cộng đồng ({selectedCourse.comments.length})</h3>
+                <h3 style={{ fontSize: "16px", marginBottom: "14px" }}>
+                  Thảo luận & Bình luận cộng đồng ({selectedCourse.comments.length})
+                </h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   {selectedCourse.comments.map((cm) => (
                     <div key={cm.id} className="course-comments-quote">
@@ -1755,9 +2142,20 @@ export function CourseGovernance() {
             {/* TAB 3: DOCUMENTS OF THE COURSE */}
             {modalTab === "docs" && (
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                  <h3 style={{ fontSize: "16px", margin: 0 }}>Học liệu & Tài liệu đính kèm ({selectedCourse.documents.length})</h3>
-                  <span className="muted" style={{ fontSize: "12.5px" }}>Đã qua rà soát an toàn phần mềm độc hại</span>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "16px",
+                  }}
+                >
+                  <h3 style={{ fontSize: "16px", margin: 0 }}>
+                    Học liệu & Tài liệu đính kèm ({selectedCourse.documents.length})
+                  </h3>
+                  <span className="muted" style={{ fontSize: "12.5px" }}>
+                    Đã qua rà soát an toàn phần mềm độc hại
+                  </span>
                 </div>
 
                 <div className="course-docs-container">
@@ -1765,7 +2163,13 @@ export function CourseGovernance() {
                     <div key={idx} className="course-doc-card">
                       <div className="course-doc-left">
                         <div className="course-doc-icon" aria-hidden="true">
-                          {doc.type === "PDF" ? "📄" : doc.type === "PPTX" ? "📊" : doc.type === "ZIP" ? "📦" : "📝"}
+                          {doc.type === "PDF"
+                            ? "📄"
+                            : doc.type === "PPTX"
+                              ? "📊"
+                              : doc.type === "ZIP"
+                                ? "📦"
+                                : "📝"}
                         </div>
                         <div>
                           <div className="course-doc-title">{doc.name}</div>
@@ -1808,10 +2212,18 @@ export function CourseGovernance() {
             {/* TAB 4: GOVERNANCE & PUBLISHING ACTIONS */}
             {modalTab === "gov" && (
               <div>
-                <div style={{ padding: "16px", background: "var(--surface-soft, rgba(0,0,0,0.03))", borderRadius: "12px", marginBottom: "20px" }}>
+                <div
+                  style={{
+                    padding: "16px",
+                    background: "var(--surface-soft, rgba(0,0,0,0.03))",
+                    borderRadius: "12px",
+                    marginBottom: "20px",
+                  }}
+                >
                   <h3 style={{ fontSize: "16px", margin: "0 0 8px" }}>Thẩm định & Quyết định xuất bản</h3>
                   <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)" }}>
-                    Quản trị viên có thẩm quyền xuất bản khóa học công khai trên danh mục AILSS hoặc chuyển khóa học vào trạng thái lưu trữ. Mọi thao tác đều yêu cầu xác thực mật khẩu bảo mật.
+                    Quản trị viên có thẩm quyền xuất bản khóa học công khai trên danh mục AILSS hoặc chuyển
+                    khóa học vào trạng thái lưu trữ. Mọi thao tác đều yêu cầu xác thực mật khẩu bảo mật.
                   </p>
                 </div>
 
@@ -1828,7 +2240,11 @@ export function CourseGovernance() {
                       readOnly
                       disabled
                       value={`${selectedCourse.title} (${selectedCourse.courseId})`}
-                      style={{ width: "100%", marginTop: "6px", background: "var(--surface-soft, rgba(0,0,0,0.05))" }}
+                      style={{
+                        width: "100%",
+                        marginTop: "6px",
+                        background: "var(--surface-soft, rgba(0,0,0,0.05))",
+                      }}
                     />
                   </label>
 
@@ -1876,11 +2292,7 @@ export function CourseGovernance() {
                     >
                       Đóng
                     </button>
-                    <button
-                      type="submit"
-                      className="button"
-                      disabled={busy || !adminPassword}
-                    >
+                    <button type="submit" className="button" disabled={busy || !adminPassword}>
                       {busy ? "Đang xử lý…" : "Thực thi quyết định"}
                     </button>
                   </div>
