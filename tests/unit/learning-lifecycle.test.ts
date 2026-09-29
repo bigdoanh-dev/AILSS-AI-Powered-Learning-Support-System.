@@ -39,6 +39,45 @@ describe("P7.12B Q-LRN-006 traversal", () => {
 });
 
 describe("P7.12B lifecycle protocol", () => {
+  it("hides a published course, queues public cleanup, and replays safely", async () => {
+    const published = { ...course("PUBLISHED", 3), publishedAt: new Date("2026-09-01T00:00:00.000Z") };
+    const memory = new MemoryLifecycle(published);
+    const service = createService(memory);
+    const input = { ...command(lecturer, "lock-published"), mode: "LOCK" as const };
+    const first = await service.retire(input);
+    expect(first.course).toMatchObject({ state: "HIDDEN", recordVersion: 4 });
+    expect(memory.schedules).toHaveLength(1);
+    expect(memory.events.map((event) => event.eventType)).toEqual(["system.projection.reconcile.v1"]);
+    expect((await service.retire(input)).replayed).toBe(true);
+    expect(memory.transitions).toBe(1);
+    await expect(
+      service.retire({ ...input, actor: actor(randomUUID(), "LECTURER"), idempotencyKey: "other" }),
+    ).rejects.toMatchObject({ status: 403, code: "COURSE_OWNER_REQUIRED" });
+  });
+
+  it("soft deletes an unpublished draft without scheduling public cleanup", async () => {
+    const memory = new MemoryLifecycle(course("DRAFT", 1));
+    const result = await createService(memory).retire({
+      ...command(lecturer, "delete-draft"),
+      mode: "DELETE",
+    });
+    expect(result.course).toMatchObject({ state: "DELETED", recordVersion: 2 });
+    expect(memory.events).toHaveLength(0);
+    expect(memory.schedules).toHaveLength(0);
+  });
+
+  it("turns a published delete request into safe unlisting", async () => {
+    const memory = new MemoryLifecycle({
+      ...course("PUBLISHED", 3),
+      publishedAt: new Date("2026-09-01T00:00:00.000Z"),
+    });
+    const result = await createService(memory).retire({
+      ...command(lecturer, "delete-published"),
+      mode: "DELETE",
+    });
+    expect(result.course.state).toBe("HIDDEN");
+  });
+
   it("moves DRAFT to IN_REVIEW to PUBLISHED to ARCHIVED exactly once", async () => {
     const memory = new MemoryLifecycle(course("DRAFT", 1));
     const service = createService(memory);

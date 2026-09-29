@@ -9,9 +9,12 @@ import {
 } from "../../../packages/security/src/index.js";
 import { parseBearerAuthorization } from "./protected-identity-proxy.js";
 
-export async function learningAuthoringProxyFactory(
-  config: AppConfig,
-): Promise<{ create: RequestHandler; update: RequestHandler }> {
+export async function learningAuthoringProxyFactory(config: AppConfig): Promise<{
+  create: RequestHandler;
+  update: RequestHandler;
+  manage: RequestHandler;
+  owned: RequestHandler;
+}> {
   if (!config.JWT_PUBLIC_KEY_PATH || !config.ACTOR_CONTEXT_PRIVATE_KEY_PATH)
     throw new Error("Learning authoring proxy requires signing keys");
   const [jwtKey, actorKey] = await Promise.all([
@@ -82,6 +85,12 @@ export async function learningAuthoringProxyFactory(
     };
   return {
     create: handler("POST", "learning.course.create", () => "/api/v1/courses"),
+    manage: handler(
+      "GET",
+      "learning.course.manage",
+      (r) => `/api/v1/me/courses/${encodeURIComponent(String(r.params.courseId))}`,
+    ),
+    owned: handler("GET", "learning.course.manage", () => "/api/v1/me/owned-courses"),
     update: handler(
       "PATCH",
       "learning.course.update",

@@ -157,6 +157,11 @@ export default function AdminDashboard() {
           </Text>
 
           <View style={ds.actionStack}>
+            <Button
+              label="Prometheus & Grafana"
+              variant="outline"
+              onPress={() => router.push("/admin/monitoring" as Href)}
+            />
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Dashboard Doanh thu & Thương mại"

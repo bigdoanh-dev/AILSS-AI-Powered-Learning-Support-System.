@@ -40,7 +40,7 @@ export default function CourseEdit() {
     const abort = new AbortController();
     setError("");
     void session
-      .request(`/api/v1/courses/${courseId}`, { signal: abort.signal })
+      .request(`/api/v1/me/courses/${courseId}`, { signal: abort.signal })
       .then((value) => {
         if (abort.signal.aborted) return;
         const c = lecturerCourse(value);

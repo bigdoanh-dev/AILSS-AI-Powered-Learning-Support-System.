@@ -42,6 +42,7 @@ import { notificationProxyFactory } from "./notification-proxy.js";
 import { federationProxy } from "./federation-proxy.js";
 import { adaptiveLearningProxyFactory } from "./adaptive-learning-proxy.js";
 import { createUpstreamReadinessHandler, gatewayReadinessDependencies } from "./readiness.js";
+import { monitoringHandler } from "./monitoring.js";
 
 const config = loadConfig({
   APP_NAME: "api-gateway",
@@ -63,6 +64,7 @@ const protectedProxy = await protectedIdentityProxyFactory(config, adminStepUp);
 const publicLecturerHandler = await publicLecturerProxyFactory(config);
 const learningCourses = await learningCoursesProxyFactory(config);
 const learningAuthoring = await learningAuthoringProxyFactory(config);
+const adminMonitoring = await monitoringHandler(config);
 
 const learningLifecycle = await learningLifecycleProxyFactory(config, adminStepUp);
 const learningLessons = await learningLessonsProxyFactory(config);
@@ -606,6 +608,21 @@ app.patch(
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
   learningAuthoring.update,
 );
+app.get(
+  "/api/v1/me/courses/:courseId",
+  readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)),
+  learningAuthoring.manage,
+);
+app.get(
+  "/api/v1/me/owned-courses",
+  readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)),
+  learningAuthoring.owned,
+);
+app.post(
+  "/api/v1/courses/:courseId/retire",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  learningLifecycle.retire,
+);
 app.post(
   "/api/v1/courses/:courseId/submit-review",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
@@ -734,6 +751,11 @@ app.get(
   "/api/v1/admin/dashboard/stats",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_ADMIN_PER_MINUTE ?? 30)),
   adminStatsHandler,
+);
+app.get(
+  "/api/v1/admin/monitoring",
+  readLimiter.middleware(Number(process.env.RATE_LIMIT_ADMIN_PER_MINUTE ?? 30)),
+  adminMonitoring,
 );
 app.get(
   "/api/v1/admin/dashboard/revenue",

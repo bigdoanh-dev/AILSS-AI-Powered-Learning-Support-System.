@@ -576,6 +576,13 @@ export class LearningCommerceRepository {
       (a, b) => b.enrolledAt.localeCompare(a.enrolledAt) || a.studentId.localeCompare(b.studentId),
     );
   }
+  async activeStudentCount(courseId: string) {
+    const roster = await this.roster(courseId);
+    const entitlements = await Promise.all(
+      roster.map((student) => this.entitlement(student.studentId, courseId)),
+    );
+    return entitlements.filter((entitlement) => entitlement?.state === "ACTIVE").length;
+  }
   async prepareEvent(input: {
     eventId: string;
     eventType: "learning.order.paid.v1" | "learning.course.enrolled.v1";

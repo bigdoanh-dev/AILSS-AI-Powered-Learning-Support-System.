@@ -40,6 +40,7 @@ rule(
 );
 for (const path of [
   "/me/courses",
+  "/me/courses/:id",
   "/courses/:id",
   "/courses/:id/lessons",
   "/lessons/:id",

@@ -202,6 +202,18 @@ export default function TeachingDashboard() {
             <ScalePressable
               style={ds.actionItem}
               scaleTo={0.94}
+              onPress={() => router.push("/teaching/reports" as Href)}
+              accessibilityRole="button"
+              accessibilityLabel="Báo cáo kết quả giảng dạy"
+            >
+              <View style={[ds.actionIcon, { backgroundColor: "#DBEAFE" }]}>
+                <Icon name="trending" size={22} color="#1D4ED8" />
+              </View>
+              <Text style={ds.actionText}>Báo cáo</Text>
+            </ScalePressable>
+            <ScalePressable
+              style={ds.actionItem}
+              scaleTo={0.94}
               onPress={() => router.push("/teaching/profile" as Href)}
               accessibilityRole="button"
               accessibilityLabel="Hồ sơ giảng viên công khai"

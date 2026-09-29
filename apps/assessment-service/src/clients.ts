@@ -25,7 +25,7 @@ const course = envelope(
     .object({
       courseId: z.string().uuid(),
       ownerLecturerId: z.string().uuid(),
-      state: z.literal("PUBLISHED"),
+      state: z.enum(["PUBLISHED", "HIDDEN"]),
       recordVersion: z.number().int().positive(),
       studentEligible: z.boolean().optional(),
     })

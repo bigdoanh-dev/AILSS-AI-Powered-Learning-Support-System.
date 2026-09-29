@@ -7,6 +7,26 @@ const command = { "idempotency-key": "logical-command-1" };
 
 test("Lecturer allowlist accepts documented reads and commands", () => {
   assert.equal(
+    lecturerOperation("/web-session/lecturer/me/owned-courses", "GET", undefined, {}).path,
+    "/me/owned-courses",
+  );
+  assert.equal(
+    lecturerOperation(`/web-session/lecturer/me/courses/${id}`, "GET", undefined, {}).path,
+    `/me/courses/${id}`,
+  );
+  assert.equal(
+    lecturerOperation(`/web-session/lecturer/courses/${id}/retire`, "POST", { mode: "LOCK" }, command).path,
+    `/courses/${id}/retire`,
+  );
+  assert.throws(() =>
+    lecturerOperation(
+      `/web-session/lecturer/courses/${id}/retire`,
+      "POST",
+      { mode: "DELETE", studentId: id },
+      command,
+    ),
+  );
+  assert.equal(
     lecturerOperation("/web-session/lecturer/me/owned-classes", "GET", undefined, {}).path,
     "/me/owned-classes",
   );

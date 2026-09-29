@@ -35,9 +35,13 @@ export class LearningLessonService {
     const course = await this.repository.course(input.courseId);
     if (!course) throw notFound("COURSE_NOT_FOUND", "Course not found");
     if (course.state !== "PUBLISHED") {
-      if (!input.actor || input.actor.userId !== course.ownerLecturerId)
+      const enrolled =
+        course.state === "HIDDEN" && input.actor
+          ? await this.repository.hasAccess(input.actor.userId, course.courseId)
+          : false;
+      if (!input.actor || (!enrolled && input.actor.userId !== course.ownerLecturerId))
         throw notFound("COURSE_NOT_FOUND", "Course not found");
-      await this.requireLecturer(input.actor, input.requestId);
+      if (!enrolled) await this.requireLecturer(input.actor, input.requestId);
     }
     const lessons = await this.repository.list(course.courseId, course.contentVersion);
     return {
@@ -61,7 +65,9 @@ export class LearningLessonService {
     const course = await this.repository.course(pointer.courseId);
     if (!course) throw notFound("LESSON_NOT_FOUND", "Lesson not found");
     const owner = input.actor.userId === course.ownerLecturerId && input.actor.roles.includes("LECTURER");
-    const entitled = await this.repository.hasAccess(input.actor.userId, course.courseId);
+    const entitled =
+      ["PUBLISHED", "HIDDEN"].includes(course.state) &&
+      (await this.repository.hasAccess(input.actor.userId, course.courseId));
     const preview = course.state === "PUBLISHED" && lesson.preview;
     if (!owner && !entitled && !preview)
       throw new AppError("LESSON_ACCESS_REQUIRED", 403, "Active Course access is required");

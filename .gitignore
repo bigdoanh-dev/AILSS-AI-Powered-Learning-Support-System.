@@ -41,6 +41,7 @@ BAO_CAO_*.md
 LECTURER_*_DECISION.md
 
 # Local credentials and real cryptographic material
+/secrets/
 /credentials/
 /credentials.*
 *.credentials

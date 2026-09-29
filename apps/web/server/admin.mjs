@@ -86,6 +86,9 @@ export function adminOperation(url, method, body, headers) {
     return { path: "/admin/reports" + (query ? `?${new URLSearchParams(query)}` : ""), headers: {} };
   }
   // --- Dashboard data routes ---
+  if (method === "GET" && path === "/monitoring" && !query) {
+    return { path: "/admin/monitoring", headers: {} };
+  }
   if (method === "GET" && path === "/dashboard/revenue") {
     const params = new URLSearchParams(query);
     const range = params.get("range") ?? "30d";

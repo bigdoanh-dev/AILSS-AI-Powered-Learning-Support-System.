@@ -192,6 +192,16 @@ function fixture() {
   };
 }
 describe("Phase 42 authoritative media boundary", () => {
+  it("keeps hidden course video available to enrolled students only", async () => {
+    const f = fixture();
+    const mediaAssetId = await f.ready();
+    f.setState("HIDDEN");
+    await expect(f.service.playback(lessonId, actor())).resolves.toMatchObject({ mediaAssetId });
+    f.setActive(false);
+    await expect(f.service.playback(lessonId, actor())).rejects.toMatchObject({
+      code: "MEDIA_ENTITLEMENT_REQUIRED",
+    });
+  });
   it("accepts a bounded plain-text WebVTT cue and rejects malformed cue structures", () => {
     const valid = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nXin chào\n";
     expect(validateWebVtt(valid)).toBe(valid);

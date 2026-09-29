@@ -24,12 +24,35 @@ export function courseSubject(title: string, categoryId?: string) {
 export function CourseArtwork({
   title,
   categoryId,
+  imageUrl,
+  courseId,
   eager = false,
 }: {
   title: string;
   categoryId?: string;
+  imageUrl?: string;
+  courseId?: string;
   eager?: boolean;
 }) {
+  const customCover =
+    imageUrl ||
+    (courseId && typeof window !== "undefined"
+      ? localStorage.getItem(`ailss_course_cover_${courseId}`)
+      : null);
+
+  if (customCover) {
+    return (
+      <img
+        className="course-artwork"
+        src={customCover}
+        alt={`Ảnh bìa khóa học ${title}`}
+        loading={eager ? "eager" : "lazy"}
+        decoding="async"
+        style={{ width: "100%", height: "180px", objectFit: "cover", borderRadius: "10px 10px 0 0" }}
+      />
+    );
+  }
+
   const subject = courseSubject(title, categoryId);
   const cover = /listening/i.test(title)
     ? "listening"

@@ -577,7 +577,7 @@ export class LearningCommerceService {
       }
       return this.completePayment(scope, hash, input.key, command.operationId, command.receipt, order, true);
     }
-    const offering = await this.requireOffering(order.offeringId, now);
+    const offering = await this.requireOffering(order.offeringId, now, true);
     if (offering.courseId !== order.courseId || offering.offeringType !== order.offeringType)
       throw conflict("OFFERING_SNAPSHOT_CONFLICT", "Offering authority no longer matches Order");
     if (input.request.outcome === "FAILURE") {
@@ -868,13 +868,19 @@ export class LearningCommerceService {
       return (await this.repo.order(order.orderId)) ?? order;
     }
   }
-  private async requireOffering(id: string, now: Date) {
+  private async requireOffering(id: string, now: Date, existingOrder = false) {
     const offering = await this.repo.offering(id);
     if (!offering || offering.state !== "PUBLISHED")
       throw notFound("OFFERING_NOT_AVAILABLE", "Offering is not available");
+    if (!existingOrder) {
+      const course = await this.repo.course(offering.courseId);
+      if (!course || course.state !== "PUBLISHED")
+        throw notFound("COURSE_NOT_AVAILABLE", "Course is no longer open for enrollment");
+    }
     if (
-      (offering.salesStartAt && offering.salesStartAt > now) ||
-      (offering.salesEndAt && offering.salesEndAt <= now)
+      !existingOrder &&
+      ((offering.salesStartAt && offering.salesStartAt > now) ||
+        (offering.salesEndAt && offering.salesEndAt <= now))
     )
       throw conflict("OFFERING_NOT_ON_SALE", "Offering is outside its sales window");
     return offering;

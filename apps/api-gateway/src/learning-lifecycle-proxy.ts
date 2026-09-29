@@ -21,6 +21,7 @@ export async function learningLifecycleProxyFactory(
   submit: RequestHandler;
   publish: RequestHandler;
   archive: RequestHandler;
+  retire: RequestHandler;
 }> {
   if (!config.JWT_PUBLIC_KEY_PATH || !config.ACTOR_CONTEXT_PRIVATE_KEY_PATH)
     throw new Error("Learning lifecycle proxy requires signing keys");
@@ -43,20 +44,29 @@ export async function learningLifecycleProxyFactory(
   }
 
   const handler =
-    (kind: "submit" | "publish" | "archive"): RequestHandler =>
+    (kind: "submit" | "publish" | "archive" | "retire"): RequestHandler =>
     async (req, res, next) => {
       try {
         const context = currentRequestContext();
         if (!context) throw new Error("REQUEST_CONTEXT_UNAVAILABLE");
         const courseId = String(req.params.courseId);
         const verified = await actor(req);
-        const isAdmin = kind !== "submit";
+        const isAdmin = kind === "publish" || kind === "archive";
         if (!verified.roles.includes(isAdmin ? "ADMIN" : "LECTURER"))
           throw new AppError(
             isAdmin ? "ADMIN_REQUIRED" : "LECTURER_REQUIRED",
             403,
             "Role authorization is required",
           );
+        const retireBody =
+          kind === "retire"
+            ? z
+                .object({ mode: z.enum(["LOCK", "DELETE"]) })
+                .strict()
+                .safeParse(req.body)
+            : undefined;
+        if (retireBody && !retireBody.success)
+          throw new AppError("COURSE_RETIRE_VALIDATION_FAILED", 422, "mode must be LOCK or DELETE");
         let proof: string | undefined;
         if (isAdmin) {
           const parsed = adminBody.safeParse(req.body);
@@ -92,7 +102,9 @@ export async function learningLifecycleProxyFactory(
           new URL(
             kind === "submit"
               ? `/api/v1/courses/${encodeURIComponent(courseId)}/submit-review`
-              : `/api/v1/admin/courses/${encodeURIComponent(courseId)}/${kind}`,
+              : kind === "retire"
+                ? `/api/v1/courses/${encodeURIComponent(courseId)}/retire`
+                : `/api/v1/admin/courses/${encodeURIComponent(courseId)}/${kind}`,
             config.LEARNING_SERVICE_URL,
           ),
           {
@@ -104,7 +116,7 @@ export async function learningLifecycleProxyFactory(
               ...(idempotencyKey ? { "idempotency-key": idempotencyKey } : {}),
               ...(proof ? { "x-admin-step-up-proof": proof } : {}),
             },
-            body: "{}",
+            body: retireBody?.success ? JSON.stringify(retireBody.data) : "{}",
             signal: AbortSignal.timeout(config.INTERNAL_HTTP_TIMEOUT_MS),
           },
         );
@@ -131,5 +143,10 @@ export async function learningLifecycleProxyFactory(
         );
       }
     };
-  return { submit: handler("submit"), publish: handler("publish"), archive: handler("archive") };
+  return {
+    submit: handler("submit"),
+    publish: handler("publish"),
+    archive: handler("archive"),
+    retire: handler("retire"),
+  };
 }

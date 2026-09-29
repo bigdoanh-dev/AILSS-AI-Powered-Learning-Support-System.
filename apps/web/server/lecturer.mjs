@@ -170,6 +170,8 @@ rule("GET", "/courses", {
 });
 for (const p of [
   "/courses/:id",
+  "/me/courses/:id",
+  "/me/owned-courses",
   "/courses/:id/lessons",
   "/lessons/:id",
   "/courses/:id/roster",
@@ -186,6 +188,10 @@ for (const p of [
 rule("POST", "/courses", { body: course, command: true });
 rule("PATCH", "/courses/:id", { body: partialNonempty(course), command: true });
 rule("POST", "/courses/:id/submit-review", { command: true });
+rule("POST", "/courses/:id/retire", {
+  body: z.object({ mode: z.enum(["LOCK", "DELETE"]) }).strict(),
+  command: true,
+});
 rule("POST", "/courses/:id/lessons", { body: lesson, command: true });
 rule("PATCH", "/lessons/:id", { body: lessonPatch, command: true });
 rule("POST", "/courses/:id/media-assets", {

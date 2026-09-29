@@ -97,6 +97,10 @@ describe("SePay settlement", () => {
           command = { operationId, resourceId, receipt, status: "PENDING" };
         }),
         command: vi.fn(async () => command),
+        course: vi.fn(async () => ({
+          courseId: id,
+          state: "PUBLISHED",
+        })),
         order: vi.fn(async () => stored),
         offering: vi.fn(async () => ({
           offeringId: id,

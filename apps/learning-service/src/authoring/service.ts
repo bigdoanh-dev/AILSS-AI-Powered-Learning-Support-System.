@@ -27,7 +27,7 @@ export type LearningAuthoringStore = Pick<
   | "deleteProjection"
   | "projectionMatches"
   | "update"
->;
+> & { listOwned?: (lecturerId: string) => Promise<AuthoringCourse[]> };
 
 export interface AuthoringResult {
   course: ReturnType<typeof courseDto>;
@@ -40,7 +40,31 @@ export class LearningAuthoringService {
     private readonly repository: LearningAuthoringStore,
     private readonly identity: Pick<IdentityPublicProfileClient, "get">,
     private readonly secret: string,
+    private readonly hasEntitlement?: (studentId: string, courseId: string) => Promise<boolean>,
+    private readonly activeStudentCount?: (courseId: string) => Promise<number>,
   ) {}
+
+  public async managedCourse(actor: ActorContext, courseId: string) {
+    const course = await this.repository.get(courseId);
+    if (!course) throw new AppError("COURSE_NOT_FOUND", 404, "Course not found");
+    if (actor.userId === course.ownerLecturerId && actor.roles.includes("LECTURER"))
+      return { ...courseDto(course), activeStudentCount: (await this.activeStudentCount?.(courseId)) ?? 0 };
+    if (
+      actor.roles.includes("STUDENT") &&
+      ["PUBLISHED", "HIDDEN"].includes(course.state) &&
+      (await this.hasEntitlement?.(actor.userId, courseId))
+    )
+      return courseDto(course);
+    throw new AppError("COURSE_ACCESS_REQUIRED", 403, "Course access is required");
+  }
+
+  public async ownedCourses(actor: ActorContext) {
+    if (!actor.roles.includes("LECTURER"))
+      throw new AppError("LECTURER_REQUIRED", 403, "Lecturer authorization is required");
+    return ((await this.repository.listOwned?.(actor.userId)) ?? [])
+      .filter((course) => course.ownerLecturerId === actor.userId && course.state !== "DELETED")
+      .map(courseDto);
+  }
 
   public async create(input: {
     actor: ActorContext;

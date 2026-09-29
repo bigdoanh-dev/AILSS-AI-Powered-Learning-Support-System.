@@ -31,7 +31,7 @@ export function learningMaterialsInternalRouter(
         throw new AppError("COURSE_ACCESS_DENIED", 403, "Student is not entitled to this course");
 
       const course = await repository.course(courseId);
-      if (!course || course.state !== "PUBLISHED")
+      if (!course || !["PUBLISHED", "HIDDEN"].includes(course.state))
         throw new AppError(
           "COURSE_MATERIALS_NOT_AVAILABLE",
           404,

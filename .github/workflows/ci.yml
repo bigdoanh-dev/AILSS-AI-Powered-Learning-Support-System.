@@ -78,10 +78,13 @@ jobs:
         with: { node-version: 24.20.0, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm keys:dev
+      - run: sudo chown -R 1000:1000 infrastructure/tls/generated
       - run: node scripts/dev/bootstrap-dev-env.mjs
       - run: pnpm env:dev-core
       - run: AILSS_PROFILE=dev-core pnpm smoke
       - if: failure()
-        run: docker compose --env-file .env --profile dev-core ps -a --format "table {{.Name}}\t{{.Service}}\t{{.Status}}\t{{.State}}\t{{.Health}}"
+        run: |
+          docker compose --env-file .env --profile dev-core ps -a --format "table {{.Name}}\t{{.Service}}\t{{.Status}}\t{{.State}}\t{{.Health}}" || true
+          docker compose --env-file .env --profile dev-core ps -a -q | xargs -r docker inspect --format '{{.Name}}: status={{.State.Status}} exitCode={{.State.ExitCode}} restarts={{.RestartCount}} oomKilled={{.State.OOMKilled}} error={{.State.Error}}' || true
       - if: always()
         run: pnpm env:down || true

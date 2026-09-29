@@ -198,6 +198,9 @@ await startService(manifest, {
       authoringRepository,
       identity,
       config.LEARNING_CURSOR_HMAC_KEY,
+      async (studentId, courseId) =>
+        (await commerceRepository.entitlement(studentId, courseId))?.state === "ACTIVE",
+      (courseId) => commerceRepository.activeStudentCount(courseId),
     );
     const verifier = (purpose: string) => (token: string) =>
       verifyActorContext(token, actorKey, {
@@ -241,6 +244,7 @@ await startService(manifest, {
         authoring,
         verifier("learning.course.create"),
         verifier("learning.course.update"),
+        verifier("learning.course.manage"),
         context.metrics,
       ),
     );
@@ -264,6 +268,7 @@ await startService(manifest, {
           submit: verifier("learning.course.submit"),
           publish: verifier("learning.course.publish"),
           archive: verifier("learning.course.archive"),
+          retire: verifier("learning.course.retire"),
         },
         context.metrics,
       ),

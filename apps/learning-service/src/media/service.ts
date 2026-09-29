@@ -394,7 +394,7 @@ export class MediaService {
     if (
       !a ||
       !course ||
-      course.state !== "PUBLISHED" ||
+      !["PUBLISHED", "HIDDEN"].includes(course.state) ||
       !publishedLesson ||
       !lesson ||
       lesson.state !== "READY" ||
@@ -406,7 +406,10 @@ export class MediaService {
       !a.masterPlaylistObjectKey
     )
       throw new AppError("MEDIA_NOT_AVAILABLE", 404, "Published lesson media is not available");
-    const isPublicPreview = (a.visibility ?? "PROTECTED_LESSON") === "PUBLIC_PREVIEW" && lesson.preview;
+    const isPublicPreview =
+      course.state === "PUBLISHED" &&
+      (a.visibility ?? "PROTECTED_LESSON") === "PUBLIC_PREVIEW" &&
+      lesson.preview;
     if (!isPublicPreview) {
       if (!actor.userId || actor.userId === "00000000-0000-0000-0000-000000000000")
         throw new AppError("MEDIA_ENTITLEMENT_REQUIRED", 401, "Authentication required for protected lesson");

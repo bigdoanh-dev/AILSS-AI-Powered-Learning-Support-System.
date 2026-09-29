@@ -4,7 +4,7 @@ import { router, type Href } from "expo-router";
 import { useSyncExternalStore } from "react";
 import { ApiError } from "../../../src/api";
 import { runtime } from "../../../src/runtime";
-import { ownedOfferings, uniqueCoursesFromOfferings } from "../../../src/teaching";
+import { lecturerCourse } from "../../../src/teaching";
 import { Page, Button, ScreenHeader, NonVirtualizedList, styles, tokens } from "../../../src/ui";
 
 export default function OwnedCoursesList() {
@@ -20,11 +20,10 @@ export default function OwnedCoursesList() {
     setError("");
     setCourses(null);
     void session
-      .request("/api/v1/me/owned-offerings", { signal: abort.signal })
+      .request("/api/v1/me/owned-courses", { signal: abort.signal })
       .then((value) => {
         if (!abort.signal.aborted) {
-          const items = ownedOfferings(value);
-          setCourses(uniqueCoursesFromOfferings(items));
+          setCourses(Array.isArray(value) ? value.map((item) => lecturerCourse(item)) : []);
         }
       })
       .catch((e: unknown) => {

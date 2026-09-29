@@ -30,7 +30,7 @@ export class AuthoritativePlanContextProvider {
 
   public async load(courseId: string): Promise<PlanContext> {
     const course = await this.lessons.course(courseId);
-    if (!course || course.state !== "PUBLISHED") throw new Error("PUBLISHED_COURSE_REQUIRED");
+    if (!course || !["PUBLISHED", "HIDDEN"].includes(course.state)) throw new Error("ACTIVE_COURSE_REQUIRED");
     const syllabus = await this.lessons.list(courseId, course.contentVersion);
     const courseRequirements = syllabus
       .filter((lesson) => lesson.state === "READY")

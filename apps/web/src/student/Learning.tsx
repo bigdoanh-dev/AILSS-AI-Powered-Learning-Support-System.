@@ -1003,7 +1003,7 @@ export function CourseLearning() {
   const { courseId = "", lessonId } = useParams();
   const [lessonSearch, setLessonSearch] = useState("");
   const [courseTab, setCourseTab] = useState<"lessons" | "exercises">("lessons");
-  const course = useStudent<LearningCourse>("/courses/" + courseId),
+  const course = useStudent<LearningCourse>("/me/courses/" + courseId),
     lessons = useStudent<Lesson[]>("/courses/" + courseId + "/lessons"),
     progress = useStudent<Progress>("/courses/" + courseId + "/progress");
   const command = useCommand();

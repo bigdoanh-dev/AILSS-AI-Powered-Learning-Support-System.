@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { lecturerError, lecturerRequest, useLecturer } from "./api";
 import { CourseArtwork, categories } from "../components/CourseArtwork";
 import { CatalogCourseSelect, Field, State } from "./ui";
@@ -19,6 +19,7 @@ type Course = {
   price: string;
   currency: string;
   ownerLecturerId?: string;
+  activeStudentCount?: number;
 };
 type Lesson = {
   lessonId: string;
@@ -82,7 +83,7 @@ export function TeachingHome() {
     setTimeout(() => setGradeNotice(null), 3500);
   };
 
-  const courses = useLecturer<Course[] | { items: Course[] }>("/courses?limit=50"),
+  const courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses"),
     offerings = useLecturer<Offering[] | { items: Offering[] }>("/me/owned-offerings"),
     classes = useLecturer<{ classes?: unknown[] } | unknown[]>("/me/owned-classes");
   const coursesList = Array.isArray(courses.data) ? courses.data : courses.data?.items || [];
@@ -1667,21 +1668,109 @@ export function TeachingHome() {
 
 export function TeachingCourses() {
   const [selectedCat, setSelectedCat] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "PUBLISHED" | "DRAFT">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "PUBLISHED" | "DRAFT" | "HIDDEN">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const courses = useLecturer<Course[] | { items: Course[] }>("/courses?limit=50");
+  const [showCreateInline, setShowCreateInline] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newSlug, setNewSlug] = useState("");
+  const [newCategoryId, setNewCategoryId] = useState<string>(categories[0].id);
+  const [newPriceType, setNewPriceType] = useState<"FREE" | "PAID">("FREE");
+  const [newPrice, setNewPrice] = useState("0");
+  const [newCurrency, setNewCurrency] = useState("VND");
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createMsg, setCreateMsg] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses");
   const coursesList = Array.isArray(courses.data) ? courses.data : courses.data?.items || [];
+
+  const slugifyTitle = (text: string) => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+  };
+
+  const handleCoverFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setCreateError("Vui lòng chọn tệp hình ảnh hợp lệ (PNG, JPG, WEBP, SVG).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setCreateError("Kích thước ảnh tối đa là 5MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (typeof ev.target?.result === "string") {
+        setCoverPreview(ev.target.result);
+        setCreateError(null);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCreateCourse = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) {
+      setCreateError("Vui lòng nhập tên khóa học.");
+      return;
+    }
+    const slug = newSlug.trim() || slugifyTitle(newTitle);
+    setCreateLoading(true);
+    setCreateError(null);
+    setCreateMsg(null);
+    try {
+      const payload = {
+        title: newTitle.trim(),
+        slug,
+        categoryId: newCategoryId,
+        priceType: newPriceType,
+        price: newPriceType === "PAID" ? newPrice : "0",
+        currency: newCurrency,
+      };
+      const r = await lecturerRequest<Course>("/courses", "POST", payload);
+      const createdId = r.data?.courseId;
+
+      if (coverPreview && createdId) {
+        try {
+          localStorage.setItem(`ailss_course_cover_${createdId}`, coverPreview);
+          localStorage.setItem(`ailss_course_cover_${slug}`, coverPreview);
+        } catch {
+          // ignore localStorage quota errors
+        }
+      }
+
+      setCreateMsg("✓ Khóa học đã được tạo thành công!");
+      courses.retry();
+      setTimeout(() => {
+        setNewTitle("");
+        setNewSlug("");
+        setCoverPreview(null);
+        setNewPriceType("FREE");
+        setNewPrice("0");
+        setCreateLoading(false);
+        setShowCreateInline(false);
+        setCreateMsg(null);
+      }, 1400);
+    } catch (err) {
+      setCreateError(lecturerError(err));
+      setCreateLoading(false);
+    }
+  };
 
   const filteredCourses = coursesList.filter((c) => {
     if (selectedCat !== "all" && c.categoryId !== selectedCat) return false;
-    const isPublished = Boolean(
-      c.publishedAt ||
-      (c as { state?: string }).state === "PUBLISHED" ||
-      (c as { state?: string }).state === "ACTIVE",
-    );
+    const isPublished = c.state === "PUBLISHED" || c.state === "ACTIVE";
     if (statusFilter === "PUBLISHED" && !isPublished) return false;
-    if (statusFilter === "DRAFT" && isPublished) return false;
+    if (statusFilter === "DRAFT" && c.state !== "DRAFT" && c.state !== "IN_REVIEW") return false;
+    if (statusFilter === "HIDDEN" && c.state !== "HIDDEN") return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return c.title.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q);
@@ -1707,16 +1796,29 @@ export function TeachingCourses() {
           </p>
         </div>
         <div className="curriculum-studio-actions">
-          <Link
+          <button
+            type="button"
             className="curriculum-create-btn"
-            to="/app/teaching/courses/new"
-            style={{ textDecoration: "none" }}
+            onClick={() => {
+              setShowCreateInline((v) => !v);
+              setCreateError(null);
+              setCreateMsg(null);
+            }}
+            style={{
+              textDecoration: "none",
+              border: "none",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              background: showCreateInline ? "var(--muted, #64748b)" : undefined,
+            }}
           >
             <span className="create-btn-icon" aria-hidden="true">
-              <Icon name="plus" size={16} />
+              <Icon name={showCreateInline ? "close" : "plus"} size={16} />
             </span>
-            <span>Soạn khóa học mới</span>
-          </Link>
+            <span>{showCreateInline ? "Đóng khung tạo" : "Soạn khóa học mới"}</span>
+          </button>
         </div>
       </div>
 
@@ -1784,6 +1886,372 @@ export function TeachingCourses() {
         </div>
       </div>
 
+      {/* Inline Course Authoring Panel */}
+      {showCreateInline && (
+        <section className="inline-course-create-card" aria-label="Tạo khóa học mới">
+          <div className="inline-create-header">
+            <div>
+              <h2 className="inline-create-title">
+                <Icon name="plus" size={18} style={{ color: "var(--blue)" }} />
+                <span>Tạo Khóa Học Mới &amp; Tải Lên Ảnh Bìa</span>
+              </h2>
+              <p className="inline-create-desc">
+                Nhập thông tin cơ bản, chọn ảnh bìa nhận diện và khởi tạo bản nháp khóa học ngay trên trang
+                này.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="button button-subtle button-small"
+              onClick={() => setShowCreateInline(false)}
+              aria-label="Đóng"
+              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+            >
+              <Icon name="close" size={14} />
+              <span>Đóng</span>
+            </button>
+          </div>
+
+          <form onSubmit={handleCreateCourse} className="inline-create-form">
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {createMsg && (
+                <div className="dashboard-banner-notice" role="status" style={{ margin: 0 }}>
+                  <span>✓</span>
+                  <span>{createMsg}</span>
+                </div>
+              )}
+              {createError && (
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    backgroundColor: "rgba(220, 38, 38, 0.1)",
+                    color: "#dc2626",
+                    fontSize: 13,
+                    fontWeight: 500,
+                  }}
+                >
+                  ⚠️ {createError}
+                </div>
+              )}
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14 }}>
+                <label
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--ink)",
+                  }}
+                >
+                  <span>
+                    Tên khóa học <span style={{ color: "#dc2626" }}>*</span>
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VD: Lập trình Python ứng dụng AI &amp; LLM nâng cao..."
+                    value={newTitle}
+                    onChange={(e) => {
+                      const t = e.target.value;
+                      setNewTitle(t);
+                      if (!newSlug || newSlug === slugifyTitle(newTitle)) {
+                        setNewSlug(slugifyTitle(t));
+                      }
+                    }}
+                    style={{
+                      padding: "9px 12px",
+                      borderRadius: 8,
+                      border: "1px solid var(--line, #cbd5e1)",
+                      fontSize: 14,
+                      backgroundColor: "var(--surface, #ffffff)",
+                      color: "var(--ink, #0f172a)",
+                    }}
+                  />
+                </label>
+
+                <label
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--ink)",
+                  }}
+                >
+                  <span>
+                    Đường dẫn (Slug URL) <span style={{ color: "#dc2626" }}>*</span>
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VD: lap-trinh-python-ung-dung-ai"
+                    value={newSlug}
+                    onChange={(e) => setNewSlug(e.target.value)}
+                    style={{
+                      padding: "9px 12px",
+                      borderRadius: 8,
+                      border: "1px solid var(--line, #cbd5e1)",
+                      fontSize: 14,
+                      backgroundColor: "var(--surface, #ffffff)",
+                      color: "var(--ink, #0f172a)",
+                    }}
+                  />
+                </label>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--ink)",
+                    }}
+                  >
+                    <span>Chủ đề / Chuyên ngành</span>
+                    <select
+                      value={newCategoryId}
+                      onChange={(e) => setNewCategoryId(e.target.value)}
+                      style={{
+                        padding: "9px 12px",
+                        borderRadius: 8,
+                        border: "1px solid var(--line, #cbd5e1)",
+                        fontSize: 14,
+                        backgroundColor: "var(--surface, #ffffff)",
+                        color: "var(--ink, #0f172a)",
+                      }}
+                    >
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--ink)",
+                    }}
+                  >
+                    <span>Hình thức</span>
+                    <select
+                      value={newPriceType}
+                      onChange={(e) => setNewPriceType(e.target.value as "FREE" | "PAID")}
+                      style={{
+                        padding: "9px 12px",
+                        borderRadius: 8,
+                        border: "1px solid var(--line, #cbd5e1)",
+                        fontSize: 14,
+                        backgroundColor: "var(--surface, #ffffff)",
+                        color: "var(--ink, #0f172a)",
+                      }}
+                    >
+                      <option value="FREE">Miễn phí (FREE)</option>
+                      <option value="PAID">Có học phí (PAID)</option>
+                    </select>
+                  </label>
+                </div>
+
+                {newPriceType === "PAID" && (
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
+                    <label
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 6,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "var(--ink)",
+                      }}
+                    >
+                      <span>Học phí</span>
+                      <input
+                        type="text"
+                        value={newPrice}
+                        onChange={(e) => setNewPrice(e.target.value)}
+                        placeholder="590000"
+                        style={{
+                          padding: "9px 12px",
+                          borderRadius: 8,
+                          border: "1px solid var(--line, #cbd5e1)",
+                          fontSize: 14,
+                          backgroundColor: "var(--surface, #ffffff)",
+                          color: "var(--ink, #0f172a)",
+                        }}
+                      />
+                    </label>
+                    <label
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 6,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "var(--ink)",
+                      }}
+                    >
+                      <span>Tiền tệ</span>
+                      <input
+                        type="text"
+                        value={newCurrency}
+                        onChange={(e) => setNewCurrency(e.target.value)}
+                        style={{
+                          padding: "9px 12px",
+                          borderRadius: 8,
+                          border: "1px solid var(--line, #cbd5e1)",
+                          fontSize: 14,
+                          backgroundColor: "var(--surface, #ffffff)",
+                          color: "var(--ink, #0f172a)",
+                        }}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+                <button
+                  type="submit"
+                  className="button"
+                  disabled={createLoading}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px" }}
+                >
+                  <Icon name="plus" size={16} />
+                  <span>{createLoading ? "Đang tạo bản nháp..." : "Tạo bản nháp khóa học"}</span>
+                </button>
+                <button
+                  type="button"
+                  className="button button-subtle"
+                  onClick={() => setShowCreateInline(false)}
+                >
+                  Hủy
+                </button>
+              </div>
+            </div>
+
+            {/* Cover image uploader */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
+                Hình ảnh bìa khóa học (Cover Image)
+              </span>
+              <div
+                className={`inline-cover-dropzone ${isDragOver ? "dragover" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                  const f = e.dataTransfer.files?.[0];
+                  if (f) handleCoverFile(f);
+                }}
+                onClick={() => {
+                  const input = document.getElementById("course-cover-input") as HTMLInputElement;
+                  input?.click();
+                }}
+              >
+                <input
+                  id="course-cover-input"
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleCoverFile(f);
+                  }}
+                />
+
+                {coverPreview ? (
+                  <div className="inline-cover-preview-wrapper" onClick={(e) => e.stopPropagation()}>
+                    <img src={coverPreview} alt="Xem trước ảnh bìa" className="inline-cover-preview-img" />
+                    <span className="inline-cover-badge">✓ Đã tải ảnh bìa</span>
+                    <div className="inline-cover-overlay-actions">
+                      <button
+                        type="button"
+                        className="button button-subtle button-small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const input = document.getElementById("course-cover-input") as HTMLInputElement;
+                          input?.click();
+                        }}
+                        style={{ fontSize: 11, padding: "4px 8px" }}
+                      >
+                        <Icon name="upload" size={12} />
+                        <span>Đổi ảnh</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="button button-subtle button-small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCoverPreview(null);
+                        }}
+                        style={{ fontSize: 11, padding: "4px 8px", color: "#dc2626" }}
+                      >
+                        <Icon name="trash" size={12} />
+                        <span>Xóa</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: "50%",
+                        background: "rgba(2, 132, 199, 0.1)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 10,
+                        color: "var(--blue)",
+                      }}
+                    >
+                      <Icon name="image" size={24} />
+                    </div>
+                    <p style={{ fontWeight: 600, fontSize: 13, margin: "0 0 4px", color: "var(--ink)" }}>
+                      Tải lên ảnh bìa đại diện
+                    </p>
+                    <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
+                      Kéo thả ảnh vào đây hoặc nhấp để chọn tệp
+                    </p>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: "var(--muted)",
+                        marginTop: 8,
+                        padding: "2px 8px",
+                        background: "var(--card-subtle, #f1f5f9)",
+                        borderRadius: 4,
+                      }}
+                    >
+                      PNG, JPG, WEBP (khuyến nghị 16:9)
+                    </span>
+                  </>
+                )}
+              </div>
+              <p style={{ fontSize: 12, color: "var(--muted)", margin: "4px 0 0" }}>
+                Ảnh bìa sẽ được hiển thị trên danh thiếp khóa học và đồng bộ trên giao diện học viên.
+              </p>
+            </div>
+          </form>
+        </section>
+      )}
+
       {/* Integrated Search & Filters Toolbar */}
       <div className="curriculum-toolbar-card">
         <div className="curriculum-search-row">
@@ -1832,6 +2300,13 @@ export function TeachingCourses() {
             >
               ○ Bản nháp
             </button>
+            <button
+              type="button"
+              className={`curriculum-status-chip ${statusFilter === "HIDDEN" ? "active" : ""}`}
+              onClick={() => setStatusFilter("HIDDEN")}
+            >
+              Không công khai
+            </button>
           </div>
         </div>
 
@@ -1863,16 +2338,14 @@ export function TeachingCourses() {
           filteredCourses.length ? (
             <div className="workspace-cards">
               {filteredCourses.map((c) => {
-                const isPublished = Boolean(
-                  c.publishedAt ||
-                  (c as { state?: string }).state === "PUBLISHED" ||
-                  (c as { state?: string }).state === "ACTIVE",
-                );
+                const isPublished = c.state === "PUBLISHED";
                 return (
                   <article key={c.courseId} className="teaching-course-card">
-                    <CourseArtwork title={c.title} categoryId={c.categoryId} />
+                    <CourseArtwork title={c.title} categoryId={c.categoryId} courseId={c.courseId} />
                     <div className="teaching-course-meta-row">
-                      <StateChip state={isPublished ? "PUBLISHED" : "DRAFT"} />
+                      <StateChip
+                        state={c.state === "HIDDEN" ? "HIDDEN" : isPublished ? "PUBLISHED" : "DRAFT"}
+                      />
                       <span className="kpi-tag accent" style={{ fontSize: 11 }}>
                         4.9 ★ (88 đánh giá)
                       </span>
@@ -1911,10 +2384,12 @@ export function TeachingCourses() {
                           alignItems: "center",
                           gap: 6,
                           textDecoration: "none",
+                          color: "#ffffff",
+                          backgroundColor: "var(--blue, #0284c7)",
                         }}
                       >
-                        <Icon name="assignment" size={14} />
-                        <span>Soạn bài giảng</span>
+                        <Icon name="assignment" size={14} style={{ color: "#ffffff" }} />
+                        <span style={{ color: "#ffffff" }}>Soạn bài giảng</span>
                       </Link>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, width: "100%" }}>
                         <Link
@@ -1937,7 +2412,7 @@ export function TeachingCourses() {
                         </Link>
                         <Link
                           className="button button-subtle button-small"
-                          to={`/app/teaching/courses/${c.courseId}`}
+                          to={`/app/teaching/courses/${c.courseId}?tab=settings`}
                           title="Cài đặt khóa học"
                           style={{
                             textAlign: "center",
@@ -1980,9 +2455,16 @@ export function TeachingCourses() {
                 >
                   Xóa bộ lọc
                 </button>
-                <Link className="button" to="/app/teaching/courses/new">
+                <button
+                  type="button"
+                  className="button"
+                  onClick={() => {
+                    setShowCreateInline(true);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                >
                   + Soạn khóa học mới
-                </Link>
+                </button>
               </div>
             </div>
           )
@@ -2064,12 +2546,36 @@ export function TeachingCourses() {
 }
 export function CourseCreate() {
   const nav = useNavigate(),
-    [msg, setMsg] = useState("");
+    [msg, setMsg] = useState(""),
+    [coverPreview, setCoverPreview] = useState<string | null>(null);
+
+  const handleCoverFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setMsg("Vui lòng chọn tệp hình ảnh hợp lệ (PNG, JPG, WEBP, SVG).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (typeof ev.target?.result === "string") {
+        setCoverPreview(ev.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     try {
       const v = values(new FormData(e.currentTarget));
       const r = await lecturerRequest<Course>("/courses", "POST", v);
+      if (coverPreview && r.data?.courseId) {
+        try {
+          localStorage.setItem(`ailss_course_cover_${r.data.courseId}`, coverPreview);
+          if (v.slug) localStorage.setItem(`ailss_course_cover_${v.slug}`, coverPreview);
+        } catch {
+          // ignore quota
+        }
+      }
       nav(`/app/teaching/courses/${r.data.courseId}`);
     } catch (x) {
       setMsg(lecturerError(x));
@@ -2101,6 +2607,38 @@ export function CourseCreate() {
         </label>
         <Field label="Giá" name="price" defaultValue="0" required />
         <Field label="Tiền tệ" name="currency" defaultValue="VND" required />
+
+        {/* Cover image upload */}
+        <label style={{ gridColumn: "1 / -1" }}>
+          Hình ảnh bìa khóa học
+          <input
+            type="file"
+            accept="image/png, image/jpeg, image/webp, image/svg+xml"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleCoverFile(f);
+            }}
+            style={{ marginTop: 6 }}
+          />
+          {coverPreview && (
+            <div
+              style={{
+                marginTop: 10,
+                maxWidth: 360,
+                borderRadius: 8,
+                overflow: "hidden",
+                border: "1px solid var(--line)",
+              }}
+            >
+              <img
+                src={coverPreview}
+                alt="Xem trước bìa"
+                style={{ width: "100%", height: 160, objectFit: "cover", display: "block" }}
+              />
+            </div>
+          )}
+        </label>
+
         <RevenueQuote initialPaid={false} />
         <button className="button">Tạo bản nháp</button>
         <p role="status">{msg}</p>
@@ -2109,8 +2647,9 @@ export function CourseCreate() {
   );
 }
 export function CourseDetail() {
+  const [searchParams] = useSearchParams();
   const { courseId: id = "" } = useParams(),
-    q = useLecturer<Course>(`/courses/${id}`),
+    q = useLecturer<Course>(`/me/courses/${id}`),
     lessons = useLecturer<Lesson[] | { lessons: Lesson[] }>(`/courses/${id}/lessons`),
     offerings = useLecturer<Offering[] | { items: Offering[] }>(`/courses/${id}/offerings?limit=50`),
     reviews = useLecturer<{ items: unknown[]; ratingSummary?: { average: number; reviewCount: number } }>(
@@ -2120,10 +2659,13 @@ export function CourseDetail() {
       | { classes?: { classId: string; name: string; linkedCourseId?: string }[] }
       | { classId: string; name: string; linkedCourseId?: string }[]
     >("/me/owned-classes"),
-    [activeTab, setActiveTab] = useState<"curriculum" | "offerings" | "classes" | "releases" | "edit">(
-      "curriculum",
-    ),
+    [activeTab, setActiveTab] = useState<
+      "curriculum" | "offerings" | "classes" | "releases" | "edit" | "settings"
+    >(searchParams.get("tab") === "settings" ? "settings" : "curriculum"),
     [msg, setMsg] = useState(""),
+    [retireMode, setRetireMode] = useState<"LOCK" | "DELETE" | null>(null),
+    [retireConfirmation, setRetireConfirmation] = useState(""),
+    [retiring, setRetiring] = useState(false),
     [dirty, setDirty] = useState(false),
     [releasesList, setReleasesList] = useState([
       {
@@ -2208,6 +2750,26 @@ export function CourseDetail() {
       q.retry();
     } catch (x) {
       setMsg(lecturerError(x));
+    }
+  }
+
+  async function retireCourse() {
+    if (!retireMode || retireConfirmation !== q.data?.title) return;
+    setRetiring(true);
+    try {
+      const result = await lecturerRequest<Course>(`/courses/${id}/retire`, "POST", { mode: retireMode });
+      setMsg(
+        result.data.state === "DELETED"
+          ? "✓ Đã xóa bản nháp khóa học."
+          : "✓ Khóa học đã ẩn khỏi công khai; học viên hiện tại tiếp tục học bình thường.",
+      );
+      setRetireMode(null);
+      setRetireConfirmation("");
+      q.retry();
+    } catch (error) {
+      setMsg(lecturerError(error));
+    } finally {
+      setRetiring(false);
     }
   }
 
@@ -2350,6 +2912,14 @@ export function CourseDetail() {
                 onClick={() => setActiveTab("edit")}
               >
                 <Icon name="settings" size={15} /> Chỉnh sửa khóa học
+              </button>
+              <button
+                className={`segmented-tab ${activeTab === "settings" ? "active" : ""}`}
+                role="tab"
+                aria-selected={activeTab === "settings"}
+                onClick={() => setActiveTab("settings")}
+              >
+                <Icon name="settings" size={15} /> Cài đặt
               </button>
             </div>
 
@@ -2821,6 +3391,85 @@ export function CourseDetail() {
               </section>
             )}
 
+            {activeTab === "settings" && (
+              <section className="dashboard-section-card">
+                <div className="section-card-header">
+                  <div>
+                    <h2>Khóa hoặc xóa khóa học</h2>
+                    <p className="subtext">
+                      Trạng thái hiện tại: {stateLabel(c.state)} · {c.activeStudentCount ?? 0} học viên đang
+                      có quyền học
+                    </p>
+                  </div>
+                </div>
+                <p>
+                  Khóa học đã xuất bản sẽ được ẩn khỏi danh mục và ngừng nhận học viên mới. Học viên đã đăng
+                  ký vẫn xem bài học, làm bài và giữ tiến độ. Dữ liệu lớp học, đơn hàng và thanh toán được giữ
+                  lại.
+                </p>
+                {!["DELETED", "ARCHIVED"].includes(c.state ?? "") &&
+                  (c.state !== "HIDDEN" || !c.publishedAt) && (
+                    <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "1rem" }}>
+                      {c.state !== "HIDDEN" && (
+                        <button
+                          className="button button-subtle"
+                          type="button"
+                          onClick={() => {
+                            setRetireMode("LOCK");
+                            setRetireConfirmation("");
+                          }}
+                        >
+                          Yêu cầu khóa học
+                        </button>
+                      )}
+                      <button
+                        className="button button-subtle"
+                        type="button"
+                        onClick={() => {
+                          setRetireMode("DELETE");
+                          setRetireConfirmation("");
+                        }}
+                      >
+                        Yêu cầu xóa khóa học
+                      </button>
+                    </div>
+                  )}
+                {retireMode && (
+                  <div className="form-panel" style={{ marginTop: "1rem" }}>
+                    <p>
+                      {retireMode === "DELETE" && c.state !== "PUBLISHED"
+                        ? "Bản nháp sẽ được xóa mềm."
+                        : "Khóa học sẽ được ẩn an toàn để bảo toàn quyền học của học viên cũ."}{" "}
+                      Nhập chính xác tên khóa học để xác nhận:
+                    </p>
+                    <input
+                      aria-label="Nhập tên khóa học để xác nhận"
+                      value={retireConfirmation}
+                      onChange={(event) => setRetireConfirmation(event.target.value)}
+                      placeholder={c.title}
+                    />
+                    <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
+                      <button
+                        className="button"
+                        type="button"
+                        disabled={retiring || retireConfirmation !== c.title}
+                        onClick={() => void retireCourse()}
+                      >
+                        {retiring ? "Đang xử lý…" : "Xác nhận yêu cầu"}
+                      </button>
+                      <button
+                        className="button button-subtle"
+                        type="button"
+                        onClick={() => setRetireMode(null)}
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+
             {/* TAB 4: EDIT FORM */}
             {activeTab === "edit" && (
               <section className="dashboard-section-card">
@@ -3127,7 +3776,7 @@ export function CourseRoster() {
   const q = useLecturer<CourseRosterMember[] | { items: CourseRosterMember[] }>(
     `/courses/${courseId}/roster`,
   );
-  const courseQ = useLecturer<Course>(`/courses/${courseId}`);
+  const courseQ = useLecturer<Course>(`/me/courses/${courseId}`);
   const [search, setSearch] = useState("");
   const [filterState, setFilterState] = useState<"ALL" | "ACTIVE" | "COMPLETED" | "LOW">("ALL");
   const [notice, setNotice] = useState<string | null>(null);

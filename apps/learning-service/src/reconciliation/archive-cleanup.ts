@@ -36,7 +36,8 @@ export class ArchivedCourseProjectionCleanup {
       LOCAL_QUORUM,
     );
     const row = canonical[0];
-    if (!row || row.get("state") !== "ARCHIVED") throw new Error("CANONICAL_COURSE_NOT_ARCHIVED");
+    if (!row || !["ARCHIVED", "HIDDEN"].includes(String(row.get("state"))))
+      throw new Error("CANONICAL_COURSE_NOT_RETIRED");
     const version = numberValue(row, "record_version");
     const canonicalCategoryId = textValue(row, "category_id");
     const canonicalPublishedAt: unknown = row.get("published_at");

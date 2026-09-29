@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { sessionRequest, useSession } from "../auth/session";
 import { ApiError, errorMessage } from "../lib/api";
+import { Icon } from "../components/Icon";
 const fields = [
   { name: "professionalTitle", label: "Chức danh chuyên môn", min: 1, max: 120 },
   { name: "institution", label: "Đơn vị công tác", min: 1, max: 160 },
@@ -381,25 +382,40 @@ export function AdminLecturerApplications() {
   });
 
   return (
-    <section className="application-admin">
-      <p className="eyebrow">QUẢN TRỊ · GIẢNG VIÊN</p>
-      <h1>Duyệt yêu cầu giảng dạy & Thẩm định hồ sơ.</h1>
-      <p className="lead">
-        Thẩm định đơn đăng ký trở thành giảng viên, rà soát học vị, đơn vị công tác và kích hoạt quyền mở lớp.
-      </p>
+    <div className="admin-dashboard-container">
+      <div className="dashboard-heading">
+        <div>
+          <p className="eyebrow">QUẢN TRỊ · GIẢNG VIÊN</p>
+          <h1>Duyệt Yêu Cầu Giảng Dạy &amp; Thẩm Định Hồ Sơ</h1>
+          <p className="lead">
+            Thẩm định đơn đăng ký trở thành giảng viên, rà soát học vị, đơn vị công tác và kích hoạt quyền mở
+            lớp.
+          </p>
+        </div>
+      </div>
 
       {/* Query Form by Month and Shard */}
       <form
-        className="form-panel"
-        style={{ marginBottom: "20px" }}
+        className="dashboard-section-card"
+        style={{ padding: "20px 24px", margin: 0 }}
         onSubmit={(e) => {
           e.preventDefault();
           void queue();
         }}
       >
         <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", alignItems: "flex-end" }}>
-          <label style={{ flex: 1, minWidth: "160px" }}>
-            Tháng nộp hồ sơ
+          <label style={{ flex: "1 1 200px" }}>
+            <span
+              style={{
+                fontSize: "13px",
+                fontWeight: 600,
+                color: "var(--ink)",
+                display: "block",
+                marginBottom: "6px",
+              }}
+            >
+              Tháng nộp hồ sơ
+            </span>
             <input
               type="month"
               required
@@ -408,18 +424,44 @@ export function AdminLecturerApplications() {
                 setMonth(e.target.value);
                 setCursor(null);
               }}
-              style={{ width: "100%", marginTop: "6px" }}
+              style={{
+                width: "100%",
+                padding: "9px 12px",
+                borderRadius: "8px",
+                border: "1px solid var(--line)",
+                backgroundColor: "var(--surface)",
+                color: "var(--ink)",
+                fontSize: "14px",
+              }}
             />
           </label>
-          <label style={{ width: "140px" }}>
-            Phân vùng (Shard)
+          <label style={{ flex: "1 1 180px" }}>
+            <span
+              style={{
+                fontSize: "13px",
+                fontWeight: 600,
+                color: "var(--ink)",
+                display: "block",
+                marginBottom: "6px",
+              }}
+            >
+              Phân vùng dữ liệu (Shard)
+            </span>
             <select
               value={shard}
               onChange={(e) => {
                 setShard(Number(e.target.value));
                 setCursor(null);
               }}
-              style={{ width: "100%", marginTop: "6px" }}
+              style={{
+                width: "100%",
+                padding: "9px 12px",
+                borderRadius: "8px",
+                border: "1px solid var(--line)",
+                backgroundColor: "var(--surface)",
+                color: "var(--ink)",
+                fontSize: "14px",
+              }}
             >
               {Array.from({ length: 16 }, (_, i) => (
                 <option key={i} value={i}>
@@ -428,8 +470,20 @@ export function AdminLecturerApplications() {
               ))}
             </select>
           </label>
-          <button className="button" disabled={busy} style={{ marginBottom: "2px" }}>
-            {busy ? "Đang tải…" : "Tải danh sách chờ"}
+          <button
+            className="button"
+            disabled={busy}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              minHeight: 38,
+              padding: "0 22px",
+              marginBottom: 0,
+            }}
+          >
+            <Icon name={busy ? "refresh" : "search"} size={15} />
+            <span>{busy ? "Đang tải…" : "Tải danh sách chờ"}</span>
           </button>
         </div>
       </form>
@@ -444,7 +498,7 @@ export function AdminLecturerApplications() {
       <div className="admin-table-toolbar">
         <div className="admin-search-input-wrap">
           <span className="admin-search-icon" aria-hidden="true">
-            🔍
+            <Icon name="search" size={15} />
           </span>
           <input
             type="search"
@@ -467,22 +521,28 @@ export function AdminLecturerApplications() {
             type="button"
             className={`filter-pill-button ${statusFilter === "SUBMITTED" ? "active" : ""}`}
             onClick={() => setStatusFilter("SUBMITTED")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
-            ⏳ Chờ duyệt
+            <Icon name="clock" size={13} />
+            <span>Chờ duyệt</span>
           </button>
           <button
             type="button"
             className={`filter-pill-button ${statusFilter === "APPROVED" ? "active" : ""}`}
             onClick={() => setStatusFilter("APPROVED")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
-            ✓ Đã duyệt
+            <Icon name="checkCircle" size={13} />
+            <span>Đã duyệt</span>
           </button>
           <button
             type="button"
             className={`filter-pill-button ${statusFilter === "REJECTED" ? "active" : ""}`}
             onClick={() => setStatusFilter("REJECTED")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
-            ✕ Đã từ chối
+            <Icon name="close" size={13} />
+            <span>Đã từ chối</span>
           </button>
         </div>
       </div>
@@ -493,7 +553,7 @@ export function AdminLecturerApplications() {
           <thead>
             <tr>
               <th scope="col">Ứng viên</th>
-              <th scope="col">Chức danh & Học vị</th>
+              <th scope="col">Chức danh &amp; Học vị</th>
               <th scope="col">Lĩnh vực giảng dạy</th>
               <th scope="col">Đơn vị công tác</th>
               <th scope="col">Trạng thái</th>
@@ -527,7 +587,7 @@ export function AdminLecturerApplications() {
                             title="Sao chép toàn bộ mã đơn"
                             onClick={() => handleCopyId(a.applicationId)}
                           >
-                            📋
+                            <Icon name="fileText" size={13} />
                           </button>
                         </div>
                       </div>
@@ -546,13 +606,37 @@ export function AdminLecturerApplications() {
                   </td>
                   <td>
                     {a.status === "SUBMITTED" ? (
-                      <span className="admin-badge pending">⏳ Chờ duyệt</span>
+                      <span
+                        className="admin-badge pending"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                      >
+                        <Icon name="clock" size={12} />
+                        <span>Chờ duyệt</span>
+                      </span>
                     ) : a.status === "REJECTED" ? (
-                      <span className="admin-badge rejected">✕ Từ chối</span>
+                      <span
+                        className="admin-badge rejected"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                      >
+                        <Icon name="close" size={12} />
+                        <span>Từ chối</span>
+                      </span>
                     ) : a.result === "APPROVED_VERIFIED" ? (
-                      <span className="admin-badge verified">🛡️ Đã xác minh</span>
+                      <span
+                        className="admin-badge verified"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                      >
+                        <Icon name="shield" size={12} />
+                        <span>Đã xác minh</span>
+                      </span>
                     ) : (
-                      <span className="admin-badge approved">✓ Đã duyệt</span>
+                      <span
+                        className="admin-badge approved"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                      >
+                        <Icon name="checkCircle" size={12} />
+                        <span>Đã duyệt</span>
+                      </span>
                     )}
                   </td>
                   <td style={{ textAlign: "right" }}>
@@ -561,8 +645,10 @@ export function AdminLecturerApplications() {
                       className="button button-small"
                       disabled={busy}
                       onClick={() => void open(a.applicationId)}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
                     >
-                      Thẩm định hồ sơ →
+                      <span>Thẩm định hồ sơ</span>
+                      <Icon name="chevronRight" size={13} />
                     </button>
                   </td>
                 </tr>
@@ -624,7 +710,7 @@ export function AdminLecturerApplications() {
                 onClick={() => setDetail(null)}
                 aria-label="Đóng cửa sổ thẩm định"
               >
-                ✕
+                <Icon name="close" size={16} />
               </button>
             </div>
 
@@ -819,6 +905,6 @@ export function AdminLecturerApplications() {
           <span>{toast}</span>
         </div>
       )}
-    </section>
+    </div>
   );
 }

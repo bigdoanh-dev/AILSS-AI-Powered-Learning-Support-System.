@@ -10,9 +10,37 @@ export function learningAuthoringRouter(
   service: LearningAuthoringService,
   verifyCreate: (t: string) => Promise<ActorContext>,
   verifyUpdate: (t: string) => Promise<ActorContext>,
+  verifyManage: (t: string) => Promise<ActorContext>,
   metrics: ReturnType<typeof createMetrics>,
 ): Router {
   const router = Router();
+  router.get("/api/v1/me/owned-courses", async (req, res, next) => {
+    try {
+      const ctx = context();
+      const actor = await verified(req, verifyManage, ctx.correlationId);
+      res.status(200).json({
+        data: await service.ownedCourses(actor),
+        meta: { requestId: ctx.requestId, timestamp: new Date().toISOString() },
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  router.get("/api/v1/me/courses/:courseId", async (req, res, next) => {
+    try {
+      const ctx = context();
+      const actor = await verified(req, verifyManage, ctx.correlationId);
+      const courseId = req.params.courseId;
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(courseId))
+        throw new AppError("INVALID_COURSE_ID", 400, "Invalid courseId");
+      res.status(200).json({
+        data: await service.managedCourse(actor, courseId),
+        meta: { requestId: ctx.requestId, timestamp: new Date().toISOString() },
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
   router.post("/api/v1/courses", async (req, res, next) => {
     const stop = metrics.learningCourseAuthoringLatency.startTimer({ operation: "create" });
     try {

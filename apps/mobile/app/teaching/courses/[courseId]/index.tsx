@@ -38,7 +38,7 @@ export default function CourseDetail() {
 
     // Course detail (LRN-03)
     void session
-      .request(`/api/v1/courses/${courseId}`, { signal: abort.signal })
+      .request(`/api/v1/me/courses/${courseId}`, { signal: abort.signal })
       .then((value) => {
         if (!abort.signal.aborted) setCourse(lecturerCourse(value));
       })
@@ -128,7 +128,11 @@ export default function CourseDetail() {
             <View style={ds.heroTopRow}>
               <View style={[ds.badge, course.state === "PUBLISHED" ? ds.published : ds.draft]}>
                 <Text style={[ds.badgeText, course.state === "PUBLISHED" ? ds.publishedText : ds.draftText]}>
-                  {course.state === "PUBLISHED" ? "● ĐÃ XUẤT BẢN" : "○ BẢN NHÁP"}
+                  {course.state === "PUBLISHED"
+                    ? "● ĐÃ XUẤT BẢN"
+                    : course.state === "HIDDEN"
+                      ? "○ ĐÃ ẨN"
+                      : "○ BẢN NHÁP"}
                 </Text>
               </View>
               <View style={ds.pricePill}>
@@ -184,6 +188,12 @@ export default function CourseDetail() {
 
           {/* Quick Studio Actions */}
           <View style={ds.quickActionsRow}>
+            <Pressable
+              style={ds.actionButton}
+              onPress={() => router.push(`/teaching/courses/${courseId}/settings` as Href)}
+            >
+              <Text style={ds.actionButtonText}>⚙️ Cài đặt</Text>
+            </Pressable>
             <Pressable
               style={ds.actionButton}
               onPress={() => router.push(`/teaching/courses/${courseId}/edit` as Href)}

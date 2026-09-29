@@ -2,6 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { adminEnvelope, adminOperation } from "./admin.mjs";
 const id = "00000000-0000-4000-8000-000000000001";
+test("Admin monitoring is read-only and rejects arbitrary queries", () => {
+  assert.equal(
+    adminOperation("/web-session/admin/monitoring", "GET", undefined, {}).path,
+    "/admin/monitoring",
+  );
+  assert.throws(() =>
+    adminOperation("/web-session/admin/monitoring?url=http://internal.test", "GET", undefined, {}),
+  );
+  assert.throws(() => adminOperation("/web-session/admin/monitoring", "POST", {}, {}));
+});
 test("Admin commission allowlist accepts a bounded rate and current policy version", () => {
   const effectiveAt = "2026-09-27T00:00:00.000Z";
   assert.equal(

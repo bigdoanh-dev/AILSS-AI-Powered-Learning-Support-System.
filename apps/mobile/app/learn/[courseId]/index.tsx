@@ -49,7 +49,7 @@ export default function CourseLearningScreen() {
       setError(null);
 
       const [cData, lData, pData] = await Promise.all([
-        session.request(`/api/v1/courses/${courseId}`),
+        session.request(`/api/v1/me/courses/${courseId}`),
         session.request(`/api/v1/courses/${courseId}/lessons`),
         session.request(`/api/v1/courses/${courseId}/progress`),
       ]);

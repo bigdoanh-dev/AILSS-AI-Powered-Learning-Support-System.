@@ -8,6 +8,11 @@ const variants = [
   },
   { name: "dev-core", files: ["docker-compose.yml"], profile: "dev-core" },
   {
+    name: "dev-observability",
+    files: ["docker-compose.yml", "docker-compose.observability.yml"],
+    profile: "dev-core",
+  },
+  {
     name: "dev-async",
     files: ["docker-compose.yml", "docker-compose.async.yml"],
     profile: "dev-async",

@@ -100,6 +100,9 @@ export function AdminHome() {
           </span>
           <span>Thống kê học tập</span>
         </Link>
+        <Link className="quick-action-chip" to="/app/admin/monitoring">
+          Prometheus &amp; Grafana
+        </Link>
         <Link className="quick-action-chip" to="/app/admin/logs">
           <span className="chip-icon" aria-hidden="true">
             <Icon name="receipt" size={16} />
@@ -1312,6 +1315,107 @@ export function CourseGovernance() {
   const [toast, setToast] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<GovernanceCourse | null>(null);
 
+  const [showCreateInline, setShowCreateInline] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newSlug, setNewSlug] = useState("");
+  const [newLecturerName, setNewLecturerName] = useState("TS. Nguyễn Minh Trí");
+  const [newCategoryName, setNewCategoryName] = useState("Lập trình");
+  const [newPriceType, setNewPriceType] = useState<"FREE" | "PAID">("PAID");
+  const [newPrice, setNewPrice] = useState("490.000");
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [createMsg, setCreateMsg] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createLoading, setCreateLoading] = useState(false);
+
+  const slugifyTitle = (text: string) => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+  };
+
+  const handleCoverFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setCreateError("Vui lòng chọn tệp hình ảnh hợp lệ (PNG, JPG, WEBP, SVG).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setCreateError("Kích thước ảnh tối đa là 5MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (typeof ev.target?.result === "string") {
+        setCoverPreview(ev.target.result);
+        setCreateError(null);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCreateCourse = (e: FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) {
+      setCreateError("Vui lòng nhập tên khóa học.");
+      return;
+    }
+    setCreateLoading(true);
+    setCreateError(null);
+    setCreateMsg(null);
+
+    const slug = newSlug.trim() || slugifyTitle(newTitle);
+    const newId = crypto.randomUUID();
+
+    if (coverPreview) {
+      try {
+        localStorage.setItem(`ailss_course_cover_${newId}`, coverPreview);
+        localStorage.setItem(`ailss_course_cover_${slug}`, coverPreview);
+      } catch {
+        // ignore localStorage quota errors
+      }
+    }
+
+    const newCourseObj: GovernanceCourse = {
+      courseId: newId,
+      title: newTitle.trim(),
+      categoryName: newCategoryName,
+      categoryId: crypto.randomUUID(),
+      lecturerName: newLecturerName.trim() || "Ban Đào Tạo AILSS",
+      lecturerId: "admin-managed",
+      rating: 5.0,
+      reviewCount: 0,
+      lessonsCount: 1,
+      quizzesCount: 0,
+      totalHours: "1.0h",
+      studentsCount: 0,
+      price: newPriceType === "PAID" ? `${newPrice} ₫` : "0 ₫",
+      priceType: newPriceType,
+      state: "DRAFT",
+      nextLesson: "Bài 1 - Giới thiệu môn học & Đề cương chi tiết",
+      updatedAt: "Vừa xong",
+      documents: [],
+      reviews: [],
+      comments: [],
+    };
+
+    setCourses((prev) => [newCourseObj, ...prev]);
+    setCreateMsg("✓ Đã tạo khóa học mới thành công!");
+    showToast(`Đã thêm khóa học: ${newCourseObj.title}`);
+
+    setTimeout(() => {
+      setNewTitle("");
+      setNewSlug("");
+      setCoverPreview(null);
+      setCreateLoading(false);
+      setShowCreateInline(false);
+      setCreateMsg(null);
+    }, 1200);
+  };
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
@@ -1420,23 +1524,413 @@ export function CourseGovernance() {
   });
 
   return (
-    <>
+    <div className="admin-dashboard-container" style={{ maxWidth: 1280, margin: "0 auto", width: "100%" }}>
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">QUẢN TRỊ HỌC THUẬT & KHÓA HỌC</p>
-          <h1>Quản Lý & Kiểm Duyệt Khóa Học Hệ Thống</h1>
+          <p className="eyebrow">QUẢN TRỊ HỌC THUẬT &amp; KHÓA HỌC</p>
+          <h1>Quản Lý &amp; Kiểm Duyệt Khóa Học Hệ Thống</h1>
           <p className="lead">
             Kiểm soát chất lượng đào tạo, xếp hạng sao, tài liệu bài giảng và phê duyệt xuất bản trên toàn hệ
             sinh thái AILSS.
           </p>
         </div>
+        <div className="dashboard-header-actions">
+          <button
+            type="button"
+            className="button"
+            onClick={() => {
+              setShowCreateInline((v) => !v);
+              setCreateError(null);
+              setCreateMsg(null);
+            }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+          >
+            <Icon name={showCreateInline ? "close" : "plus"} size={16} />
+            <span>{showCreateInline ? "Đóng khung tạo" : "Tạo khóa học mới"}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Toolbar: Search & Filter Pills matching media_1789593776396.png */}
-      <div className="admin-table-toolbar">
+      {/* Inline Course Authoring Panel for Admin */}
+      {showCreateInline && (
+        <section className="inline-course-create-card" aria-label="Tạo khóa học mới">
+          <div className="inline-create-header">
+            <div>
+              <h2 className="inline-create-title">
+                <Icon name="plus" size={18} style={{ color: "var(--blue)" }} />
+                <span>Tạo Khóa Học Mới &amp; Tải Lên Ảnh Bìa (Admin)</span>
+              </h2>
+              <p className="inline-create-desc">
+                Khởi tạo chương trình đào tạo, phân bổ giảng viên phụ trách và thiết lập ảnh bìa nhận diện cho
+                khóa học.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="button button-subtle button-small"
+              onClick={() => setShowCreateInline(false)}
+              aria-label="Đóng"
+              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+            >
+              <Icon name="close" size={14} />
+              <span>Đóng</span>
+            </button>
+          </div>
+
+          <form onSubmit={handleCreateCourse} className="inline-create-form">
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {createMsg && (
+                <div className="dashboard-banner-notice" role="status" style={{ margin: 0 }}>
+                  <span>✓</span>
+                  <span>{createMsg}</span>
+                </div>
+              )}
+              {createError && (
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    backgroundColor: "rgba(220, 38, 38, 0.1)",
+                    color: "#dc2626",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Icon name="alert" size={16} />
+                  <span>{createError}</span>
+                </div>
+              )}
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14 }}>
+                <label
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--ink)",
+                  }}
+                >
+                  <span>
+                    Tên khóa học <span style={{ color: "#dc2626" }}>*</span>
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VD: Kiến trúc Hệ thống Phân tán &amp; High Availability..."
+                    value={newTitle}
+                    onChange={(e) => {
+                      const t = e.target.value;
+                      setNewTitle(t);
+                      if (!newSlug || newSlug === slugifyTitle(newTitle)) {
+                        setNewSlug(slugifyTitle(t));
+                      }
+                    }}
+                    style={{
+                      padding: "9px 12px",
+                      borderRadius: 8,
+                      border: "1px solid var(--line, #cbd5e1)",
+                      fontSize: 14,
+                      backgroundColor: "var(--surface)",
+                      color: "var(--ink)",
+                    }}
+                  />
+                </label>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--ink)",
+                    }}
+                  >
+                    <span>
+                      Đường dẫn (Slug URL) <span style={{ color: "#dc2626" }}>*</span>
+                    </span>
+                    <input
+                      type="text"
+                      required
+                      placeholder="VD: kien-truc-he-thong-phan-tan"
+                      value={newSlug}
+                      onChange={(e) => setNewSlug(e.target.value)}
+                      style={{
+                        padding: "9px 12px",
+                        borderRadius: 8,
+                        border: "1px solid var(--line, #cbd5e1)",
+                        fontSize: 14,
+                        backgroundColor: "var(--surface)",
+                        color: "var(--ink)",
+                      }}
+                    />
+                  </label>
+
+                  <label
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--ink)",
+                    }}
+                  >
+                    <span>Giảng viên phụ trách</span>
+                    <input
+                      type="text"
+                      placeholder="TS. Nguyễn Minh Trí"
+                      value={newLecturerName}
+                      onChange={(e) => setNewLecturerName(e.target.value)}
+                      style={{
+                        padding: "9px 12px",
+                        borderRadius: 8,
+                        border: "1px solid var(--line, #cbd5e1)",
+                        fontSize: 14,
+                        backgroundColor: "var(--surface)",
+                        color: "var(--ink)",
+                      }}
+                    />
+                  </label>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--ink)",
+                    }}
+                  >
+                    <span>Chuyên ngành / Danh mục</span>
+                    <select
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      style={{
+                        padding: "9px 12px",
+                        borderRadius: 8,
+                        border: "1px solid var(--line, #cbd5e1)",
+                        fontSize: 14,
+                        backgroundColor: "var(--surface)",
+                        color: "var(--ink)",
+                      }}
+                    >
+                      <option value="Lập trình">Lập trình</option>
+                      <option value="Cơ sở dữ liệu">Cơ sở dữ liệu</option>
+                      <option value="Trí tuệ nhân tạo">Trí tuệ nhân tạo</option>
+                      <option value="DevOps &amp; Testing">DevOps &amp; Testing</option>
+                      <option value="Tiếng Anh &amp; kỹ năng">Tiếng Anh &amp; kỹ năng</option>
+                    </select>
+                  </label>
+
+                  <label
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--ink)",
+                    }}
+                  >
+                    <span>Hình thức</span>
+                    <select
+                      value={newPriceType}
+                      onChange={(e) => setNewPriceType(e.target.value as "FREE" | "PAID")}
+                      style={{
+                        padding: "9px 12px",
+                        borderRadius: 8,
+                        border: "1px solid var(--line, #cbd5e1)",
+                        fontSize: 14,
+                        backgroundColor: "var(--surface)",
+                        color: "var(--ink)",
+                      }}
+                    >
+                      <option value="PAID">Có học phí (PAID)</option>
+                      <option value="FREE">Miễn phí (FREE)</option>
+                    </select>
+                  </label>
+                </div>
+
+                {newPriceType === "PAID" && (
+                  <label
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--ink)",
+                    }}
+                  >
+                    <span>Học phí (VND)</span>
+                    <input
+                      type="text"
+                      value={newPrice}
+                      onChange={(e) => setNewPrice(e.target.value)}
+                      placeholder="490.000"
+                      style={{
+                        padding: "9px 12px",
+                        borderRadius: 8,
+                        border: "1px solid var(--line, #cbd5e1)",
+                        fontSize: 14,
+                        backgroundColor: "var(--surface)",
+                        color: "var(--ink)",
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+
+              <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+                <button
+                  type="submit"
+                  className="button"
+                  disabled={createLoading}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px" }}
+                >
+                  <Icon name="plus" size={16} />
+                  <span>{createLoading ? "Đang tạo khóa học..." : "Khởi tạo khóa học"}</span>
+                </button>
+                <button
+                  type="button"
+                  className="button button-subtle"
+                  onClick={() => setShowCreateInline(false)}
+                >
+                  Hủy
+                </button>
+              </div>
+            </div>
+
+            {/* Cover image uploader */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
+                Ảnh bìa đại diện khóa học (Cover Image)
+              </span>
+              <div
+                className={`inline-cover-dropzone ${isDragOver ? "dragover" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                  const f = e.dataTransfer.files?.[0];
+                  if (f) handleCoverFile(f);
+                }}
+                onClick={() => {
+                  const input = document.getElementById("admin-course-cover-input") as HTMLInputElement;
+                  input?.click();
+                }}
+              >
+                <input
+                  id="admin-course-cover-input"
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleCoverFile(f);
+                  }}
+                />
+
+                {coverPreview ? (
+                  <div className="inline-cover-preview-wrapper" onClick={(e) => e.stopPropagation()}>
+                    <img src={coverPreview} alt="Xem trước ảnh bìa" className="inline-cover-preview-img" />
+                    <span className="inline-cover-badge">✓ Đã tải ảnh bìa</span>
+                    <div className="inline-cover-overlay-actions">
+                      <button
+                        type="button"
+                        className="button button-subtle button-small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const input = document.getElementById(
+                            "admin-course-cover-input",
+                          ) as HTMLInputElement;
+                          input?.click();
+                        }}
+                        style={{ fontSize: 11, padding: "4px 8px" }}
+                      >
+                        <Icon name="upload" size={12} />
+                        <span>Đổi ảnh</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="button button-subtle button-small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCoverPreview(null);
+                        }}
+                        style={{ fontSize: 11, padding: "4px 8px", color: "#dc2626" }}
+                      >
+                        <Icon name="trash" size={12} />
+                        <span>Xóa</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: "50%",
+                        background: "rgba(2, 132, 199, 0.1)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 10,
+                        color: "var(--blue)",
+                      }}
+                    >
+                      <Icon name="image" size={24} />
+                    </div>
+                    <p style={{ fontWeight: 600, fontSize: 13, margin: "0 0 4px", color: "var(--ink)" }}>
+                      Tải lên ảnh bìa khóa học
+                    </p>
+                    <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
+                      Kéo thả ảnh vào đây hoặc nhấp để chọn tệp
+                    </p>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: "var(--muted)",
+                        marginTop: 8,
+                        padding: "2px 8px",
+                        background: "var(--card-subtle, #f1f5f9)",
+                        borderRadius: 4,
+                      }}
+                    >
+                      PNG, JPG, WEBP (khuyến nghị 16:9)
+                    </span>
+                  </>
+                )}
+              </div>
+              <p style={{ fontSize: 12, color: "var(--muted)", margin: "4px 0 0" }}>
+                Ảnh bìa hiển thị trong toàn bộ danh mục khóa học, trang chi tiết và giao diện học tập của học
+                viên.
+              </p>
+            </div>
+          </form>
+        </section>
+      )}
+
+      {/* Toolbar: Search & Filter Pills */}
+      <div className="admin-table-toolbar" style={{ width: "100%" }}>
         <div className="admin-search-input-wrap">
           <span className="admin-search-icon" aria-hidden="true">
-            🔍
+            <Icon name="search" size={16} />
           </span>
           <input
             type="search"
@@ -1473,30 +1967,48 @@ export function CourseGovernance() {
             type="button"
             className={`filter-pill-button ${filterState === "HIGH_RATING" ? "active" : ""}`}
             onClick={() => setFilterState("HIGH_RATING")}
-            style={{ color: filterState === "HIGH_RATING" ? "#fff" : "#16a34a" }}
+            style={{
+              color: filterState === "HIGH_RATING" ? "#fff" : "#16a34a",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
           >
-            ⭐ Đánh giá tốt (≥ 4.0★)
+            <Icon name="star" size={14} />
+            <span>Đánh giá tốt (≥ 4.0★)</span>
           </button>
           <button
             type="button"
             className={`filter-pill-button ${filterState === "LOW_RATING" ? "active" : ""}`}
             onClick={() => setFilterState("LOW_RATING")}
-            style={{ color: filterState === "LOW_RATING" ? "#fff" : "#dc2626" }}
+            style={{
+              color: filterState === "LOW_RATING" ? "#fff" : "#dc2626",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
           >
-            ⚠️ Đánh giá thấp (&lt; 4.0★)
+            <Icon name="alert" size={14} />
+            <span>Đánh giá thấp (&lt; 4.0★)</span>
           </button>
           <button
             type="button"
             className={`filter-pill-button ${filterState === "LOCKED" ? "active" : ""}`}
             onClick={() => setFilterState("LOCKED")}
-            style={{ color: filterState === "LOCKED" ? "#fff" : "#d97706" }}
+            style={{
+              color: filterState === "LOCKED" ? "#fff" : "#d97706",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
           >
-            🔒 Đã khóa
+            <Icon name="lock" size={14} />
+            <span>Đã khóa</span>
           </button>
         </div>
       </div>
 
-      {/* Course Cards Grid - Style matched exactly to media_1789593776396.png */}
+      {/* Course Cards Grid */}
       <div className="course-gov-grid">
         {filteredCourses.map((c) => {
           const isLow = c.rating < 4.0;
@@ -1514,8 +2026,9 @@ export function CourseGovernance() {
                       ? "Điểm đánh giá thấp: Cần cải thiện nội dung hoặc kiểm duyệt"
                       : "Điểm đánh giá tốt: Đạt chuẩn đào tạo AILSS"
                   }
+                  style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
                 >
-                  <span aria-hidden="true">{isLow ? "⚠️" : "⭐"}</span>
+                  <Icon name={isLow ? "alert" : "star"} size={13} />
                   <span>{c.rating.toFixed(1)}★</span>
                   <small style={{ fontSize: "10.5px", opacity: 0.9 }}>
                     ({isLow ? "Cần lưu ý" : "Chất lượng"})
@@ -1536,19 +2049,37 @@ export function CourseGovernance() {
 
               {/* Course Meta Info */}
               <div className="course-meta-pills-row">
-                <span>
-                  📚 Bài học: <strong>{c.lessonsCount}</strong>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <Icon name="book" size={13} style={{ color: "var(--blue)" }} />
+                  <span>
+                    Bài học: <strong>{c.lessonsCount}</strong>
+                  </span>
                 </span>
-                <span>
-                  📝 Quiz: <strong>{c.quizzesCount}</strong>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <Icon name="assignment" size={13} style={{ color: "var(--teal)" }} />
+                  <span>
+                    Quiz: <strong>{c.quizzesCount}</strong>
+                  </span>
                 </span>
-                <span>⏱️ {c.totalHours}</span>
-                <span>👥 {c.studentsCount.toLocaleString()}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <Icon name="clock" size={13} style={{ color: "var(--amber)" }} />
+                  <span>{c.totalHours}</span>
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <Icon name="users" size={13} style={{ color: "var(--purple)" }} />
+                  <span>{c.studentsCount.toLocaleString()}</span>
+                </span>
               </div>
 
               {/* Topic Box for Curriculum Highlight */}
               <div className="course-darkbox-topic">
-                <div className="course-darkbox-label">📖 NỘI DUNG TRỌNG TÂM · BÀI TIẾP THEO</div>
+                <div
+                  className="course-darkbox-label"
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                >
+                  <Icon name="sparkles" size={13} />
+                  <span>NỘI DUNG TRỌNG TÂM · BÀI TIẾP THEO</span>
+                </div>
                 <div className="course-darkbox-text" title={c.nextLesson}>
                   {c.nextLesson}
                 </div>
@@ -1572,8 +2103,10 @@ export function CourseGovernance() {
                     setMessage("");
                   }}
                   aria-label={`Xem chi tiết khóa học ${c.title}`}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
                 >
-                  Xem chi tiết →
+                  <span>Xem chi tiết</span>
+                  <Icon name="chevronRight" size={13} />
                 </button>
               </div>
             </article>
@@ -1605,9 +2138,17 @@ export function CourseGovernance() {
         <div className="course-approval-pwd-bar">
           <label
             htmlFor="gov-password"
-            style={{ fontSize: "13px", color: "var(--ink-muted)", whiteSpace: "nowrap" }}
+            style={{
+              fontSize: "13px",
+              color: "var(--ink-muted)",
+              whiteSpace: "nowrap",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+            }}
           >
-            🔐 Mật khẩu quản trị
+            <Icon name="lock" size={13} />
+            <span>Mật khẩu quản trị</span>
           </label>
           <input
             id="gov-password"
@@ -1662,13 +2203,29 @@ export function CourseGovernance() {
                           ? "suspended"
                           : "suspended";
                   const badgeLabel =
-                    c.state === "PUBLISHED"
-                      ? "● Xuất bản"
-                      : c.state === "DRAFT"
-                        ? "⏳ Bản nháp"
-                        : c.state === "LOCKED"
-                          ? "🔒 Đã khóa"
-                          : "🗄 Lưu trữ";
+                    c.state === "PUBLISHED" ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <span
+                          style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor" }}
+                        />
+                        <span>Xuất bản</span>
+                      </span>
+                    ) : c.state === "DRAFT" ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <Icon name="clock" size={12} />
+                        <span>Bản nháp</span>
+                      </span>
+                    ) : c.state === "LOCKED" ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <Icon name="lock" size={12} />
+                        <span>Đã khóa</span>
+                      </span>
+                    ) : (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <Icon name="archive" size={12} />
+                        <span>Lưu trữ</span>
+                      </span>
+                    );
                   return (
                     <tr key={c.courseId}>
                       <td>
@@ -1693,8 +2250,13 @@ export function CourseGovernance() {
                               className="copy-id-btn"
                               title="Sao chép toàn bộ UUID"
                               onClick={() => handleCopyId(c.courseId)}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
                             >
-                              📋
+                              <Icon name="copy" size={12} />
                             </button>
                           </div>
                         </div>
@@ -1712,8 +2274,10 @@ export function CourseGovernance() {
                       <td>
                         <span
                           className={`course-rating-pill ${c.rating < 4.0 ? "low-rating" : "high-rating"}`}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                         >
-                          {c.rating < 4.0 ? "⚠️" : "⭐"} {c.rating.toFixed(1)}
+                          <Icon name={c.rating < 4.0 ? "alert" : "star"} size={12} />
+                          <span>{c.rating.toFixed(1)}</span>
                         </span>
                       </td>
                       <td>
@@ -1737,8 +2301,10 @@ export function CourseGovernance() {
                                 !adminPassword ? "Nhập mật khẩu quản trị trước" : "Phê duyệt và xuất bản"
                               }
                               onClick={() => void handleExecuteAction(c.courseId, "publish", adminPassword)}
+                              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                             >
-                              ✅ Xuất bản
+                              <Icon name="checkCircle" size={13} />
+                              <span>Xuất bản</span>
                             </button>
                           )}
                           {c.state !== "ARCHIVED" && c.state !== "LOCKED" && (
@@ -1748,8 +2314,10 @@ export function CourseGovernance() {
                               disabled={busy || !adminPassword}
                               title={!adminPassword ? "Nhập mật khẩu quản trị trước" : "Lưu trữ khóa học"}
                               onClick={() => void handleExecuteAction(c.courseId, "archive", adminPassword)}
+                              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                             >
-                              🗄 Lưu trữ
+                              <Icon name="archive" size={13} />
+                              <span>Lưu trữ</span>
                             </button>
                           )}
                           <button
@@ -1764,17 +2332,21 @@ export function CourseGovernance() {
                                   : "Khóa khóa học (tạm ngừng truy cập)"
                             }
                             onClick={() => void handleLockCourse(c.courseId, isLocked, adminPassword)}
-                            style={
-                              isLocked
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              ...(isLocked
                                 ? {}
                                 : {
                                     background: "var(--color-warning, #d97706)",
                                     color: "#fff",
                                     borderColor: "transparent",
-                                  }
-                            }
+                                  }),
+                            }}
                           >
-                            {isLocked ? "🔓 Mở khóa" : "🔒 Khóa"}
+                            <Icon name={isLocked ? "unlock" : "lock"} size={13} />
+                            <span>{isLocked ? "Mở khóa" : "Khóa"}</span>
                           </button>
                           <button
                             type="button"
@@ -1783,19 +2355,25 @@ export function CourseGovernance() {
                             title={!adminPassword ? "Nhập mật khẩu quản trị trước" : "Xóa vĩnh viễn khóa học"}
                             onClick={() => setDeleteConfirm(c)}
                             style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
                               background: "var(--color-danger, #dc2626)",
                               color: "#fff",
                               borderColor: "transparent",
                             }}
                           >
-                            🗑️ Xóa
+                            <Icon name="trash" size={13} />
+                            <span>Xóa</span>
                           </button>
                           <button
                             type="button"
                             className="button button-subtle button-small"
                             onClick={() => setSelectedCourse(c)}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                           >
-                            Chi tiết →
+                            <span>Chi tiết</span>
+                            <Icon name="chevronRight" size={12} />
                           </button>
                         </div>
                       </td>
@@ -1820,17 +2398,25 @@ export function CourseGovernance() {
             <div className="admin-modal-header">
               <h2
                 id="delete-confirm-title"
-                style={{ fontSize: "18px", color: "var(--color-danger, #dc2626)" }}
+                style={{
+                  fontSize: "18px",
+                  color: "var(--color-danger, #dc2626)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
               >
-                🗑️ Xác nhận xóa khóa học
+                <Icon name="trash" size={18} />
+                <span>Xác nhận xóa khóa học</span>
               </h2>
               <button
                 type="button"
                 className="admin-modal-close-btn"
                 onClick={() => setDeleteConfirm(null)}
                 aria-label="Đóng"
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
               >
-                ✕
+                <Icon name="close" size={16} />
               </button>
             </div>
             <div style={{ padding: "16px 24px 8px" }}>
@@ -1841,10 +2427,22 @@ export function CourseGovernance() {
               <p className="muted" style={{ fontSize: "13px", marginBottom: "16px" }}>
                 ID: {deleteConfirm.courseId}
               </p>
-              <p style={{ color: "var(--color-danger, #dc2626)", fontSize: "13px", marginBottom: "20px" }}>
-                ⚠️ Hành động này <strong>không thể hoàn tác</strong>. Toàn bộ bài học, bài tập và dữ liệu học
-                viên liên quan sẽ bị xóa.
-              </p>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "flex-start",
+                  gap: 8,
+                  color: "var(--color-danger, #dc2626)",
+                  fontSize: "13px",
+                  marginBottom: "20px",
+                }}
+              >
+                <Icon name="alert" size={15} style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>
+                  Hành động này <strong>không thể hoàn tác</strong>. Toàn bộ bài học, bài tập và dữ liệu học
+                  viên liên quan sẽ bị xóa.
+                </span>
+              </div>
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
                 <button
                   type="button"
@@ -1890,19 +2488,26 @@ export function CourseGovernance() {
                   <span
                     className={`admin-badge ${selectedCourse.state === "PUBLISHED" ? "active" : selectedCourse.state === "DRAFT" ? "pending" : "suspended"}`}
                   >
-                    {selectedCourse.state === "PUBLISHED"
-                      ? "ĐÃ XUẤT BẢN"
-                      : selectedCourse.state === "DRAFT"
-                        ? "BẢN NHÁP"
-                        : selectedCourse.state === "LOCKED"
-                          ? "🔒 ĐÃ KHÓA"
-                          : "ĐÃ LƯU TRỮ"}
+                    {selectedCourse.state === "PUBLISHED" ? (
+                      "ĐÃ XUẤT BẢN"
+                    ) : selectedCourse.state === "DRAFT" ? (
+                      "BẢN NHÁP"
+                    ) : selectedCourse.state === "LOCKED" ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <Icon name="lock" size={11} />
+                        <span>ĐÃ KHÓA</span>
+                      </span>
+                    ) : (
+                      "ĐÃ LƯU TRỮ"
+                    )}
                   </span>
                   {/* Rating Badge */}
                   <span
                     className={`course-rating-pill ${selectedCourse.rating < 4.0 ? "low-rating" : "high-rating"}`}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                   >
-                    {selectedCourse.rating < 4.0 ? "⚠️" : "⭐"} {selectedCourse.rating.toFixed(1)} / 5
+                    <Icon name={selectedCourse.rating < 4.0 ? "alert" : "star"} size={12} />
+                    <span>{selectedCourse.rating.toFixed(1)} / 5</span>
                   </span>
                 </div>
                 <h2 id="course-modal-title" style={{ fontSize: "21px", lineHeight: "1.3" }}>
@@ -1915,8 +2520,9 @@ export function CourseGovernance() {
                     className="copy-id-btn"
                     title="Sao chép toàn bộ UUID"
                     onClick={() => handleCopyId(selectedCourse.courseId)}
+                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
                   >
-                    📋
+                    <Icon name="copy" size={12} />
                   </button>
                 </div>
               </div>
@@ -1926,8 +2532,9 @@ export function CourseGovernance() {
                 className="admin-modal-close-btn"
                 onClick={() => setSelectedCourse(null)}
                 aria-label="Đóng cửa sổ"
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
               >
-                ✕
+                <Icon name="close" size={16} />
               </button>
             </div>
 
@@ -1937,29 +2544,39 @@ export function CourseGovernance() {
                 type="button"
                 className={`course-tab-btn ${modalTab === "overview" ? "active" : ""}`}
                 onClick={() => setModalTab("overview")}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
               >
-                📊 Tổng quan & Đánh giá
+                <Icon name="chart" size={14} />
+                <span>Tổng quan &amp; Đánh giá</span>
               </button>
               <button
                 type="button"
                 className={`course-tab-btn ${modalTab === "reviews" ? "active" : ""}`}
                 onClick={() => setModalTab("reviews")}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
               >
-                ⭐ Đánh giá & Bình luận ({selectedCourse.reviews.length + selectedCourse.comments.length})
+                <Icon name="star" size={14} />
+                <span>
+                  Đánh giá &amp; Bình luận ({selectedCourse.reviews.length + selectedCourse.comments.length})
+                </span>
               </button>
               <button
                 type="button"
                 className={`course-tab-btn ${modalTab === "docs" ? "active" : ""}`}
                 onClick={() => setModalTab("docs")}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
               >
-                📁 Tài liệu khóa học ({selectedCourse.documents.length})
+                <Icon name="fileText" size={14} />
+                <span>Tài liệu khóa học ({selectedCourse.documents.length})</span>
               </button>
               <button
                 type="button"
                 className={`course-tab-btn ${modalTab === "gov" ? "active" : ""}`}
                 onClick={() => setModalTab("gov")}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
               >
-                🛡️ Thẩm định & Xuất bản
+                <Icon name="shield" size={14} />
+                <span>Thẩm định &amp; Xuất bản</span>
               </button>
             </div>
 
@@ -2055,10 +2672,11 @@ export function CourseGovernance() {
                         gap: "8px",
                       }}
                     >
+                      <Icon name={selectedCourse.rating < 4.0 ? "alert" : "checkCircle"} size={18} />
                       <span>
                         {selectedCourse.rating < 4.0
-                          ? "⚠️ Cảnh báo chất lượng: Điểm đánh giá thấp"
-                          : "✓ Chất lượng đạt chuẩn đào tạo"}
+                          ? "Cảnh báo chất lượng: Điểm đánh giá thấp"
+                          : "Chất lượng đạt chuẩn đào tạo"}
                       </span>
                     </div>
                     <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--ink)" }}>
@@ -2084,7 +2702,13 @@ export function CourseGovernance() {
 
                 {/* Dark Topic Box */}
                 <div className="course-darkbox-topic" style={{ marginBottom: "20px" }}>
-                  <div className="course-darkbox-label">NỘI DUNG ĐÀO TẠO TRỌNG TÂM</div>
+                  <div
+                    className="course-darkbox-label"
+                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    <Icon name="sparkles" size={13} />
+                    <span>NỘI DUNG ĐÀO TẠO TRỌNG TÂM</span>
+                  </div>
                   <div className="course-darkbox-text" style={{ whiteSpace: "normal" }}>
                     {selectedCourse.nextLesson}
                   </div>
@@ -2162,14 +2786,23 @@ export function CourseGovernance() {
                   {selectedCourse.documents.map((doc, idx) => (
                     <div key={idx} className="course-doc-card">
                       <div className="course-doc-left">
-                        <div className="course-doc-icon" aria-hidden="true">
-                          {doc.type === "PDF"
-                            ? "📄"
-                            : doc.type === "PPTX"
-                              ? "📊"
-                              : doc.type === "ZIP"
-                                ? "📦"
-                                : "📝"}
+                        <div
+                          className="course-doc-icon"
+                          aria-hidden="true"
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                        >
+                          <Icon
+                            name={
+                              doc.type === "PDF"
+                                ? "fileText"
+                                : doc.type === "PPTX"
+                                  ? "chart"
+                                  : doc.type === "ZIP"
+                                    ? "archive"
+                                    : "book"
+                            }
+                            size={18}
+                          />
                         </div>
                         <div>
                           <div className="course-doc-title">{doc.name}</div>
@@ -2188,15 +2821,19 @@ export function CourseGovernance() {
                           type="button"
                           className="button button-subtle button-small"
                           onClick={() => showToast(`Đang mở xem trước: ${doc.name}`)}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                         >
-                          👁️ Xem trước
+                          <Icon name="eye" size={13} />
+                          <span>Xem trước</span>
                         </button>
                         <button
                           type="button"
                           className="button button-small"
                           onClick={() => showToast(`Bắt đầu tải về: ${doc.name}`)}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                         >
-                          ⬇️ Tải xuống
+                          <Icon name="download" size={13} />
+                          <span>Tải xuống</span>
                         </button>
                       </div>
                     </div>
@@ -2310,6 +2947,6 @@ export function CourseGovernance() {
           <span>{toast}</span>
         </div>
       )}
-    </>
+    </div>
   );
 }

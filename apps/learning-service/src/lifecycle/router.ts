@@ -1,4 +1,5 @@
 import { Router, type NextFunction, type Request, type Response } from "express";
+import { z } from "zod";
 import { AppError, currentRequestContext } from "../../../../packages/http/src/index.js";
 import type { ActorContext } from "../../../../packages/security/src/index.js";
 import type { createMetrics } from "../../../../packages/observability/src/index.js";
@@ -7,15 +8,18 @@ import type { LearningLifecycleService } from "./service.js";
 
 export function learningLifecycleRouter(
   service: LearningLifecycleService,
-  verify: Readonly<Record<"submit" | "publish" | "archive", (token: string) => Promise<ActorContext>>>,
+  verify: Readonly<
+    Record<"submit" | "publish" | "archive" | "retire", (token: string) => Promise<ActorContext>>
+  >,
   metrics: ReturnType<typeof createMetrics>,
 ): Router {
   const router = Router();
   router.post("/api/v1/courses/:courseId/submit-review", handler("submit", 202));
   router.post("/api/v1/admin/courses/:courseId/publish", handler("publish", 200));
   router.post("/api/v1/admin/courses/:courseId/archive", handler("archive", 202));
+  router.post("/api/v1/courses/:courseId/retire", handler("retire", 200));
 
-  function handler(operation: "submit" | "publish" | "archive", status: 200 | 202) {
+  function handler(operation: "submit" | "publish" | "archive" | "retire", status: 200 | 202) {
     return async (req: Request, res: Response, next: NextFunction) => {
       const stop = metrics.learningCourseAuthoringLatency.startTimer({ operation });
       try {
@@ -26,24 +30,41 @@ export function learningLifecycleRouter(
           throw new AppError("INVALID_COURSE_ID", 400, "Invalid courseId");
         const actor = await verified(req, verify[operation], context.correlationId);
         const idempotencyKey = idempotency(req);
+        const retireBody =
+          operation === "retire"
+            ? z
+                .object({ mode: z.enum(["LOCK", "DELETE"]) })
+                .strict()
+                .safeParse(req.body)
+            : undefined;
+        if (retireBody && !retireBody.success)
+          throw new AppError("COURSE_RETIRE_VALIDATION_FAILED", 422, "mode must be LOCK or DELETE");
         const result =
           operation === "submit"
             ? await service.submitReview({ actor, courseId, idempotencyKey, requestId: context.requestId })
-            : operation === "publish"
-              ? await service.publish({
+            : operation === "retire" && retireBody?.success
+              ? await service.retire({
                   actor,
-                  proof: single(req, "x-admin-step-up-proof", 8192),
                   courseId,
+                  mode: retireBody.data.mode,
                   idempotencyKey,
                   requestId: context.requestId,
                 })
-              : await service.archive({
-                  actor,
-                  proof: single(req, "x-admin-step-up-proof", 8192),
-                  courseId,
-                  idempotencyKey,
-                  requestId: context.requestId,
-                });
+              : operation === "publish"
+                ? await service.publish({
+                    actor,
+                    proof: single(req, "x-admin-step-up-proof", 8192),
+                    courseId,
+                    idempotencyKey,
+                    requestId: context.requestId,
+                  })
+                : await service.archive({
+                    actor,
+                    proof: single(req, "x-admin-step-up-proof", 8192),
+                    courseId,
+                    idempotencyKey,
+                    requestId: context.requestId,
+                  });
         res.status(status).json({
           data: result.course,
           meta: {

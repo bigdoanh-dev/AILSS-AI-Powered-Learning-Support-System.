@@ -94,6 +94,7 @@ const AdminGuard = admin("AdminGuard"),
   AdminLogs = admin("LogsDashboard"),
   AdminSettings = admin("SettingsDashboard");
 const AdminAi = lazy(() => import("./admin/AdminAi"));
+const AdminMonitoring = lazy(() => import("./admin/MonitoringDashboard"));
 const Purchase = lazy(() => import("./student/Commerce"));
 const assessment = (name: keyof typeof import("./student/Assessment")) =>
   lazy(() => import("./student/Assessment").then((m) => ({ default: m[name] })));
@@ -235,6 +236,7 @@ export default function App() {
                           <Route path="admin" element={<AdminHome />} />
                           <Route path="admin/revenue" element={<AdminRevenue />} />
                           <Route path="admin/stats" element={<AdminStats />} />
+                          <Route path="admin/monitoring" element={<AdminMonitoring />} />
                           <Route path="admin/ai" element={<AdminAi />} />
                           <Route path="admin/logs" element={<AdminLogs />} />
                           <Route path="admin/users" element={<AdminUsers />} />
