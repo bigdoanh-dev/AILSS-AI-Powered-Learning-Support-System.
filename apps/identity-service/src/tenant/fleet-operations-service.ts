@@ -96,7 +96,10 @@ export class FleetOperationsService {
     };
   }
 
-  public executeBulkOperation(preview: BulkOperationPreview): { successfulCount: number; failedCount: number } {
+  public executeBulkOperation(preview: BulkOperationPreview): {
+    successfulCount: number;
+    failedCount: number;
+  } {
     if (!preview.dryRunPassed) {
       throw new Error("Cannot execute bulk operation: Dry-run preview contained validation errors!");
     }
@@ -111,7 +114,10 @@ export class FleetOperationsService {
     return { successfulCount, failedCount: 0 };
   }
 
-  public detectConfigDrift(tenantId: string, desiredConfig: Record<string, unknown>): TenantConfigDriftReport {
+  public detectConfigDrift(
+    tenantId: string,
+    desiredConfig: Record<string, unknown>,
+  ): TenantConfigDriftReport {
     const actual = this.tenantConfigs.get(tenantId);
     if (!actual) {
       return {

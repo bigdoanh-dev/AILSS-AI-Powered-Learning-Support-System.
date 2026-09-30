@@ -1,15 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { Icon } from "../components/Icon";
 import { request } from "../lib/api";
 
@@ -66,8 +57,20 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     deadline: "16/09/2026 20:00 (2h00 CH)",
     teacherFeedback: null,
     answers: [
-      { questionNumber: 1, questionText: "Mô hình ERD đã chuẩn hóa 3NF và loại bỏ phụ thuộc bắc cầu", studentAnswer: "Đã thiết kế 8 thực thể chuẩn hóa 3NF, khóa ngoại liên kết toàn vẹn.", correctAnswer: "Đạt chuẩn 3NF", isCorrect: true },
-      { questionNumber: 2, questionText: "Chiến lược đánh chỉ mục B-Tree Index cho bảng OrderItems", studentAnswer: "Tạo composite index trên (OrderId, ProductId) và cluster index trên OrderDate.", correctAnswer: "Composite Index tối ưu", isCorrect: true },
+      {
+        questionNumber: 1,
+        questionText: "Mô hình ERD đã chuẩn hóa 3NF và loại bỏ phụ thuộc bắc cầu",
+        studentAnswer: "Đã thiết kế 8 thực thể chuẩn hóa 3NF, khóa ngoại liên kết toàn vẹn.",
+        correctAnswer: "Đạt chuẩn 3NF",
+        isCorrect: true,
+      },
+      {
+        questionNumber: 2,
+        questionText: "Chiến lược đánh chỉ mục B-Tree Index cho bảng OrderItems",
+        studentAnswer: "Tạo composite index trên (OrderId, ProductId) và cluster index trên OrderDate.",
+        correctAnswer: "Composite Index tối ưu",
+        isCorrect: true,
+      },
     ],
   },
   {
@@ -88,7 +91,13 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     submittedAt: "16/09/2026 19:15",
     teacherFeedback: null,
     answers: [
-      { questionNumber: 1, questionText: "Cấu hình Vector Search với pgvector và Cosine Similarity", studentAnswer: "Đã cài đặt extension vector, tạo bảng embeddings 1536 chiều và truy vấn top-k.", correctAnswer: "pgvector top-k đúng chuẩn", isCorrect: true },
+      {
+        questionNumber: 1,
+        questionText: "Cấu hình Vector Search với pgvector và Cosine Similarity",
+        studentAnswer: "Đã cài đặt extension vector, tạo bảng embeddings 1536 chiều và truy vấn top-k.",
+        correctAnswer: "pgvector top-k đúng chuẩn",
+        isCorrect: true,
+      },
     ],
   },
   {
@@ -111,9 +120,27 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     submittedAt: "15/09/2026 14:30",
     teacherFeedback: "Bài làm rất xuất sắc! Nắm chắc sự khác biệt giữa Clustered và Non-clustered index.",
     answers: [
-      { questionNumber: 1, questionText: "Đặc điểm của dạng chuẩn 2NF là gì?", studentAnswer: "Đạt 1NF và không có thuộc tính không khóa phụ thuộc một phần vào khóa chính.", correctAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính", isCorrect: true },
-      { questionNumber: 2, questionText: "Khi nào nên sử dụng Composite Index?", studentAnswer: "Khi truy vấn WHERE thường xuyên lọc đồng thời trên nhiều cột.", correctAnswer: "Khi truy vấn lọc đồng thời nhiều cột", isCorrect: true },
-      { questionNumber: 3, questionText: "Nhược điểm lớn nhất khi tạo quá nhiều Index là gì?", studentAnswer: "Giảm tốc độ câu lệnh INSERT, UPDATE, DELETE.", correctAnswer: "Làm chậm thao tác ghi dữ liệu DML", isCorrect: true },
+      {
+        questionNumber: 1,
+        questionText: "Đặc điểm của dạng chuẩn 2NF là gì?",
+        studentAnswer: "Đạt 1NF và không có thuộc tính không khóa phụ thuộc một phần vào khóa chính.",
+        correctAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính",
+        isCorrect: true,
+      },
+      {
+        questionNumber: 2,
+        questionText: "Khi nào nên sử dụng Composite Index?",
+        studentAnswer: "Khi truy vấn WHERE thường xuyên lọc đồng thời trên nhiều cột.",
+        correctAnswer: "Khi truy vấn lọc đồng thời nhiều cột",
+        isCorrect: true,
+      },
+      {
+        questionNumber: 3,
+        questionText: "Nhược điểm lớn nhất khi tạo quá nhiều Index là gì?",
+        studentAnswer: "Giảm tốc độ câu lệnh INSERT, UPDATE, DELETE.",
+        correctAnswer: "Làm chậm thao tác ghi dữ liệu DML",
+        isCorrect: true,
+      },
     ],
   },
   {
@@ -136,8 +163,20 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     submittedAt: "15/09/2026 16:10",
     teacherFeedback: "Khá tốt. Cần lưu ý thêm về các trường hợp Index Scan vs Index Seek.",
     answers: [
-      { questionNumber: 1, questionText: "Đặc điểm của dạng chuẩn 2NF là gì?", studentAnswer: "Đạt 1NF và không có thuộc tính không khóa phụ thuộc một phần vào khóa chính.", correctAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính", isCorrect: true },
-      { questionNumber: 2, questionText: "Khi nào nên sử dụng Composite Index?", studentAnswer: "Khi bảng có hơn 1 triệu dòng dữ liệu.", correctAnswer: "Khi truy vấn lọc đồng thời nhiều cột", isCorrect: false },
+      {
+        questionNumber: 1,
+        questionText: "Đặc điểm của dạng chuẩn 2NF là gì?",
+        studentAnswer: "Đạt 1NF và không có thuộc tính không khóa phụ thuộc một phần vào khóa chính.",
+        correctAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính",
+        isCorrect: true,
+      },
+      {
+        questionNumber: 2,
+        questionText: "Khi nào nên sử dụng Composite Index?",
+        studentAnswer: "Khi bảng có hơn 1 triệu dòng dữ liệu.",
+        correctAnswer: "Khi truy vấn lọc đồng thời nhiều cột",
+        isCorrect: false,
+      },
     ],
   },
   {
@@ -160,8 +199,20 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     submittedAt: "15/09/2026 10:05",
     teacherFeedback: "Hoàn hảo 10/10! Tư duy tối ưu hóa truy vấn rất mạch lạc.",
     answers: [
-      { questionNumber: 1, questionText: "Đặc điểm của dạng chuẩn 2NF là gì?", studentAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính.", correctAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính", isCorrect: true },
-      { questionNumber: 2, questionText: "Khi nào nên sử dụng Composite Index?", studentAnswer: "Khi truy vấn lọc đồng thời nhiều cột", correctAnswer: "Khi truy vấn lọc đồng thời nhiều cột", isCorrect: true },
+      {
+        questionNumber: 1,
+        questionText: "Đặc điểm của dạng chuẩn 2NF là gì?",
+        studentAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính.",
+        correctAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính",
+        isCorrect: true,
+      },
+      {
+        questionNumber: 2,
+        questionText: "Khi nào nên sử dụng Composite Index?",
+        studentAnswer: "Khi truy vấn lọc đồng thời nhiều cột",
+        correctAnswer: "Khi truy vấn lọc đồng thời nhiều cột",
+        isCorrect: true,
+      },
     ],
   },
   {
@@ -185,7 +236,13 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     deadline: "15/09/2026 20:00 (2h00 CH)",
     teacherFeedback: null,
     answers: [
-      { questionNumber: 1, questionText: "Phân tích EXPLAIN ANALYZE trước và sau khi đánh index", studentAnswer: "Thời gian thực thi giảm từ 420ms (Seq Scan) xuống 12ms (Bitmap Index Scan).", correctAnswer: "Giảm thời gian > 90%", isCorrect: true },
+      {
+        questionNumber: 1,
+        questionText: "Phân tích EXPLAIN ANALYZE trước và sau khi đánh index",
+        studentAnswer: "Thời gian thực thi giảm từ 420ms (Seq Scan) xuống 12ms (Bitmap Index Scan).",
+        correctAnswer: "Giảm thời gian > 90%",
+        isCorrect: true,
+      },
     ],
   },
   {
@@ -206,10 +263,23 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     attemptsCount: 1,
     status: "GRADED",
     submittedAt: "14/09/2026 18:20",
-    teacherFeedback: "Điểm dưới trung bình. Em cần ôn lại bài giảng Chương 2 về đại số quan hệ và khóa phụ thuộc hàm.",
+    teacherFeedback:
+      "Điểm dưới trung bình. Em cần ôn lại bài giảng Chương 2 về đại số quan hệ và khóa phụ thuộc hàm.",
     answers: [
-      { questionNumber: 1, questionText: "Đặc điểm của dạng chuẩn 2NF là gì?", studentAnswer: "Bảng không có cột trùng tên.", correctAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính", isCorrect: false },
-      { questionNumber: 2, questionText: "Khi nào nên sử dụng Composite Index?", studentAnswer: "Khi bảng không có khóa chính.", correctAnswer: "Khi truy vấn lọc đồng thời nhiều cột", isCorrect: false },
+      {
+        questionNumber: 1,
+        questionText: "Đặc điểm của dạng chuẩn 2NF là gì?",
+        studentAnswer: "Bảng không có cột trùng tên.",
+        correctAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính",
+        isCorrect: false,
+      },
+      {
+        questionNumber: 2,
+        questionText: "Khi nào nên sử dụng Composite Index?",
+        studentAnswer: "Khi bảng không có khóa chính.",
+        correctAnswer: "Khi truy vấn lọc đồng thời nhiều cột",
+        isCorrect: false,
+      },
     ],
   },
   {
@@ -249,7 +319,13 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     submittedAt: "16/09/2026 15:40",
     teacherFeedback: "Kiến trúc API rất mạch lạc, xử lý exception và validate đầu vào đầy đủ.",
     answers: [
-      { questionNumber: 1, questionText: "Cấu hình Vector Search với pgvector", studentAnswer: "Cài đặt pgvector, index HNSW cho cosine metric, latency < 5ms.", correctAnswer: "pgvector HNSW tối ưu", isCorrect: true },
+      {
+        questionNumber: 1,
+        questionText: "Cấu hình Vector Search với pgvector",
+        studentAnswer: "Cài đặt pgvector, index HNSW cho cosine metric, latency < 5ms.",
+        correctAnswer: "pgvector HNSW tối ưu",
+        isCorrect: true,
+      },
     ],
   },
   {
@@ -272,7 +348,13 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     submittedAt: "15/09/2026 11:15",
     teacherFeedback: "Mức khá. Cần xem lại câu hỏi về giải thuật khóa ngoài Cascade.",
     answers: [
-      { questionNumber: 1, questionText: "Đặc điểm của dạng chuẩn 2NF là gì?", studentAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính.", correctAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính", isCorrect: true },
+      {
+        questionNumber: 1,
+        questionText: "Đặc điểm của dạng chuẩn 2NF là gì?",
+        studentAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính.",
+        correctAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính",
+        isCorrect: true,
+      },
     ],
   },
   {
@@ -296,7 +378,13 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     deadline: "16/09/2026 20:00 (2h00 CH)",
     teacherFeedback: null,
     answers: [
-      { questionNumber: 1, questionText: "Cấu hình Vector Search với pgvector", studentAnswer: "Tạo bảng embeddings và kết nối qua Prisma ORM raw query.", correctAnswer: "pgvector top-k đúng chuẩn", isCorrect: true },
+      {
+        questionNumber: 1,
+        questionText: "Cấu hình Vector Search với pgvector",
+        studentAnswer: "Tạo bảng embeddings và kết nối qua Prisma ORM raw query.",
+        correctAnswer: "pgvector top-k đúng chuẩn",
+        isCorrect: true,
+      },
     ],
   },
   {
@@ -317,7 +405,13 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     submittedAt: "15/09/2026 18:50",
     teacherFeedback: "Thiết kế chuẩn 3NF chính xác, sơ đồ ERD trực quan.",
     answers: [
-      { questionNumber: 1, questionText: "Mô hình ERD chuẩn hóa 3NF", studentAnswer: "Đầy đủ 8 bảng quan hệ và khóa ngoại kiểm tra ràng buộc.", correctAnswer: "Đạt chuẩn 3NF", isCorrect: true },
+      {
+        questionNumber: 1,
+        questionText: "Mô hình ERD chuẩn hóa 3NF",
+        studentAnswer: "Đầy đủ 8 bảng quan hệ và khóa ngoại kiểm tra ràng buộc.",
+        correctAnswer: "Đạt chuẩn 3NF",
+        isCorrect: true,
+      },
     ],
   },
   {
@@ -340,7 +434,13 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     submittedAt: "16/09/2026 09:30",
     teacherFeedback: "Xuất sắc! Hiểu rất sâu về useActionState và SSE streams.",
     answers: [
-      { questionNumber: 1, questionText: "Ưu điểm của Server-Sent Events (SSE) so với WebSocket?", studentAnswer: "Giao thức một chiều nhẹ hơn qua HTTP tiêu chuẩn và tự động reconnect.", correctAnswer: "Nhẹ hơn qua HTTP và tự động reconnect", isCorrect: true },
+      {
+        questionNumber: 1,
+        questionText: "Ưu điểm của Server-Sent Events (SSE) so với WebSocket?",
+        studentAnswer: "Giao thức một chiều nhẹ hơn qua HTTP tiêu chuẩn và tự động reconnect.",
+        correctAnswer: "Nhẹ hơn qua HTTP và tự động reconnect",
+        isCorrect: true,
+      },
     ],
   },
   {
@@ -382,7 +482,13 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     submittedAt: "14/09/2026 15:10",
     teacherFeedback: "Đạt mức Khá. Chú ý các câu hỏi về giải thuật phân cụm B-Tree.",
     answers: [
-      { questionNumber: 1, questionText: "Đặc điểm của dạng chuẩn 2NF là gì?", studentAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính.", correctAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính", isCorrect: true },
+      {
+        questionNumber: 1,
+        questionText: "Đặc điểm của dạng chuẩn 2NF là gì?",
+        studentAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính.",
+        correctAnswer: "Đạt 1NF và không phụ thuộc một phần vào khóa chính",
+        isCorrect: true,
+      },
     ],
   },
   {
@@ -403,7 +509,13 @@ const MOCK_GRADES: StudentGradeRecord[] = [
     submittedAt: "15/09/2026 17:25",
     teacherFeedback: "Bài làm rất tốt, script SQL tạo bảng và index chạy trơn tru.",
     answers: [
-      { questionNumber: 1, questionText: "Mô hình ERD chuẩn hóa 3NF", studentAnswer: "Đã tạo 8 bảng quan hệ và foreign keys đầy đủ.", correctAnswer: "Đạt chuẩn 3NF", isCorrect: true },
+      {
+        questionNumber: 1,
+        questionText: "Mô hình ERD chuẩn hóa 3NF",
+        studentAnswer: "Đã tạo 8 bảng quan hệ và foreign keys đầy đủ.",
+        correctAnswer: "Đạt chuẩn 3NF",
+        isCorrect: true,
+      },
     ],
   },
 ];
@@ -486,8 +598,7 @@ export default function GradebookDashboard() {
   const avgScore =
     gradedCount > 0
       ? (
-          grades.filter((g) => g.score !== null).reduce((sum, g) => sum + (g.score ?? 0), 0) /
-          gradedCount
+          grades.filter((g) => g.score !== null).reduce((sum, g) => sum + (g.score ?? 0), 0) / gradedCount
         ).toFixed(1)
       : "8.4";
   const passCount = grades.filter((g) => (g.score ?? 0) >= 5.0).length;
@@ -541,18 +652,24 @@ export default function GradebookDashboard() {
       ),
     );
 
-    setNotice(`✓ Đã lưu điểm ${numScore}/${gradingRecord.maxScore} và phản hồi cho SV ${gradingRecord.studentName}!`);
+    setNotice(
+      `✓ Đã lưu điểm ${numScore}/${gradingRecord.maxScore} và phản hồi cho SV ${gradingRecord.studentName}!`,
+    );
     setGradingRecord(null);
     setTimeout(() => setNotice(null), 4000);
   };
 
   const handleExportCsv = () => {
-    const header = "Mã SV,Họ và tên,Email,Lớp,Khóa học,Bài kiểm tra,Điểm,Thang điểm,Trạng thái,Thời gian nộp,Nhận xét\n";
-    const rows = filteredGrades.map((g) =>
-      `"${g.studentId}","${g.studentName}","${g.email}","${g.className}","${g.courseName}","${g.assessmentTitle}",${g.score !== null ? g.score : '""'},${g.maxScore},"${g.status}","${g.submittedAt ?? 'Chưa nộp'}","${(g.teacherFeedback ?? '').replace(/"/g, '""')}"`
-    ).join("\n");
+    const header =
+      "Mã SV,Họ và tên,Email,Lớp,Khóa học,Bài kiểm tra,Điểm,Thang điểm,Trạng thái,Thời gian nộp,Nhận xét\n";
+    const rows = filteredGrades
+      .map(
+        (g) =>
+          `"${g.studentId}","${g.studentName}","${g.email}","${g.className}","${g.courseName}","${g.assessmentTitle}",${g.score !== null ? g.score : '""'},${g.maxScore},"${g.status}","${g.submittedAt ?? "Chưa nộp"}","${(g.teacherFeedback ?? "").replace(/"/g, '""')}"`,
+      )
+      .join("\n");
 
-    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -571,18 +688,34 @@ export default function GradebookDashboard() {
           <p className="eyebrow">GIẢNG VIÊN · QUẢN LÝ ĐÁNH GIÁ</p>
           <h1>Bảng Điểm &amp; Kết Quả Bài Kiểm Tra Của Học Viên</h1>
           <p className="lead">
-            Tra cứu kết quả làm bài của từng học viên cụ thể theo khóa học, xem chi tiết bài làm, chấm điểm và gửi nhận xét.
+            Tra cứu kết quả làm bài của từng học viên cụ thể theo khóa học, xem chi tiết bài làm, chấm điểm và
+            gửi nhận xét.
           </p>
         </div>
         <div className="dashboard-header-actions">
-          <Link className="button button-subtle" to="/app/teaching/assessments">
-            ← Quản lý bài kiểm tra
+          <Link
+            className="button button-subtle"
+            to="/app/teaching/assessments"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
+            <Icon name="chevronLeft" size={15} />
+            <span>Quản lý bài kiểm tra</span>
           </Link>
-          <Link className="button button-subtle" to="/app/teaching/reports">
-            📊 Báo cáo &amp; Thống kê
+          <Link
+            className="button button-subtle"
+            to="/app/teaching/reports"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
+            <Icon name="chart" size={15} />
+            <span>Báo cáo &amp; Thống kê</span>
           </Link>
-          <button className="button" onClick={handleExportCsv}>
-            📥 Xuất bảng điểm CSV
+          <button
+            className="button"
+            onClick={handleExportCsv}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
+            <Icon name="download" size={15} />
+            <span>Xuất bảng điểm CSV</span>
           </button>
         </div>
       </div>
@@ -603,7 +736,9 @@ export default function GradebookDashboard() {
             </span>
             <span className="kpi-tag accent">96% Dự thi</span>
           </div>
-          <div className="kpi-value">{totalSubmissions} / {grades.length} SV</div>
+          <div className="kpi-value">
+            {totalSubmissions} / {grades.length} SV
+          </div>
           <div className="kpi-label">Học viên đã nộp bài</div>
           <p className="kpi-subtext">Sĩ số lớp tham gia đầy đủ</p>
         </div>
@@ -671,7 +806,15 @@ export default function GradebookDashboard() {
         >
           {/* Course filter */}
           <div style={{ minWidth: 220 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: "var(--muted, #64748B)", display: "block", marginBottom: 4 }}>
+            <label
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "var(--muted, #64748B)",
+                display: "block",
+                marginBottom: 4,
+              }}
+            >
               KHÓA HỌC / LỚP HỌC
             </label>
             <select
@@ -701,7 +844,15 @@ export default function GradebookDashboard() {
 
           {/* Assessment filter */}
           <div style={{ minWidth: 240, flex: 1 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: "var(--muted, #64748B)", display: "block", marginBottom: 4 }}>
+            <label
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "var(--muted, #64748B)",
+                display: "block",
+                marginBottom: 4,
+              }}
+            >
               BÀI KIỂM TRA / BÀI TẬP
             </label>
             <select
@@ -730,7 +881,15 @@ export default function GradebookDashboard() {
 
           {/* Rank filter */}
           <div style={{ minWidth: 160 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: "var(--muted, #64748B)", display: "block", marginBottom: 4 }}>
+            <label
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "var(--muted, #64748B)",
+                display: "block",
+                marginBottom: 4,
+              }}
+            >
               XẾP LOẠI ĐIỂM
             </label>
             <select
@@ -754,14 +913,22 @@ export default function GradebookDashboard() {
               <option value="FAIR">Khá (6.5 - 7.9)</option>
               <option value="WEAK">Dưới TB (&lt; 5.0)</option>
               <option value="PENDING">Chờ chấm điểm</option>
-              <option value="LATE">🚩 Nộp muộn (Đánh dấu đỏ)</option>
+              <option value="LATE">Nộp muộn (Đánh dấu đỏ)</option>
               <option value="NOT_SUBMITTED">Chưa nộp bài</option>
             </select>
           </div>
 
           {/* Search box */}
           <div style={{ minWidth: 220 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: "var(--muted, #64748B)", display: "block", marginBottom: 4 }}>
+            <label
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "var(--muted, #64748B)",
+                display: "block",
+                marginBottom: 4,
+              }}
+            >
               TÌM KIẾM HỌC VIÊN
             </label>
             <input
@@ -812,8 +979,10 @@ export default function GradebookDashboard() {
                 setSelectedRank("PENDING");
                 setCurrentPage(1);
               }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
-              ● Chờ chấm ({pendingGradingCount})
+              <span style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: "#F59E0B" }} />
+              <span>Chờ chấm ({pendingGradingCount})</span>
             </button>
             <button
               type="button"
@@ -822,9 +991,17 @@ export default function GradebookDashboard() {
                 setSelectedRank(selectedRank === "LATE" ? "all" : "LATE");
                 setCurrentPage(1);
               }}
-              style={selectedRank === "LATE" ? { backgroundColor: "#EF4444", borderColor: "#DC2626", color: "#FFF" } : {}}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                ...(selectedRank === "LATE"
+                  ? { backgroundColor: "#EF4444", borderColor: "#DC2626", color: "#FFF" }
+                  : {}),
+              }}
             >
-              🚩 Nộp muộn ({grades.filter((g) => g.isLate).length})
+              <Icon name="flag" size={13} style={{ color: selectedRank === "LATE" ? "#FFF" : "#EF4444" }} />
+              <span>Nộp muộn ({grades.filter((g) => g.isLate).length})</span>
             </button>
             <button
               type="button"
@@ -833,8 +1010,10 @@ export default function GradebookDashboard() {
                 setSelectedRank(selectedRank === "EXCELLENT" ? "GOOD" : "EXCELLENT");
                 setCurrentPage(1);
               }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
-              ✓ Điểm Giỏi &amp; Xuất sắc ({grades.filter((g) => (g.score ?? 0) >= 8.0).length})
+              <Icon name="trophy" size={13} style={{ color: "#10B981" }} />
+              <span>Điểm Giỏi &amp; Xuất sắc ({grades.filter((g) => (g.score ?? 0) >= 8.0).length})</span>
             </button>
             <button
               type="button"
@@ -843,8 +1022,17 @@ export default function GradebookDashboard() {
                 setSelectedRank("NOT_SUBMITTED");
                 setCurrentPage(1);
               }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
-              ○ Chưa nộp bài ({grades.filter((g) => g.status === "NOT_SUBMITTED").length})
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  border: "1.5px solid var(--muted, #94A3B8)",
+                }}
+              />
+              <span>Chưa nộp bài ({grades.filter((g) => g.status === "NOT_SUBMITTED").length})</span>
             </button>
           </div>
 
@@ -858,16 +1046,30 @@ export default function GradebookDashboard() {
           <table className="dashboard-data-table" role="table">
             <thead>
               <tr>
-                <th scope="col" style={{ minWidth: 220 }}>Học Viên &amp; Lớp Học</th>
-                <th scope="col" style={{ minWidth: 240 }}>Bài Kiểm Tra / Đánh Giá</th>
-                <th scope="col" style={{ minWidth: 190 }}>Bài Làm &amp; Thời Gian Nộp</th>
-                <th scope="col" style={{ minWidth: 150, textAlign: "center" }}>Kết Quả Điểm Số</th>
-                <th scope="col" style={{ minWidth: 160, textAlign: "right" }}>Thao Tác</th>
+                <th scope="col" style={{ minWidth: 220 }}>
+                  Học Viên &amp; Lớp Học
+                </th>
+                <th scope="col" style={{ minWidth: 240 }}>
+                  Bài Kiểm Tra / Đánh Giá
+                </th>
+                <th scope="col" style={{ minWidth: 190 }}>
+                  Bài Làm &amp; Thời Gian Nộp
+                </th>
+                <th scope="col" style={{ minWidth: 150, textAlign: "center" }}>
+                  Kết Quả Điểm Số
+                </th>
+                <th scope="col" style={{ minWidth: 160, textAlign: "right" }}>
+                  Thao Tác
+                </th>
               </tr>
             </thead>
             <tbody>
               {paginatedGrades.map((g) => {
-                const initials = g.studentName.split(" ").slice(-2).map((w) => w[0]).join("");
+                const initials = g.studentName
+                  .split(" ")
+                  .slice(-2)
+                  .map((w) => w[0])
+                  .join("");
                 const isExcellent = (g.score ?? 0) >= 9.0;
                 const isGood = (g.score ?? 0) >= 8.0 && (g.score ?? 0) < 9.0;
                 const isFair = (g.score ?? 0) >= 6.5 && (g.score ?? 0) < 8.0;
@@ -886,17 +1088,17 @@ export default function GradebookDashboard() {
                             backgroundColor: isExcellent
                               ? "#ECFDF5"
                               : isGood
-                              ? "#F5F3FF"
-                              : isWeak
-                              ? "#FFF1F2"
-                              : "#EFF6FF",
+                                ? "#F5F3FF"
+                                : isWeak
+                                  ? "#FFF1F2"
+                                  : "#EFF6FF",
                             color: isExcellent
                               ? "#059669"
                               : isGood
-                              ? "#7C3AED"
-                              : isWeak
-                              ? "#E11D48"
-                              : "#0284C7",
+                                ? "#7C3AED"
+                                : isWeak
+                                  ? "#E11D48"
+                                  : "#0284C7",
                             fontWeight: 700,
                             fontSize: 13,
                             display: "flex",
@@ -909,27 +1111,36 @@ export default function GradebookDashboard() {
                           {initials}
                         </div>
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ink, #0F172A)" }}>
+                          <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>
                             {g.studentName}
                           </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3, flexWrap: "wrap" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                              marginTop: 3,
+                              flexWrap: "wrap",
+                            }}
+                          >
                             <span
                               className="kpi-tag"
                               style={{
                                 fontSize: 11,
                                 padding: "2px 6px",
-                                backgroundColor: "#F1F5F9",
-                                color: "#334155",
+                                backgroundColor: "rgba(148, 163, 184, 0.12)",
+                                color: "var(--ink-secondary, #94A3B8)",
                                 fontWeight: 600,
+                                borderRadius: 4,
                               }}
                             >
                               {g.className}
                             </span>
-                            <span style={{ fontSize: 11, color: "var(--muted, #64748B)" }}>
+                            <span style={{ fontSize: 11, color: "var(--muted, #94A3B8)" }}>
                               <code>{g.studentId}</code>
                             </span>
                           </div>
-                          <div style={{ fontSize: 11, color: "var(--muted, #64748B)", marginTop: 2 }}>
+                          <div style={{ fontSize: 11, color: "var(--muted, #94A3B8)", marginTop: 2 }}>
                             {g.email}
                           </div>
                         </div>
@@ -939,7 +1150,7 @@ export default function GradebookDashboard() {
                     {/* Cột 2: Bài đánh giá */}
                     <td>
                       <div style={{ maxWidth: 280 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink, #0F172A)", lineHeight: 1.4 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", lineHeight: 1.4 }}>
                           {g.assessmentTitle}
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
@@ -948,29 +1159,41 @@ export default function GradebookDashboard() {
                               className="kpi-tag"
                               style={{
                                 fontSize: 11,
-                                padding: "2px 6px",
-                                color: "#7C3AED",
-                                backgroundColor: "#F5F3FF",
+                                padding: "3px 8px",
+                                color: "#A78BFA",
+                                backgroundColor: "rgba(124, 58, 237, 0.14)",
+                                border: "1px solid rgba(124, 58, 237, 0.28)",
+                                borderRadius: 6,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 5,
                                 fontWeight: 600,
                               }}
                             >
-                              ⚡ Trắc nghiệm AI
+                              <Icon name="zap" size={12} />
+                              <span>Trắc nghiệm AI</span>
                             </span>
                           ) : (
                             <span
                               className="kpi-tag"
                               style={{
                                 fontSize: 11,
-                                padding: "2px 6px",
-                                color: "#0284C7",
-                                backgroundColor: "#F0F9FF",
+                                padding: "3px 8px",
+                                color: "#38BDF8",
+                                backgroundColor: "rgba(2, 132, 199, 0.14)",
+                                border: "1px solid rgba(2, 132, 199, 0.28)",
+                                borderRadius: 6,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 5,
                                 fontWeight: 600,
                               }}
                             >
-                              📄 Bài tập lớn / Lab
+                              <Icon name="fileText" size={12} />
+                              <span>Bài tập lớn / Lab</span>
                             </span>
                           )}
-                          <span style={{ fontSize: 11, color: "var(--muted, #64748B)" }}>
+                          <span style={{ fontSize: 11, color: "var(--muted, #94A3B8)" }}>
                             {g.courseName.split("&")[0]?.trim()}
                           </span>
                         </div>
@@ -982,31 +1205,89 @@ export default function GradebookDashboard() {
                       <div>
                         {g.correctAnswersCount !== undefined ? (
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>
-                              🎯 {g.correctAnswersCount}/{g.totalQuestionsCount} câu đúng
+                            <span
+                              style={{
+                                fontSize: 13,
+                                fontWeight: 700,
+                                color: "var(--ink)",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                              }}
+                            >
+                              <Icon name="target" size={14} style={{ color: "#38BDF8" }} />
+                              <span>
+                                {g.correctAnswersCount}/{g.totalQuestionsCount} câu đúng
+                              </span>
                             </span>
                             <span
                               className="kpi-tag accent"
-                              style={{ fontSize: 10, padding: "1px 5px" }}
+                              style={{ fontSize: 10, padding: "1px 6px", borderRadius: 4 }}
                             >
-                              {Math.round(((g.correctAnswersCount ?? 0) / (g.totalQuestionsCount || 1)) * 100)}%
+                              {Math.round(
+                                ((g.correctAnswersCount ?? 0) / (g.totalQuestionsCount || 1)) * 100,
+                              )}
+                              %
                             </span>
                           </div>
                         ) : g.status !== "NOT_SUBMITTED" ? (
-                          <div style={{ fontSize: 13, fontWeight: 600, color: "#0284C7" }}>
-                            📎 1 tệp bài tập nộp
+                          <div
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 600,
+                              color: "#38BDF8",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            <Icon name="paperclip" size={14} />
+                            <span>1 tệp bài tập nộp</span>
                           </div>
                         ) : (
-                          <div style={{ fontSize: 12, color: "#94A3B8" }}>
+                          <div style={{ fontSize: 12, color: "var(--muted, #94A3B8)" }}>
                             — Chưa có bài nộp
                           </div>
                         )}
 
-                        <div style={{ fontSize: 11, color: "var(--muted, #64748B)", marginTop: 4, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                          {g.submittedAt ? <span>⏱️ Nộp: {g.submittedAt}</span> : <span>Hạn nộp: 23:59 Hôm nay</span>}
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: "var(--muted, #94A3B8)",
+                            marginTop: 4,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {g.submittedAt ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                              <Icon name="clock" size={12} style={{ color: "var(--muted, #94A3B8)" }} />
+                              <span>Nộp: {g.submittedAt}</span>
+                            </span>
+                          ) : (
+                            <span>Hạn nộp: 23:59 Hôm nay</span>
+                          )}
                           {g.isLate && (
-                            <span className="badge-late-flag" title={`Nộp muộn ${g.lateMinutes} phút so với hạn chót ${g.deadline}`}>
-                              ⚠️ Nộp muộn (+{g.lateMinutes}p)
+                            <span
+                              className="badge-late-flag"
+                              title={`Nộp muộn ${g.lateMinutes} phút so với hạn chót ${g.deadline}`}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4,
+                                backgroundColor: "rgba(239, 68, 68, 0.15)",
+                                color: "#F87171",
+                                border: "1px solid rgba(239, 68, 68, 0.3)",
+                                borderRadius: 4,
+                                padding: "2px 6px",
+                                fontSize: 11,
+                                fontWeight: 600,
+                              }}
+                            >
+                              <Icon name="alert" size={11} style={{ color: "#F87171" }} />
+                              <span>Nộp muộn (+{g.lateMinutes}p)</span>
                             </span>
                           )}
                         </div>
@@ -1016,32 +1297,39 @@ export default function GradebookDashboard() {
                     {/* Cột 4: Kết quả Điểm số & Xếp loại (Hợp nhất trực quan) */}
                     <td style={{ textAlign: "center" }}>
                       {g.score !== null ? (
-                        <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
                           <div
                             style={{
                               display: "inline-flex",
                               alignItems: "baseline",
-                              padding: "4px 12px",
+                              padding: "4px 14px",
                               borderRadius: 8,
                               backgroundColor: isExcellent
-                                ? "#ECFDF5"
+                                ? "rgba(16, 185, 129, 0.12)"
                                 : isGood
-                                ? "#F5F3FF"
-                                : isFair
-                                ? "#EFF6FF"
-                                : isWeak
-                                ? "#FFF1F2"
-                                : "#F8FAFC",
+                                  ? "rgba(139, 92, 246, 0.12)"
+                                  : isFair
+                                    ? "rgba(14, 165, 233, 0.12)"
+                                    : isWeak
+                                      ? "rgba(239, 68, 68, 0.12)"
+                                      : "rgba(255, 255, 255, 0.06)",
                               border: `1px solid ${
                                 isExcellent
-                                  ? "#A7F3D0"
+                                  ? "rgba(16, 185, 129, 0.3)"
                                   : isGood
-                                  ? "#DDD6FE"
-                                  : isFair
-                                  ? "#BFDBFE"
-                                  : isWeak
-                                  ? "#FECDD3"
-                                  : "#E2E8F0"
+                                    ? "rgba(139, 92, 246, 0.3)"
+                                    : isFair
+                                      ? "rgba(14, 165, 233, 0.3)"
+                                      : isWeak
+                                        ? "rgba(239, 68, 68, 0.3)"
+                                        : "var(--line, rgba(255, 255, 255, 0.1))"
                               }`,
                               whiteSpace: "nowrap",
                             }}
@@ -1051,67 +1339,110 @@ export default function GradebookDashboard() {
                                 fontSize: "1.25rem",
                                 fontWeight: 900,
                                 color: isExcellent
-                                  ? "#047857"
+                                  ? "#10B981"
                                   : isGood
-                                  ? "#6D28D9"
-                                  : isFair
-                                  ? "#0369A1"
-                                  : isWeak
-                                  ? "#BE123C"
-                                  : "#334155",
+                                    ? "#A78BFA"
+                                    : isFair
+                                      ? "#38BDF8"
+                                      : isWeak
+                                        ? "#F87171"
+                                        : "var(--ink)",
                               }}
                             >
                               {g.score}
                             </span>
-                            <span style={{ fontSize: "0.8rem", color: "var(--muted, #64748B)", marginLeft: 2 }}>
+                            <span
+                              style={{ fontSize: "0.8rem", color: "var(--muted, #94A3B8)", marginLeft: 2 }}
+                            >
                               /{g.maxScore}
                             </span>
                           </div>
                           <span
                             className="kpi-tag"
                             style={{
-                              fontSize: 10,
+                              fontSize: 11,
                               padding: "1px 6px",
                               backgroundColor: "transparent",
                               color: isExcellent
-                                ? "#059669"
+                                ? "#10B981"
                                 : isGood
-                                ? "#7C3AED"
-                                : isFair
-                                ? "#0284C7"
-                                : isWeak
-                                ? "#DC2626"
-                                : "#64748B",
+                                  ? "#A78BFA"
+                                  : isFair
+                                    ? "#38BDF8"
+                                    : isWeak
+                                      ? "#F87171"
+                                      : "var(--muted, #94A3B8)",
                               fontWeight: 700,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
                             }}
                           >
-                            {isExcellent
-                              ? "✓ Xuất sắc (9+)"
-                              : isGood
-                              ? "✓ Giỏi (8+)"
-                              : isFair
-                              ? "✓ Khá (6.5+)"
-                              : isWeak
-                              ? "⚠ Dưới chuẩn (<5)"
-                              : "Đạt chuẩn"}
+                            {isExcellent && <Icon name="check" size={11} />}
+                            {isGood && <Icon name="check" size={11} />}
+                            {isFair && <Icon name="check" size={11} />}
+                            {isWeak && <Icon name="alert" size={11} />}
+                            <span>
+                              {isExcellent
+                                ? "Xuất sắc (9+)"
+                                : isGood
+                                  ? "Giỏi (8+)"
+                                  : isFair
+                                    ? "Khá (6.5+)"
+                                    : isWeak
+                                      ? "Dưới chuẩn (<5)"
+                                      : "Đạt chuẩn"}
+                            </span>
                           </span>
                         </div>
                       ) : g.status === "PENDING_GRADING" ? (
-                        <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: 3,
+                          }}
+                        >
                           <span
                             className="status-pill status-pending"
-                            style={{ fontWeight: 700, fontSize: 12, padding: "4px 10px" }}
+                            style={{
+                              fontWeight: 700,
+                              fontSize: 12,
+                              padding: "4px 10px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
                           >
-                            ● Chờ chấm
+                            <span
+                              style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "#F59E0B" }}
+                            />
+                            <span>Chờ chấm</span>
                           </span>
                           <span style={{ fontSize: 10, color: "#D97706" }}>Cần GV đánh giá</span>
                         </div>
                       ) : (
                         <span
                           className="status-pill status-reconciled"
-                          style={{ color: "#64748B", fontSize: 12, padding: "4px 10px" }}
+                          style={{
+                            color: "var(--muted, #94A3B8)",
+                            fontSize: 12,
+                            padding: "4px 10px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                          }}
                         >
-                          ○ Chưa nộp bài
+                          <span
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: "50%",
+                              border: "1.5px solid var(--muted, #94A3B8)",
+                            }}
+                          />
+                          <span>Chưa nộp bài</span>
                         </span>
                       )}
                     </td>
@@ -1124,13 +1455,18 @@ export default function GradebookDashboard() {
                             className="button button-small"
                             onClick={() => handleOpenGrading(g)}
                             style={{
-                              backgroundColor: "#0284C7",
+                              backgroundColor: "var(--accent, #0284C7)",
                               fontWeight: 700,
-                              padding: "6px 12px",
-                              boxShadow: "0 1px 2px rgba(2, 132, 199, 0.2)",
+                              padding: "6px 14px",
+                              borderRadius: 6,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              boxShadow: "0 2px 6px rgba(2, 132, 199, 0.3)",
                             }}
                           >
-                            ✏️ Chấm bài
+                            <Icon name="pencil" size={13} />
+                            <span>Chấm bài</span>
                           </button>
                         )}
 
@@ -1140,17 +1476,33 @@ export default function GradebookDashboard() {
                               className="button button-subtle button-small"
                               onClick={() => setViewingRecord(g)}
                               title="Xem chi tiết bài làm của sinh viên"
-                              style={{ padding: "6px 10px" }}
+                              style={{
+                                padding: "6px 12px",
+                                borderRadius: 6,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                              }}
                             >
-                              👁 Xem bài
+                              <Icon name="eye" size={13} />
+                              <span>Xem bài</span>
                             </button>
                             <button
                               className="button button-subtle button-small"
                               onClick={() => handleOpenGrading(g)}
-                              style={{ color: "#0284C7", fontWeight: 600, padding: "6px 10px" }}
+                              style={{
+                                color: "#38BDF8",
+                                fontWeight: 600,
+                                padding: "6px 12px",
+                                borderRadius: 6,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                              }}
                               title="Chỉnh sửa điểm hoặc nhận xét"
                             >
-                              Sửa điểm
+                              <Icon name="pencil" size={12} />
+                              <span>Sửa điểm</span>
                             </button>
                           </>
                         )}
@@ -1159,13 +1511,23 @@ export default function GradebookDashboard() {
                           <button
                             className="button button-subtle button-small"
                             onClick={() => {
-                              setNotice(`✓ Đã gửi thông báo nhắc hạn nộp bài đến sinh viên ${g.studentName}!`);
+                              setNotice(
+                                `✓ Đã gửi thông báo nhắc hạn nộp bài đến sinh viên ${g.studentName}!`,
+                              );
                               setTimeout(() => setNotice(null), 3000);
                             }}
                             title="Gửi nhắc nhở nộp bài cho sinh viên"
-                            style={{ color: "#D97706", padding: "6px 10px" }}
+                            style={{
+                              color: "#F59E0B",
+                              padding: "6px 12px",
+                              borderRadius: 6,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
                           >
-                            🔔 Nhắc nộp
+                            <Icon name="bell" size={13} />
+                            <span>Nhắc nộp</span>
                           </button>
                         )}
                       </div>
@@ -1198,7 +1560,16 @@ export default function GradebookDashboard() {
             gap: 12,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "var(--muted, #64748B)", flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              fontSize: 13,
+              color: "var(--muted, #64748B)",
+              flexWrap: "wrap",
+            }}
+          >
             <span>Số hàng mỗi trang:</span>
             <select
               value={pageSize}
@@ -1223,7 +1594,12 @@ export default function GradebookDashboard() {
               <option value={20}>20 học viên / trang</option>
             </select>
             <span>
-              Hiển thị <strong>{filteredGrades.length === 0 ? 0 : (safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filteredGrades.length)}</strong> trên tổng số <strong>{filteredGrades.length}</strong> học viên
+              Hiển thị{" "}
+              <strong>
+                {filteredGrades.length === 0 ? 0 : (safePage - 1) * pageSize + 1} -{" "}
+                {Math.min(safePage * pageSize, filteredGrades.length)}
+              </strong>{" "}
+              trên tổng số <strong>{filteredGrades.length}</strong> học viên
             </span>
           </div>
 
@@ -1234,9 +1610,16 @@ export default function GradebookDashboard() {
               onClick={() => setCurrentPage(1)}
               disabled={safePage <= 1}
               aria-label="Trang đầu tiên"
-              style={{ padding: "5px 9px", fontSize: 12 }}
+              style={{
+                padding: "5px 10px",
+                fontSize: 12,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+              }}
             >
-              ⏮ Đầu
+              <Icon name="chevronLeft" size={12} />
+              <span>Đầu</span>
             </button>
             <button
               type="button"
@@ -1246,7 +1629,7 @@ export default function GradebookDashboard() {
               aria-label="Trang trước"
               style={{ padding: "5px 10px", fontSize: 12 }}
             >
-              ◀ Trước
+              Trước
             </button>
 
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -1261,7 +1644,7 @@ export default function GradebookDashboard() {
                     borderRadius: 6,
                     border: pageNum === safePage ? "1px solid #1760EF" : "1px solid var(--line, #E2E8F0)",
                     backgroundColor: pageNum === safePage ? "#1760EF" : "var(--surface, #FFFFFF)",
-                    color: pageNum === safePage ? "#FFFFFF" : "var(--ink, #0F172A)",
+                    color: pageNum === safePage ? "#FFFFFF" : "var(--ink)",
                     fontWeight: pageNum === safePage ? 700 : 500,
                     fontSize: 13,
                     cursor: "pointer",
@@ -1285,7 +1668,7 @@ export default function GradebookDashboard() {
               aria-label="Trang sau"
               style={{ padding: "5px 10px", fontSize: 12 }}
             >
-              Sau ▶
+              Sau
             </button>
             <button
               type="button"
@@ -1293,9 +1676,16 @@ export default function GradebookDashboard() {
               onClick={() => setCurrentPage(totalPages)}
               disabled={safePage >= totalPages}
               aria-label="Trang cuối cùng"
-              style={{ padding: "5px 9px", fontSize: 12 }}
+              style={{
+                padding: "5px 10px",
+                fontSize: 12,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+              }}
             >
-              Cuối ⏭
+              <span>Cuối</span>
+              <Icon name="chevronRight" size={12} />
             </button>
           </div>
         </div>
@@ -1315,7 +1705,10 @@ export default function GradebookDashboard() {
             <BarChart data={GRADE_DISTRIBUTION} margin={{ top: 12, right: 16, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--line, #dce3ee)" />
               <XAxis dataKey="range" tick={{ fontSize: 12, fill: "var(--muted, #53617a)" }} />
-              <YAxis tickFormatter={(v: number) => `${v} SV`} tick={{ fontSize: 12, fill: "var(--muted, #53617a)" }} />
+              <YAxis
+                tickFormatter={(v: number) => `${v} SV`}
+                tick={{ fontSize: 12, fill: "var(--muted, #53617a)" }}
+              />
               <Tooltip formatter={(v) => [`${v ?? 0} sinh viên`, "Số lượng"]} />
               <Bar dataKey="count" name="Số sinh viên" radius={[4, 4, 0, 0]}>
                 {GRADE_DISTRIBUTION.map((entry, index) => (
@@ -1362,10 +1755,17 @@ export default function GradebookDashboard() {
               boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.25)",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                marginBottom: 16,
+              }}
+            >
               <div>
                 <p className="eyebrow">CHI TIẾT BÀI LÀM HỌC VIÊN</p>
-                <h2 id="view-modal-title" style={{ margin: "4px 0", color: "var(--ink, #0F172A)" }}>
+                <h2 id="view-modal-title" style={{ margin: "4px 0", color: "var(--ink)" }}>
                   {viewingRecord.studentName} ({viewingRecord.studentId})
                 </h2>
                 <p className="subtext">
@@ -1376,8 +1776,16 @@ export default function GradebookDashboard() {
                 className="button button-subtle button-small"
                 onClick={() => setViewingRecord(null)}
                 aria-label="Đóng"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 32,
+                  height: 32,
+                  padding: 0,
+                }}
               >
-                ✕
+                <Icon name="close" size={16} />
               </button>
             </div>
 
@@ -1394,12 +1802,22 @@ export default function GradebookDashboard() {
             >
               <div>
                 <div style={{ fontSize: 12, color: "var(--muted, #64748B)" }}>Thời gian nộp bài:</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink, #0F172A)" }}>{viewingRecord.submittedAt}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
+                  {viewingRecord.submittedAt}
+                </div>
               </div>
               <div>
                 <div style={{ fontSize: 12, color: "var(--muted, #64748B)" }}>Điểm hiện tại:</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: viewingRecord.score !== null ? "#16A34A" : "#D97706" }}>
-                  {viewingRecord.score !== null ? `${viewingRecord.score} / ${viewingRecord.maxScore}` : "Chưa chấm"}
+                <div
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 800,
+                    color: viewingRecord.score !== null ? "#16A34A" : "#D97706",
+                  }}
+                >
+                  {viewingRecord.score !== null
+                    ? `${viewingRecord.score} / ${viewingRecord.maxScore}`
+                    : "Chưa chấm"}
                 </div>
               </div>
             </div>
@@ -1415,21 +1833,23 @@ export default function GradebookDashboard() {
                   display: "flex",
                   alignItems: "center",
                   gap: 10,
-                  color: "var(--ink, #0F172A)",
+                  color: "var(--ink)",
                   fontSize: 13,
                 }}
               >
-                <span style={{ fontSize: 18 }}>🚩</span>
+                <Icon name="flag" size={18} style={{ color: "#EF4444" }} />
                 <div>
-                  <strong style={{ color: "#EF4444" }}>Cảnh báo nộp muộn:</strong> Học viên nộp bài muộn {viewingRecord.lateMinutes} phút so với hạn chót ({viewingRecord.deadline}).
+                  <strong style={{ color: "#EF4444" }}>Cảnh báo nộp muộn:</strong> Học viên nộp bài muộn{" "}
+                  {viewingRecord.lateMinutes} phút so với hạn chót ({viewingRecord.deadline}).
                   <div style={{ fontSize: 12, color: "var(--muted, #64748B)", marginTop: 2 }}>
-                    Chính sách: Cho nộp muộn có đánh dấu đỏ. Giảng viên cân nhắc trừ điểm nộp trễ theo quy chế.
+                    Chính sách: Cho nộp muộn có đánh dấu đỏ. Giảng viên cân nhắc trừ điểm nộp trễ theo quy
+                    chế.
                   </div>
                 </div>
               </div>
             )}
 
-            <h3 style={{ fontSize: 14, marginBottom: 10, color: "var(--ink, #0F172A)" }}>Câu trả lời của học viên:</h3>
+            <h3 style={{ fontSize: 14, marginBottom: 10, color: "var(--ink)" }}>Câu trả lời của học viên:</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {viewingRecord.answers.map((ans) => (
                 <div
@@ -1443,14 +1863,26 @@ export default function GradebookDashboard() {
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <strong style={{ color: "var(--ink, #0F172A)" }}>Câu {ans.questionNumber}: {ans.questionText}</strong>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: ans.isCorrect ? "#16A34A" : "#EF4444" }}>
-                      {ans.isCorrect ? "✓ Đúng" : "✕ Sai"}
+                    <strong style={{ color: "var(--ink)" }}>
+                      Câu {ans.questionNumber}: {ans.questionText}
+                    </strong>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: ans.isCorrect ? "#16A34A" : "#EF4444",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <Icon name={ans.isCorrect ? "check" : "close"} size={13} />
+                      <span>{ans.isCorrect ? "Đúng" : "Sai"}</span>
                     </span>
                   </div>
                   <div style={{ fontSize: 13, marginTop: 4 }}>
                     <span style={{ color: "var(--muted, #64748B)" }}>Câu trả lời của SV: </span>
-                    <strong style={{ color: "var(--ink, #0F172A)" }}>{ans.studentAnswer}</strong>
+                    <strong style={{ color: "var(--ink)" }}>{ans.studentAnswer}</strong>
                   </div>
                   {!ans.isCorrect && (
                     <div style={{ fontSize: 12, color: "#10B981", marginTop: 4, fontWeight: 600 }}>
@@ -1471,8 +1903,12 @@ export default function GradebookDashboard() {
                   borderRadius: 8,
                 }}
               >
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#D97706" }}>LỜI PHÊ &amp; NHẬN XÉT CỦA GIẢNG VIÊN:</div>
-                <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--ink, #0F172A)" }}>{viewingRecord.teacherFeedback}</p>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#D97706" }}>
+                  LỜI PHÊ &amp; NHẬN XÉT CỦA GIẢNG VIÊN:
+                </div>
+                <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--ink)" }}>
+                  {viewingRecord.teacherFeedback}
+                </p>
               </div>
             )}
 
@@ -1528,10 +1964,17 @@ export default function GradebookDashboard() {
               boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.25)",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                marginBottom: 16,
+              }}
+            >
               <div>
                 <p className="eyebrow">CHẤM ĐIỂM &amp; ĐÁNH GIÁ</p>
-                <h2 id="grading-modal-title" style={{ margin: "4px 0", color: "var(--ink, #0F172A)" }}>
+                <h2 id="grading-modal-title" style={{ margin: "4px 0", color: "var(--ink)" }}>
                   Chấm Bài: {gradingRecord.studentName}
                 </h2>
                 <p className="subtext">
@@ -1542,8 +1985,16 @@ export default function GradebookDashboard() {
                 className="button button-subtle button-small"
                 onClick={() => setGradingRecord(null)}
                 aria-label="Đóng"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 32,
+                  height: 32,
+                  padding: 0,
+                }}
               >
-                ✕
+                <Icon name="close" size={16} />
               </button>
             </div>
 
@@ -1558,15 +2009,19 @@ export default function GradebookDashboard() {
                     display: "flex",
                     alignItems: "center",
                     gap: 10,
-                    color: "var(--ink, #0F172A)",
+                    color: "var(--ink)",
                     fontSize: 13,
                   }}
                 >
-                  <span style={{ fontSize: 18 }}>🚩</span>
+                  <Icon name="flag" size={18} style={{ color: "#EF4444" }} />
                   <div>
-                    <strong style={{ color: "#EF4444" }}>Bài nộp quá hạn ({gradingRecord.lateMinutes} phút trễ):</strong> Hạn chót: {gradingRecord.deadline}.
+                    <strong style={{ color: "#EF4444" }}>
+                      Bài nộp quá hạn ({gradingRecord.lateMinutes} phút trễ):
+                    </strong>{" "}
+                    Hạn chót: {gradingRecord.deadline}.
                     <div style={{ fontSize: 12, color: "var(--muted, #64748B)", marginTop: 2 }}>
-                      Chính sách: Cho nộp muộn có đánh dấu đỏ. Giảng viên có thể trừ điểm phạt trực tiếp khi nhập điểm dưới đây.
+                      Chính sách: Cho nộp muộn có đánh dấu đỏ. Giảng viên có thể trừ điểm phạt trực tiếp khi
+                      nhập điểm dưới đây.
                     </div>
                   </div>
                 </div>
@@ -1581,13 +2036,25 @@ export default function GradebookDashboard() {
                     color: "#EF4444",
                     border: "1px solid rgba(239, 68, 68, 0.3)",
                     margin: "4px 0",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
                   }}
                 >
-                  <span>⚠️ {gradingError}</span>
+                  <Icon name="alert" size={16} />
+                  <span>{gradingError}</span>
                 </div>
               )}
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700, color: "var(--ink, #0F172A)", display: "block", marginBottom: 6 }}>
+                <label
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "var(--ink)",
+                    display: "block",
+                    marginBottom: 6,
+                  }}
+                >
                   Điểm số (Thang điểm {gradingRecord.maxScore}) *
                 </label>
                 <input
@@ -1604,7 +2071,7 @@ export default function GradebookDashboard() {
                     borderRadius: 8,
                     border: "1px solid var(--line, #E2E8F0)",
                     backgroundColor: "var(--surface-soft, #F8FAFC)",
-                    color: "var(--ink, #0F172A)",
+                    color: "var(--ink)",
                     fontSize: 15,
                     fontWeight: 700,
                   }}
@@ -1613,7 +2080,15 @@ export default function GradebookDashboard() {
               </div>
 
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700, color: "var(--ink, #0F172A)", display: "block", marginBottom: 6 }}>
+                <label
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "var(--ink)",
+                    display: "block",
+                    marginBottom: 6,
+                  }}
+                >
                   Nhận xét &amp; Lời phê của Giảng viên
                 </label>
                 <textarea
@@ -1627,7 +2102,7 @@ export default function GradebookDashboard() {
                     borderRadius: 8,
                     border: "1px solid var(--line, #E2E8F0)",
                     backgroundColor: "var(--surface-soft, #F8FAFC)",
-                    color: "var(--ink, #0F172A)",
+                    color: "var(--ink)",
                     fontSize: 13,
                     fontFamily: "inherit",
                   }}
@@ -1639,8 +2114,13 @@ export default function GradebookDashboard() {
               <button className="button button-subtle" onClick={() => setGradingRecord(null)}>
                 Hủy
               </button>
-              <button className="button" onClick={handleSaveGrading}>
-                ✓ Lưu điểm &amp; Gửi nhận xét
+              <button
+                className="button"
+                onClick={handleSaveGrading}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <Icon name="check" size={15} />
+                <span>Lưu điểm &amp; Gửi nhận xét</span>
               </button>
             </div>
           </div>

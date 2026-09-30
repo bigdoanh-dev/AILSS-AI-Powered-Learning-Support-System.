@@ -40,10 +40,7 @@ export class InMemoryVersioningRepository implements VersioningRepository {
     if (courseReleases.has(release.version)) {
       return Promise.resolve(false);
     }
-    const currentVer =
-      courseReleases.size === 0
-        ? 0
-        : Math.max(...Array.from(courseReleases.keys()));
+    const currentVer = courseReleases.size === 0 ? 0 : Math.max(...Array.from(courseReleases.keys()));
     if (currentVer !== expectedVersion) {
       return Promise.resolve(false);
     }
@@ -119,14 +116,15 @@ export class CourseVersioningService {
     if (typeof this.repository.saveReleaseWithCas === "function") {
       const applied = await this.repository.saveReleaseWithCas(release, expectedVersion);
       if (!applied) {
-        throw new Error(`CONCURRENT_PUBLICATION_CONFLICT: Course ${input.courseId} was concurrently modified. Expected version ${String(expectedVersion)}.`);
+        throw new Error(
+          `CONCURRENT_PUBLICATION_CONFLICT: Course ${input.courseId} was concurrently modified. Expected version ${String(expectedVersion)}.`,
+        );
       }
     } else {
       await this.repository.saveRelease(release);
     }
     return release;
   }
-
 
   async getRelease(courseId: string, version: number): Promise<CourseRelease | null> {
     return this.repository.getRelease(courseId, version);
@@ -215,9 +213,7 @@ export class CourseVersioningService {
     const fromConcepts = new Set(
       fromSyllabus.modules.flatMap((m) => m.lessons.flatMap((l) => l.concepts ?? [])),
     );
-    const toConcepts = new Set(
-      toSyllabus.modules.flatMap((m) => m.lessons.flatMap((l) => l.concepts ?? [])),
-    );
+    const toConcepts = new Set(toSyllabus.modules.flatMap((m) => m.lessons.flatMap((l) => l.concepts ?? [])));
 
     const prerequisiteChanges: { conceptId: string; change: "ADDED" | "REMOVED" }[] = [];
     for (const c of toConcepts) {
@@ -335,9 +331,7 @@ export class CourseVersioningService {
 
     const diff = await this.compareVersions(input.courseId, current.pinnedVersion, input.targetVersion);
     const targetSyllabus = JSON.parse(targetRelease.syllabusJson) as CourseReleaseSyllabus;
-    const targetLessonIds = new Set(
-      targetSyllabus.modules.flatMap((m) => m.lessons.map((l) => l.lessonId)),
-    );
+    const targetLessonIds = new Set(targetSyllabus.modules.flatMap((m) => m.lessons.map((l) => l.lessonId)));
 
     // Preserve completion only for lessons that still exist in the new release
     const preservedCompletedLessons = input.completedLessonIds.filter((id) => targetLessonIds.has(id));

@@ -1,6 +1,6 @@
 {
   "version": "P12.9R",
-  "publicCount": 101,
+  "publicCount": 116,
   "internalCount": 15,
   "public": [
     {
@@ -1170,6 +1170,39 @@
       "event": null
     },
     {
+      "id": "IDN-20",
+      "service": "Identity",
+      "method": "POST",
+      "path": "/api/v1/auth/password-reset/request",
+      "summary": "Gửi mã OTP đặt lại mật khẩu",
+      "auth": "Public",
+      "roles": "anonymous",
+      "queryIds": ["Q-IDN-001", "Q-IDN-002", "Q-IDN-012"],
+      "event": null
+    },
+    {
+      "id": "IDN-21",
+      "service": "Identity",
+      "method": "POST",
+      "path": "/api/v1/auth/password-reset/verify",
+      "summary": "Xác minh mã OTP đặt lại mật khẩu",
+      "auth": "Public",
+      "roles": "anonymous",
+      "queryIds": ["Q-IDN-001", "Q-IDN-002", "Q-IDN-012"],
+      "event": null
+    },
+    {
+      "id": "IDN-22",
+      "service": "Identity",
+      "method": "POST",
+      "path": "/api/v1/auth/password-reset/complete",
+      "summary": "Đặt lại mật khẩu bằng OTP đã xác minh",
+      "auth": "Public",
+      "roles": "anonymous",
+      "queryIds": ["Q-IDN-001", "Q-IDN-002", "Q-IDN-007", "Q-IDN-012"],
+      "event": null
+    },
+    {
       "id": "LRN-31",
       "service": "Learning",
       "method": "POST",
@@ -1179,6 +1212,138 @@
       "roles": "EXTERNAL_PROVIDER",
       "queryIds": ["Q-LRN-024", "Q-LRN-025", "Q-LRN-013", "Q-LRN-015", "Q-LRN-026"],
       "event": "learning.order.paid.v1"
+    },
+    {
+      "id": "IDN-23",
+      "service": "Identity",
+      "method": "GET",
+      "path": "/api/v1/me/lecturer-profile",
+      "summary": "Đọc hồ sơ giảng viên công khai",
+      "auth": "Bearer",
+      "roles": "lecturer",
+      "queryIds": ["Q-IDN-006"],
+      "event": null
+    },
+    {
+      "id": "IDN-24",
+      "service": "Identity",
+      "method": "PATCH",
+      "path": "/api/v1/me/lecturer-profile",
+      "summary": "Cập nhật hồ sơ giảng viên công khai",
+      "auth": "Bearer",
+      "roles": "lecturer",
+      "queryIds": ["Q-IDN-006"],
+      "event": null
+    },
+    {
+      "id": "LRN-32",
+      "service": "Learning",
+      "method": "GET",
+      "path": "/api/v1/me/dashboard/revenue",
+      "summary": "Báo cáo doanh thu giảng viên",
+      "auth": "Bearer",
+      "roles": "lecturer",
+      "queryIds": ["Q-LRN-001", "Q-LRN-027"],
+      "event": null
+    },
+    {
+      "id": "LRN-33",
+      "service": "Learning",
+      "method": "GET",
+      "path": "/api/v1/me/payout-account",
+      "summary": "Đọc tài khoản nhận tiền",
+      "auth": "Bearer",
+      "roles": "lecturer",
+      "queryIds": ["Q-LRN-028"],
+      "event": null
+    },
+    {
+      "id": "LRN-34",
+      "service": "Learning",
+      "method": "POST",
+      "path": "/api/v1/me/payout-account",
+      "summary": "Lưu tài khoản nhận tiền",
+      "auth": "Bearer",
+      "roles": "lecturer",
+      "queryIds": ["Q-LRN-028"],
+      "event": null
+    },
+    {
+      "id": "LRN-35",
+      "service": "Learning",
+      "method": "GET",
+      "path": "/api/v1/admin/payouts",
+      "summary": "Xem phiếu chi kỳ trước",
+      "auth": "Bearer",
+      "roles": "admin",
+      "queryIds": ["Q-LRN-029"],
+      "event": null
+    },
+    {
+      "id": "LRN-36",
+      "service": "Learning",
+      "method": "POST",
+      "path": "/api/v1/admin/payouts/prepare",
+      "summary": "Lập phiếu chi một hoặc tất cả giảng viên",
+      "auth": "Bearer",
+      "roles": "admin",
+      "queryIds": ["Q-LRN-027", "Q-LRN-028", "Q-LRN-029"],
+      "event": null
+    },
+    {
+      "id": "LRN-37",
+      "service": "Learning",
+      "method": "GET",
+      "path": "/api/v1/admin/dashboard/revenue",
+      "summary": "Báo cáo doanh thu nền tảng",
+      "auth": "Bearer",
+      "roles": "admin",
+      "queryIds": ["Q-LRN-027"],
+      "event": null
+    },
+    {
+      "id": "LRN-38",
+      "service": "Learning",
+      "method": "GET",
+      "path": "/api/v1/me/commission",
+      "summary": "Đọc tỷ lệ chiết khấu hiện hành",
+      "auth": "Bearer",
+      "roles": "lecturer",
+      "queryIds": ["Q-LRN-030"],
+      "event": null
+    },
+    {
+      "id": "LRN-39",
+      "service": "Learning",
+      "method": "GET",
+      "path": "/api/v1/admin/commission",
+      "summary": "Admin đọc tỷ lệ chiết khấu",
+      "auth": "Bearer",
+      "roles": "admin",
+      "queryIds": ["Q-LRN-030"],
+      "event": null
+    },
+    {
+      "id": "LRN-40",
+      "service": "Learning",
+      "method": "POST",
+      "path": "/api/v1/admin/commission",
+      "summary": "Admin điều chỉnh tỷ lệ chiết khấu",
+      "auth": "Bearer",
+      "roles": "admin",
+      "queryIds": ["Q-LRN-030"],
+      "event": null
+    },
+    {
+      "id": "LRN-41",
+      "service": "Learning",
+      "method": "POST",
+      "path": "/api/v1/admin/payouts/{month}/{lecturerId}/approve",
+      "summary": "Duyệt phiếu chi kỳ trước qua nhà cung cấp giả lập",
+      "auth": "Bearer",
+      "roles": "admin",
+      "queryIds": ["Q-LRN-029", "Q-LRN-031"],
+      "event": null
     }
   ],
   "internal": [

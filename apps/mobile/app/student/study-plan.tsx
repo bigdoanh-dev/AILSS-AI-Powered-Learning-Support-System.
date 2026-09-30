@@ -59,10 +59,18 @@ export default function StudyPlanScreen() {
       <Page testID="student-study-plan" style={{ gap: 16, paddingBottom: 28 }}>
         <View style={{ gap: 5 }}>
           <Text style={local.eyebrow}>STUDY PLAN V2</Text>
-          <Text testID="student-study-plan-title" style={styles.title}>Lộ trình của bạn</Text>
+          <Text testID="student-study-plan-title" style={styles.title}>
+            Lộ trình của bạn
+          </Text>
           <Text style={styles.text}>Đề xuất, lịch và lý do được cung cấp bởi Learning Service.</Text>
-          <Text testID="student-study-plan-data-source" accessibilityLabel={data.source === "LIVE" ? "LIVE" : "OFFLINE_CACHE"} style={styles.small}>
-            {data.source === "LIVE" ? "LIVE · dữ liệu mới nhất từ máy chủ" : `OFFLINE_CACHE · LAST_SYNCED ${selected?.studyPlanSyncedAt ?? "chưa có"}`}
+          <Text
+            testID="student-study-plan-data-source"
+            accessibilityLabel={data.source === "LIVE" ? "LIVE" : "OFFLINE_CACHE"}
+            style={styles.small}
+          >
+            {data.source === "LIVE"
+              ? "LIVE · dữ liệu mới nhất từ máy chủ"
+              : `OFFLINE_CACHE · LAST_SYNCED ${selected?.studyPlanSyncedAt ?? "chưa có"}`}
           </Text>
         </View>
         {data.loading ? (
@@ -118,7 +126,12 @@ export default function StudyPlanScreen() {
             ) : selected?.studyPlan ? (
               <>
                 <View style={local.summary}>
-                  <Text testID={`student-study-plan-selected-course-${selected.course.courseId}`} style={local.summaryTitle}>{selected.course.title}</Text>
+                  <Text
+                    testID={`student-study-plan-selected-course-${selected.course.courseId}`}
+                    style={local.summaryTitle}
+                  >
+                    {selected.course.title}
+                  </Text>
                   <Text style={local.summaryText}>
                     Sinh lúc {new Date(selected.studyPlan.generatedAt).toLocaleString("vi-VN")} · Mastery tổng
                     quan {Math.round(selected.studyPlan.overallMasteryPercent)}%
@@ -184,7 +197,9 @@ export default function StudyPlanScreen() {
                       : "Cần có Mastery evidence trước khi hệ thống tạo lộ trình."}
                 </Text>
                 <Button
-                  disabled={auth.state !== "AUTHENTICATED" || !selected?.mastery?.length || !!selected?.masteryError}
+                  disabled={
+                    auth.state !== "AUTHENTICATED" || !selected?.mastery?.length || !!selected?.masteryError
+                  }
                   label="Tạo lộ trình"
                   onPress={() => void generate()}
                 />

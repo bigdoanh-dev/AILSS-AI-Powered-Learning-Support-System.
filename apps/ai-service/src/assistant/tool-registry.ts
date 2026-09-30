@@ -107,7 +107,8 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
   },
   get_course_details: {
     name: "get_course_details",
-    description: "Retrieve full details of a specific course, including title, description, instructor, price, syllabus outline, and published status.",
+    description:
+      "Retrieve full details of a specific course, including title, description, instructor, price, syllabus outline, and published status.",
     schema: getCourseDetailsSchema,
     parameters: {
       type: "object",
@@ -124,14 +125,19 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
     parameters: {
       type: "object",
       properties: {
-        courseIds: { type: "array", items: { type: "string" }, description: "List of course UUIDs to compare" },
+        courseIds: {
+          type: "array",
+          items: { type: "string" },
+          description: "List of course UUIDs to compare",
+        },
       },
       required: ["courseIds"],
     },
   },
   get_knowledge_gaps: {
     name: "get_knowledge_gaps",
-    description: "Analyze student's quiz history and identified knowledge gaps across Bloom's cognitive levels.",
+    description:
+      "Analyze student's quiz history and identified knowledge gaps across Bloom's cognitive levels.",
     schema: getKnowledgeGapsSchema,
     parameters: {
       type: "object",
@@ -200,7 +206,8 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
   },
   suggest_remedial_actions: {
     name: "suggest_remedial_actions",
-    description: "Generate remedial recommendations and supplementary review materials for struggling students.",
+    description:
+      "Generate remedial recommendations and supplementary review materials for struggling students.",
     schema: suggestRemedialActionsSchema,
     parameters: {
       type: "object",
@@ -233,7 +240,8 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
   },
   get_recommended_learning_path: {
     name: "get_recommended_learning_path",
-    description: "Generate personalized next adaptive study steps (continue, review, practice, prerequisite unblocking) for a student.",
+    description:
+      "Generate personalized next adaptive study steps (continue, review, practice, prerequisite unblocking) for a student.",
     schema: getRecommendedLearningPathSchema,
     parameters: {
       type: "object",
@@ -245,12 +253,16 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
     allowedRoles: ["STUDENT", "LECTURER", "ADMIN"],
     tenantScope: "ACTOR_TENANT",
     courseScope: "ENTITLED_COURSE",
-    outputSchema: z.object({ planId: z.string().uuid(), courseId: z.string().uuid(), items: z.array(z.unknown()) }).passthrough().nullable(),
+    outputSchema: z
+      .object({ planId: z.string().uuid(), courseId: z.string().uuid(), items: z.array(z.unknown()) })
+      .passthrough()
+      .nullable(),
     timeoutBehavior: "RETURN_TEMPORARILY_UNAVAILABLE",
   },
   get_prerequisite_gaps: {
     name: "get_prerequisite_gaps",
-    description: "Identify missing prerequisite knowledge and required foundational concepts for a course or specific topic.",
+    description:
+      "Identify missing prerequisite knowledge and required foundational concepts for a course or specific topic.",
     schema: getPrerequisiteGapsSchema,
     parameters: {
       type: "object",
@@ -263,7 +275,8 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
   },
   record_recommendation_feedback: {
     name: "record_recommendation_feedback",
-    description: "Record learner feedback (useful, not_useful, already_know, too_difficult, too_easy) on a course recommendation.",
+    description:
+      "Record learner feedback (useful, not_useful, already_know, too_difficult, too_easy) on a course recommendation.",
     schema: recordRecommendationFeedbackSchema,
     parameters: {
       type: "object",
@@ -281,7 +294,8 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
   },
   get_course_version_diff: {
     name: "get_course_version_diff",
-    description: "Inspect changes, added/removed lessons, and concept modifications between two published course release versions.",
+    description:
+      "Inspect changes, added/removed lessons, and concept modifications between two published course release versions.",
     schema: getCourseVersionDiffSchema,
     parameters: {
       type: "object",
@@ -295,7 +309,8 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
   },
   identify_high_friction_lessons: {
     name: "identify_high_friction_lessons",
-    description: "Analyze learner struggle signals across cohort to identify high-friction lessons and suggest concrete pedagogical improvements.",
+    description:
+      "Analyze learner struggle signals across cohort to identify high-friction lessons and suggest concrete pedagogical improvements.",
     schema: identifyHighFrictionLessonsSchema,
     parameters: {
       type: "object",

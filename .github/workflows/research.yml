@@ -1,6 +1,14 @@
 name: phase6-research
 on:
   workflow_dispatch:
+
+concurrency:
+  group: ailss-research-self-hosted
+  queue: max
+
+permissions:
+  contents: read
+
 jobs:
   research-profile:
     runs-on: [self-hosted, ailss-research]
@@ -12,9 +20,15 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 24.20.0, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      - run: pnpm keys:dev && node scripts/dev/bootstrap-dev-env.mjs
+      - run: pnpm keys:dev
+      - run: sudo chown -R 1000:1000 infrastructure/tls/generated
+      - run: node scripts/dev/bootstrap-dev-env.mjs
       - run: pnpm env:research
       - run: AILSS_PROFILE=research pnpm smoke
       - run: AILSS_PROFILE=research pnpm evidence
+      - if: failure()
+        run: |
+          docker compose --env-file .env --profile research ps -a --format "table {{.Name}}\t{{.Service}}\t{{.Status}}\t{{.State}}\t{{.Health}}" || true
+          docker compose --env-file .env --profile research ps -a -q | xargs -r docker inspect --format '{{.Name}}: status={{.State.Status}} exitCode={{.State.ExitCode}} restarts={{.RestartCount}} oomKilled={{.State.OOMKilled}} error={{.State.Error}}' || true
       - if: always()
         run: pnpm env:down || true

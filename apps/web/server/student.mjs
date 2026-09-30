@@ -40,6 +40,7 @@ rule(
 );
 for (const path of [
   "/me/courses",
+  "/me/courses/:id",
   "/courses/:id",
   "/courses/:id/lessons",
   "/lessons/:id",
@@ -78,6 +79,8 @@ rule(
     })
     .strict(),
 );
+rule("GET", "/assistant/conversations");
+rule("GET", "/assistant/conversations/:id");
 rule(
   "PATCH",
   "/study-plan/items/:id",

@@ -1,0 +1,869 @@
+/* ==========================================================================
+   AILSS AI Learning 3D Design System
+   Compatible with Pristine Light & Executive Obsidian Dark themes
+   ========================================================================== */
+
+/* Theme Variables for AI Learning */
+:root {
+  --ail-hero-bg:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(2, 132, 199, 0.12), transparent 75%), var(--surface);
+  --ail-card-bg: rgba(255, 255, 255, 0.88);
+  --ail-card-border: rgba(2, 132, 199, 0.18);
+  --ail-card-hover-border: #0284c7;
+  --ail-card-shadow: 0 12px 32px rgba(15, 23, 42, 0.06), 0 2px 8px rgba(2, 132, 199, 0.04);
+  --ail-card-hover-shadow: 0 20px 48px rgba(2, 132, 199, 0.16), 0 4px 12px rgba(15, 23, 42, 0.08);
+  --ail-tag-bg: #ffffff;
+  --ail-tag-border: #bae6fd;
+  --ail-tag-color: #0369a1;
+  --ail-tag-hover-bg: #f0f9ff;
+  --ail-glow: rgba(2, 132, 199, 0.2);
+  --ail-deck-bg: linear-gradient(145deg, #ffffff 0%, #f0f7ff 100%);
+  --ail-deck-border: #bae6fd;
+  --ail-deck-shadow: 0 24px 60px rgba(2, 132, 199, 0.14);
+  --ail-section-alt-bg: linear-gradient(180deg, var(--surface) 0%, #f1f8fe 50%, var(--surface) 100%);
+  --ail-sheet-gradient: linear-gradient(145deg, #ffffff, #f0f7ff);
+  --ail-sheet-border: rgba(2, 132, 199, 0.28);
+  --ail-sheet-shadow: 0 24px 48px rgba(2, 132, 199, 0.14);
+  --ail-highlight: #0284c7;
+}
+
+:root[data-theme="dark"] {
+  --ail-hero-bg:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(56, 189, 248, 0.14), transparent 75%), #040915;
+  --ail-card-bg: rgba(17, 35, 68, 0.65);
+  --ail-card-border: rgba(56, 189, 248, 0.24);
+  --ail-card-hover-border: #38bdf8;
+  --ail-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.08);
+  --ail-card-hover-shadow: 0 24px 56px rgba(0, 0, 0, 0.8), 0 0 32px rgba(56, 189, 248, 0.25);
+  --ail-tag-bg: rgba(14, 165, 233, 0.12);
+  --ail-tag-border: rgba(56, 189, 248, 0.35);
+  --ail-tag-color: #7dd3fc;
+  --ail-tag-hover-bg: rgba(14, 165, 233, 0.25);
+  --ail-glow: rgba(56, 189, 248, 0.35);
+  --ail-deck-bg: linear-gradient(145deg, #0f1d38 0%, #060d20 100%);
+  --ail-deck-border: rgba(56, 189, 248, 0.35);
+  --ail-deck-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  --ail-section-alt-bg: linear-gradient(180deg, #040915 0%, #081329 50%, #040915 100%);
+  --ail-sheet-gradient: linear-gradient(145deg, #163756, #091529);
+  --ail-sheet-border: rgba(56, 189, 248, 0.45);
+  --ail-sheet-shadow: 0 24px 50px rgba(0, 0, 0, 0.75);
+  --ail-highlight: #38bdf8;
+}
+
+/* --------------------------------------------------------------------------
+   1. 3D Hero Section
+   -------------------------------------------------------------------------- */
+.ai-hero-3d-wrapper {
+  position: relative;
+  background: var(--ail-hero-bg);
+  padding: 68px 0 54px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+}
+
+.ai-hero-3d-wrapper::before {
+  content: "";
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 380px;
+  background: radial-gradient(ellipse, var(--ail-glow) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ai-hero-container {
+  position: relative;
+  z-index: 1;
+}
+
+.ai-badge-3d {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 18px;
+  border-radius: 999px;
+  background: var(--ail-card-bg);
+  border: 1.5px solid var(--ail-card-border);
+  box-shadow: 0 4px 16px var(--ail-glow);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ail-highlight);
+  text-transform: uppercase;
+  margin-bottom: 22px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transform: perspective(600px) translateZ(8px);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.ai-badge-3d:hover {
+  transform: perspective(600px) translateZ(16px) scale(1.03);
+  box-shadow: 0 8px 24px var(--ail-glow);
+}
+
+.ai-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ail-highlight);
+  box-shadow: 0 0 10px var(--ail-highlight);
+  animation: ailPulse 2s infinite;
+}
+
+@keyframes ailPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.6;
+  }
+}
+
+.ai-hero-title {
+  font-size: clamp(2.3rem, 4.4vw, 3.8rem);
+  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  max-width: 880px;
+  margin-bottom: 20px;
+}
+
+.ai-hero-title .gradient-text {
+  background: linear-gradient(135deg, var(--ail-highlight) 0%, #818cf8 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.ai-hero-desc {
+  font-size: 1.15rem;
+  line-height: 1.75;
+  color: var(--muted);
+  max-width: 720px;
+  margin-bottom: 36px;
+}
+
+/* 3D Hero Stat Spheres Grid */
+.ai-stat-grid-3d {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-top: 14px;
+}
+
+.ai-stat-card-3d {
+  position: relative;
+  background: var(--ail-card-bg);
+  border: 1.5px solid var(--ail-card-border);
+  border-radius: 20px;
+  padding: 22px 20px;
+  box-shadow: var(--ail-card-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transform-style: preserve-3d;
+  transition:
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+  overflow: hidden;
+}
+
+.ai-stat-card-3d::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 60%);
+  pointer-events: none;
+}
+
+.ai-stat-card-3d:hover {
+  transform: translateY(-6px) perspective(700px) rotateX(4deg);
+  border-color: var(--ail-card-hover-border);
+  box-shadow: var(--ail-card-hover-shadow);
+}
+
+.ai-stat-icon-3d {
+  font-size: 26px;
+  margin-bottom: 12px;
+  display: inline-block;
+  transform: translateZ(15px);
+}
+
+.ai-stat-num {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.ai-stat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* --------------------------------------------------------------------------
+   2. 3D Knowledge & Semantic Chunking Section
+   -------------------------------------------------------------------------- */
+.ai-knowledge-section {
+  position: relative;
+  background: var(--ail-section-alt-bg);
+  padding: 80px 0;
+}
+
+.ai-knowledge-split {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 50px;
+  align-items: center;
+}
+
+.ai-heading-3d {
+  font-size: clamp(2rem, 3.2vw, 3rem);
+  font-weight: 800;
+  line-height: 1.16;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+
+.ai-body-text {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--muted);
+  margin-bottom: 28px;
+}
+
+/* 3D Interactive Format Tags */
+.format-tags-3d {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 34px;
+}
+
+.format-pill-3d {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: var(--ail-tag-bg);
+  border: 1.5px solid var(--ail-tag-border);
+  color: var(--ail-tag-color);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 12px var(--ail-glow);
+  cursor: pointer;
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+  user-select: none;
+}
+
+.format-pill-3d:hover {
+  transform: translateY(-3px) scale(1.04);
+  background: var(--ail-tag-hover-bg);
+  border-color: var(--ail-card-hover-border);
+  box-shadow: 0 8px 20px var(--ail-glow);
+}
+
+.format-pill-3d.active {
+  background: var(--ail-highlight);
+  color: #ffffff;
+  border-color: var(--ail-highlight);
+  box-shadow: 0 8px 24px var(--ail-glow);
+}
+
+:root[data-theme="dark"] .format-pill-3d.active {
+  color: #040915;
+}
+
+/* 3D Interactive Semantic Chunking Simulator Card */
+.ai-chunk-simulator-card {
+  background: var(--ail-card-bg);
+  border: 1.5px solid var(--ail-card-border);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--ail-card-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  margin-top: 10px;
+}
+
+.ai-sim-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.ai-sim-tag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ail-highlight);
+}
+
+.ai-sim-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--ail-tag-bg);
+  color: var(--ail-tag-color);
+  border: 1px solid var(--ail-tag-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ai-sim-action-btn:hover {
+  background: var(--ail-tag-hover-bg);
+  border-color: var(--ail-card-hover-border);
+}
+
+.ai-chunks-display {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ai-chunk-item {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.ai-chunk-item.active {
+  border-color: var(--ail-highlight);
+  background: var(--ail-tag-hover-bg);
+  box-shadow: 0 4px 16px var(--ail-glow);
+  transform: translateX(4px);
+}
+
+.ai-chunk-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ail-highlight);
+}
+
+.ai-vector-token {
+  font-family: monospace;
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 3D Knowledge Scene Frame */
+.ai-scene-frame-3d {
+  position: relative;
+  background: var(--ail-deck-bg);
+  border: 1.5px solid var(--ail-deck-border);
+  border-radius: 28px;
+  box-shadow: var(--ail-deck-shadow);
+  padding: 6px;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  transition:
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.ai-scene-frame-3d:hover {
+  box-shadow: 0 32px 80px var(--ail-glow);
+}
+
+/* --------------------------------------------------------------------------
+   3. 3D Workflow Section Overrides & Polish
+   -------------------------------------------------------------------------- */
+.ai-workflow-section {
+  position: relative;
+  background: var(--surface);
+  padding: 80px 0;
+}
+
+.workflow-steps button {
+  background: var(--ail-card-bg) !important;
+  border: 1.5px solid var(--ail-card-border) !important;
+  color: var(--ink) !important;
+  box-shadow: var(--ail-card-shadow) !important;
+  border-radius: 18px !important;
+  padding: 22px 18px !important;
+  transform-style: preserve-3d;
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s ease,
+    border-color 0.25s ease !important;
+}
+
+.workflow-steps button:hover {
+  transform: translateY(-5px) perspective(600px) rotateX(4deg) !important;
+  border-color: var(--ail-card-hover-border) !important;
+  box-shadow: var(--ail-card-hover-shadow) !important;
+}
+
+.workflow-steps button[aria-pressed="true"] {
+  border-color: var(--ail-highlight) !important;
+  box-shadow: 0 10px 28px var(--ail-glow) !important;
+  transform: translateY(-3px) perspective(600px) rotateX(2deg) !important;
+}
+
+.workflow-steps .step-number {
+  background: linear-gradient(135deg, var(--ail-highlight), #6366f1) !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  padding: 4px 10px !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  box-shadow: 0 4px 10px var(--ail-glow);
+}
+
+:root[data-theme="dark"] .workflow-steps .step-number {
+  color: #040915 !important;
+}
+
+.workflow-detail {
+  background: var(--ail-deck-bg) !important;
+  border: 1.5px solid var(--ail-deck-border) !important;
+  box-shadow: var(--ail-deck-shadow) !important;
+  border-radius: 24px !important;
+  padding: 38px !important;
+  color: var(--ink) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.workflow-detail h3 {
+  color: var(--ink) !important;
+  font-size: 1.85rem !important;
+  letter-spacing: -0.03em !important;
+}
+
+.workflow-detail p {
+  color: var(--muted) !important;
+  font-size: 1.05rem !important;
+  line-height: 1.75 !important;
+}
+
+.workflow-track {
+  background: var(--line) !important;
+  border-radius: 999px !important;
+  height: 6px !important;
+  overflow: hidden;
+}
+
+.workflow-track span {
+  background: linear-gradient(90deg, var(--ail-highlight), #818cf8) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 0 12px var(--ail-glow);
+}
+
+.workflow-autoplay-btn {
+  font-size: 12px !important;
+  padding: 5px 12px !important;
+  border-radius: 8px !important;
+  background: var(--ail-tag-bg) !important;
+  color: var(--ail-tag-color) !important;
+  border: 1px solid var(--ail-tag-border) !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.workflow-autoplay-btn:hover {
+  background: var(--ail-tag-hover-bg) !important;
+  border-color: var(--ail-card-hover-border) !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. NEW: 3D Interactive Bloom Taxonomy Matrix Section
+   -------------------------------------------------------------------------- */
+.ai-bloom-section {
+  position: relative;
+  background: var(--ail-section-alt-bg);
+  padding: 84px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.bloom-grid-3d {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  margin-top: 36px;
+}
+
+.bloom-card-3d {
+  position: relative;
+  background: var(--ail-card-bg);
+  border: 1.5px solid var(--ail-card-border);
+  border-radius: 18px;
+  padding: 18px 14px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  transform-style: preserve-3d;
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+  box-shadow: var(--ail-card-shadow);
+}
+
+.bloom-card-3d:hover {
+  transform: translateY(-6px) perspective(600px) rotateX(4deg);
+  border-color: var(--bloom-color, var(--ail-highlight));
+  box-shadow: 0 14px 32px var(--bloom-glow, var(--ail-glow));
+}
+
+.bloom-card-3d.active {
+  border-color: var(--bloom-color, var(--ail-highlight));
+  background: var(--surface);
+  transform: translateY(-4px) perspective(600px) scale(1.03);
+  box-shadow: 0 16px 36px var(--bloom-glow, var(--ail-glow));
+}
+
+.bloom-level-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: #ffffff;
+  background: var(--bloom-color, #0284c7);
+  margin-bottom: 8px;
+}
+
+.bloom-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.bloom-card-en {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.bloom-card-verbs {
+  font-size: 11.5px;
+  color: var(--bloom-color, var(--ail-highlight));
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* 3D Bloom Preview Panel */
+.bloom-preview-deck-3d {
+  margin-top: 28px;
+  background: var(--ail-card-bg);
+  border: 1.5px solid var(--ail-card-border);
+  border-radius: 22px;
+  padding: 28px 32px;
+  box-shadow: var(--ail-card-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transform-style: preserve-3d;
+}
+
+.bloom-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 16px;
+  margin-bottom: 18px;
+}
+
+.bloom-archetype-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.bloom-preview-body h4 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.bloom-preview-body p {
+  font-size: 14.5px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+
+.bloom-question-sample-box {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-left: 4px solid var(--bloom-active-color, var(--ail-highlight));
+  border-radius: 12px;
+  padding: 16px 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* --------------------------------------------------------------------------
+   5. 3D Human-in-the-Loop & Trust Guardrails Section
+   -------------------------------------------------------------------------- */
+.ai-trust-section {
+  position: relative;
+  background: var(--surface);
+  padding: 84px 0;
+}
+
+.ai-trust-cards-grid-3d {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-top: 40px;
+}
+
+.ai-trust-card-3d {
+  position: relative;
+  background: var(--ail-card-bg);
+  border: 1.5px solid var(--ail-card-border);
+  border-radius: 24px;
+  padding: 34px;
+  box-shadow: var(--ail-card-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transform-style: preserve-3d;
+  transition:
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+}
+
+.ai-trust-card-3d:hover {
+  transform: translateY(-6px) perspective(700px) rotateX(3deg);
+  border-color: var(--ail-card-hover-border);
+  box-shadow: var(--ail-card-hover-shadow);
+}
+
+.ai-trust-icon-box {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: var(--ail-tag-hover-bg);
+  border: 1.5px solid var(--ail-tag-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 16px var(--ail-glow);
+  transform: translateZ(12px);
+}
+
+.ai-trust-card-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+.ai-trust-card-desc {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+
+.ai-check-list-3d {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ai-check-list-3d li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.ai-check-bullet {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--ail-highlight), #10b981);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 1px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   6. Adaptive 3D ScrollStory Polish
+   -------------------------------------------------------------------------- */
+.ai-scroll-story-adaptive {
+  position: relative;
+  background: var(--ail-section-alt-bg);
+  padding: 84px 0;
+  border-top: 1px solid var(--line);
+}
+
+.ai-scroll-story-adaptive .story-sticky h2 {
+  color: var(--ink) !important;
+  letter-spacing: -0.035em !important;
+}
+
+.ai-scroll-story-adaptive .story-sticky > p {
+  color: var(--muted) !important;
+}
+
+.ai-scroll-story-adaptive .story-chapters li {
+  color: var(--ink) !important;
+  opacity: 0.45;
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease;
+}
+
+.ai-scroll-story-adaptive .story-chapters li.is-current {
+  opacity: 1 !important;
+  transform: translateX(8px);
+}
+
+.ai-scroll-story-adaptive .story-chapters h3 {
+  color: var(--ink) !important;
+}
+
+.ai-scroll-story-adaptive .story-chapters p {
+  color: var(--muted) !important;
+}
+
+.ai-scroll-story-adaptive .story-number {
+  color: var(--ail-highlight) !important;
+  font-weight: 800 !important;
+}
+
+.ai-scroll-story-adaptive .story-sheet {
+  background: var(--ail-sheet-gradient) !important;
+  border: 1.5px solid var(--ail-sheet-border) !important;
+  box-shadow: var(--ail-sheet-shadow) !important;
+}
+
+.ai-scroll-story-adaptive .sheet-front {
+  color: var(--ink) !important;
+}
+
+.ai-scroll-story-adaptive .sheet-front > span {
+  color: var(--ail-highlight) !important;
+}
+
+.ai-scroll-story-adaptive .sheet-front strong {
+  color: var(--ink) !important;
+}
+
+.ai-scroll-story-adaptive .sheet-front i {
+  background: var(--ail-card-border) !important;
+}
+
+.ai-scroll-story-adaptive .sheet-front b {
+  color: var(--ail-highlight) !important;
+}
+
+.ai-scroll-story-adaptive .story-rail {
+  background: var(--line) !important;
+}
+
+.ai-scroll-story-adaptive .story-rail span {
+  background: var(--ail-highlight) !important;
+}
+
+.story-autoplay-btn {
+  font-size: 12px !important;
+  padding: 6px 14px !important;
+  border-radius: 8px !important;
+  background: var(--ail-tag-bg) !important;
+  color: var(--ail-tag-color) !important;
+  border: 1.5px solid var(--ail-tag-border) !important;
+  box-shadow: 0 4px 12px var(--ail-glow) !important;
+  cursor: pointer;
+  transition: all 0.2s ease !important;
+}
+
+.story-autoplay-btn:hover {
+  background: var(--ail-tag-hover-bg) !important;
+  border-color: var(--ail-card-hover-border) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .ai-stat-grid-3d {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ai-knowledge-split {
+    grid-template-columns: 1fr;
+  }
+  .bloom-grid-3d {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .ai-trust-cards-grid-3d {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .ai-stat-grid-3d {
+    grid-template-columns: 1fr;
+  }
+  .bloom-grid-3d {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

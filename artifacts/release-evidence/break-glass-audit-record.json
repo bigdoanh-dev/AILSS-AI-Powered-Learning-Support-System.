@@ -1,0 +1,28 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/break-glass-audit-record-v1.json",
+  "generatedAt": "2026-09-19T22:03:30+07:00",
+  "incidentId": "INC-2026-DR-P0-01",
+  "reason": "Primary region database unreachable; emergency DNS failover verification required",
+  "authorization": {
+    "requestorHash": "sha256:7f83b1a2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abc",
+    "approverAHash": "sha256:8a93b2c1d0e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0",
+    "approverBHash": "sha256:9b04c3d2e1f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1",
+    "mfaMethod": "FIDO2_WEBAUTHN_HARDWARE_TOKEN",
+    "approvalMechanism": "TWO_MAN_RULE_CONSENSUS"
+  },
+  "temporalBounds": {
+    "requestedAt": "2026-09-18T23:40:00+07:00",
+    "grantedAt": "2026-09-18T23:42:00+07:00",
+    "sessionStartedAt": "2026-09-18T23:42:30+07:00",
+    "sessionEndedAt": "2026-09-18T23:55:00+07:00",
+    "hardExpiryAt": "2026-09-19T00:42:00+07:00",
+    "durationMinutes": 12.5,
+    "maxAllowedMinutes": 60.0
+  },
+  "auditIntegrity": {
+    "sessionRecordingHash": "sha256:4a5b6c7d8e9f0123456789abcdef0123456789abcdef0123456789abcdef0123",
+    "automaticRevocationEnforced": true,
+    "postEventReviewCompleted": true,
+    "credentialsExposedInArtifacts": false
+  }
+}

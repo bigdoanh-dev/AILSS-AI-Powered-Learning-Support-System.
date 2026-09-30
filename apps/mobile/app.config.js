@@ -87,7 +87,9 @@ module.exports = ({ config }) => {
   }
   const localHttp = environment !== "production" && url.protocol === "http:";
   config.plugins = [
-    ...(config.plugins ?? []).filter((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) !== "expo-sqlite"),
+    ...(config.plugins ?? []).filter(
+      (plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) !== "expo-sqlite",
+    ),
     ["expo-sqlite", { useSQLCipher: true }],
   ];
   config.ios = {

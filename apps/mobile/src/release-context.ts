@@ -24,9 +24,10 @@ export function releaseContext(input: ReleaseContextInput): ReleaseContext {
         : input.platform === "android"
           ? input.androidVersionCode?.toString() || input.appVersion || "unknown"
           : input.appVersion || "unknown",
-    releaseGitSha: input.releaseGitSha && /^[a-f0-9]{7,64}$/iu.test(input.releaseGitSha)
-      ? input.releaseGitSha.toLowerCase()
-      : "unavailable",
+    releaseGitSha:
+      input.releaseGitSha && /^[a-f0-9]{7,64}$/iu.test(input.releaseGitSha)
+        ? input.releaseGitSha.toLowerCase()
+        : "unavailable",
     platform: input.platform,
     osVersion: input.osVersion || "unknown",
   };

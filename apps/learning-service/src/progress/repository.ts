@@ -262,16 +262,21 @@ export class LearningProgressRepository {
       correlationId,
       aggregate: { type: "COURSE_PROGRESS", id: courseId, version },
       data: {
-        studentId, courseId, percent, version,
-        ...(mastery?.completed ? {
-          tenantId: mastery.tenantId,
-          learningOutcomeId: `lesson:${mastery.lessonId}`,
-          conceptId: `lesson:${mastery.lessonId}`,
-          sourceType: "LESSON_COMPLETION",
-          sourceId: mastery.lessonId,
-          rawScorePercent: 100,
-          schemaVersion: "1.0",
-        } : {}),
+        studentId,
+        courseId,
+        percent,
+        version,
+        ...(mastery?.completed
+          ? {
+              tenantId: mastery.tenantId,
+              learningOutcomeId: `lesson:${mastery.lessonId}`,
+              conceptId: `lesson:${mastery.lessonId}`,
+              sourceType: "LESSON_COMPLETION",
+              sourceId: mastery.lessonId,
+              rawScorePercent: 100,
+              schemaVersion: "1.0",
+            }
+          : {}),
       },
     };
     const s = shard(eventId);

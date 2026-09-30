@@ -202,7 +202,9 @@ services:
       JWT_PUBLIC_KEY_PATH: /run/ailss/identity/user-jwt-public.pem
       ACTOR_CONTEXT_PRIVATE_KEY_PATH: /run/ailss/services/gateway-private.pem
       CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH: /run/ailss/services/classroom-public.pem
-    ports: ["127.0.0.1:8080:8080"]
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "${AILSS_MOBILE_GATEWAY_BIND_ADDRESS:-127.0.0.1}:18080:8080"
     mem_limit: 384m
     cpus: 0.50
     volumes:
@@ -234,7 +236,15 @@ services:
       ACCESS_TOKEN_TTL_SECONDS: ${ACCESS_TOKEN_TTL_SECONDS:-900}
       REFRESH_TOKEN_TTL_SECONDS: ${REFRESH_TOKEN_TTL_SECONDS:-2592000}
       PASSWORD_IDEMPOTENCY_HMAC_KEY: ${PASSWORD_IDEMPOTENCY_HMAC_KEY}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
       ADMIN_CURSOR_HMAC_KEY: ${PASSWORD_IDEMPOTENCY_HMAC_KEY}
+      GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS:-}
+      APPLE_CLIENT_IDS: ${APPLE_CLIENT_IDS:-}
       SERVICE_TOKEN_PUBLIC_KEY_PATH: /run/ailss/services/learning-public.pem
       CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH: /run/ailss/services/classroom-public.pem
       CLASSROOM_SERVICE_TOKEN_KID: dev-classroom-2026-01

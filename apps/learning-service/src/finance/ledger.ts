@@ -1,11 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 export type LedgerEntryType =
-  | "PAYMENT_SETTLED"
-  | "PLATFORM_COMMISSION"
-  | "LECTURER_REVENUE"
-  | "STUDENT_REFUND"
-  | "LECTURER_PAYOUT";
+  "PAYMENT_SETTLED" | "PLATFORM_COMMISSION" | "LECTURER_REVENUE" | "STUDENT_REFUND" | "LECTURER_PAYOUT";
 
 export type LedgerDirection = "DEBIT" | "CREDIT";
 
@@ -38,7 +34,31 @@ export function formatBucketDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-import { DEFAULT_FINANCE_POLICY, type FinancePolicyConfig } from "./refund-policy.js";
+import {
+  DEFAULT_FINANCE_POLICY,
+  platformFeeBasisPointsAt,
+  type FinancePolicyConfig,
+} from "./refund-policy.js";
+
+function policyAt(
+  date: Date,
+  explicit: FinancePolicyConfig | undefined,
+  configured: FinancePolicyConfig,
+): FinancePolicyConfig {
+  if (explicit) return explicit;
+  if (configured !== DEFAULT_FINANCE_POLICY) return configured;
+  const fee = platformFeeBasisPointsAt(date);
+  return {
+    ...configured,
+    policyVersion: fee === 2000 ? 1 : 2,
+    platformFeeBasisPoints: fee,
+    lecturerShareBasisPoints: 10_000 - fee,
+  };
+}
+
+function formatBasisPointsPercent(basisPoints: number): string {
+  return (basisPoints / 100).toString();
+}
 
 export class FinancialLedger {
   readonly #policy: FinancePolicyConfig;
@@ -69,11 +89,9 @@ export class FinancialLedger {
     const occurredAt = input.occurredAt ?? new Date();
     const bucket = formatBucketDate(occurredAt);
     const txId = randomUUID();
-    const activePolicy = input.policy ?? this.#policy;
+    const activePolicy = policyAt(occurredAt, input.policy, this.#policy);
 
-    const platformCommission = Math.floor(
-      (input.amountMinor * activePolicy.platformFeeBasisPoints) / 10000,
-    );
+    const platformCommission = Math.floor((input.amountMinor * activePolicy.platformFeeBasisPoints) / 10000);
     const lecturerShare = input.amountMinor - platformCommission;
 
     const entries: LedgerEntry[] = [
@@ -103,7 +121,7 @@ export class FinancialLedger {
         currency: input.currency,
         referenceType: "ORDER",
         referenceId: input.orderId,
-        description: `Platform fee (20%) for order ${input.orderId}`,
+        description: `Platform fee (${formatBasisPointsPercent(activePolicy.platformFeeBasisPoints)}%) for order ${input.orderId}`,
         metadata: { courseId: input.courseId },
         createdAt: occurredAt,
       },
@@ -118,7 +136,7 @@ export class FinancialLedger {
         currency: input.currency,
         referenceType: "ORDER",
         referenceId: input.orderId,
-        description: `Lecturer earnings (80%) for order ${input.orderId}`,
+        description: `Lecturer earnings (${formatBasisPointsPercent(10_000 - activePolicy.platformFeeBasisPoints)}%) for order ${input.orderId}`,
         metadata: { courseId: input.courseId, studentId: input.studentId },
         createdAt: occurredAt,
       },
@@ -147,11 +165,9 @@ export class FinancialLedger {
     const occurredAt = input.occurredAt ?? new Date();
     const bucket = formatBucketDate(occurredAt);
     const txId = randomUUID();
-    const activePolicy = input.policy ?? this.#policy;
+    const activePolicy = policyAt(occurredAt, input.policy, this.#policy);
 
-    const platformReversal = Math.floor(
-      (input.amountMinor * activePolicy.platformFeeBasisPoints) / 10000,
-    );
+    const platformReversal = Math.floor((input.amountMinor * activePolicy.platformFeeBasisPoints) / 10000);
     const lecturerReversal = input.amountMinor - platformReversal;
 
     const entries: LedgerEntry[] = [

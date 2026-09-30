@@ -5,6 +5,8 @@ const labels: Record<string, string> = {
   IN_REVIEW: "Đang chờ duyệt",
   PUBLISHED: "Đã xuất bản",
   ARCHIVED: "Đã lưu trữ",
+  HIDDEN: "Không công khai",
+  DELETED: "Đã xóa",
   CLOSED: "Đã đóng",
   READY: "Sẵn sàng",
   INCOMPLETE: "Chưa đủ nội dung",

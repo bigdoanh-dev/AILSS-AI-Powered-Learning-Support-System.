@@ -17,16 +17,29 @@ const safeSnapshot = {
   diskFreeBytes: 1,
   capacityApproved: true,
   populationFacts: {
-    reviewedMigrations: { "013": true, "024": true, "026": true, "033": true, "052": true, "076": true },
+    reviewedMigrations: {
+      "013": true,
+      "024": true,
+      "026": true,
+      "033": true,
+      "052": true,
+      "076": true,
+      "093": true,
+    },
   },
 };
 
 describe("populated migration precheck", () => {
-  it("has an exact explicit 54-file policy covering both profiles", async () => {
-    expect(Object.keys(canonicalPolicy)).toHaveLength(54);
+  it("has an exact explicit 62-file policy covering both profiles", async () => {
+    expect(Object.keys(canonicalPolicy)).toHaveLength(62);
     expect(canonicalPolicy).toHaveProperty("086_media_replacement_audit.cql");
     expect(canonicalPolicy).toHaveProperty("087_media_quota.cql");
     expect(canonicalPolicy).toHaveProperty("088_media_output_journal.cql");
+    expect(canonicalPolicy).toHaveProperty("092_platform_commission_policy.cql");
+    expect(canonicalPolicy).toHaveProperty("093_classroom_schedule_compaction_parity.cql");
+    expect(canonicalPolicy).toHaveProperty("094_ai_token_usage.cql");
+    expect(canonicalPolicy).toHaveProperty("095_ai_assistant_response_cache.cql");
+    expect(canonicalPolicy).toHaveProperty("096_lecturer_payout_execution.cql");
     const result = (await runPrecheck()) as {
       status: string;
       networkAccessPerformed: boolean;
@@ -38,7 +51,7 @@ describe("populated migration precheck", () => {
       status: "PASS_SOURCE_POLICY",
       networkAccessPerformed: false,
       targetMutationPerformed: false,
-      profiles: { dev: 54, research: 54 },
+      profiles: { dev: 62, research: 62 },
       targetQualification: { status: "BLOCKED_EXTERNAL" },
     });
   });
@@ -65,6 +78,9 @@ describe("populated migration precheck", () => {
       "BACKFILL_OR_RECONCILIATION_REVIEW",
     );
     expect(canonicalPolicy["033_classroom_student_schedule.cql"]?.classification).toBe("TABLE_OPTION_CHANGE");
+    expect(canonicalPolicy["093_classroom_schedule_compaction_parity.cql"]?.classification).toBe(
+      "TABLE_OPTION_CHANGE",
+    );
     expect(canonicalPolicy["052_interaction_reviews.cql"]?.classification).toBe(
       "BACKFILL_OR_RECONCILIATION_REVIEW",
     );
@@ -115,7 +131,7 @@ describe("populated migration precheck", () => {
     expect(evaluateTargetSnapshot(safeSnapshot)).toEqual({ status: "QUALIFIED_READ_ONLY", reasons: [] });
   });
 
-  it("verifies canonical migration registry contains 54 migrations matching precheck baseline", async () => {
+  it("verifies canonical migration registry contains 62 migrations matching precheck baseline", async () => {
     const { readFile } = await import("node:fs/promises");
     const registryContent = await readFile("database/migration-registry.json", "utf8");
     interface MigrationEntry {
@@ -136,12 +152,12 @@ describe("populated migration precheck", () => {
     }
     const registry = JSON.parse(registryContent) as MigrationRegistry;
 
-    expect(registry.totalMigrations).toBe(54);
-    expect(registry.migrations).toHaveLength(54);
+    expect(registry.totalMigrations).toBe(62);
+    expect(registry.migrations).toHaveLength(62);
 
     const ids = registry.migrations.map((m: MigrationEntry) => m.id);
     const uniqueIds = new Set(ids);
-    expect(uniqueIds.size).toBe(54); // No duplicates
+    expect(uniqueIds.size).toBe(62); // No duplicates
 
     // Verify ordering
     for (let i = 1; i < registry.migrations.length; i++) {

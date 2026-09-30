@@ -12,11 +12,21 @@ export class AiDocumentRelay {
   constructor(
     private readonly db: CassandraClient,
     private readonly url: string,
+    private readonly onPollError: (error: unknown) => void = () => undefined,
   ) {}
   start() {
-    this.timer = setInterval(() => void this.poll(), 1000);
+    const pollSafely = () => {
+      void this.poll().catch((error: unknown) => {
+        try {
+          this.onPollError(error);
+        } catch {
+          // Logging failures must not turn a recoverable poll error into an unhandled rejection.
+        }
+      });
+    };
+    this.timer = setInterval(pollSafely, 1000);
     this.timer.unref();
-    void this.poll();
+    pollSafely();
   }
   async close() {
     if (this.timer) clearInterval(this.timer);

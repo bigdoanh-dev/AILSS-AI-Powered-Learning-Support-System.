@@ -7,6 +7,7 @@ import { ApiError, record, string } from "../../../src/api";
 import { runtime } from "../../../src/runtime";
 import { CONTRACT_LIMITED } from "../../../src/teaching";
 import { Page, Button, styles } from "../../../src/ui";
+import { RevenueQuote } from "../../../src/RevenueQuote";
 
 interface OfferingDetail {
   offeringId: string;
@@ -154,6 +155,7 @@ export default function OfferingDetailScreen() {
                 onChangeText={setCurrency}
                 placeholder="VND"
               />
+              <RevenueQuote price={price} currency={currency || "VND"} />
               <Button
                 label={busy ? "Đang lưu…" : "Lưu thay đổi"}
                 disabled={busy}

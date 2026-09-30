@@ -80,15 +80,27 @@ export default function CreateAssessmentScreen() {
         <Text style={s.label}>Hình thức & Chế độ chấm điểm</Text>
         <View style={{ gap: 8, marginVertical: 4 }}>
           <Button
-            label={format === "OBJECTIVE_QUIZ" ? "● ⚡ Trắc nghiệm (Hệ thống chấm tự động)" : "○ ⚡ Trắc nghiệm (Hệ thống chấm tự động)"}
+            label={
+              format === "OBJECTIVE_QUIZ"
+                ? "● ⚡ Trắc nghiệm (Hệ thống chấm tự động)"
+                : "○ ⚡ Trắc nghiệm (Hệ thống chấm tự động)"
+            }
             onPress={() => setFormat("OBJECTIVE_QUIZ")}
           />
           <Button
-            label={format === "ESSAY" ? "● ✍️ Tự luận (Giảng viên chấm thủ công)" : "○ ✍️ Tự luận (Giảng viên chấm thủ công)"}
+            label={
+              format === "ESSAY"
+                ? "● ✍️ Tự luận (Giảng viên chấm thủ công)"
+                : "○ ✍️ Tự luận (Giảng viên chấm thủ công)"
+            }
             onPress={() => setFormat("ESSAY")}
           />
           <Button
-            label={format === "PROJECT_FILE" ? "● 📁 Đồ án / Nộp file (Giảng viên chấm thủ công)" : "○ 📁 Đồ án / Nộp file (Giảng viên chấm thủ công)"}
+            label={
+              format === "PROJECT_FILE"
+                ? "● 📁 Đồ án / Nộp file (Giảng viên chấm thủ công)"
+                : "○ 📁 Đồ án / Nộp file (Giảng viên chấm thủ công)"
+            }
             onPress={() => setFormat("PROJECT_FILE")}
           />
         </View>

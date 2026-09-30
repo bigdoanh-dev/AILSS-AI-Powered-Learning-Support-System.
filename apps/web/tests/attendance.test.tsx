@@ -86,7 +86,7 @@ describe("Attendance Component with Demo Data Fallback", () => {
     // Find student Lê Văn Đức's row and mark as Absent
     const absentButtons = screen.getAllByRole("button", { name: /Vắng/i });
     // Pick the button in the table row
-    const rowAbsentBtn = absentButtons.find(btn => btn.classList.contains("btn-attendance-absent"));
+    const rowAbsentBtn = absentButtons.find((btn) => btn.classList.contains("btn-attendance-absent"));
     expect(rowAbsentBtn).toBeTruthy();
     if (rowAbsentBtn) {
       fireEvent.click(rowAbsentBtn);

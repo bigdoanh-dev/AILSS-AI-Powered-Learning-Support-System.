@@ -21,7 +21,7 @@ import {
   type AdminUser,
   type AdminUserStatus,
 } from "../../../src/admin";
-import { Page, Button, styles, tokens } from "../../../src/ui";
+import { Page, Button, PasswordInput, styles, tokens } from "../../../src/ui";
 
 export default function AdminUserDetailScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
@@ -227,8 +227,7 @@ export default function AdminUserDetailScreen() {
                   Thẩm định quyền hạn giảng dạy cho người dùng này. Thao tác yêu cầu nhập mật khẩu quản trị
                   viên.
                 </Text>
-                <TextInput
-                  secureTextEntry
+                <PasswordInput
                   placeholder="Mật khẩu quản trị viên"
                   value={verifyPassword}
                   onChangeText={setVerifyPassword}
@@ -275,8 +274,7 @@ export default function AdminUserDetailScreen() {
                 accessibilityLabel="Lý do thay đổi trạng thái"
               />
 
-              <TextInput
-                secureTextEntry
+              <PasswordInput
                 placeholder="Mật khẩu quản trị viên hiện tại"
                 value={statusPassword}
                 onChangeText={setStatusPassword}

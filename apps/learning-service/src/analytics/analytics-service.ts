@@ -201,10 +201,15 @@ export class ProductAnalyticsService {
     readonly generatedAt: string;
   }> {
     const isPlatformAdmin = input.actor.roles.includes("PLATFORM_ADMIN");
-    const isInstAdmin = input.actor.roles.includes("ADMIN") || input.actor.roles.includes("INSTITUTION_ADMIN");
+    const isInstAdmin =
+      input.actor.roles.includes("ADMIN") || input.actor.roles.includes("INSTITUTION_ADMIN");
 
     if (!isPlatformAdmin && !isInstAdmin) {
-      throw new AppError("FORBIDDEN", 403, "Administrator clearance required for enterprise analytics export");
+      throw new AppError(
+        "FORBIDDEN",
+        403,
+        "Administrator clearance required for enterprise analytics export",
+      );
     }
 
     if (!isPlatformAdmin) {
@@ -273,7 +278,8 @@ export class ProductAnalyticsService {
 
     let outputData = "";
     if (input.format === "CSV") {
-      const header = "learnerId,courseId,organizationId,completedLessons,totalTimeSpentSeconds,lastActiveAt,status\n";
+      const header =
+        "learnerId,courseId,organizationId,completedLessons,totalTimeSpentSeconds,lastActiveAt,status\n";
       const rows = records
         .map(
           (r) =>
@@ -296,4 +302,3 @@ export class ProductAnalyticsService {
     });
   }
 }
-

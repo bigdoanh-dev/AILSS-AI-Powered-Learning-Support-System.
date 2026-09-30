@@ -10,11 +10,12 @@ export interface FeatureItem {
   hasBadge?: boolean;
 }
 
-/** Revision B ships Student Mobile only; legacy lecturer/admin pages stay unreachable. */
+/** Match protected mobile route groups to the authenticated account role. */
 export function phase41RouteAvailable(pathname: string, role?: string): boolean {
   const path = pathname.split("?", 1)[0] ?? pathname;
-  if (path === "/" && role && role !== "STUDENT") return false;
-  return !(/^\/(?:admin|teaching)(?:\/|$)/u.test(path));
+  if (/^\/admin(?:\/|$)/u.test(path)) return role === "ADMIN";
+  if (/^\/teaching(?:\/|$)/u.test(path)) return role === "LECTURER";
+  return true;
 }
 
 export function getFeaturesForRole(role?: string): FeatureItem[] {
@@ -22,13 +23,64 @@ export function getFeaturesForRole(role?: string): FeatureItem[] {
 
   // STUDENT or Guest: Gồm Lớp học, Khóa học, Bài tập (chấm đỏ), Bài kiểm tra (chấm đỏ)
   return [
-    { id: "classes", label: "Lớp học", icon: "class", bgColor: "#E0F2FE", iconColor: "#0284C7", path: "/classes" },
-    { id: "courses", label: "Khóa học", icon: "book", bgColor: "#EDE9FE", iconColor: "#7C3AED", path: "/courses" },
-    { id: "assignments", label: "Bài tập", icon: "assignment", bgColor: "#FEE2E2", iconColor: "#DC2626", path: "/classes", hasBadge: true },
-    { id: "assessments", label: "Bài kiểm tra", icon: "quiz", bgColor: "#FEF3C7", iconColor: "#D97706", path: "/assessments", hasBadge: true },
-    { id: "learn", label: "Khóa của tôi", icon: "academic", bgColor: "#E0E7FF", iconColor: "#4F46E5", path: "/learn" },
-    { id: "schedule", label: "Lịch học", icon: "calendar", bgColor: "#CFFAFE", iconColor: "#0891B2", path: "/classes?tab=schedule" },
-    { id: "attendance", label: "Điểm danh", icon: "checkCircle", bgColor: "#DCFCE7", iconColor: "#16A34A", path: "/classes?tab=attendance" },
+    {
+      id: "classes",
+      label: "Lớp học",
+      icon: "class",
+      bgColor: "#E0F2FE",
+      iconColor: "#0284C7",
+      path: "/classes",
+    },
+    {
+      id: "courses",
+      label: "Khóa học",
+      icon: "book",
+      bgColor: "#EDE9FE",
+      iconColor: "#7C3AED",
+      path: "/courses",
+    },
+    {
+      id: "assignments",
+      label: "Bài tập",
+      icon: "assignment",
+      bgColor: "#FEE2E2",
+      iconColor: "#DC2626",
+      path: "/classes",
+      hasBadge: true,
+    },
+    {
+      id: "assessments",
+      label: "Bài kiểm tra",
+      icon: "quiz",
+      bgColor: "#FEF3C7",
+      iconColor: "#D97706",
+      path: "/assessments",
+      hasBadge: true,
+    },
+    {
+      id: "learn",
+      label: "Khóa của tôi",
+      icon: "academic",
+      bgColor: "#E0E7FF",
+      iconColor: "#4F46E5",
+      path: "/learn",
+    },
+    {
+      id: "schedule",
+      label: "Lịch học",
+      icon: "calendar",
+      bgColor: "#CFFAFE",
+      iconColor: "#0891B2",
+      path: "/classes?tab=schedule",
+    },
+    {
+      id: "attendance",
+      label: "Điểm danh",
+      icon: "checkCircle",
+      bgColor: "#DCFCE7",
+      iconColor: "#16A34A",
+      path: "/classes?tab=attendance",
+    },
     { id: "all", label: "Tất cả", icon: "grid", bgColor: "#F1F5F9", iconColor: "#475569", path: "modal:all" },
   ];
 }

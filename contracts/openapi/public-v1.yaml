@@ -3,6 +3,184 @@
   "info": { "title": "AILSS Public API", "version": "7.12C" },
   "paths":
     {
+      "/api/v1/me/commission":
+        {
+          "get":
+            {
+              "operationId": "LRN-38",
+              "summary": "Đọc tỷ lệ chiết khấu hiện hành",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                { "200": { "description": "Success" }, "403": { "description": "Lecturer required" } },
+            },
+        },
+      "/api/v1/admin/commission":
+        {
+          "get":
+            {
+              "operationId": "LRN-39",
+              "summary": "Admin đọc tỷ lệ chiết khấu",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                { "200": { "description": "Success" }, "403": { "description": "Admin required" } },
+            },
+          "post":
+            {
+              "operationId": "LRN-40",
+              "summary": "Admin điều chỉnh tỷ lệ chiết khấu",
+              "security": [{ "bearerAuth": [] }],
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": ["basisPoints", "expectedEffectiveAt"],
+                              "properties":
+                                {
+                                  "basisPoints": { "type": "integer", "minimum": 0, "maximum": 5000 },
+                                  "expectedEffectiveAt": { "type": "string", "format": "date-time" },
+                                },
+                            },
+                        },
+                    },
+                },
+              "responses":
+                {
+                  "200": { "description": "Updated" },
+                  "403": { "description": "Admin required" },
+                  "409": { "description": "Policy changed" },
+                  "422": { "description": "Invalid rate" },
+                },
+            },
+        },
+      "/api/v1/me/lecturer-profile":
+        {
+          "get":
+            {
+              "operationId": "IDN-23",
+              "summary": "Đọc hồ sơ giảng viên công khai",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                {
+                  "200": { "description": "Success" },
+                  "403": { "description": "Verified lecturer required" },
+                },
+            },
+          "patch":
+            {
+              "operationId": "IDN-24",
+              "summary": "Cập nhật hồ sơ giảng viên công khai",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                { "200": { "description": "Updated" }, "422": { "description": "Invalid profile" } },
+            },
+        },
+      "/api/v1/me/dashboard/revenue":
+        {
+          "get":
+            {
+              "operationId": "LRN-32",
+              "summary": "Báo cáo doanh thu giảng viên",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                {
+                  "200": { "description": "Reconciled revenue" },
+                  "503": { "description": "Projection unavailable" },
+                },
+            },
+        },
+      "/api/v1/me/payout-account":
+        {
+          "get":
+            {
+              "operationId": "LRN-33",
+              "summary": "Đọc tài khoản nhận tiền",
+              "security": [{ "bearerAuth": [] }],
+              "responses": { "200": { "description": "Success" } },
+            },
+          "post":
+            {
+              "operationId": "LRN-34",
+              "summary": "Lưu tài khoản nhận tiền",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                { "200": { "description": "Saved" }, "422": { "description": "Invalid bank account" } },
+            },
+        },
+      "/api/v1/admin/payouts":
+        {
+          "get":
+            {
+              "operationId": "LRN-35",
+              "summary": "Xem phiếu chi kỳ trước",
+              "security": [{ "bearerAuth": [] }],
+              "responses": { "200": { "description": "Payout instructions" } },
+            },
+        },
+      "/api/v1/admin/payouts/prepare":
+        {
+          "post":
+            {
+              "operationId": "LRN-36",
+              "summary": "Lập phiếu chi một hoặc tất cả giảng viên",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                {
+                  "200": { "description": "Payout instructions prepared" },
+                  "409": { "description": "Refund window still open" },
+                },
+            },
+        },
+      "/api/v1/admin/payouts/{month}/{lecturerId}/approve":
+        {
+          "post":
+            {
+              "operationId": "LRN-41",
+              "summary": "Duyệt phiếu chi kỳ trước qua nhà cung cấp giả lập",
+              "security": [{ "bearerAuth": [] }],
+              "parameters":
+                [
+                  {
+                    "name": "month",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "pattern": "^\\d{4}-(0[1-9]|1[0-2])$" },
+                  },
+                  {
+                    "name": "lecturerId",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                ],
+              "responses":
+                {
+                  "200": { "description": "Payout state persisted" },
+                  "409": { "description": "Already handled or reconciliation required" },
+                  "503": { "description": "Mock payout provider unavailable" },
+                },
+            },
+        },
+      "/api/v1/admin/dashboard/revenue":
+        {
+          "get":
+            {
+              "operationId": "LRN-37",
+              "summary": "Báo cáo doanh thu nền tảng",
+              "security": [{ "bearerAuth": [] }],
+              "responses":
+                {
+                  "200": { "description": "Reconciled revenue" },
+                  "503": { "description": "Projection unavailable" },
+                },
+            },
+        },
       "/api/v1/me/avatar":
         {
           "get":
@@ -151,6 +329,130 @@
                   "422": { "$ref": "#/components/responses/ErrorResponse" },
                   "429": { "$ref": "#/components/responses/ErrorResponse" },
                   "500": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [],
+            },
+        },
+      "/api/v1/auth/password-reset/request":
+        {
+          "post":
+            {
+              "operationId": "IDN-20",
+              "summary": "Gửi mã OTP đặt lại mật khẩu",
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": ["email"],
+                              "properties":
+                                { "email": { "type": "string", "format": "email", "maxLength": 254 } },
+                            },
+                        },
+                    },
+                },
+              "responses":
+                {
+                  "202":
+                    {
+                      "description": "Accepted without revealing whether the email belongs to an account",
+                      "content": { "application/json": { "schema": { "type": "object" } } },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "422": { "$ref": "#/components/responses/ErrorResponse" },
+                  "429": { "$ref": "#/components/responses/ErrorResponse" },
+                  "503": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [],
+            },
+        },
+      "/api/v1/auth/password-reset/verify":
+        {
+          "post":
+            {
+              "operationId": "IDN-21",
+              "summary": "Xác minh mã OTP đặt lại mật khẩu",
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": ["email", "code"],
+                              "properties":
+                                {
+                                  "email": { "type": "string", "format": "email", "maxLength": 254 },
+                                  "code": { "type": "string", "pattern": "^[0-9]{6}$" },
+                                },
+                            },
+                        },
+                    },
+                },
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "OTP verified; returns a short-lived reset token",
+                      "content": { "application/json": { "schema": { "type": "object" } } },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "422": { "$ref": "#/components/responses/ErrorResponse" },
+                  "429": { "$ref": "#/components/responses/ErrorResponse" },
+                },
+              "security": [],
+            },
+        },
+      "/api/v1/auth/password-reset/complete":
+        {
+          "post":
+            {
+              "operationId": "IDN-22",
+              "summary": "Đặt lại mật khẩu bằng OTP đã xác minh",
+              "requestBody":
+                {
+                  "required": true,
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": ["email", "resetToken", "newPassword", "confirmPassword"],
+                              "properties":
+                                {
+                                  "email": { "type": "string", "format": "email", "maxLength": 254 },
+                                  "resetToken": { "type": "string", "minLength": 40, "maxLength": 128 },
+                                  "newPassword": { "type": "string", "minLength": 12, "maxLength": 128 },
+                                  "confirmPassword": { "type": "string", "minLength": 12, "maxLength": 128 },
+                                },
+                            },
+                        },
+                    },
+                },
+              "responses":
+                {
+                  "200":
+                    {
+                      "description": "Password updated and existing access sessions invalidated",
+                      "content": { "application/json": { "schema": { "type": "object" } } },
+                    },
+                  "400": { "$ref": "#/components/responses/ErrorResponse" },
+                  "422": { "$ref": "#/components/responses/ErrorResponse" },
+                  "429": { "$ref": "#/components/responses/ErrorResponse" },
                   "503": { "$ref": "#/components/responses/ErrorResponse" },
                 },
               "security": [],

@@ -878,7 +878,17 @@ export class AssessmentService {
       result,
       occurredAt: now,
       correlationId: input.actor.correlationId,
-      ...(masteryQuiz.targetType === "COURSE" ? { mastery: { tenantId: this.platformTenantId, courseId: masteryQuiz.targetId, learningOutcomeId: `quiz:${masteryQuiz.quizId}`, conceptId: `quiz:${masteryQuiz.quizId}`, sourceType: "QUIZ" as const } } : {}),
+      ...(masteryQuiz.targetType === "COURSE"
+        ? {
+            mastery: {
+              tenantId: this.platformTenantId,
+              courseId: masteryQuiz.targetId,
+              learningOutcomeId: `quiz:${masteryQuiz.quizId}`,
+              conceptId: `quiz:${masteryQuiz.quizId}`,
+              sourceType: "QUIZ" as const,
+            },
+          }
+        : {}),
     });
     await this.repository.writeResultItems(attempt.attemptId, graded.items);
     await this.repository.createResult(result);
@@ -1131,7 +1141,17 @@ export class AssessmentService {
         occurredAt: now,
         correlationId: input.actor.correlationId,
         actorId: input.actor.userId,
-        ...(quiz.targetType === "COURSE" ? { mastery: { tenantId: this.platformTenantId, courseId: quiz.targetId, learningOutcomeId: `quiz:${quiz.quizId}`, conceptId: `quiz:${quiz.quizId}`, sourceType: "MANUAL_ASSESSMENT" as const } } : {}),
+        ...(quiz.targetType === "COURSE"
+          ? {
+              mastery: {
+                tenantId: this.platformTenantId,
+                courseId: quiz.targetId,
+                learningOutcomeId: `quiz:${quiz.quizId}`,
+                conceptId: `quiz:${quiz.quizId}`,
+                sourceType: "MANUAL_ASSESSMENT" as const,
+              },
+            }
+          : {}),
       });
       await this.repository.readySubmittedEvent(eventId, now);
     } catch {

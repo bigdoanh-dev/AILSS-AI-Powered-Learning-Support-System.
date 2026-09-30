@@ -10,12 +10,12 @@ const events = await readJson("contracts/event-registry.json");
 function unique(values, label) {
   if (new Set(values).size !== values.length) throw new Error(`${label} contains duplicates`);
 }
-if (api.publicCount !== 101 || api.public.length !== 101)
-  throw new Error("Public API registry must contain exactly 101 contracts");
+if (api.publicCount !== 116 || api.public.length !== 116)
+  throw new Error("Public API registry must contain exactly 116 contracts");
 if (api.internalCount !== 15 || api.internal.length !== 15)
   throw new Error("Internal API registry must contain exactly 15 contracts");
-if (queries.count !== 78 || queries.queries.length !== 78)
-  throw new Error("Query registry must contain exactly 78 Query IDs");
+if (queries.count !== 84 || queries.queries.length !== 84)
+  throw new Error("Query registry must contain exactly 84 Query IDs");
 if (events.count !== 22 || events.events.length !== 22)
   throw new Error("Event registry must contain exactly 22 events");
 unique(
@@ -75,8 +75,8 @@ function assertRegistryMatchesOpenApi(registry, document, label) {
 }
 const publicOpenApi = YAML.parse(await readFile("contracts/openapi/public-v1.yaml", "utf8"));
 const internalOpenApi = YAML.parse(await readFile("contracts/openapi/internal-v1.yaml", "utf8"));
-if (publicOpenApi.openapi !== "3.1.0" || operationIds(publicOpenApi).length !== 101)
-  throw new Error("Public OpenAPI must expose 101 OpenAPI 3.1 operations");
+if (publicOpenApi.openapi !== "3.1.0" || operationIds(publicOpenApi).length !== 116)
+  throw new Error("Public OpenAPI must expose 116 OpenAPI 3.1 operations");
 if (internalOpenApi.openapi !== "3.1.0" || operationIds(internalOpenApi).length !== 15)
   throw new Error("Internal OpenAPI must expose 15 OpenAPI 3.1 operations");
 assertRegistryMatchesOpenApi(api.public, publicOpenApi, "Public");
@@ -119,10 +119,10 @@ console.log(
   JSON.stringify({
     stage: "contract-validation",
     status: "PASS",
-    publicApis: 101,
+    publicApis: 116,
     businessServices: businessServices.size,
     internalApis: 15,
-    queryIds: 78,
+    queryIds: 84,
     events: 22,
     openApi: "3.1.0",
     redis: false,

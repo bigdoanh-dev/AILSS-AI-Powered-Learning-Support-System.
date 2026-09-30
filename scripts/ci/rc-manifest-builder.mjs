@@ -29,39 +29,177 @@ const MOBILE_TEST_COUNTS = {
 
 const WEB_FILES = [
   // WEB_NODE: BFF server-side allowlist / session / auth tests (node:test runner)
-  { path: "apps/web/server/admin.test.mjs",          count: 5,  runner: "node:test", category: "WEB_NODE",         reason: "Admin moderation allowlist tests" },
-  { path: "apps/web/server/lecturer.test.mjs",       count: 6,  runner: "node:test", category: "WEB_NODE",         reason: "Lecturer allowlist tests" },
-  { path: "apps/web/server/local-library.test.mjs",  count: 4,  runner: "node:test", category: "WEB_NODE",         reason: "Video range requests tests" },
-  { path: "apps/web/server/realtime.test.mjs",       count: 3,  runner: "node:test", category: "WEB_NODE",         reason: "WebSocket and realtime AI proxy tests" },
-  { path: "apps/web/server/session.test.mjs",        count: 11, runner: "node:test", category: "WEB_NODE",         reason: "Session auth and CSRF tests" },
-  { path: "apps/web/server/student-commerce.test.mjs", count: 5, runner: "node:test", category: "WEB_NODE",       reason: "Student commerce allowlist tests" },
+  {
+    path: "apps/web/server/admin.test.mjs",
+    count: 5,
+    runner: "node:test",
+    category: "WEB_NODE",
+    reason: "Admin moderation allowlist tests",
+  },
+  {
+    path: "apps/web/server/lecturer.test.mjs",
+    count: 6,
+    runner: "node:test",
+    category: "WEB_NODE",
+    reason: "Lecturer allowlist tests",
+  },
+  {
+    path: "apps/web/server/local-library.test.mjs",
+    count: 4,
+    runner: "node:test",
+    category: "WEB_NODE",
+    reason: "Video range requests tests",
+  },
+  {
+    path: "apps/web/server/realtime.test.mjs",
+    count: 3,
+    runner: "node:test",
+    category: "WEB_NODE",
+    reason: "WebSocket and realtime AI proxy tests",
+  },
+  {
+    path: "apps/web/server/session.test.mjs",
+    count: 11,
+    runner: "node:test",
+    category: "WEB_NODE",
+    reason: "Session auth and CSRF tests",
+  },
+  {
+    path: "apps/web/server/student-commerce.test.mjs",
+    count: 5,
+    runner: "node:test",
+    category: "WEB_NODE",
+    reason: "Student commerce allowlist tests",
+  },
   // WEB_COMPONENT: React component / UI tests (vitest + jsdom runner)
-  { path: "apps/web/tests/admin-dashboards.test.tsx",    count: 5,  runner: "vitest", category: "WEB_COMPONENT",  reason: "Admin dashboard tests" },
-  { path: "apps/web/tests/ai-distribution.test.tsx",     count: 1,  runner: "vitest", category: "WEB_COMPONENT",  reason: "AI cognitive distribution tests" },
-  { path: "apps/web/tests/ai-usage.test.tsx",            count: 2,  runner: "vitest", category: "WEB_COMPONENT",  reason: "AI usage tests" },
-  { path: "apps/web/tests/attendance.test.tsx",          count: 6,  runner: "vitest", category: "WEB_COMPONENT",  reason: "Attendance component tests" },
-  { path: "apps/web/tests/dark-mode.test.tsx",           count: 3,  runner: "vitest", category: "WEB_COMPONENT",  reason: "Dark mode system tests" },
-  { path: "apps/web/tests/e2e-browser-journeys.test.tsx", count: 8, runner: "vitest", category: "WEB_BROWSER_E2E", reason: "E2E browser journeys & WCAG 2.2 AA pilot accessibility" },
-  { path: "apps/web/tests/i18n.test.tsx",                count: 4,  runner: "vitest", category: "WEB_COMPONENT",  reason: "i18n and LanguageSwitcher tests" },
-  { path: "apps/web/tests/motion-auth.test.tsx",         count: 7,  runner: "vitest", category: "WEB_COMPONENT",  reason: "Motion and auth tests" },
-  { path: "apps/web/tests/navigation-theme.test.tsx",    count: 3,  runner: "vitest", category: "WEB_COMPONENT",  reason: "Navigation identity and return path tests" },
-  { path: "apps/web/tests/planning.test.tsx",            count: 5,  runner: "vitest", category: "WEB_COMPONENT",  reason: "Schedule range and planning tests" },
-  { path: "apps/web/tests/product.test.tsx",             count: 1,  runner: "vitest", category: "WEB_COMPONENT",  reason: "Cross-role product vocabulary tests" },
-  { path: "apps/web/tests/public.test.tsx",              count: 13, runner: "vitest", category: "WEB_COMPONENT",  reason: "Public browse and foundation tests" },
-  { path: "apps/web/tests/session-hydration.test.tsx",   count: 1,  runner: "vitest", category: "WEB_COMPONENT",  reason: "Session hydration tests" },
-  { path: "apps/web/tests/session.test.tsx",             count: 6,  runner: "vitest", category: "WEB_COMPONENT",  reason: "Session authority tests" },
-  { path: "apps/web/tests/student-marketplace.test.tsx", count: 3,  runner: "vitest", category: "WEB_COMPONENT",  reason: "Student marketplace tests" },
-  { path: "apps/web/tests/student-progress.test.tsx",    count: 4,  runner: "vitest", category: "WEB_COMPONENT",  reason: "Student progress dashboard tests" },
-  { path: "apps/web/tests/student.test.tsx",             count: 12, runner: "vitest", category: "WEB_COMPONENT",  reason: "Student workspace and privacy contract tests" },
+  {
+    path: "apps/web/tests/admin-dashboards.test.tsx",
+    count: 5,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Admin dashboard tests",
+  },
+  {
+    path: "apps/web/tests/ai-distribution.test.tsx",
+    count: 1,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "AI cognitive distribution tests",
+  },
+  {
+    path: "apps/web/tests/ai-usage.test.tsx",
+    count: 2,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "AI usage tests",
+  },
+  {
+    path: "apps/web/tests/attendance.test.tsx",
+    count: 6,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Attendance component tests",
+  },
+  {
+    path: "apps/web/tests/dark-mode.test.tsx",
+    count: 3,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Dark mode system tests",
+  },
+  {
+    path: "apps/web/tests/e2e-browser-journeys.test.tsx",
+    count: 8,
+    runner: "vitest",
+    category: "WEB_BROWSER_E2E",
+    reason: "E2E browser journeys & WCAG 2.2 AA pilot accessibility",
+  },
+  {
+    path: "apps/web/tests/i18n.test.tsx",
+    count: 4,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "i18n and LanguageSwitcher tests",
+  },
+  {
+    path: "apps/web/tests/motion-auth.test.tsx",
+    count: 7,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Motion and auth tests",
+  },
+  {
+    path: "apps/web/tests/navigation-theme.test.tsx",
+    count: 3,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Navigation identity and return path tests",
+  },
+  {
+    path: "apps/web/tests/planning.test.tsx",
+    count: 5,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Schedule range and planning tests",
+  },
+  {
+    path: "apps/web/tests/product.test.tsx",
+    count: 1,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Cross-role product vocabulary tests",
+  },
+  {
+    path: "apps/web/tests/public.test.tsx",
+    count: 13,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Public browse and foundation tests",
+  },
+  {
+    path: "apps/web/tests/session-hydration.test.tsx",
+    count: 1,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Session hydration tests",
+  },
+  {
+    path: "apps/web/tests/session.test.tsx",
+    count: 6,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Session authority tests",
+  },
+  {
+    path: "apps/web/tests/student-marketplace.test.tsx",
+    count: 3,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Student marketplace tests",
+  },
+  {
+    path: "apps/web/tests/student-progress.test.tsx",
+    count: 4,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Student progress dashboard tests",
+  },
+  {
+    path: "apps/web/tests/student.test.tsx",
+    count: 12,
+    runner: "vitest",
+    category: "WEB_COMPONENT",
+    reason: "Student workspace and privacy contract tests",
+  },
 ];
 
 const ROOT_EXPANSION_SUITES = [
-  { path: "tests/unit/pilot-hardening.test.ts", count: 11 },
-  { path: "tests/unit/product-expansion-wave2.test.ts", count: 13 },
-  { path: "tests/unit/wave2-e2e-and-security.test.ts", count: 13 },
-  { path: "tests/unit/mastery-calibration-v2.test.ts", count: 3 },
-  { path: "tests/unit/differential-privacy.test.ts", count: 12 },
-  { path: "tests/unit/ai-tutor-eval-v3.test.ts", count: 4 },
+  { path: "tests/unit/phase40-pilot-hardening.test.ts", count: 11 },
+  { path: "tests/unit/phase40-product-expansion-wave2.test.ts", count: 13 },
+  { path: "tests/unit/phase40-wave2-e2e-and-security.test.ts", count: 13 },
+  { path: "tests/unit/phase40-mastery-calibration-v2.test.ts", count: 3 },
+  { path: "tests/unit/phase40-differential-privacy.test.ts", count: 12 },
+  { path: "tests/unit/phase40-ai-tutor-eval-v3.test.ts", count: 4 },
 ];
 
 export async function buildReleaseManifest({
@@ -118,11 +256,15 @@ export async function buildReleaseManifest({
       const isMigrationSuite = s.path.includes("migration");
       const isAiEvalSuite = s.path.includes("rag") || s.path.includes("ai-tutor");
       const isIntegrationSuite = s.path.includes("contract") || s.path.includes("preflight");
-      const rootCategory = isSecuritySuite ? "SECURITY"
-        : isMigrationSuite ? "MIGRATION"
-        : isAiEvalSuite ? "AI_EVAL"
-        : isIntegrationSuite ? "ROOT_INTEGRATION"
-        : "ROOT_UNIT";
+      const rootCategory = isSecuritySuite
+        ? "SECURITY"
+        : isMigrationSuite
+          ? "MIGRATION"
+          : isAiEvalSuite
+            ? "AI_EVAL"
+            : isIntegrationSuite
+              ? "ROOT_INTEGRATION"
+              : "ROOT_UNIT";
       suites.push({
         workspace: "root",
         path: s.path,
@@ -163,21 +305,28 @@ export async function buildReleaseManifest({
     }
   }
 
-
   const totalSuites = suites.length;
   const totalTests = suites.reduce((acc, s) => acc + s.testCount, 0);
   const rootSuites = suites.filter((s) => s.workspace === "root").length;
   const rootTests = suites.filter((s) => s.workspace === "root").reduce((acc, s) => acc + s.testCount, 0);
   const webSuites = suites.filter((s) => s.workspace === "@ailss/web").length;
-  const webTests = suites.filter((s) => s.workspace === "@ailss/web").reduce((acc, s) => acc + s.testCount, 0);
+  const webTests = suites
+    .filter((s) => s.workspace === "@ailss/web")
+    .reduce((acc, s) => acc + s.testCount, 0);
   const mobileSuites = suites.filter((s) => s.workspace === "@ailss/mobile").length;
-  const mobileTests = suites.filter((s) => s.workspace === "@ailss/mobile").reduce((acc, s) => acc + s.testCount, 0);
+  const mobileTests = suites
+    .filter((s) => s.workspace === "@ailss/mobile")
+    .reduce((acc, s) => acc + s.testCount, 0);
 
   // Duplicate detection: suites keyed by canonical path — each path appears exactly once
   const pathsSeen = new Set();
   let duplicateSuiteCount = 0;
   for (const s of suites) {
-    if (pathsSeen.has(s.path)) { duplicateSuiteCount++; } else { pathsSeen.add(s.path); }
+    if (pathsSeen.has(s.path)) {
+      duplicateSuiteCount++;
+    } else {
+      pathsSeen.add(s.path);
+    }
   }
   const uniqueSuites = totalSuites - duplicateSuiteCount;
 

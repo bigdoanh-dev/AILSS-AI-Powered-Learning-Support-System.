@@ -13,7 +13,7 @@ import {
   type UserProfile,
 } from "../src/account";
 import { ApiError } from "../src/api";
-import { Page, Button, Icon, Badge, BottomNavBar, styles, tokens } from "../src/ui";
+import { Page, Button, Icon, Badge, BottomNavBar, PasswordInput, styles, tokens } from "../src/ui";
 import { ScalePressable } from "../src/motion";
 
 // Minimal valid PNG data URIs for preset avatars (1x1 PNGs in distinct colors)
@@ -569,17 +569,26 @@ export default function AccountScreen() {
           <View style={styles.card}>
             <View style={localStyles.cardTitleRow}>
               <Icon name="award" size={16} color={tokens.color.brand} />
-              <Text style={localStyles.cardSectionTitle}>XÁC MINH GIẢNG VIÊN</Text>
+              <Text style={localStyles.cardSectionTitle}>XÁC MINH GIẢNG VIÊN &amp; HỒ SƠ</Text>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <Badge
-                label={profile.lecturerVerified ? "Đã xác minh chính thức" : "Đang chờ duyệt"}
+                label={profile.lecturerVerified ? "Đã xác minh chính thức" : "Đang chờ duyệt xét"}
                 variant={profile.lecturerVerified ? "success" : "warning"}
               />
             </View>
             <Text style={styles.small}>
-              Trạng thái xác minh giảng viên được xét duyệt và quản lý bởi Quản trị viên (Admin).
+              {profile.lecturerVerified
+                ? "Tài khoản của bạn đã được xác minh. Bạn có toàn quyền xuất bản khóa học, công khai hồ sơ và nhận doanh thu."
+                : "Tài khoản đang chờ Quản trị viên xét duyệt. Bạn có thể cập nhật hồ sơ chuyên môn và cài đặt tài khoản nhận tiền trước."}
             </Text>
+            <View style={{ marginTop: 4 }}>
+              <Button
+                label="Hồ sơ &amp; Quy trình xác thực"
+                variant="outline"
+                onPress={() => router.push("/teaching/profile" as Href)}
+              />
+            </View>
           </View>
         )}
 
@@ -607,34 +616,24 @@ export default function AccountScreen() {
             <View style={localStyles.passForm}>
               <View style={{ gap: 4 }}>
                 <Text style={styles.small}>Mật khẩu hiện tại</Text>
-                <TextInput
-                  style={styles.input}
+                <PasswordInput
                   value={currentPassword}
                   onChangeText={setCurrentPassword}
                   placeholder="••••••••"
-                  secureTextEntry
                 />
               </View>
 
               <View style={{ gap: 4 }}>
                 <Text style={styles.small}>Mật khẩu mới (tối thiểu 8 ký tự)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newPassword}
-                  onChangeText={setNewPassword}
-                  placeholder="••••••••"
-                  secureTextEntry
-                />
+                <PasswordInput value={newPassword} onChangeText={setNewPassword} placeholder="••••••••" />
               </View>
 
               <View style={{ gap: 4 }}>
                 <Text style={styles.small}>Xác nhận mật khẩu mới</Text>
-                <TextInput
-                  style={styles.input}
+                <PasswordInput
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   placeholder="••••••••"
-                  secureTextEntry
                 />
               </View>
 

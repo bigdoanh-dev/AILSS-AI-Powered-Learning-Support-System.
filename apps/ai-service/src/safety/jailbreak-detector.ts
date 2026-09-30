@@ -1,17 +1,28 @@
 import type { SafetyContext, SafetyPolicyResult } from "./policy-types.js";
 
 const HOMOGLYPH_MAP: Record<string, string> = {
-  "\u0430": "a", "\u0410": "A", // Cyrillic а/А
-  "\u0435": "e", "\u0415": "E", // Cyrillic е/Е
-  "\u043E": "o", "\u041E": "O", // Cyrillic о/О
-  "\u0440": "p", "\u0420": "P", // Cyrillic р/Р
-  "\u0441": "c", "\u0421": "C", // Cyrillic с/С
-  "\u0443": "y", "\u0423": "Y", // Cyrillic у/У
-  "\u0445": "x", "\u0425": "X", // Cyrillic х/Х
-  "\u0456": "i", "\u0406": "I", // Cyrillic і/І
-  "\u03B1": "a", "\u0391": "A", // Greek α/Α
-  "\u03BF": "o", "\u039F": "O", // Greek ο/Ο
-  "\u03BD": "v", "\u039D": "N", // Greek ν/Ν
+  "\u0430": "a",
+  "\u0410": "A", // Cyrillic а/А
+  "\u0435": "e",
+  "\u0415": "E", // Cyrillic е/Е
+  "\u043E": "o",
+  "\u041E": "O", // Cyrillic о/О
+  "\u0440": "p",
+  "\u0420": "P", // Cyrillic р/Р
+  "\u0441": "c",
+  "\u0421": "C", // Cyrillic с/С
+  "\u0443": "y",
+  "\u0423": "Y", // Cyrillic у/У
+  "\u0445": "x",
+  "\u0425": "X", // Cyrillic х/Х
+  "\u0456": "i",
+  "\u0406": "I", // Cyrillic і/І
+  "\u03B1": "a",
+  "\u0391": "A", // Greek α/Α
+  "\u03BF": "o",
+  "\u039F": "O", // Greek ο/Ο
+  "\u03BD": "v",
+  "\u039D": "N", // Greek ν/Ν
 };
 
 function normalizeText(input: string): string {
@@ -88,12 +99,14 @@ function extractDecodedVariants(rawText: string): string[] {
 
 const INJECTION_PATTERNS: ReadonlyArray<{ readonly regex: RegExp; readonly reason: string }> = [
   {
-    regex: /(?:ignore|disregard|forget)\s+(?:all\s+)?(?:previous|prior|above)\s+(?:instructions|prompts|directives|rules)/iu,
+    regex:
+      /(?:ignore|disregard|forget)\s+(?:all\s+)?(?:previous|prior|above)\s+(?:instructions|prompts|directives|rules)/iu,
     reason: "PROMPT_INJECTION_OVERRIDE",
   },
   // Multilingual prompt injection (Vietnamese, Spanish, French, Russian)
   {
-    regex: /(?:bỏ qua|hãy quên|không tuân theo|bỏ hết)\s+(?:tất cả\s+)?(?:hướng dẫn|chỉ thị|quy tắc|lời nhắc)\s+(?:trước|cũ|ban đầu)/iu,
+    regex:
+      /(?:bỏ qua|hãy quên|không tuân theo|bỏ hết)\s+(?:tất cả\s+)?(?:hướng dẫn|chỉ thị|quy tắc|lời nhắc)\s+(?:trước|cũ|ban đầu)/iu,
     reason: "MULTILINGUAL_INJECTION_OVERRIDE",
   },
   {
@@ -110,7 +123,8 @@ const INJECTION_PATTERNS: ReadonlyArray<{ readonly regex: RegExp; readonly reaso
   },
   // Tool injection & RAG indirect prompt injection poisoning
   {
-    regex: /(?:\[(?:TOOL_CALL|FUNCTION_CALL|TOOL_INVOKE)|<tool_call>|\{"(?:tool|function|action)":\s*"(?:execute|shell|bash|eval|sql))/iu,
+    regex:
+      /(?:\[(?:TOOL_CALL|FUNCTION_CALL|TOOL_INVOKE)|<tool_call>|\{"(?:tool|function|action)":\s*"(?:execute|shell|bash|eval|sql))/iu,
     reason: "TOOL_INJECTION_ATTEMPT",
   },
   {
@@ -118,15 +132,18 @@ const INJECTION_PATTERNS: ReadonlyArray<{ readonly regex: RegExp; readonly reaso
     reason: "RAG_INDIRECT_INJECTION_DETECTED",
   },
   {
-    regex: /(?:reveal|show|print|output|display|repeat)\s+(?:your\s+)?(?:system\s+prompt|developer\s+instructions|hidden\s+prompt|initial\s+prompt)/iu,
+    regex:
+      /(?:reveal|show|print|output|display|repeat)\s+(?:your\s+)?(?:system\s+prompt|developer\s+instructions|hidden\s+prompt|initial\s+prompt)/iu,
     reason: "SYSTEM_PROMPT_EXTRACTION",
   },
   {
-    regex: /(?:service[_\s]*token|jwt[_\s]*secret|private[_\s]*key|database[_\s]*password|credentials|api[_-]?key|root[_\s]*secret)/iu,
+    regex:
+      /(?:service[_\s]*token|jwt[_\s]*secret|private[_\s]*key|database[_\s]*password|credentials|api[_-]?key|root[_\s]*secret)/iu,
     reason: "CREDENTIAL_EXFILTRATION_ATTEMPT",
   },
   {
-    regex: /(?:act\s+as|pretend\s+(?:to\s+be)?|switch\s+to|enable)\s+(?:administrator|admin|system\s+admin|root|lecturer|super\s*user)/iu,
+    regex:
+      /(?:act\s+as|pretend\s+(?:to\s+be)?|switch\s+to|enable)\s+(?:administrator|admin|system\s+admin|root|lecturer|super\s*user)/iu,
     reason: "ROLE_ESCALATION_ATTEMPT",
   },
   {

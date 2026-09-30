@@ -5,4 +5,5 @@ export * from "./tool-registry.js";
 export * from "./tool-runner.js";
 export * from "./llm-provider.js";
 export * from "./orchestrator.js";
+export * from "./response-cache.js";
 export * from "./router.js";

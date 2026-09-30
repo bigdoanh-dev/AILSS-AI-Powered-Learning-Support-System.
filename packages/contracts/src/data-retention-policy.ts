@@ -1,10 +1,4 @@
-export type DataCategory =
-  | "IDENTITY"
-  | "ACADEMIC"
-  | "AI"
-  | "ANALYTICS"
-  | "NOTIFICATION"
-  | "AUDIT_SECURITY";
+export type DataCategory = "IDENTITY" | "ACADEMIC" | "AI" | "ANALYTICS" | "NOTIFICATION" | "AUDIT_SECURITY";
 
 export interface CategoryRetentionRule {
   readonly category: DataCategory;
@@ -19,54 +13,54 @@ export interface CategoryRetentionRule {
 export const PLATFORM_RETENTION_CONSTRAINTS: Record<DataCategory, CategoryRetentionRule> = {
   IDENTITY: {
     category: "IDENTITY",
-    minPlatformSafeDays: 365,       // 1 year minimum for active enrollment verification
-    defaultDays: 1825,              // 5 years default
-    maxPlatformSafeDays: 3650,      // 10 years maximum
+    minPlatformSafeDays: 365, // 1 year minimum for active enrollment verification
+    defaultDays: 1825, // 5 years default
+    maxPlatformSafeDays: 3650, // 10 years maximum
     exportable: true,
     userDeletable: true,
     legalHoldSupported: true,
   },
   ACADEMIC: {
     category: "ACADEMIC",
-    minPlatformSafeDays: 1825,      // 5 years minimum per higher ed accreditation requirements
-    defaultDays: 3650,              // 10 years default
-    maxPlatformSafeDays: 7300,      // 20 years maximum
+    minPlatformSafeDays: 1825, // 5 years minimum per higher ed accreditation requirements
+    defaultDays: 3650, // 10 years default
+    maxPlatformSafeDays: 7300, // 20 years maximum
     exportable: true,
-    userDeletable: false,           // Academic records cannot be unilaterally deleted by students
+    userDeletable: false, // Academic records cannot be unilaterally deleted by students
     legalHoldSupported: true,
   },
   AI: {
     category: "AI",
-    minPlatformSafeDays: 30,        // 30 days minimum for safety moderation audits
-    defaultDays: 90,                // 90 days default
-    maxPlatformSafeDays: 365,       // 1 year maximum
+    minPlatformSafeDays: 30, // 30 days minimum for safety moderation audits
+    defaultDays: 90, // 90 days default
+    maxPlatformSafeDays: 365, // 1 year maximum
     exportable: true,
     userDeletable: true,
     legalHoldSupported: true,
   },
   ANALYTICS: {
     category: "ANALYTICS",
-    minPlatformSafeDays: 30,        // 30 days minimum
-    defaultDays: 180,               // 180 days default
-    maxPlatformSafeDays: 730,       // 2 years maximum
+    minPlatformSafeDays: 30, // 30 days minimum
+    defaultDays: 180, // 180 days default
+    maxPlatformSafeDays: 730, // 2 years maximum
     exportable: false,
     userDeletable: false,
     legalHoldSupported: false,
   },
   NOTIFICATION: {
     category: "NOTIFICATION",
-    minPlatformSafeDays: 14,        // 14 days minimum
-    defaultDays: 90,                // 90 days default
-    maxPlatformSafeDays: 365,       // 1 year maximum
+    minPlatformSafeDays: 14, // 14 days minimum
+    defaultDays: 90, // 90 days default
+    maxPlatformSafeDays: 365, // 1 year maximum
     exportable: false,
     userDeletable: false,
     legalHoldSupported: false,
   },
   AUDIT_SECURITY: {
     category: "AUDIT_SECURITY",
-    minPlatformSafeDays: 730,       // 2 years minimum per security audit compliance
-    defaultDays: 1825,              // 5 years default
-    maxPlatformSafeDays: 3650,      // 10 years maximum
+    minPlatformSafeDays: 730, // 2 years minimum per security audit compliance
+    defaultDays: 1825, // 5 years default
+    maxPlatformSafeDays: 3650, // 10 years maximum
     exportable: true,
     userDeletable: false,
     legalHoldSupported: true,
@@ -198,7 +192,8 @@ export const DataRetentionPolicyEngine = {
       };
     }
 
-    const retentionDays = schedule.schedules[category] ?? PLATFORM_RETENTION_CONSTRAINTS[category].defaultDays;
+    const retentionDays =
+      schedule.schedules[category] ?? PLATFORM_RETENTION_CONSTRAINTS[category].defaultDays;
     const ageInDays = (now.getTime() - itemCreatedAt.getTime()) / (1000 * 60 * 60 * 24);
 
     if (ageInDays > retentionDays) {
@@ -233,12 +228,7 @@ export interface InstitutionalDataProcessingPolicy {
   readonly externalProcessors: readonly string[];
 }
 
-export type DataSubjectOperationType =
-  | "EXPORT"
-  | "CORRECTION"
-  | "DEACTIVATION"
-  | "ANONYMIZATION"
-  | "PURGE";
+export type DataSubjectOperationType = "EXPORT" | "CORRECTION" | "DEACTIVATION" | "ANONYMIZATION" | "PURGE";
 
 export interface DataSubjectOperationRequest {
   readonly requestId: string;
@@ -298,8 +288,7 @@ export const DataSubjectOperationProcessor = {
     }
 
     if (request.operation === "PURGE" || request.operation === "ANONYMIZATION") {
-      const targetCats =
-        request.targetCategories ?? (Object.keys(policy.retentionRules) as DataCategory[]);
+      const targetCats = request.targetCategories ?? (Object.keys(policy.retentionRules) as DataCategory[]);
       const deletable: DataCategory[] = [];
       const protectedRetained: DataCategory[] = [];
 

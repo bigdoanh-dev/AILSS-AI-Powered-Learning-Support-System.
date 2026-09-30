@@ -145,7 +145,10 @@ export function UnifiedStudentWorkspace({
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "24px" }}>
         {/* Left Column: Today Highlights & Recommendations */}
         <section aria-labelledby="today-overview-heading">
-          <h2 id="today-overview-heading" style={{ fontSize: "20px", fontWeight: "600", color: "#1e293b", marginBottom: "16px" }}>
+          <h2
+            id="today-overview-heading"
+            style={{ fontSize: "20px", fontWeight: "600", color: "#1e293b", marginBottom: "16px" }}
+          >
             Tiếp tục học & Khuyến nghị hôm nay
           </h2>
 
@@ -165,8 +168,18 @@ export function UnifiedStudentWorkspace({
             <h3 style={{ margin: "6px 0 10px 0", fontSize: "18px", color: "#0f172a" }}>
               Cấu trúc Dữ liệu & Giải thuật: Bài 4 - Cây Cân Bằng AVL
             </h3>
-            <div style={{ width: "100%", height: "8px", backgroundColor: "#e2e8f0", borderRadius: "4px", marginBottom: "12px" }}>
-              <div style={{ width: "72%", height: "100%", backgroundColor: "#3b82f6", borderRadius: "4px" }} />
+            <div
+              style={{
+                width: "100%",
+                height: "8px",
+                backgroundColor: "#e2e8f0",
+                borderRadius: "4px",
+                marginBottom: "12px",
+              }}
+            >
+              <div
+                style={{ width: "72%", height: "100%", backgroundColor: "#3b82f6", borderRadius: "4px" }}
+              />
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
               <button
@@ -215,15 +228,20 @@ export function UnifiedStudentWorkspace({
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
-                  <span style={{ fontSize: "12px", fontWeight: 700, color: "#b45309", textTransform: "uppercase" }}>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      color: "#b45309",
+                      textTransform: "uppercase",
+                    }}
+                  >
                     Khuyến nghị từ Hệ thống Adaptive V2
                   </span>
                   <h4 style={{ margin: "4px 0 6px 0", fontSize: "16px", color: "#78350f" }}>
                     {recommendation.title}
                   </h4>
-                  <p style={{ margin: 0, fontSize: "14px", color: "#92400e" }}>
-                    {recommendation.rationale}
-                  </p>
+                  <p style={{ margin: 0, fontSize: "14px", color: "#92400e" }}>{recommendation.rationale}</p>
                 </div>
                 <button
                   aria-label="Bỏ qua khuyến nghị"
@@ -250,7 +268,14 @@ export function UnifiedStudentWorkspace({
               Nhiệm vụ & Bài kiểm tra sắp đến hạn
             </h3>
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              <li style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f1f5f9" }}>
+              <li
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "8px 0",
+                  borderBottom: "1px solid #f1f5f9",
+                }}
+              >
                 <span>Bài trắc nghiệm giữa kỳ (Midterm Quiz 1)</span>
                 <strong style={{ color: "#dc2626" }}>Hạn chót: 23:59 ngày mai</strong>
               </li>
@@ -264,19 +289,45 @@ export function UnifiedStudentWorkspace({
 
         {/* Right Column: Learning Goals & AI Tutor Shortcut */}
         <aside aria-labelledby="goals-sidebar-heading">
-          <h2 id="goals-sidebar-heading" style={{ fontSize: "20px", fontWeight: "600", color: "#1e293b", marginBottom: "16px" }}>
+          <h2
+            id="goals-sidebar-heading"
+            style={{ fontSize: "20px", fontWeight: "600", color: "#1e293b", marginBottom: "16px" }}
+          >
             Mục tiêu học tập
           </h2>
 
-          <div style={{ padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0", backgroundColor: "#ffffff" }}>
+          <div
+            style={{
+              padding: "16px",
+              borderRadius: "8px",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+            }}
+          >
             {goals.map((g) => (
               <div key={g.id} style={{ marginBottom: "14px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", marginBottom: "4px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "14px",
+                    marginBottom: "4px",
+                  }}
+                >
                   <span style={{ fontWeight: 600, color: "#334155" }}>{g.title}</span>
                   <span style={{ color: "#2563eb", fontWeight: 700 }}>{g.target}</span>
                 </div>
-                <div style={{ width: "100%", height: "6px", backgroundColor: "#f1f5f9", borderRadius: "3px" }}>
-                  <div style={{ width: `${Math.min(100, g.current)}%`, height: "100%", backgroundColor: "#10b981", borderRadius: "3px" }} />
+                <div
+                  style={{ width: "100%", height: "6px", backgroundColor: "#f1f5f9", borderRadius: "3px" }}
+                >
+                  <div
+                    style={{
+                      width: `${Math.min(100, g.current)}%`,
+                      height: "100%",
+                      backgroundColor: "#10b981",
+                      borderRadius: "3px",
+                    }}
+                  />
                 </div>
               </div>
             ))}
@@ -309,17 +360,25 @@ export function UnifiedStudentWorkspace({
           </div>
 
           {/* Instructor Feedback Box */}
-          <div style={{ marginTop: "20px", padding: "16px", borderRadius: "8px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+          <div
+            style={{
+              marginTop: "20px",
+              padding: "16px",
+              borderRadius: "8px",
+              backgroundColor: "#f0fdf4",
+              border: "1px solid #bbf7d0",
+            }}
+          >
             <h3 style={{ margin: "0 0 6px 0", fontSize: "15px", color: "#166534" }}>
               Nhận xét từ Giảng viên (Thầy Tuấn)
             </h3>
             <p style={{ margin: 0, fontSize: "13px", color: "#14532d" }}>
-              &quot;Em đã nắm rất tốt phần duyệt cây theo thứ tự. Hãy cố gắng hoàn thành phần xoay kép để sẵn sàng cho bài thi.&quot;
+              &quot;Em đã nắm rất tốt phần duyệt cây theo thứ tự. Hãy cố gắng hoàn thành phần xoay kép để sẵn
+              sàng cho bài thi.&quot;
             </p>
           </div>
         </aside>
       </div>
-
     </div>
   );
 }

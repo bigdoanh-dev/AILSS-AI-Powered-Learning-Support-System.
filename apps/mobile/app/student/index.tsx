@@ -21,7 +21,9 @@ export default function StudentWorkspace() {
             <Text style={screen.eyebrow}>KHÔNG GIAN HỌC TẬP</Text>
             <Text style={styles.title}>Chào {auth.user.displayName}</Text>
             <Text style={styles.text}>
-              {data.source === "LIVE" ? "Dữ liệu học tập trực tiếp từ AILSS." : "Đang xem bản lưu cục bộ, không thay thế dữ liệu máy chủ."}
+              {data.source === "LIVE"
+                ? "Dữ liệu học tập trực tiếp từ AILSS."
+                : "Đang xem bản lưu cục bộ, không thay thế dữ liệu máy chủ."}
             </Text>
           </View>
           <Pressable
@@ -55,13 +57,17 @@ export default function StudentWorkspace() {
           <>
             <View style={screen.sectionHead}>
               <Text style={screen.sectionTitle}>Khóa học của bạn</Text>
-              <Text accessibilityLabel={data.source === "LIVE" ? "LIVE" : "OFFLINE_CACHE"} style={screen.live}>
+              <Text
+                accessibilityLabel={data.source === "LIVE" ? "LIVE" : "OFFLINE_CACHE"}
+                style={screen.live}
+              >
                 {data.source === "LIVE" ? "LIVE" : "OFFLINE_CACHE"}
               </Text>
             </View>
             {data.source === "OFFLINE_CACHE" && (
               <Text style={styles.small}>
-                LAST_SYNCED · {data.courseSyncedAt ? new Date(data.courseSyncedAt).toLocaleString("vi-VN") : "chưa rõ"}
+                LAST_SYNCED ·{" "}
+                {data.courseSyncedAt ? new Date(data.courseSyncedAt).toLocaleString("vi-VN") : "chưa rõ"}
               </Text>
             )}
             {data.courses.map(({ course, mastery, masteryError, studyPlan, studyPlanError }) => {

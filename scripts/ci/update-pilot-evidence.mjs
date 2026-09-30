@@ -21,7 +21,8 @@ async function main() {
 
   const evidence = {
     $schema: "https://json-schema.org/draft/2020-12/schema",
-    title: "AILSS Phase 40 Runtime Connectivity Recovery (Revision F): pilot classification revoked pending runtime and staging evidence",
+    title:
+      "AILSS Phase 40 Runtime Connectivity Recovery (Revision F): pilot classification revoked pending runtime and staging evidence",
     version: "4.0.0",
     attestedAt: currentMeasurementTimestamp,
     provenance: {
@@ -47,19 +48,20 @@ async function main() {
         DEV: "DEV_DEPLOYED",
         RESEARCH: "RESEARCH_DEPLOYED",
         STAGING: "STAGING_REHEARSED_VERIFIED",
-        PROD: "PRODUCTION_NOT_APPLIED"
+        PROD: "PRODUCTION_NOT_APPLIED",
       },
       migration080EnvironmentStatus: {
         DEV: "DEV_DEPLOYED",
         RESEARCH: "RESEARCH_DEPLOYED",
         STAGING: "STAGING_REHEARSED_VERIFIED",
-        PROD: "PRODUCTION_NOT_APPLIED"
-      }
+        PROD: "PRODUCTION_NOT_APPLIED",
+      },
     },
     reliabilityHistory: {
       firstProductionRequest,
       currentMeasurementTimestamp,
-      calculationFormula: "elapsedSeconds = floor((currentMeasurementTimestamp - firstProductionRequest) / 1000)",
+      calculationFormula:
+        "elapsedSeconds = floor((currentMeasurementTimestamp - firstProductionRequest) / 1000)",
       elapsedSeconds,
       elapsedHours,
       elapsedDays,
@@ -70,8 +72,9 @@ async function main() {
         HISTORICAL_PLATFORM_WINDOW: {
           windowId: "HISTORICAL_PLATFORM_WINDOW",
           startedAt: historicalPlatformBaseline,
-          description: "Long-term production platform telemetry and cumulative historical reliability baseline across releases",
-          status: "HISTORICAL_RECORD_PRESERVED"
+          description:
+            "Long-term production platform telemetry and cumulative historical reliability baseline across releases",
+          status: "HISTORICAL_RECORD_PRESERVED",
         },
         "6_1_3_RELEASE_WINDOW": {
           windowId: "6_1_3_RELEASE_WINDOW",
@@ -80,7 +83,7 @@ async function main() {
           releaseVersion: "AILSS 6.1.3",
           description: "Precursor stable release serving production traffic prior to 6.1.4 cutover",
           trafficPercent: 100,
-          status: "SUPERSEDED_BY_6_1_4"
+          status: "SUPERSEDED_BY_6_1_4",
         },
         "6_1_4_RELEASE_WINDOW": {
           windowId: "6_1_4_RELEASE_WINDOW",
@@ -94,7 +97,7 @@ async function main() {
           preReleaseTrafficAttributedSeconds: 0,
           preReleaseTrafficClassification: "PRECURSOR_DEPLOYMENT_PLATFORM_HISTORY",
           trafficPercent: 100,
-          status: "HEALTHY_SERVING_ALL_PRODUCTION"
+          status: "HEALTHY_SERVING_ALL_PRODUCTION",
         },
         CURRENT_ATTESTATION_MEASUREMENT_WINDOW: {
           windowId: "CURRENT_ATTESTATION_MEASUREMENT_WINDOW",
@@ -105,15 +108,15 @@ async function main() {
           elapsedDays,
           uptimeRatio: 1.0,
           targetSLA: 0.999,
-          status: "ACTIVE_CONTINUOUS_UPTIME"
+          status: "ACTIVE_CONTINUOUS_UPTIME",
         },
         "6_2_RC_STAGING_WINDOW": {
           windowId: "6_2_RC_STAGING_WINDOW",
           evaluationScope: "STAGING_PILOT_REHEARSAL",
           productionTrafficPercent: 0,
-          status: "HELD_UNRELEASED_IN_STAGING"
-        }
-      }
+          status: "HELD_UNRELEASED_IN_STAGING",
+        },
+      },
     },
     track1PilotHardening: {
       privacyMechanismValidation: {
@@ -121,7 +124,7 @@ async function main() {
           mechanism: "SMALL_COHORT_SUPPRESSION",
           minimumCohortThreshold: 5,
           classification: "DETERMINISTIC_HEURISTIC_SUPPRESSION",
-          note: "Never referred to as differential privacy; strictly protects individuals in micro-cohorts < 5 from singling-out"
+          note: "Never referred to as differential privacy; strictly protects individuals in micro-cohorts < 5 from singling-out",
         },
         laplaceDifferentialPrivacy: {
           status: "VALIDATED_EPSILON_DP",
@@ -137,7 +140,8 @@ async function main() {
             maxRowsPerUser: 10,
             duplicateHandling: "LATEST_SUBMISSION",
             joinSafetyGuaranteed: true,
-            sensitivityDerivation: "With grades bounded in [0, 100], substituting one user's contribution changes cohort mean by at most 100/N, yielding sensitivity Δf = 100/N under bounded replace-one"
+            sensitivityDerivation:
+              "With grades bounded in [0, 100], substituting one user's contribution changes cohort mean by at most 100/N, yielding sensitivity Δf = 100/N under bounded replace-one",
           },
           epsilon: 1.0,
           budgetPolicy: {
@@ -147,15 +151,17 @@ async function main() {
             budgetPerTenant: 50.0,
             budgetPeriodDays: 30,
             resetPolicy: "EXPLICIT_IRB_OR_DPO_APPROVAL_ONLY",
-            governanceNote: "B = 10.0 is an institutional policy threshold establishing an acceptable privacy-utility tradeoff for institutional research queries without unbounded budget expansion"
+            governanceNote:
+              "B = 10.0 is an institutional policy threshold establishing an acceptable privacy-utility tradeoff for institutional research queries without unbounded budget expansion",
           },
-          repeatedQueryDefense: "Sequential composition tracks cumulative epsilon per researcher + tenant; subsequent queries are rejected once cumulative epsilon exceeds budgetMax",
+          repeatedQueryDefense:
+            "Sequential composition tracks cumulative epsilon per researcher + tenant; subsequent queries are rejected once cumulative epsilon exceeds budgetMax",
           utilityBenchmarkMAE: [
             { cohortSize: 10, targetAccuracyPercent: 85, benchmarkMAE: 8.7, status: "PASS" },
             { cohortSize: 50, targetAccuracyPercent: 95, benchmarkMAE: 2.1, status: "PASS" },
-            { cohortSize: 200, targetAccuracyPercent: 99, benchmarkMAE: 0.5, status: "PASS" }
-          ]
-        }
+            { cohortSize: 200, targetAccuracyPercent: 99, benchmarkMAE: 0.5, status: "PASS" },
+          ],
+        },
       },
       assessmentPsychometrics: {
         status: "VALIDATED",
@@ -163,37 +169,41 @@ async function main() {
         metrics: {
           itemDifficultyP: {
             formula: "P = R / N",
-            description: "Proportion of total examinees answering the item correctly"
+            description: "Proportion of total examinees answering the item correctly",
           },
           upperLowerDiscriminationD: {
             formula: "D = P_upper - P_lower",
-            description: "Difference in pass rates between the top 27% and bottom 27% scoring cohorts (Kelley's method)"
+            description:
+              "Difference in pass rates between the top 27% and bottom 27% scoring cohorts (Kelley's method)",
           },
           correctedItemRestPointBiserial: {
             formula: "r_pb = cov(y, X') / (s_y * s_X') where X' = totalScore - y",
             scoreDefinition: "CORRECTED_TOTAL_EXCLUDING_ITEM",
             methodVersion: "CORRECTED_ITEM_REST_PEARSON",
-            description: "Corrected item-rest Pearson correlation coefficient strictly excluding the item's own score"
+            description:
+              "Corrected item-rest Pearson correlation coefficient strictly excluding the item's own score",
           },
           distractorEfficiency: {
-            description: "Proportion of incorrect response options chosen by at least 5% of lower-performing students"
-          }
+            description:
+              "Proportion of incorrect response options chosen by at least 5% of lower-performing students",
+          },
         },
         sampleSizeGuard: {
           minimumSampleSize: 30,
-          insufficientSampleStatus: "INSUFFICIENT_SAMPLE"
+          insufficientSampleStatus: "INSUFFICIENT_SAMPLE",
         },
         zeroVarianceGuard: {
           rPbDefault: 0.0,
-          nanPrevented: true
+          nanPrevented: true,
         },
         advisoryFlags: [
           "LOW_DISCRIMINATION",
           "NEGATIVE_DISCRIMINATION",
           "EXTREME_DIFFICULTY",
-          "NON_FUNCTIONING_DISTRACTOR"
+          "NON_FUNCTIONING_DISTRACTOR",
         ],
-        reviewPolicy: "Flags produce REVIEW_RECOMMENDED verdicts; questions are never automatically suppressed or deleted without instructor approval"
+        reviewPolicy:
+          "Flags produce REVIEW_RECOMMENDED verdicts; questions are never automatically suppressed or deleted without instructor approval",
       },
       masteryCalibrationV2: {
         version: "2.0.0",
@@ -209,7 +219,7 @@ async function main() {
           sensitivityScore: 0.96,
           teacherAgreementRate: 95,
           cohensKappa: 0.93,
-          verdict: "CALIBRATED_STABLE"
+          verdict: "CALIBRATED_STABLE",
         },
         mathematicalPropertiesVerified: {
           scoreBounded: true,
@@ -217,8 +227,8 @@ async function main() {
           retryDampeningMonotonic: true,
           prerequisiteClampEnforced: true,
           recencyDecayMonotonic: true,
-          tenantPolicyIsolation: true
-        }
+          tenantPolicyIsolation: true,
+        },
       },
       aiTutorEvaluationV3: {
         benchmarkSuite: "ai-tutor-eval-v3",
@@ -231,7 +241,7 @@ async function main() {
           pedagogicalUsefulness: "94 / 100 (94.0%)",
           instructionFollowing: "98 / 100 (98.0%)",
           masteryAwareness: "95 / 100 (95.0%)",
-          abstentionQuality: "97 / 100 (97.0%)"
+          abstentionQuality: "97 / 100 (97.0%)",
         },
         citationFailureModesClassified: [
           "WRONG_SOURCE",
@@ -239,7 +249,7 @@ async function main() {
           "UNSUPPORTED_CLAIM",
           "MISSING_CITATION",
           "STALE_SOURCE",
-          "RETRIEVAL_FAILURE"
+          "RETRIEVAL_FAILURE",
         ],
         adversarialLeakageSuiteV2: {
           totalAttacks: 16,
@@ -262,10 +272,11 @@ async function main() {
             "HEX_ASCII_ENCODED_INJECTION",
             "FEW_SHOT_ANSWER_COMPLETION_TRICK",
             "FEIGN_EMERGENCY_TIME_PRESSURE",
-            "INLINE_MARKDOWN_IMAGE_EXFILTRATION"
+            "INLINE_MARKDOWN_IMAGE_EXFILTRATION",
           ],
-          mandatoryDisclaimer: "0% observed leakage on benchmark test suites does NOT imply zero risk in all possible adversarial environments"
-        }
+          mandatoryDisclaimer:
+            "0% observed leakage on benchmark test suites does NOT imply zero risk in all possible adversarial environments",
+        },
       },
       browserMatrixAndAccessibility: {
         accessibilityClassification: "WCAG_2_2_AA_TARGET",
@@ -280,20 +291,20 @@ async function main() {
           "/teaching/copilot",
           "/teaching/interventions",
           "/admin/onboarding",
-          "/admin/fleet-operations"
+          "/admin/fleet-operations",
         ],
         manualAuditChecklist: {
           minClickTargetSizePx: 24,
           focusVisibleEnforced: true,
           modalFocusTrappingVerified: true,
           ariaLabelsAndRolesVerified: true,
-          contrastRatioTarget4_5to1Verified: true
+          contrastRatioTarget4_5to1Verified: true,
         },
         manualSpotChecks: {
           nvdaWithChromiumAndFirefox: "PASS",
           voiceOverWithSafari: "PASS",
           spotCheckDate: "2026-09-22",
-          scope: "10 canonical core pilot routes verified with screen readers"
+          scope: "10 canonical core pilot routes verified with screen readers",
         },
         browserSupportMatrix: {
           desktopChromium: "VERIFIED_AUTOMATED",
@@ -301,8 +312,8 @@ async function main() {
           desktopWebKit: "VERIFIED_AUTOMATED",
           mobileChromeAndroid: "VERIFIED_VIEWPORT_SIMULATION",
           mobileSafariIOS: "VERIFIED_VIEWPORT_SIMULATION",
-          nativeMobileAndroidIOS: "OUT_OF_SCOPE_RESPONSIVE_WEB_ONLY"
-        }
+          nativeMobileAndroidIOS: "OUT_OF_SCOPE_RESPONSIVE_WEB_ONLY",
+        },
       },
       featureFlags: {
         resolver: "TenantFeatureFlagResolver",
@@ -314,47 +325,80 @@ async function main() {
           { flag: "INTERVENTIONS", mode: "OFF", allowedTenants: [] },
           { flag: "INSTITUTION_ADMIN_V2", mode: "OFF", allowedTenants: [] },
           { flag: "LEARNING_INTELLIGENCE_V2", mode: "OFF", allowedTenants: [] },
-          { flag: "STUDENT_WORKSPACE_WAVE2", mode: "OFF", allowedTenants: [] }
-        ]
-      }
+          { flag: "STUDENT_WORKSPACE_WAVE2", mode: "OFF", allowedTenants: [] },
+        ],
+      },
     },
     track2ProductExpansionWave2: {
       unifiedStudentWorkspace: {
         status: "DEFERRED_UNSHIPPED",
         route: "/student/workspace",
-        components: ["Today Agenda", "Learning Goals", "Continue Learning Carousel", "Mastery Gaps", "Recommendations", "Recent Submissions"],
-        implementation: "apps/web/src/student/UnifiedStudentWorkspace.tsx"
+        components: [
+          "Today Agenda",
+          "Learning Goals",
+          "Continue Learning Carousel",
+          "Mastery Gaps",
+          "Recommendations",
+          "Recent Submissions",
+        ],
+        implementation: "apps/web/src/student/UnifiedStudentWorkspace.tsx",
       },
       courseAuthoringStudioV2: {
         status: "DEFERRED_UNSHIPPED",
         route: "/teaching/course-authoring",
-        components: ["Module Tree", "Lesson Editor", "Outcome Mapping", "Prerequisite Graph", "Draft/Review/Publish Lifecycle", "Immutable Course Versioning"],
+        components: [
+          "Module Tree",
+          "Lesson Editor",
+          "Outcome Mapping",
+          "Prerequisite Graph",
+          "Draft/Review/Publish Lifecycle",
+          "Immutable Course Versioning",
+        ],
         service: "apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
-        implementation: "apps/web/src/lecturer/CourseAuthoringStudio.tsx"
+        implementation: "apps/web/src/lecturer/CourseAuthoringStudio.tsx",
       },
       assessmentAuthoringV2: {
         status: "DEFERRED_UNSHIPPED",
-        components: ["Question Bank V2", "Item Analysis (p-value, d-index, r_pb)", "Blueprint Validation", "AI Draft Review Workflow"],
-        service: "apps/assessment-service/src/authoring/question-bank-v2-service.ts"
+        components: [
+          "Question Bank V2",
+          "Item Analysis (p-value, d-index, r_pb)",
+          "Blueprint Validation",
+          "AI Draft Review Workflow",
+        ],
+        service: "apps/assessment-service/src/authoring/question-bank-v2-service.ts",
       },
       curriculumIntelligence: {
         status: "DEFERRED_UNSHIPPED",
-        components: ["Curriculum Graph", "Outcome Coverage Analysis", "Gap Identification", "Audit-Logged Evidence Export"],
-        service: "apps/learning-service/src/curriculum/curriculum-intelligence-service.ts"
+        components: [
+          "Curriculum Graph",
+          "Outcome Coverage Analysis",
+          "Gap Identification",
+          "Audit-Logged Evidence Export",
+        ],
+        service: "apps/learning-service/src/curriculum/curriculum-intelligence-service.ts",
       },
       fleetOperationsCenter: {
         status: "DEFERRED_UNSHIPPED",
         route: "/admin/fleet-operations",
-        components: ["Tenant Templates (zero secret copying)", "Bulk Validation Preview", "Dry-Run Change Application", "Configuration Drift Detection"],
+        components: [
+          "Tenant Templates (zero secret copying)",
+          "Bulk Validation Preview",
+          "Dry-Run Change Application",
+          "Configuration Drift Detection",
+        ],
         service: "apps/identity-service/src/tenant/fleet-operations-service.ts",
-        implementation: "apps/web/src/admin/FleetOperationsCenter.tsx"
+        implementation: "apps/web/src/admin/FleetOperationsCenter.tsx",
       },
       productExperimentation: {
         status: "DEFERRED_UNSHIPPED",
-        components: ["Deterministic Variant Hash Assignment", "Tenant Scoping", "Strict Sensitive Scope Guard"],
+        components: [
+          "Deterministic Variant Hash Assignment",
+          "Tenant Scoping",
+          "Strict Sensitive Scope Guard",
+        ],
         forbiddenScopes: ["GRADES", "CREDENTIALS", "SECURITY_CONTROLS", "PAYMENTS", "AUTHORIZATION"],
-        service: "apps/learning-service/src/experimentation/product-experimentation-service.ts"
-      }
+        service: "apps/learning-service/src/experimentation/product-experimentation-service.ts",
+      },
     },
     testExecutionSummary: {
       rootVitestSuites: 168,
@@ -368,20 +412,24 @@ async function main() {
       totalPassed: 1450,
       totalFailed: 0,
       totalSkipped: 0,
-      passRate: 1.0
+      passRate: 1.0,
     },
     parallelProductionAssuranceTrackB: {
       externalPentestStatus: "EXTERNAL_ASSESSMENT_PENDING",
-      externalPentestDetails: "Pentest scheduled with contracted external firm; zero simulation. All internal security gates verified.",
+      externalPentestDetails:
+        "Pentest scheduled with contracted external firm; zero simulation. All internal security gates verified.",
       ASVStatus: "PENDING",
       ASVDetails: "PCI-approved ASV scan pending. No simulated ASV pass.",
       PCIStatus: "SAQ_A_CANDIDATE",
-      PCIScopeDetails: "Hosted checkout redirection; no cardholder data transmission/storage/processing on AILSS infrastructure.",
+      PCIScopeDetails:
+        "Hosted checkout redirection; no cardholder data transmission/storage/processing on AILSS infrastructure.",
       LTICertificationStatus: "CONFORMANCE_TESTING",
-      LTIDetails: "Automated 1EdTech diagnostic test suites pass. Formal directory listing submission in progress.",
+      LTIDetails:
+        "Automated 1EdTech diagnostic test suites pass. Formal directory listing submission in progress.",
       commercialPaymentStatus: "PILOT_BLOCKED",
-      commercialPaymentDetails: "Fail-closed invariant strictly maintained. Real commercial payments remain blocked from production activation until external gates pass.",
-      payoutStatus: "BLOCKED"
+      commercialPaymentDetails:
+        "Fail-closed invariant strictly maintained. Real commercial payments remain blocked from production activation until external gates pass.",
+      payoutStatus: "BLOCKED",
     },
     finalClassifications: {
       CANDIDATE_CLASSIFICATION: "RUNTIME_INTEGRATION_INCOMPLETE",
@@ -406,12 +454,18 @@ async function main() {
       PCI_SCOPE_STATUS: "SAQ_A_CANDIDATE",
       ASV_STATUS: "PENDING",
       COMMERCIAL_PAYMENT_STATUS: "PILOT_BLOCKED",
-      PAYOUT_STATUS: "BLOCKED"
-    }
+      PAYOUT_STATUS: "BLOCKED",
+    },
   };
 
-  await writeFile("artifacts/release-evidence/runtime-connectivity-and-pilot-evidence.json", JSON.stringify(evidence, null, 2), "utf8");
-  console.log("Updated Phase 40 evidence with Revision F runtime classifications; unconnected features are not pilot-ready.");
+  await writeFile(
+    "artifacts/release-evidence/phase40-pilot-hardening-evidence.json",
+    JSON.stringify(evidence, null, 2),
+    "utf8",
+  );
+  console.log(
+    "Updated Phase 40 evidence with Revision F runtime classifications; unconnected features are not pilot-ready.",
+  );
 }
 
 main().catch((err) => {

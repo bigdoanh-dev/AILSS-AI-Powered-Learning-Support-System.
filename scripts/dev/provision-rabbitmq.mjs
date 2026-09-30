@@ -260,7 +260,8 @@ await api(
 
 const topicPermissions = {
   mq_identity: "^(identity\\..*|system\\.audit\\.requested\\.v1)$",
-  mq_learning: "^(learning\\..*|assessment\\.quiz\\.(submitted|graded)\\.v1\\.retry\\.[1-3]|system\\.audit\\.requested\\.v1)$",
+  mq_learning:
+    "^(learning\\..*|assessment\\.quiz\\.(submitted|graded)\\.v1\\.retry\\.[1-3]|system\\.audit\\.requested\\.v1)$",
   mq_classroom: "^(classroom\\..*|system\\.(audit|notification)\\.requested\\.v1)$",
   mq_assessment: "^(assessment\\..*|system\\.(audit|notification)\\.requested\\.v1)$",
   mq_interaction: "^(interaction\\..*|system\\.audit\\.requested\\.v1)$",

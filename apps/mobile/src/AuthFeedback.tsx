@@ -12,11 +12,7 @@ import {
 import { Icon, tokens, type IconName } from "./ui";
 import { ScalePressable, PulseBadge, useReducedMotionPreference } from "./motion";
 
-export type AuthFeedbackType =
-  | "LOGIN_SUCCESS"
-  | "LOGIN_ERROR"
-  | "LOGOUT_SUCCESS"
-  | "REGISTER_SUCCESS";
+export type AuthFeedbackType = "LOGIN_SUCCESS" | "LOGIN_ERROR" | "LOGOUT_SUCCESS" | "REGISTER_SUCCESS";
 
 export interface AuthFeedbackProps {
   visible: boolean;
@@ -178,11 +174,7 @@ export function AuthFeedbackModal({
             style={[
               feedbackStyles.topStripe,
               {
-                backgroundColor: isSuccess
-                  ? "#10B981"
-                  : isLogout
-                    ? "#2563EB"
-                    : "#EF4444",
+                backgroundColor: isSuccess ? "#10B981" : isLogout ? "#2563EB" : "#EF4444",
               },
             ]}
           />
@@ -224,12 +216,8 @@ export function AuthFeedbackModal({
                   </View>
                 </View>
 
-                {user.displayName && (
-                  <Text style={feedbackStyles.displayNameText}>{user.displayName}</Text>
-                )}
-                {user.emailMasked && (
-                  <Text style={feedbackStyles.emailText}>{user.emailMasked}</Text>
-                )}
+                {user.displayName && <Text style={feedbackStyles.displayNameText}>{user.displayName}</Text>}
+                {user.emailMasked && <Text style={feedbackStyles.emailText}>{user.emailMasked}</Text>}
               </View>
             )}
 
@@ -258,17 +246,14 @@ export function AuthFeedbackModal({
                   style={[
                     feedbackStyles.primaryBtn,
                     {
-                      backgroundColor: isSuccess
-                        ? "#0A7E85"
-                        : isLogout
-                          ? "#2563EB"
-                          : "#DC2626",
+                      backgroundColor: isSuccess ? "#0A7E85" : isLogout ? "#2563EB" : "#DC2626",
                     },
                   ]}
                   onPress={onProceed}
                 >
                   <Text style={feedbackStyles.primaryBtnText}>
-                    {proceedLabel || (isSuccess ? "Vào ứng dụng ngay →" : isLogout ? "Về trang chủ →" : "Đã hiểu")}
+                    {proceedLabel ||
+                      (isSuccess ? "Vào ứng dụng ngay →" : isLogout ? "Về trang chủ →" : "Đã hiểu")}
                   </Text>
                 </ScalePressable>
               )}

@@ -3,7 +3,6 @@ import { CANONICAL_PREREQUISITE_POLICY } from "../../../../packages/contracts/sr
 import type { LearnerMasteryService } from "../mastery/mastery-service.js";
 import type { AdaptiveLearningPath, AdaptivePathItem } from "./model.js";
 
-
 export interface CourseOutlineConcept {
   conceptId: string;
   conceptName: string;
@@ -91,7 +90,10 @@ export class AdaptivePathService {
           priority: 3,
           rationale: `Mastery score is ${String(mastery.masteryScore)}%. Solve practice quizzes to reach proficiency.`,
         });
-      } else if (mastery.masteryScore >= CANONICAL_PREREQUISITE_POLICY.advancedMasteryThreshold && isCompleted) {
+      } else if (
+        mastery.masteryScore >= CANONICAL_PREREQUISITE_POLICY.advancedMasteryThreshold &&
+        isCompleted
+      ) {
         items.push({
           itemId: randomUUID(),
           courseId: input.courseId,
@@ -103,7 +105,6 @@ export class AdaptivePathService {
           rationale: `Mastered (${String(mastery.masteryScore)}%). Optional advanced topics available.`,
         });
       }
-
     }
 
     // Sort by priority ascending (1 = highest urgency), then by original outline order

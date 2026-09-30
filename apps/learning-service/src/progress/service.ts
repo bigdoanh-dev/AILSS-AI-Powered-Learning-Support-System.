@@ -17,7 +17,7 @@ export class LearningProgressService {
     const current = await this.repo.progress(actor.userId, courseId);
     if (current) return progressDto(current);
     const course = await this.repo.course(courseId);
-    if (!course || course.state !== "PUBLISHED") throw notFound();
+    if (!course || !["PUBLISHED", "HIDDEN"].includes(course.state)) throw notFound();
     const lessons = await this.repo.syllabus(courseId, course.contentVersion),
       now = new Date();
     return progressDto({
@@ -93,7 +93,7 @@ export class LearningProgressService {
     if (!locked) throw conflict("PROGRESS_MUTATION_BUSY", "Progress mutation is in progress");
     try {
       const course = await this.repo.course(pointer.courseId);
-      if (!course || course.state !== "PUBLISHED") throw notFound();
+      if (!course || !["PUBLISHED", "HIDDEN"].includes(course.state)) throw notFound();
       const syllabus = await this.repo.syllabus(pointer.courseId, course.contentVersion);
       if (!syllabus.includes(input.lessonId)) throw notFound();
       let old = await this.repo.progress(input.actor.userId, pointer.courseId);

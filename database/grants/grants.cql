@@ -4,6 +4,7 @@ GRANT ALL PERMISSIONS ON KEYSPACE classroom_keyspace TO cassandra_migrator;
 GRANT ALL PERMISSIONS ON KEYSPACE assessment_keyspace TO cassandra_migrator;
 GRANT ALL PERMISSIONS ON KEYSPACE interaction_keyspace TO cassandra_migrator;
 GRANT ALL PERMISSIONS ON KEYSPACE ai_keyspace TO cassandra_migrator;
+GRANT ALL PERMISSIONS ON KEYSPACE ai_service TO cassandra_migrator;
 GRANT ALL PERMISSIONS ON KEYSPACE notification_keyspace TO cassandra_migrator;
 GRANT ALL PERMISSIONS ON KEYSPACE audit_support_keyspace TO cassandra_migrator;
 
@@ -19,6 +20,8 @@ GRANT SELECT ON KEYSPACE interaction_keyspace TO svc_interaction;
 GRANT MODIFY ON KEYSPACE interaction_keyspace TO svc_interaction;
 GRANT SELECT ON KEYSPACE ai_keyspace TO svc_ai;
 GRANT MODIFY ON KEYSPACE ai_keyspace TO svc_ai;
+GRANT SELECT ON KEYSPACE ai_service TO svc_ai;
+GRANT MODIFY ON KEYSPACE ai_service TO svc_ai;
 GRANT SELECT ON KEYSPACE notification_keyspace TO svc_notification;
 GRANT MODIFY ON KEYSPACE notification_keyspace TO svc_notification;
 GRANT SELECT ON KEYSPACE audit_support_keyspace TO svc_audit;

@@ -117,16 +117,12 @@ export const OneRosterSyncEngine = {
 
       // Referential integrity check
       if (!validUserIds.has(e.userSourcedId)) {
-        errors.push(
-          `Enrollment ${e.sourcedId} references unknown user ${e.userSourcedId}`,
-        );
+        errors.push(`Enrollment ${e.sourcedId} references unknown user ${e.userSourcedId}`);
         continue;
       }
 
       if (!validClassIds.has(e.classSourcedId)) {
-        errors.push(
-          `Enrollment ${e.sourcedId} references unknown class ${e.classSourcedId}`,
-        );
+        errors.push(`Enrollment ${e.sourcedId} references unknown class ${e.classSourcedId}`);
         continue;
       }
 
@@ -249,13 +245,17 @@ export const OneRosterCsvParser = {
       }
       if (props.has("oneroster.version") && props.get("oneroster.version") !== "1.2") {
         manifestValid = false;
-        violations.push(`Unsupported OneRoster version in manifest: ${props.get("oneroster.version") ?? "unknown"}`);
+        violations.push(
+          `Unsupported OneRoster version in manifest: ${props.get("oneroster.version") ?? "unknown"}`,
+        );
       }
     }
 
     // 2. Parse Orgs
     const orgRows = pkg.orgsCsv ? parseCsvLines(pkg.orgsCsv) : [];
-    const validOrgIds = new Set<string>(orgRows.map((o) => o["sourcedId"]).filter((id): id is string => Boolean(id)));
+    const validOrgIds = new Set<string>(
+      orgRows.map((o) => o["sourcedId"]).filter((id): id is string => Boolean(id)),
+    );
 
     // 3. Parse Courses
     const courseRows = pkg.coursesCsv ? parseCsvLines(pkg.coursesCsv) : [];
@@ -280,10 +280,13 @@ export const OneRosterCsvParser = {
       if (validCourseIds.size > 0 && !validCourseIds.has(courseSourcedId)) {
         violations.push(`Class ${sourcedId} references unknown course ${courseSourcedId}`);
       }
-      const termIds = (cl["termSourcedIds"] ?? "").split(/[,;]/u).map((t) => t.trim()).filter(Boolean);
+      const termIds = (cl["termSourcedIds"] ?? "")
+        .split(/[,;]/u)
+        .map((t) => t.trim())
+        .filter(Boolean);
       parsedClasses.push({
         sourcedId,
-        status: (cl["status"] === "tobedeleted" ? "tobedeleted" : "active"),
+        status: cl["status"] === "tobedeleted" ? "tobedeleted" : "active",
         title: cl["title"] ?? "Untitled Class",
         classCode: cl["classCode"] ?? sourcedId,
         courseSourcedId,
@@ -413,7 +416,11 @@ export const OneRosterReconciliationEngine = {
     readonly sisUsers: readonly OneRosterUserInput[];
     readonly sisClasses: readonly OneRosterClassInput[];
     readonly sisEnrollments: readonly OneRosterEnrollmentInput[];
-    readonly ailssUsers: readonly { readonly sourcedId: string; readonly role: string; readonly active: boolean }[];
+    readonly ailssUsers: readonly {
+      readonly sourcedId: string;
+      readonly role: string;
+      readonly active: boolean;
+    }[];
     readonly ailssClasses: readonly { readonly sourcedId: string; readonly active: boolean }[];
     readonly ailssEnrollments: readonly {
       readonly sourcedId: string;
@@ -528,4 +535,3 @@ export const OneRosterReconciliationEngine = {
     };
   },
 } as const;
-

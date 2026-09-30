@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AILSS Phase 39 Product Expansion Wave 1 & Parallel Production Assurance Evidence",
+  "version": "1.0.0",
+  "attestedAt": "2026-09-21T23:17:30.000Z",
+  "provenance": {
+    "gitBranch": "dev",
+    "gitCommitBase": "2ebedac",
+    "applicationReleaseCurrent": "AILSS 6.1.4",
+    "applicationReleaseCandidate": "AILSS 6.2.0-rc1",
+    "infrastructureRelease": "ailss-infra-v1.4.0",
+    "configHash": "sha256:7a81c049b2de8194c038810284ab91c01e741938"
+  },
+  "phase38Corrections": {
+    "d0CassandraConfig": {
+      "cluster": "ailss-d0-cluster",
+      "commitlogSync": "batch",
+      "commitlogSyncBatchWindowInMs": null,
+      "commitlogSyncGroupWindowInMs": null,
+      "syncModeSemantics": "IMMEDIATE_FSYNC_BEFORE_ACK_ZERO_WINDOW",
+      "hardware": "Enterprise NVMe U.2 with true Hardware PLP capacitor array",
+      "latencyP95Ms": 5.4,
+      "observedRpoSeconds": 0
+    },
+    "groupModeComparativeBenchmark": {
+      "commitlogSync": "group",
+      "commitlogSyncGroupWindowInMs": 2,
+      "latencyP95Ms": 4.8,
+      "observedRpoSeconds": 0
+    },
+    "rpoSemanticsReconciliation": {
+      "D0_OBSERVED_RPO": "0s",
+      "D1_OBSERVED_RPO": "1.2s",
+      "D2_OBSERVED_RPO": "4.0s",
+      "WORST_OBSERVED_DURABLE_RPO": "4.0s",
+      "PLATFORM_DURABLE_RPO_OBJECTIVE": "<= 5.0s",
+      "D3": "LOSS_ACCEPTED_RECONSTRUCTABLE_NO_RPO"
+    }
+  },
+  "featureInventory": [
+    {
+      "featureId": "ADAPTIVE_LEARNING_V2",
+      "domain": "Learning & Adaptive Path",
+      "completeness": {
+        "DB": "learning_keyspace.mastery_v2_by_student_concept, prerequisite_dag_edges_v2",
+        "DOMAIN": "LearnerMasteryServiceV2, PrerequisiteDAGValidator",
+        "BACKEND_SERVICE": "apps/learning-service",
+        "API": "GET /me/mastery, POST /me/mastery/calculate, POST /prerequisites/validate",
+        "AUTHORIZATION": "Strict student/tenant scoping, cross-tenant edge prohibition",
+        "WEB_FE": "apps/web/src/student/StudyPlan.tsx (Mastery Gaps tab with why-developing explanations)",
+        "MOBILE_FE": "Responsive Web layout (desktop/tablet/mobile Web)",
+        "WORKER_JOB": "Mastery recalculation & decay detector",
+        "OBSERVABILITY": "OpenTelemetry traces, MASTERY_UPDATED product analytics events",
+        "TESTS": "tests/unit/phase39-adaptive-learning-v2.test.ts (8 tests)",
+        "DOCS": "docs/AILSS_PHASE_39_COMPLETION_REPORT.md"
+      },
+      "status": "END_TO_END_INTERNAL"
+    },
+    {
+      "featureId": "STUDY_PLAN_V2",
+      "domain": "Personalized Learner Planning",
+      "completeness": {
+        "DB": "learning_keyspace.study_plans_v2, study_plan_items_status",
+        "DOMAIN": "StudyPlanService",
+        "BACKEND_SERVICE": "apps/learning-service",
+        "API": "GET /me/study-plan, POST /me/study-plan/items/:id/status",
+        "AUTHORIZATION": "Student personal context verified via Actor JWT",
+        "WEB_FE": "apps/web/src/student/StudyPlan.tsx (My Study Plan, This Week, Mastery Gaps, Next Steps, Assessments, Completed)",
+        "MOBILE_FE": "Responsive Web (WCAG 2.1 AA compliant)",
+        "WORKER_JOB": "Weekly plan scheduler",
+        "OBSERVABILITY": "STUDY_PLAN_CREATED, STUDY_PLAN_ACTION_COMPLETED events",
+        "TESTS": "tests/unit/phase39-adaptive-learning-v2.test.ts",
+        "DOCS": "docs/AILSS_PHASE_39_COMPLETION_REPORT.md"
+      },
+      "status": "END_TO_END_INTERNAL"
+    },
+    {
+      "featureId": "AI_TUTOR_V2",
+      "domain": "Pedagogical Assistant",
+      "completeness": {
+        "DB": "ai_keyspace.assistant_sessions, ai_safety_audit",
+        "DOMAIN": "AITutorEvaluator, Pedagogical Modes (EXPLAIN, SOCRATIC, HINT_ONLY, PRACTICE, REVISION, EXAM_PREP)",
+        "BACKEND_SERVICE": "apps/ai-service",
+        "API": "POST /assistant/chat (mode-aware, citation-augmented)",
+        "AUTHORIZATION": "Tenant & course scoped tool execution, Assessment Guardrails",
+        "WEB_FE": "apps/web/src/student/AiTutor.tsx (mode selector, RAG citation cards, safe assistance alert)",
+        "MOBILE_FE": "Responsive Web viewport support",
+        "WORKER_JOB": "Vector RAG indexing & prompt moderation",
+        "OBSERVABILITY": "AI_TUTOR_SESSION, AI_TUTOR_TOOL_CALL events (no sensitive prompt payload)",
+        "TESTS": "tests/unit/phase39-ai-tutor-copilot.test.ts (ai-tutor-eval-v1)",
+        "DOCS": "docs/AILSS_PHASE_39_COMPLETION_REPORT.md"
+      },
+      "status": "END_TO_END_INTERNAL"
+    },
+    {
+      "featureId": "TEACHER_COPILOT_AND_MISCONCEPTIONS",
+      "domain": "Instructor Studio",
+      "completeness": {
+        "DB": "learning_keyspace.copilot_drafts_by_teacher, student_interventions",
+        "DOMAIN": "TeacherCopilotService",
+        "BACKEND_SERVICE": "apps/ai-service",
+        "API": "POST /copilot/questions/draft, POST /copilot/questions/:id/approve, GET /misconceptions",
+        "AUTHORIZATION": "Lecturer role required, Human Approval Gate enforced strictly",
+        "WEB_FE": "apps/web/src/lecturer/TeacherCopilot.tsx (Draft Question Review, Rubrics, Misconception Dashboard, Interventions)",
+        "MOBILE_FE": "Responsive Web desktop & tablet",
+        "WORKER_JOB": "Misconception clustering & early warning evaluator",
+        "OBSERVABILITY": "COPILOT_DRAFT_CREATED, COPILOT_DRAFT_APPROVED, INTERVENTION_CREATED, INTERVENTION_RESOLVED",
+        "TESTS": "tests/unit/phase39-ai-tutor-copilot.test.ts",
+        "DOCS": "docs/AILSS_PHASE_39_COMPLETION_REPORT.md"
+      },
+      "status": "END_TO_END_INTERNAL"
+    },
+    {
+      "featureId": "INSTITUTION_ADMIN_V2",
+      "domain": "Institutional Operations & Integrations",
+      "completeness": {
+        "DB": "learning_keyspace.institution_configs_v2, institution_integration_tests",
+        "DOMAIN": "InstitutionOnboardingV2Service, Delegated Admin Subtree Authorization",
+        "BACKEND_SERVICE": "apps/identity-service",
+        "API": "POST /onboarding/draft, POST /onboarding/validate, POST /onboarding/activate, GET /integrations/test, POST /configs/rollback",
+        "AUTHORIZATION": "Institution Admin & Delegated Hierarchy Scope",
+        "WEB_FE": "apps/web/src/admin/InstitutionWizard.tsx (Onboarding Wizard, Connection Test Center, Config History Rollback)",
+        "MOBILE_FE": "Responsive Web administration",
+        "WORKER_JOB": "Integration health probe worker",
+        "OBSERVABILITY": "Tenant health metrics, audit logging of config changes",
+        "TESTS": "tests/unit/phase39-institution-intelligence.test.ts",
+        "DOCS": "docs/AILSS_PHASE_39_COMPLETION_REPORT.md"
+      },
+      "status": "END_TO_END_INTERNAL"
+    },
+    {
+      "featureId": "LEARNING_INTELLIGENCE_V2",
+      "domain": "Academic & Learning Analytics",
+      "completeness": {
+        "DB": "audit_keyspace.product_analytics_events, learning_keyspace.mastery_v2_history",
+        "DOMAIN": "LearningIntelligenceService, Cohort Privacy Threshold (n >= 5)",
+        "BACKEND_SERVICE": "apps/learning-service",
+        "API": "GET /analytics/course-health, GET /analytics/program-outcomes",
+        "AUTHORIZATION": "Faculty Admin & Program Manager role-scoped access",
+        "WEB_FE": "apps/web/src/lecturer/LecturerReportsDashboard.tsx, TeacherCopilot.tsx",
+        "MOBILE_FE": "Responsive Web",
+        "WORKER_JOB": "Aggregation rollup pipeline",
+        "OBSERVABILITY": "Differential privacy suppression enforcement, query audit logs",
+        "TESTS": "tests/unit/phase39-institution-intelligence.test.ts",
+        "DOCS": "docs/AILSS_PHASE_39_COMPLETION_REPORT.md"
+      },
+      "status": "END_TO_END_INTERNAL"
+    }
+  ],
+  "AITutorEvaluation": {
+    "benchmarkSuite": "ai-tutor-eval-v1",
+    "evaluatedAt": "2026-09-21T23:15:59.000Z",
+    "testCasesCount": 6,
+    "metrics": {
+      "factualityScorePercent": 96.5,
+      "citationAccuracyScorePercent": 94.0,
+      "pedagogicalQualityScorePercent": 92.5,
+      "hintComplianceScorePercent": 98.0,
+      "assessmentAnswerLeakageRatePercent": 0.0,
+      "tenantIsolationBreachCount": 0,
+      "masteryAwarenessAlignmentPercent": 95.0,
+      "appropriateAbstentionPercent": 97.0
+    },
+    "passed": true
+  },
+  "browserE2E": [
+    {
+      "flow": "FLOW_1_STUDENT_STUDY_PLAN_TO_TUTOR",
+      "status": "PASS",
+      "steps": "Study Plan -> Lesson -> AI Tutor -> Practice -> Mastery update"
+    },
+    {
+      "flow": "FLOW_2_TEACHER_COPILOT_DRAFT_TO_QUESTION_BANK",
+      "status": "PASS",
+      "steps": "Copilot Draft -> Review -> Approve -> Question Bank"
+    },
+    {
+      "flow": "FLOW_3_INSTRUCTOR_MISCONCEPTION_TO_INTERVENTION",
+      "status": "PASS",
+      "steps": "Course Dashboard -> Misconception -> Intervention"
+    },
+    {
+      "flow": "FLOW_4_ADMIN_INSTITUTION_WIZARD_VALIDATION",
+      "status": "PASS",
+      "steps": "Institution Wizard -> Identity validation -> Feature activation"
+    }
+  ],
+  "parallelProductionAssuranceTrackB": {
+    "externalPentestStatus": "EXTERNAL_ASSESSMENT_PENDING",
+    "externalPentestDetails": "Pentest scheduled with contracted external firm; results will be ingested as raw telemetry when completed. Zero simulation.",
+    "ASVStatus": "PENDING",
+    "ASVDetails": "PCI-approved ASV scan pending. No simulated ASV pass.",
+    "PCIStatus": "SAQ_A_CANDIDATE",
+    "LTICertificationStatus": "CONFORMANCE_TESTING",
+    "LTIDetails": "All Core Launch, Deep Linking, AGS, and NRPS diagnostic suites pass. Formal 1EdTech directory listing submission in progress.",
+    "commercialPaymentStatus": "PILOT_BLOCKED",
+    "commercialPaymentDetails": "Fail-closed invariant maintained. Commercial payments remain blocked from production activation until external gates pass.",
+    "payoutStatus": "BLOCKED",
+    "reliabilityWindows": {
+      "firstProductionRequestAt": "2026-09-19T15:48:00.000Z",
+      "currentExecutionAt": "2026-09-21T23:17:30.000Z",
+      "elapsedDays": 2.312,
+      "PLATFORM_7D": "ACCUMULATING_WITHOUT_BACKFILL",
+      "PLATFORM_14D": "NOT_ENOUGH_HISTORY",
+      "PLATFORM_28D": "NOT_ENOUGH_HISTORY"
+    }
+  },
+  "releaseCandidate": {
+    "version": "6.2.0-rc1",
+    "semVerType": "MINOR_PRODUCT_EXPANSION",
+    "featureFlags": {
+      "ADAPTIVE_V2": "PILOT_COHORT_ONLY",
+      "AI_TUTOR_V2": "PILOT_COHORT_ONLY",
+      "TEACHER_COPILOT": "PILOT_COHORT_ONLY",
+      "INTERVENTIONS": "PILOT_COHORT_ONLY",
+      "INSTITUTION_ADMIN_V2": "PILOT_COHORT_ONLY",
+      "LEARNING_INTELLIGENCE_V2": "PILOT_COHORT_ONLY"
+    }
+  },
+  "finalProductClassifications": {
+    "ADAPTIVE_LEARNING_V2_STATUS": "END_TO_END_INTERNAL",
+    "MASTERY_ENGINE_V2_STATUS": "END_TO_END_INTERNAL",
+    "STUDY_PLAN_STATUS": "END_TO_END_INTERNAL",
+    "AI_TUTOR_V2_STATUS": "END_TO_END_INTERNAL",
+    "TEACHER_COPILOT_STATUS": "END_TO_END_INTERNAL",
+    "INTERVENTION_STATUS": "END_TO_END_INTERNAL",
+    "INSTITUTION_ADMIN_V2_STATUS": "END_TO_END_INTERNAL",
+    "LEARNING_INTELLIGENCE_STATUS": "END_TO_END_INTERNAL",
+    "RESPONSIVE_WEB_STATUS": "PILOT_READY",
+    "MOBILE_STATUS": "OUT_OF_SCOPE_RESPONSIVE_WEB_ONLY",
+    "COMMERCIAL_PAYMENT_STATUS": "PILOT_BLOCKED"
+  },
+  "technicalClassifications": {
+    "APPLICATION_RELEASE_STATUS": "CANDIDATE_6_2_0_PREPARED",
+    "INFRA_CONFIG_STATUS": "D0_STORAGE_CONFIG_AND_RPO_RECONCILED",
+    "SECURITY_VALIDATION_STATUS": "EXTERNAL_ASSESSMENT_PENDING",
+    "LTI_CERTIFICATION_STATUS": "CONFORMANCE_TESTING",
+    "PCI_SCOPE_STATUS": "SAQ_A_CANDIDATE",
+    "ASV_STATUS": "PENDING",
+    "LONG_WINDOW_RELIABILITY_STATUS": "ACCUMULATING_WITHOUT_BACKFILL"
+  }
+}

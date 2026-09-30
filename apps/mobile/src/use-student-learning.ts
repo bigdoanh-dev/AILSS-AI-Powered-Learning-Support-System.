@@ -69,7 +69,9 @@ export function useStudentLearning(session: Session, userId?: string, authState:
       try {
         if (authState === "OFFLINE_CACHE") throw new ApiError("network");
         enrolled = decodeCourses(await session.request("/api/v1/me/courses", { signal: abort.signal }));
-        courseSyncedAt = await store.writeCache(userId, "COURSES", "__all__", enrolled).catch(() => undefined);
+        courseSyncedAt = await store
+          .writeCache(userId, "COURSES", "__all__", enrolled)
+          .catch(() => undefined);
       } catch (reason) {
         if (authState !== "OFFLINE_CACHE" && !canUseCache(reason)) {
           if (!abort.signal.aborted) setError(errorText(reason, "Không tải được không gian học tập."));
@@ -78,7 +80,11 @@ export function useStudentLearning(session: Session, userId?: string, authState:
         const cached = await store.readCache<unknown>(userId, "COURSES", "__all__");
         if (!cached) {
           if (!abort.signal.aborted)
-            setError(authState === "OFFLINE_CACHE" ? "Chưa có khóa học được đồng bộ trên thiết bị này." : errorText(reason, "Không tải được không gian học tập."));
+            setError(
+              authState === "OFFLINE_CACHE"
+                ? "Chưa có khóa học được đồng bộ trên thiết bị này."
+                : errorText(reason, "Không tải được không gian học tập."),
+            );
           return;
         }
         enrolled = decodeCourses(cached.value);
@@ -95,17 +101,24 @@ export function useStudentLearning(session: Session, userId?: string, authState:
                   signal: abort.signal,
                 }),
               );
-              const syncedAt = await store.writeCache(userId, "MASTERY", course.courseId, value).catch(() => "");
+              const syncedAt = await store
+                .writeCache(userId, "MASTERY", course.courseId, value)
+                .catch(() => "");
               return { value, source: "LIVE" as const, syncedAt };
             })(),
             (async () => {
               if (authState === "OFFLINE_CACHE") throw new ApiError("network");
               const value = studyPlan(
-                await session.request(`/api/v1/study-plan/current?courseId=${encodeURIComponent(course.courseId)}`, {
-                  signal: abort.signal,
-                }),
+                await session.request(
+                  `/api/v1/study-plan/current?courseId=${encodeURIComponent(course.courseId)}`,
+                  {
+                    signal: abort.signal,
+                  },
+                ),
               );
-              const syncedAt = await store.writeCache(userId, "STUDY_PLAN", course.courseId, value).catch(() => "");
+              const syncedAt = await store
+                .writeCache(userId, "STUDY_PLAN", course.courseId, value)
+                .catch(() => "");
               return { value, source: "LIVE" as const, syncedAt };
             })(),
           ]);
@@ -122,9 +135,10 @@ export function useStudentLearning(session: Session, userId?: string, authState:
               masterySource = "OFFLINE_CACHE";
               masterySyncedAt = cached.syncedAt;
             } else {
-              masteryError = authState === "OFFLINE_CACHE"
-                ? "Chưa có Mastery snapshot được đồng bộ trên thiết bị này."
-                : errorText(masteryResult.reason, "Không tải được Mastery.");
+              masteryError =
+                authState === "OFFLINE_CACHE"
+                  ? "Chưa có Mastery snapshot được đồng bộ trên thiết bị này."
+                  : errorText(masteryResult.reason, "Không tải được Mastery.");
             }
           } else {
             masteryError = errorText(masteryResult.reason, "Không tải được Mastery.");
@@ -134,7 +148,9 @@ export function useStudentLearning(session: Session, userId?: string, authState:
           let studyPlanSyncedAt: string | undefined;
           let studyPlanError: string | undefined;
           const missingPlan =
-            planResult.status === "rejected" && planResult.reason instanceof ApiError && planResult.reason.status === 404;
+            planResult.status === "rejected" &&
+            planResult.reason instanceof ApiError &&
+            planResult.reason.status === 404;
           if (planResult.status === "fulfilled") {
             ({ value: currentPlan, source: studyPlanSource, syncedAt: studyPlanSyncedAt } = planResult.value);
           } else if (missingPlan && authState !== "OFFLINE_CACHE") {
@@ -146,9 +162,10 @@ export function useStudentLearning(session: Session, userId?: string, authState:
               studyPlanSource = "OFFLINE_CACHE";
               studyPlanSyncedAt = cached.syncedAt;
             } else {
-              studyPlanError = authState === "OFFLINE_CACHE"
-                ? "Chưa có Study Plan snapshot được đồng bộ trên thiết bị này."
-                : errorText(planResult.reason, "Không tải được Study Plan.");
+              studyPlanError =
+                authState === "OFFLINE_CACHE"
+                  ? "Chưa có Study Plan snapshot được đồng bộ trên thiết bị này."
+                  : errorText(planResult.reason, "Không tải được Study Plan.");
             }
           } else {
             studyPlanError = errorText(planResult.reason, "Không tải được Study Plan.");

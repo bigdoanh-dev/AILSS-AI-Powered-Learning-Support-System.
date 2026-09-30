@@ -20,16 +20,32 @@ const candidatePaths = git("ls-files", "--cached", "--others", "--exclude-standa
   .filter((path) => path !== "AILSS_P13_2A_RELEASE_CANDIDATE_MANIFEST.md")
   .sort();
 
-const manifest = [];
-for (const path of candidatePaths) {
-  try {
-    if (!(await stat(path)).isFile()) continue;
-    manifest.push(`${sha256(await readFile(path))}  ${path}`);
-  } catch (error) {
-    if (error?.code === "ENOENT") manifest.push(`DELETED  ${path}`);
-    else throw error;
-  }
+async function mapLimit(items, limit, fn) {
+  const results = new Array(items.length);
+  let cursor = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      while (cursor < items.length) {
+        const index = cursor++;
+        results[index] = await fn(items[index]);
+      }
+    }),
+  );
+  return results;
 }
+
+const entries = await mapLimit(candidatePaths, 32, async (path) => {
+  try {
+    const s = await stat(path);
+    if (!s.isFile()) return null;
+    return `${sha256(await readFile(path))}  ${path}`;
+  } catch (error) {
+    if (error?.code === "ENOENT") return `DELETED  ${path}`;
+    throw error;
+  }
+});
+
+const manifest = entries.filter(Boolean);
 
 const dirty = git("status", "--porcelain=v1", "--untracked-files=all")
   .split("\n")

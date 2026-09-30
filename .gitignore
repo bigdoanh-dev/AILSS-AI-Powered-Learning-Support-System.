@@ -1,8 +1,8 @@
 node_modules/
 dist/
 build/
-tmp/
-temp/
+/tmp/
+/temp/
 .env
 .env.*
 !.env.example
@@ -14,10 +14,23 @@ coverage/
 
 # Project reports, prompts, evidence, and manually generated output
 docs/
-evidence/
-logs/
-screenshots/
-output/
+!docs/
+docs/*
+!docs/STABILIZATION_AUDIT.md
+!docs/REVIEW_REMEDIATION.md
+!docs/architecture-sequences.md
+!docs/product-roadmap.md
+!docs/PHASE_40_REVISION_F_IMPLEMENTATION.md
+!docs/PHASE_40_REVISION_G_PROGRESS.md
+!docs/PHASE_40_REVISION_H_PROGRESS.md
+!docs/PHASE_40_REVISION_I_PROGRESS.md
+!docs/PHASE_40_REVISION_J_PROGRESS.md
+!docs/PHASE_40_REVISION_L_PROGRESS.md
+!docs/PHASE_40_REVISION_M_RELEASE.md
+/evidence/
+/logs/
+/screenshots/
+/output/
 AILSS_PHASE_*.md
 MASTER_PROMPT_*.md
 ERRATA_*.md
@@ -28,8 +41,9 @@ BAO_CAO_*.md
 LECTURER_*_DECISION.md
 
 # Local credentials and real cryptographic material
-credentials/
-credentials.*
+/secrets/
+/credentials/
+/credentials.*
 *.credentials
 *.crt
 *.cer
@@ -50,3 +64,18 @@ infrastructure/cassandra/data/
 # Keep internal reports and release documentation local
 AILSS_P13_*.md
 BAO_CAO_*
+
+# Generated runtime artifacts — do NOT commit
+.audit-runtime/
+RELEASE_MANIFEST.json
+phase*-evidence-bundle.json
+/doc/
+
+# Local pre-tag acceptance output. RC5 attestation is regenerated from its tag.
+artifacts/release-evidence/rc5-test-discovery.json
+artifacts/release-evidence/rc6-test-discovery.json
+artifacts/release-evidence/revision-l/
+artifacts/runtime-audit/*.json
+artifacts/load-evidence/*-local-*.json
+artifacts/release-evidence/release-source-tracking-audit.json
+artifacts/release-evidence/release-source-content-manifest.json

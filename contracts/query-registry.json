@@ -1,6 +1,6 @@
 {
   "version": "P12.9R",
-  "count": 78,
+  "count": 84,
   "queries": [
     {
       "queryId": "Q-AI-001",
@@ -860,6 +860,16 @@
       "contractNotes": "Single user partition derived from validated session; Cassandra stores MIME and private MinIO object reference only, never binary. Existing authenticated route reads at most 256 KiB; no public object URL."
     },
     {
+      "queryId": "Q-IDN-012",
+      "owner": "Identity",
+      "keyspace": "identity_keyspace",
+      "tables": ["password_reset_by_email"],
+      "operation": "R/W LWT",
+      "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
+      "apiConsumers": ["IDN-20", "IDN-21", "IDN-22"],
+      "contractNotes": "Single normalized-email partition; stores keyed OTP/reset-token digests only, limits OTP attempts, and expires each challenge within 15 minutes."
+    },
+    {
       "queryId": "Q-LRN-024",
       "owner": "Learning",
       "keyspace": "learning_keyspace",
@@ -888,6 +898,63 @@
       "candidateConsistency": "LOCAL_QUORUM/LOCAL_SERIAL",
       "apiConsumers": ["LRN-31", "learning-sepay-recovery"],
       "contractNotes": "Approved pending payment recovery: exact 16-shard bounded keyset pages LIMIT25; candidate INSERT IF NOT EXISTS; exact-key read; HMAC integrity over accepted identity; fenced 15-second leases, retry/manual-review and terminal cleanup. No TTL or calendar cutoff. No raw webhook payload or credentials."
+    },
+    {
+      "queryId": "Q-LRN-027",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": [
+        "finance_projection_control",
+        "revenue_payment_facts_by_day_shard",
+        "revenue_refund_facts_by_day_shard",
+        "order_by_id",
+        "course_by_id",
+        "commission_policy_by_effective_at"
+      ],
+      "operation": "R",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "contractNotes": "Lecturer revenue and manual payout preparation use exact partition reads; instructions are inserted once per month and lecturer.",
+      "apiConsumers": ["LRN-32", "LRN-36", "LRN-37"]
+    },
+    {
+      "queryId": "Q-LRN-028",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["payout_account_by_lecturer"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "contractNotes": "Lecturer revenue and manual payout preparation use exact partition reads; instructions are inserted once per month and lecturer.",
+      "apiConsumers": ["LRN-33", "LRN-34", "LRN-36"]
+    },
+    {
+      "queryId": "Q-LRN-029",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["payout_instruction_by_month"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "contractNotes": "Lecturer revenue and payout preparation use exact partition reads; approval uses conditional updates to fence duplicate mock transfers.",
+      "apiConsumers": ["LRN-35", "LRN-36", "LRN-41"]
+    },
+    {
+      "queryId": "Q-LRN-030",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["commission_policy_by_effective_at"],
+      "operation": "R/W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "contractNotes": "Append-only effective-time policy. Original payment date selects the fee for revenue and refund calculations.",
+      "apiConsumers": ["LRN-32", "LRN-36", "LRN-37", "LRN-38", "LRN-39", "LRN-40"]
+    },
+    {
+      "queryId": "Q-LRN-031",
+      "owner": "Learning",
+      "keyspace": "learning_keyspace",
+      "tables": ["payout_audit_by_instruction"],
+      "operation": "W",
+      "candidateConsistency": "LOCAL_QUORUM",
+      "contractNotes": "Payout approval writes an immutable audit entry before and after the mock provider result.",
+      "apiConsumers": ["LRN-41"]
     }
   ]
 }

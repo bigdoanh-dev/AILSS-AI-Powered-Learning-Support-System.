@@ -15,11 +15,13 @@ export interface PayoutSubmissionRequest {
   lecturerId: string;
   amountMinor: number;
   currency: string;
-  bankAccount?: {
-    accountNumber: string;
-    bankCode: string;
-    beneficiaryName: string;
-  } | undefined;
+  bankAccount?:
+    | {
+        accountNumber: string;
+        bankCode: string;
+        beneficiaryName: string;
+      }
+    | undefined;
 }
 
 export interface PayoutSubmissionResponse {
@@ -145,7 +147,11 @@ export class SimulationPayoutProvider implements PayoutProvider {
   /**
    * Test helper to simulate external bank payout execution or failure.
    */
-  public simulateExternalSettlement(providerPayoutId: string, success: boolean, failureReason?: string): void {
+  public simulateExternalSettlement(
+    providerPayoutId: string,
+    success: boolean,
+    failureReason?: string,
+  ): void {
     const record = this.records.get(providerPayoutId);
     if (!record) throw new Error(`Simulation record not found for payout: ${providerPayoutId}`);
     if (success) {
@@ -266,7 +272,6 @@ export class ProductionPayoutProvider implements PayoutProvider {
     });
   }
 
-
   public async reconcilePayout(providerPayoutId: string): Promise<PayoutReconciliationResult> {
     if (!providerPayoutId) {
       return {
@@ -322,7 +327,8 @@ export class ProductionPayoutProvider implements PayoutProvider {
 }
 
 export function resolvePayoutProvider(env: NodeJS.ProcessEnv = process.env): PayoutProvider {
-  const mode = env.PAYOUT_PROVIDER ?? env.PAYOUT_MODE ?? (env.NODE_ENV === "production" ? "production" : "simulation");
+  const mode =
+    env.PAYOUT_PROVIDER ?? env.PAYOUT_MODE ?? (env.NODE_ENV === "production" ? "production" : "simulation");
   if (mode === "simulation") {
     if (env.NODE_ENV === "production") {
       throw new AppError(

@@ -5,7 +5,11 @@ import type { LearningCommerceRepository } from "../commerce/repository.js";
 import { FinancialLedger, type LedgerEntry } from "./ledger.js";
 import type { PaymentProvider, PaymentWebhookResult } from "./payment-provider.js";
 import type { PayoutProvider, PayoutStatus } from "./payout-provider.js";
-import { CourseRefundPolicyEngine, type FinancePolicyConfig } from "./refund-policy.js";
+import {
+  CourseRefundPolicyEngine,
+  DEFAULT_FINANCE_POLICY,
+  type FinancePolicyConfig,
+} from "./refund-policy.js";
 import type { DurableFinanceStore } from "./repository.js";
 
 export interface RefundRequestInput {
@@ -109,7 +113,9 @@ export class LearningFinanceService {
     const existingRefundId = this.#orderRefundStore.get(order.orderId);
     const existingRefund = this.#persistence
       ? await this.#persistence.refundByOrder(order.orderId)
-      : existingRefundId ? this.#refundsStore.get(existingRefundId) : undefined;
+      : existingRefundId
+        ? this.#refundsStore.get(existingRefundId)
+        : undefined;
 
     // Look up learning progress for this student and course
     const course = await this.#repo.course(order.courseId);
@@ -149,9 +155,17 @@ export class LearningFinanceService {
     });
     if (!refundProviderResult.success) {
       const rejected: RefundRecord = {
-        refundId, orderId: order.orderId, studentId: order.studentId, courseId: order.courseId,
-        amount: amountMinor, currency: order.currency, reason: input.reason, status: "REJECTED",
-        progressPercentAtRequest: progressPercent, requestedAt: now, processedAt: now,
+        refundId,
+        orderId: order.orderId,
+        studentId: order.studentId,
+        courseId: order.courseId,
+        amount: amountMinor,
+        currency: order.currency,
+        reason: input.reason,
+        status: "REJECTED",
+        progressPercentAtRequest: progressPercent,
+        requestedAt: now,
+        processedAt: now,
         failureReason: "PAYMENT_PROVIDER_REJECTED_REFUND",
       };
       await this.#persistence?.persistRefund(rejected, refundProviderResult.refundTransactionId, []);
@@ -177,6 +191,7 @@ export class LearningFinanceService {
     }
 
     // 3. Record Double-Entry Ledger Transactions
+    const commission = await this.#repo.commissionAt(order.paidAt ?? now);
     const tx = this.#ledger.recordRefundSettlement({
       refundId,
       orderId: order.orderId,
@@ -186,6 +201,11 @@ export class LearningFinanceService {
       amountMinor,
       currency: order.currency,
       occurredAt: now,
+      policy: {
+        ...DEFAULT_FINANCE_POLICY,
+        platformFeeBasisPoints: commission.basisPoints,
+        lecturerShareBasisPoints: 10_000 - commission.basisPoints,
+      },
     });
 
     for (const entry of tx.entries) {
@@ -211,11 +231,7 @@ export class LearningFinanceService {
 
     this.#refundsStore.set(refundId, record);
     this.#orderRefundStore.set(order.orderId, refundId);
-    await this.#persistence?.persistRefund(
-      record,
-      refundProviderResult.refundTransactionId,
-      tx.entries,
-    );
+    await this.#persistence?.persistRefund(record, refundProviderResult.refundTransactionId, tx.entries);
 
     return record;
   }
@@ -364,7 +380,11 @@ export class LearningFinanceService {
       return batch;
     }
     if (batch.status !== "APPROVED") {
-      throw new AppError("INVALID_STATE", 409, `Payout batch must be APPROVED before submitting (currently ${batch.status})`);
+      throw new AppError(
+        "INVALID_STATE",
+        409,
+        `Payout batch must be APPROVED before submitting (currently ${batch.status})`,
+      );
     }
 
     // Record payout in double-entry ledger upon provider dispatch

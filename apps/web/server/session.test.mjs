@@ -137,6 +137,36 @@ test("Lecturer business adapter rechecks role and verification before forwarding
   );
   assert.equal(verified.calls.at(-1).route, "/api/v1/me/owned-classes");
 });
+
+test("Admin AI chat is forwarded only for an active admin session", async () => {
+  const student = fixture();
+  const studentLogin = await student.request("login", "POST", {});
+  const denied = await student.request(
+    "admin/assistant/chat",
+    "POST",
+    {
+      mode: "ADMIN_SUPPORT",
+      message: "Xem thống kê",
+    },
+    studentLogin.cookie,
+  );
+  assert.equal(denied.status, 403);
+  assert.equal(student.calls.at(-1).route, "/api/v1/me");
+
+  const admin = fixture({ role: "ADMIN" });
+  const adminLogin = await admin.request("login", "POST", {});
+  const accepted = await admin.request(
+    "admin/assistant/chat",
+    "POST",
+    {
+      mode: "ADMIN_SUPPORT",
+      message: "Xem thống kê",
+    },
+    adminLogin.cookie,
+  );
+  assert.equal(accepted.status, 200);
+  assert.equal(admin.calls.at(-1).route, "/api/v1/assistant/chat");
+});
 test("five expired requests share one refresh, use rotated credential", async () => {
   const f = fixture();
   const r = await f.request("login", "POST", {});

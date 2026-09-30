@@ -6,6 +6,7 @@ import { CatalogCourseSelect } from "./ui";
 import { Field, State } from "./ui";
 import { Breadcrumbs, EmptyState, ScheduleTime, StateChip } from "../components/product";
 import { Icon } from "../components/Icon";
+import { AnimatedNumber } from "../components/AnimatedNumber";
 type C = {
   classId: string;
   name: string;
@@ -77,7 +78,9 @@ export function Classes() {
             </span>
             <span className="kpi-tag accent">Đang phụ trách</span>
           </div>
-          <div className="kpi-value">{classesList.length || 3} Lớp</div>
+          <div className="kpi-value">
+            <AnimatedNumber value={classesList.length || 3} suffix=" Lớp" />
+          </div>
           <div className="kpi-label">Tổng số lớp học phần</div>
           <p className="kpi-subtext">Học kỳ 1 - Năm học 2026</p>
         </div>
@@ -88,7 +91,9 @@ export function Classes() {
             </span>
             <span className="kpi-tag accent">Quy mô</span>
           </div>
-          <div className="kpi-value">50 SV / lớp</div>
+          <div className="kpi-value">
+            <AnimatedNumber value={50} suffix=" SV / lớp" />
+          </div>
           <div className="kpi-label">Sĩ số trung bình</div>
           <p className="kpi-subtext">Đảm bảo tương tác tối ưu</p>
         </div>
@@ -99,7 +104,9 @@ export function Classes() {
             </span>
             <span className="kpi-tag accent">94.2% Đạt</span>
           </div>
-          <div className="kpi-value">Chuyên cần</div>
+          <div className="kpi-value">
+            <AnimatedNumber value={94.2} suffix="%" decimals={1} />
+          </div>
           <div className="kpi-label">Tỷ lệ điểm danh tích cực</div>
           <p className="kpi-subtext">Ghi nhận qua mã QR &amp; định vị</p>
         </div>
@@ -110,7 +117,9 @@ export function Classes() {
             </span>
             <span className="kpi-tag">Tuần này</span>
           </div>
-          <div className="kpi-value">6 Buổi</div>
+          <div className="kpi-value">
+            <AnimatedNumber value={6} suffix=" Buổi" />
+          </div>
           <div className="kpi-label">Lịch giảng dạy &amp; Lab</div>
           <p className="kpi-subtext">Phòng thực hành Lab B402 &amp; Online</p>
         </div>
@@ -118,8 +127,8 @@ export function Classes() {
 
       {/* Search & Filter Toolbar */}
       <div className="teaching-search-filter-box">
-        <span style={{ color: "var(--muted, #64748b)" }} aria-hidden="true">
-          🔍
+        <span style={{ color: "var(--muted, #64748b)", display: "inline-flex" }} aria-hidden="true">
+          <Icon name="search" size={16} />
         </span>
         <input
           type="search"
@@ -177,7 +186,7 @@ export function Classes() {
       </div>
 
       <State q={q}>
-        {(v) => {
+        {() => {
           const list = filtered;
           if (!list.length) {
             return (
@@ -226,28 +235,73 @@ export function Classes() {
                           : "Lớp doanh nghiệp"}
                     </p>
                   </div>
-                  <div style={{ display: "flex", gap: 8, marginTop: 16, alignItems: "center", flexWrap: "wrap" }}>
+                  <div
+                    className="class-card-actions-bar"
+                    style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 18 }}
+                  >
                     <Link
-                      className="card-action-btn"
+                      className="button button-small"
                       to={`/app/teaching/classes/${x.classId}`}
-                      style={{ flex: 1, textAlign: "center" }}
+                      style={{
+                        width: "100%",
+                        textAlign: "center",
+                        justifyContent: "center",
+                        textDecoration: "none",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        boxSizing: "border-box",
+                      }}
                     >
-                      Điều hành lớp →
+                      <span>Điều hành lớp</span>
+                      <Icon name="chevronRight" size={14} />
                     </Link>
-                    <Link
-                      className="button button-subtle button-small"
-                      to={`/app/teaching/classes/${x.classId}/roster`}
-                      title="Danh sách sinh viên"
-                    >
-                      👥 Sĩ số
-                    </Link>
-                    <Link
-                      className="button button-subtle button-small"
-                      to={`/app/teaching/classes/${x.classId}/schedule`}
-                      title="Thời khóa biểu"
-                    >
-                      📅 Lịch
-                    </Link>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      <Link
+                        className="button button-subtle button-small"
+                        to={`/app/teaching/classes/${x.classId}/roster`}
+                        title="Danh sách sinh viên và sĩ số"
+                        style={{
+                          textAlign: "center",
+                          justifyContent: "center",
+                          textDecoration: "none",
+                          fontSize: 12,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "6px 8px",
+                          borderRadius: 8,
+                          boxSizing: "border-box",
+                        }}
+                      >
+                        <Icon name="users" size={13} />
+                        <span>Sĩ số</span>
+                      </Link>
+                      <Link
+                        className="button button-subtle button-small"
+                        to={`/app/teaching/classes/${x.classId}/schedule`}
+                        title="Thời khóa biểu và lịch học"
+                        style={{
+                          textAlign: "center",
+                          justifyContent: "center",
+                          textDecoration: "none",
+                          fontSize: 12,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "6px 8px",
+                          borderRadius: 8,
+                          boxSizing: "border-box",
+                        }}
+                      >
+                        <Icon name="calendar" size={13} />
+                        <span>Lịch học</span>
+                      </Link>
+                    </div>
                   </div>
                 </article>
               ))}
@@ -340,7 +394,14 @@ export function ClassCreate() {
         <p className="subtext" style={{ marginTop: -8, marginBottom: 8 }}>
           Catalog khóa học đã xuất bản. Quyền sử dụng được kiểm tra khi gửi.
         </p>
-        <Field label="Số học viên tối đa" name="maxMembers" type="number" defaultValue={100} min={1} required />
+        <Field
+          label="Số học viên tối đa"
+          name="maxMembers"
+          type="number"
+          defaultValue={100}
+          min={1}
+          required
+        />
         <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 12 }}>
           <button className="button" disabled={busy}>
             {busy ? "Đang tạo lớp…" : "Tạo lớp"}
@@ -421,23 +482,33 @@ export function ClassDetail() {
             {/* Quick Management Hub */}
             <div className="workspace-quick-actions" style={{ margin: "1.5rem 0" }}>
               <Link className="quick-action-chip" to={`/app/teaching/classes/${classId}/roster`}>
-                <span className="chip-icon"><Icon name="users" size={16} /></span>
+                <span className="chip-icon">
+                  <Icon name="users" size={16} />
+                </span>
                 <span>Danh sách lớp & Học viên</span>
               </Link>
               <Link className="quick-action-chip" to={`/app/teaching/classes/${classId}/schedule`}>
-                <span className="chip-icon"><Icon name="calendar" size={16} /></span>
+                <span className="chip-icon">
+                  <Icon name="calendar" size={16} />
+                </span>
                 <span>Lịch dạy & Điểm danh</span>
               </Link>
               <Link className="quick-action-chip" to={`/app/teaching/classes/${classId}/announcements`}>
-                <span className="chip-icon"><Icon name="bell" size={16} /></span>
+                <span className="chip-icon">
+                  <Icon name="bell" size={16} />
+                </span>
                 <span>Thông báo lớp</span>
               </Link>
               <Link className="quick-action-chip" to={`/app/teaching/discussion/CLASS/${classId}`}>
-                <span className="chip-icon"><Icon name="message" size={16} /></span>
+                <span className="chip-icon">
+                  <Icon name="message" size={16} />
+                </span>
                 <span>Thảo luận lớp</span>
               </Link>
               <button type="button" className="quick-action-chip" onClick={() => void reset()}>
-                <span className="chip-icon"><Icon name="refresh" size={16} /></span>
+                <span className="chip-icon">
+                  <Icon name="refresh" size={16} />
+                </span>
                 <span>Đổi mã tham gia</span>
               </button>
             </div>
@@ -484,7 +555,9 @@ export function ClassRoster() {
         <div>
           <p className="eyebrow">QUẢN TRỊ THÀNH VIÊN</p>
           <h1>Danh sách học viên trong lớp.</h1>
-          <p className="lead">Theo dõi danh sách học viên ghi danh, nguồn tuyển sinh và thời điểm tham gia.</p>
+          <p className="lead">
+            Theo dõi danh sách học viên ghi danh, nguồn tuyển sinh và thời điểm tham gia.
+          </p>
         </div>
         <Link className="button button-subtle" to={`/app/teaching/classes/${classId}`}>
           ← Quay lại lớp
@@ -542,10 +615,18 @@ export function ClassRoster() {
                             <code className="code-badge">{m.studentId}</code>
                           </td>
                           <td>
-                            <strong>{m.source === "OFFERING" ? "Đợt tuyển sinh" : m.source === "JOIN_CODE" ? "Mã mời lớp" : m.source}</strong>
+                            <strong>
+                              {m.source === "OFFERING"
+                                ? "Đợt tuyển sinh"
+                                : m.source === "JOIN_CODE"
+                                  ? "Mã mời lớp"
+                                  : m.source}
+                            </strong>
                           </td>
                           <td>
-                            <span className="time-sub">{new Date(m.joinedAt).toLocaleDateString("vi-VN")}</span>
+                            <span className="time-sub">
+                              {new Date(m.joinedAt).toLocaleDateString("vi-VN")}
+                            </span>
                           </td>
                           <td>
                             <StateChip state={m.state} />
@@ -848,6 +929,14 @@ const STUDENT_NAMES_LOOKUP: Record<string, { name: string; avatar: string; email
   "SV-202610": { name: "Đặng Thùy Linh", avatar: "👩‍💻", email: "linh.dang@student.edu.vn" },
 };
 
+function getStudentInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  const first = parts[0][0] || "";
+  const last = parts[parts.length - 1][0] || "";
+  return (first + last).toUpperCase();
+}
+
 export function Attendance() {
   const [params] = useSearchParams();
   const [busy, setBusy] = useState(false);
@@ -958,7 +1047,7 @@ export function Attendance() {
           `${i + 1},${r.studentId},"${r.studentName}",${r.email},"${attendanceLabel[r.attendanceStatus] || r.attendanceStatus}","${r.notes || ""}"`,
       ),
     ].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -978,7 +1067,10 @@ export function Attendance() {
   return (
     <div className="attendance-page-container">
       <div style={{ marginBottom: 16 }}>
-        <Link className="button button-subtle button-small" to={`/app/teaching/attendance?${params.toString()}`}>
+        <Link
+          className="button button-subtle button-small"
+          to={`/app/teaching/attendance?${params.toString()}`}
+        >
           ← Danh sách buổi điểm danh
         </Link>
       </div>
@@ -993,11 +1085,17 @@ export function Attendance() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {isUsingDemo ? (
-            <span className="kpi-tag accent" style={{ backgroundColor: "#e0f2fe", color: "#0284c7", fontWeight: 700 }}>
+            <span
+              className="kpi-tag accent"
+              style={{ backgroundColor: "#e0f2fe", color: "#0284c7", fontWeight: 700 }}
+            >
               ⚡ Dữ liệu minh họa (Demo Live)
             </span>
           ) : (
-            <span className="kpi-tag" style={{ backgroundColor: "#dcfce7", color: "#166534", fontWeight: 700 }}>
+            <span
+              className="kpi-tag"
+              style={{ backgroundColor: "#dcfce7", color: "#166534", fontWeight: 700 }}
+            >
               ● Máy chủ trực tuyến
             </span>
           )}
@@ -1014,14 +1112,26 @@ export function Attendance() {
       {/* Demo Banner */}
       {isUsingDemo && (
         <div className="attendance-demo-banner" role="status">
-          <span className="demo-banner-icon" aria-hidden="true">⚡</span>
+          <span
+            className="demo-banner-icon"
+            aria-hidden="true"
+            style={{ display: "inline-flex", color: "#f59e0b" }}
+          >
+            <Icon name="sparkles" size={16} />
+          </span>
           <div style={{ flex: 1 }}>
             <strong>Đang hiển thị dữ liệu điểm danh mẫu (10 sinh viên)</strong>
             <p>
-              Hệ thống đã tự động nạp danh sách học viên mẫu để bạn trải nghiệm trọn vẹn quy trình điểm danh có mặt, vắng, có phép và xuất báo cáo CSV.
+              Hệ thống đã tự động nạp danh sách học viên mẫu để bạn trải nghiệm trọn vẹn quy trình điểm danh
+              có mặt, vắng, có phép và xuất báo cáo CSV.
             </p>
           </div>
-          <button type="button" className="button button-subtle button-small" onClick={q.retry} disabled={q.pending}>
+          <button
+            type="button"
+            className="button button-subtle button-small"
+            onClick={q.retry}
+            disabled={q.pending}
+          >
             {q.pending ? "Đang kết nối…" : "↻ Thử kết nối lại máy chủ"}
           </button>
         </div>
@@ -1030,24 +1140,26 @@ export function Attendance() {
       {/* Summary KPI Cards */}
       <div className="attendance-metric-grid">
         <div className="attendance-metric-card">
-          <div className="stat-val">{activeRows.length} SV</div>
+          <div className="stat-val">
+            <AnimatedNumber value={activeRows.length} suffix=" SV" />
+          </div>
           <div className="stat-lbl">Tổng sĩ số lớp</div>
         </div>
         <div className="attendance-metric-card">
           <div className="stat-val" style={{ color: "#16a34a" }}>
-            {presentCount} SV ({attendanceRate}%)
+            <AnimatedNumber value={presentCount} suffix={` SV (${attendanceRate}%)`} />
           </div>
           <div className="stat-lbl">Có mặt tham gia</div>
         </div>
         <div className="attendance-metric-card">
           <div className="stat-val" style={{ color: "#d97706" }}>
-            {excusedCount} SV
+            <AnimatedNumber value={excusedCount} suffix=" SV" />
           </div>
           <div className="stat-lbl">Vắng có phép</div>
         </div>
         <div className="attendance-metric-card">
           <div className="stat-val" style={{ color: "#dc2626" }}>
-            {absentCount} SV
+            <AnimatedNumber value={absentCount} suffix=" SV" />
           </div>
           <div className="stat-lbl">Vắng không phép</div>
         </div>
@@ -1056,7 +1168,9 @@ export function Attendance() {
       {/* Actions & Filters Toolbar */}
       <div className="attendance-actions-toolbar">
         <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 240 }}>
-          <span style={{ color: "var(--muted, #64748b)" }} aria-hidden="true">🔍</span>
+          <span style={{ color: "var(--muted, #64748b)", display: "inline-flex" }} aria-hidden="true">
+            <Icon name="search" size={15} />
+          </span>
           <input
             type="search"
             placeholder="Tìm theo tên học viên hoặc mã SV..."
@@ -1089,7 +1203,7 @@ export function Attendance() {
             type="button"
             className={`catalog-filter-pill ${filterStatus === "ALL" ? "active" : ""}`}
             onClick={() => setFilterStatus("ALL")}
-            style={{ fontSize: 12, padding: "4px 10px" }}
+            style={{ fontSize: 12, padding: "5px 12px", textDecoration: "none" }}
           >
             Tất cả ({activeRows.length})
           </button>
@@ -1097,25 +1211,57 @@ export function Attendance() {
             type="button"
             className={`catalog-filter-pill ${filterStatus === "PRESENT" ? "active" : ""}`}
             onClick={() => setFilterStatus("PRESENT")}
-            style={{ fontSize: 12, padding: "4px 10px" }}
+            style={{
+              fontSize: 12,
+              padding: "5px 12px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              textDecoration: "none",
+            }}
           >
-            ● Có mặt ({presentCount})
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "#16a34a",
+                display: "inline-block",
+              }}
+            />
+            <span>Có mặt ({presentCount})</span>
           </button>
           <button
             type="button"
             className={`catalog-filter-pill ${filterStatus === "EXCUSED" ? "active" : ""}`}
             onClick={() => setFilterStatus("EXCUSED")}
-            style={{ fontSize: 12, padding: "4px 10px" }}
+            style={{
+              fontSize: 12,
+              padding: "5px 12px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              textDecoration: "none",
+            }}
           >
-            ⏰ Có phép ({excusedCount})
+            <Icon name="clock" size={13} style={{ color: "#d97706" }} />
+            <span>Có phép ({excusedCount})</span>
           </button>
           <button
             type="button"
             className={`catalog-filter-pill ${filterStatus === "ABSENT" ? "active" : ""}`}
             onClick={() => setFilterStatus("ABSENT")}
-            style={{ fontSize: 12, padding: "4px 10px" }}
+            style={{
+              fontSize: 12,
+              padding: "5px 12px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              textDecoration: "none",
+            }}
           >
-            ✕ Vắng ({absentCount})
+            <Icon name="close" size={13} style={{ color: "#dc2626" }} />
+            <span>Vắng ({absentCount})</span>
           </button>
 
           <div style={{ width: 1, height: 24, background: "var(--line, #e2e8f0)", margin: "0 4px" }} />
@@ -1123,28 +1269,52 @@ export function Attendance() {
           <button
             type="button"
             className="button button-small"
-            style={{ backgroundColor: "#16a34a", borderColor: "#16a34a", color: "#fff", fontSize: 12 }}
+            style={{
+              backgroundColor: "#16a34a",
+              borderColor: "#16a34a",
+              color: "#fff",
+              fontSize: 12,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              textDecoration: "none",
+            }}
             onClick={handleMarkAllPresent}
           >
-            ✓ Điểm danh tất cả Có mặt
+            <Icon name="check" size={13} />
+            <span>Điểm danh tất cả Có mặt</span>
           </button>
           <button
             type="button"
             className="button button-subtle button-small"
-            style={{ fontSize: 12 }}
+            style={{
+              fontSize: 12,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              textDecoration: "none",
+            }}
             onClick={handleExportCsv}
           >
-            📥 Xuất CSV
+            <Icon name="download" size={13} />
+            <span>Xuất CSV</span>
           </button>
           {isUsingDemo && (
             <button
               type="button"
               className="button button-subtle button-small"
-              style={{ fontSize: 12 }}
+              style={{
+                fontSize: 12,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                textDecoration: "none",
+              }}
               onClick={handleResetDemo}
               title="Khôi phục danh sách demo mặc định"
             >
-              ↺ Đặt lại
+              <Icon name="refresh" size={13} />
+              <span>Đặt lại</span>
             </button>
           )}
         </div>
@@ -1169,16 +1339,25 @@ export function Attendance() {
                 <td>{i + 1}</td>
                 <td style={{ textAlign: "left" }}>
                   <div className="student-info-cell">
-                    <span className="student-avatar" aria-hidden="true">{x.avatar}</span>
+                    <span className="student-avatar-badge" aria-hidden="true">
+                      {getStudentInitials(x.studentName)}
+                    </span>
                     <div className="student-text-wrap">
                       <span className="student-name-text">{x.studentName}</span>
-                      <span className="student-id-sub">{x.studentId} • {x.email}</span>
+                      <span className="student-id-sub">
+                        {x.studentId} • {x.email}
+                      </span>
                     </div>
                   </div>
                 </td>
                 <td style={{ textAlign: "left", fontSize: 12.5, color: "var(--muted, #64748b)" }}>
                   {x.notes ? (
-                    <span style={{ fontWeight: 600, color: x.attendanceStatus === "EXCUSED" ? "#d97706" : "inherit" }}>
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        color: x.attendanceStatus === "EXCUSED" ? "#d97706" : "inherit",
+                      }}
+                    >
                       {x.notes}
                     </span>
                   ) : (
@@ -1194,9 +1373,24 @@ export function Attendance() {
                   <div className="inline-actions" style={{ justifyContent: "center" }}>
                     {(
                       [
-                        { key: "PRESENT" as const, label: "Có mặt", icon: "check" as const, cls: "btn-attendance-present" },
-                        { key: "ABSENT" as const, label: "Vắng", icon: "close" as const, cls: "btn-attendance-absent" },
-                        { key: "EXCUSED" as const, label: "Có phép", icon: "clock" as const, cls: "btn-attendance-excused" },
+                        {
+                          key: "PRESENT" as const,
+                          label: "Có mặt",
+                          icon: "check" as const,
+                          cls: "btn-attendance-present",
+                        },
+                        {
+                          key: "ABSENT" as const,
+                          label: "Vắng",
+                          icon: "close" as const,
+                          cls: "btn-attendance-absent",
+                        },
+                        {
+                          key: "EXCUSED" as const,
+                          label: "Có phép",
+                          icon: "clock" as const,
+                          cls: "btn-attendance-excused",
+                        },
                       ] as const
                     ).map(({ key: status, label, icon, cls }) => (
                       <button
@@ -1205,7 +1399,10 @@ export function Attendance() {
                         disabled={busy || status === x.attendanceStatus}
                         onClick={() => handleUpdateStatus(x.studentId, status, x.attendanceVersion)}
                       >
-                        <span aria-hidden="true" style={{ display: "inline-flex", verticalAlign: "middle", marginRight: "3px" }}>
+                        <span
+                          aria-hidden="true"
+                          style={{ display: "inline-flex", verticalAlign: "middle", marginRight: "3px" }}
+                        >
                           <Icon name={icon} size={12} />
                         </span>{" "}
                         {label}

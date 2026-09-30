@@ -15,6 +15,11 @@ export function learningCommerceRouter(
     (token: string) => Promise<ActorContext>
   > & {
     dashboardRevenue?: (token: string) => Promise<ActorContext>;
+    lecturerRevenue?: (token: string) => Promise<ActorContext>;
+    payoutAccount?: (token: string) => Promise<ActorContext>;
+    adminPayouts?: (token: string) => Promise<ActorContext>;
+    commissionRead?: (token: string) => Promise<ActorContext>;
+    commissionAdmin?: (token: string) => Promise<ActorContext>;
   },
 ): Router {
   const r = Router();
@@ -121,6 +126,137 @@ export function learningCommerceRouter(
       const range = typeof req.query.range === "string" ? req.query.range : "30d";
       const data = await service.revenueDashboard(actor, range);
       res.status(200).json({ data, meta: meta(c.requestId) });
+    } catch (e) {
+      next(e);
+    }
+  });
+  r.get("/api/v1/me/dashboard/revenue", async (req, res, next) => {
+    try {
+      const c = context();
+      const actor = await requiredActor(req, verify.lecturerRevenue ?? verify.orderRead, c.correlationId);
+      const range = typeof req.query.range === "string" ? req.query.range : "30d";
+      const data = await service.lecturerRevenueDashboard(actor, range);
+      res.status(200).json({ data, meta: meta(c.requestId) });
+    } catch (e) {
+      next(e);
+    }
+  });
+  r.get("/api/v1/me/payout-account", async (req, res, next) => {
+    try {
+      const c = context();
+      const actor = await requiredActor(req, verify.payoutAccount ?? verify.orderRead, c.correlationId);
+      res.status(200).json({ data: await service.payoutAccount(actor), meta: meta(c.requestId) });
+    } catch (e) {
+      next(e);
+    }
+  });
+  r.post("/api/v1/me/payout-account", async (req, res, next) => {
+    try {
+      const c = context();
+      const actor = await requiredActor(req, verify.payoutAccount ?? verify.orderRead, c.correlationId);
+      const input = body(() =>
+        z
+          .object({
+            bankName: z
+              .string()
+              .trim()
+              .regex(/^[\p{L}\p{N} .&-]{2,100}$/u),
+            accountNumber: z.string().regex(/^[0-9]{6,24}$/),
+            accountHolder: z
+              .string()
+              .trim()
+              .regex(/^[\p{L} .'-]{2,100}$/u),
+          })
+          .strict()
+          .parse(req.body),
+      );
+      res.status(200).json({ data: await service.savePayoutAccount(actor, input), meta: meta(c.requestId) });
+    } catch (e) {
+      next(e);
+    }
+  });
+  r.get("/api/v1/admin/payouts", async (req, res, next) => {
+    try {
+      const c = context();
+      const actor = await requiredActor(req, verify.adminPayouts ?? verify.orderRead, c.correlationId);
+      res.status(200).json({ data: await service.payoutInstructions(actor), meta: meta(c.requestId) });
+    } catch (e) {
+      next(e);
+    }
+  });
+  r.get("/api/v1/me/commission", async (req, res, next) => {
+    try {
+      const c = context();
+      const actor = await requiredActor(req, verify.commissionRead ?? verify.orderRead, c.correlationId);
+      res.status(200).json({ data: await service.commission(actor), meta: meta(c.requestId) });
+    } catch (e) {
+      next(e);
+    }
+  });
+  r.get("/api/v1/admin/commission", async (req, res, next) => {
+    try {
+      const c = context();
+      const actor = await requiredActor(req, verify.commissionAdmin ?? verify.orderRead, c.correlationId);
+      if (!actor.roles.includes("ADMIN"))
+        throw new AppError("ADMIN_REQUIRED", 403, "Admin authorization is required");
+      res.status(200).json({ data: await service.commission(actor), meta: meta(c.requestId) });
+    } catch (e) {
+      next(e);
+    }
+  });
+  r.post("/api/v1/admin/commission", async (req, res, next) => {
+    try {
+      const c = context();
+      const actor = await requiredActor(req, verify.commissionAdmin ?? verify.orderRead, c.correlationId);
+      const input = body(() =>
+        z
+          .object({
+            basisPoints: z.number().int().min(0).max(5000),
+            expectedEffectiveAt: z.string().datetime(),
+          })
+          .strict()
+          .parse(req.body),
+      );
+      res.status(200).json({
+        data: await service.changeCommission(actor, input.basisPoints, input.expectedEffectiveAt),
+        meta: meta(c.requestId),
+      });
+    } catch (e) {
+      next(e);
+    }
+  });
+  r.post("/api/v1/admin/payouts/prepare", async (req, res, next) => {
+    try {
+      const c = context();
+      const actor = await requiredActor(req, verify.adminPayouts ?? verify.orderRead, c.correlationId);
+      const input = body(() =>
+        z.object({ lecturerId: uuid.optional(), approve: z.boolean().optional() }).strict().parse(req.body),
+      );
+      if (input.approve) {
+        if (!input.lecturerId)
+          throw new AppError("PAYOUT_LECTURER_REQUIRED", 422, "Lecturer is required for approval");
+        res.status(200).json({
+          data: await service.approvePreviousMonthPayout(actor, input.lecturerId),
+          meta: meta(c.requestId),
+        });
+        return;
+      }
+      res
+        .status(200)
+        .json({ data: await service.preparePayouts(actor, input.lecturerId), meta: meta(c.requestId) });
+    } catch (e) {
+      next(e);
+    }
+  });
+  r.post("/api/v1/admin/payouts/:month/:lecturerId/approve", async (req, res, next) => {
+    try {
+      const c = context();
+      const actor = await requiredActor(req, verify.adminPayouts ?? verify.orderRead, c.correlationId);
+      strictEmpty(req.body);
+      res.status(200).json({
+        data: await service.approvePayout(actor, id(req.params.lecturerId), req.params.month),
+        meta: meta(c.requestId),
+      });
     } catch (e) {
       next(e);
     }

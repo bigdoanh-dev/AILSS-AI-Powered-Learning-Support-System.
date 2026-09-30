@@ -2502,7 +2502,7 @@ dd {
 }
 .workspace-cards a {
   color: #174d9e;
-  text-decoration: underline;
+  text-decoration: none;
 }
 .account-grid {
   display: grid;
@@ -2710,9 +2710,6 @@ main {
   .panel-motion {
     animation: panel-arrive 560ms var(--ease-settle) both;
   }
-  .auth-route-panel {
-    animation: auth-arrive 560ms var(--ease-settle) both;
-  }
   .auth-art picture {
     animation: orb-breathe 9s ease-in-out infinite alternate;
   }
@@ -2727,16 +2724,6 @@ main {
   }
   .auth-universe-copy {
     animation: panel-arrive 650ms var(--ease-settle);
-  }
-}
-@keyframes auth-arrive {
-  from {
-    opacity: 0;
-    transform: translateX(12px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
   }
 }
 @keyframes orb-breathe {
@@ -3353,29 +3340,6 @@ main {
     margin: 8px 0;
   }
 }
-.user-paused * {
-  animation-play-state: paused !important;
-}
-.auth-motion-toggle {
-  align-self: center;
-  background: transparent;
-  color: #c4d8eb;
-  border: 1px solid #7797b66b;
-  border-radius: 30px;
-  padding: 9px 16px;
-  margin-top: 12px;
-  font-size: 11px;
-  min-height: 40px;
-}
-.auth-motion-toggle:hover {
-  background: #ffffff0a;
-}
-@media (prefers-reduced-motion: reduce) {
-  .auth-motion-toggle {
-    display: none;
-  }
-}
-
 /* P12.2B application form, inheriting the NVD AuthLayout environment. */
 .lecturer-onboarding {
   width: min(100%, 680px);
@@ -4142,6 +4106,5 @@ main {
 }
 .study-card a:not(.button),
 .study-welcome a:not(.button) {
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+  text-decoration: none;
 }

@@ -64,7 +64,8 @@ export function evaluateAssessmentIntegrity(context: SafetyContext, now: Date): 
     policyId: "ASSESSMENT_INTEGRITY_POLICY",
     decision: "ALLOW_WITH_WARNING",
     reasonCode: "ACTIVE_ASSESSMENT_MONITORED",
-    warning: "Hệ thống ghi nhận bạn đang có bài kiểm tra hoạt động. Hãy tập trung hoàn thành bài thi với năng lực bản thân.",
+    warning:
+      "Hệ thống ghi nhận bạn đang có bài kiểm tra hoạt động. Hãy tập trung hoàn thành bài thi với năng lực bản thân.",
     timestamp: now,
   };
 }

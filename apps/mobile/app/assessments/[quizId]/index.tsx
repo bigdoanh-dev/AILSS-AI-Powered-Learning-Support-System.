@@ -9,16 +9,7 @@ import {
 } from "../../../src/assessment";
 import { ApiError } from "../../../src/api";
 import { runtime } from "../../../src/runtime";
-import {
-  Button,
-  Page,
-  ScreenHeader,
-  BottomNavBar,
-  Badge,
-  Icon,
-  StatCard,
-  tokens,
-} from "../../../src/ui";
+import { Button, Page, ScreenHeader, BottomNavBar, Badge, Icon, StatCard, tokens } from "../../../src/ui";
 
 export default function QuizDetailScreen() {
   const { quizId } = useLocalSearchParams<{ quizId: string }>();
@@ -83,10 +74,16 @@ export default function QuizDetailScreen() {
         <View style={screenStyles.authCard}>
           <Icon name="lock" size={36} color={tokens.color.brand} />
           <Text style={screenStyles.cardTitle}>Yêu cầu đăng nhập</Text>
-          <Text style={screenStyles.authText}>Vui lòng đăng nhập để xem thông tin và tham gia làm bài kiểm tra.</Text>
+          <Text style={screenStyles.authText}>
+            Vui lòng đăng nhập để xem thông tin và tham gia làm bài kiểm tra.
+          </Text>
           <Button label="Đăng nhập ngay" onPress={() => router.push("/login" as Href)} />
         </View>
-        <BottomNavBar currentRoute="/assessments" onNavigate={(r) => router.push(r as Href)} role={snapshot.user?.role} />
+        <BottomNavBar
+          currentRoute="/assessments"
+          onNavigate={(r) => router.push(r as Href)}
+          role={snapshot.user?.role}
+        />
       </Page>
     );
   }
@@ -99,7 +96,11 @@ export default function QuizDetailScreen() {
           <ActivityIndicator size="large" color={tokens.color.brand} />
           <Text style={screenStyles.loadingText}>Đang chuẩn bị đề thi…</Text>
         </View>
-        <BottomNavBar currentRoute="/assessments" onNavigate={(r) => router.push(r as Href)} role={snapshot.user?.role} />
+        <BottomNavBar
+          currentRoute="/assessments"
+          onNavigate={(r) => router.push(r as Href)}
+          role={snapshot.user?.role}
+        />
       </Page>
     );
   }
@@ -110,13 +111,23 @@ export default function QuizDetailScreen() {
         <ScreenHeader title="Thông báo" onBack={() => router.push("/assessments" as Href)} />
         <View style={screenStyles.errorBox}>
           <Icon name="alert" size={28} color={tokens.color.danger} />
-          <Text accessibilityRole="alert" style={screenStyles.errorText}>{error}</Text>
+          <Text accessibilityRole="alert" style={screenStyles.errorText}>
+            {error}
+          </Text>
           <View style={screenStyles.actionCol}>
             <Button label="Thử lại" onPress={() => void loadDetail()} />
-            <Button label="Quay lại danh sách bài kiểm tra" variant="outline" onPress={() => router.push("/assessments" as Href)} />
+            <Button
+              label="Quay lại danh sách bài kiểm tra"
+              variant="outline"
+              onPress={() => router.push("/assessments" as Href)}
+            />
           </View>
         </View>
-        <BottomNavBar currentRoute="/assessments" onNavigate={(r) => router.push(r as Href)} role={snapshot.user?.role} />
+        <BottomNavBar
+          currentRoute="/assessments"
+          onNavigate={(r) => router.push(r as Href)}
+          role={snapshot.user?.role}
+        />
       </Page>
     );
   }
@@ -134,10 +145,7 @@ export default function QuizDetailScreen() {
       {/* Hero Exam Header Card */}
       <View style={screenStyles.heroCard}>
         <View style={screenStyles.badgeRow}>
-          <Badge
-            label={quiz.targetType === "COURSE" ? "KHÓA HỌC" : "LỚP HỌC"}
-            variant="primary"
-          />
+          <Badge label={quiz.targetType === "COURSE" ? "KHÓA HỌC" : "LỚP HỌC"} variant="primary" />
           <Badge label="ĐÃ XUẤT BẢN" variant="success" />
         </View>
 
@@ -153,18 +161,15 @@ export default function QuizDetailScreen() {
 
       {error && (
         <View style={screenStyles.errorBox}>
-          <Text accessibilityRole="alert" style={screenStyles.errorText}>{error}</Text>
+          <Text accessibilityRole="alert" style={screenStyles.errorText}>
+            {error}
+          </Text>
         </View>
       )}
 
       {/* Exam Specs - KPI Cards */}
       <View style={screenStyles.kpiRow}>
-        <StatCard
-          label="CÂU HỎI"
-          value={`${quiz.questionCount}`}
-          icon="book"
-          color={tokens.color.brand}
-        />
+        <StatCard label="CÂU HỎI" value={`${quiz.questionCount}`} icon="book" color={tokens.color.brand} />
         <StatCard
           label="THỜI LƯỢNG"
           value={quiz.durationSeconds ? `${Math.round(quiz.durationSeconds / 60)}'` : "Tự do"}
@@ -230,7 +235,11 @@ export default function QuizDetailScreen() {
         />
       </View>
 
-      <BottomNavBar currentRoute="/assessments" onNavigate={(r) => router.push(r as Href)} role={snapshot.user?.role} />
+      <BottomNavBar
+        currentRoute="/assessments"
+        onNavigate={(r) => router.push(r as Href)}
+        role={snapshot.user?.role}
+      />
     </Page>
   );
 }

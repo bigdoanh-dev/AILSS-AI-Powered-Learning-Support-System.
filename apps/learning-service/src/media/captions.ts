@@ -2,17 +2,28 @@ import { z } from "zod";
 
 export const MAX_WEBVTT_BYTES = 256 * 1024;
 
-export const captionUploadSchema = z.object({
-  language: z.string().regex(/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8}){0,3}$/).max(35),
-  label: z.string().trim().min(1).max(80).refine((value) =>
-    Array.from(value).every((char) => {
-      const code = char.codePointAt(0) ?? 0;
-      return code > 31 && code !== 127;
-    })),
-  kind: z.enum(["SUBTITLES", "CAPTIONS"]),
-  contentType: z.literal("text/vtt"),
-  content: z.string().min(1).max(MAX_WEBVTT_BYTES),
-}).strict();
+export const captionUploadSchema = z
+  .object({
+    language: z
+      .string()
+      .regex(/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8}){0,3}$/)
+      .max(35),
+    label: z
+      .string()
+      .trim()
+      .min(1)
+      .max(80)
+      .refine((value) =>
+        Array.from(value).every((char) => {
+          const code = char.codePointAt(0) ?? 0;
+          return code > 31 && code !== 127;
+        }),
+      ),
+    kind: z.enum(["SUBTITLES", "CAPTIONS"]),
+    contentType: z.literal("text/vtt"),
+    content: z.string().min(1).max(MAX_WEBVTT_BYTES),
+  })
+  .strict();
 
 const timestamp = /^(?:(\d{2,}):)?([0-5]\d):([0-5]\d)\.(\d{3})$/;
 function timestampMs(value: string): number | undefined {
@@ -24,10 +35,13 @@ function timestampMs(value: string): number | undefined {
 // Accept a deliberately small, plain-text WebVTT subset. Reject unsupported
 // constructs instead of silently storing a track browsers may parse differently.
 export function validateWebVtt(raw: string): string {
-  if (Buffer.byteLength(raw, "utf8") > MAX_WEBVTT_BYTES || Array.from(raw).some((char) => {
-    const code = char.codePointAt(0) ?? 0;
-    return (code < 32 && code !== 9 && code !== 10 && code !== 13) || code === 127;
-  }))
+  if (
+    Buffer.byteLength(raw, "utf8") > MAX_WEBVTT_BYTES ||
+    Array.from(raw).some((char) => {
+      const code = char.codePointAt(0) ?? 0;
+      return (code < 32 && code !== 9 && code !== 10 && code !== 13) || code === 127;
+    })
+  )
     throw Error("WEBVTT_INVALID");
   const normalized = raw.replace(/^\uFEFF/u, "").replace(/\r\n?/gu, "\n");
   const blocks = normalized.trimEnd().split(/\n\n+/u);

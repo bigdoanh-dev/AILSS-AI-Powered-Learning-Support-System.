@@ -238,7 +238,12 @@ export class SepayPaymentProvider implements PaymentProvider {
   }): Promise<{ success: boolean; refundTransactionId: string }> {
     const endpoint = process.env.SEPAY_REFUND_API_URL;
     if (!endpoint)
-      throw new AppError("REFUND_PROVIDER_NOT_CONFIGURED", 503, "Automated refund provider is not configured", true);
+      throw new AppError(
+        "REFUND_PROVIDER_NOT_CONFIGURED",
+        503,
+        "Automated refund provider is not configured",
+        true,
+      );
     const url = new URL(endpoint);
     if (process.env.NODE_ENV === "production" && url.protocol !== "https:")
       throw new AppError("REFUND_PROVIDER_INSECURE", 500, "Refund provider must use HTTPS");
@@ -253,13 +258,19 @@ export class SepayPaymentProvider implements PaymentProvider {
     const payload = (await response.json()) as { transactionId?: unknown; refundId?: unknown };
     const providerId = payload.transactionId ?? payload.refundId;
     if (typeof providerId !== "string" || !providerId)
-      throw new AppError("REFUND_PROVIDER_INVALID_RESPONSE", 502, "Refund provider returned an invalid response", true);
+      throw new AppError(
+        "REFUND_PROVIDER_INVALID_RESPONSE",
+        502,
+        "Refund provider returned an invalid response",
+        true,
+      );
     return { success: true, refundTransactionId: providerId };
   }
 }
 
 export function resolvePaymentProvider(env: NodeJS.ProcessEnv = process.env): PaymentProvider {
-  const mode = env.PAYMENT_PROVIDER ?? env.PAYMENT_MODE ?? (env.NODE_ENV === "production" ? "sepay" : "simulation");
+  const mode =
+    env.PAYMENT_PROVIDER ?? env.PAYMENT_MODE ?? (env.NODE_ENV === "production" ? "sepay" : "simulation");
   if (mode === "simulation") {
     if (env.NODE_ENV === "production") {
       throw new AppError(

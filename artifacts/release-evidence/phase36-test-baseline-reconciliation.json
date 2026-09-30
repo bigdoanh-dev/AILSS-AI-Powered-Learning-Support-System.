@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Phase 36 Test Baseline Reconciliation",
+  "version": "1.0.0",
+  "generatedAt": "2026-09-21T01:40:00.000Z",
+  "reconciliationStatus": "RESOLVED_AND_VERIFIED",
+  "releaseGitSha": "bfe0ede2b6c54725757b649716731e152f353a12",
+  "tag": "v6.1.4",
+  "tagTargetSha": "bfe0ede2b6c54725757b649716731e152f353a12",
+  "canonicalReleaseBaseline": "RELEASE_TAG_BASELINE",
+  "releaseCheckoutSuites": 194,
+  "releaseCheckoutTests": 1338,
+  "releaseCheckoutPassRate": 100.0,
+  "canonicalAssuranceBaseline": "POST_RELEASE_ASSURANCE_BASELINE",
+  "currentHeadGitSha": "94c049987b7985ff427b9b164543570d16dd1239",
+  "currentBranch": "dev",
+  "assuranceCheckoutSuites": 196,
+  "assuranceCheckoutTests": 1350,
+  "assuranceCheckoutPassRate": 100.0,
+  "postReleaseAssuranceSuites": 2,
+  "postReleaseAssuranceTests": 12,
+  "postReleaseTestCommits": [
+    {
+      "commitSha": "7de45bd6ae3c505dc1c3f5096624bdb9a7e56ff8",
+      "author": "Nguyen viet doanh <vietdoanhk5@gmail.com>",
+      "committedAt": "2026-09-19T22:44:27+07:00",
+      "summary": "feat(phase35): release 6.1.4 attestation, cassandra commitlog d0 durability proof, finops arithmetic reconciliation, payment state machine property testing, and external assurance"
+    },
+    {
+      "commitSha": "94c049987b7985ff427b9b164543570d16dd1239",
+      "author": "Nguyen viet doanh <vietdoanhk5@gmail.com>",
+      "committedAt": "2026-09-21T01:38:38+07:00",
+      "summary": "chore(reconciliation): preserve 100% exact runtime packages from release tag bfe0ede"
+    }
+  ],
+  "postReleaseSuitesDetails": [
+    {
+      "suiteFile": "tests/security/payment-state-machine-property.test.ts",
+      "testCount": 7,
+      "category": "SECURITY_PROPERTY_TESTING",
+      "scope": "Payment state transitions, illegal transition rejection, refund invariant proofs, and double-settlement idempotency"
+    },
+    {
+      "suiteFile": "tests/unit/phase35-d0-durability-and-finops.test.ts",
+      "testCount": 5,
+      "category": "D0_DURABILITY_LOGIC_HARNESS",
+      "scope": "Cassandra CommitLog D0 dual-region synchronous durability harness, zero-loss verification, and FinOps arithmetic validation"
+    }
+  ],
+  "runtimeChangesAfterTag": [],
+  "runtimePackageDiffAgainstTag": {
+    "targetDir": "packages/",
+    "diffLines": 0,
+    "diffBytes": 0,
+    "verdict": "IDENTICAL_TO_RELEASE_TAG"
+  },
+  "semverDecision": {
+    "createNewRelease": false,
+    "rationale": "All changes committed after tag v6.1.4 are strictly TEST_ONLY and EVIDENCE_ONLY. The production runtime code within packages/ has exactly 0 differences against commit bfe0ede2b6c54725757b649716731e152f353a12. In accordance with Phase 36 directives, post-release test additions do not warrant a new product version. Release v6.1.4 remains the immutable candidate release."
+  },
+  "provenanceAttestation": {
+    "releaseTagBaselineAttestation": "Tag v6.1.4 (commit bfe0ede2b6c54725757b649716731e152f353a12) contains exactly 194 test suites and 1,338 tests.",
+    "assuranceBaselineAttestation": "Commit 94c049987b7985ff427b9b164543570d16dd1239 contains exactly 196 test suites and 1,350 tests.",
+    "strictSeparationEnforced": true
+  }
+}

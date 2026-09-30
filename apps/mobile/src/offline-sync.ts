@@ -51,10 +51,7 @@ export function mergeCourseProgressCrdt(
   }
 
   // 1. Grow-Only Set Union of completedLessonIds
-  const completedSet = new Set<string>([
-    ...local.completedLessonIds,
-    ...remote.completedLessonIds,
-  ]);
+  const completedSet = new Set<string>([...local.completedLessonIds, ...remote.completedLessonIds]);
 
   // 2. Union and max-register reconciliation of individual lessons
   const mergedLessons: Record<string, LessonProgressState> = {};
@@ -71,10 +68,7 @@ export function mergeCourseProgressCrdt(
       const isCompleted = loc.completed || rem.completed || completedSet.has(lessonId);
       const maxProgress = Math.max(loc.progressPercent, rem.progressPercent, isCompleted ? 100 : 0);
       const totalTime = Math.max(loc.timeSpentSeconds, rem.timeSpentSeconds);
-      const maxPosition = Math.max(
-        loc.lastWatchedPositionSeconds ?? 0,
-        rem.lastWatchedPositionSeconds ?? 0,
-      );
+      const maxPosition = Math.max(loc.lastWatchedPositionSeconds ?? 0, rem.lastWatchedPositionSeconds ?? 0);
       const latestUpdated = loc.updatedAt > rem.updatedAt ? loc.updatedAt : rem.updatedAt;
 
       mergedLessons[lessonId] = {
@@ -189,10 +183,7 @@ export class OfflineProgressSyncQueue {
     };
 
     const totalCount = Object.keys(newLessonProgress).length;
-    const totalPercentSum = Object.values(newLessonProgress).reduce(
-      (acc, l) => acc + l.progressPercent,
-      0,
-    );
+    const totalPercentSum = Object.values(newLessonProgress).reduce((acc, l) => acc + l.progressPercent, 0);
     const overallProgressPercent =
       totalCount === 0 ? 0 : Math.round((totalPercentSum / (totalCount * 100)) * 100);
 

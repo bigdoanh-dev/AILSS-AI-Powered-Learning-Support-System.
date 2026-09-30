@@ -45,11 +45,7 @@
     "w3c_verifiable_credentials",
     "open_badges_3_0"
   ],
-  "excludedFeatureScope": [
-    "nativeMobileApp",
-    "liveRealMoneyPayments",
-    "liveRealMoneyPayouts"
-  ],
+  "excludedFeatureScope": ["nativeMobileApp", "liveRealMoneyPayments", "liveRealMoneyPayouts"],
   "scopeConstraints": {
     "mobilePilotScope": "NOT_IN_SCOPE",
     "mobileAccessMethod": "RESPONSIVE_WEB_APPLICATION",

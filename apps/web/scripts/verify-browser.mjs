@@ -45,7 +45,9 @@ for (const width of [1440, 375]) {
     const broken = await page
       .locator("img")
       .evaluateAll((images) => images.filter((i) => i.complete && i.naturalWidth === 0).map((i) => i.src));
-    const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+    const axe = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .analyze();
     const name = (route === "/" ? "home" : route.slice(1).replaceAll("/", "-")) + "-" + width;
     await page.screenshot({ path: `${out}/${name}-viewport.png` });
     await page.screenshot({ path: `${out}/${name}.png`, fullPage: true });

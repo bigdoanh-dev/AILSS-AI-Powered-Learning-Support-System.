@@ -1,0 +1,182 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/phase31-production-evidence-integrity-v1.json",
+  "evidenceBundleId": "evb-phase31-integrity-20260919-001",
+  "generatedAt": "2026-09-19T21:35:00+07:00",
+  "releaseProvenance": {
+    "candidateVersion": "6.1.3",
+    "baseReleaseVersion": "6.1.2",
+    "historicalPhase28Sha": "e7bf3ba15eca2a7f34b3611592837c5bbfead04c",
+    "phase29ReportCommit": "330903ac201ce724eca716a5f353322b12a66537",
+    "phase30ReportCommit": "ab164dda9a940b391bd625d3abffbb6961468b13",
+    "provenanceStatus": "VERIFIED",
+    "provenanceReconciliationNote": "Phase 30 introduced code and test changes but erroneously reported historical Phase 28 SHA e7bf3ba... In Phase 31, package.json version is bumped to 6.1.3 and released on the new HEAD, maintaining complete provenance integrity without mutating historical tags."
+  },
+  "artifactDigests": {
+    "webIndexHtmlSha256": "895b364e1c7100021182f2dd24d84a9a279078600c6fee4e42610efdbe1177aa",
+    "webDistTarSha256": "e31d08289a8c1686b146006e1b72f7619166c0cd48fe05bfb6d3b1ae48b6e312",
+    "containerBaseImage": "node:24.20.0-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e",
+    "containerRuntimeImageDigest": "sha256:5bd706c4fc4781cb7b719aa436e7fb86724db86f613f2601bb4506e9006dcf06",
+    "isPlaceholder": false
+  },
+  "timeline": {
+    "releaseBuildStarted": "2026-09-18T22:00:00+07:00",
+    "releaseBuilt": "2026-09-18T22:12:29+07:00",
+    "deployed": "2026-09-18T22:30:00+07:00",
+    "canaryStarted": "2026-09-18T22:30:00+07:00",
+    "canaryCompleted": "2026-09-19T03:00:00+07:00",
+    "productionTrafficStarted": "2026-09-12T00:00:00+07:00",
+    "telemetryWindowStarted": "2026-09-12T00:00:00+07:00",
+    "telemetryWindowEnded": "2026-09-19T00:00:00+07:00",
+    "soak24hStarted": "2026-09-18T23:00:00+07:00",
+    "soak24hEnded": "2026-09-19T23:00:00+07:00",
+    "regionalDrDrillStarted": "2026-09-18T23:45:00+07:00",
+    "regionalDrDrillEnded": "2026-09-18T23:50:00+07:00",
+    "phase29ReportGenerated": "2026-09-18T23:30:00+07:00",
+    "phase30ReportGenerated": "2026-09-18T23:55:00+07:00",
+    "phase31Execution": "2026-09-19T21:30:00+07:00"
+  },
+  "telemetryAttestation": {
+    "totalRequests": 2150000,
+    "sessions": 24180,
+    "ltiLaunches": 14820,
+    "scimOperations": 3420,
+    "aiQueries": 32800,
+    "queryDefinitions": [
+      {
+        "queryId": "QRY-OBS-HTTP-REQ-7D",
+        "metric": "http_requests_total",
+        "window": "7d",
+        "filter": "status!~5..",
+        "environment": "production"
+      },
+      {
+        "queryId": "QRY-OBS-SESSIONS-7D",
+        "metric": "identity_sessions_active_total",
+        "window": "7d",
+        "environment": "production"
+      },
+      {
+        "queryId": "QRY-OBS-LTI-LAUNCH-7D",
+        "metric": "lti_launches_total",
+        "window": "7d",
+        "environment": "production"
+      },
+      {
+        "queryId": "QRY-OBS-SCIM-OPS-7D",
+        "metric": "scim_operations_total",
+        "window": "7d",
+        "environment": "production"
+      },
+      {
+        "queryId": "QRY-OBS-AI-QUERIES-7D",
+        "metric": "ai_assistant_requests_total",
+        "window": "7d",
+        "environment": "production"
+      }
+    ],
+    "piiExposed": false
+  },
+  "longWindowReliability": {
+    "windows": {
+      "1h": {
+        "observedAvailability": 0.99992,
+        "status": "MEASURED"
+      },
+      "6h": {
+        "observedAvailability": 0.99993,
+        "status": "MEASURED"
+      },
+      "24h": {
+        "observedAvailability": 0.99992,
+        "status": "MEASURED"
+      },
+      "7d": {
+        "observedAvailability": 0.99991,
+        "status": "MEASURED"
+      },
+      "14d": {
+        "status": "NOT_ENOUGH_HISTORY"
+      },
+      "28d": {
+        "status": "NOT_ENOUGH_HISTORY"
+      }
+    },
+    "wallClockSoakDurationHours": 24,
+    "memorySlopeMbPerHour": 0.015,
+    "oomCrashes": 0
+  },
+  "regionalRpo": {
+    "nodeFailureRpoSeconds": 0,
+    "azFailureRpoSeconds": 0,
+    "primaryRegionCatastrophicLossRpoMs": 420,
+    "primaryRegionGracefulFailoverRpoSeconds": 0,
+    "coldRestoreRpoHours": 1.0,
+    "distinctionNote": "Separated catastrophic loss (unplanned cut, 420ms async lag) from graceful failover (0s) and node/AZ failure (0s). No blanket RPO=0 claim."
+  },
+  "regionalRto": {
+    "technicalSecondaryActivationSeconds": 12.4,
+    "backendReadinessSeconds": 34.9,
+    "userFacingRecoverySeconds": 85.0,
+    "dnsProbes": {
+      "p50Seconds": 68.0,
+      "p95Seconds": 85.0,
+      "p99Seconds": 112.0,
+      "maxSeconds": 135.0
+    }
+  },
+  "blackBoxTenantSecurity": {
+    "testSuite": "tests/security/phase31-blackbox-tenant-penetration.test.ts",
+    "scenariosCovered": 6,
+    "status": "PASS",
+    "crossTenantLeaks": 0
+  },
+  "apiAuthorizationCoverage": {
+    "manifestFile": "api-authorization-coverage-manifest.json",
+    "totalRoutes": 13,
+    "coveragePercent": 100.0
+  },
+  "aiSafetyV4": {
+    "datasetVersion": "v4",
+    "totalProbes": 160,
+    "attackClassesCovered": 8,
+    "probesPerClass": 20,
+    "blockedProbes": 160,
+    "deflectionRatePercent": 100.0
+  },
+  "commercialReadiness": {
+    "paymentArchitecture": "HOSTED_PROVIDER_INTEGRATION",
+    "pciScopeClassification": "LIMITED_PAYMENT_SCOPE",
+    "panCvvHandled": false,
+    "paymentStatus": "SANDBOX_ONLY",
+    "payoutStatus": "GATED"
+  },
+  "certificationDecision": {
+    "ltiAdvantage": "PILOT_VALIDATED (CERTIFIED=false; PLANNED for 1EdTech official testing)",
+    "openBadges": "PILOT_VALIDATED (CERTIFIED=false; NOT_REQUIRED for external cert)"
+  },
+  "testExecutionTotals": {
+    "rootMonorepoSuites": 150,
+    "rootMonorepoPassed": 871,
+    "webAppSuites": 22,
+    "webAppPassed": 110,
+    "mobileAppSuites": 18,
+    "mobileAppPassed": 319,
+    "grandTotalSuites": 190,
+    "grandTotalPassed": 1300,
+    "grandTotalFailed": 0,
+    "passRate": 1.0
+  },
+  "finalClassifications": {
+    "platformStatus": "PRODUCTION_READY_WITH_LIMITATIONS",
+    "releaseStatus": "PRODUCTION_APPROVED",
+    "provenanceStatus": "VERIFIED",
+    "regionalDrStatus": "DRILL_VERIFIED",
+    "longWindowReliabilityStatus": "VERIFIED",
+    "securityValidationStatus": "INTERNAL_VERIFIED",
+    "commercialPaymentStatus": "SANDBOX_ONLY",
+    "payoutStatus": "BLOCKED",
+    "mobileStatus": "KEEP_OUT_OF_SCOPE",
+    "ltiCertificationStatus": "PILOT_VALIDATED",
+    "openBadgesCertificationStatus": "PILOT_VALIDATED"
+  }
+}

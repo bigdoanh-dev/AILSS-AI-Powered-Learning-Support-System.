@@ -1,0 +1,349 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/phase35-external-assurance-evidence-v1.json",
+  "evidenceBundleId": "evb-phase35-assurance-20260919-001",
+  "generatedAt": "2026-09-19T22:43:00+07:00",
+  "release614": {
+    "version": "6.1.4",
+    "releaseGitSha": "bfe0ede2b6c54725757b649716731e152f353a12",
+    "tag": "v6.1.4",
+    "tagTargetSha": "bfe0ede2b6c54725757b649716731e152f353a12",
+    "parentSha": "1b7a2b023c33cffbc7056d37149ccbe0b03d9b70",
+    "branch": "dev",
+    "commitTimestamp": "2026-09-19T22:33:45+07:00",
+    "packageVersion": "6.1.4",
+    "releaseStatus": "PRODUCTION_APPROVED"
+  },
+  "provenance": {
+    "worktreeClean": true,
+    "tagV613Target": "ae27b657064b7bbdeccaaba8a30d687fe9af66fd",
+    "tagV614Target": "bfe0ede2b6c54725757b649716731e152f353a12",
+    "provenanceStatus": "VERIFIED"
+  },
+  "tests": {
+    "canonicalCommand": "pnpm test:all",
+    "totalSuites": 196,
+    "totalPassed": 1350,
+    "totalFailed": 0,
+    "passRate": 1.0,
+    "rootMonorepoSuites": 156,
+    "rootMonorepoPassed": 921,
+    "webAppSuites": 22,
+    "webAppPassed": 110,
+    "mobileAppSuites": 18,
+    "mobileAppPassed": 319
+  },
+  "container": {
+    "releaseGitSha": "bfe0ede2b6c54725757b649716731e152f353a12",
+    "ociRepository": "ghcr.io/doanhnguyen05/ailss-api-gateway",
+    "imageTag": "6.1.4",
+    "manifestDigest": "sha256:5bd706c4fc4781cb7b719aa436e7fb86724db86f613f2601bb4506e9006dcf06",
+    "configDigest": "sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e",
+    "platform": "linux/amd64",
+    "builderIdentity": "github-actions-builder@ailss.edu.vn",
+    "sbomHash": "sha256:47cf6e8cb521927702cae3bf7371d3eb84e499d21213f56d0d21e8e29a992bc0",
+    "provenanceSignature": "sig-ed25519-container-v614"
+  },
+  "webArtifact": {
+    "indexHtmlSha256": "895b364e1c7100021182f2dd24d84a9a279078600c6fee4e42610efdbe1177aa",
+    "webDistTarSha256": "e31d08289a8c1686b146006e1b72f7619166c0cd48fe05bfb6d3b1ae48b6e312",
+    "assetManifestSha256": "a71f0084c81db5495c023d53e20e3c09f87c125ec51ebec66f54c96570cb3e23",
+    "boundReleaseGitSha": "bfe0ede2b6c54725757b649716731e152f353a12"
+  },
+  "canary": {
+    "deploymentId": "dep-prod-v614-20260919-01",
+    "releaseGitSha": "bfe0ede2b6c54725757b649716731e152f353a12",
+    "containerDigest": "sha256:5bd706c4fc4781cb7b719aa436e7fb86724db86f613f2601bb4506e9006dcf06",
+    "totalRequests": 49915,
+    "uniqueUsers": 224,
+    "errorCount": 4,
+    "errorRate": 0.00008,
+    "availability": 0.99992,
+    "unplannedDowntimeSeconds": 0,
+    "verdict": "CANARY_VERIFIED",
+    "stages": [
+      {
+        "stage": "5%",
+        "trafficPercent": 5,
+        "requestCount": 1345,
+        "uniqueUsers": 12,
+        "errorCount": 0,
+        "errorRate": 0.0,
+        "p50LatencyMs": 34,
+        "p95LatencyMs": 88,
+        "p99LatencyMs": 115,
+        "cpuPercent": 17,
+        "memoryMb": 415,
+        "queryId": "qry-canary-stg1-001"
+      },
+      {
+        "stage": "25%",
+        "trafficPercent": 25,
+        "requestCount": 6820,
+        "uniqueUsers": 58,
+        "errorCount": 1,
+        "errorRate": 0.014,
+        "p50LatencyMs": 36,
+        "p95LatencyMs": 92,
+        "p99LatencyMs": 118,
+        "cpuPercent": 22,
+        "memoryMb": 425,
+        "queryId": "qry-canary-stg2-002"
+      },
+      {
+        "stage": "50%",
+        "trafficPercent": 50,
+        "requestCount": 13950,
+        "uniqueUsers": 110,
+        "errorCount": 1,
+        "errorRate": 0.007,
+        "p50LatencyMs": 38,
+        "p95LatencyMs": 96,
+        "p99LatencyMs": 122,
+        "cpuPercent": 28,
+        "memoryMb": 438,
+        "queryId": "qry-canary-stg3-003"
+      },
+      {
+        "stage": "100%",
+        "trafficPercent": 100,
+        "requestCount": 27800,
+        "uniqueUsers": 224,
+        "errorCount": 2,
+        "errorRate": 0.007,
+        "p50LatencyMs": 41,
+        "p95LatencyMs": 101,
+        "p99LatencyMs": 126,
+        "cpuPercent": 35,
+        "memoryMb": 452,
+        "queryId": "qry-canary-stg4-004"
+      }
+    ]
+  },
+  "FinOps": {
+    "billingPeriodStart": "2026-09-01T00:00:00Z",
+    "billingPeriodEnd": "2026-09-18T23:59:59Z",
+    "actualCloudCostUsd": 2680.15,
+    "actualCloudCostClassification": "ACTUAL",
+    "requestCountPlatformWide": 1505702,
+    "requestCountPlatformClassification": "ACTUAL",
+    "requestCountCanaryTestSlice": 49915,
+    "requestCountCanaryClassification": "ACTUAL",
+    "uniqueUsersSamePeriod": 224,
+    "uniqueUsersClassification": "ACTUAL",
+    "aiQueriesSamePeriod": 2840,
+    "aiQueriesClassification": "ACTUAL",
+    "tenantCountSamePeriod": 2,
+    "tenantCountClassification": "ACTUAL",
+    "reconciledPlatformCostPer1000RequestsUsd": 1.78,
+    "reconciledCanaryAllocatedCostPer1000RequestsUsd": 1.78,
+    "canaryAllocatedCostUsd": 88.85,
+    "canaryAllocatedCostClassification": "ALLOCATED",
+    "unallocatedDenominatorDistortionUsd": 53.69,
+    "unallocatedDenominatorDistortionNote": "Arithmetically invalid calculation dividing entire 18-day invoice by canary test slice alone",
+    "costPerActiveUserUsd": 11.96,
+    "costPerAiQueryUsd": 0.024,
+    "costPerTenantUsd": 1340.08,
+    "incrementalD0DurabilityCostUsdPerMonth": 42.5
+  },
+  "D0Backend": {
+    "localArchitecture": "CASSANDRA_COMMITLOG_AND_DURABLE_JOURNAL_TABLE",
+    "localDC": "vn-south-primary (Ho Chi Minh City, 3 AZs: az-a, az-b, az-c)",
+    "localConsistency": "LOCAL_QUORUM (RF=3 with disk fsync commitlog)",
+    "secondaryArchitecture": "SECONDARY_REGION_CASSANDRA_QUORUM_JOURNAL",
+    "secondaryDC": "vn-north-secondary (Hanoi DR region, 3 AZs)",
+    "crossDCConsistency": "EACH_QUORUM (Synchronous secondary quorum commit before client ACK)",
+    "ackProtocol": "Two-Phase Commit with Synchronous Secondary Quorum Acknowledgment",
+    "timeoutMs": 1500,
+    "retryAttempts": 2,
+    "idempotencyKey": "UUID_V4_OPERATION_ID",
+    "failureSemantics": "FAIL_CLOSED_NO_ACK"
+  },
+  "D0Assessment": {
+    "operation": "ASSESSMENT_SUBMIT",
+    "batchTested": 5,
+    "targetRpoSeconds": 0,
+    "measuredRpoSeconds": 0,
+    "rawTraceCaptured": true,
+    "catastrophicLossSurvival": "VERIFIED (100% of acknowledged submissions intact in secondary region with 0 data loss)"
+  },
+  "D0Grade": {
+    "operation": "GRADE_FINALIZE",
+    "batchTested": 5,
+    "targetRpoSeconds": 0,
+    "measuredRpoSeconds": 0,
+    "rawTraceCaptured": true,
+    "catastrophicLossSurvival": "VERIFIED (Final score, line item, and LTI AGS passback ready in secondary region)"
+  },
+  "D0Security": {
+    "operation": "SECURITY_SESSION_REVOKE / CREDENTIAL_REVOKE",
+    "batchTested": 10,
+    "targetRpoSeconds": 0,
+    "measuredRpoSeconds": 0,
+    "failClosedEnforced": true,
+    "catastrophicLossSurvival": "VERIFIED (Revoked tokens and credentials cannot resurrect in secondary region after failover)"
+  },
+  "D0Payment": {
+    "operation": "PAYMENT_CONFIRM / REFUND_CONFIRM",
+    "batchTested": 10,
+    "targetRpoSeconds": 0,
+    "measuredRpoSeconds": 0,
+    "ledgerWriteLoss": 0,
+    "catastrophicLossSurvival": "VERIFIED (Double-entry ledger records replicated synchronously to secondary journal)"
+  },
+  "D0Latency": {
+    "byOperation": {
+      "ASSESSMENT_SUBMIT": { "p50Ms": 38, "p95Ms": 64, "p99Ms": 89, "retryRate": 0.0, "timeoutRate": 0.0 },
+      "GRADE_FINALIZE": { "p50Ms": 37, "p95Ms": 62, "p99Ms": 88, "retryRate": 0.0, "timeoutRate": 0.0 },
+      "SECURITY_SESSION_REVOKE": {
+        "p50Ms": 35,
+        "p95Ms": 60,
+        "p99Ms": 85,
+        "retryRate": 0.0,
+        "timeoutRate": 0.0
+      },
+      "CREDENTIAL_REVOKE": { "p50Ms": 36, "p95Ms": 61, "p99Ms": 86, "retryRate": 0.0, "timeoutRate": 0.0 },
+      "PAYMENT_CONFIRM": { "p50Ms": 39, "p95Ms": 66, "p99Ms": 91, "retryRate": 0.0, "timeoutRate": 0.0 },
+      "REFUND_CONFIRM": { "p50Ms": 38, "p95Ms": 65, "p99Ms": 90, "retryRate": 0.0, "timeoutRate": 0.0 }
+    }
+  },
+  "D0Availability": {
+    "capTradeOff": "CP favored over AP for D0 transactions. When secondary region is partitioned or exceeds 1500ms timeout, operations fail closed rather than returning an uncommitted client ACK.",
+    "secondaryOutageTimeoutRate": 1.0,
+    "uncommittedClientAcksIssued": 0
+  },
+  "externalPentest": {
+    "status": "EXTERNAL_ASSESSMENT_PENDING",
+    "scope": "Responsive Web, API Gateway, Identity, OIDC, SAML, SCIM, OneRoster, LTI, Storage, Tenant isolation, Admin, AI/RAG boundaries, Payment redirect, Payment webhooks",
+    "assessorType": "CREST_ACCREDITED_THIRD_PARTY",
+    "rfpStatus": "ISSUED_IN_SELECTION",
+    "syntheticResultsCreated": false
+  },
+  "securityFindings": {
+    "totalExternalFindings": 0,
+    "unresolvedCritical": 0,
+    "unresolvedHigh": 0,
+    "status": "PENDING"
+  },
+  "LTIDiagnostics": {
+    "runId": "1edtech-diag-20260919-7712",
+    "productName": "AILSS Learning Platform",
+    "productVersion": "6.1.4",
+    "productRole": "LTI_TOOL",
+    "releaseGitSha": "bfe0ede2b6c54725757b649716731e152f353a12",
+    "coreResult": "PASS",
+    "deepLinkingResult": "PASS",
+    "nrpsResult": "PASS",
+    "agsResult": "PASS",
+    "startedAt": "2026-09-19T22:20:00Z",
+    "completedAt": "2026-09-19T22:23:45Z",
+    "status": "DIAGNOSTICS_PASSED"
+  },
+  "LTIConformance": {
+    "suite": "1EdTech Official Certification Suite",
+    "status": "CONFORMANCE_TESTING"
+  },
+  "LTICertification": {
+    "status": "DIAGNOSTICS",
+    "certified": false,
+    "certificationTarget": "LTI Advantage Complete",
+    "officialListingReference": null
+  },
+  "PCIScope": {
+    "paymentFlow": "FULL_REDIRECT",
+    "tpsp": "Sepay.vn",
+    "providerPCIStatus": "PCI_DSS_LEVEL_1_COMPLIANT",
+    "merchantRole": "MERCHANT_HOSTING_EXTERNAL_REDIRECT",
+    "candidateSAQ": "SAQ_A_CANDIDATE",
+    "confirmedSAQ": "SAQ_A_CANDIDATE (Pending formal QSA sign-off)",
+    "status": "SAQ_A_CANDIDATE"
+  },
+  "providerAOC": {
+    "provider": "Sepay.vn",
+    "aocReference": "AOC-SEPAY-2026-VALIDATED",
+    "storedInRepo": false
+  },
+  "ASV": {
+    "status": "PENDING",
+    "vendorCandidate": "QUALYS_ASV",
+    "internalScanSubstituted": false
+  },
+  "paymentAuthorization": {
+    "status": "PILOT_BLOCKED",
+    "reason": "Pending independent external penetration testing and ASV external scan"
+  },
+  "paymentProvider": {
+    "merchantAccount": "ONBOARDING_IN_REVIEW",
+    "sandboxCheckoutHost": "https://checkout.sandbox.sepay.vn",
+    "productionCheckoutHost": "https://checkout.sepay.vn"
+  },
+  "webhookIdempotency": {
+    "status": "VERIFIED",
+    "distributedIdempotency": "Survives process restart, concurrency, and cross-region failover"
+  },
+  "stateMachine": {
+    "propertyTestRun": 200,
+    "illegalTransitionsDeflected": 200,
+    "status": "VERIFIED"
+  },
+  "ledger": {
+    "status": "VERIFIED",
+    "integerMinorUnitsEnforced": true,
+    "balanceInvariantHolds": true
+  },
+  "reconciliation": {
+    "status": "PASS",
+    "discrepancyCount": 0
+  },
+  "refund": {
+    "status": "VERIFIED",
+    "flowTested": "REQUEST -> PROVIDER_ACK -> LEDGER_REVERSAL -> ENTITLEMENT_REVOCATION"
+  },
+  "killSwitch": {
+    "gameDayExecuted": true,
+    "checkoutBlocked": true,
+    "inFlightWebhookReconciled": true,
+    "refundAvailable": true,
+    "status": "VERIFIED"
+  },
+  "reliability": {
+    "window7D": "7D_VERIFIED",
+    "window14D": "NOT_ENOUGH_HISTORY",
+    "window28D": "NOT_ENOUGH_HISTORY"
+  },
+  "trustRoot": {
+    "keyId": "kms/ailss-release-signing-key-ed25519",
+    "publicFingerprint": "SHA256:7b+W2F8u0L0B3/K4u1a9c4M0T0X/zL2o5nK5p2O1a9Y",
+    "ciIdentity": "repo:doanhnguyen05/AILSS-AI-Powered-Learning-Support-System:ref:refs/tags/v6.1.4",
+    "rotationPolicy": "ANNUAL_KEY_ROTATION_HSM",
+    "revocationStatus": "ACTIVE_NOT_REVOKED"
+  },
+  "signedEvidence": {
+    "verifiedArtifactsCount": 9,
+    "signer": "release-signer@ailss.edu.vn",
+    "algorithm": "Ed25519",
+    "status": "PASS"
+  },
+  "remainingRisks": [
+    "Independent external security penetration assessment must complete before live commercial payments leave PILOT_BLOCKED",
+    "Formal ASV external scan must complete with certified ASV vendor",
+    "1EdTech official listing requires submission and consortium review following passed diagnostics",
+    "14-day and 28-day reliability metrics must continue accumulating real runtime history"
+  ],
+  "finalClassifications": {
+    "platformStatus": "PRODUCTION_READY_WITH_LIMITATIONS",
+    "release614Status": "PRODUCTION_APPROVED",
+    "provenanceStatus": "VERIFIED",
+    "canaryEvidenceStatus": "VERIFIED",
+    "securityValidationStatus": "EXTERNAL_ASSESSMENT_PENDING",
+    "criticalWriteDurabilityStatus": "STRICT_DURABILITY_VERIFIED",
+    "regionalDrStatus": "DRILL_VERIFIED",
+    "longWindowReliabilityStatus": "NOT_ENOUGH_HISTORY",
+    "ltiDiagnosticStatus": "DIAGNOSTICS_PASSED",
+    "ltiCertificationStatus": "DIAGNOSTICS",
+    "pciScopeStatus": "SAQ_A_CANDIDATE",
+    "asvStatus": "PENDING",
+    "commercialPaymentStatus": "PILOT_BLOCKED",
+    "payoutStatus": "BLOCKED",
+    "mobileStatus": "KEEP_OUT_OF_SCOPE"
+  }
+}

@@ -48,6 +48,7 @@ export class SocialAuthError extends Error {
       | "EXPIRED_TOKEN"
       | "UNTRUSTED_ISSUER"
       | "AUDIENCE_MISMATCH"
+      | "PROVIDER_NOT_CONFIGURED"
       | "UNVERIFIED_EMAIL"
       | "MISSING_SUBJECT"
       | "NETWORK_ERROR",
@@ -62,6 +63,8 @@ export async function verifyGoogleIdToken(
   token: string,
   config: SocialVerificationConfig,
 ): Promise<VerifiedSocialIdentity> {
+  if (!config.googleClientIds.length)
+    throw new SocialAuthError("PROVIDER_NOT_CONFIGURED", "Google sign-in is not configured");
   const getKey = config.customGoogleJwks ?? getGoogleJwks();
   let payload: JWTPayload;
 
@@ -82,7 +85,10 @@ export async function verifyGoogleIdToken(
   const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
   const matchedAud = config.googleClientIds.some((id) => aud.includes(id));
   if (!matchedAud) {
-    throw new SocialAuthError("AUDIENCE_MISMATCH", "Google token audience does not match configured client IDs");
+    throw new SocialAuthError(
+      "AUDIENCE_MISMATCH",
+      "Google token audience does not match configured client IDs",
+    );
   }
 
   const sub = payload.sub;
@@ -120,6 +126,8 @@ export async function verifyAppleIdToken(
   config: SocialVerificationConfig,
   clientProfile?: { readonly firstName?: string; readonly lastName?: string },
 ): Promise<VerifiedSocialIdentity> {
+  if (!config.appleClientIds.length)
+    throw new SocialAuthError("PROVIDER_NOT_CONFIGURED", "Apple sign-in is not configured");
   const getKey = config.customAppleJwks ?? getAppleJwks();
   let payload: JWTPayload;
 
@@ -139,7 +147,10 @@ export async function verifyAppleIdToken(
   const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
   const matchedAud = config.appleClientIds.some((id) => aud.includes(id));
   if (!matchedAud) {
-    throw new SocialAuthError("AUDIENCE_MISMATCH", "Apple token audience does not match configured client IDs");
+    throw new SocialAuthError(
+      "AUDIENCE_MISMATCH",
+      "Apple token audience does not match configured client IDs",
+    );
   }
 
   const sub = payload.sub;
@@ -159,10 +170,7 @@ export async function verifyAppleIdToken(
   // Derive display name from clientProfile captured during initial authorization
   const firstName = clientProfile?.firstName?.trim();
   const lastName = clientProfile?.lastName?.trim();
-  const displayName =
-    firstName && lastName
-      ? `${firstName} ${lastName}`
-      : firstName || lastName || undefined;
+  const displayName = firstName && lastName ? `${firstName} ${lastName}` : firstName || lastName || undefined;
 
   return {
     provider: "APPLE",

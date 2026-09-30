@@ -1,11 +1,12 @@
 import { AppError } from "../../../../packages/http/src/index.js";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { types } from "cassandra-driver";
 import type { CassandraClient } from "../../../../packages/cassandra/src/index.js";
 import type { EventEnvelope } from "../../../../packages/contracts/src/index.js";
 import type { AuthoringCourse } from "../authoring/model.js";
 import { crashAfter } from "./crash-injection.js";
 import type { Offering } from "../offerings/model.js";
+import { platformFeeBasisPointsAt } from "../finance/refund-policy.js";
 import {
   eventShard,
   type CommerceReceipt,
@@ -22,6 +23,48 @@ const uuid = (v: string) => types.Uuid.fromString(v),
 
 export class LearningCommerceRepository {
   public constructor(private readonly db: CassandraClient) {}
+  async commissionAt(at: Date) {
+    const row = (
+      await this.db.execute(
+        `SELECT effective_at,basis_points,updated_by FROM commission_policy_by_effective_at WHERE policy_name=? AND effective_at<=? ORDER BY effective_at DESC LIMIT 1`,
+        ["PLATFORM", at],
+        LQ,
+      )
+    )[0];
+    return row
+      ? {
+          basisPoints: num(row.basis_points),
+          effectiveAt: date(row.effective_at).toISOString(),
+          updatedBy: String(row.updated_by),
+        }
+      : {
+          basisPoints: platformFeeBasisPointsAt(at),
+          effectiveAt: "2026-09-27T00:00:00.000Z",
+          updatedBy: null,
+        };
+  }
+  async currentCommission() {
+    return this.commissionAt(new Date());
+  }
+  async changeCommission(basisPoints: number, adminId: string, expectedEffectiveAt: string) {
+    const current = await this.currentCommission();
+    if (current.effectiveAt !== expectedEffectiveAt)
+      throw new AppError("COMMISSION_VERSION_CONFLICT", 409, "Commission policy has changed");
+    if (current.basisPoints === basisPoints) return current;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const effectiveAt = new Date();
+      const rows = await this.db.execute(
+        `INSERT INTO commission_policy_by_effective_at (policy_name,effective_at,basis_points,updated_by) VALUES (?,?,?,?) IF NOT EXISTS`,
+        ["PLATFORM", effectiveAt, basisPoints, uuid(adminId)],
+        LQ,
+        LS,
+      );
+      if (rows[0]?.["[applied]"] === true)
+        return { basisPoints, effectiveAt: effectiveAt.toISOString(), updatedBy: adminId };
+      await new Promise((resolve) => setTimeout(resolve, 1));
+    }
+    throw new AppError("COMMISSION_CHANGE_CONFLICT", 409, "Commission policy changed concurrently");
+  }
   async claimSepayTransaction(transactionId: string, orderId: string, fingerprint: string, now: Date) {
     try {
       await this.db.execute(
@@ -533,6 +576,13 @@ export class LearningCommerceRepository {
       (a, b) => b.enrolledAt.localeCompare(a.enrolledAt) || a.studentId.localeCompare(b.studentId),
     );
   }
+  async activeStudentCount(courseId: string) {
+    const roster = await this.roster(courseId);
+    const entitlements = await Promise.all(
+      roster.map((student) => this.entitlement(student.studentId, courseId)),
+    );
+    return entitlements.filter((entitlement) => entitlement?.state === "ACTIVE").length;
+  }
   async prepareEvent(input: {
     eventId: string;
     eventType: "learning.order.paid.v1" | "learning.course.enrolled.v1";
@@ -610,10 +660,143 @@ export class LearningCommerceRepository {
     crashAfter("E2_OUTBOX_ID_READY", { eventId });
   }
 
-  public async revenueDashboard(range: "today" | "7d" | "30d", now = new Date()) {
+  public async payoutAccount(lecturerId: string) {
+    const rows = await this.db.execute(
+      `SELECT bank_name,account_number,account_holder,updated_at FROM payout_account_by_lecturer WHERE lecturer_id=?`,
+      [uuid(lecturerId)],
+      LQ,
+    );
+    const row = rows[0];
+    return row
+      ? {
+          bankName: String(row.bank_name),
+          accountNumber: String(row.account_number),
+          accountHolder: String(row.account_holder),
+          updatedAt: date(row.updated_at).toISOString(),
+        }
+      : null;
+  }
+
+  public async savePayoutAccount(
+    lecturerId: string,
+    input: { bankName: string; accountNumber: string; accountHolder: string },
+  ) {
+    await this.db.execute(
+      `INSERT INTO payout_account_by_lecturer (lecturer_id,bank_name,account_number,account_holder,updated_at) VALUES (?,?,?,?,?)`,
+      [uuid(lecturerId), input.bankName, input.accountNumber, input.accountHolder, new Date()],
+      LQ,
+    );
+    return this.payoutAccount(lecturerId);
+  }
+
+  public async payoutInstructions(month: string) {
+    const rows = await this.db.execute(
+      `SELECT lecturer_id,instruction_id,amount_minor,currency,bank_name,account_number,account_holder,status,created_at,approved_by,approved_at,provider_reference,failure_reason,updated_at FROM payout_instruction_by_month WHERE payout_month=?`,
+      [month],
+      LQ,
+    );
+    return rows.map(payoutInstructionRow);
+  }
+
+  public async payoutInstruction(month: string, lecturerId: string) {
+    const rows = await this.db.execute(
+      `SELECT lecturer_id,instruction_id,amount_minor,currency,bank_name,account_number,account_holder,status,created_at,approved_by,approved_at,provider_reference,failure_reason,updated_at FROM payout_instruction_by_month WHERE payout_month=? AND lecturer_id=?`,
+      [month, uuid(lecturerId)],
+      LQ,
+    );
+    return rows[0] ? payoutInstructionRow(rows[0]) : null;
+  }
+
+  public async claimPayoutApproval(
+    month: string,
+    lecturerId: string,
+    instructionId: string,
+    adminId: string,
+  ) {
+    const now = new Date();
+    const rows = await this.db.execute(
+      `UPDATE payout_instruction_by_month SET status='SUBMITTING',approved_by=?,approved_at=?,updated_at=? WHERE payout_month=? AND lecturer_id=? IF status='PENDING_TRANSFER' AND instruction_id=?`,
+      [uuid(adminId), now, now, month, uuid(lecturerId), uuid(instructionId)],
+      LQ,
+      LS,
+    );
+    return rows[0]?.["[applied]"] === true;
+  }
+
+  public async finishPayoutApproval(
+    month: string,
+    lecturerId: string,
+    status: "PAID" | "PAYOUT_FAILED" | "RECONCILIATION_REQUIRED",
+    providerReference: string | null,
+    failureReason: string | null,
+  ) {
+    const rows = await this.db.execute(
+      `UPDATE payout_instruction_by_month SET status=?,provider_reference=?,failure_reason=?,updated_at=? WHERE payout_month=? AND lecturer_id=? IF status='SUBMITTING'`,
+      [status, providerReference, failureReason, new Date(), month, uuid(lecturerId)],
+      LQ,
+      LS,
+    );
+    return rows[0]?.["[applied]"] === true;
+  }
+
+  public async auditPayout(input: {
+    instructionId: string;
+    eventId: string;
+    state: string;
+    actorId: string;
+    reason?: string;
+  }) {
+    await this.db.execute(
+      `INSERT INTO payout_audit_by_instruction (instruction_id,event_id,state,actor_id,reason,occurred_at) VALUES (?,?,?,?,?,?) IF NOT EXISTS`,
+      [
+        uuid(input.instructionId),
+        uuid(input.eventId),
+        input.state,
+        uuid(input.actorId),
+        input.reason ?? null,
+        new Date(),
+      ],
+      LQ,
+      LS,
+    );
+  }
+
+  public async preparePayoutInstruction(
+    month: string,
+    lecturerId: string,
+    amountMinor: string,
+    account: { bankName: string; accountNumber: string; accountHolder: string },
+  ) {
+    await this.db.execute(
+      `INSERT INTO payout_instruction_by_month (payout_month,lecturer_id,instruction_id,amount_minor,currency,bank_name,account_number,account_holder,status,created_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?) IF NOT EXISTS`,
+      [
+        month,
+        uuid(lecturerId),
+        uuid(randomUUID()),
+        types.Long.fromString(amountMinor),
+        "VND",
+        account.bankName,
+        account.accountNumber,
+        account.accountHolder,
+        "PENDING_TRANSFER",
+        new Date(),
+      ],
+      LQ,
+      LS,
+    );
+  }
+
+  public async revenueDashboard(range: "today" | "7d" | "30d" | "previousMonth", now = new Date()) {
     const days = range === "today" ? 1 : range === "7d" ? 7 : 30,
-      end = startUtcDay(now),
-      start = new Date(end.getTime() - (days - 1) * 86_400_000),
+      end =
+        range === "previousMonth"
+          ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0))
+          : startUtcDay(now),
+      start =
+        range === "previousMonth"
+          ? new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), 1))
+          : new Date(end.getTime() - (days - 1) * 86_400_000),
       control = (
         await this.db.execute(
           `SELECT status,backfill_through,last_reconciled_at,checksum FROM finance_projection_control WHERE projection_name=?`,
@@ -634,19 +817,104 @@ export class LearningCommerceRepository {
       refundMinor = 0n,
       orderCount = 0,
       refundCount = 0;
-    const dailyRevenue: Array<{ day: string; grossMinor: string; refundMinor: string; netMinor: string; orders: number }> = [];
+    const ownerCache = new Map<string, Promise<{ lecturerId: string; title: string }>>();
+    const orderRateCache = new Map<string, Promise<bigint>>();
+    const commissionRateForOrder = (orderId: string) => {
+      let pending = orderRateCache.get(orderId);
+      if (!pending) {
+        pending = this.db
+          .execute(`SELECT paid_at FROM order_by_id WHERE order_id=?`, [uuid(orderId)], LQ)
+          .then((rows) => {
+            const paidAt: unknown = rows[0]?.get("paid_at");
+            if (!paidAt)
+              throw new AppError(
+                "FINANCE_ORDER_MISSING",
+                503,
+                "Original order for refund is unavailable",
+                true,
+              );
+            return this.commissionAt(date(paidAt)).then((policy) => BigInt(policy.basisPoints));
+          });
+        orderRateCache.set(orderId, pending);
+      }
+      return pending;
+    };
+    const byLecturer = new Map<
+      string,
+      {
+        lecturerId: string;
+        grossMinor: bigint;
+        refundMinor: bigint;
+        platformMinor: bigint;
+        orders: number;
+        daily: Map<string, { grossMinor: bigint; refundMinor: bigint }>;
+        courses: Map<
+          string,
+          { courseId: string; title: string; grossMinor: bigint; refundMinor: bigint; orders: number }
+        >;
+      }
+    >();
+    const ownerOf = (courseId: string) => {
+      let pending = ownerCache.get(courseId);
+      if (!pending) {
+        pending = this.db
+          .execute(`SELECT owner_lecturer_id,title FROM course_by_id WHERE course_id=?`, [uuid(courseId)], LQ)
+          .then((rows) => {
+            const row = rows[0];
+            if (!row?.owner_lecturer_id)
+              throw new AppError(
+                "FINANCE_COURSE_OWNER_MISSING",
+                503,
+                "Course ownership for finance report is unavailable",
+                true,
+              );
+            return { lecturerId: String(row.owner_lecturer_id), title: String(row.title ?? "Khóa học") };
+          });
+        ownerCache.set(courseId, pending);
+      }
+      return pending;
+    };
+    const bucketFor = async (courseId: string) => {
+      const owner = await ownerOf(courseId);
+      let lecturer = byLecturer.get(owner.lecturerId);
+      if (!lecturer) {
+        lecturer = {
+          lecturerId: owner.lecturerId,
+          grossMinor: 0n,
+          refundMinor: 0n,
+          platformMinor: 0n,
+          orders: 0,
+          daily: new Map(),
+          courses: new Map(),
+        };
+        byLecturer.set(owner.lecturerId, lecturer);
+      }
+      let course = lecturer.courses.get(courseId);
+      if (!course) {
+        course = { courseId, title: owner.title, grossMinor: 0n, refundMinor: 0n, orders: 0 };
+        lecturer.courses.set(courseId, course);
+      }
+      return { lecturer, course };
+    };
+    const dailyRevenue: Array<{
+      day: string;
+      grossMinor: string;
+      refundMinor: string;
+      netMinor: string;
+      orders: number;
+    }> = [];
     for (let cursor = new Date(start); cursor <= end; cursor = new Date(cursor.getTime() + 86_400_000)) {
       const day = cursor.toISOString().slice(0, 10),
         partitions = await Promise.all(
           Array.from({ length: 16 }, (_, shard) =>
             Promise.all([
               this.db.execute(
-                `SELECT gross_minor,currency FROM revenue_payment_facts_by_day_shard WHERE bucket_day=? AND shard=?`,
+                `SELECT gross_minor,currency,course_id,order_id,occurred_at FROM revenue_payment_facts_by_day_shard WHERE bucket_day=? AND shard=?`,
                 [localDate(day), shard],
                 LQ,
               ),
               this.db.execute(
-                `SELECT amount_minor,currency,status FROM revenue_refund_facts_by_day_shard WHERE bucket_day=? AND shard=?`,
+                `SELECT amount_minor,currency,status,course_id,order_id FROM revenue_refund_facts_by_day_shard WHERE bucket_day=? AND shard=?`,
                 [localDate(day), shard],
                 LQ,
               ),
@@ -658,15 +926,47 @@ export class LearningCommerceRepository {
         dayOrders = 0;
       for (const [payments, refunds] of partitions) {
         for (const payment of payments) {
-          if (payment.currency !== "VND") throw new AppError("FINANCE_CURRENCY_MISMATCH", 503, "Revenue projection currency mismatch", true);
+          if (payment.currency !== "VND")
+            throw new AppError(
+              "FINANCE_CURRENCY_MISMATCH",
+              503,
+              "Revenue projection currency mismatch",
+              true,
+            );
           dayGross += big(payment.gross_minor);
           dayOrders += 1;
+          const { lecturer, course } = await bucketFor(String(payment.course_id));
+          const amount = big(payment.gross_minor);
+          const rate = await commissionRateForOrder(String(payment.order_id));
+          lecturer.grossMinor += amount;
+          const dayValue = lecturer.daily.get(day) ?? { grossMinor: 0n, refundMinor: 0n };
+          dayValue.grossMinor += amount;
+          lecturer.daily.set(day, dayValue);
+          lecturer.platformMinor += (amount * rate) / 10000n;
+          lecturer.orders += 1;
+          course.grossMinor += amount;
+          course.orders += 1;
         }
         for (const refund of refunds) {
           if (refund.status !== "PROCESSED") continue;
-          if (refund.currency !== "VND") throw new AppError("FINANCE_CURRENCY_MISMATCH", 503, "Revenue projection currency mismatch", true);
+          if (refund.currency !== "VND")
+            throw new AppError(
+              "FINANCE_CURRENCY_MISMATCH",
+              503,
+              "Revenue projection currency mismatch",
+              true,
+            );
           dayRefund += big(refund.amount_minor);
           refundCount += 1;
+          const { lecturer, course } = await bucketFor(String(refund.course_id));
+          const amount = big(refund.amount_minor);
+          const rate = await commissionRateForOrder(String(refund.order_id));
+          lecturer.refundMinor += amount;
+          const dayValue = lecturer.daily.get(day) ?? { grossMinor: 0n, refundMinor: 0n };
+          dayValue.refundMinor += amount;
+          lecturer.daily.set(day, dayValue);
+          lecturer.platformMinor -= (amount * rate) / 10000n;
+          course.refundMinor += amount;
         }
       }
       grossMinor += dayGross;
@@ -690,12 +990,52 @@ export class LearningCommerceRepository {
       orderCount,
       refundCount,
       dailyRevenue,
+      lecturers: [...byLecturer.values()]
+        .map((lecturer) => ({
+          lecturerId: lecturer.lecturerId,
+          grossMinor: lecturer.grossMinor.toString(),
+          refundMinor: lecturer.refundMinor.toString(),
+          netMinor: (lecturer.grossMinor - lecturer.refundMinor).toString(),
+          estimatedPlatformMinor: lecturer.platformMinor.toString(),
+          estimatedEarningsMinor: (
+            lecturer.grossMinor -
+            lecturer.refundMinor -
+            lecturer.platformMinor
+          ).toString(),
+          orders: lecturer.orders,
+          dailyRevenue: dailyRevenue.map(({ day }) => {
+            const value = lecturer.daily.get(day) ?? { grossMinor: 0n, refundMinor: 0n };
+            return {
+              day,
+              grossMinor: value.grossMinor.toString(),
+              refundMinor: value.refundMinor.toString(),
+              netMinor: (value.grossMinor - value.refundMinor).toString(),
+            };
+          }),
+          courses: [...lecturer.courses.values()]
+            .map((course) => ({
+              courseId: course.courseId,
+              title: course.title,
+              grossMinor: course.grossMinor.toString(),
+              refundMinor: course.refundMinor.toString(),
+              netMinor: (course.grossMinor - course.refundMinor).toString(),
+              orders: course.orders,
+            }))
+            .sort((a, b) =>
+              BigInt(b.netMinor) > BigInt(a.netMinor) ? 1 : BigInt(b.netMinor) < BigInt(a.netMinor) ? -1 : 0,
+            ),
+        }))
+        .sort((a, b) =>
+          BigInt(b.estimatedEarningsMinor) > BigInt(a.estimatedEarningsMinor)
+            ? 1
+            : BigInt(b.estimatedEarningsMinor) < BigInt(a.estimatedEarningsMinor)
+              ? -1
+              : 0,
+        ),
       completeness: {
         status: "READY" as const,
         backfillThrough: backfillThrough.toISOString(),
-        lastReconciledAt: control.last_reconciled_at
-          ? date(control.last_reconciled_at).toISOString()
-          : null,
+        lastReconciledAt: control.last_reconciled_at ? date(control.last_reconciled_at).toISOString() : null,
         checksum: String(control.checksum ?? ""),
       },
     };
@@ -719,6 +1059,25 @@ function big(value: unknown): bigint {
     return BigInt(stringifiable.toString());
   }
   return 0n;
+}
+
+function payoutInstructionRow(row: types.Row) {
+  return {
+    lecturerId: String(row.lecturer_id),
+    instructionId: String(row.instruction_id),
+    amountMinor: big(row.amount_minor).toString(),
+    currency: String(row.currency),
+    bankName: String(row.bank_name),
+    accountNumber: String(row.account_number),
+    accountHolder: String(row.account_holder),
+    status: String(row.status),
+    createdAt: date(row.created_at).toISOString(),
+    approvedBy: row.approved_by ? String(row.approved_by) : null,
+    approvedAt: row.approved_at ? date(row.approved_at).toISOString() : null,
+    providerReference: row.provider_reference ? String(row.provider_reference) : null,
+    failureReason: row.failure_reason ? String(row.failure_reason) : null,
+    updatedAt: row.updated_at ? date(row.updated_at).toISOString() : null,
+  };
 }
 
 function orderRow(r: types.Row): LearningOrder {

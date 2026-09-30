@@ -65,7 +65,11 @@ export default function QuizResultScreen() {
           <Text style={screenStyles.authText}>Vui lòng đăng nhập để xem kết quả.</Text>
           <Button label="Đăng nhập" onPress={() => router.push("/login" as Href)} />
         </View>
-        <BottomNavBar currentRoute="/assessments" onNavigate={(r) => router.push(r as Href)} role={snapshot.user?.role} />
+        <BottomNavBar
+          currentRoute="/assessments"
+          onNavigate={(r) => router.push(r as Href)}
+          role={snapshot.user?.role}
+        />
       </Page>
     );
   }
@@ -78,7 +82,11 @@ export default function QuizResultScreen() {
           <ActivityIndicator size="large" color={tokens.color.brand} />
           <Text style={screenStyles.loadingText}>Đang tải kết quả chấm điểm...</Text>
         </View>
-        <BottomNavBar currentRoute="/assessments" onNavigate={(r) => router.push(r as Href)} role={snapshot.user?.role} />
+        <BottomNavBar
+          currentRoute="/assessments"
+          onNavigate={(r) => router.push(r as Href)}
+          role={snapshot.user?.role}
+        />
       </Page>
     );
   }
@@ -89,12 +97,18 @@ export default function QuizResultScreen() {
         <ScreenHeader title="Thông báo" onBack={() => router.push("/assessments" as Href)} />
         <View style={screenStyles.errorBox}>
           <Icon name="alert" size={28} color={tokens.color.danger} />
-          <Text accessibilityRole="alert" style={screenStyles.errorText}>{error}</Text>
+          <Text accessibilityRole="alert" style={screenStyles.errorText}>
+            {error}
+          </Text>
           <View style={screenStyles.actionCol}>
             <Button label="Quay lại danh sách" onPress={() => router.push("/assessments" as Href)} />
           </View>
         </View>
-        <BottomNavBar currentRoute="/assessments" onNavigate={(r) => router.push(r as Href)} role={snapshot.user?.role} />
+        <BottomNavBar
+          currentRoute="/assessments"
+          onNavigate={(r) => router.push(r as Href)}
+          role={snapshot.user?.role}
+        />
       </Page>
     );
   }
@@ -131,27 +145,27 @@ export default function QuizResultScreen() {
         </View>
 
         {isPendingManual ? (
-          <Badge
-            label="⏳ ĐÃ NỘP BÀI · CHỜ GIẢNG VIÊN CHẤM"
-            variant="warning"
-          />
+          <Badge label="⏳ ĐÃ NỘP BÀI · CHỜ GIẢNG VIÊN CHẤM" variant="warning" />
         ) : isManuallyGraded ? (
-          <Badge
-            label="✍️ ĐÃ CHẤM THỦ CÔNG BỞI GIẢNG VIÊN"
-            variant="ai"
-          />
+          <Badge label="✍️ ĐÃ CHẤM THỦ CÔNG BỞI GIẢNG VIÊN" variant="ai" />
         ) : (
-          <Badge
-            label="⚡ ĐÃ CHẤM TỰ ĐỘNG THÀNH CÔNG"
-            variant="success"
-          />
+          <Badge label="⚡ ĐÃ CHẤM TỰ ĐỘNG THÀNH CÔNG" variant="success" />
         )}
 
         {isPendingManual ? (
           <View style={{ alignItems: "center", paddingVertical: 12, gap: 6 }}>
             <Text style={[screenStyles.scoreLabel, { color: "#B45309" }]}>ĐANG ĐỢI CHẤM THỦ CÔNG</Text>
-            <Text style={{ fontSize: 14, color: "#475569", textAlign: "center", paddingHorizontal: 12, lineHeight: 20 }}>
-              Bài thi Tự luận / Đồ án đã được nộp thành công. Giảng viên sẽ trực tiếp đánh giá và phản hồi điểm số kèm nhận xét chi tiết.
+            <Text
+              style={{
+                fontSize: 14,
+                color: "#475569",
+                textAlign: "center",
+                paddingHorizontal: 12,
+                lineHeight: 20,
+              }}
+            >
+              Bài thi Tự luận / Đồ án đã được nộp thành công. Giảng viên sẽ trực tiếp đánh giá và phản hồi
+              điểm số kèm nhận xét chi tiết.
             </Text>
           </View>
         ) : (
@@ -160,7 +174,9 @@ export default function QuizResultScreen() {
               {isManuallyGraded ? "ĐIỂM SỐ DO GIẢNG VIÊN ĐÁNH GIÁ" : "ĐIỂM SỐ CHÍNH THỨC (TỰ ĐỘNG)"}
             </Text>
             <View style={screenStyles.scoreNumberRow}>
-              <Text testID="student-assessment-result-value" style={screenStyles.scoreNumber}>{finalScore}</Text>
+              <Text testID="student-assessment-result-value" style={screenStyles.scoreNumber}>
+                {finalScore}
+              </Text>
               <Text style={screenStyles.maxScoreNumber}> / {finalMaxScore}</Text>
             </View>
 
@@ -179,7 +195,17 @@ export default function QuizResultScreen() {
         )}
 
         {isManuallyGraded && result.teacherFeedback && (
-          <View style={{ marginTop: 12, padding: 12, backgroundColor: "#F0FDF4", borderRadius: 10, borderWidth: 1, borderColor: "#BBF7D0", width: "100%" }}>
+          <View
+            style={{
+              marginTop: 12,
+              padding: 12,
+              backgroundColor: "#F0FDF4",
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: "#BBF7D0",
+              width: "100%",
+            }}
+          >
             <Text style={{ fontSize: 13, fontWeight: "700", color: "#166534", marginBottom: 3 }}>
               💬 Lời phê & Nhận xét của Giảng viên:
             </Text>
@@ -236,14 +262,14 @@ export default function QuizResultScreen() {
           onPress={() => router.push("/assessments" as Href)}
           size="lg"
         />
-        <Button
-          label="Về trang chủ"
-          variant="outline"
-          onPress={() => router.push("/" as Href)}
-        />
+        <Button label="Về trang chủ" variant="outline" onPress={() => router.push("/" as Href)} />
       </View>
 
-      <BottomNavBar currentRoute="/assessments" onNavigate={(r) => router.push(r as Href)} role={snapshot.user?.role} />
+      <BottomNavBar
+        currentRoute="/assessments"
+        onNavigate={(r) => router.push(r as Href)}
+        role={snapshot.user?.role}
+      />
     </Page>
   );
 }

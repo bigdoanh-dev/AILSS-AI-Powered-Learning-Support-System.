@@ -4,6 +4,7 @@ import { AuthLayout } from "./components/AuthLayout";
 import { Motion } from "./components/Motion";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { CinematicIntro } from "./components/CinematicIntro";
+import { RoleAiExperience } from "./components/RoleAiExperience";
 import { AvatarProvider, PreferencesProvider } from "./components/Preferences";
 import { LanguageProvider } from "./lib/i18n";
 import { SessionProvider } from "./auth/session";
@@ -11,10 +12,10 @@ import { AppShell, Account, AppHome } from "./pages/Workspace";
 import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Layout } from "./components/Layout";
-import { PageHero, Section, ButtonLink } from "./components/ui";
 import { metadata } from "./metadata";
 import Home from "./pages/Home";
 import Courses, { CourseDetail } from "./pages/Courses";
+import { LecturerProfilePage } from "./components/PublicLecturer";
 const student = (name: keyof typeof import("./student/Learning")) =>
   lazy(() => import("./student/Learning").then((m) => ({ default: m[name] })));
 const Learn = student("Learn"),
@@ -33,8 +34,8 @@ const lecturerAi = (name: keyof typeof import("./lecturer/AiStudio")) =>
   lazy(() => import("./lecturer/AiStudio").then((m) => ({ default: m[name] })));
 const GradebookDashboard = lazy(() => import("./lecturer/GradebookDashboard"));
 const LecturerReportsDashboard = lazy(() => import("./lecturer/LecturerReportsDashboard"));
-const TeachingHome = teaching("TeachingHome"),
-  TeachingCourses = teaching("TeachingCourses"),
+const LecturerRevenueDashboard = lazy(() => import("./lecturer/RevenueDashboard"));
+const TeachingCourses = teaching("TeachingCourses"),
   CourseCreate = teaching("CourseCreate"),
   TeachingCourse = teaching("CourseDetail"),
   Lessons = teaching("Lessons"),
@@ -43,6 +44,7 @@ const TeachingHome = teaching("TeachingHome"),
   Offerings = teaching("Offerings"),
   OfferingCreate = teaching("OfferingCreate"),
   OfferingDetail = teaching("OfferingDetail"),
+  LecturerProfile = teaching("LecturerProfilePage"),
   TeachingClasses = classroom("Classes"),
   ClassCreate = classroom("ClassCreate"),
   TeachingClass = classroom("ClassDetail"),
@@ -70,12 +72,8 @@ const TeachingSchedule = lazy(() =>
 const TeachingAttendance = lazy(() =>
   import("./lecturer/Planning").then((m) => ({ default: m.TeachingAttendance })),
 );
-const StudyPlanPage = lazy(() =>
-  import("./student/StudyPlan").then((m) => ({ default: m.StudyPlanPage })),
-);
-const AiTutorPage = lazy(() =>
-  import("./student/AiTutor").then((m) => ({ default: m.AiTutorPage })),
-);
+const StudyPlanPage = lazy(() => import("./student/StudyPlan").then((m) => ({ default: m.StudyPlanPage })));
+const AiTutorPage = lazy(() => import("./student/AiTutor").then((m) => ({ default: m.AiTutorPage })));
 const UnifiedStudentWorkspacePage = lazy(() =>
   import("./student/UnifiedStudentWorkspace").then((m) => ({ default: m.UnifiedStudentWorkspace })),
 );
@@ -95,6 +93,8 @@ const AdminGuard = admin("AdminGuard"),
   AdminStats = admin("StatsDashboard"),
   AdminLogs = admin("LogsDashboard"),
   AdminSettings = admin("SettingsDashboard");
+const AdminAi = lazy(() => import("./admin/AdminAi"));
+const AdminMonitoring = lazy(() => import("./admin/MonitoringDashboard"));
 const Purchase = lazy(() => import("./student/Commerce"));
 const assessment = (name: keyof typeof import("./student/Assessment")) =>
   lazy(() => import("./student/Assessment").then((m) => ({ default: m[name] })));
@@ -124,6 +124,7 @@ const Security = trust("Security"),
   Research = trust("Research"),
   Roadmap = trust("Roadmap"),
   Policy = trust("Policy");
+const NotFound = lazy(() => import("./pages/NotFound"));
 function Head() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -151,145 +152,144 @@ export default function App() {
           <SessionProvider>
             <AvatarProvider>
               <Head />
-            <Suspense
-              fallback={
-                <div className="route-loading" role="status">
-                  Đang mở trang…
-                </div>
-              }
-            >
-              <Motion />
-              <ErrorBoundary>
-                <Routes>
-                  <Route path="auth" element={<AuthLayout />}>
-                    <Route path="result" element={<OperationResultPage />} />
-                    <Route path="register/lecturer" element={<Auth key={location.pathname} />} />
-                    <Route path="register/lecturer/application" element={<LecturerApplication />} />
-                    <Route path="register/lecturer/status" element={<LecturerApplication />} />
-                    {["login", "register", "register/student", "forgot-password"].map((path) => (
-                      <Route key={path} path={path} element={<Auth key={location.pathname} />} />
-                    ))}
-                  </Route>
-                  <Route path="app" element={<AppShell />}>
-                    <Route index element={<AppHome />} />
-                    <Route path="account" element={<Account />} />
-                    <Route path="notifications" element={<Notifications />} />
-                    <Route path="result" element={<OperationResultPage />} />
-                    <Route path="resources" element={<Navigate to="/app/learn" replace />} />
-                    <Route element={<StudentGuard />}>
-                      <Route path="learn" element={<Learn />} />
-                      <Route path="learn/:courseId" element={<CourseLearning />} />
-                      <Route path="learn/:courseId/lessons/:lessonId" element={<CourseLearning />} />
-                      <Route path="purchase/:courseId" element={<Purchase />} />
-                      <Route path="progress" element={<ProgressPage />} />
-                      <Route path="classes" element={<Classes />} />
-                      <Route path="schedule" element={<StudentSchedule />} />
-                      <Route path="attendance" element={<StudentAttendance />} />
-                      <Route path="classes/:classId" element={<ClassDetail />} />
-                      <Route path="study-plan" element={<StudyPlanPage />} />
-                      <Route path="ai-tutor" element={<AiTutorPage />} />
-                      <Route path="workspace" element={<UnifiedStudentWorkspacePage />} />
+              <RoleAiExperience>
+                <Suspense
+                  fallback={
+                    <div className="route-loading" role="status">
+                      Đang mở trang…
+                    </div>
+                  }
+                >
+                  <Motion />
+                  <ErrorBoundary>
+                    <Routes>
+                      <Route path="auth" element={<AuthLayout />}>
+                        <Route path="result" element={<OperationResultPage />} />
+                        <Route path="register/lecturer" element={<Auth key={location.pathname} />} />
+                        <Route path="register/lecturer/application" element={<LecturerApplication />} />
+                        <Route path="register/lecturer/status" element={<LecturerApplication />} />
+                        {["login", "register", "register/student", "forgot-password"].map((path) => (
+                          <Route key={path} path={path} element={<Auth key={location.pathname} />} />
+                        ))}
+                      </Route>
+                      <Route path="app" element={<AppShell />}>
+                        <Route index element={<AppHome />} />
+                        <Route path="account" element={<Account />} />
+                        <Route path="notifications" element={<Notifications />} />
+                        <Route path="result" element={<OperationResultPage />} />
+                        <Route path="resources" element={<Navigate to="/app/learn" replace />} />
+                        <Route element={<StudentGuard />}>
+                          <Route path="learn" element={<Learn />} />
+                          <Route path="learn/:courseId" element={<CourseLearning />} />
+                          <Route path="learn/:courseId/lessons/:lessonId" element={<CourseLearning />} />
+                          <Route path="purchase/:courseId" element={<Purchase />} />
+                          <Route path="progress" element={<ProgressPage />} />
+                          <Route path="classes" element={<Classes />} />
+                          <Route path="schedule" element={<StudentSchedule />} />
+                          <Route path="attendance" element={<StudentAttendance />} />
+                          <Route path="classes/:classId" element={<ClassDetail />} />
+                          <Route path="study-plan" element={<StudyPlanPage />} />
+                          <Route path="ai-tutor" element={<AiTutorPage />} />
+                          <Route path="workspace" element={<UnifiedStudentWorkspacePage />} />
 
-                      <Route path="assessments" element={<Assessments />} />
-                      <Route path="assessments/:quizId" element={<QuizDetail />} />
-                      <Route path="attempts/:attemptId" element={<AttemptPage />} />
-                      <Route path="attempts/:attemptId/result" element={<ResultPage />} />
-                    </Route>
-                    <Route element={<LecturerGuard />}>
-                      <Route path="teaching" element={<TeachingCourses />} />
-                      <Route path="teaching/courses/new" element={<CourseCreate />} />
-                      <Route path="teaching/courses/:courseId" element={<TeachingCourse />} />
-                      <Route path="teaching/courses/:courseId/lessons" element={<Lessons />} />
-                      <Route path="teaching/courses/:courseId/roster" element={<CourseRoster />} />
-                      <Route path="teaching/lessons/:lessonId" element={<TeachingLesson />} />
-                      <Route path="teaching/offerings" element={<Offerings />} />
-                      <Route path="teaching/offerings/new" element={<OfferingCreate />} />
-                      <Route path="teaching/offerings/:offeringId" element={<OfferingDetail />} />
-                      <Route path="teaching/classes" element={<TeachingClasses />} />
-                      <Route path="teaching/classes/new" element={<ClassCreate />} />
-                      <Route path="teaching/schedule" element={<TeachingSchedule />} />
-                      <Route path="teaching/attendance" element={<TeachingAttendance />} />
-                      <Route path="teaching/classes/:classId" element={<TeachingClass />} />
-                      <Route path="teaching/classes/:classId/roster" element={<ClassRoster />} />
-                      <Route path="teaching/classes/:classId/announcements" element={<Announcements />} />
-                      <Route path="teaching/classes/:classId/schedule" element={<Schedule />} />
-                      <Route path="teaching/sessions/:sessionId" element={<TeachingSession />} />
-                      <Route path="teaching/sessions/:sessionId/attendance" element={<Attendance />} />
-                      <Route path="teaching/assessments" element={<TeachingAssessments />} />
-                      <Route path="teaching/grades" element={<GradebookDashboard />} />
-                      <Route path="teaching/reports" element={<LecturerReportsDashboard />} />
-                      <Route path="teaching/assessments/:quizId" element={<TeachingAssessment />} />
-                      <Route path="teaching/assessments/:quizId/results" element={<TeachingResults />} />
-                      <Route path="teaching/ai" element={<AiStudio />} />
-                      <Route path="teaching/ai/jobs/:jobId" element={<AiJob />} />
-                      <Route path="teaching/course-authoring" element={<CourseAuthoringStudioPage />} />
-                      <Route
-                        path="teaching/discussion/:resourceType/:resourceId"
-                        element={<LecturerComments />}
-                      />
-                    </Route>
-                    <Route element={<AdminGuard />}>
-                      <Route path="admin" element={<AdminHome />} />
-                      <Route path="admin/revenue" element={<AdminRevenue />} />
-                      <Route path="admin/stats" element={<AdminStats />} />
-                      <Route path="admin/logs" element={<AdminLogs />} />
-                      <Route path="admin/users" element={<AdminUsers />} />
-                      <Route path="admin/users/:userId" element={<AdminUserDetail />} />
-                      <Route path="admin/courses" element={<CourseGovernance />} />
-                      <Route path="admin/lecturer-applications" element={<AdminLecturerApplications />} />
-                      <Route path="admin/moderation" element={<Moderation />} />
-                      <Route path="admin/settings" element={<AdminSettings />} />
-                    </Route>
-                  </Route>
-                  <Route element={<Layout />}>
-                    <Route index element={<Home />} />
-                    <Route path="about" element={<About />} />
-                    <Route path="features" element={<Features />} />
-                    <Route path="how-it-works" element={<How />} />
-                    <Route path="courses" element={<Courses />} />
-                    <Route path="courses/:id" element={<CourseDetail />} />
-                    <Route path="ai-learning" element={<Ai />} />
-                    <Route path="ai-quiz" element={<Quiz />} />
-                    {["students", "lecturers", "classroom", "assessment", "progress", "notifications"].map(
-                      (path) => (
-                        <Route key={path} path={path} element={<Experience key={path} />} />
-                      ),
-                    )}
-                    <Route path="architecture" element={<Architecture />} />
-                    <Route path="security" element={<Security />} />
-                    <Route path="research" element={<Research />} />
-                    <Route path="roadmap" element={<Roadmap />} />
-                    <Route path="contact" element={<Contact />} />
-                    <Route path="faq" element={<Faq />} />
-                    <Route path="help" element={<Help />} />
-                    <Route path="media" element={<Media />} />
-
-                    {["legal/privacy", "legal/terms", "legal/cookies", "accessibility"].map((path) => (
-                      <Route key={path} path={path} element={<Policy />} />
-                    ))}
-                    <Route
-                      path="*"
-                      element={
-                        <>
-                          <PageHero
-                            label="404"
-                            title="Trang này chưa có ở đây."
-                            description="Đường dẫn có thể đã thay đổi. Bạn có thể quay lại trang chủ hoặc khám phá khóa học."
+                          <Route path="assessments" element={<Assessments />} />
+                          <Route path="assessments/:quizId" element={<QuizDetail />} />
+                          <Route path="attempts/:attemptId" element={<AttemptPage />} />
+                          <Route path="attempts/:attemptId/result" element={<ResultPage />} />
+                        </Route>
+                        <Route element={<LecturerGuard />}>
+                          <Route path="teaching" element={<TeachingCourses />} />
+                          <Route path="teaching/courses/new" element={<CourseCreate />} />
+                          <Route path="teaching/courses/:courseId" element={<TeachingCourse />} />
+                          <Route path="teaching/courses/:courseId/lessons" element={<Lessons />} />
+                          <Route path="teaching/courses/:courseId/roster" element={<CourseRoster />} />
+                          <Route path="teaching/lessons/:lessonId" element={<TeachingLesson />} />
+                          <Route path="teaching/offerings" element={<Offerings />} />
+                          <Route path="teaching/offerings/new" element={<OfferingCreate />} />
+                          <Route path="teaching/offerings/:offeringId" element={<OfferingDetail />} />
+                          <Route path="teaching/classes" element={<TeachingClasses />} />
+                          <Route path="teaching/classes/new" element={<ClassCreate />} />
+                          <Route path="teaching/schedule" element={<TeachingSchedule />} />
+                          <Route path="teaching/attendance" element={<TeachingAttendance />} />
+                          <Route path="teaching/classes/:classId" element={<TeachingClass />} />
+                          <Route path="teaching/classes/:classId/roster" element={<ClassRoster />} />
+                          <Route path="teaching/classes/:classId/announcements" element={<Announcements />} />
+                          <Route path="teaching/classes/:classId/schedule" element={<Schedule />} />
+                          <Route path="teaching/sessions/:sessionId" element={<TeachingSession />} />
+                          <Route path="teaching/sessions/:sessionId/attendance" element={<Attendance />} />
+                          <Route path="teaching/assessments" element={<TeachingAssessments />} />
+                          <Route path="teaching/grades" element={<GradebookDashboard />} />
+                          <Route path="teaching/reports" element={<LecturerReportsDashboard />} />
+                          <Route path="teaching/revenue" element={<LecturerRevenueDashboard />} />
+                          <Route path="teaching/profile" element={<LecturerProfile />} />
+                          <Route path="teaching/assessments/:quizId" element={<TeachingAssessment />} />
+                          <Route path="teaching/assessments/:quizId/results" element={<TeachingResults />} />
+                          <Route path="teaching/ai" element={<AiStudio />} />
+                          <Route path="teaching/ai/jobs/:jobId" element={<AiJob />} />
+                          <Route path="teaching/course-authoring" element={<CourseAuthoringStudioPage />} />
+                          <Route
+                            path="teaching/discussion/:resourceType/:resourceId"
+                            element={<LecturerComments />}
                           />
-                          <Section>
-                            <ButtonLink to="/">Về trang chủ</ButtonLink>
-                          </Section>
-                        </>
-                      }
-                    />
-                  </Route>
-                </Routes>
-              </ErrorBoundary>
-            </Suspense>
-          </AvatarProvider>
-        </SessionProvider>
-      </PreferencesProvider>
-    </LanguageProvider>
-  </>
-);
+                        </Route>
+                        <Route element={<AdminGuard />}>
+                          <Route path="admin" element={<AdminHome />} />
+                          <Route path="admin/revenue" element={<AdminRevenue />} />
+                          <Route path="admin/stats" element={<AdminStats />} />
+                          <Route path="admin/monitoring" element={<AdminMonitoring />} />
+                          <Route path="admin/ai" element={<AdminAi />} />
+                          <Route path="admin/logs" element={<AdminLogs />} />
+                          <Route path="admin/users" element={<AdminUsers />} />
+                          <Route path="admin/users/:userId" element={<AdminUserDetail />} />
+                          <Route path="admin/courses" element={<CourseGovernance />} />
+                          <Route path="admin/lecturer-applications" element={<AdminLecturerApplications />} />
+                          <Route path="admin/moderation" element={<Moderation />} />
+                          <Route path="admin/settings" element={<AdminSettings />} />
+                        </Route>
+                      </Route>
+                      <Route element={<Layout />}>
+                        <Route index element={<Home />} />
+                        <Route path="about" element={<About />} />
+                        <Route path="features" element={<Features />} />
+                        <Route path="how-it-works" element={<How />} />
+                        <Route path="courses" element={<Courses />} />
+                        <Route path="courses/:id" element={<CourseDetail />} />
+                        <Route path="lecturers/:id" element={<LecturerProfilePage />} />
+                        <Route path="ai-learning" element={<Ai />} />
+                        <Route path="ai-quiz" element={<Quiz />} />
+                        {[
+                          "students",
+                          "lecturers",
+                          "classroom",
+                          "assessment",
+                          "progress",
+                          "notifications",
+                        ].map((path) => (
+                          <Route key={path} path={path} element={<Experience key={path} />} />
+                        ))}
+                        <Route path="architecture" element={<Architecture />} />
+                        <Route path="security" element={<Security />} />
+                        <Route path="research" element={<Research />} />
+                        <Route path="roadmap" element={<Roadmap />} />
+                        <Route path="contact" element={<Contact />} />
+                        <Route path="faq" element={<Faq />} />
+                        <Route path="help" element={<Help />} />
+                        <Route path="media" element={<Media />} />
+
+                        {["legal/privacy", "legal/terms", "legal/cookies", "accessibility"].map((path) => (
+                          <Route key={path} path={path} element={<Policy />} />
+                        ))}
+                        <Route path="404" element={<NotFound />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Route>
+                    </Routes>
+                  </ErrorBoundary>
+                </Suspense>
+              </RoleAiExperience>
+            </AvatarProvider>
+          </SessionProvider>
+        </PreferencesProvider>
+      </LanguageProvider>
+    </>
+  );
 }

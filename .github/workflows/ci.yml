@@ -2,6 +2,14 @@ name: phase6-ci
 on:
   push:
   pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
 jobs:
   static-gates:
     runs-on: ubuntu-latest
@@ -19,10 +27,46 @@ jobs:
       - run: pnpm test
       - run: pnpm validate:contracts
       - run: pnpm validate:migration-bootstrap
+      - run: pnpm validate:compose
+      - run: pnpm validate:production-config
       - run: pnpm scan:secrets
       - run: pnpm build
       - run: pnpm format:check
-      - run: docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.async.yml --profile research config --quiet
+
+  web-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.19.0, run_install: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24.20.0, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ailss/web lint
+      - run: pnpm --filter @ailss/web typecheck
+      - run: pnpm --filter @ailss/web test
+      - run: pnpm --filter @ailss/web build
+
+  mobile-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXPO_PUBLIC_AILSS_ENV: development
+      EXPO_PUBLIC_AILSS_API_BASE_URL: http://127.0.0.1:8080
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.19.0, run_install: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24.20.0, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ailss/mobile lint:phase41
+      - run: pnpm --filter @ailss/mobile typecheck
+      - run: pnpm --filter @ailss/mobile test
+      - run: pnpm --filter @ailss/mobile validate:config
+      - run: pnpm --filter @ailss/mobile build:development
+
   dev-core-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -34,10 +78,13 @@ jobs:
         with: { node-version: 24.20.0, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm keys:dev
+      - run: sudo chown -R 1000:1000 infrastructure/tls/generated
       - run: node scripts/dev/bootstrap-dev-env.mjs
       - run: pnpm env:dev-core
       - run: AILSS_PROFILE=dev-core pnpm smoke
-      - if: always()
-        run: docker compose --env-file .env --profile dev-core logs --no-color > phase6-dev-core.log || true
+      - if: failure()
+        run: |
+          docker compose --env-file .env --profile dev-core ps -a --format "table {{.Name}}\t{{.Service}}\t{{.Status}}\t{{.State}}\t{{.Health}}" || true
+          docker compose --env-file .env --profile dev-core ps -a -q | xargs -r docker inspect --format '{{.Name}}: status={{.State.Status}} exitCode={{.State.ExitCode}} restarts={{.RestartCount}} oomKilled={{.State.OOMKilled}} error={{.State.Error}}' || true
       - if: always()
         run: pnpm env:down || true

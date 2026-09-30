@@ -43,7 +43,9 @@ export function updateSystemSettings(patch: Partial<SystemSettings>): SystemSett
  * Restores only the explicitly persisted cold-start policy. Unknown or unavailable
  * values keep the secure default (login required).
  */
-export async function restoreColdStartLoginPreference(storage: Pick<PreferenceStorage, "read">): Promise<void> {
+export async function restoreColdStartLoginPreference(
+  storage: Pick<PreferenceStorage, "read">,
+): Promise<void> {
   try {
     const stored = await storage.read();
     if (stored === "true" || stored === "false") {

@@ -34,7 +34,7 @@ describe("Web Multi-Language Support (i18n & LanguageSwitcher)", () => {
     render(
       <LanguageProvider>
         <TestConsumer />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     expect(screen.getByTestId("current-lang").textContent).toBe("vi");
@@ -45,7 +45,7 @@ describe("Web Multi-Language Support (i18n & LanguageSwitcher)", () => {
     render(
       <LanguageProvider>
         <TestConsumer />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     fireEvent.click(screen.getByText("Switch to EN"));
@@ -65,7 +65,7 @@ describe("Web Multi-Language Support (i18n & LanguageSwitcher)", () => {
     render(
       <LanguageProvider>
         <TestConsumer />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     const switcherBtn = screen.getByRole("button", { name: /Ngôn ngữ:/i });
@@ -104,7 +104,7 @@ describe("Web Multi-Language Support (i18n & LanguageSwitcher)", () => {
     render(
       <LanguageProvider>
         <AdvancedConsumer />
-      </LanguageProvider>
+      </LanguageProvider>,
     );
 
     // Initial Vietnamese
@@ -146,4 +146,3 @@ describe("Web Multi-Language Support (i18n & LanguageSwitcher)", () => {
     expect(screen.getByTestId("t-help").textContent).toBe("Trợ giúp");
   });
 });
-

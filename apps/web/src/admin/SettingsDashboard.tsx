@@ -83,14 +83,18 @@ export default function SettingsDashboard() {
 
       {savedNotice && (
         <div className="dashboard-banner-notice" role="status">
-          <span><Icon name="check" size={15} /></span>
+          <span>
+            <Icon name="check" size={15} />
+          </span>
           <span>Đã lưu các thay đổi cấu hình thành công!</span>
         </div>
       )}
 
       {cacheNotice && (
         <div className="dashboard-banner-notice" role="status">
-          <span><Icon name="check" size={15} /></span>
+          <span>
+            <Icon name="check" size={15} />
+          </span>
           <span>{cacheNotice}</span>
         </div>
       )}
@@ -114,7 +118,8 @@ export default function SettingsDashboard() {
                 Yêu cầu đăng nhập lại khi đóng trình duyệt / thoát app
               </label>
               <p className="settings-item-desc">
-                Khi bật, hệ thống tự động hủy token phiên và yêu cầu xác thực lại mỗi khi người dùng tắt hẳn phiên làm việc hoặc khởi động lại thiết bị (Cold Start).
+                Khi bật, hệ thống tự động hủy token phiên và yêu cầu xác thực lại mỗi khi người dùng tắt hẳn
+                phiên làm việc hoặc khởi động lại thiết bị (Cold Start).
               </p>
             </div>
             <div className="toggle-switch-wrapper">
@@ -134,7 +139,8 @@ export default function SettingsDashboard() {
                 Chế độ Sudo Mode cho các tác vụ nhạy cảm
               </label>
               <p className="settings-item-desc">
-                Bắt buộc Quản trị viên phải nhập lại mật khẩu hiện tại trước khi thay đổi trạng thái người dùng (Khóa/Mở) hoặc duyệt khóa học.
+                Bắt buộc Quản trị viên phải nhập lại mật khẩu hiện tại trước khi thay đổi trạng thái người
+                dùng (Khóa/Mở) hoặc duyệt khóa học.
               </p>
             </div>
             <div className="toggle-switch-wrapper">
@@ -154,7 +160,8 @@ export default function SettingsDashboard() {
                 Thời gian nhàn rỗi tự động đăng xuất
               </label>
               <p className="settings-item-desc">
-                Tự động kết thúc phiên làm việc nếu người dùng không tương tác trong khoảng thời gian quy định.
+                Tự động kết thúc phiên làm việc nếu người dùng không tương tác trong khoảng thời gian quy
+                định.
               </p>
             </div>
             <div className="settings-control-right">
@@ -190,7 +197,8 @@ export default function SettingsDashboard() {
                 Thông báo đơn hàng & Biến động số dư SePay
               </label>
               <p className="settings-item-desc">
-                Nhận cảnh báo âm thanh và pop-up ngay khi có giao dịch thanh toán thành công hoặc ngoại lệ đối soát.
+                Nhận cảnh báo âm thanh và pop-up ngay khi có giao dịch thanh toán thành công hoặc ngoại lệ đối
+                soát.
               </p>
             </div>
             <div className="toggle-switch-wrapper">
@@ -210,7 +218,8 @@ export default function SettingsDashboard() {
                 Cảnh báo kiểm duyệt nội dung tự động
               </label>
               <p className="settings-item-desc">
-                Nhận cảnh báo khi thuật toán AI phát hiện bình luận vi phạm hoặc học viên gửi báo cáo khiếu nại mới.
+                Nhận cảnh báo khi thuật toán AI phát hiện bình luận vi phạm hoặc học viên gửi báo cáo khiếu
+                nại mới.
               </p>
             </div>
             <div className="toggle-switch-wrapper">
@@ -230,7 +239,8 @@ export default function SettingsDashboard() {
                 Hồ sơ ứng tuyển giảng viên mới
               </label>
               <p className="settings-item-desc">
-                Gửi thông báo nhắc nhở Quản trị viên thẩm định bằng cấp khi có học viên đăng ký nâng cấp vai trò giảng viên.
+                Gửi thông báo nhắc nhở Quản trị viên thẩm định bằng cấp khi có học viên đăng ký nâng cấp vai
+                trò giảng viên.
               </p>
             </div>
             <div className="toggle-switch-wrapper">
@@ -251,7 +261,9 @@ export default function SettingsDashboard() {
         <div className="section-card-header">
           <div>
             <h2>Thông Tin Hệ Thống & Bảo Trì Tài Nguyên</h2>
-            <p className="subtext">Chi tiết phiên bản triển khai, trạng thái máy chủ và dọn dẹp bộ nhớ đệm.</p>
+            <p className="subtext">
+              Chi tiết phiên bản triển khai, trạng thái máy chủ và dọn dẹp bộ nhớ đệm.
+            </p>
           </div>
         </div>
 

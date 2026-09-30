@@ -33,7 +33,7 @@ describe("assistant LLM provider failure handling", () => {
       );
       const provider = new HttpAssistantLlmProvider({ endpoint, apiKey: "test-key", model: "test-model" });
       await expect(provider.generate(request)).rejects.toMatchObject({
-        code: "AI_PROVIDER_UNAVAILABLE",
+        code: "AI_PROVIDER_HTTP_503",
         status: 503,
         retryable: true,
         message: "The assistant service is temporarily unavailable",
@@ -49,7 +49,7 @@ describe("assistant LLM provider failure handling", () => {
       model: "test-model",
     });
     await expect(provider.generate(request)).rejects.toMatchObject({
-      code: "AI_PROVIDER_UNAVAILABLE",
+      code: "AI_PROVIDER_NETWORK_ERROR",
       status: 503,
       retryable: true,
     });

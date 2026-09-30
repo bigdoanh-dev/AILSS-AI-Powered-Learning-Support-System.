@@ -31,6 +31,16 @@ export interface DueLearningEvent {
 export class LearningAuthoringRepository {
   public constructor(private readonly db: CassandraClient) {}
 
+  public async listOwned(lecturerId: string): Promise<AuthoringCourse[]> {
+    const rows = await this.db.execute(
+      "SELECT course_id FROM courses_by_lecturer WHERE lecturer_id=? LIMIT 100",
+      [types.Uuid.fromString(lecturerId)],
+      "LOCAL_QUORUM",
+    );
+    const courses = await Promise.all(rows.map((row) => this.get(String(row.course_id))));
+    return courses.filter((course): course is AuthoringCourse => !!course);
+  }
+
   public async reserve(
     scope: string,
     keyHash: number,

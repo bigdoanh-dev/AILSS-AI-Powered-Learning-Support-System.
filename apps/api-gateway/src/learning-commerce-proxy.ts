@@ -9,7 +9,24 @@ import {
 } from "../../../packages/security/src/index.js";
 import { parseBearerAuthorization } from "./protected-identity-proxy.js";
 
-type Name = "enroll" | "myCourses" | "roster" | "orderCreate" | "orderRead" | "payment" | "refund" | "dashboardRevenue";
+type Name =
+  | "enroll"
+  | "myCourses"
+  | "roster"
+  | "orderCreate"
+  | "orderRead"
+  | "payment"
+  | "refund"
+  | "dashboardRevenue"
+  | "lecturerRevenue"
+  | "payoutAccountRead"
+  | "payoutAccountSave"
+  | "adminPayouts"
+  | "preparePayouts"
+  | "approvePayout"
+  | "lecturerCommission"
+  | "adminCommissionRead"
+  | "adminCommissionSave";
 export async function learningCommerceProxyFactory(config: AppConfig): Promise<Record<Name, RequestHandler>> {
   if (!config.JWT_PUBLIC_KEY_PATH || !config.ACTOR_CONTEXT_PRIVATE_KEY_PATH)
     throw new Error("Learning commerce proxy requires signing keys");
@@ -123,5 +140,22 @@ export async function learningCommerceProxyFactory(config: AppConfig): Promise<R
       "learning.admin.dashboard.revenue",
       (r) => `/api/v1/admin/dashboard/revenue${r.url.includes("?") ? r.url.slice(r.url.indexOf("?")) : ""}`,
     ),
+    lecturerRevenue: handler(
+      "GET",
+      "learning.lecturer.dashboard.revenue",
+      (r) => `/api/v1/me/dashboard/revenue${r.url.includes("?") ? r.url.slice(r.url.indexOf("?")) : ""}`,
+    ),
+    payoutAccountRead: handler("GET", "learning.lecturer.payout-account", () => "/api/v1/me/payout-account"),
+    payoutAccountSave: handler("POST", "learning.lecturer.payout-account", () => "/api/v1/me/payout-account"),
+    adminPayouts: handler("GET", "learning.admin.payouts", () => "/api/v1/admin/payouts"),
+    preparePayouts: handler("POST", "learning.admin.payouts", () => "/api/v1/admin/payouts/prepare"),
+    approvePayout: handler(
+      "POST",
+      "learning.admin.payouts",
+      (r) => `/api/v1/admin/payouts/${enc(r.params.month)}/${enc(r.params.lecturerId)}/approve`,
+    ),
+    lecturerCommission: handler("GET", "learning.lecturer.commission", () => "/api/v1/me/commission"),
+    adminCommissionRead: handler("GET", "learning.admin.commission", () => "/api/v1/admin/commission"),
+    adminCommissionSave: handler("POST", "learning.admin.commission", () => "/api/v1/admin/commission"),
   };
 }

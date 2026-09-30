@@ -1,6 +1,6 @@
 /**
  * AILSS Critical-Write Durability Policy & Engine
- * 
+ *
  * Implements Phase 34.5 - 34.10:
  * Enforces business-level durability classifications (D0_CRITICAL, D1_HIGH, D2_STANDARD, D3_RECONSTRUCTABLE).
  * D0_CRITICAL mandates SYNCHRONOUS_SECONDARY_COMMIT before client ACK is returned.
@@ -22,7 +22,8 @@ export type DurabilityOperation =
 
 export interface DurabilityContractDefinition {
   readonly tier: DurabilityTier;
-  readonly ackRule: "SYNCHRONOUS_SECONDARY_COMMIT" | "REGIONALLY_DURABLE_JOURNAL" | "LOCAL_QUORUM" | "BEST_EFFORT";
+  readonly ackRule:
+    "SYNCHRONOUS_SECONDARY_COMMIT" | "REGIONALLY_DURABLE_JOURNAL" | "LOCAL_QUORUM" | "BEST_EFFORT";
   readonly localPersistence: "WAL_AND_COMMITTED_STORAGE" | "LOCAL_QUORUM_RF3" | "IN_MEMORY_WRITE_BACK";
   readonly remotePersistence: "SYNCHRONOUS_SECONDARY_QUORUM" | "ASYNCHRONOUS_STREAM" | "NONE";
   readonly secondaryAckRequiredBeforeClientResponse: boolean;
@@ -208,7 +209,8 @@ export class CriticalDurabilityCoordinator {
       }, 50);
     }
 
-    const totalLatency = Date.now() - startTime + (contract.secondaryAckRequiredBeforeClientResponse ? crossRegionDelta : 12);
+    const totalLatency =
+      Date.now() - startTime + (contract.secondaryAckRequiredBeforeClientResponse ? crossRegionDelta : 12);
 
     return {
       success: true,

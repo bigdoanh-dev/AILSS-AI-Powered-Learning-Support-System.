@@ -40,21 +40,15 @@ describe("Phase 40 Track 1 & 2: Browser E2E User Journeys & WCAG 2.2 AA", () => 
       expect(todayTab.getAttribute("aria-selected")).toBe("true");
 
       // Verify Continue Learning card
-      expect(
-        screen.getByText("Cấu trúc Dữ liệu & Giải thuật: Bài 4 - Cây Cân Bằng AVL"),
-      ).toBeTruthy();
+      expect(screen.getByText("Cấu trúc Dữ liệu & Giải thuật: Bài 4 - Cây Cân Bằng AVL")).toBeTruthy();
 
       // Verify Recommended Next Action
-      expect(
-        screen.getByText("Luyện tập: Phép xoay kép LR/RL trên Cây AVL"),
-      ).toBeTruthy();
+      expect(screen.getByText("Luyện tập: Phép xoay kép LR/RL trên Cây AVL")).toBeTruthy();
 
       // Test dismissing recommendation
       const dismissBtn = screen.getByRole("button", { name: "Bỏ qua khuyến nghị" });
       fireEvent.click(dismissBtn);
-      expect(
-        screen.queryByText("Luyện tập: Phép xoay kép LR/RL trên Cây AVL"),
-      ).toBeNull();
+      expect(screen.queryByText("Luyện tập: Phép xoay kép LR/RL trên Cây AVL")).toBeNull();
 
       const tutorLink = screen.getByRole("link", { name: "Hỏi AI Tutor bài này" });
       expect(tutorLink.getAttribute("href")).toBe("/app/ai-tutor?mode=STUDY_BUDDY");
@@ -62,7 +56,11 @@ describe("Phase 40 Track 1 & 2: Browser E2E User Journeys & WCAG 2.2 AA", () => 
     });
 
     it("allows learner to create a new Learning Goal", () => {
-      render(<MemoryRouter><UnifiedStudentWorkspace /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <UnifiedStudentWorkspace />
+        </MemoryRouter>,
+      );
       const addGoalBtn = screen.getByRole("button", { name: "+ Đặt mục tiêu học tập mới" });
       fireEvent.click(addGoalBtn);
       expect(screen.getByText("Luyện tập thêm 30 phút")).toBeTruthy();

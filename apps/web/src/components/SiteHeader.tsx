@@ -95,7 +95,11 @@ export function SiteHeader() {
       <NavLink to={coursesPath}>{t("nav.courses", "Khóa học")}</NavLink>
       {p ? (
         <NavLink to="/app">
-          {p.role === "ADMIN" ? t("nav.admin", "Quản trị") : p.role === "LECTURER" ? t("nav.teaching", "Giảng dạy") : t("nav.classroom", "Học tập")}
+          {p.role === "ADMIN"
+            ? t("nav.admin", "Quản trị")
+            : p.role === "LECTURER"
+              ? t("nav.teaching", "Giảng dạy")
+              : t("nav.classroom", "Học tập")}
         </NavLink>
       ) : (
         <NavLink to="/lecturers">{t("nav.forLecturers", "Dành cho giảng viên")}</NavLink>
@@ -119,9 +123,7 @@ export function SiteHeader() {
             {p && (
               <NavLink
                 to="/app/notifications"
-                className={({ isActive }) =>
-                  `header-notification-btn ${isActive ? "active" : ""}`
-                }
+                className={({ isActive }) => `header-notification-btn ${isActive ? "active" : ""}`}
                 aria-label={t("nav.notifications", "Thông báo")}
                 title={t("nav.notifications", "Thông báo")}
               >
@@ -222,7 +224,11 @@ export function SiteHeader() {
         >
           {links}
           {p && <NavLink to="/app/notifications">{t("nav.notifications", "Thông báo")}</NavLink>}
-          {p ? <Link to="/app/account">{t("nav.profile", "Hồ sơ của tôi")}</Link> : <Link to="/auth/login">{t("nav.login", "Đăng nhập")}</Link>}
+          {p ? (
+            <Link to="/app/account">{t("nav.profile", "Hồ sơ của tôi")}</Link>
+          ) : (
+            <Link to="/auth/login">{t("nav.login", "Đăng nhập")}</Link>
+          )}
         </nav>
       </Dialog>
       <nav className="web-bottom-dock" aria-label={t("nav.quickNav", "Điều hướng nhanh")}>
@@ -234,7 +240,15 @@ export function SiteHeader() {
         >
           {({ isActive }) => (
             <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
@@ -250,7 +264,15 @@ export function SiteHeader() {
         >
           {({ isActive }) => (
             <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
                 <path d="M6 6h10" />
                 <path d="M6 10h10" />
@@ -261,17 +283,49 @@ export function SiteHeader() {
           )}
         </NavLink>
         <NavLink
-          to={p?.role === "LECTURER" ? "/app/teaching/classes" : p?.role === "ADMIN" ? "/app" : p ? "/app/classes" : "/ai-learning"}
+          to={
+            p?.role === "LECTURER"
+              ? "/app/teaching/classes"
+              : p?.role === "ADMIN"
+                ? "/app"
+                : p
+                  ? "/app/classes"
+                  : "/ai-learning"
+          }
           className={({ isActive }) => `web-bottom-dock-item ${isActive ? "active" : ""}`}
-          aria-label={p?.role === "LECTURER" ? t("nav.teaching", "Giảng dạy") : p?.role === "ADMIN" ? t("nav.admin", "Quản trị") : p ? t("nav.classroom", "Lớp học") : t("nav.aiLearning", "Học AI")}
+          aria-label={
+            p?.role === "LECTURER"
+              ? t("nav.teaching", "Giảng dạy")
+              : p?.role === "ADMIN"
+                ? t("nav.admin", "Quản trị")
+                : p
+                  ? t("nav.classroom", "Lớp học")
+                  : t("nav.aiLearning", "Học AI")
+          }
         >
           {({ isActive }) => (
             <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
                 <path d="M6 12v5c3 3 9 3 12 0v-5" />
               </svg>
-              <span>{p?.role === "LECTURER" ? t("nav.teaching", "Giảng dạy") : p?.role === "ADMIN" ? t("nav.admin", "Quản trị") : p ? t("nav.classroom", "Lớp học") : t("nav.aiLearning", "Học AI")}</span>
+              <span>
+                {p?.role === "LECTURER"
+                  ? t("nav.teaching", "Giảng dạy")
+                  : p?.role === "ADMIN"
+                    ? t("nav.admin", "Quản trị")
+                    : p
+                      ? t("nav.classroom", "Lớp học")
+                      : t("nav.aiLearning", "Học AI")}
+              </span>
               {isActive && <span className="dock-indicator-dot" />}
             </>
           )}
@@ -283,7 +337,15 @@ export function SiteHeader() {
         >
           {({ isActive }) => (
             <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
                 <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
               </svg>
@@ -299,7 +361,15 @@ export function SiteHeader() {
         >
           {({ isActive }) => (
             <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <circle cx="12" cy="7" r="4" />
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               </svg>

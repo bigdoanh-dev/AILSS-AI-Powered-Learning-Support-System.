@@ -1,26 +1,65 @@
 import type { AssistantMode, ToolCall, ToolResult } from "./model.js";
 import { AppError } from "../../../../packages/http/src/index.js";
+import { randomUUID } from "node:crypto";
+import type { AssistantRepository } from "./repository.js";
 
 async function requestProvider(endpoint: string, init: RequestInit): Promise<Response> {
-  let response: Response;
-  try {
-    response = await fetch(endpoint, init);
-  } catch {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    let response: Response;
+    try {
+      response = await fetch(endpoint, init);
+    } catch (error) {
+      const timedOut =
+        init.signal?.aborted ||
+        (error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError"));
+      const cause = error instanceof Error ? error.cause : undefined;
+      const connectCode = cause && typeof cause === "object" && "code" in cause ? cause.code : undefined;
+      if (
+        attempt === 0 &&
+        !timedOut &&
+        ["EAI_AGAIN", "ENOTFOUND", "ECONNREFUSED", "UND_ERR_CONNECT_TIMEOUT"].includes(String(connectCode))
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        if (!init.signal?.aborted) continue;
+      }
+      throw new AppError(
+        timedOut ? "AI_PROVIDER_TIMEOUT" : "AI_PROVIDER_NETWORK_ERROR",
+        503,
+        "The assistant service is temporarily unavailable",
+        true,
+      );
+    }
+    if (response.ok) return response;
+
+    // A transient upstream outage can be brief. Reuse the same deadline and
+    // retry once; do not retry rate limits or authentication/configuration errors.
+    if (attempt === 0 && [502, 503, 504].includes(response.status) && !init.signal?.aborted) {
+      await response.body?.cancel().catch(() => undefined);
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      if (init.signal?.aborted)
+        throw new AppError(
+          "AI_PROVIDER_TIMEOUT",
+          503,
+          "The assistant service is temporarily unavailable",
+          true,
+        );
+      continue;
+    }
+
     throw new AppError(
-      "AI_PROVIDER_UNAVAILABLE",
+      `AI_PROVIDER_HTTP_${String(response.status)}`,
       503,
       "The assistant service is temporarily unavailable",
-      true,
+      response.status === 429 || response.status >= 500,
     );
   }
-  if (!response.ok)
-    throw new AppError(
-      "AI_PROVIDER_UNAVAILABLE",
-      503,
-      "The assistant service is temporarily unavailable",
-      true,
-    );
-  return response;
+
+  throw new AppError(
+    "AI_PROVIDER_UNAVAILABLE",
+    503,
+    "The assistant service is temporarily unavailable",
+    true,
+  );
 }
 
 async function readProviderJson<T>(response: Response): Promise<T> {
@@ -57,6 +96,7 @@ export interface LlmCompletionRequest {
   }[];
   readonly temperature?: number;
   readonly maxTokens?: number;
+  readonly usageContext?: { readonly userId: string; readonly sessionId: string };
   /** In-process-only data for the explicitly enabled integration acceptance adapter. */
   readonly integrationContext?: {
     readonly mode: AssistantMode;
@@ -193,8 +233,39 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
       readonly apiKey: string;
       readonly model: string;
       readonly timeoutMs?: number;
+      readonly tokenUsageRepository?: Pick<AssistantRepository, "saveTokenUsage">;
+      readonly onTokenUsageError?: (error: unknown) => void;
     },
   ) {}
+
+  private saveUsage(
+    request: LlmCompletionRequest,
+    provider: string,
+    usage: LlmCompletionResponse["usage"],
+  ): void {
+    const repository = this.options.tokenUsageRepository;
+    const context = request.usageContext;
+    if (!repository || !context || !usage) return;
+    const input = {
+      usageId: randomUUID(),
+      userId: context.userId,
+      sessionId: context.sessionId,
+      provider,
+      promptTokens: usage.inputTokens,
+      completionTokens: usage.outputTokens,
+      timestamp: new Date(),
+    };
+    // Persist after provider usage is known, without adding Cassandra latency to the answer.
+    void Promise.resolve()
+      .then(() => repository.saveTokenUsage(input))
+      .catch((error: unknown) => {
+        try {
+          this.options.onTokenUsageError?.(error);
+        } catch {
+          // The observer must never turn a failed accounting write into an unhandled rejection.
+        }
+      });
+  }
 
   public async generate(request: LlmCompletionRequest): Promise<LlmCompletionResponse> {
     const isGoogle =
@@ -202,6 +273,7 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
       this.options.endpoint.endsWith(":generateContent");
 
     if (isGoogle) {
+      const isGemini3 = /^gemini-3(?:[.-]|$)/u.test(this.options.model);
       // Gemini native format
       const contents = request.messages
         .filter((m) => m.role !== "system")
@@ -220,7 +292,9 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
           systemInstruction: { parts: [{ text: request.systemPrompt }] },
           contents,
           generationConfig: {
-            temperature: request.temperature ?? 0.3,
+            ...(isGemini3
+              ? { thinkingConfig: { thinkingLevel: "low" } }
+              : { temperature: request.temperature ?? 0.3 }),
             maxOutputTokens: request.maxTokens ?? 2048,
           },
         }),
@@ -232,17 +306,19 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
         usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
       }>(res);
 
+      const usage = validUsage(
+        json.usageMetadata?.promptTokenCount,
+        json.usageMetadata?.candidatesTokenCount,
+      );
       const text =
         json.candidates?.[0]?.content?.parts
           ?.map((part) => (typeof part.text === "string" ? part.text : ""))
           .join("") ?? "";
       if (!text.trim()) throw invalidProviderResponse();
+      this.saveUsage(request, "gemini", usage);
       return {
         content: text,
-        usage: {
-          inputTokens: json.usageMetadata?.promptTokenCount ?? 0,
-          outputTokens: json.usageMetadata?.candidatesTokenCount ?? 0,
-        },
+        ...(usage ? { usage } : {}),
       };
     }
 
@@ -275,14 +351,26 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
       usage?: { prompt_tokens?: number; completion_tokens?: number };
     }>(res);
 
+    const usage = validUsage(json.usage?.prompt_tokens, json.usage?.completion_tokens);
     const text = json.choices?.[0]?.message?.content;
     if (typeof text !== "string" || !text.trim()) throw invalidProviderResponse();
+    this.saveUsage(request, "openai-compatible", usage);
     return {
       content: text,
-      usage: {
-        inputTokens: json.usage?.prompt_tokens ?? 0,
-        outputTokens: json.usage?.completion_tokens ?? 0,
-      },
+      ...(usage ? { usage } : {}),
     };
   }
+}
+
+function validUsage(inputTokens: unknown, outputTokens: unknown): LlmCompletionResponse["usage"] {
+  if (
+    typeof inputTokens !== "number" ||
+    typeof outputTokens !== "number" ||
+    !Number.isSafeInteger(inputTokens) ||
+    !Number.isSafeInteger(outputTokens) ||
+    inputTokens < 0 ||
+    outputTokens < 0
+  )
+    return undefined;
+  return { inputTokens, outputTokens };
 }

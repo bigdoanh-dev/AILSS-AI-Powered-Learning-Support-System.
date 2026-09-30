@@ -18,7 +18,14 @@ try {
   groups.push(await vitestGroup("WEB_VITEST", join(root, "apps/web"), join(temp, "web.json")));
   groups.push(await nodeGroup());
   groups.push(await vitestGroup("MOBILE", join(root, "apps/mobile"), join(temp, "mobile.json")));
-  groups.push(await commandGroup("BROWSER_E2E", "pnpm", ["--filter", "@ailss/web", "verify:phase40:revision-l"], "apps/web/scripts/verify-revision-l-runtime.mjs"));
+  groups.push(
+    await commandGroup(
+      "BROWSER_E2E",
+      "pnpm",
+      ["--filter", "@ailss/web", "verify:phase40:revision-l"],
+      "apps/web/scripts/verify-phase40-revision-l.mjs",
+    ),
+  );
 
   const suites = groups.flatMap((group) => group.suites);
   const paths = suites.map((suite) => suite.path);
@@ -27,12 +34,15 @@ try {
   const duplicateTests = suites
     .filter((suite) => duplicatePaths.has(suite.path))
     .reduce((total, suite) => total + (suite.testCount ?? 0), 0);
-  const totals = groups.reduce((value, group) => ({
-    tests: value.tests + group.total,
-    passed: value.passed + group.passed,
-    failed: value.failed + group.failed,
-    skipped: value.skipped + group.skipped,
-  }), { tests: 0, passed: 0, failed: 0, skipped: 0 });
+  const totals = groups.reduce(
+    (value, group) => ({
+      tests: value.tests + group.total,
+      passed: value.passed + group.passed,
+      failed: value.failed + group.failed,
+      skipped: value.skipped + group.skipped,
+    }),
+    { tests: 0, passed: 0, failed: 0, skipped: 0 },
+  );
   const output = {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
@@ -51,7 +61,10 @@ try {
     suites,
   };
   await mkdir(join(root, "artifacts/release-evidence"), { recursive: true });
-  await writeFile(join(root, `artifacts/release-evidence/${releaseLabel}-test-discovery.json`), `${JSON.stringify(output, null, 2)}\n`);
+  await writeFile(
+    join(root, `artifacts/release-evidence/${releaseLabel}-test-discovery.json`),
+    `${JSON.stringify(output, null, 2)}\n`,
+  );
   process.stdout.write(`${JSON.stringify(output.summary)}\n`);
   if (totals.failed > 0) process.exitCode = 1;
 } finally {
@@ -61,7 +74,9 @@ try {
 async function vitestGroup(name, cwd, outputFile) {
   await run("pnpm", ["exec", "vitest", "run", "--reporter=json", `--outputFile=${outputFile}`], cwd);
   const report = JSON.parse(await readFile(outputFile, "utf8"));
-  const suites = await Promise.all(report.testResults.map(async (result) => suiteRecord(name, result.name, result.assertionResults)));
+  const suites = await Promise.all(
+    report.testResults.map(async (result) => suiteRecord(name, result.name, result.assertionResults)),
+  );
   return {
     name,
     runner: "vitest",
@@ -75,62 +90,119 @@ async function vitestGroup(name, cwd, outputFile) {
 }
 
 async function nodeGroup() {
-  const files = ["session", "lecturer", "admin", "student-commerce", "local-library", "realtime"]
-    .map((name) => `apps/web/server/${name}.test.mjs`);
+  const files = ["session", "lecturer", "admin", "student-commerce", "local-library", "realtime"].map(
+    (name) => `apps/web/server/${name}.test.mjs`,
+  );
   const output = await run("node", ["--test", "--test-reporter=tap", ...files], root, true);
   const value = (label) => Number(new RegExp(`^# ${label} (\\d+)$`, "mu").exec(output)?.[1] ?? 0);
   const tests = output.split("\n").flatMap((line) => {
     const match = /^ok \d+ - (.+)$/u.exec(line.trim());
     return match?.[1] ? [{ name: match[1], status: "passed" }] : [];
   });
-  const suites = await Promise.all(files.map(async (path) => ({
-    path, category: "WEB_NODE", sha256: sha256(await readFile(join(root, path))),
-    tests: [], testCount: null,
-  })));
-  return { name: "WEB_NODE", runner: "node:test", suiteCount: files.length, total: value("tests"), passed: value("pass"), failed: value("fail"), skipped: value("skipped"), suites, discoveredTestNames: tests };
+  const suites = await Promise.all(
+    files.map(async (path) => ({
+      path,
+      category: "WEB_NODE",
+      sha256: sha256(await readFile(join(root, path))),
+      tests: [],
+      testCount: null,
+    })),
+  );
+  return {
+    name: "WEB_NODE",
+    runner: "node:test",
+    suiteCount: files.length,
+    total: value("tests"),
+    passed: value("pass"),
+    failed: value("fail"),
+    skipped: value("skipped"),
+    suites,
+    discoveredTestNames: tests,
+  };
 }
 
 async function suiteRecord(group, absolutePath, assertions) {
   const path = relative(root, resolve(absolutePath));
-  const category = group === "ROOT_VITEST" && /migration|cassandra-bootstrap/u.test(path) ? "MIGRATION" : group;
+  const category =
+    group === "ROOT_VITEST" && /migration|cassandra-bootstrap/u.test(path) ? "MIGRATION" : group;
   return {
-    path, category, sha256: sha256(await readFile(join(root, path))), testCount: assertions.length,
+    path,
+    category,
+    sha256: sha256(await readFile(join(root, path))),
+    testCount: assertions.length,
     tests: assertions.map((test) => ({ name: test.fullName, status: test.status })),
   };
 }
 
 function groupFromSuites(name, runner, suites) {
   const tests = suites.flatMap((suite) => suite.tests);
-  return { name, runner, suiteCount: suites.length, total: tests.length,
+  return {
+    name,
+    runner,
+    suiteCount: suites.length,
+    total: tests.length,
     passed: tests.filter((test) => test.status === "passed").length,
     failed: tests.filter((test) => test.status === "failed").length,
-    skipped: tests.filter((test) => !["passed", "failed"].includes(test.status)).length, suites };
+    skipped: tests.filter((test) => !["passed", "failed"].includes(test.status)).length,
+    suites,
+  };
 }
 
 async function commandGroup(name, command, args, path) {
   const output = await run(command, args, root, true);
-  const resultLine = output.split("\n").findLast((line) => line.startsWith("{") && line.includes('"browserGoldenPath"'));
+  const resultLine = output
+    .split("\n")
+    .findLast((line) => line.startsWith("{") && line.includes('"browserGoldenPath"'));
   if (!resultLine) throw new Error(`BROWSER_RESULT_MISSING\n${output}`);
   const result = JSON.parse(resultLine);
   const tests = Object.entries(result)
     .filter(([key]) => key !== "networkRequests")
     .map(([name, status]) => ({ name, status: status === "PASS" ? "passed" : "failed" }));
-  if (!tests.length || tests.some((test) => test.status !== "passed")) throw new Error(`BROWSER_ASSERTION_FAILED\n${resultLine}`);
-  return { name, runner: "playwright", suiteCount: 1, total: tests.length, passed: tests.length, failed: 0, skipped: 0,
-    suites: [{ path, category: name, sha256: sha256(await readFile(join(root, path))), testCount: tests.length, tests }] };
+  if (!tests.length || tests.some((test) => test.status !== "passed"))
+    throw new Error(`BROWSER_ASSERTION_FAILED\n${resultLine}`);
+  return {
+    name,
+    runner: "playwright",
+    suiteCount: 1,
+    total: tests.length,
+    passed: tests.length,
+    failed: 0,
+    skipped: 0,
+    suites: [
+      {
+        path,
+        category: name,
+        sha256: sha256(await readFile(join(root, path))),
+        testCount: tests.length,
+        tests,
+      },
+    ],
+  };
 }
 
 function run(command, args, cwd, capture = false) {
   return new Promise((resolveRun, reject) => {
-    const child = spawn(command, args, { cwd, env: process.env, stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit" });
+    const child = spawn(command, args, {
+      cwd,
+      env: process.env,
+      stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit",
+    });
     let output = "";
     if (capture) {
-      child.stdout.on("data", (chunk) => { output += chunk; });
-      child.stderr.on("data", (chunk) => { output += chunk; });
+      child.stdout.on("data", (chunk) => {
+        output += chunk;
+      });
+      child.stderr.on("data", (chunk) => {
+        output += chunk;
+      });
     }
     child.on("error", reject);
-    child.on("close", (code) => code === 0 ? resolveRun(output) : reject(new Error(`${command} exited ${String(code)}\n${output}`)));
+    child.on("close", (code) =>
+      code === 0 ? resolveRun(output) : reject(new Error(`${command} exited ${String(code)}\n${output}`)),
+    );
   });
 }
 
-function sha256(content) { return createHash("sha256").update(content).digest("hex"); }
+function sha256(content) {
+  return createHash("sha256").update(content).digest("hex");
+}

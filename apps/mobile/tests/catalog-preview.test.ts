@@ -6,7 +6,11 @@ import {
   loadConfiguredCoursePreview,
 } from "../src/catalog-preview";
 
-const sample = (courseId: string, categoryId: string) => ({ courseId, title: `Khóa ${courseId}`, categoryId });
+const sample = (courseId: string, categoryId: string) => ({
+  courseId,
+  title: `Khóa ${courseId}`,
+  categoryId,
+});
 
 describe("configured mobile catalog preview", () => {
   it("requests only bounded, configured category pages and deduplicates courses", async () => {
@@ -20,8 +24,11 @@ describe("configured mobile catalog preview", () => {
     const result = await loadConfiguredCoursePreview(request);
 
     expect(request).toHaveBeenCalledTimes(4);
-    expect(request.mock.calls.map(([path]) => new URL(path, "https://example.invalid").searchParams.get("categoryId")))
-      .toEqual(configuredCourseCategories.map((category) => category.id));
+    expect(
+      request.mock.calls.map(([path]) =>
+        new URL(path, "https://example.invalid").searchParams.get("categoryId"),
+      ),
+    ).toEqual(configuredCourseCategories.map((category) => category.id));
     expect(result.courses.map((course) => course.courseId)).toEqual([
       "shared",
       ...configuredCourseCategories.map((category) => category.id),
@@ -44,7 +51,9 @@ describe("configured mobile catalog preview", () => {
   });
 
   it("fails if none of the configured categories could be read", async () => {
-    const request = vi.fn(async () => { throw new Error("offline"); });
+    const request = vi.fn(async () => {
+      throw new Error("offline");
+    });
     await expect(loadConfiguredCoursePreview(request)).rejects.toThrow("offline");
   });
 

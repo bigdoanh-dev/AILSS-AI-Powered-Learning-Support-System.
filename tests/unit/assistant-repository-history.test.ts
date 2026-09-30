@@ -19,15 +19,24 @@ describe("AssistantRepository conversation history", () => {
     // share a timestamp, so message_id is needed for deterministic ordering.
     const newestFirst = [
       row({
-        message_id: messageIds[2], conversation_id: conversationId,
-        created_at: new Date("2026-09-23T10:01:00.000Z"), sender: "ASSISTANT",
-        content: "Latest reply", tool_calls: null, tool_results: null,
+        message_id: messageIds[2],
+        conversation_id: conversationId,
+        created_at: new Date("2026-09-23T10:01:00.000Z"),
+        sender: "ASSISTANT",
+        content: "Latest reply",
+        tool_calls: null,
+        tool_results: null,
         citations: '[{"title":"Source"}]',
       }),
       row({
-        message_id: messageIds[1], conversation_id: conversationId,
-        created_at: new Date("2026-09-23T10:01:00.000Z"), sender: "USER",
-        content: "Latest question", tool_calls: null, tool_results: null, citations: null,
+        message_id: messageIds[1],
+        conversation_id: conversationId,
+        created_at: new Date("2026-09-23T10:01:00.000Z"),
+        sender: "USER",
+        content: "Latest question",
+        tool_calls: null,
+        tool_results: null,
+        citations: null,
       }),
     ];
     const execute = vi.fn().mockResolvedValue(newestFirst);

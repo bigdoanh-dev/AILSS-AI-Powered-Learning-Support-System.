@@ -35,10 +35,14 @@ export function learningInteractionEligibilityRouter(
           .enum(["COMMENT_READ_PUBLIC", "COMMENT_WRITE", "REVIEW_READ_PUBLIC", "REVIEW_CREATE"])
           .parse(req.query.intent),
         course = await repository.getCanonicalCourse(id);
-      if (!course || course.state !== "PUBLISHED")
+      if (!course || !["PUBLISHED", "HIDDEN"].includes(course.state))
         throw new AppError("RESOURCE_NOT_FOUND", 404, "Resource not found");
       if (intent === "COMMENT_READ_PUBLIC" || intent === "REVIEW_READ_PUBLIC")
-        return res.status(200).json({ eligible: true, reason: "ELIGIBLE", version: course.recordVersion });
+        return res.status(200).json({
+          eligible: course.state === "PUBLISHED",
+          reason: course.state === "PUBLISHED" ? "ELIGIBLE" : "RESOURCE_NOT_PUBLIC",
+          version: course.recordVersion,
+        });
       const token = header(req, "x-actor-context");
       if (!token) throw new AppError("INVALID_ACTOR_CONTEXT", 401, "Actor Context is required");
       let actor;

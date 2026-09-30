@@ -14,6 +14,13 @@ export function refreshProxy(config: AppConfig): RequestHandler {
   return identityPostProxy(config, "/api/v1/auth/refresh", false);
 }
 
+export function passwordResetProxy(
+  config: AppConfig,
+  operation: "request" | "verify" | "complete",
+): RequestHandler {
+  return identityPostProxy(config, `/api/v1/auth/password-reset/${operation}`, false);
+}
+
 export function socialLoginProxy(config: AppConfig): RequestHandler {
   return async (request, response, next): Promise<void> => {
     try {
@@ -46,11 +53,7 @@ export function socialLoginProxy(config: AppConfig): RequestHandler {
   };
 }
 
-function identityPostProxy(
-  config: AppConfig,
-  path: "/api/v1/auth/register" | "/api/v1/auth/login" | "/api/v1/auth/refresh",
-  forwardIdempotencyKey: boolean,
-): RequestHandler {
+function identityPostProxy(config: AppConfig, path: string, forwardIdempotencyKey: boolean): RequestHandler {
   return async (request, response, next): Promise<void> => {
     try {
       const context = currentRequestContext();

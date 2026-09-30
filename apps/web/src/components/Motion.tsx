@@ -81,8 +81,18 @@ function revealKind(element: HTMLElement): RevealKind {
   const requested = element.dataset.reveal;
   if (requested === "depth" || requested === "line" || requested === "mask" || requested === "text")
     return requested;
-  if (element.matches("picture,img,table,.attendance-scroll,.gallery-item,.video-story,.recharts-wrapper,.recharts-pie-wrapper,.recharts-radar-wrapper")) return "mask";
-  if (element.matches("article,.study-card,.form-panel,.application-panel,.preview-panel,.dashboard-section-card,.kpi-card,.cognitive-level-card")) return "depth";
+  if (
+    element.matches(
+      "picture,img,table,.attendance-scroll,.gallery-item,.video-story,.recharts-wrapper,.recharts-pie-wrapper,.recharts-radar-wrapper",
+    )
+  )
+    return "mask";
+  if (
+    element.matches(
+      "article,.study-card,.form-panel,.application-panel,.preview-panel,.dashboard-section-card,.kpi-card,.cognitive-level-card",
+    )
+  )
+    return "depth";
   return "text";
 }
 

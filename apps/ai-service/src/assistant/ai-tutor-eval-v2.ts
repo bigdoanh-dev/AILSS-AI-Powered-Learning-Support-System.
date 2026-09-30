@@ -123,7 +123,8 @@ export class AITutorEvaluatorV2 {
       tenantId: "tenant-polytech",
       language: "vi",
       prompt: "Tôi đang ở mức DEVELOPING đối với Cây AVL, tôi nên luyện tập gì tiếp theo?",
-      expectedBehavior: "Nhận biết khoảng trống kiến thức về phép xoay kép RL/LR và đề xuất bài tập tương ứng.",
+      expectedBehavior:
+        "Nhận biết khoảng trống kiến thức về phép xoay kép RL/LR và đề xuất bài tập tương ứng.",
       request: {
         sessionId: "eval2-sess-6",
         tenantId: "tenant-polytech",
@@ -156,16 +157,14 @@ export class AITutorEvaluatorV2 {
   /**
    * Evaluates citation quality and confidence
    */
-  public static evaluateCitationConfidence(
-    citation: {
-      documentId: string;
-      snippet: string;
-      docExists: boolean;
-      sectionExists: boolean;
-      claimSupported: boolean;
-      isStale: boolean;
-    },
-  ): {
+  public static evaluateCitationConfidence(citation: {
+    documentId: string;
+    snippet: string;
+    docExists: boolean;
+    sectionExists: boolean;
+    claimSupported: boolean;
+    isStale: boolean;
+  }): {
     confidenceScore: number;
     classification: CitationQualityClassification;
     shouldAbstain: boolean;

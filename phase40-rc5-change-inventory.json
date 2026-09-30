@@ -1,0 +1,2148 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-23T03:48:58.243Z",
+  "baseTag": "v6.2.0-rc.4",
+  "workingTreeOnly": true,
+  "files": [
+    {
+      "path": ".env.example",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": ".gitignore",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "api-authorization-coverage-manifest.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "api-route-inventory.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "apps/ai-service/src/assistant/citation-policy.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/ai-service/src/assistant/domain-client.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/ai-service/src/assistant/model.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/ai-service/src/assistant/orchestrator.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/ai-service/src/assistant/roles.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/ai-service/src/assistant/tool-registry.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/ai-service/src/assistant/tool-runner.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/ai-service/src/server.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/api-gateway/src/adaptive-learning-proxy.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/api-gateway/src/assistant-proxy.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/api-gateway/src/federation-proxy.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/api-gateway/src/learning-commerce-proxy.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/api-gateway/src/server.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/assessment-service/src/repository.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/assessment-service/src/schedule-internal-router.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/assessment-service/src/server.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/assessment-service/src/service.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/identity-service/src/federation/repository.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/identity-service/src/federation/router.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/identity-service/src/federation/service.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/identity-service/src/server.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/identity-service/src/tenant/service.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/adaptive/internal-router.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/adaptive/mastery-consumer.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/adaptive/mastery-ingestion-repository.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/adaptive/plan-context.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/adaptive/runtime-repository.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/adaptive/runtime-router.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/adaptive/study-plan-service.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/commerce/repository.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/commerce/service.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/finance/finance-service.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/finance/index.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/finance/payment-provider.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/finance/repository.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/finance/router.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/materials/internal-router.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/progress/repository.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/progress/service.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/learning-service/src/server.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/[screen].tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/admin/index.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/admin/moderation/[itemId].tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/admin/revenue/index.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/assessments/[quizId]/attempt/[attemptId].tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/assessments/[quizId]/index.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/assessments/[quizId]/result/[resultId].tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/courses/index.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/index.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/teaching/assessments/[quizId]/results/index.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/teaching/classes/[classId]/index.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/teaching/classes/[classId]/sessions/[sessionId]/attendance.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/teaching/classes/[classId]/sessions/index.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/teaching/classes/index.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/app/teaching/index.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/mobile/src/grading-store.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/package.json",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/scripts/serve.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/scripts/verify-phase40-revision-l.mjs",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Revision L/M",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/server/session.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/server/student.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/src/admin/LogsDashboard.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/src/admin/Moderation.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/src/admin/RevenueDashboard.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/src/admin/SettingsDashboard.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/src/App.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/src/lecturer/Teaching.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/src/pages/Support.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/src/student/AiTutor.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/src/student/api.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/src/student/Commerce.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/src/student/StudyPlan.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/tests/admin-dashboards.test.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "apps/web/tests/motion-auth.test.tsx",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/api-authorization-coverage-manifest.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/api-route-inventory.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/backup-object-lock-status.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/break-glass-audit-record.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/d0-storage-topology.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/deployment-image-manifest.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/dns-probes-vantage-50.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/finops-billing-export-august2026.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/iam-access-matrix.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/metric-semantics-registry.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/payment-pci-scope-assessment.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase27-release-attestation.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase28-production-attestation.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase29-production-cutover-evidence.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase30-production-operations-evidence.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase31-production-evidence-integrity.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase31-release-attestation.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase32-evidence-timeline.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase32-release-and-commercial-readiness-evidence.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase33-external-assurance-commercial-pilot-evidence.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase34-external-validation-evidence.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase35-external-assurance-evidence.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase36-artifact-infrastructure-assurance.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase36-test-baseline-reconciliation.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase37-crash-durability-external-gates.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase38-storage-config-rpo-assurance.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase39-d0-config-correction.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase39-product-expansion-evidence.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/phase40-pilot-hardening-evidence.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/pilot-deployment-manifest.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/production-topology.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/README.md",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "DOCUMENTATION_REQUIRED",
+      "reason": "DOCUMENTATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/regional-rpo-sequence-proof.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/release614-deployment-timeline.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/release620rc1-test-manifest.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/release620rc2-test-manifest.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/release620rc3-test-manifest.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/release620rc4-artifact-manifest.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/release620rc4-runtime-inventory.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/release620rc4-test-manifest.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/sbom.cyclonedx.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "artifacts/release-evidence/test-discovery-manifest.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "backup-object-lock-status.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "break-glass-audit-record.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "config/production.env.example",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "contracts/mastery-evidence-event.schema.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "d0-storage-topology.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "database/migration-inventory.json",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "MIGRATION_REQUIRED",
+      "reason": "MIGRATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "database/migration-registry.json",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "MIGRATION_REQUIRED",
+      "reason": "MIGRATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "database/migrations/dev/077_product_analytics_events.cql",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "MIGRATION_REQUIRED",
+      "reason": "MIGRATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "database/migrations/dev/081_finance_projection_and_durable_refunds.cql",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "MIGRATION_REQUIRED",
+      "reason": "MIGRATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "database/migrations/dev/082_identity_federation_runtime.cql",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "MIGRATION_REQUIRED",
+      "reason": "MIGRATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "database/migrations/dev/083_adaptive_runtime_completion.cql",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "MIGRATION_REQUIRED",
+      "reason": "MIGRATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "database/migrations/dev/084_mastery_evidence_ingestion.cql",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "MIGRATION_REQUIRED",
+      "reason": "MIGRATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "database/migrations/research/077_product_analytics_events.cql",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "MIGRATION_REQUIRED",
+      "reason": "MIGRATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "database/migrations/research/081_finance_projection_and_durable_refunds.cql",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "MIGRATION_REQUIRED",
+      "reason": "MIGRATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "database/migrations/research/082_identity_federation_runtime.cql",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "MIGRATION_REQUIRED",
+      "reason": "MIGRATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "database/migrations/research/083_adaptive_runtime_completion.cql",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "MIGRATION_REQUIRED",
+      "reason": "MIGRATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "database/migrations/research/084_mastery_evidence_ingestion.cql",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "MIGRATION_REQUIRED",
+      "reason": "MIGRATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "deployment-image-manifest.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "dns-probes-vantage-50.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "docker-compose.observability.yml",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "docker-compose.yml",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "docs/PHASE_40_REVISION_F_IMPLEMENTATION.md",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Revision F",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "DOCUMENTATION_REQUIRED",
+      "reason": "DOCUMENTATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "docs/PHASE_40_REVISION_G_PROGRESS.md",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Revision G",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "DOCUMENTATION_REQUIRED",
+      "reason": "DOCUMENTATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "docs/PHASE_40_REVISION_H_PROGRESS.md",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Revision H",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "DOCUMENTATION_REQUIRED",
+      "reason": "DOCUMENTATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "docs/PHASE_40_REVISION_I_PROGRESS.md",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Revision I",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "DOCUMENTATION_REQUIRED",
+      "reason": "DOCUMENTATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "docs/PHASE_40_REVISION_J_PROGRESS.md",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Revision J",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "DOCUMENTATION_REQUIRED",
+      "reason": "DOCUMENTATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "docs/PHASE_40_REVISION_L_PROGRESS.md",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Revision L",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "DOCUMENTATION_REQUIRED",
+      "reason": "DOCUMENTATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "finops-billing-export-august2026.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "iam-access-matrix.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "lint-baseline.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "metric-semantics-registry.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "ops/observability/alertmanager.yml",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "ops/observability/alerts.yml",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "ops/observability/grafana/dashboards/platform-overview.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "ops/observability/grafana/provisioning/dashboards/ailss.yml",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "ops/observability/grafana/provisioning/datasources/prometheus.yml",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "ops/observability/prometheus.yml",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "ops/vault/ailss-service-policy.hcl",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "ops/vault/kubernetes-workload.env.example",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "package.json",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "packages/config/src/index.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "packages/contracts/src/adaptive-learning-v2.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "packages/http/src/rate-limiter.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "packages/observability/src/index.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "packages/runtime/src/index.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "packages/security/src/saml.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "packages/security/src/secret-provider.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "payment-pci-scope-assessment.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase27-release-attestation.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase28-production-attestation.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase29-production-cutover-evidence.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase30-production-operations-evidence.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase31-production-evidence-integrity.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase31-release-attestation.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase32-evidence-timeline.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase32-release-and-commercial-readiness-evidence.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase33-external-assurance-commercial-pilot-evidence.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase34-external-validation-evidence.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase35-external-assurance-evidence.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase36-artifact-infrastructure-assurance.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase36-test-baseline-reconciliation.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase37-crash-durability-external-gates.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase38-storage-config-rpo-assurance.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase39-d0-config-correction.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase39-product-expansion-evidence.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase40-pilot-feature-scope.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "phase40-pilot-hardening-evidence.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "phase40-rc5-change-inventory.json",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Revision L/M",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "pilot-deployment-manifest.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "production-topology.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "README.md",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "DOCUMENTATION_REQUIRED",
+      "reason": "DOCUMENTATION_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "regional-rpo-sequence-proof.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "release614-deployment-timeline.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "release620rc1-test-manifest.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "release620rc2-test-manifest.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "release620rc3-test-manifest.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "release620rc4-artifact-manifest.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "release620rc4-runtime-inventory.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "release620rc4-test-manifest.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "sbom.cyclonedx.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "scripts/acceptance/capture-phase40-durable.mjs",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/acceptance/phase-40-revision-l-local-runtime.mjs",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Revision L/M",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/audit-dead-code.mjs",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/generate-phase40-runtime-feature-graph.mjs",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/generate-rc2-manifest.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/generate-rc3-manifest.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/generate-rc4-manifest.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/generate-sbom.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/inventory-rc5-changes.mjs",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Revision L/M",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/lint-no-regression.mjs",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/precheck-populated-migrations.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/rc-candidate-policy.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/rc-manifest-builder.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "RELEASE_EVIDENCE_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/run-rc5-canonical-tests.mjs",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Revision L/M",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/update-pilot-evidence.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/validate-migration-bootstrap-parity.mjs",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/verify-clean-cassandra-bootstrap.mjs",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/ci/verify-evidence-signatures.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/dev/bootstrap-cassandra.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/dev/provision-rabbitmq.mjs",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "scripts/operations/finance-projection-backfill.mjs",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": true,
+      "intendedForRC5": true,
+      "classification": "RUNTIME_REQUIRED",
+      "reason": "RUNTIME_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "test-discovery-manifest.json",
+      "changeType": "DELETED",
+      "originPhaseRevision": "Historical phase evidence relocation",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "RELEASE_EVIDENCE_REQUIRED",
+      "reason": "Historical evidence is relocated to artifacts/release-evidence; preserve content and remove root duplicate."
+    },
+    {
+      "path": "tests/load/commerce-revenue.k6.js",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/security/http.test.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/unit/assistant-domain-client-rag.test.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/unit/assistant-orchestrator.test.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/unit/assistant-tool-authorization.test.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/unit/federation-runtime.test.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40, Revisions F–H",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/unit/oidc-security-conformance.test.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/unit/phase24-saml-security.test.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/unit/phase39-adaptive-learning-v2.test.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40, Revisions I–K",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/unit/phase39-d0-config-correction.test.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/unit/phase40-citation-policy.test.ts",
+      "changeType": "UNTRACKED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/unit/populated-migration-precheck.test.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/unit/sepay-repository.test.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    },
+    {
+      "path": "tests/unit/sepay.test.ts",
+      "changeType": "MODIFIED",
+      "originPhaseRevision": "Phase 40 accumulated working tree; exact revision not proven",
+      "runtimeImpact": false,
+      "intendedForRC5": true,
+      "classification": "TEST_REQUIRED",
+      "reason": "TEST_REQUIRED for accumulated Phase 40 release scope; see RC4-to-RC5 diff review."
+    }
+  ],
+  "summary": {
+    "DOCUMENTATION_REQUIRED": 8,
+    "MIGRATION_REQUIRED": 12,
+    "RELEASE_EVIDENCE_REQUIRED": 89,
+    "RUNTIME_REQUIRED": 96,
+    "TEST_REQUIRED": 32
+  }
+}

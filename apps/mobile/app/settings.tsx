@@ -2,11 +2,7 @@ import { useState, useSyncExternalStore } from "react";
 import { Text, View, Switch, StyleSheet, ScrollView } from "react-native";
 import { router, type Href } from "expo-router";
 import { runtime, setRequireLoginOnColdStart } from "../src/runtime";
-import {
-  getSystemSettings,
-  updateSystemSettings,
-  subscribeSystemSettings,
-} from "../src/settings";
+import { getSystemSettings, updateSystemSettings, subscribeSystemSettings } from "../src/settings";
 import { Page, Button, Icon, Badge, ScreenHeader, BottomNavBar, tokens } from "../src/ui";
 
 export default function SettingsScreen() {
@@ -69,7 +65,10 @@ export default function SettingsScreen() {
           onBack={() => (router.canGoBack() ? router.back() : router.replace("/"))}
         />
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 24 }}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ gap: 16, paddingBottom: 24 }}
+        >
           {/* Section 1: Session Security */}
           <View style={s.section}>
             <View style={s.sectionHeaderRow}>
@@ -108,11 +107,12 @@ export default function SettingsScreen() {
               <View style={s.rowBetween}>
                 <View style={{ flex: 1 }}>
                   <Text style={s.rowLabel}>Cơ chế xác thực</Text>
-                <Text style={s.rowSub}>
-                  Token được lưu bằng SecureStore của hệ điều hành; bản này chưa xác minh phần cứng lưu khóa.
-                </Text>
-              </View>
-              <Badge label="SECURESTORE" variant="success" icon="check" />
+                  <Text style={s.rowSub}>
+                    Token được lưu bằng SecureStore của hệ điều hành; bản này chưa xác minh phần cứng lưu
+                    khóa.
+                  </Text>
+                </View>
+                <Badge label="SECURESTORE" variant="success" icon="check" />
               </View>
 
               {snapshot.state === "AUTHENTICATED" && (
@@ -141,7 +141,8 @@ export default function SettingsScreen() {
                 <View style={{ flex: 1, paddingRight: 12 }}>
                   <Text style={s.rowLabel}>Thông báo trong ứng dụng</Text>
                   <Text style={s.rowSub}>
-                    Danh sách thông báo được đồng bộ khi mở ứng dụng. Push và nhắc lịch chưa khả dụng trong bản này.
+                    Danh sách thông báo được đồng bộ khi mở ứng dụng. Push và nhắc lịch chưa khả dụng trong
+                    bản này.
                   </Text>
                 </View>
                 <Badge label="IN-APP ONLY" variant="neutral" />

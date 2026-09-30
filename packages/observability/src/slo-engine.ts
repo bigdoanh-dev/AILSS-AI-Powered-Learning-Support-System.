@@ -1,8 +1,8 @@
 /**
  * AILSS SRE Canonical SLO & Error Budget Calculation Engine
- * 
+ *
  * Implements standard Google SRE error-budget mathematics:
- * 
+ *
  * allowedBadFraction = 1 - targetSLO
  * observedBadFraction = 1 - observedSLI
  * budgetConsumedFraction = observedBadFraction / allowedBadFraction
@@ -77,7 +77,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   LTI: {
     domain: "LTI",
-    targetSlo: 0.9990, // 99.90%
+    targetSlo: 0.999, // 99.90%
     windowDays: 30,
     description: "LTI 1.3 launches, Assignment and Grade Services (AGS), Names & Role (NRPS)",
     goodEventCriteria: "LTI launch succeeds, grades posted to LMS within 5000ms or outbox queued",
@@ -86,7 +86,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   SCIM: {
     domain: "SCIM",
-    targetSlo: 0.9950, // 99.50%
+    targetSlo: 0.995, // 99.50%
     windowDays: 30,
     description: "SCIM Enterprise directory provisioning, user/group CRUD, and drift reconciliation",
     goodEventCriteria: "SCIM request processed within 2000ms with RFC7644 compliance",
@@ -95,7 +95,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   AI_RAG: {
     domain: "AI_RAG",
-    targetSlo: 0.9900, // 99.00%
+    targetSlo: 0.99, // 99.00%
     windowDays: 30,
     description: "AI conversational tutoring, lesson explanation, RAG document search",
     goodEventCriteria: "Streaming response started within 2000ms, grounded non-hallucinated response",
@@ -104,7 +104,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   CREDENTIAL_VERIFICATION: {
     domain: "CREDENTIAL_VERIFICATION",
-    targetSlo: 0.9990, // 99.90%
+    targetSlo: 0.999, // 99.90%
     windowDays: 30,
     description: "W3C VC v2.0 and Open Badges v3.0 verification, status list lookups",
     goodEventCriteria: "Proof cryptosuite verified or rejected with valid status under 300ms",
@@ -113,7 +113,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   NOTIFICATION: {
     domain: "NOTIFICATION",
-    targetSlo: 0.9990, // 99.90%
+    targetSlo: 0.999, // 99.90%
     windowDays: 30,
     description: "In-app notifications, transactional email dispatch, webhook alerts",
     goodEventCriteria: "Notification delivered or queued to transactional outbox",
@@ -142,7 +142,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   LTI_AND_WEBHOOKS: {
     domain: "LTI_AND_WEBHOOKS",
-    targetSlo: 0.9990,
+    targetSlo: 0.999,
     windowDays: 30,
     description: "LTI 1.3 launches, Assignment and Grade Services, Names & Role sync",
     goodEventCriteria: "LTI launch succeeds, grades posted to LMS within 5000ms or outbox queued",
@@ -151,7 +151,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   AI_STUDY_ASSISTANT: {
     domain: "AI_STUDY_ASSISTANT",
-    targetSlo: 0.9900,
+    targetSlo: 0.99,
     windowDays: 30,
     description: "AI conversational tutoring, lesson explanation, RAG document search",
     goodEventCriteria: "Streaming response started within 2000ms, grounded non-hallucinated response",
@@ -160,7 +160,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   BATCH_AND_OUTBOX_WORKERS: {
     domain: "BATCH_AND_OUTBOX_WORKERS",
-    targetSlo: 0.9990,
+    targetSlo: 0.999,
     windowDays: 30,
     description: "Transactional outbox event delivery to RabbitMQ, audit trail persistence",
     goodEventCriteria: "Message acknowledged by broker within retry limit",
@@ -169,7 +169,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
   },
   DATA_RECONCILIATION: {
     domain: "DATA_RECONCILIATION",
-    targetSlo: 0.9950,
+    targetSlo: 0.995,
     windowDays: 30,
     description: "SCIM directory synchronization and OneRoster SIS drift reconciliation jobs",
     goodEventCriteria: "Scheduled reconciliation batch completes successfully without corruption",
@@ -180,7 +180,7 @@ export const CANONICAL_PRODUCTION_SLOS: Record<string, SloDefinition> = {
 
 /**
  * Calculates error budget metrics from target SLO and observed SLI fractions.
- * 
+ *
  * Canonical formula:
  * allowedBad = 1 - targetSLO
  * observedBad = 1 - observedSLI
@@ -220,10 +220,7 @@ export function calculateErrorBudget(
 /**
  * Evaluates an SLO from discrete event counts (goodEvents, badEvents).
  */
-export function evaluateSloFromEvents(
-  slo: SloDefinition,
-  input: SloEvaluationInput,
-): SloEvaluationResult {
+export function evaluateSloFromEvents(slo: SloDefinition, input: SloEvaluationInput): SloEvaluationResult {
   const totalEvents = input.goodEvents + input.badEvents;
   const excludedEvents = input.excludedEvents ?? 0;
 
@@ -250,11 +247,10 @@ export function evaluateSloFromEvents(
   }
 
   const observedSli = input.goodEvents / totalEvents;
-  const {
-    budgetConsumedFraction,
-    budgetRemainingFraction,
-    burnRate,
-  } = calculateErrorBudget(slo.targetSlo, observedSli);
+  const { budgetConsumedFraction, budgetRemainingFraction, burnRate } = calculateErrorBudget(
+    slo.targetSlo,
+    observedSli,
+  );
 
   const allowedBadEvents = Math.floor(totalEvents * (1 - slo.targetSlo));
   const isBreached = observedSli < slo.targetSlo;
@@ -316,13 +312,13 @@ export function calculateWindowBurnRate(options: {
 
   const observedBadRatio = options.badWindowEvents / options.totalWindowEvents;
   const burnRate = observedBadRatio / allowedBadRatio;
-  
+
   // Fraction of 30-day budget consumed in this window
   const windowTo30DayRatio = options.windowHours / (30 * 24);
   const budgetConsumedInWindow = burnRate * windowTo30DayRatio;
 
-  const requiresPageAlert = (options.windowHours <= 1 && burnRate >= 14.4) ||
-                            (options.windowHours <= 6 && burnRate >= 6.0);
+  const requiresPageAlert =
+    (options.windowHours <= 1 && burnRate >= 14.4) || (options.windowHours <= 6 && burnRate >= 6.0);
   const requiresTicketAlert = options.windowHours <= 72 && burnRate >= 1.0;
 
   return {
@@ -380,4 +376,3 @@ export function evaluateRollingWindows(
 
   return results;
 }
-

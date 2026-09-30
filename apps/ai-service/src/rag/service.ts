@@ -1,11 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { AppError } from "../../../../packages/http/src/index.js";
-import type {
-  KnowledgeChunk,
-  RagQueryInput,
-  RagRetrievalResponse,
-  ScoredKnowledgeChunk,
-} from "./model.js";
+import type { KnowledgeChunk, RagQueryInput, RagRetrievalResponse, ScoredKnowledgeChunk } from "./model.js";
 import type { RagKnowledgeRepository } from "./repository.js";
 
 export class GovernedRagService {
@@ -27,7 +22,10 @@ export class GovernedRagService {
 
     const now = new Date().toISOString();
     const createdChunks: KnowledgeChunk[] = input.chunks.map((text, idx) => {
-      const tokens = text.toLowerCase().split(/\s+/u).filter((t) => t.length > 1);
+      const tokens = text
+        .toLowerCase()
+        .split(/\s+/u)
+        .filter((t) => t.length > 1);
       return {
         chunkId: randomUUID(),
         courseId: input.courseId,
@@ -81,7 +79,10 @@ export class GovernedRagService {
     }
 
     // Score eligible chunks against query
-    const queryTokens = input.query.toLowerCase().split(/\s+/u).filter((t) => t.length > 1);
+    const queryTokens = input.query
+      .toLowerCase()
+      .split(/\s+/u)
+      .filter((t) => t.length > 1);
     const scored: ScoredKnowledgeChunk[] = [];
 
     for (const chunk of eligibleChunks) {

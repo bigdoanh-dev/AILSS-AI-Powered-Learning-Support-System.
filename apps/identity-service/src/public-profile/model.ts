@@ -15,6 +15,10 @@ export interface PublicLecturerProjection {
   readonly displayName: string;
   readonly bio: string | null;
   readonly avatarObjectKey: string | null;
+  readonly experience?: string | null;
+  readonly education?: string | null;
+  readonly achievements?: string | null;
+  readonly avatarPublic?: boolean;
   readonly verified: boolean;
   readonly profileVersion: number;
   readonly updatedAt: Date;
@@ -24,7 +28,10 @@ export interface PublicLecturerProfile {
   readonly lecturerId: string;
   readonly displayName: string;
   readonly bio: string | null;
-  readonly avatarRef: null;
+  readonly avatarRef: string | null;
+  readonly experience?: string | null;
+  readonly education?: string | null;
+  readonly achievements?: string | null;
   readonly verified: true;
   readonly profileVersion: number;
 }

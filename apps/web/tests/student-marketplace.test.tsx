@@ -91,7 +91,9 @@ describe("Student Marketplace Course Search on StudentHome", () => {
     const buyLinks = m.getAllByRole("link", { name: /Mua ngay/i });
     expect(buyLinks.length).toBeGreaterThan(0);
     const firstBuyLink = buyLinks[0].closest("a");
-    expect(firstBuyLink?.getAttribute("href")).toContain("/app/purchase/10000000-0000-4000-8000-000000000002");
+    expect(firstBuyLink?.getAttribute("href")).toContain(
+      "/app/purchase/10000000-0000-4000-8000-000000000002",
+    );
   });
 
   it("filters courses when typing search term", async () => {

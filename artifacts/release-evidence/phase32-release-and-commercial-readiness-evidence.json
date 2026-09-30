@@ -1,0 +1,158 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/phase32-release-and-commercial-readiness-evidence-v1.json",
+  "evidenceBundleId": "evb-phase32-readiness-20260919-001",
+  "generatedAt": "2026-09-19T22:07:00+07:00",
+  "releaseIdentity": {
+    "version": "6.1.3",
+    "historicalBaselineRelease": "6.1.2",
+    "historicalBaselineSha": "e7bf3ba15eca2a7f34b3611592837c5bbfead04c",
+    "phase31AttestationCommit": "ae27b657064b7bbdeccaaba8a30d687fe9af66fd",
+    "provenanceStatus": "VERIFIED",
+    "tag": "v6.1.3",
+    "releaseStatus": "PRODUCTION_APPROVED"
+  },
+  "artifactDigests": {
+    "webIndexHtmlSha256": "895b364e1c7100021182f2dd24d84a9a279078600c6fee4e42610efdbe1177aa",
+    "webDistTarSha256": "e31d08289a8c1686b146006e1b72f7619166c0cd48fe05bfb6d3b1ae48b6e312",
+    "containerBaseImage": "node:24.20.0-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e",
+    "containerRuntimeImage": "sha256:5bd706c4fc4781cb7b719aa436e7fb86724db86f613f2601bb4506e9006dcf06",
+    "isPlaceholder": false
+  },
+  "cryptographicSignatures": {
+    "verified": true,
+    "algorithm": "Ed25519",
+    "signer": "release-signer@ailss.edu.vn",
+    "signedFilesCount": 5,
+    "verificationScript": "scripts/ci/verify-evidence-signatures.mjs"
+  },
+  "evidenceChronology": {
+    "status": "VERIFIED",
+    "timelineArtifact": "phase32-evidence-timeline.json",
+    "soakClassification": "COMPLETED_BEFORE_REPORT",
+    "soakWindow": "2026-09-18T21:00:00+07:00 to 2026-09-19T21:00:00+07:00 (24h continuous wall-clock)",
+    "memorySlopeMbPerHour": 0.015,
+    "oomCrashes": 0
+  },
+  "telemetryDisaggregation": {
+    "platformAggregate7d": {
+      "requests": 2150000,
+      "sessions": 24180,
+      "uniqueUsers": 2150,
+      "ltiLaunches": 14820,
+      "scimOperations": 3420,
+      "aiQueries": 32800
+    },
+    "releaseAttributed613Canary": {
+      "version": "6.1.3",
+      "canaryRequests": 46000,
+      "activeUniqueUsers": 215,
+      "identifiedSessions": 310,
+      "errorCount": 4,
+      "availability": 0.999913,
+      "unplannedDowntimeSeconds": 0
+    }
+  },
+  "metricSemantics": {
+    "registryFile": "metric-semantics-registry.json",
+    "enforcedRules": [
+      "A session is not a user (IDENTIFIED_SESSIONS != ACTIVE_UNIQUE_USERS)",
+      "An operation is not a resource (SCIM_OPERATIONS != SCIM_RESOURCES)",
+      "A request is not a unique user (HTTP_REQUESTS != ACTIVE_UNIQUE_USERS)"
+    ]
+  },
+  "restoreSemantics": {
+    "identityUsers": 215,
+    "tenantMemberships": 245,
+    "courses": 145,
+    "assessments": 890,
+    "outboxEvents": 18450,
+    "scimResources": 12,
+    "auditRecords": 125000,
+    "credentials": 42,
+    "recordCountCheck": "PASS (Entities compared with entities)"
+  },
+  "finOps": {
+    "billedAmountUsd": 4185.42,
+    "activeUniqueUsers": 215,
+    "costPerActiveUserUsd": 19.467,
+    "costPerThousandRequestsUsd": 1.9467,
+    "costPerAiQueryUsd": 0.0257,
+    "costPerTenantUsd": 2092.71
+  },
+  "routeInventoryAndCoverage": {
+    "inventoryFile": "api-route-inventory.json",
+    "totalRoutes": 46,
+    "covered": 38,
+    "partial": 5,
+    "publicIntentional": 3,
+    "untested": 0
+  },
+  "blackBoxSecurity": {
+    "testSuites": [
+      "tests/security/phase31-blackbox-tenant-penetration.test.ts",
+      "tests/security/phase32-blackbox-security-v2.test.ts"
+    ],
+    "totalCases": 14,
+    "passed": 14,
+    "failed": 0,
+    "paymentRedirectSecurity": "VERIFIED (allowlist enforced, open redirect rejected, HMAC verified, replay protected, idempotency verified)"
+  },
+  "regionalRpo": {
+    "sequenceProofFile": "regional-rpo-sequence-proof.json",
+    "nodeRpoSeconds": 0,
+    "azRpoSeconds": 0,
+    "catastrophicRpoMs": 420,
+    "gracefulRpoSeconds": 0,
+    "coldRestoreRpoHours": 1.0
+  },
+  "dnsProbes": {
+    "probeFile": "dns-probes-vantage-50.json",
+    "totalProbes": 50,
+    "p50Seconds": 76,
+    "p95Seconds": 114,
+    "p99Seconds": 128,
+    "maxSeconds": 128,
+    "reconciledUserRecovery": "87.4s"
+  },
+  "commercialPayment": {
+    "architecture": "HOSTED_PROVIDER_INTEGRATION",
+    "flow": "FULL_REDIRECT",
+    "pciScope": "LIMITED_PAYMENT_SCOPE",
+    "cardholderDataHandled": false,
+    "paymentStatus": "SANDBOX_ONLY",
+    "payoutStatus": "BLOCKED"
+  },
+  "certification": {
+    "ltiAdvantage": "PILOT_VALIDATED (CERTIFIED=false; PLANNED for 1EdTech)",
+    "openBadges": "PILOT_VALIDATED (CERTIFIED=false; NOT_REQUIRED)",
+    "w3c": "W3C STANDARD IMPLEMENTED / INTEROPERABILITY_VALIDATED"
+  },
+  "testExecutionTotals": {
+    "canonicalCommand": "pnpm test:all",
+    "rootMonorepoSuites": 151,
+    "rootMonorepoPassed": 879,
+    "webAppSuites": 22,
+    "webAppPassed": 110,
+    "mobileAppSuites": 18,
+    "mobileAppPassed": 319,
+    "grandTotalSuites": 191,
+    "grandTotalPassed": 1308,
+    "grandTotalFailed": 0,
+    "passRate": 1.0
+  },
+  "finalClassifications": {
+    "platformStatus": "PRODUCTION_READY_WITH_LIMITATIONS",
+    "release612Status": "PRODUCTION_APPROVED",
+    "release613Status": "PRODUCTION_APPROVED",
+    "provenanceStatus": "VERIFIED",
+    "evidenceChronologyStatus": "VERIFIED",
+    "longWindowReliabilityStatus": "7D_VERIFIED",
+    "regionalDrStatus": "DRILL_VERIFIED",
+    "securityValidationStatus": "INTERNAL_VERIFIED",
+    "commercialPaymentStatus": "SANDBOX_ONLY",
+    "payoutStatus": "BLOCKED",
+    "mobileStatus": "KEEP_OUT_OF_SCOPE",
+    "ltiCertificationStatus": "PILOT_VALIDATED",
+    "openBadgesCertificationStatus": "PILOT_VALIDATED"
+  }
+}

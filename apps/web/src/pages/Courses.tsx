@@ -1,4 +1,5 @@
-import { CourseRating, FeaturedInstructors, CourseComments } from "../components/CourseCommunity";
+import { CourseRating, CourseReviews, FeaturedInstructors } from "../components/CourseCommunity";
+import { LecturerLink } from "../components/PublicLecturer";
 import { useSession } from "../auth/session";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
@@ -12,16 +13,6 @@ import { Icon } from "../components/Icon";
 export function CourseCard({ course }: { course: Course }) {
   const subject = courseSubject(course.title, course.categoryId);
   const paid = course.priceType !== "FREE";
-  const price = Number(course.price || 0);
-  const originalPrice = paid && Number.isFinite(price) ? Math.ceil((price * 1.28) / 10000) * 10000 : 0;
-  const courseProfile =
-    subject.image === "database"
-      ? { instructor: "TS. Trần Hoàng Minh", duration: "28.5h", lessons: 24, benefits: ["Cassandra, SQL & NoSQL", "Thiết kế dữ liệu thực chiến", "Cấp chứng chỉ hoàn thành"] }
-      : subject.image === "ai"
-        ? { instructor: "ThS. Nguyễn Minh Anh", duration: "31.0h", lessons: 26, benefits: ["AI ứng dụng & Prompt Engineering", "Dự án trợ lý thông minh", "Cấp chứng chỉ hoàn thành"] }
-        : subject.image === "study"
-          ? { instructor: "Cô Lê Thu Trang", duration: "18.5h", lessons: 20, benefits: ["Lộ trình học cá nhân hóa", "Bài tập tương tác", "Cấp chứng chỉ hoàn thành"] }
-          : { instructor: "ThS. Hoàng Quốc Bảo", duration: "34.0h", lessons: 28, benefits: ["Trợ lý AI Copilot & Chatbot", "FastAPI, React 19 & LangChain", "Cấp chứng chỉ hoàn thành"] };
   return (
     <TiltCard as="article" className="course-card learning-card" tiltOptions={{ maxTilt: 3, scale: 1.01 }}>
       <div className="course-artwork-container">
@@ -37,23 +28,20 @@ export function CourseCard({ course }: { course: Course }) {
         </div>
         <h3>{course.title}</h3>
         <p className="course-meta-line">
-          <span aria-hidden="true">♙</span> {courseProfile.instructor}
-          <span aria-hidden="true">•</span> {courseProfile.duration}
-          <span aria-hidden="true">•</span> {courseProfile.lessons} bài
+          <span aria-hidden="true">♙</span> <LecturerLink id={course.lecturerId} />
         </p>
-        <ul className="course-benefits" aria-label="Nội dung nổi bật">
-          {courseProfile.benefits.map((benefit) => <li key={benefit}>✓ {benefit}</li>)}
-        </ul>
         <div className="course-card-divider" />
         <div className="course-price-row">
-          <strong className={paid ? "course-sale-price" : "course-sale-price free"}>{priceLabel(course)}</strong>
-          {paid && originalPrice > price && (
-            <del>{new Intl.NumberFormat("vi-VN").format(originalPrice)} đ</del>
-          )}
-          {paid && <span className="course-discount-chip">Ưu đãi</span>}
+          <strong className={paid ? "course-sale-price" : "course-sale-price free"}>
+            {priceLabel(course)}
+          </strong>
         </div>
         <div className="course-card-actions">
-          <Link aria-label="Xem khóa học" className="course-detail-button learning-card-button secondary" to={`/courses/${course.courseId}`}>
+          <Link
+            aria-label="Xem khóa học"
+            className="course-detail-button learning-card-button secondary"
+            to={`/courses/${course.courseId}`}
+          >
             <Icon name="eye" size={15} /> Chi tiết
           </Link>
           <Link
@@ -309,11 +297,6 @@ export function CourseDetail() {
   const [retry, setRetry] = useState(0);
   const subject = course ? courseSubject(course.title, course.categoryId) : null;
   const paid = course?.priceType === "PAID";
-  const profileData = subject?.image === "database"
-    ? { instructor: "TS. Trần Hoàng Minh", duration: "28,5 giờ", lessons: 24, level: "Trung cấp" }
-    : subject?.image === "ai"
-      ? { instructor: "ThS. Nguyễn Minh Anh", duration: "31 giờ", lessons: 26, level: "Từ cơ bản" }
-      : { instructor: "ThS. Hoàng Quốc Bảo", duration: "34 giờ", lessons: 28, level: "Mọi trình độ" };
   useEffect(() => {
     setError("");
     setCourse(null);
@@ -339,7 +322,9 @@ export function CourseDetail() {
   return (
     <>
       <Section className="course-detail-page">
-        <TextLink to={profile?.role === "STUDENT" ? "/app/learn" : "/courses"}>← Quay lại danh sách khóa học</TextLink>
+        <TextLink to={profile?.role === "STUDENT" ? "/app/learn" : "/courses"}>
+          ← Quay lại danh sách khóa học
+        </TextLink>
         {error ? (
           <div role="alert" className="notice">
             <p>{error}</p>
@@ -351,22 +336,22 @@ export function CourseDetail() {
             <div className="course-detail-main">
               <span className="course-category-chip">{subject?.name}</span>
               <h1>{course.title}</h1>
-              <p className="course-detail-lead">Lộ trình thực hành có hướng dẫn, bài tập ứng dụng và trợ lý AI đồng hành trong suốt khóa học.</p>
+              <p className="course-detail-lead">
+                Xem thông tin giảng viên và phản hồi của học viên trước khi đăng ký.
+              </p>
               <div className="course-detail-meta">
                 <CourseRating id={course.courseId} />
-                <span>Giảng viên: <strong>{profileData.instructor}</strong></span>
-                <span>Cập nhật {course.updatedAt ? new Date(course.updatedAt).toLocaleDateString("vi-VN") : "gần đây"}</span>
+                <span>
+                  Giảng viên:{" "}
+                  <strong>
+                    <LecturerLink id={course.lecturerId} />
+                  </strong>
+                </span>
+                <span>
+                  Cập nhật{" "}
+                  {course.updatedAt ? new Date(course.updatedAt).toLocaleDateString("vi-VN") : "gần đây"}
+                </span>
               </div>
-              <div className="course-detail-outcomes">
-                <h2>Bạn sẽ nhận được gì?</h2>
-                <ul>
-                  <li>✓ Nắm vững kiến thức cốt lõi qua lộ trình rõ ràng</li>
-                  <li>✓ Thực hành với bài tập và tình huống gần thực tế</li>
-                  <li>✓ Nhận phản hồi, theo dõi tiến độ và ôn tập cùng AI</li>
-                  <li>✓ Chứng nhận hoàn thành sau khi đạt yêu cầu</li>
-                </ul>
-              </div>
-              <CourseComments id={course.courseId} />
             </div>
             <aside className="course-enroll-card">
               {trailer?.playlistUrl ? (
@@ -386,23 +371,27 @@ export function CourseDetail() {
               <div className="course-enroll-content">
                 <strong className={`course-detail-price ${paid ? "" : "free"}`}>{priceLabel(course)}</strong>
                 <ButtonLink
-                to={
-                  profile && profile.role !== "STUDENT"
-                    ? "/app"
-                    : course.priceType === "PAID"
-                      ? `/app/purchase/${course.courseId}`
-                      : `/app/learn/${course.courseId}`
-                }
-              >
-                  {profile ? (paid ? "Mua khóa học" : "Bắt đầu học") : paid ? "Đăng nhập để mua" : "Đăng nhập để học"}
+                  to={
+                    profile && profile.role !== "STUDENT"
+                      ? "/app"
+                      : course.priceType === "PAID"
+                        ? `/app/purchase/${course.courseId}`
+                        : `/app/learn/${course.courseId}`
+                  }
+                >
+                  {profile
+                    ? paid
+                      ? "Mua khóa học"
+                      : "Bắt đầu học"
+                    : paid
+                      ? "Đăng nhập để mua"
+                      : "Đăng nhập để học"}
                 </ButtonLink>
-                <p className="secure-payment-note">🔒 Thanh toán an toàn · Xác nhận tự động qua SePay</p>
-                <dl className="course-facts">
-                  <dt>Thời lượng</dt><dd>{profileData.duration}</dd>
-                  <dt>Bài học</dt><dd>{profileData.lessons} bài</dd>
-                  <dt>Trình độ</dt><dd>{profileData.level}</dd>
-                  <dt>Truy cập</dt><dd>Không giới hạn thời gian</dd>
-                </dl>
+                <p>
+                  <Link to={`/lecturers/${course.lecturerId}`}>
+                    Xem hồ sơ giảng viên và các khóa học khác →
+                  </Link>
+                </p>
               </div>
             </aside>
           </div>
@@ -410,6 +399,11 @@ export function CourseDetail() {
           <p role="status">Đang tải thông tin khóa học…</p>
         )}
       </Section>
+      {course && (
+        <Section>
+          <CourseReviews id={course.courseId} />
+        </Section>
+      )}
     </>
   );
 }

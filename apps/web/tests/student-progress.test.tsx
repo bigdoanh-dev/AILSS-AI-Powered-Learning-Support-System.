@@ -35,7 +35,7 @@ describe("Student ProgressDashboard pagination and UI", () => {
         <MemoryRouter>
           <ProgressDashboard />
         </MemoryRouter>
-      </SessionProvider>
+      </SessionProvider>,
     );
 
     // Wait for courses to be rendered
@@ -87,7 +87,7 @@ describe("Student ProgressDashboard pagination and UI", () => {
         <MemoryRouter>
           <ProgressDashboard />
         </MemoryRouter>
-      </SessionProvider>
+      </SessionProvider>,
     );
 
     await waitFor(() => {
@@ -120,7 +120,7 @@ describe("Student ProgressDashboard pagination and UI", () => {
         <MemoryRouter>
           <ProgressDashboard />
         </MemoryRouter>
-      </SessionProvider>
+      </SessionProvider>,
     );
 
     await waitFor(() => {
@@ -153,7 +153,7 @@ describe("Student ProgressDashboard pagination and UI", () => {
         <MemoryRouter>
           <ProgressDashboard />
         </MemoryRouter>
-      </SessionProvider>
+      </SessionProvider>,
     );
 
     await waitFor(() => {
@@ -186,5 +186,3 @@ describe("Student ProgressDashboard pagination and UI", () => {
     expect(screen.queryByText("So Sánh Phiên Bản Khóa Học")).toBeNull();
   });
 });
-
-

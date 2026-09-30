@@ -1,13 +1,5 @@
 import { useEffect, useRef } from "react";
-import {
-  Text,
-  View,
-  StyleSheet,
-  Animated,
-  Dimensions,
-  StatusBar,
-  ScrollView,
-} from "react-native";
+import { Text, View, StyleSheet, Animated, Dimensions, StatusBar, ScrollView } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import { Icon, type IconName } from "../src/ui";
 import {
@@ -44,12 +36,7 @@ export default function ResultScreen() {
 
   // Destination target
   const defaultTarget =
-    params.target ||
-    (params.role === "ADMIN"
-      ? "/admin"
-      : params.role === "LECTURER"
-        ? "/teaching"
-        : "/");
+    params.target || (params.role === "ADMIN" ? "/admin" : params.role === "LECTURER" ? "/teaching" : "/");
 
   const autoProceedMs = isSuccess ? 2200 : isLogout ? 2000 : 0;
 
@@ -133,10 +120,7 @@ export default function ResultScreen() {
     <View style={screenStyles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <ScrollView
-        contentContainerStyle={screenStyles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={screenStyles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Top App Identity */}
         <FadeSlideIn delay={50} duration={300}>
           <View style={screenStyles.brandRow}>
@@ -160,16 +144,8 @@ export default function ResultScreen() {
               style={[
                 screenStyles.iconOuterRing,
                 {
-                  backgroundColor: isSuccess
-                    ? "#D1FAE5"
-                    : isLogout
-                      ? "#DBEAFE"
-                      : "#FEE2E2",
-                  borderColor: isSuccess
-                    ? "#10B981"
-                    : isLogout
-                      ? "#3B82F6"
-                      : "#EF4444",
+                  backgroundColor: isSuccess ? "#D1FAE5" : isLogout ? "#DBEAFE" : "#FEE2E2",
+                  borderColor: isSuccess ? "#10B981" : isLogout ? "#3B82F6" : "#EF4444",
                 },
               ]}
             >
@@ -177,25 +153,11 @@ export default function ResultScreen() {
                 style={[
                   screenStyles.iconInnerCircle,
                   {
-                    backgroundColor: isSuccess
-                      ? "#10B981"
-                      : isLogout
-                        ? "#2563EB"
-                        : "#DC2626",
+                    backgroundColor: isSuccess ? "#10B981" : isLogout ? "#2563EB" : "#DC2626",
                   },
                 ]}
               >
-                <Icon
-                  name={
-                    isSuccess
-                      ? "check"
-                      : isLogout
-                        ? "logout"
-                        : "alert"
-                  }
-                  size={46}
-                  color="#FFFFFF"
-                />
+                <Icon name={isSuccess ? "check" : isLogout ? "logout" : "alert"} size={46} color="#FFFFFF" />
               </View>
             </View>
           </PulseBadge>
@@ -246,12 +208,8 @@ export default function ResultScreen() {
               </Text>
             </View>
 
-            {params.name && (
-              <Text style={screenStyles.profileName}>{params.name}</Text>
-            )}
-            {params.email && (
-              <Text style={screenStyles.profileEmail}>{params.email}</Text>
-            )}
+            {params.name && <Text style={screenStyles.profileName}>{params.name}</Text>}
+            {params.email && <Text style={screenStyles.profileEmail}>{params.email}</Text>}
           </StaggerPop>
         )}
 
@@ -285,9 +243,7 @@ export default function ResultScreen() {
                 ]}
               />
             </View>
-            <Text style={screenStyles.autoRedirectText}>
-              Tự động chuyển tiếp sau giây lát…
-            </Text>
+            <Text style={screenStyles.autoRedirectText}>Tự động chuyển tiếp sau giây lát…</Text>
           </StaggerPop>
         )}
 
@@ -297,11 +253,7 @@ export default function ResultScreen() {
             style={[
               screenStyles.primaryButton,
               {
-                backgroundColor: isSuccess
-                  ? "#0A7E85"
-                  : isLogout
-                    ? "#2563EB"
-                    : "#DC2626",
+                backgroundColor: isSuccess ? "#0A7E85" : isLogout ? "#2563EB" : "#DC2626",
               },
             ]}
             onPress={handleProceed}
@@ -316,10 +268,7 @@ export default function ResultScreen() {
           </ScalePressable>
 
           {(isError || isLogout) && (
-            <ScalePressable
-              style={screenStyles.secondaryButton}
-              onPress={() => router.replace("/")}
-            >
+            <ScalePressable style={screenStyles.secondaryButton} onPress={() => router.replace("/")}>
               <Text style={screenStyles.secondaryButtonText}>← Về trang chủ</Text>
             </ScalePressable>
           )}

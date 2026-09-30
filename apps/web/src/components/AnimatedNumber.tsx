@@ -21,9 +21,14 @@ interface ParsedNumber {
 
 const IS_TEST = typeof process !== "undefined" && process.env?.NODE_ENV === "test";
 
-function parseNumber(input: number | string, explicitDecimals?: number, explicitPrefix = "", explicitSuffix = ""): ParsedNumber | null {
+function parseNumber(
+  input: number | string,
+  explicitDecimals?: number,
+  explicitPrefix = "",
+  explicitSuffix = "",
+): ParsedNumber | null {
   if (typeof input === "number") {
-    const dec = explicitDecimals !== undefined ? explicitDecimals : (input % 1 !== 0 ? 1 : 0);
+    const dec = explicitDecimals !== undefined ? explicitDecimals : input % 1 !== 0 ? 1 : 0;
     return {
       target: input,
       prefix: explicitPrefix,
@@ -36,7 +41,7 @@ function parseNumber(input: number | string, explicitDecimals?: number, explicit
   const str = String(input).trim();
   if (!str) return null;
 
-  const match = str.match(/^([^\d\-+]*)([\-+]?\d(?:[\d.,]*\d)?)(.*)$/);
+  const match = str.match(/^([^\d\-+]*)([-+]?\d(?:[\d.,]*\d)?)(.*)$/);
   if (!match) return null;
 
   const rawPrefix = explicitPrefix || match[1];
@@ -130,7 +135,7 @@ export function AnimatedNumber({
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     observer.observe(el);
@@ -191,7 +196,11 @@ export function AnimatedNumber({
       : Math.round(displayNumber).toLocaleString("vi-VN");
 
   return (
-    <span ref={containerRef} className={className} style={style}>{`${parsed.prefix}${formattedNum}${parsed.suffix}`}</span>
+    <span
+      ref={containerRef}
+      className={className}
+      style={style}
+    >{`${parsed.prefix}${formattedNum}${parsed.suffix}`}</span>
   );
 }
 
@@ -271,4 +280,3 @@ export function AnimatedProgressBar({
     </div>
   );
 }
-

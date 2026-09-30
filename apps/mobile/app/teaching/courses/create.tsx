@@ -6,6 +6,7 @@ import * as Crypto from "expo-crypto";
 import { ApiError } from "../../../src/api";
 import { runtime } from "../../../src/runtime";
 import { Page, Button, ScreenHeader, styles } from "../../../src/ui";
+import { RevenueQuote } from "../../../src/RevenueQuote";
 
 function generateSlug(text: string): string {
   const base = text
@@ -133,6 +134,8 @@ export default function CreateCourse() {
           />
         </>
       )}
+
+      <RevenueQuote price={price} currency={currency} paid={priceType !== "FREE"} />
 
       <Button
         label={busy ? "Đang tạo…" : "Tạo khóa học"}

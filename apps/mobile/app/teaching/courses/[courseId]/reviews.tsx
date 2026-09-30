@@ -179,8 +179,15 @@ export default function CourseReviewsAndCommentsScreen() {
     return (
       <View style={[revStyles.card, isMyComment && revStyles.myCommentCard]}>
         <View style={revStyles.cardHeader}>
-          <Text style={[styles.text, { fontWeight: "700", color: isMyComment ? tokens.color.brand : tokens.color.ink }]}>
-            {isMyComment ? "👨‍🏫 Bạn (Giảng viên)" : `Học viên: ${item.authorId ? `${item.authorId.slice(0, 8)}…` : ""}`}
+          <Text
+            style={[
+              styles.text,
+              { fontWeight: "700", color: isMyComment ? tokens.color.brand : tokens.color.ink },
+            ]}
+          >
+            {isMyComment
+              ? "👨‍🏫 Bạn (Giảng viên)"
+              : `Học viên: ${item.authorId ? `${item.authorId.slice(0, 8)}…` : ""}`}
           </Text>
           <Text style={styles.small}>
             {new Date(item.createdAt).toLocaleDateString("vi-VN", {
@@ -197,7 +204,12 @@ export default function CourseReviewsAndCommentsScreen() {
             <Pressable
               onPress={() => void handleDeleteComment(item)}
               disabled={deletingCommentId === item.commentId}
-              style={{ paddingVertical: 4, paddingHorizontal: 8, backgroundColor: "#fee2e2", borderRadius: 4 }}
+              style={{
+                paddingVertical: 4,
+                paddingHorizontal: 8,
+                backgroundColor: "#fee2e2",
+                borderRadius: 4,
+              }}
             >
               <Text style={{ fontSize: 12, color: "#dc2626", fontWeight: "600" }}>
                 {deletingCommentId === item.commentId ? "Đang xóa…" : "🗑️ Xóa phản hồi"}
@@ -243,7 +255,9 @@ export default function CourseReviewsAndCommentsScreen() {
           {/* Rating Summary Card */}
           <View style={[styles.card, revStyles.summaryCard]}>
             <View style={revStyles.scoreCol}>
-              <Text style={revStyles.bigScore}>{ratingInfo.average > 0 ? ratingInfo.average.toFixed(1) : "5.0"}</Text>
+              <Text style={revStyles.bigScore}>
+                {ratingInfo.average > 0 ? ratingInfo.average.toFixed(1) : "5.0"}
+              </Text>
               <Text style={revStyles.stars}>
                 {"★".repeat(Math.round(ratingInfo.average || 5))}
                 {"☆".repeat(5 - Math.round(ratingInfo.average || 5))}
@@ -255,7 +269,12 @@ export default function CourseReviewsAndCommentsScreen() {
             <View style={revStyles.barsCol}>
               {[5, 4, 3, 2, 1].map((s) => {
                 const count = starCounts[s as keyof typeof starCounts] || 0;
-                const pct = ratingInfo.reviewCount > 0 ? Math.round((count / ratingInfo.reviewCount) * 100) : (s === 5 ? 100 : 0);
+                const pct =
+                  ratingInfo.reviewCount > 0
+                    ? Math.round((count / ratingInfo.reviewCount) * 100)
+                    : s === 5
+                      ? 100
+                      : 0;
                 return (
                   <View key={s} style={revStyles.barRow}>
                     <Text style={revStyles.barLabel}>{s}★</Text>
@@ -275,7 +294,9 @@ export default function CourseReviewsAndCommentsScreen() {
               style={[revStyles.filterChip, starFilter === "all" && revStyles.filterChipActive]}
               onPress={() => setStarFilter("all")}
             >
-              <Text style={[revStyles.filterChipText, starFilter === "all" && revStyles.filterChipTextActive]}>
+              <Text
+                style={[revStyles.filterChipText, starFilter === "all" && revStyles.filterChipTextActive]}
+              >
                 Tất cả ({reviews.length})
               </Text>
             </Pressable>
@@ -307,7 +328,9 @@ export default function CourseReviewsAndCommentsScreen() {
           ) : filteredReviews.length === 0 ? (
             <View style={[styles.card, { alignItems: "center", paddingVertical: 24 }]}>
               <Text style={styles.text}>
-                {reviews.length === 0 ? "Khóa học chưa có đánh giá nào." : `Không có đánh giá ${starFilter} sao.`}
+                {reviews.length === 0
+                  ? "Khóa học chưa có đánh giá nào."
+                  : `Không có đánh giá ${starFilter} sao.`}
               </Text>
             </View>
           ) : (
@@ -328,7 +351,10 @@ export default function CourseReviewsAndCommentsScreen() {
           <View style={styles.card}>
             <Text style={[styles.title, { fontSize: 14 }]}>Phản hồi học viên với tư cách Giảng viên</Text>
             {commentMsg && (
-              <Text accessibilityRole="alert" style={commentMsg.type === "error" ? styles.error : revStyles.successText}>
+              <Text
+                accessibilityRole="alert"
+                style={commentMsg.type === "error" ? styles.error : revStyles.successText}
+              >
                 {commentMsg.text}
               </Text>
             )}
@@ -371,7 +397,9 @@ export default function CourseReviewsAndCommentsScreen() {
         <Button
           label="Quay lại chi tiết khóa học"
           variant="outline"
-          onPress={() => (router.canGoBack() ? router.back() : router.replace(`/teaching/courses/${courseId}`))}
+          onPress={() =>
+            router.canGoBack() ? router.back() : router.replace(`/teaching/courses/${courseId}`)
+          }
         />
       </View>
     </Page>
@@ -537,4 +565,3 @@ const revStyles = StyleSheet.create({
     marginVertical: 4,
   },
 });
-

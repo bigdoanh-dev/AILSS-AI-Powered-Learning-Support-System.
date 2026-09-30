@@ -177,17 +177,19 @@ export function tutorReply(value: unknown): TutorReply {
   if (!Array.isArray(row.citations)) throw new ApiError("invalid");
   const rawCatalog = row.catalogCourses ?? [];
   if (!Array.isArray(rawCatalog)) throw new ApiError("invalid");
-  const catalogCourses: TutorCatalogCourse[] = rawCatalog.map((entry: unknown) => {
-    const course = record(entry);
-    const amount = course.priceAmount;
-    if (typeof amount !== "number" || !Number.isFinite(amount) || amount < 0) throw new ApiError("invalid");
-    return {
-      courseId: string(course.courseId),
-      title: string(course.title),
-      priceAmount: amount,
-      priceCurrency: string(course.priceCurrency),
-    };
-  }).slice(0, 3);
+  const catalogCourses: TutorCatalogCourse[] = rawCatalog
+    .map((entry: unknown) => {
+      const course = record(entry);
+      const amount = course.priceAmount;
+      if (typeof amount !== "number" || !Number.isFinite(amount) || amount < 0) throw new ApiError("invalid");
+      return {
+        courseId: string(course.courseId),
+        title: string(course.title),
+        priceAmount: amount,
+        priceCurrency: string(course.priceCurrency),
+      };
+    })
+    .slice(0, 3);
   return {
     conversationId: string(row.conversationId),
     content: string(row.content),

@@ -10,7 +10,7 @@ const key = new URL("gateway-key.pem", dir);
 const cert = new URL("gateway-cert.pem", dir);
 if (!(await exists(caKey)) || !(await exists(caCert))) throw new Error("Generate the development CA first");
 await ensureDir(dir);
-if (!(await exists(key))) {
+if (process.env.AILSS_ROTATE_TLS_KEYS === "true" || !(await exists(key))) {
   await openssl([
     "genpkey",
     "-algorithm",
@@ -55,7 +55,7 @@ try {
     "-out",
     filePath(cert),
     "-days",
-    "30",
+    "365",
     "-extfile",
     ext,
   ]);
@@ -69,6 +69,6 @@ console.log(
     stage: "gateway-certificate",
     status: "PASS",
     hostnameVerification: true,
-    validityDays: 30,
+    validityDays: 365,
   }),
 );

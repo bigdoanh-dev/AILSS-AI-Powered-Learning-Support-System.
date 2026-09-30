@@ -1087,6 +1087,9 @@ export class ClassroomService {
     const cmd = await this.requiredCommand(scope, hash, input.key, fp);
     if (cmd.status === "COMPLETE" && cmd.receipt.resource)
       return { data: cmd.receipt.resource, replayed: true };
+    const existingMembership = await this.repo.membership(klass.classId, input.actor.userId);
+    if (!existingMembership && klass.linkedCourseId)
+      await this.link(klass.linkedCourseId, klass.ownerLecturerId, input.requestId);
     const occurredAt = new Date(cmd.receipt.occurredAt),
       scheduled = klass.scheduleState === "PUBLISHED",
       offeringId = deterministicUuid(this.secret, "private-class-offering", klass.classId),

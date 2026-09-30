@@ -1,6 +1,7 @@
 import { AppError } from "../../../../packages/http/src/index.js";
 import { safeError } from "../../../../packages/logger/src/index.js";
 import type { createMetrics } from "../../../../packages/observability/src/index.js";
+import type { MinioStorage } from "../../../../packages/storage/src/index.js";
 import {
   isPubliclyEligible,
   type CanonicalPublicSubject,
@@ -12,6 +13,7 @@ import {
 export interface PublicProfileStore {
   getCanonicalSubject(userId: string): Promise<CanonicalPublicSubject | undefined>;
   getProjection(lecturerId: string): Promise<PublicLecturerProjection | undefined>;
+  getAvatar?(lecturerId: string): Promise<{ contentType: string; objectKey: string } | undefined>;
 }
 
 export class PublicProfileService {
@@ -23,6 +25,7 @@ export class PublicProfileService {
       warn(input: object, message: string): void;
       error(input: object, message: string): void;
     },
+    private readonly storage?: Pick<MinioStorage, "read">,
   ) {}
 
   public async readPublic(lecturerId: string, requestId: string): Promise<PublicLecturerProfile> {
@@ -31,10 +34,25 @@ export class PublicProfileService {
       lecturerId: profile.lecturerId,
       displayName: profile.displayName,
       bio: profile.bio,
-      avatarRef: null,
+      avatarRef: await this.#publicAvatar(profile),
+      ...(profile.experience ? { experience: profile.experience } : {}),
+      ...(profile.education ? { education: profile.education } : {}),
+      ...(profile.achievements ? { achievements: profile.achievements } : {}),
       verified: true,
       profileVersion: profile.profileVersion,
     };
+  }
+
+  async #publicAvatar(profile: PublicLecturerProjection): Promise<string | null> {
+    if (!profile.avatarPublic || !this.storage || !this.store.getAvatar) return null;
+    try {
+      const avatar = await this.store.getAvatar(profile.lecturerId);
+      if (!avatar || !["image/png", "image/jpeg", "image/webp"].includes(avatar.contentType)) return null;
+      const bytes = await this.storage.read(avatar.objectKey, 256 * 1024);
+      return `data:${avatar.contentType};base64,${bytes.toString("base64")}`;
+    } catch {
+      return null;
+    }
   }
 
   public async readInternal(userId: string, requestId: string): Promise<InternalPublicProfile> {

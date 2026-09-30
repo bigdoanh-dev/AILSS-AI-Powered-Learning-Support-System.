@@ -22,6 +22,7 @@ import {
   type PaymentRequest,
 } from "./model.js";
 import type { LearningCommerceRepository } from "./repository.js";
+import type { IPayoutProvider, PayoutExecutionResult } from "./bank-api-provider.js";
 
 export class LearningCommerceService {
   public constructor(
@@ -30,6 +31,7 @@ export class LearningCommerceService {
     private readonly classroomContext: ClassroomOfferingContextClient,
     private readonly secret: string,
     private readonly recovery?: SepayRecoveryRepository,
+    private readonly payoutProvider?: IPayoutProvider,
   ) {}
 
   async revenueDashboard(actor: ActorContext, range: string) {
@@ -38,6 +40,176 @@ export class LearningCommerceService {
     if (range !== "today" && range !== "7d" && range !== "30d")
       throw new AppError("INVALID_REVENUE_RANGE", 422, "Revenue range must be today, 7d, or 30d");
     return this.repo.revenueDashboard(range);
+  }
+
+  async lecturerRevenueDashboard(actor: ActorContext, range: string) {
+    if (!actor.roles.includes("LECTURER"))
+      throw new AppError("LECTURER_REQUIRED", 403, "Lecturer authorization is required");
+    if (range !== "today" && range !== "7d" && range !== "30d")
+      throw new AppError("INVALID_REVENUE_RANGE", 422, "Revenue range must be today, 7d, or 30d");
+    const report = await this.repo.revenueDashboard(range);
+    return {
+      dataSource: report.dataSource,
+      range: report.range,
+      currency: report.currency,
+      lecturer: report.lecturers.find((item) => item.lecturerId === actor.userId) ?? {
+        lecturerId: actor.userId,
+        grossMinor: "0",
+        refundMinor: "0",
+        netMinor: "0",
+        estimatedPlatformMinor: "0",
+        estimatedEarningsMinor: "0",
+        orders: 0,
+        courses: [],
+      },
+      completeness: report.completeness,
+    };
+  }
+
+  async commission(actor: ActorContext) {
+    if (!actor.roles.includes("ADMIN") && !actor.roles.includes("LECTURER"))
+      throw new AppError("COMMISSION_ROLE_REQUIRED", 403, "Admin or lecturer authorization is required");
+    return this.repo.currentCommission();
+  }
+
+  async changeCommission(actor: ActorContext, basisPoints: number, expectedEffectiveAt: string) {
+    if (!actor.roles.includes("ADMIN"))
+      throw new AppError("ADMIN_REQUIRED", 403, "Admin authorization is required");
+    return this.repo.changeCommission(basisPoints, actor.userId, expectedEffectiveAt);
+  }
+
+  async payoutAccount(actor: ActorContext) {
+    if (!actor.roles.includes("LECTURER")) throw new AppError("LECTURER_REQUIRED", 403, "Lecturer required");
+    return this.repo.payoutAccount(actor.userId);
+  }
+
+  async savePayoutAccount(
+    actor: ActorContext,
+    input: { bankName: string; accountNumber: string; accountHolder: string },
+  ) {
+    if (!actor.roles.includes("LECTURER")) throw new AppError("LECTURER_REQUIRED", 403, "Lecturer required");
+    return this.repo.savePayoutAccount(actor.userId, input);
+  }
+
+  async payoutInstructions(actor: ActorContext) {
+    if (!actor.roles.includes("ADMIN")) throw new AppError("ADMIN_REQUIRED", 403, "Admin required");
+    const month = previousMonth();
+    const report = await this.repo.revenueDashboard("previousMonth");
+    const candidates = await Promise.all(
+      report.lecturers.map(async (item) => ({
+        lecturerId: item.lecturerId,
+        estimatedEarningsMinor: item.estimatedEarningsMinor,
+        accountConfigured: !!(await this.repo.payoutAccount(item.lecturerId)),
+      })),
+    );
+    return {
+      month,
+      canPrepare: new Date().getUTCDate() > 7,
+      candidates,
+      instructions: await this.repo.payoutInstructions(month),
+    };
+  }
+
+  async preparePayouts(actor: ActorContext, lecturerId?: string) {
+    if (!actor.roles.includes("ADMIN")) throw new AppError("ADMIN_REQUIRED", 403, "Admin required");
+    if (new Date().getUTCDate() <= 7)
+      throw new AppError(
+        "PAYOUT_REFUND_WINDOW_OPEN",
+        409,
+        "Previous month payout can be prepared after the refund window closes",
+      );
+    const month = previousMonth();
+    const report = await this.repo.revenueDashboard("previousMonth");
+    const selected = lecturerId
+      ? report.lecturers.filter((item) => item.lecturerId === lecturerId)
+      : report.lecturers;
+    const skipped: Array<{ lecturerId: string; reason: string }> = [];
+    for (const item of selected) {
+      if (BigInt(item.estimatedEarningsMinor) <= 0n) {
+        skipped.push({ lecturerId: item.lecturerId, reason: "NO_POSITIVE_BALANCE" });
+        continue;
+      }
+      const account = await this.repo.payoutAccount(item.lecturerId);
+      if (!account) {
+        skipped.push({ lecturerId: item.lecturerId, reason: "PAYOUT_ACCOUNT_MISSING" });
+        continue;
+      }
+      await this.repo.preparePayoutInstruction(month, item.lecturerId, item.estimatedEarningsMinor, account);
+    }
+    return { month, instructions: await this.repo.payoutInstructions(month), skipped };
+  }
+
+  async approvePayout(actor: ActorContext, lecturerId: string, month: string) {
+    if (!actor.roles.includes("ADMIN")) throw new AppError("ADMIN_REQUIRED", 403, "Admin required");
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || month !== previousMonth())
+      throw new AppError("PAYOUT_MONTH_INVALID", 422, "Only the previous payout month can be approved");
+    if (new Date().getUTCDate() <= 7)
+      throw new AppError("PAYOUT_REFUND_WINDOW_OPEN", 409, "Refund window is still open");
+    if (!this.payoutProvider)
+      throw new AppError("PAYOUT_PROVIDER_DISABLED", 503, "Payout mock is not configured");
+    const instruction = await this.repo.payoutInstruction(month, lecturerId);
+    if (!instruction) throw new AppError("PAYOUT_NOT_FOUND", 404, "Payout instruction not found");
+    if (instruction.status !== "PENDING_TRANSFER")
+      throw new AppError("PAYOUT_ALREADY_HANDLED", 409, "Payout already approved or requires review");
+    if (
+      instruction.currency !== "VND" ||
+      !/^[1-9]\d*$/.test(instruction.amountMinor) ||
+      BigInt(instruction.amountMinor) > BigInt(Number.MAX_SAFE_INTEGER) ||
+      !/^[0-9]{6,24}$/.test(instruction.accountNumber) ||
+      !instruction.bankName ||
+      !instruction.accountHolder
+    )
+      throw new AppError("PAYOUT_INSTRUCTION_INVALID", 422, "Payout instruction is invalid");
+    const claimed = await this.repo.claimPayoutApproval(
+      month,
+      lecturerId,
+      instruction.instructionId,
+      actor.userId,
+    );
+    if (!claimed)
+      throw new AppError("PAYOUT_ALREADY_HANDLED", 409, "Payout already approved or requires review");
+    await this.repo.auditPayout({
+      instructionId: instruction.instructionId,
+      eventId: randomUUID(),
+      state: "SUBMITTING",
+      actorId: actor.userId,
+    });
+    // SUBMITTING is a durable fence. An interrupted call remains there for manual reconciliation.
+    let result: PayoutExecutionResult;
+    try {
+      result = await this.payoutProvider.executePayout(
+        { minor: instruction.amountMinor, currency: "VND" },
+        {
+          bankName: instruction.bankName,
+          accountNumber: instruction.accountNumber,
+          accountHolder: instruction.accountHolder,
+        },
+        `AILSS-PAYOUT-${instruction.instructionId}`,
+      );
+    } catch {
+      result = { status: "RECONCILIATION_REQUIRED", reason: "PROVIDER_CALL_UNCERTAIN" };
+    }
+    const completed = await this.repo.finishPayoutApproval(
+      month,
+      lecturerId,
+      result.status,
+      result.status === "PAID" ? result.providerReference : null,
+      result.status === "PAID" ? null : result.reason,
+    );
+    if (!completed)
+      throw new AppError("PAYOUT_RECONCILIATION_REQUIRED", 409, "Payout requires manual reconciliation");
+    await this.repo.auditPayout({
+      instructionId: instruction.instructionId,
+      eventId: randomUUID(),
+      state: result.status,
+      actorId: actor.userId,
+      ...(result.status === "PAID" ? {} : { reason: result.reason }),
+    });
+    return this.repo.payoutInstruction(month, lecturerId);
+  }
+
+  async approvePreviousMonthPayout(actor: ActorContext, lecturerId: string) {
+    return this.approvePayout(actor, lecturerId, previousMonth());
   }
 
   async freeEnroll(input: { courseId: string; actor: ActorContext; key: string; correlationId: string }) {
@@ -313,10 +485,7 @@ export class LearningCommerceService {
     if (typeof this.recovery.get === "function") {
       const existing = await this.recovery.get(String(transaction.id));
       if (existing) {
-        if (
-          existing.orderId !== orderId ||
-          existing.amount !== transaction.transferAmount
-        ) {
+        if (existing.orderId !== orderId || existing.amount !== transaction.transferAmount) {
           console.warn(
             JSON.stringify({
               eventType: "APPSEC_AUDIT_PAYLOAD_COLLISION",
@@ -483,7 +652,7 @@ export class LearningCommerceService {
       }
       return this.completePayment(scope, hash, input.key, command.operationId, command.receipt, order, true);
     }
-    const offering = await this.requireOffering(order.offeringId, now);
+    const offering = await this.requireOffering(order.offeringId, now, true);
     if (offering.courseId !== order.courseId || offering.offeringType !== order.offeringType)
       throw conflict("OFFERING_SNAPSHOT_CONFLICT", "Offering authority no longer matches Order");
     if (input.request.outcome === "FAILURE") {
@@ -774,13 +943,19 @@ export class LearningCommerceService {
       return (await this.repo.order(order.orderId)) ?? order;
     }
   }
-  private async requireOffering(id: string, now: Date) {
+  private async requireOffering(id: string, now: Date, existingOrder = false) {
     const offering = await this.repo.offering(id);
     if (!offering || offering.state !== "PUBLISHED")
       throw notFound("OFFERING_NOT_AVAILABLE", "Offering is not available");
+    if (!existingOrder) {
+      const course = await this.repo.course(offering.courseId);
+      if (!course || course.state !== "PUBLISHED")
+        throw notFound("COURSE_NOT_AVAILABLE", "Course is no longer open for enrollment");
+    }
     if (
-      (offering.salesStartAt && offering.salesStartAt > now) ||
-      (offering.salesEndAt && offering.salesEndAt <= now)
+      !existingOrder &&
+      ((offering.salesStartAt && offering.salesStartAt > now) ||
+        (offering.salesEndAt && offering.salesEndAt <= now))
     )
       throw conflict("OFFERING_NOT_ON_SALE", "Offering is outside its sales window");
     return offering;
@@ -876,4 +1051,7 @@ function unavailable() {
     "Learning command is temporarily unavailable",
     true,
   );
+}
+function previousMonth(now = new Date()) {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
 }

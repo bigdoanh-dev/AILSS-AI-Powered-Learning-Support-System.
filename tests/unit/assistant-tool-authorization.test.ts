@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  isModeAllowedForRole,
-  isToolAllowedForRole,
-} from "../../apps/ai-service/src/assistant/roles.js";
+import { isModeAllowedForRole, isToolAllowedForRole } from "../../apps/ai-service/src/assistant/roles.js";
 import { ToolRunner, type AssistantDomainClient } from "../../apps/ai-service/src/assistant/tool-runner.js";
 
 describe("Phase 16B — Assistant Tool Authorization & Role Boundaries", () => {
@@ -44,11 +41,12 @@ describe("Phase 16B — Assistant Tool Authorization & Role Boundaries", () => {
       expect(isToolAllowedForRole("STUDENT", "suggest_remedial_actions")).toBe(false);
     });
 
-    it("permits LECTURER to invoke both student and educator authoring tools", () => {
-      expect(isToolAllowedForRole("LECTURER", "generate_quiz_draft")).toBe(true);
-      expect(isToolAllowedForRole("LECTURER", "diagnose_cohort_gaps")).toBe(true);
-      expect(isToolAllowedForRole("LECTURER", "suggest_remedial_actions")).toBe(true);
+    it("limits lecturer chat to public catalog and conceptual help", () => {
       expect(isToolAllowedForRole("LECTURER", "search_courses")).toBe(true);
+      expect(isToolAllowedForRole("LECTURER", "explain_concept")).toBe(true);
+      expect(isToolAllowedForRole("LECTURER", "get_student_mastery")).toBe(false);
+      expect(isToolAllowedForRole("LECTURER", "diagnose_cohort_gaps")).toBe(false);
+      expect(isToolAllowedForRole("LECTURER", "generate_quiz_draft")).toBe(false);
     });
 
     it("restricts modes based on role", () => {
@@ -60,7 +58,13 @@ describe("Phase 16B — Assistant Tool Authorization & Role Boundaries", () => {
       expect(isModeAllowedForRole("STUDENT", "STUDY_BUDDY")).toBe(true);
       expect(isModeAllowedForRole("STUDENT", "LECTURER_COPILOT")).toBe(false);
 
-      expect(isModeAllowedForRole("LECTURER", "LECTURER_COPILOT")).toBe(false);
+      expect(isModeAllowedForRole("LECTURER", "LECTURER_COPILOT")).toBe(true);
+      expect(isModeAllowedForRole("LECTURER", "STUDY_BUDDY")).toBe(false);
+      expect(isModeAllowedForRole("LECTURER", "STUDENT_ADVISOR")).toBe(false);
+      expect(isModeAllowedForRole("ADMIN", "ADMIN_SUPPORT")).toBe(true);
+      expect(isModeAllowedForRole("ADMIN", "STUDY_BUDDY")).toBe(false);
+      expect(isModeAllowedForRole("ADMIN", "STUDENT_ADVISOR")).toBe(false);
+      expect(isToolAllowedForRole("ADMIN", "get_student_mastery")).toBe(false);
     });
   });
 
@@ -69,7 +73,10 @@ describe("Phase 16B — Assistant Tool Authorization & Role Boundaries", () => {
       let invoked = false;
       const guarded = new ToolRunner({
         ...dummyDomainClient,
-        generateQuizDraft: () => { invoked = true; return Promise.resolve({}); },
+        generateQuizDraft: () => {
+          invoked = true;
+          return Promise.resolve({});
+        },
       });
       const result = await guarded.executeTool(
         "call-pre-auth",

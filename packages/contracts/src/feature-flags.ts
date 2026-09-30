@@ -12,13 +12,7 @@ export const PRODUCT_FEATURE_FLAGS = [
 
 export type ProductFeatureFlag = (typeof PRODUCT_FEATURE_FLAGS)[number];
 
-export const FeatureRolloutModeEnum = z.enum([
-  "OFF",
-  "INTERNAL",
-  "PILOT_TENANTS",
-  "PERCENT_ROLLOUT",
-  "ON",
-]);
+export const FeatureRolloutModeEnum = z.enum(["OFF", "INTERNAL", "PILOT_TENANTS", "PERCENT_ROLLOUT", "ON"]);
 export type FeatureRolloutMode = z.infer<typeof FeatureRolloutModeEnum>;
 
 export interface FeatureFlagPolicy {
@@ -52,11 +46,7 @@ export class TenantFeatureFlagResolver {
 
   private initDefaultPolicies(): void {
     const now = "2026-09-21T23:30:00Z";
-    const pilotTenants = [
-      "tenant-polytech-hcm",
-      "tenant-vnu-hn",
-      "tenant-pilot-engineering",
-    ];
+    const pilotTenants = ["tenant-polytech-hcm", "tenant-vnu-hn", "tenant-pilot-engineering"];
 
     for (const flag of PRODUCT_FEATURE_FLAGS) {
       this.policies.set(flag, {
@@ -90,9 +80,9 @@ export class TenantFeatureFlagResolver {
       case "INTERNAL":
         return Boolean(
           context.isInternalTenant ||
-            context.tenantId.includes("internal") ||
-            context.tenantId.includes("research") ||
-            context.tenantId.includes("dev"),
+          context.tenantId.includes("internal") ||
+          context.tenantId.includes("research") ||
+          context.tenantId.includes("dev"),
         );
       case "PILOT_TENANTS":
         if (

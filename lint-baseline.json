@@ -1,0 +1,665 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-09-23T04:10:14.743Z",
+  "baselineCommit": "7523e35a158137edf949bf442a163bf9010e927d",
+  "scope": ["apps", "packages"],
+  "existingIssueCount": 82,
+  "issues": [
+    {
+      "relativePath": "apps/ai-service/src/assistant/ai-tutor-eval-v1.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 149,
+      "column": 11,
+      "messageFingerprint": "80920ce7b1a9919d976068bf44796476869d55360d9cd105c54e366f4e56c34a"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/ai-tutor-eval-v1.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 155,
+      "column": 11,
+      "messageFingerprint": "231ac8fbd7dd1a7ed1f5e84942d8b420717d4097d7fc3de2ae4e02ae1e3270ff"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/ai-tutor-eval-v1.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 156,
+      "column": 11,
+      "messageFingerprint": "5e672b8a40a98fd26814c3b80a5c3134ed457017e45261383ca85ed7e3b368b8"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/ai-tutor-eval-v1.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 162,
+      "column": 11,
+      "messageFingerprint": "0ed2f57ed2f8891a3c9b78c43b2d603e99a9c8b6210e82531a941d26241a7190"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/ai-tutor-eval-v1.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 163,
+      "column": 11,
+      "messageFingerprint": "52fb43e4b6321be18fa7656472fe651ad947d8184988668125e261ac04262572"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/ai-tutor-eval-v1.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 169,
+      "column": 11,
+      "messageFingerprint": "4e0e5e0b56f8c892b6f14ddde63633f51ce8483c6ab0af81f4d825870943a84a"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/ai-tutor-eval-v2.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 3,
+      "column": 3,
+      "messageFingerprint": "9e6e5df4c318cd170abf1ff478bc379a9d0c4122c9d7106da142d4121814edd0"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/ai-tutor-eval-v2.ts",
+      "ruleId": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 27,
+      "column": 14,
+      "messageFingerprint": "d9edac561b7f5f4f91438b807f7e1dfa79ee979890421d5727a8f5994a62ecf1"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/ai-tutor-eval-v3.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 3,
+      "column": 3,
+      "messageFingerprint": "9e6e5df4c318cd170abf1ff478bc379a9d0c4122c9d7106da142d4121814edd0"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/ai-tutor-eval-v3.ts",
+      "ruleId": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 29,
+      "column": 14,
+      "messageFingerprint": "d9edac561b7f5f4f91438b807f7e1dfa79ee979890421d5727a8f5994a62ecf1"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/assessment-integrity-attacks.ts",
+      "ruleId": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 305,
+      "column": 14,
+      "messageFingerprint": "d9edac561b7f5f4f91438b807f7e1dfa79ee979890421d5727a8f5994a62ecf1"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/assessment-integrity-attacks.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 382,
+      "column": 27,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/assessment-integrity-attacks.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 382,
+      "column": 41,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/teacher-copilot-service.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 8,
+      "column": 3,
+      "messageFingerprint": "537ba6fceb2816b95a43ef01834734ce3ce8c5ea2850012cec59fa844ff39a2a"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/teacher-copilot-service.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 9,
+      "column": 3,
+      "messageFingerprint": "d6b2360314cabf9cb92316a7dbbe894d8bb2f0bba2c8add668be802b7ea66a20"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/teacher-copilot-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 226,
+      "column": 99,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/teacher-copilot-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 244,
+      "column": 65,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/teacher-copilot-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 244,
+      "column": 99,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/ai-service/src/assistant/teacher-copilot-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 262,
+      "column": 54,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/identity-service/src/tenant/fleet-operations-service.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 136,
+      "column": 20,
+      "messageFingerprint": "44dc97ee6e5006f7e0c7613bb274df86ad4cdbd07015e8a80e9e9e79d3123fb1"
+    },
+    {
+      "relativePath": "apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 1,
+      "column": 10,
+      "messageFingerprint": "0aeb9174849dbbaf2a4c9e9808676fbe175e8b641a80a82713b73be1efd3e253"
+    },
+    {
+      "relativePath": "apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 5,
+      "column": 3,
+      "messageFingerprint": "ac30b317649be82d4eb32a6614322a92b5fcf5084ec4fb62fd0f15eee02fb190"
+    },
+    {
+      "relativePath": "apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 91,
+      "column": 34,
+      "messageFingerprint": "1c68384631abd9d58bd25b244ac0fc0c036bf1bd4550b4e8f5a0abc16952fdc1"
+    },
+    {
+      "relativePath": "apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 92,
+      "column": 37,
+      "messageFingerprint": "1c68384631abd9d58bd25b244ac0fc0c036bf1bd4550b4e8f5a0abc16952fdc1"
+    },
+    {
+      "relativePath": "apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 94,
+      "column": 35,
+      "messageFingerprint": "1c68384631abd9d58bd25b244ac0fc0c036bf1bd4550b4e8f5a0abc16952fdc1"
+    },
+    {
+      "relativePath": "apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 132,
+      "column": 28,
+      "messageFingerprint": "1c68384631abd9d58bd25b244ac0fc0c036bf1bd4550b4e8f5a0abc16952fdc1"
+    },
+    {
+      "relativePath": "apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 133,
+      "column": 31,
+      "messageFingerprint": "1c68384631abd9d58bd25b244ac0fc0c036bf1bd4550b4e8f5a0abc16952fdc1"
+    },
+    {
+      "relativePath": "apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 135,
+      "column": 29,
+      "messageFingerprint": "1c68384631abd9d58bd25b244ac0fc0c036bf1bd4550b4e8f5a0abc16952fdc1"
+    },
+    {
+      "relativePath": "apps/identity-service/src/tenant/institution-onboarding-v2-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 182,
+      "column": 36,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/adaptive/recommendation-service.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 262,
+      "column": 3,
+      "messageFingerprint": "1859369ace22ada78a17986269f007580b8babb515591035db4550db2679500a"
+    },
+    {
+      "relativePath": "apps/learning-service/src/adaptive/recommendation-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 315,
+      "column": 53,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/adaptive/runtime-repository.ts",
+      "ruleId": "@typescript-eslint/no-base-to-string",
+      "severity": "error",
+      "line": 119,
+      "column": 51,
+      "messageFingerprint": "440f6545197e5325e9f2ccec36b5f9b2184acb32bc29fc034154e018d9b0f320"
+    },
+    {
+      "relativePath": "apps/learning-service/src/analytics/differential-privacy-service.ts",
+      "ruleId": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 107,
+      "column": 14,
+      "messageFingerprint": "d9edac561b7f5f4f91438b807f7e1dfa79ee979890421d5727a8f5994a62ecf1"
+    },
+    {
+      "relativePath": "apps/learning-service/src/analytics/differential-privacy-service.ts",
+      "ruleId": "@typescript-eslint/no-non-null-assertion",
+      "severity": "error",
+      "line": 153,
+      "column": 28,
+      "messageFingerprint": "e4ee207902bc1bd3fcbf2bd9e0621d38984edfdfde38d57011c0aa86f7a17343"
+    },
+    {
+      "relativePath": "apps/learning-service/src/analytics/differential-privacy-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 278,
+      "column": 24,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/analytics/differential-privacy-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 295,
+      "column": 24,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/analytics/differential-privacy-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 323,
+      "column": 22,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/analytics/learning-intelligence-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 183,
+      "column": 30,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/analytics/learning-intelligence-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 183,
+      "column": 44,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/analytics/learning-intelligence-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 191,
+      "column": 76,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 56,
+      "column": 24,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 56,
+      "column": 38,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 79,
+      "column": 24,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 79,
+      "column": 38,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 154,
+      "column": 30,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/course-authoring/course-authoring-studio-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 154,
+      "column": 44,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/curriculum/curriculum-intelligence-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 84,
+      "column": 33,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/curriculum/curriculum-intelligence-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 84,
+      "column": 47,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "apps/learning-service/src/mastery/mastery-calibration-v1.ts",
+      "ruleId": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 254,
+      "column": 14,
+      "messageFingerprint": "d9edac561b7f5f4f91438b807f7e1dfa79ee979890421d5727a8f5994a62ecf1"
+    },
+    {
+      "relativePath": "apps/learning-service/src/mastery/mastery-calibration-v2.ts",
+      "ruleId": "@typescript-eslint/no-unused-vars",
+      "severity": "error",
+      "line": 3,
+      "column": 8,
+      "messageFingerprint": "03e6c69e9d044caea308746f35c58fb30a8d03a243226aa4034b36f9fe060572"
+    },
+    {
+      "relativePath": "apps/learning-service/src/mastery/mastery-service.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 535,
+      "column": 52,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/commercial-gate.ts",
+      "ruleId": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 77,
+      "column": 14,
+      "messageFingerprint": "d9edac561b7f5f4f91438b807f7e1dfa79ee979890421d5727a8f5994a62ecf1"
+    },
+    {
+      "relativePath": "packages/contracts/src/commercial-gate.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 222,
+      "column": 101,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/commercial-gate.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 233,
+      "column": 90,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/commercial-gate.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 233,
+      "column": 138,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/commercial-gate.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 260,
+      "column": 96,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/commercial-gate.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 307,
+      "column": 52,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/commercial-gate.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 307,
+      "column": 90,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/critical-durability.ts",
+      "ruleId": "@typescript-eslint/require-await",
+      "severity": "error",
+      "line": 142,
+      "column": 3,
+      "messageFingerprint": "c9b4901e3b453bcba5c48a060b5ee3a1ae24001565f2fe4756be962d16a670fa"
+    },
+    {
+      "relativePath": "packages/contracts/src/critical-durability.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-type-parameters",
+      "severity": "error",
+      "line": 242,
+      "column": 33,
+      "messageFingerprint": "d99546cc63149ea6860bde4c3da8fe184d481dca23d3fe85714daf610b972297"
+    },
+    {
+      "relativePath": "packages/contracts/src/data-retention-policy.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 121,
+      "column": 11,
+      "messageFingerprint": "5e0a7f1d03d16590b750d0bd8818ca327a73b5819c37a0aa176712832549fab9"
+    },
+    {
+      "relativePath": "packages/contracts/src/data-retention-policy.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 121,
+      "column": 26,
+      "messageFingerprint": "aeaa30bafb0e47d5a726e6fb6fce77b05b7051f9aab5480e4597a89f3a3cb907"
+    },
+    {
+      "relativePath": "packages/contracts/src/data-retention-policy.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 162,
+      "column": 68,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/data-retention-policy.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 162,
+      "column": 115,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/data-retention-policy.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 162,
+      "column": 139,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/data-retention-policy.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 201,
+      "column": 27,
+      "messageFingerprint": "44dc97ee6e5006f7e0c7613bb274df86ad4cdbd07015e8a80e9e9e79d3123fb1"
+    },
+    {
+      "relativePath": "packages/contracts/src/data-retention-policy.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 207,
+      "column": 48,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/data-retention-policy.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 207,
+      "column": 96,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/data-retention-policy.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 213,
+      "column": 45,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/data-retention-policy.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 213,
+      "column": 105,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/feature-flags.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-type-conversion",
+      "severity": "error",
+      "line": 91,
+      "column": 16,
+      "messageFingerprint": "5c9189368bc8ed1c85e4906bd977d2d2510b9b2cf89eb31710a6c9a59fdbefd3"
+    },
+    {
+      "relativePath": "packages/contracts/src/institutional-pilot.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 313,
+      "column": 9,
+      "messageFingerprint": "e1eab0270879399202e8011c556bf3909b1c1d40118c83d4010b14111d7e335b"
+    },
+    {
+      "relativePath": "packages/contracts/src/institutional-pilot.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 314,
+      "column": 81,
+      "messageFingerprint": "406c7ef3f5ec4a4e904b673ad7f284ea4968c8134e7ad1eb0825c28cbb7a8ede"
+    },
+    {
+      "relativePath": "packages/contracts/src/institutional-pilot.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 317,
+      "column": 9,
+      "messageFingerprint": "e998122df7ef0ecb4daabd3396be5e624e29eff45d7802a526e99dcadfe41c81"
+    },
+    {
+      "relativePath": "packages/contracts/src/institutional-pilot.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 318,
+      "column": 66,
+      "messageFingerprint": "406c7ef3f5ec4a4e904b673ad7f284ea4968c8134e7ad1eb0825c28cbb7a8ede"
+    },
+    {
+      "relativePath": "packages/contracts/src/institutional-pilot.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 321,
+      "column": 9,
+      "messageFingerprint": "68d98e65d917e9fafc51373347ae4b0b47bdb51a521e2c7361adae528e75795b"
+    },
+    {
+      "relativePath": "packages/contracts/src/institutional-pilot.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 322,
+      "column": 58,
+      "messageFingerprint": "406c7ef3f5ec4a4e904b673ad7f284ea4968c8134e7ad1eb0825c28cbb7a8ede"
+    },
+    {
+      "relativePath": "packages/contracts/src/institutional-pilot.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 326,
+      "column": 84,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/contracts/src/learning-intelligence.ts",
+      "ruleId": "@typescript-eslint/no-extraneous-class",
+      "severity": "error",
+      "line": 67,
+      "column": 14,
+      "messageFingerprint": "d9edac561b7f5f4f91438b807f7e1dfa79ee979890421d5727a8f5994a62ecf1"
+    },
+    {
+      "relativePath": "packages/contracts/src/scim.ts",
+      "ruleId": "@typescript-eslint/no-unnecessary-condition",
+      "severity": "error",
+      "line": 777,
+      "column": 53,
+      "messageFingerprint": "1c68384631abd9d58bd25b244ac0fc0c036bf1bd4550b4e8f5a0abc16952fdc1"
+    },
+    {
+      "relativePath": "packages/security/src/saml.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 640,
+      "column": 68,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    },
+    {
+      "relativePath": "packages/security/src/saml.ts",
+      "ruleId": "@typescript-eslint/restrict-template-expressions",
+      "severity": "error",
+      "line": 897,
+      "column": 44,
+      "messageFingerprint": "9176aeadd06e8a4e7d018009b560218742e3c5f5aaed3e0a73f799b320a07f87"
+    }
+  ]
+}

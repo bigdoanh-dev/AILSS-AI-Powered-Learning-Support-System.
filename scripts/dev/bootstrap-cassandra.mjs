@@ -51,18 +51,53 @@ for (const name of roleSecrets)
 cql(roles);
 
 const migrationDir = new URL(`../../database/migrations/${migrationProfile}/`, import.meta.url);
-const registry = JSON.parse(await readFile(new URL("../../database/migration-registry.json", import.meta.url), "utf8"));
-const inventory = JSON.parse(await readFile(new URL("../../database/migration-inventory.json", import.meta.url), "utf8"));
+const registry = JSON.parse(
+  await readFile(new URL("../../database/migration-registry.json", import.meta.url), "utf8"),
+);
+const inventory = JSON.parse(
+  await readFile(new URL("../../database/migration-inventory.json", import.meta.url), "utf8"),
+);
 const files = registry.migrations.map((entry) => entry.filename);
 const diskFiles = (await readdir(migrationDir)).filter((name) => name.endsWith(".cql")).sort();
-if (files.length !== inventory.summary.CANONICAL_LOGICAL_MIGRATIONS || files.length !== diskFiles.length || files.some((name, index) => name !== diskFiles[index])) {
-  throw new Error(`MIGRATION_BOOTSTRAP_PARITY_FAILED registry=${files.length} inventory=${inventory.summary.CANONICAL_LOGICAL_MIGRATIONS} disk=${diskFiles.length}`);
+if (
+  files.length !== inventory.summary.CANONICAL_LOGICAL_MIGRATIONS ||
+  files.length !== diskFiles.length ||
+  files.some((name, index) => name !== diskFiles[index])
+) {
+  throw new Error(
+    `MIGRATION_BOOTSTRAP_PARITY_FAILED registry=${files.length} inventory=${inventory.summary.CANONICAL_LOGICAL_MIGRATIONS} disk=${diskFiles.length}`,
+  );
 }
 const checksums = [];
+// A fresh bootstrap has no schedule tables before 033. On an existing target,
+// changing a compaction strategy needs an operator review of data and capacity.
+const scheduleTables = ["student_schedule_by_day", "schedule_reservations_by_expiry_bucket"];
+const scheduleTableOptions = scheduleTables.map((table) =>
+  cql(
+    `SELECT compaction FROM system_schema.tables WHERE keyspace_name = 'classroom_keyspace' AND table_name = '${table}';`,
+  ),
+);
+const needsCompactionChange = scheduleTableOptions.some(
+  (output) =>
+    output.includes("1 row") &&
+    !(
+      output.includes("TimeWindowCompactionStrategy") &&
+      output.includes("compaction_window_unit") &&
+      output.includes("DAYS") &&
+      output.includes("compaction_window_size") &&
+      output.includes("'1'")
+    ),
+);
+if (needsCompactionChange && process.env.AILSS_APPROVE_093_COMPACTION !== "true") {
+  throw new Error(
+    "MIGRATION_093_PRECHECK_REQUIRED: existing schedule tables require a reviewed target snapshot and AILSS_APPROVE_093_COMPACTION=true",
+  );
+}
 for (const [index, file] of files.entries()) {
   const text = await readFile(new URL(file, migrationDir), "utf8");
   const digest = createHash("sha256").update(text).digest("hex");
-  const expected = registry.migrations[index][migrationProfile === "research" ? "sha256Research" : "sha256Dev"];
+  const expected =
+    registry.migrations[index][migrationProfile === "research" ? "sha256Research" : "sha256Dev"];
   if (digest !== expected) throw new Error(`MIGRATION_HASH_MISMATCH ${file}`);
   cql(text);
   checksums.push({ file, sha256: digest });

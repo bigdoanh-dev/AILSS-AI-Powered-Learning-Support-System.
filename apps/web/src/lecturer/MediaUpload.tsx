@@ -296,11 +296,21 @@ export function MediaUpload({
               />
               <label>
                 Ngôn ngữ{" "}
-                <input aria-label="Ngôn ngữ phụ đề" value={captionLanguage} maxLength={35} onChange={(event) => setCaptionLanguage(event.target.value)} />
+                <input
+                  aria-label="Ngôn ngữ phụ đề"
+                  value={captionLanguage}
+                  maxLength={35}
+                  onChange={(event) => setCaptionLanguage(event.target.value)}
+                />
               </label>
               <label>
                 Tên phụ đề{" "}
-                <input aria-label="Tên phụ đề" value={captionLabel} maxLength={80} onChange={(event) => setCaptionLabel(event.target.value)} />
+                <input
+                  aria-label="Tên phụ đề"
+                  value={captionLabel}
+                  maxLength={80}
+                  onChange={(event) => setCaptionLabel(event.target.value)}
+                />
               </label>
               <button
                 className="button secondary"
@@ -332,7 +342,9 @@ export function MediaUpload({
               >
                 {captionBusy ? "Đang lưu phụ đề…" : "Thêm phụ đề"}
               </button>
-              {asset.captionTracks?.length ? <p role="status">{asset.captionTracks.map((track) => track.label).join(", ")}</p> : null}
+              {asset.captionTracks?.length ? (
+                <p role="status">{asset.captionTracks.map((track) => track.label).join(", ")}</p>
+              ) : null}
             </div>
           ) : null}
         </>

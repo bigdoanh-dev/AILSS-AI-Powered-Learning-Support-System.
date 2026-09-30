@@ -29,21 +29,11 @@ export const notificationListSchema = z
   })
   .strict();
 
-export const NOTIFICATION_DELIVERY_STATUSES = [
-  "PENDING",
-  "SENT",
-  "DELIVERED",
-  "FAILED",
-] as const;
+export const NOTIFICATION_DELIVERY_STATUSES = ["PENDING", "SENT", "DELIVERED", "FAILED"] as const;
 
 export type NotificationDeliveryStatus = (typeof NOTIFICATION_DELIVERY_STATUSES)[number];
 
-export const NOTIFICATION_CHANNELS = [
-  "IN_APP",
-  "EMAIL",
-  "PUSH",
-  "SMS",
-] as const;
+export const NOTIFICATION_CHANNELS = ["IN_APP", "EMAIL", "PUSH", "SMS"] as const;
 
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
 

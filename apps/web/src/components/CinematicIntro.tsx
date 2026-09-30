@@ -9,6 +9,7 @@ export function CinematicIntro() {
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
+      video.playbackRate = 1.5;
       video.currentTime = 0;
       video.volume = 1.0;
       // Start completely muted so no sound plays automatically on Home
@@ -21,6 +22,7 @@ export function CinematicIntro() {
       setClosing(false);
       setVisible(true);
       if (videoRef.current) {
+        videoRef.current.playbackRate = 1.5;
         videoRef.current.currentTime = 0;
         videoRef.current.volume = 1.0;
         videoRef.current.muted = false;
@@ -29,6 +31,7 @@ export function CinematicIntro() {
         if (p !== undefined) {
           p.catch(() => {
             if (videoRef.current) {
+              videoRef.current.playbackRate = 1.5;
               videoRef.current.muted = true;
               setIsMuted(true);
               void videoRef.current.play().catch(() => {});
@@ -40,10 +43,10 @@ export function CinematicIntro() {
 
     window.addEventListener("ailss-play-intro", handleReplay);
 
-    // Safety timeout in case video stalls or fails to trigger onEnded
+    // Safety timeout in case video stalls or fails to trigger onEnded (adjusted for 1.5x speed)
     const safetyTimer = setTimeout(() => {
       handleEnded();
-    }, 14000);
+    }, 10000);
 
     return () => {
       clearTimeout(safetyTimer);
@@ -67,6 +70,7 @@ export function CinematicIntro() {
   const toggleSound = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (videoRef.current) {
+      videoRef.current.playbackRate = 1.5;
       const nextMuted = !videoRef.current.muted;
       videoRef.current.muted = nextMuted;
       videoRef.current.volume = 1.0;
@@ -79,6 +83,7 @@ export function CinematicIntro() {
 
   const handleOverlayClick = () => {
     if (videoRef.current && videoRef.current.muted) {
+      videoRef.current.playbackRate = 1.5;
       videoRef.current.muted = false;
       videoRef.current.volume = 1.0;
       setIsMuted(false);
@@ -106,9 +111,14 @@ export function CinematicIntro() {
         disablePictureInPicture
         disableRemotePlayback
         tabIndex={-1}
+        onLoadedMetadata={(e) => {
+          e.currentTarget.playbackRate = 1.5;
+        }}
+        onPlay={(e) => {
+          e.currentTarget.playbackRate = 1.5;
+        }}
         onEnded={handleEnded}
       />
-      <div className="cinematic-corner-mask" aria-hidden="true" />
 
       {/* Interactive Controls Overlay */}
       <div className="cinematic-controls">

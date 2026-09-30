@@ -97,8 +97,8 @@ export default function AdminCommerceScreen() {
           </View>
           <Text style={cs.noticeText}>
             • Ứng dụng di động đóng vai trò giám sát, không lưu trữ chứng thư bảo mật hoặc khóa bí mật của
-            cổng thanh toán.{"\n"}• Mọi giao dịch đối soát và xác nhận thanh toán do dịch vụ Learning/Commerce thực
-            hiện.{"\n"}• {CONTRACT_LIMITED.manualPaymentMutation}
+            cổng thanh toán.{"\n"}• Mọi giao dịch đối soát và xác nhận thanh toán do dịch vụ Learning/Commerce
+            thực hiện.{"\n"}• {CONTRACT_LIMITED.manualPaymentMutation}
             {"\n"}• {CONTRACT_LIMITED.orderList}
           </Text>
         </View>

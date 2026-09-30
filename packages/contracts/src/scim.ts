@@ -116,8 +116,8 @@ export function processScimUserProvisioning(
   const givenName = user.name?.givenName;
   const familyName = user.name?.familyName;
   const combinedName = [givenName, familyName].filter((part): part is string => Boolean(part)).join(" ");
-  const fullName = user.name?.formatted ?? (combinedName.length > 0 ? combinedName : (user.displayName ?? user.userName));
-
+  const fullName =
+    user.name?.formatted ?? (combinedName.length > 0 ? combinedName : (user.displayName ?? user.userName));
 
   // 3. Resolve role and enforce PLATFORM_ADMIN prohibition
   let mappedRole: InstitutionalRole = "STUDENT";
@@ -137,7 +137,11 @@ export function processScimUserProvisioning(
 
       if (roleVal.includes("ADMIN") || roleVal.includes("MANAGER")) {
         mappedRole = "INSTITUTION_ADMIN";
-      } else if (roleVal.includes("INSTRUCTOR") || roleVal.includes("LECTURER") || roleVal.includes("FACULTY")) {
+      } else if (
+        roleVal.includes("INSTRUCTOR") ||
+        roleVal.includes("LECTURER") ||
+        roleVal.includes("FACULTY")
+      ) {
         mappedRole = "LECTURER";
       }
     }
@@ -159,11 +163,13 @@ export interface ScimRequest {
   readonly path: string;
   readonly body?: unknown;
   readonly headers?: Record<string, string | undefined> | undefined;
-  readonly query?: {
-    readonly startIndex?: string | number | undefined;
-    readonly count?: string | number | undefined;
-    readonly filter?: string | undefined;
-  } | undefined;
+  readonly query?:
+    | {
+        readonly startIndex?: string | number | undefined;
+        readonly count?: string | number | undefined;
+        readonly filter?: string | undefined;
+      }
+    | undefined;
 }
 
 export interface ScimResponse {
@@ -299,7 +305,10 @@ export class Scim2ServerHandler {
     const cleanPath = req.path.replace(/\/+$/u, "");
 
     // 1. GET /ServiceProviderConfig
-    if (req.method === "GET" && (cleanPath === "/ServiceProviderConfig" || cleanPath.endsWith("/ServiceProviderConfig"))) {
+    if (
+      req.method === "GET" &&
+      (cleanPath === "/ServiceProviderConfig" || cleanPath.endsWith("/ServiceProviderConfig"))
+    ) {
       return {
         status: 200,
         headers: { "Content-Type": "application/scim+json" },
@@ -492,7 +501,7 @@ export class Scim2ServerHandler {
           status: 200,
           headers: {
             "Content-Type": "application/scim+json",
-            "ETag": `W/"${version}"`,
+            ETag: `W/"${version}"`,
           },
           body: user,
         };
@@ -541,12 +550,13 @@ export class Scim2ServerHandler {
             status: 200,
             headers: {
               "Content-Type": "application/scim+json",
-              "ETag": `W/"${version}"`,
+              ETag: `W/"${version}"`,
             },
             body: updated,
           };
         } catch (err) {
-          const status = err instanceof AppError && err.code === "SCIM_PRIVILEGE_ESCALATION_DENIED" ? 403 : 400;
+          const status =
+            err instanceof AppError && err.code === "SCIM_PRIVILEGE_ESCALATION_DENIED" ? 403 : 400;
           return {
             status,
             headers: { "Content-Type": "application/scim+json" },
@@ -605,10 +615,18 @@ export class Scim2ServerHandler {
           if (opType === "replace" || opType === "add") {
             if (op.path === "active") {
               updatedUser = { ...updatedUser, active: Boolean(op.value) };
-            } else if (op.path === "roles" || (!op.path && typeof op.value === "object" && op.value !== null && "roles" in op.value)) {
-              const roles = (op.path === "roles" ? op.value : (op.value as { roles: unknown }).roles) as Array<{ value: string }>;
+            } else if (
+              op.path === "roles" ||
+              (!op.path && typeof op.value === "object" && op.value !== null && "roles" in op.value)
+            ) {
+              const roles = (
+                op.path === "roles" ? op.value : (op.value as { roles: unknown }).roles
+              ) as Array<{ value: string }>;
               // Enforce anti-privilege escalation
-              if (Array.isArray(roles) && roles.some((r) => r.value.toUpperCase().includes("PLATFORM_ADMIN"))) {
+              if (
+                Array.isArray(roles) &&
+                roles.some((r) => r.value.toUpperCase().includes("PLATFORM_ADMIN"))
+              ) {
                 return {
                   status: 403,
                   headers: { "Content-Type": "application/scim+json" },
@@ -630,7 +648,7 @@ export class Scim2ServerHandler {
           status: 200,
           headers: {
             "Content-Type": "application/scim+json",
-            "ETag": `W/"${version}"`,
+            ETag: `W/"${version}"`,
           },
           body: saved,
         };

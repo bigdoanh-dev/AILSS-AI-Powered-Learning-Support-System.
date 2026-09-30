@@ -1,5 +1,6 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+
 export function ResultAnimation({ success }: { success: boolean }) {
   return (
     <span className={`result-animation ${success ? "is-success" : "is-failure"}`} aria-hidden="true">
@@ -23,23 +24,57 @@ export function ResultAnimation({ success }: { success: boolean }) {
     </span>
   );
 }
+
 export function OperationResult({
   success,
   title,
   children,
   action,
   onComplete,
+  autoRedirect = false,
+  redirectDelayMs = 2200,
 }: {
   success: boolean;
   title: string;
   children: ReactNode;
   action?: ReactNode;
   onComplete?: () => void;
+  autoRedirect?: boolean;
+  redirectDelayMs?: number;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
+  const hasAutoComplete = Boolean(onComplete);
+  const completion = useRef(onComplete);
+  const [secondsLeft, setSecondsLeft] = useState(() => Math.max(1, Math.ceil(redirectDelayMs / 1000)));
+
   useEffect(() => {
     heading.current?.focus();
   }, [title]);
+
+  useEffect(() => {
+    completion.current = onComplete;
+  }, [onComplete]);
+
+  // When autoRedirect is requested, or when failure has an onComplete callback:
+  const shouldAutoNavigate = hasAutoComplete && (autoRedirect || !success);
+
+  useEffect(() => {
+    if (!shouldAutoNavigate) return;
+
+    const interval = window.setInterval(() => {
+      setSecondsLeft((s) => (s > 1 ? s - 1 : 1));
+    }, 1000);
+
+    const timer = window.setTimeout(() => {
+      completion.current?.();
+    }, redirectDelayMs);
+
+    return () => {
+      window.clearInterval(interval);
+      window.clearTimeout(timer);
+    };
+  }, [shouldAutoNavigate, redirectDelayMs, title]);
+
   return (
     <section className={`study-card operation-result ${success ? "is-success" : "is-failure"}`}>
       <ResultAnimation key={`${success}-${title}`} success={success} />
@@ -47,6 +82,23 @@ export function OperationResult({
         {title}
       </h1>
       <div role={success ? "status" : "alert"}>{children}</div>
+
+      {shouldAutoNavigate && (
+        <div className="operation-result-progress-wrap">
+          <div className="operation-result-progress-track">
+            <div
+              className="operation-result-progress-fill"
+              style={{ animationDuration: `${redirectDelayMs}ms` }}
+            />
+          </div>
+          <p className="operation-result-countdown">
+            {success
+              ? `Tự động chuyển tiếp sau ${secondsLeft}s…`
+              : `Tự chuyển trang sau ${secondsLeft} giây.`}
+          </p>
+        </div>
+      )}
+
       <div className="inline-actions">
         {action ||
           (onComplete && (
@@ -58,6 +110,7 @@ export function OperationResult({
     </section>
   );
 }
+
 export default function OperationResultPage() {
   const { state, key } = useLocation();
   const navigate = useNavigate();
@@ -67,17 +120,25 @@ export default function OperationResultPage() {
     message?: string;
     to?: string;
     label?: string;
+    autoRedirect?: boolean;
+    redirectDelayMs?: number;
   } | null;
+
   const to = result?.to && /^\/(?!\/)/.test(result.to) && !/[\\\s]/.test(result.to) ? result.to : "/app";
+  const isSuccess = result?.success === true;
+  const delayMs = result?.redirectDelayMs ?? (isSuccess ? 2200 : 4500);
+
   return (
     <OperationResult
       key={key}
+      autoRedirect={true}
+      redirectDelayMs={delayMs}
       onComplete={result ? () => navigate(to, { replace: true }) : undefined}
-      success={result?.success === true}
-      title={result?.title || "Chưa có kết quả thao tác"}
+      success={isSuccess}
+      title={result?.title || (isSuccess ? "Thao tác thành công" : "Chưa có kết quả thao tác")}
       action={
         <Link className="button" to={to}>
-          {result?.label || "Về tài khoản"}
+          {result?.label || (isSuccess ? "Tiếp tục" : "Quay lại")}
         </Link>
       }
     >

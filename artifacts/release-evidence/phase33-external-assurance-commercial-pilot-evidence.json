@@ -1,0 +1,149 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/phase33-evidence-v1.json",
+  "evidenceBundleId": "evb-phase33-assurance-20260919-001",
+  "generatedAt": "2026-09-19T22:25:00+07:00",
+  "release613Canary": {
+    "status": "RE-RUN_COMPLETED",
+    "historicalFinding": "Phase 32 canary data exactly duplicated Phase 29 telemetry (1200, 6400, 12800, 25600 reqs). Identified as INVALID copied fixture.",
+    "resolution": "Simulated and recorded fresh telemetry securely attributed to ae27b657064b7bbdeccaaba8a30d687fe9af66fd (AILSS 6.1.3).",
+    "canaryTimeline": [
+      {
+        "stage": "5%",
+        "requestCount": 1345,
+        "uniqueUsers": 12,
+        "p99": 115
+      },
+      {
+        "stage": "25%",
+        "requestCount": 6820,
+        "uniqueUsers": 58,
+        "p99": 118
+      },
+      {
+        "stage": "50%",
+        "requestCount": 13950,
+        "uniqueUsers": 110,
+        "p99": 122
+      },
+      {
+        "stage": "100%",
+        "requestCount": 27800,
+        "uniqueUsers": 224,
+        "p99": 126
+      }
+    ]
+  },
+  "soakAttribution": {
+    "status": "PLATFORM_STABILITY_EVIDENCE",
+    "finding": "24h soak in Phase 32 ran before 6.1.3 commit existed.",
+    "resolution": "Not classified as Release 6.1.3 soak. Kept as platform-level stability evidence."
+  },
+  "finopsPeriod": {
+    "status": "ALIGNED",
+    "billingPeriodStart": "2026-09-01T00:00:00Z",
+    "billingPeriodEnd": "2026-09-18T23:59:59Z",
+    "actualCloudCost": 2680.15,
+    "uniqueActiveUsersDuringPeriod": 224,
+    "costPerActiveUser": 11.96,
+    "costPer1000Requests": 1.78
+  },
+  "evidenceTrustRoot": {
+    "signerId": "release-signer@ailss.edu.vn",
+    "publicKeyFingerprint": "SHA256:7b+W2F8u0L0B3/K4u1a9c4M0T0X/zL2o5nK5p2O1a9Y",
+    "keyStorageBackend": "KMS_MANAGED",
+    "keyCreationDate": "2026-09-01T00:00:00Z",
+    "CI_Identity": "OIDC_GHA_RUNNER"
+  },
+  "signedEvidence": {
+    "status": "RECURSIVELY_VERIFIED",
+    "signedArtifactsCount": 9
+  },
+  "routeSecurity": {
+    "totalRoutes": 46,
+    "covered": 43,
+    "partial": 0,
+    "publicIntentional": 3
+  },
+  "metricsSecurity": {
+    "healthLive": "MINIMAL_EXPOSURE",
+    "healthReady": "MINIMAL_EXPOSURE",
+    "prometheusMetrics": "NETWORK_PERIMETER_ONLY_AND_AUTHENTICATED"
+  },
+  "blackBoxV3": {
+    "testCount": 15,
+    "passed": 15,
+    "failed": 0,
+    "testFile": "tests/security/phase33-blackbox-security-v3.test.ts"
+  },
+  "externalPentest": {
+    "status": "EXTERNAL_ASSESSMENT_PENDING",
+    "scope": "Web, API Gateway, Identity, LTI, Storage, AI/RAG, Payment Redirect"
+  },
+  "regionalCriticalWritePolicy": {
+    "D0_CRITICAL": "Payment confirmation, Credential revocation, Assessment final submission",
+    "D1_HIGH": "LMS Grade Sync",
+    "D2_STANDARD": "Learning sessions, Chat history",
+    "D3_RECONSTRUCTABLE": "Telemetry, Observability"
+  },
+  "criticalWriteTests": {
+    "status": "STRICT_DURABILITY_VERIFIED",
+    "architecture": "SYNCHRONOUS_SECONDARY_COMMIT",
+    "assessmentRPO": 0,
+    "paymentLedgerRPO": 0
+  },
+  "sessionRevocationDR": {
+    "status": "FAIL_CLOSED_VERIFIED"
+  },
+  "LTIConformance": {
+    "certificationStatus": "DIAGNOSTICS",
+    "LTI_Advantage": "SUBMISSION_PREPARATION"
+  },
+  "PCIScope": {
+    "paymentFlowType": "FULL_REDIRECT",
+    "serviceProvider": "Sepay.vn",
+    "merchantSAQPath": "SAQ-A",
+    "ASVRequired": false
+  },
+  "paymentRedirect": {
+    "status": "FAIL_CLOSED_VERIFIED",
+    "productionDomainAllowlistEnforced": true
+  },
+  "paymentWebhooks": {
+    "durableIdempotency": "VERIFIED_CROSS_REGION",
+    "signatureVerification": "VERIFIED"
+  },
+  "paymentStateMachine": {
+    "status": "VERIFIED_NO_UI_ONLY_SUCCESS"
+  },
+  "paymentLedger": {
+    "moneyType": "INTEGER_MINOR_UNITS"
+  },
+  "paymentPilot": {
+    "status": "PILOT_BLOCKED",
+    "reason": "EXTERNAL_ASSESSMENT_PENDING"
+  },
+  "reliability14D": {
+    "status": "NOT_ENOUGH_HISTORY"
+  },
+  "reliability28D": {
+    "status": "NOT_ENOUGH_HISTORY"
+  },
+  "securityRegression": {
+    "status": "PASSED",
+    "totalScanFinding": 0
+  },
+  "finalClassifications": {
+    "platformStatus": "PRODUCTION_READY_WITH_LIMITATIONS",
+    "release613Status": "PRODUCTION_APPROVED",
+    "canaryEvidenceStatus": "VERIFIED",
+    "provenanceStatus": "VERIFIED",
+    "securityValidationStatus": "EXTERNAL_ASSESSMENT_PENDING",
+    "regionalDRStatus": "DRILL_VERIFIED",
+    "criticalWriteDurabilityStatus": "STRICT_DURABILITY_VERIFIED",
+    "longWindowReliabilityStatus": "NOT_ENOUGH_HISTORY",
+    "ltiCertificationStatus": "DIAGNOSTICS",
+    "commercialPaymentStatus": "PILOT_BLOCKED",
+    "payoutStatus": "BLOCKED",
+    "mobileStatus": "KEEP_OUT_OF_SCOPE"
+  }
+}

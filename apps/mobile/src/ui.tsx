@@ -128,6 +128,8 @@ export type IconName =
   | "trash"
   | "logoGoogle"
   | "logoApple"
+  | "eye"
+  | "eyeOff"
   | "class"
   | "checkCircle"
   | "quiz"
@@ -188,6 +190,8 @@ const VECTOR_ICON_MAP: Record<IconName, { outline: IoniconsGlyph; filled: Ionico
   trash: { outline: "trash-outline", filled: "trash" },
   logoGoogle: { outline: "logo-google", filled: "logo-google" },
   logoApple: { outline: "logo-apple", filled: "logo-apple" },
+  eye: { outline: "eye-outline", filled: "eye" },
+  eyeOff: { outline: "eye-off-outline", filled: "eye-off" },
 };
 
 export function Icon({
@@ -210,14 +214,7 @@ export function Icon({
       : iconConfig.outline
     : ("help-outline" as IoniconsGlyph);
 
-  return (
-    <Ionicons
-      name={glyphName}
-      size={size}
-      color={color || tokens.color.ink}
-      style={style}
-    />
-  );
+  return <Ionicons name={glyphName} size={size} color={color || tokens.color.ink} style={style} />;
 }
 
 export const styles = StyleSheet.create({
@@ -306,11 +303,14 @@ export function Page({
   testID,
 }: PropsWithChildren<{ style?: StyleProp<ViewStyle>; scroll?: boolean; testID?: string }>) {
   const requestedBottomPadding = StyleSheet.flatten([styles.page, style]).paddingBottom;
-  const scrollBottomPadding = typeof requestedBottomPadding === "number"
-    ? Math.max(requestedBottomPadding, 120)
-    : 120;
+  const scrollBottomPadding =
+    typeof requestedBottomPadding === "number" ? Math.max(requestedBottomPadding, 120) : 120;
   if (!scroll) {
-    return <View testID={testID} style={[styles.page, { flex: 1 }, style]}>{children}</View>;
+    return (
+      <View testID={testID} style={[styles.page, { flex: 1 }, style]}>
+        {children}
+      </View>
+    );
   }
   return (
     <ScrollView
@@ -323,6 +323,40 @@ export function Page({
     </ScrollView>
   );
 }
+
+export interface PasswordInputProps extends React.ComponentProps<typeof TextInput> {
+  containerStyle?: StyleProp<ViewStyle>;
+  toggleTestID?: string;
+}
+
+export const PasswordInput = React.forwardRef<TextInput, PasswordInputProps>(function PasswordInput(
+  { style, containerStyle, secureTextEntry = true, toggleTestID, ...rest },
+  ref,
+) {
+  const [showPassword, setShowPassword] = React.useState(!secureTextEntry);
+
+  return (
+    <View style={[{ position: "relative", justifyContent: "center" }, containerStyle]}>
+      <TextInput
+        ref={ref}
+        style={[styles.input, { paddingRight: 48 }, style]}
+        secureTextEntry={!showPassword}
+        autoCapitalize="none"
+        {...rest}
+      />
+      <Pressable
+        testID={toggleTestID}
+        accessibilityRole="button"
+        accessibilityLabel={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+        onPress={() => setShowPassword((prev) => !prev)}
+        style={{ position: "absolute", right: 12, padding: 8, zIndex: 10 }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Icon name={showPassword ? "eyeOff" : "eye"} size={20} color={tokens.color.muted} />
+      </Pressable>
+    </View>
+  );
+});
 
 export interface NonVirtualizedListProps<T> {
   data: readonly T[] | null | undefined;
@@ -477,18 +511,10 @@ export function Button({
       disabled={disabled}
       onPress={onPress}
       scaleTo={disabled ? 1 : 0.96}
-      style={[
-        styles.button,
-        vStyles.button,
-        sStyles.button,
-        disabled && { opacity: 0.5 },
-        style,
-      ]}
+      style={[styles.button, vStyles.button, sStyles.button, disabled && { opacity: 0.5 }, style]}
     >
       {icon}
-      <Text style={[styles.buttonText, vStyles.text, sStyles.text, textStyle]}>
-        {label}
-      </Text>
+      <Text style={[styles.buttonText, vStyles.text, sStyles.text, textStyle]}>{label}</Text>
     </ScalePressable>
   );
 }
@@ -538,9 +564,7 @@ export function Badge({
       }}
     >
       {icon && <Icon name={icon} size={11} color={theme.text} />}
-      <Text style={{ fontSize: 11, fontWeight: "700", color: theme.text, letterSpacing: 0.3 }}>
-        {label}
-      </Text>
+      <Text style={{ fontSize: 11, fontWeight: "700", color: theme.text, letterSpacing: 0.3 }}>{label}</Text>
     </View>
   );
 }
@@ -604,9 +628,7 @@ export function StatCard({
       ]}
     >
       {icon && <Icon name={icon} size={20} color={color} />}
-      <Text style={{ fontSize: 20, fontWeight: "800", color: tokens.color.ink }}>
-        {value}
-      </Text>
+      <Text style={{ fontSize: 20, fontWeight: "800", color: tokens.color.ink }}>{value}</Text>
       <Text
         style={{
           fontSize: 11,
@@ -813,9 +835,7 @@ export function HeaderBar({
             }}
           >
             <Icon name="flame" size={13} />
-            <Text style={{ fontSize: 12, fontWeight: "800", color: "#B45309" }}>
-              {streak} ngày
-            </Text>
+            <Text style={{ fontSize: 12, fontWeight: "800", color: "#B45309" }}>{streak} ngày</Text>
           </View>
         )}
 
@@ -938,13 +958,23 @@ export function ScreenHeader({
 function isBottomTabActive(key: string, currentRoute: string): boolean {
   return (
     (key === "attendance" && (currentRoute === "attendance" || currentRoute.includes("attendance"))) ||
-    (key === "classes" && (currentRoute === "classes" || currentRoute.includes("classes") || currentRoute === "schedule")) ||
-    (key === "home" && (currentRoute === "home" || currentRoute === "" || currentRoute === "/" || currentRoute === "/index")) ||
+    (key === "classes" &&
+      (currentRoute === "classes" || currentRoute.includes("classes") || currentRoute === "schedule")) ||
+    (key === "home" &&
+      (currentRoute === "home" ||
+        currentRoute === "" ||
+        currentRoute === "/" ||
+        currentRoute === "/index")) ||
     (key === "teaching" && currentRoute.includes("teaching")) ||
     (key === "courses" && (currentRoute.includes("courses") || currentRoute === "/courses")) ||
     (key === "admin" && (currentRoute.includes("admin") || currentRoute === "/admin")) ||
-    (key === "notifications" && (currentRoute.includes("notification") || currentRoute === "notifications")) ||
-    (key === "account" && (currentRoute.includes("account") || currentRoute === "account" || currentRoute.includes("login") || currentRoute.includes("settings")))
+    (key === "notifications" &&
+      (currentRoute.includes("notification") || currentRoute === "notifications")) ||
+    (key === "account" &&
+      (currentRoute.includes("account") ||
+        currentRoute === "account" ||
+        currentRoute.includes("login") ||
+        currentRoute.includes("settings")))
   );
 }
 
@@ -1101,34 +1131,47 @@ export function BottomNavBar({
           { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
         ]
       : role === "ADMIN"
-      ? [
-          { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-          { key: "admin", label: "Quản trị", icon: "shield" as IconName, path: "/admin" },
-          { key: "notifications", label: "Thông báo", icon: "bell" as IconName, path: "/notifications" },
-          { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
-        ]
-      : role === "STUDENT"
-      ? [
-          { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-          { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
-          { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/classes" },
-          { key: "attendance", label: "Điểm danh", icon: "checkCircle" as IconName, path: "/classes?tab=attendance" },
-          { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
-        ]
-      : [
-          { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-          { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
-          { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/login" },
-          { key: "account", label: "Đăng nhập", icon: "user" as IconName, path: "/login" },
-        ];
+        ? [
+            { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
+            { key: "admin", label: "Quản trị", icon: "shield" as IconName, path: "/admin" },
+            { key: "notifications", label: "Thông báo", icon: "bell" as IconName, path: "/notifications" },
+            { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
+          ]
+        : role === "STUDENT"
+          ? [
+              { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
+              { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
+              { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/classes" },
+              {
+                key: "attendance",
+                label: "Điểm danh",
+                icon: "checkCircle" as IconName,
+                path: "/classes?tab=attendance",
+              },
+              { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
+            ]
+          : [
+              { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
+              { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
+              { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/login" },
+              { key: "account", label: "Đăng nhập", icon: "user" as IconName, path: "/login" },
+            ];
 
   const [nativeGlass, setNativeGlass] = React.useState(false);
   const [rowWidth, setRowWidth] = React.useState(0);
   const reduceMotion = useReducedMotionPreference();
   const indicatorX = React.useRef(new Animated.Value(0)).current;
   const previousIndex = React.useRef<number | null>(null);
-  const activeKey = ["attendance", "classes", "teaching", "courses", "admin", "notifications", "account", "home"]
-    .find((key) => tabs.some((tab) => tab.key === key && isBottomTabActive(key, currentRoute)));
+  const activeKey = [
+    "attendance",
+    "classes",
+    "teaching",
+    "courses",
+    "admin",
+    "notifications",
+    "account",
+    "home",
+  ].find((key) => tabs.some((tab) => tab.key === key && isBottomTabActive(key, currentRoute)));
   const activeIndex = tabs.findIndex((tab) => tab.key === activeKey);
   const tabWidth = rowWidth > 0 ? (rowWidth - 12) / tabs.length : 0;
 
@@ -1257,8 +1300,16 @@ export function AdaptivePathCard({
 }) {
   const isReview = action === "REVIEW";
   const isPractice = action === "PRACTICE";
-  const badgeColor = isReview ? tokens.color.danger : isPractice ? tokens.color.warning : tokens.color.success;
-  const badgeBg = isReview ? tokens.color.dangerLight : isPractice ? tokens.color.warningLight : tokens.color.successLight;
+  const badgeColor = isReview
+    ? tokens.color.danger
+    : isPractice
+      ? tokens.color.warning
+      : tokens.color.success;
+  const badgeBg = isReview
+    ? tokens.color.dangerLight
+    : isPractice
+      ? tokens.color.warningLight
+      : tokens.color.successLight;
 
   return (
     <View
@@ -1272,8 +1323,17 @@ export function AdaptivePathCard({
         ...tokens.shadow.subtle,
       }}
     >
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: tokens.space.small }}>
-        <Text style={{ fontSize: 11, fontWeight: "700", color: tokens.color.brand, textTransform: "uppercase" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: tokens.space.small,
+        }}
+      >
+        <Text
+          style={{ fontSize: 11, fontWeight: "700", color: tokens.color.brand, textTransform: "uppercase" }}
+        >
           Lộ trình thích ứng
         </Text>
         <View style={{ backgroundColor: badgeBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 }}>
@@ -1335,7 +1395,11 @@ export function VersionPinningIndicator({
         <Icon name="award" size={14} color={tokens.color.muted} />
         <Text style={{ fontSize: 12, color: tokens.color.inkSecondary }}>
           Bản: <Text style={{ fontWeight: "700" }}>v{pinnedVersion}.0</Text>{" "}
-          {isPinned ? "(Đã ghim)" : latestVersion > pinnedVersion ? `(Có bản v${latestVersion}.0)` : "(Mới nhất)"}
+          {isPinned
+            ? "(Đã ghim)"
+            : latestVersion > pinnedVersion
+              ? `(Có bản v${latestVersion}.0)`
+              : "(Mới nhất)"}
         </Text>
       </View>
       {onTogglePin ? (
@@ -1411,7 +1475,13 @@ export function RefundRequestModal({
             marginBottom: 12,
           }}
         >
-          <Text style={{ fontSize: 12, fontWeight: "600", color: isEligible ? tokens.color.success : tokens.color.danger }}>
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: "600",
+              color: isEligible ? tokens.color.success : tokens.color.danger,
+            }}
+          >
             {isEligible
               ? `✓ Hợp lệ: Tiến độ ${progressPercent}% (< 20%), trong thời hạn 7 ngày từ ${purchaseDate}.`
               : `✕ Không hợp lệ: Tiến độ ${progressPercent}% (vượt ngưỡng 20% chính sách hoàn tiền).`}

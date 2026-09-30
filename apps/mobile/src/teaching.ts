@@ -72,6 +72,7 @@ export interface LecturerCourse {
   courseId: string;
   title: string;
   state?: string;
+  activeStudentCount?: number;
   description?: string;
   slug?: string;
   priceType?: string;
@@ -92,6 +93,7 @@ export function lecturerCourse(value: unknown): LecturerCourse {
     courseId: string(rec.courseId),
     title: string(rec.title),
     state: optionalString(rec.state),
+    activeStudentCount: optionalNumber(rec.activeStudentCount),
     description: optionalString(rec.description),
     slug: optionalString(rec.slug),
     priceType: optionalString(rec.priceType),

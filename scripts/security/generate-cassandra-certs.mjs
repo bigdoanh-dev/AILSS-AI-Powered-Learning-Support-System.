@@ -61,7 +61,7 @@ for (const [node, dns] of [
       "-out",
       filePath(cert),
       "-days",
-      "30",
+      "365",
       "-extfile",
       ext,
     ]);
@@ -78,4 +78,4 @@ for (const [node, dns] of [
     await rm(temp, { recursive: true, force: true });
   }
 }
-console.log(JSON.stringify({ stage: "cassandra-certificates", status: "PASS", nodes: 3, validityDays: 30 }));
+console.log(JSON.stringify({ stage: "cassandra-certificates", status: "PASS", nodes: 3, validityDays: 365 }));

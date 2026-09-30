@@ -53,11 +53,13 @@ export interface AITutorInteractionRequest {
   pedagogicalMode: AITutorPedagogicalMode;
   userMessage: string;
   personalizationEnabled?: boolean | undefined;
-  assessmentContext?: {
-    isGradedAssessmentActive: boolean;
-    restrictedQuizId?: string | undefined;
-    restrictedQuestionId?: string | undefined;
-  } | undefined;
+  assessmentContext?:
+    | {
+        isGradedAssessmentActive: boolean;
+        restrictedQuizId?: string | undefined;
+        restrictedQuestionId?: string | undefined;
+      }
+    | undefined;
 }
 
 export interface AITutorInteractionResponse {
@@ -68,11 +70,13 @@ export interface AITutorInteractionResponse {
   citations: AITutorCitation[];
   citationConfidence?: number | undefined; // 0.0 - 1.0
   isAbstainedDueToLowEvidence?: boolean | undefined;
-  suggestedNextAction?: {
-    action: "REVIEW_PREREQUISITE" | "PRACTICE_QUESTION" | "ASK_FOLLOW_UP";
-    targetId: string;
-    description: string;
-  } | undefined;
+  suggestedNextAction?:
+    | {
+        action: "REVIEW_PREREQUISITE" | "PRACTICE_QUESTION" | "ASK_FOLLOW_UP";
+        targetId: string;
+        description: string;
+      }
+    | undefined;
   guardrailsTriggered: {
     answerKeyRedacted: boolean;
     offTopicAbstained: boolean;

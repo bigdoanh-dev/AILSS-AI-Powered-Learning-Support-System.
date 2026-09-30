@@ -11,11 +11,12 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test:browser": "node scripts/verify-browser.mjs",
-    "verify:phase40:revision-l": "node scripts/verify-revision-l-runtime.mjs",
+    "verify:phase40:revision-l": "node scripts/verify-phase40-revision-l.mjs",
     "assets": "node scripts/assets.mjs",
     "video": "node scripts/video.mjs"
   },
   "dependencies": {
+    "@dangnguyendota/page-mascot": "0.2.4",
     "hls.js": "1.6.19",
     "react": "19.1.1",
     "react-dom": "19.1.1",

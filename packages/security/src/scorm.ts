@@ -51,7 +51,11 @@ export function sanitizeScormZipEntryPath(entryPath: string, destinationDir: str
 
   // Reject null bytes
   if (entryPath.includes("\0")) {
-    throw new AppError("ZIP_SLIP_ATTEMPT_DETECTED", 400, "[ZIP_SLIP_ATTEMPT_DETECTED] Null byte detected in zip entry path");
+    throw new AppError(
+      "ZIP_SLIP_ATTEMPT_DETECTED",
+      400,
+      "[ZIP_SLIP_ATTEMPT_DETECTED] Null byte detected in zip entry path",
+    );
   }
 
   const resolvedDest = path.resolve(destinationDir);
@@ -91,7 +95,11 @@ export function validateScormPostMessage(
 
   // 2. Payload structure validation
   if (!data || typeof data !== "object") {
-    throw new AppError("INVALID_SCORM_PAYLOAD", 400, "[INVALID_SCORM_PAYLOAD] SCORM postMessage data must be an object");
+    throw new AppError(
+      "INVALID_SCORM_PAYLOAD",
+      400,
+      "[INVALID_SCORM_PAYLOAD] SCORM postMessage data must be an object",
+    );
   }
 
   const payload = data as Partial<ScormPostMessagePayload>;
@@ -107,22 +115,38 @@ export function validateScormPostMessage(
   ];
 
   if (!payload.action || !validActions.includes(payload.action)) {
-    throw new AppError("INVALID_SCORM_ACTION", 400, `[INVALID_SCORM_ACTION] Unknown SCORM action: ${String(payload.action)}`);
+    throw new AppError(
+      "INVALID_SCORM_ACTION",
+      400,
+      `[INVALID_SCORM_ACTION] Unknown SCORM action: ${String(payload.action)}`,
+    );
   }
 
   if (!payload.packageId || typeof payload.packageId !== "string") {
-    throw new AppError("INVALID_SCORM_PACKAGE_ID", 400, "[INVALID_SCORM_PACKAGE_ID] Missing or invalid packageId");
+    throw new AppError(
+      "INVALID_SCORM_PACKAGE_ID",
+      400,
+      "[INVALID_SCORM_PACKAGE_ID] Missing or invalid packageId",
+    );
   }
 
   if (!payload.attemptId || typeof payload.attemptId !== "string") {
-    throw new AppError("INVALID_SCORM_ATTEMPT_ID", 400, "[INVALID_SCORM_ATTEMPT_ID] Missing or invalid attemptId");
+    throw new AppError(
+      "INVALID_SCORM_ATTEMPT_ID",
+      400,
+      "[INVALID_SCORM_ATTEMPT_ID] Missing or invalid attemptId",
+    );
   }
 
   // 3. CMI Element & Value validation on LMSSetValue
   if (payload.action === "LMSSetValue") {
     const param = payload.parameter;
     if (!param || !ALLOWED_CMI_ELEMENTS.has(param)) {
-      throw new AppError("UNSUPPORTED_CMI_ELEMENT", 400, `[UNSUPPORTED_CMI_ELEMENT] Unsupported or prohibited CMI element: ${String(param)}`);
+      throw new AppError(
+        "UNSUPPORTED_CMI_ELEMENT",
+        400,
+        `[UNSUPPORTED_CMI_ELEMENT] Unsupported or prohibited CMI element: ${String(param)}`,
+      );
     }
 
     if (param === "cmi.core.lesson_status" && payload.value) {
@@ -138,7 +162,11 @@ export function validateScormPostMessage(
     if (param === "cmi.core.score.raw" && payload.value !== undefined) {
       const score = Number(payload.value);
       if (Number.isNaN(score) || score < 0 || score > 1000) {
-        throw new AppError("INVALID_SCORE_RANGE", 400, `[INVALID_SCORE_RANGE] Invalid raw score value: ${payload.value}`);
+        throw new AppError(
+          "INVALID_SCORE_RANGE",
+          400,
+          `[INVALID_SCORE_RANGE] Invalid raw score value: ${payload.value}`,
+        );
       }
     }
   }

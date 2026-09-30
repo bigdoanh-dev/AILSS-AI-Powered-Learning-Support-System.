@@ -180,7 +180,11 @@ export class EmailGovernancePolicy {
     email: string,
     category: NotificationCategory,
     preferences?: UserEmailPreferences,
-  ): { readonly deliverable: boolean; readonly reason?: string; readonly fallbackChannelRecommended?: boolean } {
+  ): {
+    readonly deliverable: boolean;
+    readonly reason?: string;
+    readonly fallbackChannelRecommended?: boolean;
+  } {
     const normalized = email.toLowerCase().trim();
     const suppression = this.#suppressionList.get(normalized);
 

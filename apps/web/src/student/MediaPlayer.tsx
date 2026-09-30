@@ -7,7 +7,14 @@ interface PlaybackSession {
   posterUrl?: string;
   expiresAt: string;
   completionPolicy: "EXPLICIT_AUTHORITATIVE_LESSON_ACK";
-  captionTracks: { captionTrackId: string; language: string; label: string; kind: "SUBTITLES" | "CAPTIONS"; format: "WEBVTT"; url: string }[];
+  captionTracks: {
+    captionTrackId: string;
+    language: string;
+    label: string;
+    kind: "SUBTITLES" | "CAPTIONS";
+    format: "WEBVTT";
+    url: string;
+  }[];
 }
 export function MediaPlayer({ lessonId, title }: { lessonId: string; title: string }) {
   const { profile } = useSession();
@@ -76,7 +83,8 @@ export function MediaPlayer({ lessonId, title }: { lessonId: string; title: stri
             caption.pathname !== `/playback/${playbackAssetId}/caption-${track.captionTrackId}.vtt` ||
             !caption.searchParams.has("token") ||
             track.format !== "WEBVTT"
-          ) throw Error("Invalid caption URL");
+          )
+            throw Error("Invalid caption URL");
           return { ...track, url: caption.href };
         });
         hls?.destroy();
@@ -165,9 +173,17 @@ export function MediaPlayer({ lessonId, title }: { lessonId: string; title: stri
       {tracks.length ? (
         <label>
           Phụ đề{" "}
-          <select aria-label="Chọn phụ đề" value={selectedTrack} onChange={(event) => setSelectedTrack(event.target.value)}>
+          <select
+            aria-label="Chọn phụ đề"
+            value={selectedTrack}
+            onChange={(event) => setSelectedTrack(event.target.value)}
+          >
             <option value="">Tắt phụ đề</option>
-            {tracks.map((track) => <option key={track.captionTrackId} value={track.captionTrackId}>{track.label}</option>)}
+            {tracks.map((track) => (
+              <option key={track.captionTrackId} value={track.captionTrackId}>
+                {track.label}
+              </option>
+            ))}
           </select>
         </label>
       ) : null}

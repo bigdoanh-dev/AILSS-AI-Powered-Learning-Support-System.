@@ -16,7 +16,9 @@ export function notifyLessonCompletionChanged(userId: string, courseId: string):
 }
 
 function retryable(error: unknown): boolean {
-  return error instanceof ApiError && ["network", "timeout", "server", "429", "cancelled"].includes(error.kind);
+  return (
+    error instanceof ApiError && ["network", "timeout", "server", "429", "cancelled"].includes(error.kind)
+  );
 }
 
 export async function syncPendingLessonCompletions(
@@ -24,7 +26,8 @@ export async function syncPendingLessonCompletions(
   userId: string,
   store: OfflineStore | null,
 ): Promise<void> {
-  if (!store || session.snapshot.state !== "AUTHENTICATED" || session.snapshot.user?.userId !== userId) return;
+  if (!store || session.snapshot.state !== "AUTHENTICATED" || session.snapshot.user?.userId !== userId)
+    return;
   const running = activeSyncs.get(userId);
   if (running) return running;
   const work = syncForUser(session, userId, store).finally(() => activeSyncs.delete(userId));
@@ -75,7 +78,10 @@ async function syncForUser(session: Session, userId: string, store: OfflineStore
 }
 
 export function queueOperationInput(
-  operation: Pick<LessonCompletionOperation, "operationId" | "userId" | "courseId" | "resourceId" | "idempotencyKey">,
+  operation: Pick<
+    LessonCompletionOperation,
+    "operationId" | "userId" | "courseId" | "resourceId" | "idempotencyKey"
+  >,
 ) {
   return { ...operation, createdAt: new Date().toISOString() };
 }

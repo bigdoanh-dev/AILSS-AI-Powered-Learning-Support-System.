@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { sessionRequest, useSession } from "../auth/session";
 import { ApiError, errorMessage } from "../lib/api";
+import { Icon } from "../components/Icon";
 const fields = [
   { name: "professionalTitle", label: "Chức danh chuyên môn", min: 1, max: 120 },
   { name: "institution", label: "Đơn vị công tác", min: 1, max: 160 },
@@ -200,7 +201,8 @@ const DEMO_APPLICATIONS: Application[] = [
     professionalTitle: "Tiến sĩ Khoa học Máy tính",
     institution: "Đại học Bách Khoa Hà Nội",
     teachingArea: "Cơ sở dữ liệu & Hệ thống phân tán",
-    motivation: "Tôi mong muốn chia sẻ kiến thức chuyên sâu về tối ưu hóa SQL, kiến trúc Sharding và phân tán dữ liệu đến đông đảo học viên công nghệ tại Việt Nam qua nền tảng AILSS.",
+    motivation:
+      "Tôi mong muốn chia sẻ kiến thức chuyên sâu về tối ưu hóa SQL, kiến trúc Sharding và phân tán dữ liệu đến đông đảo học viên công nghệ tại Việt Nam qua nền tảng AILSS.",
     status: "APPROVED",
     result: "APPROVED_VERIFIED",
     applicantId: "00000000-0000-4000-8000-000000000001",
@@ -212,7 +214,8 @@ const DEMO_APPLICATIONS: Application[] = [
     professionalTitle: "Thạc sĩ Trí tuệ Nhân tạo",
     institution: "Viện Công nghệ Thông tin",
     teachingArea: "Lập trình Web & Trợ lý AI",
-    motivation: "Xây dựng giáo trình thực hành thế hệ mới, kết hợp lý thuyết nền tảng với thực chiến xây dựng Agent và mô hình ngôn ngữ lớn (LLM).",
+    motivation:
+      "Xây dựng giáo trình thực hành thế hệ mới, kết hợp lý thuyết nền tảng với thực chiến xây dựng Agent và mô hình ngôn ngữ lớn (LLM).",
     status: "SUBMITTED",
     result: "PENDING",
     applicantId: "00000000-0000-4000-8000-000000000002",
@@ -224,7 +227,8 @@ const DEMO_APPLICATIONS: Application[] = [
     professionalTitle: "Chuyên gia DevOps & Cloud Architecture",
     institution: "Tập đoàn Viễn thông & Công nghệ",
     teachingArea: "DevOps CI/CD & Kubernetes",
-    motivation: "Giúp học viên làm chủ quy trình CI/CD tự động, vận hành hạ tầng Kubernetes chịu tải cao theo chuẩn các dự án quốc tế.",
+    motivation:
+      "Giúp học viên làm chủ quy trình CI/CD tự động, vận hành hạ tầng Kubernetes chịu tải cao theo chuẩn các dự án quốc tế.",
     status: "SUBMITTED",
     result: "PENDING",
     applicantId: "00000000-0000-4000-8000-000000000003",
@@ -378,25 +382,40 @@ export function AdminLecturerApplications() {
   });
 
   return (
-    <section className="application-admin">
-      <p className="eyebrow">QUẢN TRỊ · GIẢNG VIÊN</p>
-      <h1>Duyệt yêu cầu giảng dạy & Thẩm định hồ sơ.</h1>
-      <p className="lead">
-        Thẩm định đơn đăng ký trở thành giảng viên, rà soát học vị, đơn vị công tác và kích hoạt quyền mở lớp.
-      </p>
+    <div className="admin-dashboard-container">
+      <div className="dashboard-heading">
+        <div>
+          <p className="eyebrow">QUẢN TRỊ · GIẢNG VIÊN</p>
+          <h1>Duyệt Yêu Cầu Giảng Dạy &amp; Thẩm Định Hồ Sơ</h1>
+          <p className="lead">
+            Thẩm định đơn đăng ký trở thành giảng viên, rà soát học vị, đơn vị công tác và kích hoạt quyền mở
+            lớp.
+          </p>
+        </div>
+      </div>
 
       {/* Query Form by Month and Shard */}
       <form
-        className="form-panel"
-        style={{ marginBottom: "20px" }}
+        className="dashboard-section-card"
+        style={{ padding: "20px 24px", margin: 0 }}
         onSubmit={(e) => {
           e.preventDefault();
           void queue();
         }}
       >
         <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", alignItems: "flex-end" }}>
-          <label style={{ flex: 1, minWidth: "160px" }}>
-            Tháng nộp hồ sơ
+          <label style={{ flex: "1 1 200px" }}>
+            <span
+              style={{
+                fontSize: "13px",
+                fontWeight: 600,
+                color: "var(--ink)",
+                display: "block",
+                marginBottom: "6px",
+              }}
+            >
+              Tháng nộp hồ sơ
+            </span>
             <input
               type="month"
               required
@@ -405,36 +424,82 @@ export function AdminLecturerApplications() {
                 setMonth(e.target.value);
                 setCursor(null);
               }}
-              style={{ width: "100%", marginTop: "6px" }}
+              style={{
+                width: "100%",
+                padding: "9px 12px",
+                borderRadius: "8px",
+                border: "1px solid var(--line)",
+                backgroundColor: "var(--surface)",
+                color: "var(--ink)",
+                fontSize: "14px",
+              }}
             />
           </label>
-          <label style={{ width: "140px" }}>
-            Phân vùng (Shard)
+          <label style={{ flex: "1 1 180px" }}>
+            <span
+              style={{
+                fontSize: "13px",
+                fontWeight: 600,
+                color: "var(--ink)",
+                display: "block",
+                marginBottom: "6px",
+              }}
+            >
+              Phân vùng dữ liệu (Shard)
+            </span>
             <select
               value={shard}
               onChange={(e) => {
                 setShard(Number(e.target.value));
                 setCursor(null);
               }}
-              style={{ width: "100%", marginTop: "6px" }}
+              style={{
+                width: "100%",
+                padding: "9px 12px",
+                borderRadius: "8px",
+                border: "1px solid var(--line)",
+                backgroundColor: "var(--surface)",
+                color: "var(--ink)",
+                fontSize: "14px",
+              }}
             >
               {Array.from({ length: 16 }, (_, i) => (
-                <option key={i} value={i}>Phân vùng {i}</option>
+                <option key={i} value={i}>
+                  Phân vùng {i}
+                </option>
               ))}
             </select>
           </label>
-          <button className="button" disabled={busy} style={{ marginBottom: "2px" }}>
-            {busy ? "Đang tải…" : "Tải danh sách chờ"}
+          <button
+            className="button"
+            disabled={busy}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              minHeight: 38,
+              padding: "0 22px",
+              marginBottom: 0,
+            }}
+          >
+            <Icon name={busy ? "refresh" : "search"} size={15} />
+            <span>{busy ? "Đang tải…" : "Tải danh sách chờ"}</span>
           </button>
         </div>
       </form>
 
-      {message && <p role="status" className="notice error">{message}</p>}
+      {message && (
+        <p role="status" className="notice error">
+          {message}
+        </p>
+      )}
 
       {/* Toolbar: Search & Status Filter Pills */}
       <div className="admin-table-toolbar">
         <div className="admin-search-input-wrap">
-          <span className="admin-search-icon" aria-hidden="true">🔍</span>
+          <span className="admin-search-icon" aria-hidden="true">
+            <Icon name="search" size={15} />
+          </span>
           <input
             type="search"
             placeholder="Tìm theo tên ứng viên, chuyên môn, viện/trường..."
@@ -456,22 +521,28 @@ export function AdminLecturerApplications() {
             type="button"
             className={`filter-pill-button ${statusFilter === "SUBMITTED" ? "active" : ""}`}
             onClick={() => setStatusFilter("SUBMITTED")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
-            ⏳ Chờ duyệt
+            <Icon name="clock" size={13} />
+            <span>Chờ duyệt</span>
           </button>
           <button
             type="button"
             className={`filter-pill-button ${statusFilter === "APPROVED" ? "active" : ""}`}
             onClick={() => setStatusFilter("APPROVED")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
-            ✓ Đã duyệt
+            <Icon name="checkCircle" size={13} />
+            <span>Đã duyệt</span>
           </button>
           <button
             type="button"
             className={`filter-pill-button ${statusFilter === "REJECTED" ? "active" : ""}`}
             onClick={() => setStatusFilter("REJECTED")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
-            ✕ Đã từ chối
+            <Icon name="close" size={13} />
+            <span>Đã từ chối</span>
           </button>
         </div>
       </div>
@@ -482,25 +553,30 @@ export function AdminLecturerApplications() {
           <thead>
             <tr>
               <th scope="col">Ứng viên</th>
-              <th scope="col">Chức danh & Học vị</th>
+              <th scope="col">Chức danh &amp; Học vị</th>
               <th scope="col">Lĩnh vực giảng dạy</th>
               <th scope="col">Đơn vị công tác</th>
               <th scope="col">Trạng thái</th>
-              <th scope="col" style={{ textAlign: "right" }}>Thao tác</th>
+              <th scope="col" style={{ textAlign: "right" }}>
+                Thao tác
+              </th>
             </tr>
           </thead>
           <tbody>
             {filteredApplications.map((a) => {
               const monogram = a.displayNameSnapshot
-                ? a.displayNameSnapshot.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase()
+                ? a.displayNameSnapshot
+                    .split(" ")
+                    .slice(-2)
+                    .map((w) => w[0])
+                    .join("")
+                    .toUpperCase()
                 : "GV";
               return (
                 <tr key={a.applicationId}>
                   <td>
                     <div className="user-avatar-cell">
-                      <div className="user-monogram lecturer">
-                        {monogram}
-                      </div>
+                      <div className="user-monogram lecturer">{monogram}</div>
                       <div>
                         <div className="user-name-title">{a.displayNameSnapshot}</div>
                         <div className="user-id-code">
@@ -511,7 +587,7 @@ export function AdminLecturerApplications() {
                             title="Sao chép toàn bộ mã đơn"
                             onClick={() => handleCopyId(a.applicationId)}
                           >
-                            📋
+                            <Icon name="fileText" size={13} />
                           </button>
                         </div>
                       </div>
@@ -524,17 +600,43 @@ export function AdminLecturerApplications() {
                     <span className="course-category-tag">{a.teachingArea}</span>
                   </td>
                   <td>
-                    <span className="muted" style={{ fontSize: "13px" }}>{a.institution}</span>
+                    <span className="muted" style={{ fontSize: "13px" }}>
+                      {a.institution}
+                    </span>
                   </td>
                   <td>
                     {a.status === "SUBMITTED" ? (
-                      <span className="admin-badge pending">⏳ Chờ duyệt</span>
+                      <span
+                        className="admin-badge pending"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                      >
+                        <Icon name="clock" size={12} />
+                        <span>Chờ duyệt</span>
+                      </span>
                     ) : a.status === "REJECTED" ? (
-                      <span className="admin-badge rejected">✕ Từ chối</span>
+                      <span
+                        className="admin-badge rejected"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                      >
+                        <Icon name="close" size={12} />
+                        <span>Từ chối</span>
+                      </span>
                     ) : a.result === "APPROVED_VERIFIED" ? (
-                      <span className="admin-badge verified">🛡️ Đã xác minh</span>
+                      <span
+                        className="admin-badge verified"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                      >
+                        <Icon name="shield" size={12} />
+                        <span>Đã xác minh</span>
+                      </span>
                     ) : (
-                      <span className="admin-badge approved">✓ Đã duyệt</span>
+                      <span
+                        className="admin-badge approved"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                      >
+                        <Icon name="checkCircle" size={12} />
+                        <span>Đã duyệt</span>
+                      </span>
                     )}
                   </td>
                   <td style={{ textAlign: "right" }}>
@@ -543,8 +645,10 @@ export function AdminLecturerApplications() {
                       className="button button-small"
                       disabled={busy}
                       onClick={() => void open(a.applicationId)}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
                     >
-                      Thẩm định hồ sơ →
+                      <span>Thẩm định hồ sơ</span>
+                      <Icon name="chevronRight" size={13} />
                     </button>
                   </td>
                 </tr>
@@ -570,13 +674,20 @@ export function AdminLecturerApplications() {
 
       {/* APPRAISAL MODAL / DRAWER */}
       {detail && (
-        <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="appraisal-title">
+        <div
+          className="admin-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="appraisal-title"
+        >
           <div className="admin-modal-card large">
             <div className="admin-modal-header">
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
                   <span className="course-category-tag">{detail.teachingArea}</span>
-                  <span className={`admin-badge ${detail.status === "SUBMITTED" ? "pending" : detail.status === "APPROVED" ? "approved" : "rejected"}`}>
+                  <span
+                    className={`admin-badge ${detail.status === "SUBMITTED" ? "pending" : detail.status === "APPROVED" ? "approved" : "rejected"}`}
+                  >
                     {detail.status === "SUBMITTED"
                       ? "HỒ SƠ CHỜ DUYỆT"
                       : detail.status === "REJECTED"
@@ -599,53 +710,104 @@ export function AdminLecturerApplications() {
                 onClick={() => setDetail(null)}
                 aria-label="Đóng cửa sổ thẩm định"
               >
-                ✕
+                <Icon name="close" size={16} />
               </button>
             </div>
 
             {/* Profile Info Summary Grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px", marginBottom: "22px" }}>
-              <div style={{ padding: "14px", background: "var(--surface-soft, rgba(0,0,0,0.03))", borderRadius: "12px", border: "1px solid var(--line)" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: "14px",
+                marginBottom: "22px",
+              }}
+            >
+              <div
+                style={{
+                  padding: "14px",
+                  background: "var(--surface-soft, rgba(0,0,0,0.03))",
+                  borderRadius: "12px",
+                  border: "1px solid var(--line)",
+                }}
+              >
                 <div style={{ fontSize: "12px", color: "var(--muted)" }}>Chức danh chuyên môn</div>
-                <div style={{ fontWeight: 700, fontSize: "14.5px", marginTop: "4px", color: "var(--ink)" }}>{detail.professionalTitle}</div>
+                <div style={{ fontWeight: 700, fontSize: "14.5px", marginTop: "4px", color: "var(--ink)" }}>
+                  {detail.professionalTitle}
+                </div>
               </div>
-              <div style={{ padding: "14px", background: "var(--surface-soft, rgba(0,0,0,0.03))", borderRadius: "12px", border: "1px solid var(--line)" }}>
+              <div
+                style={{
+                  padding: "14px",
+                  background: "var(--surface-soft, rgba(0,0,0,0.03))",
+                  borderRadius: "12px",
+                  border: "1px solid var(--line)",
+                }}
+              >
                 <div style={{ fontSize: "12px", color: "var(--muted)" }}>Đơn vị công tác / Viện đào tạo</div>
-                <div style={{ fontWeight: 700, fontSize: "14.5px", marginTop: "4px", color: "var(--ink)" }}>{detail.institution}</div>
+                <div style={{ fontWeight: 700, fontSize: "14.5px", marginTop: "4px", color: "var(--ink)" }}>
+                  {detail.institution}
+                </div>
               </div>
-              <div style={{ padding: "14px", background: "var(--surface-soft, rgba(0,0,0,0.03))", borderRadius: "12px", border: "1px solid var(--line)" }}>
+              <div
+                style={{
+                  padding: "14px",
+                  background: "var(--surface-soft, rgba(0,0,0,0.03))",
+                  borderRadius: "12px",
+                  border: "1px solid var(--line)",
+                }}
+              >
                 <div style={{ fontSize: "12px", color: "var(--muted)" }}>Lĩnh vực đăng ký giảng dạy</div>
-                <div style={{ fontWeight: 700, fontSize: "14.5px", marginTop: "4px", color: "var(--ink)" }}>{detail.teachingArea}</div>
+                <div style={{ fontWeight: 700, fontSize: "14.5px", marginTop: "4px", color: "var(--ink)" }}>
+                  {detail.teachingArea}
+                </div>
               </div>
             </div>
 
             {/* Motivation / Teaching Proposal */}
             <div style={{ marginBottom: "24px" }}>
               <h3 style={{ fontSize: "15px", marginBottom: "8px" }}>Mong muốn & Kế hoạch giảng dạy</h3>
-              <div style={{
-                padding: "16px",
-                background: "var(--surface-soft, rgba(0,0,0,0.02))",
-                borderRadius: "12px",
-                border: "1px solid var(--line)",
-                lineHeight: "1.6",
-                fontSize: "13.5px",
-                color: "var(--ink)",
-              }}>
+              <div
+                style={{
+                  padding: "16px",
+                  background: "var(--surface-soft, rgba(0,0,0,0.02))",
+                  borderRadius: "12px",
+                  border: "1px solid var(--line)",
+                  lineHeight: "1.6",
+                  fontSize: "13.5px",
+                  color: "var(--ink)",
+                }}
+              >
                 {detail.motivation}
               </div>
             </div>
 
             {/* Decision Forms */}
             {detail.status === "SUBMITTED" ? (
-              <div style={{ padding: "20px", background: "var(--surface-soft, rgba(0,0,0,0.03))", borderRadius: "14px", border: "1px solid var(--line)" }}>
+              <div
+                style={{
+                  padding: "20px",
+                  background: "var(--surface-soft, rgba(0,0,0,0.03))",
+                  borderRadius: "14px",
+                  border: "1px solid var(--line)",
+                }}
+              >
                 <h3 style={{ fontSize: "16px", margin: "0 0 8px" }}>Phê duyệt hoặc Từ chối hồ sơ</h3>
                 <p style={{ fontSize: "13px", color: "var(--muted)", margin: "0 0 16px" }}>
-                  <strong>Duyệt</strong>: Nâng cấp tài khoản Sinh viên lên Giảng viên; xác minh là bước riêng biệt tiếp theo.
+                  <strong>Duyệt</strong>: Nâng cấp tài khoản Sinh viên lên Giảng viên; xác minh là bước riêng
+                  biệt tiếp theo.
                   <strong>Từ chối</strong>: Giữ nguyên trạng thái tài khoản sinh viên.
                 </p>
 
                 <form onSubmit={decide}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "16px",
+                      marginBottom: "16px",
+                    }}
+                  >
                     <label>
                       Quyết định thẩm định
                       <select name="decision" style={{ width: "100%", marginTop: "6px" }}>
@@ -684,10 +846,20 @@ export function AdminLecturerApplications() {
                 </form>
               </div>
             ) : detail.status === "APPROVED" && detail.result !== "APPROVED_VERIFIED" ? (
-              <div style={{ padding: "20px", background: "var(--surface-soft, rgba(0,0,0,0.03))", borderRadius: "14px", border: "1px solid var(--line)" }}>
-                <h3 style={{ fontSize: "16px", margin: "0 0 8px" }}>Xác minh Giảng viên chính thức (Bước riêng biệt)</h3>
+              <div
+                style={{
+                  padding: "20px",
+                  background: "var(--surface-soft, rgba(0,0,0,0.03))",
+                  borderRadius: "14px",
+                  border: "1px solid var(--line)",
+                }}
+              >
+                <h3 style={{ fontSize: "16px", margin: "0 0 8px" }}>
+                  Xác minh Giảng viên chính thức (Bước riêng biệt)
+                </h3>
                 <p style={{ fontSize: "13px", color: "var(--muted)", margin: "0 0 16px" }}>
-                  Sau khi xác minh, giảng viên sẽ được cấp huy hiệu tin cậy và quyền xuất bản các khóa học có thu phí.
+                  Sau khi xác minh, giảng viên sẽ được cấp huy hiệu tin cậy và quyền xuất bản các khóa học có
+                  thu phí.
                 </p>
 
                 <form onSubmit={verify}>
@@ -733,6 +905,6 @@ export function AdminLecturerApplications() {
           <span>{toast}</span>
         </div>
       )}
-    </section>
+    </div>
   );
 }

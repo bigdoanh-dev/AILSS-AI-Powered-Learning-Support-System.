@@ -56,7 +56,7 @@ export class LearningLifecycleService {
       resourceId: string;
     }) => Promise<unknown>,
     private readonly secret: string,
-    private readonly requireMediaReady?: (courseId:string,contentVersion:number)=>Promise<void>,
+    private readonly requireMediaReady?: (courseId: string, contentVersion: number) => Promise<void>,
   ) {}
 
   public async submitReview(input: {
@@ -73,7 +73,7 @@ export class LearningLifecycleService {
       from: "DRAFT",
       to: "IN_REVIEW",
       before: async (course) => {
-        await this.requireMediaReady?.(course.courseId,course.contentVersion);
+        await this.requireMediaReady?.(course.courseId, course.contentVersion);
         if (!(await this.lifecycle.allLessonsReady(course.courseId, course.contentVersion)))
           throw conflict(
             "COURSE_CONTENT_NOT_READY",
@@ -99,7 +99,7 @@ export class LearningLifecycleService {
       to: "PUBLISHED",
       eventType: "learning.course.published.v1",
       before: async (course, record, ids) => {
-        await this.requireMediaReady?.(course.courseId,course.contentVersion);
+        await this.requireMediaReady?.(course.courseId, course.contentVersion);
         const publishedAt = new Date(record.receipt.publishedAt ?? receiptTime(record.receipt));
         const version = course.recordVersion + 1;
         await this.lifecycle.prepareEvent({
@@ -171,15 +171,100 @@ export class LearningLifecycleService {
     });
   }
 
+  public async retire(input: {
+    actor: ActorContext;
+    courseId: string;
+    mode: "LOCK" | "DELETE";
+    idempotencyKey: string;
+    requestId: string;
+  }): Promise<LifecycleResult> {
+    await this.requireLecturer(input.actor, input.requestId);
+    const course = await this.commands.get(input.courseId);
+    if (!course) throw new AppError("COURSE_NOT_FOUND", 404, "Course not found");
+    if (course.ownerLecturerId !== input.actor.userId)
+      throw new AppError("COURSE_OWNER_REQUIRED", 403, "Course owner authorization is required");
+    const operation = input.mode === "LOCK" ? "LRN-32" : "LRN-33";
+    const scope = `${operation}:${input.actor.userId}:course:${input.courseId}`;
+    const record = await this.commands.idempotency(
+      scope,
+      keyHash(this.secret, input.idempotencyKey),
+      input.idempotencyKey,
+    );
+    if (record?.status === "COMPLETE" && record.receipt.course) {
+      const expected = commandFingerprint(this.secret, {
+        method: "POST",
+        route: "/api/v1/courses/{courseId}/retire",
+        actorId: input.actor.userId,
+        courseId: input.courseId,
+      });
+      if (record.receipt.fingerprint !== expected)
+        throw conflict("IDEMPOTENCY_CONFLICT", "Idempotency key was used with a different request");
+      return { course: record.receipt.course, replayed: true };
+    }
+    const source = record?.receipt.oldCourse ? courseFromDto(record.receipt.oldCourse) : course;
+    if (
+      (source.state === "HIDDEN" && (input.mode === "LOCK" || source.publishedAt)) ||
+      (source.state === "DELETED" && input.mode === "DELETE")
+    )
+      return { course: courseDto(course), replayed: true };
+    if (!["DRAFT", "IN_REVIEW", "PUBLISHED", "HIDDEN"].includes(source.state))
+      throw conflict("COURSE_STATE_CONFLICT", "Course cannot be retired from its current state");
+    // Published courses may have students, classes, orders and financial history. Keep
+    // their canonical content and entitlements; remove only public discovery/sales.
+    const to: "DELETED" | "HIDDEN" =
+      input.mode === "DELETE" && source.state !== "PUBLISHED" ? "DELETED" : "HIDDEN";
+    const publicCourse = source.state === "PUBLISHED";
+    return this.runTransition({
+      ...input,
+      operation,
+      route: "/api/v1/courses/{courseId}/retire",
+      from: source.state as "DRAFT" | "IN_REVIEW" | "PUBLISHED" | "HIDDEN",
+      to,
+      ...(publicCourse ? { eventType: "system.projection.reconcile.v1" as const } : {}),
+      before: async (old, record, ids) => {
+        if (!publicCourse) return;
+        await this.lifecycle.prepareEvent({
+          ids,
+          eventType: "system.projection.reconcile.v1",
+          version: old.recordVersion + 1,
+          occurredAt: new Date(receiptTime(record.receipt)),
+          correlationId: input.requestId,
+          data: {
+            projectionName: "COURSE_PUBLIC_ARCHIVE_CLEANUP",
+            canonicalId: old.courseId,
+            canonicalVersion: old.recordVersion + 1,
+          },
+        });
+      },
+      after: async (updated, record) => {
+        if (!publicCourse || !updated.publishedAt) return;
+        await this.reconciliation.schedule({
+          operationId: record.operationId,
+          projectionName: "COURSE_PUBLIC_ARCHIVE_CLEANUP",
+          canonicalId: updated.courseId,
+          canonicalVersion: updated.recordVersion,
+          checksum: JSON.stringify({
+            schemaVersion: 1,
+            categoryId: updated.categoryId,
+            publishedAt: updated.publishedAt.toISOString(),
+            searchTokens: searchProjectionTokens(updated.title),
+          }),
+          now: new Date(receiptTime(record.receipt)),
+          shard: learningShard(record.operationId) % 16,
+        });
+      },
+    });
+  }
+
   private async runTransition(input: {
     actor: ActorContext;
     courseId: string;
     idempotencyKey: string;
     requestId: string;
-    operation: "LRN-07" | "LRN-08" | "LRN-09";
+    operation: "LRN-07" | "LRN-08" | "LRN-09" | "LRN-32" | "LRN-33";
     route: string;
-    from: "DRAFT" | "IN_REVIEW" | "PUBLISHED";
-    to: "IN_REVIEW" | "PUBLISHED" | "ARCHIVED";
+    from: "DRAFT" | "IN_REVIEW" | "PUBLISHED" | "HIDDEN";
+    to: "IN_REVIEW" | "PUBLISHED" | "ARCHIVED" | "HIDDEN" | "DELETED";
     eventType?: "learning.course.published.v1" | "system.projection.reconcile.v1";
     before(
       course: AuthoringCourse,
@@ -217,7 +302,10 @@ export class LearningLifecycleService {
 
     let current = await this.commands.get(input.courseId);
     if (!current) throw new AppError("COURSE_NOT_FOUND", 404, "Course not found");
-    if (input.operation === "LRN-07" && current.ownerLecturerId !== input.actor.userId)
+    if (
+      ["LRN-07", "LRN-32", "LRN-33"].includes(input.operation) &&
+      current.ownerLecturerId !== input.actor.userId
+    )
       throw new AppError("COURSE_OWNER_REQUIRED", 403, "Course owner authorization is required");
     let old = record.receipt.oldCourse ? courseFromDto(record.receipt.oldCourse) : undefined;
     if (!old) {

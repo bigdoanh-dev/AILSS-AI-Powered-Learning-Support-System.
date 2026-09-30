@@ -270,8 +270,7 @@ export class DifferentialPrivacyService {
 
     // 2. Check budget
     const budgetKey = `${tenantId}:${researcherId}`;
-    const currentBudget =
-      this.budgetStore.get(budgetKey) ?? DifferentialPrivacyService.TOTAL_BUDGET;
+    const currentBudget = this.budgetStore.get(budgetKey) ?? DifferentialPrivacyService.TOTAL_BUDGET;
 
     if (currentBudget < epsilonRequested) {
       return {

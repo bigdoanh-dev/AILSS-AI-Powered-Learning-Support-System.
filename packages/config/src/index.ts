@@ -25,6 +25,10 @@ const baseSchema = z.object({
   INTERACTION_SERVICE_URL: z.string().url().default("http://127.0.0.1:8105"),
   AI_SERVICE_URL: z.string().url().default("http://127.0.0.1:8106"),
   NOTIFICATION_SERVICE_URL: z.string().url().default("http://127.0.0.1:8203"),
+  PROMETHEUS_SERVICE_URL: z.string().url().default("http://127.0.0.1:9090"),
+  GRAFANA_SERVICE_URL: z.string().url().default("http://127.0.0.1:3001"),
+  PROMETHEUS_PUBLIC_URL: z.string().url().default("http://localhost:9090"),
+  GRAFANA_PUBLIC_URL: z.string().url().default("http://localhost:3001"),
   INTERNAL_HTTP_TIMEOUT_MS: z.coerce.number().int().min(100).max(10_000).default(5_000),
   PASSWORD_CHANGE_HTTP_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(60_000).default(20_000),
   IDENTITY_OUTBOX_POLL_MS: z.coerce.number().int().min(250).max(60_000).default(1_000),
@@ -58,6 +62,15 @@ const baseSchema = z.object({
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().min(60).max(3_600).default(900),
   REFRESH_TOKEN_TTL_SECONDS: z.coerce.number().int().min(3_600).max(7_776_000).default(2_592_000),
   PASSWORD_IDEMPOTENCY_HMAC_KEY: optionalInjected,
+  SMTP_HOST: z.string().trim().optional(),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+  SMTP_SECURE: bool,
+  SMTP_USER: optionalInjected,
+  SMTP_PASS: optionalInjected,
+  SMTP_FROM: z.preprocess(
+    (value) => (value === "" || value === "<INJECTED>" ? undefined : value),
+    z.string().trim().email().optional(),
+  ),
   ADMIN_CURSOR_HMAC_KEY: optionalInjected,
   LEARNING_CURSOR_HMAC_KEY: optionalInjected,
   PLATFORM_TENANT_ID: z.string().uuid().default("00000000-0000-4000-8000-000000000001"),
@@ -71,6 +84,8 @@ const baseSchema = z.object({
   AI_PROVIDER_API_KEY: optionalInjected,
   AI_PROVIDER_MODE: z.enum(["production", "deterministic-test"]).default("production"),
   AI_ASSISTANT_PROVIDER_MODE: z.enum(["external", "integration-only"]).default("external"),
+  AI_ASSISTANT_CACHE_TTL_SECONDS: z.coerce.number().int().min(1).max(604_800).default(86_400),
+  AI_ASSISTANT_CACHE_TENANT_ID: z.string().min(1).max(200).default("platform-default"),
   AI_ASSISTANT_INTEGRATION_ENABLED: bool,
   AI_PROVIDER_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(120_000).default(30_000),
   AI_CIRCUIT_BREAKER_FAILURE_THRESHOLD: z.coerce.number().int().min(1).max(100).default(5),
@@ -133,8 +148,8 @@ const baseSchema = z.object({
   MEDIA_TRANSCODE_PROFILES: z.string().optional(),
   MEDIA_QUOTA_LIMITS: z.string().optional(),
   MEDIA_PLAYBACK_TTL_SECONDS: z.coerce.number().int().min(1).max(300).default(120),
-  GOOGLE_CLIENT_IDS: z.string().default("ailss-web-google-client-id,ailss-mobile-google-client-id"),
-  APPLE_CLIENT_IDS: z.string().default("com.ailss.web,com.ailss.mobile"),
+  GOOGLE_CLIENT_IDS: z.string().default(""),
+  APPLE_CLIENT_IDS: z.string().default(""),
   SEPAY_WEBHOOK_API_KEY: optionalInjected,
   SEPAY_REFUND_API_URL: z.string().url().optional(),
 });
@@ -202,6 +217,17 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     !result.data.AI_PROVIDER_API_KEY
   ) {
     throw new ConfigurationError(["Production AI worker provider credential is missing"]);
+  }
+  if (result.data.NODE_ENV === "production" && result.data.MEDIA_ENABLED) {
+    if (!result.data.MEDIA_STORAGE_ACCESS_KEY || !result.data.MEDIA_STORAGE_SECRET_KEY) {
+      throw new ConfigurationError(["Production media storage credentials are missing"]);
+    }
+    if (!result.data.OBJECT_STORAGE_USE_SSL) {
+      throw new ConfigurationError(["Production object storage must use SSL"]);
+    }
+    if (result.data.MEDIA_DELIVERY_ORIGIN && !result.data.MEDIA_DELIVERY_ORIGIN.startsWith("https://")) {
+      throw new ConfigurationError(["Production media delivery origin must use HTTPS"]);
+    }
   }
   return result.data;
 }

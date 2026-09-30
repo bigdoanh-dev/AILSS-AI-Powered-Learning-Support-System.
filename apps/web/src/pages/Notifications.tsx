@@ -73,7 +73,9 @@ export default function Notifications() {
         <div className="dashboard-banner-notice sse-live-banner" role="status">
           <span className="live-dot" />
           <span>{realtimeAlert}</span>
-          <button className="button button-subtle button-small" onClick={() => setRealtimeAlert(null)}>✕ Đóng</button>
+          <button className="button button-subtle button-small" onClick={() => setRealtimeAlert(null)}>
+            ✕ Đóng
+          </button>
         </div>
       )}
       <label>

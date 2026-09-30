@@ -33,7 +33,14 @@ async function run() {
         firstPartyMap.set(name, {
           name,
           version: info.version ?? rootPkg.version,
-          type: name.includes("service") || name.includes("gateway") || name.includes("web") || name.includes("mobile") || name.includes("worker") ? "application" : "library",
+          type:
+            name.includes("service") ||
+            name.includes("gateway") ||
+            name.includes("web") ||
+            name.includes("mobile") ||
+            name.includes("worker")
+              ? "application"
+              : "library",
         });
       } else {
         const id = `${name}@${info.version}`;
@@ -54,7 +61,14 @@ async function run() {
       firstPartyMap.set(pkg.name, {
         name: pkg.name,
         version: pkg.version ?? rootPkg.version,
-        type: pkg.name.includes("service") || pkg.name.includes("gateway") || pkg.name.includes("web") || pkg.name.includes("mobile") || pkg.name.includes("worker") ? "application" : "library",
+        type:
+          pkg.name.includes("service") ||
+          pkg.name.includes("gateway") ||
+          pkg.name.includes("web") ||
+          pkg.name.includes("mobile") ||
+          pkg.name.includes("worker")
+            ? "application"
+            : "library",
       });
     }
     walk(pkg.dependencies, true);

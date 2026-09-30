@@ -50,7 +50,7 @@ export default function AdminDashboard() {
         }
       }
     },
-    [session, snapshot.user?.role]
+    [session, snapshot.user?.role],
   );
 
   useEffect(() => {
@@ -85,7 +85,8 @@ export default function AdminDashboard() {
           </View>
           <Text style={[styles.title, { textAlign: "center" }]}>Trung tâm Quản trị AILSS</Text>
           <Text style={[styles.text, { textAlign: "center", maxWidth: 300 }]}>
-            Khu vực dành riêng cho Quản trị viên hệ thống (ADMIN) để duyệt giảng viên, kiểm duyệt báo cáo và giám sát vận hành.
+            Khu vực dành riêng cho Quản trị viên hệ thống (ADMIN) để duyệt giảng viên, kiểm duyệt báo cáo và
+            giám sát vận hành.
           </Text>
 
           <View style={{ width: "100%", gap: 10, marginTop: 12 }}>
@@ -101,12 +102,7 @@ export default function AdminDashboard() {
               size="md"
               onPress={() => router.push("/login?role=admin" as Href)}
             />
-            <Button
-              label="← Về trang chủ"
-              variant="outline"
-              size="md"
-              onPress={() => router.replace("/")}
-            />
+            <Button label="← Về trang chủ" variant="outline" size="md" onPress={() => router.replace("/")} />
           </View>
         </View>
       </Page>
@@ -115,11 +111,11 @@ export default function AdminDashboard() {
 
   return (
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
-      <Page>
+      <Page scroll={false}>
         <ScreenHeader
           title="Bảng điều khiển quản trị"
           subtitle={`Chào ${snapshot.user.displayName} · Quản trị viên hệ thống`}
-          onBack={() => router.replace("/")}
+          onBack={() => router.replace("/account")}
         />
 
         <ScrollView
@@ -161,6 +157,11 @@ export default function AdminDashboard() {
           </Text>
 
           <View style={ds.actionStack}>
+            <Button
+              label="Prometheus & Grafana"
+              variant="outline"
+              onPress={() => router.push("/admin/monitoring" as Href)}
+            />
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Dashboard Doanh thu & Thương mại"
@@ -183,7 +184,25 @@ export default function AdminDashboard() {
 
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Dashboard Người dùng & Học tập"
+              accessibilityLabel="AI quản trị"
+              style={ds.queueCard}
+              onPress={() => router.push("/admin/ai" as Href)}
+            >
+              <View style={ds.queueHeader}>
+                <View style={[ds.queueIconWrap, { backgroundColor: "#FEF3C7" }]}>
+                  <Icon name="sparkles" size={20} color="#D97706" />
+                </View>
+                <View style={ds.queueText}>
+                  <Text style={ds.queueTitle}>AI quản trị</Text>
+                  <Text style={ds.queueDesc}>Hỏi về báo cáo, kiểm duyệt và quy trình vận hành</Text>
+                </View>
+              </View>
+              <Icon name="chevronRight" size={18} color={tokens.color.muted} />
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Thống kê tài khoản"
               style={ds.queueCard}
               onPress={() => router.push("/admin/stats" as Href)}
             >
@@ -192,15 +211,12 @@ export default function AdminDashboard() {
                   <Icon name="stats" size={20} color="#0284C7" />
                 </View>
                 <View style={ds.queueText}>
-                  <Text style={ds.queueTitle}>Dashboard Người dùng & Học tập</Text>
-                  <Text style={ds.queueDesc}>
-                    Thống kê phân loại tài khoản, tỷ lệ học viên & bài thi AI
-                  </Text>
+                  <Text style={ds.queueTitle}>Thống kê tài khoản</Text>
+                  <Text style={ds.queueDesc}>Số tài khoản theo vai trò và trạng thái tạm khóa</Text>
                 </View>
               </View>
               <Icon name="chevronRight" size={18} color={tokens.color.muted} />
             </Pressable>
-
           </View>
 
           {/* Operational Queues & Modules */}
@@ -208,96 +224,98 @@ export default function AdminDashboard() {
             Hàng đợi vận hành
           </Text>
 
-        <View style={ds.actionStack}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Tra cứu người dùng"
-            style={ds.queueCard}
-            onPress={() => router.push("/admin/users" as Href)}
-          >
-            <View style={ds.queueHeader}>
-              <View style={ds.queueIconWrap}>
-                <Icon name="people" size={20} color={tokens.color.brand} />
+          <View style={ds.actionStack}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Tra cứu người dùng"
+              style={ds.queueCard}
+              onPress={() => router.push("/admin/users" as Href)}
+            >
+              <View style={ds.queueHeader}>
+                <View style={ds.queueIconWrap}>
+                  <Icon name="people" size={20} color={tokens.color.brand} />
+                </View>
+                <View style={ds.queueText}>
+                  <Text style={ds.queueTitle}>Tra cứu người dùng</Text>
+                  <Text style={ds.queueDesc}>Tìm kiếm, xem chi tiết và quản lý trạng thái tài khoản</Text>
+                </View>
               </View>
-              <View style={ds.queueText}>
-                <Text style={ds.queueTitle}>Tra cứu người dùng</Text>
-                <Text style={ds.queueDesc}>Tìm kiếm, xem chi tiết và quản lý trạng thái tài khoản</Text>
-              </View>
-            </View>
-            <Icon name="chevronRight" size={18} color={tokens.color.muted} />
-          </Pressable>
+              <Icon name="chevronRight" size={18} color={tokens.color.muted} />
+            </Pressable>
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Xác minh giảng viên"
-            style={ds.queueCard}
-            onPress={() => router.push("/admin/lecturers" as Href)}
-          >
-            <View style={ds.queueHeader}>
-              <View style={ds.queueIconWrap}>
-                <Icon name="academic" size={20} color={tokens.color.brand} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Xác minh giảng viên"
+              style={ds.queueCard}
+              onPress={() => router.push("/admin/lecturers" as Href)}
+            >
+              <View style={ds.queueHeader}>
+                <View style={ds.queueIconWrap}>
+                  <Icon name="academic" size={20} color={tokens.color.brand} />
+                </View>
+                <View style={ds.queueText}>
+                  <Text style={ds.queueTitle}>Xác minh giảng viên</Text>
+                  <Text style={ds.queueDesc}>Thẩm định hồ sơ và xác minh quyền giảng dạy</Text>
+                </View>
               </View>
-              <View style={ds.queueText}>
-                <Text style={ds.queueTitle}>Xác minh giảng viên</Text>
-                <Text style={ds.queueDesc}>Thẩm định hồ sơ và xác minh quyền giảng dạy</Text>
-              </View>
-            </View>
-            <Icon name="chevronRight" size={18} color={tokens.color.muted} />
-          </Pressable>
+              <Icon name="chevronRight" size={18} color={tokens.color.muted} />
+            </Pressable>
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Trung tâm kiểm duyệt"
-            style={ds.queueCard}
-            onPress={() => router.push("/admin/moderation" as Href)}
-          >
-            <View style={ds.queueHeader}>
-              <View style={ds.queueIconWrap}>
-                <Icon name="shield" size={20} color={tokens.color.brand} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Trung tâm kiểm duyệt"
+              style={ds.queueCard}
+              onPress={() => router.push("/admin/moderation" as Href)}
+            >
+              <View style={ds.queueHeader}>
+                <View style={ds.queueIconWrap}>
+                  <Icon name="shield" size={20} color={tokens.color.brand} />
+                </View>
+                <View style={ds.queueText}>
+                  <Text style={ds.queueTitle}>Trung tâm kiểm duyệt</Text>
+                  <Text style={ds.queueDesc}>Xử lý báo cáo bình luận và đánh giá vi phạm</Text>
+                </View>
               </View>
-              <View style={ds.queueText}>
-                <Text style={ds.queueTitle}>Trung tâm kiểm duyệt</Text>
-                <Text style={ds.queueDesc}>Xử lý báo cáo bình luận và đánh giá vi phạm</Text>
-              </View>
-            </View>
-            <Icon name="chevronRight" size={18} color={tokens.color.muted} />
-          </Pressable>
+              <Icon name="chevronRight" size={18} color={tokens.color.muted} />
+            </Pressable>
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Giám sát thương mại"
-            style={ds.queueCard}
-            onPress={() => router.push("/admin/commerce" as Href)}
-          >
-            <View style={ds.queueHeader}>
-              <View style={ds.queueIconWrap}>
-                <Icon name="card" size={20} color={tokens.color.brand} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Giám sát thương mại"
+              style={ds.queueCard}
+              onPress={() => router.push("/admin/commerce" as Href)}
+            >
+              <View style={ds.queueHeader}>
+                <View style={ds.queueIconWrap}>
+                  <Icon name="card" size={20} color={tokens.color.brand} />
+                </View>
+                <View style={ds.queueText}>
+                  <Text style={ds.queueTitle}>Giám sát thương mại</Text>
+                  <Text style={ds.queueDesc}>
+                    Tra cứu đơn hàng, phân tách trạng thái thanh toán và quyền học
+                  </Text>
+                </View>
               </View>
-              <View style={ds.queueText}>
-                <Text style={ds.queueTitle}>Giám sát thương mại</Text>
-                <Text style={ds.queueDesc}>
-                  Tra cứu đơn hàng, phân tách trạng thái thanh toán và quyền học
-                </Text>
-              </View>
-            </View>
-            <Icon name="chevronRight" size={18} color={tokens.color.muted} />
-          </Pressable>
-        </View>
-
-        {/* System Operations & Governance Info */}
-        <View style={ds.governanceSection}>
-          <Text style={[styles.text, { fontWeight: "700" }]}>Chính sách vận hành</Text>
-          <View style={ds.infoBox}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: tokens.space.xs }}>
-              <Icon name="scale" size={16} color={tokens.color.brand} />
-              <Text style={ds.infoTitle}>Phân quyền máy chủ chuẩn hóa</Text>
-            </View>
-            <Text style={ds.infoText}>
-              Trạng thái quyền hạn và kiểm duyệt được xác thực tuyệt đối tại máy chủ. Thao tác tác động cao
-              yêu cầu xác thực lại mật khẩu hiện tại.
-            </Text>
+              <Icon name="chevronRight" size={18} color={tokens.color.muted} />
+            </Pressable>
           </View>
-        </View>
+
+          {/* System Operations & Governance Info */}
+          <View style={ds.governanceSection}>
+            <Text style={[styles.text, { fontWeight: "700" }]}>Chính sách vận hành</Text>
+            <View style={ds.infoBox}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: tokens.space.xs }}
+              >
+                <Icon name="scale" size={16} color={tokens.color.brand} />
+                <Text style={ds.infoTitle}>Phân quyền máy chủ chuẩn hóa</Text>
+              </View>
+              <Text style={ds.infoText}>
+                Trạng thái quyền hạn và kiểm duyệt được xác thực tuyệt đối tại máy chủ. Thao tác tác động cao
+                yêu cầu xác thực lại mật khẩu hiện tại.
+              </Text>
+            </View>
+          </View>
         </ScrollView>
       </Page>
 

@@ -81,8 +81,8 @@ describe("SePay webhook & payment payload collision detection (P0)", () => {
 
     // Verify AppSec audit log was emitted
     expect(warnSpy).toHaveBeenCalled();
-    const warnCall = warnSpy.mock.calls.find((call) =>
-      typeof call[0] === "string" && call[0].includes("APPSEC_AUDIT_PAYLOAD_COLLISION"),
+    const warnCall = warnSpy.mock.calls.find(
+      (call) => typeof call[0] === "string" && call[0].includes("APPSEC_AUDIT_PAYLOAD_COLLISION"),
     );
     expect(warnCall).toBeDefined();
 
@@ -197,12 +197,12 @@ describe("SePay webhook & payment payload collision detection (P0)", () => {
       transactionDate: new Date().toISOString(),
     });
 
-    await expect(
-      financeService.processPaymentWebhook(headers, collidingAmountPayload),
-    ).rejects.toMatchObject({
-      code: "PROVIDER_TRANSACTION_CONFLICT",
-      status: 409,
-    });
+    await expect(financeService.processPaymentWebhook(headers, collidingAmountPayload)).rejects.toMatchObject(
+      {
+        code: "PROVIDER_TRANSACTION_CONFLICT",
+        status: 409,
+      },
+    );
 
     // Colliding payload with changed orderId
     const collidingOrderPayload = JSON.stringify({
@@ -213,9 +213,7 @@ describe("SePay webhook & payment payload collision detection (P0)", () => {
       transactionDate: new Date().toISOString(),
     });
 
-    await expect(
-      financeService.processPaymentWebhook(headers, collidingOrderPayload),
-    ).rejects.toMatchObject({
+    await expect(financeService.processPaymentWebhook(headers, collidingOrderPayload)).rejects.toMatchObject({
       code: "PROVIDER_TRANSACTION_CONFLICT",
       status: 409,
     });

@@ -42,4 +42,18 @@ describe("AI outbox exchange routing", () => {
       connect.mockRestore();
     }
   });
+
+  it("recovers from a background poll timeout and continues polling", async () => {
+    const execute = vi.fn().mockRejectedValueOnce(new Error("CASSANDRA_TIMEOUT")).mockResolvedValue([]);
+    const onPollError = vi.fn();
+    const relay = new AiDocumentRelay({ execute } as unknown as CassandraClient, "unused", onPollError);
+    try {
+      relay.start();
+      await vi.waitFor(() => expect(onPollError).toHaveBeenCalledTimes(1));
+      await expect(relay.poll()).resolves.toBeUndefined();
+      expect(execute).toHaveBeenCalledTimes(33);
+    } finally {
+      await relay.close();
+    }
+  });
 });

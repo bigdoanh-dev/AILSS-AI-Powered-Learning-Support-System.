@@ -265,7 +265,9 @@ export function assessmentResult(value: unknown): AssessmentResult {
     resultVersion,
     gradingAlgorithmVersion:
       typeof row.gradingAlgorithmVersion === "string" ? row.gradingAlgorithmVersion : "objective-v1",
-    ...(row.gradingStatus === "AUTO_GRADED" || row.gradingStatus === "PENDING_MANUAL_GRADING" || row.gradingStatus === "MANUALLY_GRADED"
+    ...(row.gradingStatus === "AUTO_GRADED" ||
+    row.gradingStatus === "PENDING_MANUAL_GRADING" ||
+    row.gradingStatus === "MANUALLY_GRADED"
       ? { gradingStatus: row.gradingStatus }
       : {}),
     ...(typeof row.manualScore === "string" ? { manualScore: row.manualScore } : {}),

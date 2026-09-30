@@ -53,7 +53,7 @@ export function assistantRouter(
           error.issues.map((i) => ({ field: i.path.join(".") || "body", reason: i.message })),
         );
       }
- 
+
       const result = await orchestrator.chat(actor, body);
 
       res.status(200).json({
@@ -75,7 +75,9 @@ export function assistantRouter(
       const context = currentRequestContext();
       const actor = await getActor(req);
 
-      const conversations = await repository.listUserConversations(actor.userId);
+      const conversations = (await repository.listUserConversations(actor.userId)).filter(
+        (conversation) => conversation.role === actor.role,
+      );
 
       res.status(200).json({
         data: conversations,
@@ -100,11 +102,11 @@ export function assistantRouter(
       if (!conversation) {
         throw new AppError("NOT_FOUND", 404, "Conversation not found");
       }
-      if (conversation.userId !== actor.userId && actor.role !== "ADMIN") {
+      if (conversation.userId !== actor.userId || conversation.role !== actor.role) {
         throw new AppError("FORBIDDEN", 403, "Access to conversation denied");
       }
 
-      const messages = await repository.getRecentMessages(conversationId, 50);
+      const messages = await repository.getRecentMessages(conversationId, 500);
 
       res.status(200).json({
         data: {

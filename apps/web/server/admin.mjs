@@ -39,6 +39,23 @@ export function adminOperation(url, method, body, headers) {
   const raw = url.slice("/web-session/admin".length),
     [path, query = ""] = raw.split("?");
   if (raw.includes("#") || /[%\\]/.test(path)) throw Error("INVALID_ADMIN_REQUEST");
+  if (method === "POST" && path === "/assistant/chat" && !query) {
+    z.object({
+      conversationId: z.string().uuid().optional(),
+      mode: z.literal("ADMIN_SUPPORT"),
+      message: z.string().trim().min(1).max(4000),
+    })
+      .strict()
+      .parse(body);
+    return { path: "/assistant/chat", headers: {} };
+  }
+  if (method === "GET" && path === "/assistant/conversations" && !query) {
+    return { path: "/assistant/conversations", headers: {} };
+  }
+  const assistantConversation = new RegExp(`^/assistant/conversations/(${uuid})$`).exec(path);
+  if (method === "GET" && assistantConversation && !query) {
+    return { path: `/assistant/conversations/${assistantConversation[1]}`, headers: {} };
+  }
   if (method === "GET" && path === "/users") {
     const params = new URLSearchParams(query),
       values = {};
@@ -69,11 +86,39 @@ export function adminOperation(url, method, body, headers) {
     return { path: "/admin/reports" + (query ? `?${new URLSearchParams(query)}` : ""), headers: {} };
   }
   // --- Dashboard data routes ---
+  if (method === "GET" && path === "/monitoring" && !query) {
+    return { path: "/admin/monitoring", headers: {} };
+  }
   if (method === "GET" && path === "/dashboard/revenue") {
     const params = new URLSearchParams(query);
     const range = params.get("range") ?? "30d";
     if (!["today", "7d", "30d", "all"].includes(range)) throw Error("INVALID_ADMIN_REQUEST");
     return { path: `/admin/dashboard/revenue?range=${encodeURIComponent(range)}`, headers: {} };
+  }
+  if (method === "GET" && path === "/payouts" && !query) {
+    return { path: "/admin/payouts", headers: {} };
+  }
+  if (method === "GET" && path === "/commission" && !query) {
+    return { path: "/admin/commission", headers: {} };
+  }
+  if (method === "POST" && path === "/commission" && !query) {
+    z.object({ basisPoints: z.number().int().min(0).max(5000), expectedEffectiveAt: z.string().datetime() })
+      .strict()
+      .parse(body);
+    return { path: "/admin/commission", headers: {}, key: keyOf(headers) };
+  }
+  if (method === "POST" && path === "/payouts/prepare" && !query) {
+    z.object({ lecturerId: z.string().uuid().optional() }).strict().parse(body);
+    return { path: "/admin/payouts/prepare", headers: {}, key: keyOf(headers) };
+  }
+  const payoutApproval = new RegExp(`^/payouts/(\\d{4}-(?:0[1-9]|1[0-2]))/(${uuid})/approve$`).exec(path);
+  if (method === "POST" && payoutApproval && !query) {
+    z.object({}).strict().parse(body);
+    return {
+      path: `/admin/payouts/${payoutApproval[1]}/${payoutApproval[2]}/approve`,
+      headers: {},
+      key: keyOf(headers),
+    };
   }
   if (method === "GET" && path === "/dashboard/stats" && !query) {
     return { path: "/admin/dashboard/stats", headers: {} };
@@ -84,9 +129,7 @@ export function adminOperation(url, method, body, headers) {
     for (const k of params.keys()) {
       if (!allowed.includes(k)) throw Error("INVALID_ADMIN_REQUEST");
     }
-    page.parse(Object.fromEntries(
-      [...params.entries()].filter(([k]) => ["limit", "cursor"].includes(k))
-    ));
+    page.parse(Object.fromEntries([...params.entries()].filter(([k]) => ["limit", "cursor"].includes(k))));
     return { path: "/admin/audit-logs" + (query ? `?${params.toString()}` : ""), headers: {} };
   }
   // --- Export routes ---
@@ -101,7 +144,11 @@ export function adminOperation(url, method, body, headers) {
     const category = params.get("category");
     if (category && !["COMMERCE", "AUTH", "MODERATION", "ADMIN"].includes(category))
       throw Error("INVALID_ADMIN_REQUEST");
-    return { path: `/admin/export/audit-logs` + (query ? `?${params.toString()}` : ""), headers: {}, export: true };
+    return {
+      path: `/admin/export/audit-logs` + (query ? `?${params.toString()}` : ""),
+      headers: {},
+      export: true,
+    };
   }
   const match = new RegExp(`^/interaction-reports/(${uuid})/moderate$`).exec(path);
   if (method !== "POST" || !match) throw Error("INVALID_ADMIN_REQUEST");

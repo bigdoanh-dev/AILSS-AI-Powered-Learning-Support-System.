@@ -1,17 +1,25 @@
 services:
+  api-gateway:
+    environment:
+      PROMETHEUS_SERVICE_URL: http://prometheus:9090
+      GRAFANA_SERVICE_URL: http://grafana:3000
+      PROMETHEUS_PUBLIC_URL: ${PROMETHEUS_PUBLIC_URL:-http://localhost:9090}
+      GRAFANA_PUBLIC_URL: ${GRAFANA_PUBLIC_URL:-http://localhost:3001}
   prometheus:
     image: prom/prometheus:v3.5.0
     command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=30d"]
     volumes:
       - ./ops/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./ops/observability/alerts.yml:/etc/prometheus/rules/alerts.yml:ro
-    ports: ["9090:9090"]
+    ports: ["127.0.0.1:9090:9090"]
+    networks: [service_net, ops_net]
   alertmanager:
     image: prom/alertmanager:v0.28.1
     command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
     volumes:
       - ./ops/observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
-    ports: ["9093:9093"]
+    ports: ["127.0.0.1:9093:9093"]
+    networks: [ops_net]
   grafana:
     image: grafana/grafana:12.1.1
     environment:
@@ -21,7 +29,8 @@ services:
     volumes:
       - ./ops/observability/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./ops/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
-    ports: ["3001:3000"]
+    ports: ["127.0.0.1:3001:3000"]
+    networks: [service_net, ops_net]
 secrets:
   grafana_admin_password:
     file: ./secrets/grafana_admin_password

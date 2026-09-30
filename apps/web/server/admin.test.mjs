@@ -2,6 +2,81 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { adminEnvelope, adminOperation } from "./admin.mjs";
 const id = "00000000-0000-4000-8000-000000000001";
+test("Admin monitoring is read-only and rejects arbitrary queries", () => {
+  assert.equal(
+    adminOperation("/web-session/admin/monitoring", "GET", undefined, {}).path,
+    "/admin/monitoring",
+  );
+  assert.throws(() =>
+    adminOperation("/web-session/admin/monitoring?url=http://internal.test", "GET", undefined, {}),
+  );
+  assert.throws(() => adminOperation("/web-session/admin/monitoring", "POST", {}, {}));
+});
+test("Admin commission allowlist accepts a bounded rate and current policy version", () => {
+  const effectiveAt = "2026-09-27T00:00:00.000Z";
+  assert.equal(
+    adminOperation("/web-session/admin/commission", "GET", undefined, {}).path,
+    "/admin/commission",
+  );
+  assert.equal(
+    adminOperation(
+      "/web-session/admin/commission",
+      "POST",
+      { basisPoints: 2200, expectedEffectiveAt: effectiveAt },
+      { "idempotency-key": "commission-change" },
+    ).path,
+    "/admin/commission",
+  );
+  assert.throws(() =>
+    adminOperation(
+      "/web-session/admin/commission",
+      "POST",
+      { basisPoints: 5001, expectedEffectiveAt: effectiveAt },
+      { "idempotency-key": "bad" },
+    ),
+  );
+});
+test("Admin payout allowlist scopes one or all lecturers", () => {
+  assert.equal(adminOperation("/web-session/admin/payouts", "GET", undefined, {}).path, "/admin/payouts");
+  assert.equal(
+    adminOperation(
+      "/web-session/admin/payouts/prepare",
+      "POST",
+      { lecturerId: id },
+      { "idempotency-key": "pay-one" },
+    ).path,
+    "/admin/payouts/prepare",
+  );
+  assert.equal(
+    adminOperation("/web-session/admin/payouts/prepare", "POST", {}, { "idempotency-key": "pay-all" }).path,
+    "/admin/payouts/prepare",
+  );
+  assert.throws(() =>
+    adminOperation(
+      "/web-session/admin/payouts/prepare",
+      "POST",
+      { accountNumber: "123" },
+      { "idempotency-key": "bad" },
+    ),
+  );
+  assert.deepEqual(
+    adminOperation(
+      `/web-session/admin/payouts/2026-08/${id}/approve`,
+      "POST",
+      {},
+      { "idempotency-key": "approve-one" },
+    ),
+    { path: `/admin/payouts/2026-08/${id}/approve`, headers: {}, key: "approve-one" },
+  );
+  assert.throws(() =>
+    adminOperation(
+      `/web-session/admin/payouts/2026-08/${id}/approve`,
+      "POST",
+      { accountNumber: "123" },
+      { "idempotency-key": "bad" },
+    ),
+  );
+});
 test("Admin moderation allowlist preserves cursor, optimistic version and password reauth body", () => {
   assert.equal(
     adminOperation("/web-session/admin/interaction-reports?limit=20&cursor=opaque", "GET", undefined, {})
@@ -88,4 +163,33 @@ test("Admin identity allowlist rejects missing filters, unsupported status and e
       { "idempotency-key": "archive" },
     ),
   );
+});
+
+test("Admin AI proxy accepts only admin support chat and own conversation routes", () => {
+  assert.deepEqual(
+    adminOperation(
+      "/web-session/admin/assistant/chat",
+      "POST",
+      {
+        mode: "ADMIN_SUPPORT",
+        message: "Xem thống kê AI ở đâu?",
+      },
+      {},
+    ),
+    { path: "/assistant/chat", headers: {} },
+  );
+  assert.equal(
+    adminOperation("/web-session/admin/assistant/conversations", "GET", undefined, {}).path,
+    "/assistant/conversations",
+  );
+  assert.equal(
+    adminOperation(`/web-session/admin/assistant/conversations/${id}`, "GET", undefined, {}).path,
+    `/assistant/conversations/${id}`,
+  );
+  for (const body of [
+    { mode: "STUDY_BUDDY", message: "Hỏi bài" },
+    { mode: "ADMIN_SUPPORT", message: "Hỏi bài", courseId: id },
+  ]) {
+    assert.throws(() => adminOperation("/web-session/admin/assistant/chat", "POST", body, {}));
+  }
 });

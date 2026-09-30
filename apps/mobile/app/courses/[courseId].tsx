@@ -1,5 +1,5 @@
 import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
-import { Text, View, TextInput, Pressable, ActivityIndicator, StyleSheet, Alert } from "react-native";
+import { Text, View, TextInput, Pressable, ActivityIndicator, StyleSheet, Alert, Image } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { runtime } from "../../src/runtime";
@@ -19,6 +19,7 @@ import {
   type RatingSummary,
 } from "../../src/interaction";
 import { ApiError } from "../../src/api";
+import { publicLecturer, type PublicLecturer } from "../../src/public-lecturer";
 import { Page, Button, Badge, Icon, BottomNavBar, styles, tokens } from "../../src/ui";
 
 export default function CourseDetailScreen() {
@@ -27,6 +28,7 @@ export default function CourseDetailScreen() {
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [lecturerProfile, setLecturerProfile] = useState<PublicLecturer | null>(null);
   const [offeringsList, setOfferingsList] = useState<Offering[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +41,7 @@ export default function CourseDetailScreen() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [ratingInfo, setRatingInfo] = useState<RatingSummary>({ reviewCount: 0, ratingSum: 0, average: 0 });
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsError, setReviewsError] = useState(false);
 
   // Write/Edit Review Form state
   const [showReviewForm, setShowReviewForm] = useState(() => review === "1");
@@ -85,13 +88,14 @@ export default function CourseDetailScreen() {
     if (!courseId) return;
     try {
       setReviewsLoading(true);
+      setReviewsError(false);
       const api = snapshot.state === "AUTHENTICATED" ? session : session.api;
       const data = await api.request(`/api/v1/courses/${courseId}/reviews?limit=20`);
       const res = reviewList(data);
       setReviews(res.items);
       setRatingInfo(res.ratingSummary);
     } catch {
-      // Graceful fallback for reviews
+      setReviewsError(true);
     } finally {
       setReviewsLoading(false);
     }
@@ -101,6 +105,19 @@ export default function CourseDetailScreen() {
     void fetchDetails();
     void fetchReviews();
   }, [fetchDetails, fetchReviews]);
+
+  useEffect(() => {
+    setLecturerProfile(null);
+    if (!course?.lecturerId) return;
+    const controller = new AbortController();
+    void session.api
+      .request(`/api/v1/lecturers/${encodeURIComponent(course.lecturerId)}`, { signal: controller.signal })
+      .then((value) => {
+        if (!controller.signal.aborted) setLecturerProfile(publicLecturer(value));
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [course?.lecturerId, session]);
 
   useEffect(() => {
     if (review === "1") {
@@ -279,26 +296,40 @@ export default function CourseDetailScreen() {
             <View style={localStyles.ratingBadge}>
               <Icon name="star" size={13} color="#F59E0B" />
               <Text style={{ fontSize: 13, fontWeight: "800", color: "#FFF" }}>
-                {ratingInfo.average > 0 ? ratingInfo.average.toFixed(1) : "4.9"}
+                {ratingInfo.reviewCount > 0 ? ratingInfo.average.toFixed(1) : "—"}
               </Text>
             </View>
           </View>
 
           <Text style={localStyles.heroTitle}>{course.title}</Text>
 
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 }}>
-            <View style={localStyles.instructorAvatar}>
-              <Text style={{ color: "#FFF", fontWeight: "800", fontSize: 12 }}>
-                {course.lecturerName ? course.lecturerName.charAt(0).toUpperCase() : "G"}
-              </Text>
-            </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Xem hồ sơ giảng viên"
+            disabled={!course.lecturerId}
+            onPress={() => router.push(`/lecturers/${course.lecturerId}?courseId=${courseId}` as Href)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 }}
+          >
+            {lecturerProfile?.avatarRef ? (
+              <Image
+                source={{ uri: lecturerProfile.avatarRef }}
+                accessibilityLabel={`Ảnh giảng viên ${lecturerProfile.displayName}`}
+                style={localStyles.instructorAvatar}
+              />
+            ) : (
+              <View style={localStyles.instructorAvatar}>
+                <Text style={{ color: "#FFF", fontWeight: "800", fontSize: 12 }}>
+                  {(lecturerProfile?.displayName ?? course.lecturerName ?? "G").charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
             <View>
               <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>Giảng viên phụ trách</Text>
               <Text style={{ fontSize: 14, fontWeight: "700", color: "#FFF" }}>
-                {course.lecturerName ?? "Đội ngũ Giảng viên AILSS"}
+                {lecturerProfile?.displayName ?? course.lecturerName ?? "Hồ sơ giảng viên"}
               </Text>
             </View>
-          </View>
+          </Pressable>
 
           {offeringsList.length > 0 && (
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
@@ -315,7 +346,12 @@ export default function CourseDetailScreen() {
         </View>
 
         {/* Enrollment Card */}
-        <View style={[styles.card, { borderWidth: 1.5, borderColor: tokens.color.brandLight, ...tokens.shadow.card }]}>
+        <View
+          style={[
+            styles.card,
+            { borderWidth: 1.5, borderColor: tokens.color.brandLight, ...tokens.shadow.card },
+          ]}
+        >
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             <Text style={[styles.title, { fontSize: 18 }]}>Tham gia học tập</Text>
             <Text style={{ fontSize: 18, fontWeight: "800", color: tokens.color.brand }}>
@@ -376,7 +412,8 @@ export default function CourseDetailScreen() {
             </>
           ) : (
             <Text style={styles.small}>
-              Khóa học chuyên sâu có học phí. Vui lòng liên hệ trung tâm đào tạo hoặc hoàn tất thanh toán trên web.
+              Khóa học chuyên sâu có học phí. Vui lòng liên hệ trung tâm đào tạo hoặc hoàn tất thanh toán trên
+              web.
             </Text>
           )}
         </View>
@@ -434,7 +471,9 @@ export default function CourseDetailScreen() {
                     onPress={() => setFormRating(star)}
                     style={localStyles.starBtn}
                   >
-                    <Text style={[localStyles.starText, formRating >= star && localStyles.starActive]}>★</Text>
+                    <Text style={[localStyles.starText, formRating >= star && localStyles.starActive]}>
+                      ★
+                    </Text>
                   </Pressable>
                 ))}
                 <Text style={styles.small}>({formRating} / 5 sao)</Text>
@@ -469,13 +508,25 @@ export default function CourseDetailScreen() {
                     disabled={reviewSaving}
                   />
                 )}
-                <Button label="Đóng" variant="outline" onPress={() => setShowReviewForm(false)} disabled={reviewSaving} />
+                <Button
+                  label="Đóng"
+                  variant="outline"
+                  onPress={() => setShowReviewForm(false)}
+                  disabled={reviewSaving}
+                />
               </View>
             </View>
           )}
 
           {/* Reviews List */}
-          {reviewsLoading ? (
+          {reviewsError ? (
+            <View style={{ gap: 8 }}>
+              <Text accessibilityRole="alert" style={styles.error}>
+                Không tải được đánh giá khóa học.
+              </Text>
+              <Button label="Thử tải đánh giá" variant="outline" onPress={() => void fetchReviews()} />
+            </View>
+          ) : reviewsLoading ? (
             <ActivityIndicator size="small" color={tokens.color.brand} />
           ) : reviews.length === 0 ? (
             <Text style={styles.small}>
@@ -636,4 +687,3 @@ const localStyles = StyleSheet.create({
     color: "#F59E0B",
   },
 });
-

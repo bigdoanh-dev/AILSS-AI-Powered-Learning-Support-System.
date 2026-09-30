@@ -103,7 +103,6 @@ export default function AssessmentDetailScreen() {
 
       {!loading && quiz && (
         <>
-
           <View style={styles.card}>
             <View style={s.row}>
               <Text style={styles.small}>Trạng thái:</Text>

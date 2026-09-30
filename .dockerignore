@@ -12,6 +12,7 @@
 apps/mobile/android
 apps/mobile/ios
 credentials
+secrets
 evidence
 logs
 screenshots

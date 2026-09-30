@@ -1,10 +1,6 @@
 import { createHash } from "node:crypto";
 import { RESTRICTED_EXPERIMENT_DOMAINS } from "./model.js";
-import type {
-  ExperimentVariant,
-  LearningExperiment,
-  StudentExperimentAssignment,
-} from "./model.js";
+import type { ExperimentVariant, LearningExperiment, StudentExperimentAssignment } from "./model.js";
 
 export class LearningExperimentationService {
   private readonly experiments = new Map<string, LearningExperiment>();
@@ -24,7 +20,9 @@ export class LearningExperimentationService {
     const metricUpper = input.targetMetric.toUpperCase();
     const isRestricted = RESTRICTED_EXPERIMENT_DOMAINS.some((domain) => metricUpper.includes(domain));
     if (isRestricted) {
-      throw new Error(`Cannot experiment on restricted security, finance, or integrity domain: ${input.targetMetric}`);
+      throw new Error(
+        `Cannot experiment on restricted security, finance, or integrity domain: ${input.targetMetric}`,
+      );
     }
 
     const experiment: LearningExperiment = {

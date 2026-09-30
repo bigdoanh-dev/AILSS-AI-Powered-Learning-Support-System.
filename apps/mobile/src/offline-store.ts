@@ -4,12 +4,7 @@ import * as SQLite from "expo-sqlite";
 
 export type CacheKind = "COURSES" | "MASTERY" | "STUDY_PLAN";
 export type CompletionState =
-  | "PENDING"
-  | "SYNCING"
-  | "SYNCED"
-  | "FAILED_RETRYABLE"
-  | "FAILED_FINAL"
-  | "CONFLICT";
+  "PENDING" | "SYNCING" | "SYNCED" | "FAILED_RETRYABLE" | "FAILED_FINAL" | "CONFLICT";
 
 export interface CachedValue<T> {
   value: T;
@@ -63,7 +58,8 @@ export class OfflineStore {
       SQLite.openDatabaseAsync(name),
     private readonly secrets: Pick<SecretStore, "getItemAsync" | "setItemAsync"> = SecureStore,
     private readonly makeKey: () => string = () => hex(Crypto.getRandomBytes(32)),
-    private readonly deleteDatabase: (name: string) => Promise<void> = (name) => SQLite.deleteDatabaseAsync(name),
+    private readonly deleteDatabase: (name: string) => Promise<void> = (name) =>
+      SQLite.deleteDatabaseAsync(name),
   ) {}
 
   private async db(): Promise<Database> {
@@ -94,7 +90,9 @@ export class OfflineStore {
     const currentVersion = Number(version?.user_version ?? 0);
     if (currentVersion > schemaVersion) throw new Error("OFFLINE_DATABASE_NEWER_THAN_APP");
     if (currentVersion < 1) {
-      await database.execAsync(`
+      await database
+        .execAsync(
+          `
         BEGIN EXCLUSIVE;
         CREATE TABLE cache_records (
           user_id TEXT NOT NULL,
@@ -118,10 +116,12 @@ export class OfflineStore {
         CREATE INDEX lesson_completion_user_state_idx ON lesson_completion_queue(user_id, state, created_at);
         PRAGMA user_version = 1;
         COMMIT;
-      `).catch(async (error) => {
-        await database.execAsync("ROLLBACK;").catch(() => {});
-        throw error;
-      });
+      `,
+        )
+        .catch(async (error) => {
+          await database.execAsync("ROLLBACK;").catch(() => {});
+          throw error;
+        });
     }
     await database.execAsync(
       "CREATE INDEX IF NOT EXISTS cache_records_synced_at_idx ON cache_records(synced_at);",
@@ -177,7 +177,9 @@ export class OfflineStore {
     );
     if (!row) return null;
     if (!Number.isFinite(Date.parse(row.synced_at)) || Date.now() - Date.parse(row.synced_at) > cacheTtlMs) {
-      await (await this.db()).runAsync(
+      await (
+        await this.db()
+      ).runAsync(
         "DELETE FROM cache_records WHERE user_id=? AND kind=? AND course_id=?",
         userId,
         kind,
@@ -188,7 +190,9 @@ export class OfflineStore {
     try {
       return { value: JSON.parse(row.payload_json) as T, syncedAt: row.synced_at };
     } catch {
-      await (await this.db()).runAsync(
+      await (
+        await this.db()
+      ).runAsync(
         "DELETE FROM cache_records WHERE user_id=? AND kind=? AND course_id=?",
         userId,
         kind,
@@ -212,7 +216,9 @@ export class OfflineStore {
   async deleteCache(userId: string, kind: CacheKind, courseId: string): Promise<void> {
     assertIdentity(userId);
     assertIdentity(courseId);
-    await (await this.db()).runAsync(
+    await (
+      await this.db()
+    ).runAsync(
       "DELETE FROM cache_records WHERE user_id=? AND kind=? AND course_id=?",
       userId,
       kind,
@@ -298,7 +304,9 @@ export class OfflineStore {
     options: { incrementAttempt?: boolean; errorCode?: string } = {},
   ): Promise<void> {
     assertIdentity(userId);
-    await (await this.db()).runAsync(
+    await (
+      await this.db()
+    ).runAsync(
       `UPDATE lesson_completion_queue SET state=?,attempt_count=attempt_count+?,last_error_code=?
        WHERE user_id=? AND operation_id=?`,
       state,

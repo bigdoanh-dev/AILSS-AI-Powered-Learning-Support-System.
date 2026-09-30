@@ -34,7 +34,11 @@ describe("native media authorization contract", () => {
     vi.stubEnv("EXPO_PUBLIC_AILSS_ENV", "production");
     const id = "2e3a35e4-8798-4b3f-beca-94a686f64f9d";
     const caption = {
-      captionTrackId: id, language: "vi", label: "Tiếng Việt", kind: "SUBTITLES", format: "WEBVTT",
+      captionTrackId: id,
+      language: "vi",
+      label: "Tiếng Việt",
+      kind: "SUBTITLES",
+      format: "WEBVTT",
       url: `${origin}/playback/${assetId}/caption-${id}.vtt?token=short-lived`,
     };
     expect(mediaSession({ ...valid, captionTracks: [caption] }, origin).captionTracks).toEqual([caption]);
@@ -43,7 +47,8 @@ describe("native media authorization contract", () => {
       caption.url.replace("?token=short-lived", ""),
       caption.url.replace(id, "2e3a35e4-8798-4b3f-beca-94a686f64f9e"),
       caption.url.replace(assetId, "72d31aae-a982-4d2d-b117-ffb46647bff1"),
-    ]) expect(() => mediaSession({ ...valid, captionTracks: [{ ...caption, url }] }, origin)).toThrow();
+    ])
+      expect(() => mediaSession({ ...valid, captionTracks: [{ ...caption, url }] }, origin)).toThrow();
   });
   it("rewrites local loopback delivery to simulator-reachable gateway host", () => {
     vi.stubEnv("EXPO_PUBLIC_AILSS_ENV", "development");

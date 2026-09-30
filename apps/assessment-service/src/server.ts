@@ -27,7 +27,11 @@ await startService(manifest, {
   configure: async (app, config, context) => {
     if (!context.cassandra) throw new Error("Assessment requires Cassandra");
     if (!config.PASSWORD_IDEMPOTENCY_HMAC_KEY) throw new Error("Assessment requires an idempotency HMAC key");
-    if (!config.ACTOR_CONTEXT_PUBLIC_KEY_PATH || !config.AI_SERVICE_TOKEN_PUBLIC_KEY_PATH || !config.LEARNING_SERVICE_TOKEN_PUBLIC_KEY_PATH)
+    if (
+      !config.ACTOR_CONTEXT_PUBLIC_KEY_PATH ||
+      !config.AI_SERVICE_TOKEN_PUBLIC_KEY_PATH ||
+      !config.LEARNING_SERVICE_TOKEN_PUBLIC_KEY_PATH
+    )
       throw new Error("Assessment requires Gateway actor-context public key");
     const [actorKey, aiServiceKey, learningServiceKey] = await Promise.all([
         loadPublicKey(config.ACTOR_CONTEXT_PUBLIC_KEY_PATH),
@@ -88,14 +92,16 @@ await startService(manifest, {
           : undefined,
       ),
     );
-    app.use(assessmentScheduleInternalRouter(repository, (token) =>
-      verifyServiceToken(token, learningServiceKey, {
-        issuer: config.SERVICE_TOKEN_ISSUER,
-        audience: "assessment-service",
-        purpose: "assessment.schedule.read",
-        kid: config.LEARNING_SERVICE_TOKEN_KID,
-      }),
-    ));
+    app.use(
+      assessmentScheduleInternalRouter(repository, (token) =>
+        verifyServiceToken(token, learningServiceKey, {
+          issuer: config.SERVICE_TOKEN_ISSUER,
+          audience: "assessment-service",
+          purpose: "assessment.schedule.read",
+          kid: config.LEARNING_SERVICE_TOKEN_KID,
+        }),
+      ),
+    );
     const relay = config.ENABLE_RABBITMQ
       ? new AssessmentOutboxRelay(repository, authenticatedRabbitUrl(config), context.logger)
       : undefined;

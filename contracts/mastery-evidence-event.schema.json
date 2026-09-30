@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ailss.local/contracts/mastery-evidence-event.schema.json",
+  "title": "AILSS Authoritative Mastery Evidence Event Data v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "tenantId",
+    "studentId",
+    "courseId",
+    "learningOutcomeId",
+    "conceptId",
+    "sourceType",
+    "sourceId",
+    "rawScorePercent",
+    "schemaVersion"
+  ],
+  "properties": {
+    "tenantId": { "type": "string", "format": "uuid" },
+    "studentId": { "type": "string", "format": "uuid" },
+    "courseId": { "type": "string", "format": "uuid" },
+    "learningOutcomeId": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "conceptId": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "sourceType": {
+      "enum": [
+        "QUIZ",
+        "MANUAL_ASSESSMENT",
+        "LESSON_COMPLETION",
+        "PROCTORED_EXAM",
+        "FINAL_PROJECT",
+        "LAB",
+        "ASSIGNMENT",
+        "DIAGNOSTIC"
+      ]
+    },
+    "sourceId": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "rawScorePercent": { "type": "number", "minimum": 0, "maximum": 100 },
+    "schemaVersion": { "const": "1.0" }
+  },
+  "x-ailss-deferredEvidenceSources": [
+    "PRACTICE",
+    "PRACTICE_ATTEMPT",
+    "TEACHER_OBSERVATION",
+    "AI_CONVERSATION"
+  ]
+}

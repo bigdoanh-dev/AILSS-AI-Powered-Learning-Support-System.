@@ -45,7 +45,8 @@ function Shell() {
     };
   }, [session]);
   useEffect(() => {
-    if (snapshot.state !== "AUTHENTICATED" || snapshot.user?.role !== "STUDENT" || !snapshot.user.userId) return;
+    if (snapshot.state !== "AUTHENTICATED" || snapshot.user?.role !== "STUDENT" || !snapshot.user.userId)
+      return;
     const userId = snapshot.user.userId;
     const syncIfOnline = async () => {
       const network = await Network.getNetworkStateAsync();
@@ -70,26 +71,28 @@ function Shell() {
   if (!phase41RouteAvailable(pathname, snapshot.user?.role))
     return (
       <Page>
-        <Text style={styles.title}>Tính năng chưa khả dụng trên Mobile</Text>
+        <Text style={styles.title}>Không có quyền truy cập</Text>
         <Text accessibilityRole="alert" style={styles.text}>
-          Phase 41 hiện chỉ hỗ trợ trải nghiệm Học viên. Các màn hình Giảng viên và Quản trị được giữ ngoài phạm vi phát hành này.
+          Trang này yêu cầu tài khoản có đúng vai trò. Hãy đăng nhập bằng tài khoản Giảng viên hoặc Quản trị
+          viên phù hợp.
         </Text>
         <Button
-          label={snapshot.state === "AUTHENTICATED" ? "Đăng xuất" : "Đến đăng nhập"}
+          label={snapshot.state === "AUTHENTICATED" ? "Về trang của bạn" : "Đến đăng nhập"}
           onPress={() =>
             snapshot.state === "AUTHENTICATED"
-              ? void session.logout().catch(() => {})
+              ? router.replace(
+                  snapshot.user?.role === "ADMIN"
+                    ? "/admin"
+                    : snapshot.user?.role === "LECTURER"
+                      ? "/teaching"
+                      : "/",
+                )
               : router.replace("/login")
           }
         />
       </Page>
     );
-  return (
-    <Stack
-      initialRouteName="index"
-      screenOptions={{ headerShown: false, animation: "none" }}
-    />
-  );
+  return <Stack initialRouteName="index" screenOptions={{ headerShown: false, animation: "none" }} />;
 }
 export default function Layout() {
   const pathname = usePathname();

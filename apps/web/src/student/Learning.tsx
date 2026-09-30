@@ -100,7 +100,11 @@ const MARKETPLACE_COURSES: MarketplaceCourse[] = [
     durationHours: "12.5h",
     lessonsCount: 15,
     level: "Nhập môn",
-    highlights: ["Few-Shot & Chain-of-Thought", "Đánh giá RAG và LLM Testing", "Thực hành tương tác AI Tutor"],
+    highlights: [
+      "Few-Shot & Chain-of-Thought",
+      "Đánh giá RAG và LLM Testing",
+      "Thực hành tương tác AI Tutor",
+    ],
   },
   {
     courseId: "10000000-0000-4000-8000-000000000005",
@@ -139,19 +143,26 @@ function MarketplaceCourseCard({ course: c, owned }: { course: MarketplaceCourse
     <article className="marketplace-course-card learning-card">
       <div className="learning-card-media">
         <CourseArtwork title={c.title} categoryId={c.categoryId} />
-        <span className="learning-card-type"><Icon name="sparkles" size={14} /> AI hỗ trợ</span>
+        <span className="learning-card-type">
+          <Icon name="sparkles" size={14} /> AI hỗ trợ
+        </span>
       </div>
       <div className="learning-card-content">
         <div className="learning-card-heading-row">
           <span className="course-category-chip">{c.categoryName}</span>
-          <span className="learning-card-rating"><Icon name="starFilled" size={14} /> <strong>{c.rating}</strong> ({c.reviewCount})</span>
+          <span className="learning-card-rating">
+            <Icon name="starFilled" size={14} /> <strong>{c.rating}</strong> ({c.reviewCount})
+          </span>
         </div>
         <h3>{c.title}</h3>
         <p className="learning-card-meta">
-          <Icon name="user" size={14} /> {c.lecturerName} <span>•</span> {c.durationHours} <span>•</span> {c.lessonsCount} bài
+          <Icon name="user" size={14} /> {c.lecturerName} <span>•</span> {c.durationHours} <span>•</span>{" "}
+          {c.lessonsCount} bài
         </p>
         <ul className="course-benefits" aria-label="Nội dung nổi bật">
-          {c.highlights.map((highlight) => <li key={highlight}>✓ {highlight}</li>)}
+          {c.highlights.map((highlight) => (
+            <li key={highlight}>✓ {highlight}</li>
+          ))}
         </ul>
         <div className="course-card-divider" />
         <div className="course-price-row">
@@ -166,7 +177,13 @@ function MarketplaceCourseCard({ course: c, owned }: { course: MarketplaceCourse
           </Link>
           <Link
             className="learning-card-button primary"
-            to={owned ? "/app/learn/" + c.courseId : c.priceType === "PAID" ? "/app/purchase/" + c.courseId : "/app/learn/" + c.courseId}
+            to={
+              owned
+                ? "/app/learn/" + c.courseId
+                : c.priceType === "PAID"
+                  ? "/app/purchase/" + c.courseId
+                  : "/app/learn/" + c.courseId
+            }
           >
             <Icon name={owned || c.priceType === "FREE" ? "book" : "card"} size={15} />
             {owned ? "Tiếp tục học" : c.priceType === "PAID" ? "Mua ngay" : "Bắt đầu học"}
@@ -356,7 +373,8 @@ function CourseMarketplaceSearch({
           className={`filter-pill-button ${hideOwned ? "active" : ""}`}
           onClick={() => setHideOwned(!hideOwned)}
         >
-          🛒 Khóa chưa đăng ký ({MARKETPLACE_COURSES.filter((c) => !ownedCourseIds.includes(c.courseId)).length})
+          🛒 Khóa chưa đăng ký (
+          {MARKETPLACE_COURSES.filter((c) => !ownedCourseIds.includes(c.courseId)).length})
         </button>
         <span style={{ color: "var(--line)" }}>|</span>
         <button
@@ -389,7 +407,9 @@ function CourseMarketplaceSearch({
         </button>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+      <div
+        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}
+      >
         <span style={{ fontSize: 13, color: "var(--muted)" }}>
           Tìm thấy <strong>{filteredCourses.length}</strong> khóa học
           {searchTerm ? ` cho từ khóa "${searchTerm}"` : ""}
@@ -498,7 +518,9 @@ export function StudentHome() {
             <span className="kpi-icon" aria-hidden="true">
               <Icon name="quiz" size={20} />
             </span>
-            <span className="kpi-tag" style={{ color: "var(--danger, #DC2626)", fontWeight: 700 }}>Hạn 23:59 hôm nay</span>
+            <span className="kpi-tag" style={{ color: "var(--danger, #DC2626)", fontWeight: 700 }}>
+              Hạn 23:59 hôm nay
+            </span>
           </div>
           <div className="kpi-value">2 bài tập</div>
           <div className="kpi-label">Bài tập & Đánh giá chờ nộp</div>
@@ -587,11 +609,17 @@ export function StudentHome() {
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                   <span className="kpi-tag accent">✦ Trợ lý AI Phân Tích Thích Ứng</span>
-                  <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>Cá nhân hóa theo năng lực Bloom</span>
+                  <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>
+                    Cá nhân hóa theo năng lực Bloom
+                  </span>
                 </div>
-                <h3 style={{ margin: 0, fontSize: "1.1rem" }}>Đề xuất củng cố: Tối ưu hóa truy vấn SQL & Đánh chỉ mục Index</h3>
+                <h3 style={{ margin: 0, fontSize: "1.1rem" }}>
+                  Đề xuất củng cố: Tối ưu hóa truy vấn SQL & Đánh chỉ mục Index
+                </h3>
                 <p className="subtext" style={{ marginTop: 6, lineHeight: 1.5 }}>
-                  Dựa trên kết quả bài trắc nghiệm gần nhất, bạn đạt <strong>88% phần Nhận biết</strong> nhưng cần củng cố mức độ <strong>Vận dụng (Bloom Level 3)</strong>. Trợ lý AI đã soạn sẵn 10 câu hỏi trắc nghiệm tương tác giúp bạn tự tin đạt điểm 9+.
+                  Dựa trên kết quả bài trắc nghiệm gần nhất, bạn đạt <strong>88% phần Nhận biết</strong> nhưng
+                  cần củng cố mức độ <strong>Vận dụng (Bloom Level 3)</strong>. Trợ lý AI đã soạn sẵn 10 câu
+                  hỏi trắc nghiệm tương tác giúp bạn tự tin đạt điểm 9+.
                 </p>
               </div>
             </div>
@@ -618,32 +646,77 @@ export function StudentHome() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 12 }}>
               <div className="student-progress-overview-item">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 8,
+                  }}
+                >
                   <div>
                     <strong style={{ fontSize: 14.5 }}>Cơ sở dữ liệu Nâng cao & Tối ưu hóa</strong>
                     <div style={{ fontSize: 12.5, color: "var(--muted, #64748b)", marginTop: 3 }}>
                       Bài tiếp theo: Bài 5 - Kỹ thuật Sharding &amp; Replication
                     </div>
                   </div>
-                  <span className="kpi-tag accent" style={{ fontWeight: 700, fontSize: 13 }}>72%</span>
+                  <span className="kpi-tag accent" style={{ fontWeight: 700, fontSize: 13 }}>
+                    72%
+                  </span>
                 </div>
-                <div style={{ width: "100%", height: 7, backgroundColor: "var(--line, #e2e8f0)", borderRadius: 4, overflow: "hidden" }}>
-                  <div className="progress-bar-fill" style={{ width: "72%", height: "100%", backgroundColor: "var(--blue, #0284c7)", borderRadius: 4 }} />
+                <div
+                  style={{
+                    width: "100%",
+                    height: 7,
+                    backgroundColor: "var(--line, #e2e8f0)",
+                    borderRadius: 4,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    className="progress-bar-fill"
+                    style={{
+                      width: "72%",
+                      height: "100%",
+                      backgroundColor: "var(--blue, #0284c7)",
+                      borderRadius: 4,
+                    }}
+                  />
                 </div>
               </div>
 
               <div className="student-progress-overview-item">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 8,
+                  }}
+                >
                   <div>
                     <strong style={{ fontSize: 14.5 }}>Lập trình Web & Trợ lý AI Fullstack</strong>
                     <div style={{ fontSize: 12.5, color: "var(--muted, #64748b)", marginTop: 3 }}>
                       Bài tiếp theo: Bài 4 - Tích hợp Vector Database với LangChain
                     </div>
                   </div>
-                  <span className="kpi-tag accent" style={{ fontWeight: 700, fontSize: 13 }}>54%</span>
+                  <span className="kpi-tag accent" style={{ fontWeight: 700, fontSize: 13 }}>
+                    54%
+                  </span>
                 </div>
-                <div style={{ width: "100%", height: 7, backgroundColor: "var(--line, #e2e8f0)", borderRadius: 4, overflow: "hidden" }}>
-                  <div className="progress-bar-fill" style={{ width: "54%", height: "100%", backgroundColor: "#7c3aed", borderRadius: 4 }} />
+                <div
+                  style={{
+                    width: "100%",
+                    height: 7,
+                    backgroundColor: "var(--line, #e2e8f0)",
+                    borderRadius: 4,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    className="progress-bar-fill"
+                    style={{ width: "54%", height: "100%", backgroundColor: "#7c3aed", borderRadius: 4 }}
+                  />
                 </div>
               </div>
             </div>
@@ -717,7 +790,9 @@ export function StudentHome() {
               <h2>📝 Bài tập cần hoàn thành</h2>
               <span className="red-badge-pill">● 2 bài chưa nộp</span>
             </div>
-            <Link className="button button-subtle button-small" to="/app/classes">Xem tất cả →</Link>
+            <Link className="button button-subtle button-small" to="/app/classes">
+              Xem tất cả →
+            </Link>
           </div>
           <div className="home-card-list">
             <Link className="home-activity-card" to="/app/classes">
@@ -763,7 +838,9 @@ export function StudentHome() {
               <h2>✨ Bài kiểm tra &amp; Đề thi AI</h2>
               <span className="amber-badge-pill">● 2 đề chờ thi</span>
             </div>
-            <Link className="button button-subtle button-small" to="/app/assessments">Tất cả đề thi →</Link>
+            <Link className="button button-subtle button-small" to="/app/assessments">
+              Tất cả đề thi →
+            </Link>
           </div>
           <div className="home-card-list">
             <Link className="home-activity-card" to="/app/assessments">
@@ -771,7 +848,9 @@ export function StudentHome() {
                 <span className="badge">AI ADAPTIVE</span>
                 <span className="red-badge-pill">● Chưa làm</span>
               </div>
-              <h3 className="home-activity-card-title">Kiểm tra trắc nghiệm AI: Chuẩn hóa dữ liệu &amp; SQL Nâng cao</h3>
+              <h3 className="home-activity-card-title">
+                Kiểm tra trắc nghiệm AI: Chuẩn hóa dữ liệu &amp; SQL Nâng cao
+              </h3>
               <div className="home-activity-card-meta">
                 <span>⏱️ 45 phút • 30 câu hỏi thích ứng</span>
                 <span style={{ color: "#d97706", fontWeight: 700 }}>Vào thi ngay →</span>
@@ -793,7 +872,9 @@ export function StudentHome() {
                 <span className="badge">ĐÃ HOÀN THÀNH</span>
                 <span className="green-badge-pill">✓ Điểm: 9.5 / 10</span>
               </div>
-              <h3 className="home-activity-card-title">Kiểm tra 15 phút: Mô hình hóa ERD &amp; Ràng buộc toàn vẹn</h3>
+              <h3 className="home-activity-card-title">
+                Kiểm tra 15 phút: Mô hình hóa ERD &amp; Ràng buộc toàn vẹn
+              </h3>
               <div className="home-activity-card-meta">
                 <span>⏱️ 15 phút • 10 câu</span>
                 <span style={{ color: "#16a34a", fontWeight: 600 }}>Xem phân tích AI</span>
@@ -814,7 +895,8 @@ export function Learn() {
   return (
     <>
       <Heading title="Khóa học AILSS">
-        Quản lý các khóa học đã đăng ký và khám phá danh mục khóa học để đăng ký mua trực tuyến tiện lợi, an toàn.
+        Quản lý các khóa học đã đăng ký và khám phá danh mục khóa học để đăng ký mua trực tuyến tiện lợi, an
+        toàn.
       </Heading>
 
       <div
@@ -867,17 +949,16 @@ export function Learn() {
             {own.data?.length ? (
               <CourseCards items={own.data} />
             ) : (
-              <Empty>Bạn chưa đăng ký khóa học nào. Hãy khám phá và mua khóa học bên dưới để bắt đầu học ngay.</Empty>
+              <Empty>
+                Bạn chưa đăng ký khóa học nào. Hãy khám phá và mua khóa học bên dưới để bắt đầu học ngay.
+              </Empty>
             )}
           </State>
         </section>
       )}
 
       {(activeTab === "ALL" || activeTab === "UNENROLLED") && (
-        <CourseMarketplaceSearch
-          ownedCourseIds={ownedIds}
-          onlyUnenrolled={activeTab === "UNENROLLED"}
-        />
+        <CourseMarketplaceSearch ownedCourseIds={ownedIds} onlyUnenrolled={activeTab === "UNENROLLED"} />
       )}
 
       {activeTab === "ALL" && (
@@ -907,10 +988,7 @@ function CourseCards({ items }: { items: LearningCourse[] }) {
           <div className="study-course-body">
             <h3>{c.title}</h3>
             <div className="card-action-row">
-              <Link
-                className="card-action-btn primary"
-                to={`/app/learn/${c.courseId}`}
-              >
+              <Link className="card-action-btn primary" to={`/app/learn/${c.courseId}`}>
                 Tiếp tục học →
               </Link>
             </div>
@@ -925,7 +1003,7 @@ export function CourseLearning() {
   const { courseId = "", lessonId } = useParams();
   const [lessonSearch, setLessonSearch] = useState("");
   const [courseTab, setCourseTab] = useState<"lessons" | "exercises">("lessons");
-  const course = useStudent<LearningCourse>("/courses/" + courseId),
+  const course = useStudent<LearningCourse>("/me/courses/" + courseId),
     lessons = useStudent<Lesson[]>("/courses/" + courseId + "/lessons"),
     progress = useStudent<Progress>("/courses/" + courseId + "/progress");
   const command = useCommand();
@@ -934,7 +1012,12 @@ export function CourseLearning() {
       <Link to="/app/learn">← Học tập</Link>
       <Heading title={course.data?.title || "Khóa học của bạn"} />
 
-      <div className="module-segmented-bar" role="tablist" aria-label="Phân hệ khóa học" style={{ marginBottom: "20px" }}>
+      <div
+        className="module-segmented-bar"
+        role="tablist"
+        aria-label="Phân hệ khóa học"
+        style={{ marginBottom: "20px" }}
+      >
         <button
           type="button"
           className={`segmented-tab ${courseTab === "lessons" ? "active" : ""}`}
@@ -957,139 +1040,141 @@ export function CourseLearning() {
           <>
             {courseTab === "lessons" ? (
               <>
-            <div className="study-grid">
-              <section className="study-card">
-                <h2>Tiến độ học tập</h2>
-                <State query={progress}>{progress.data && <ProgressView value={progress.data} />}</State>
-                {!progress.data && course.data.priceType === "FREE" && (
-                  <>
-                    <button
-                      className="button"
-                      disabled={command.busy}
-                      onClick={async () => {
-                        if (await command.run("/courses/" + courseId + "/enrollments", "POST")) {
-                          navigate("/app/result", {
-                            state: {
-                              success: true,
-                              title: "Đăng ký khóa học thành công",
-                              message: "Khóa học miễn phí đã được thêm vào tài khoản của bạn.",
-                              to: "/app/learn/" + courseId,
-                              label: "Bắt đầu học",
-                            },
-                          });
-                        }
-                      }}
-                    >
-                      Đăng ký học miễn phí
-                    </button>
-                    <Status command={command} />
-                  </>
-                )}
-                {!progress.data && course.data.priceType === "PAID" && (
-                  <Link className="button" to={"/app/purchase/" + courseId}>
-                    Đăng ký khóa học có phí →
-                  </Link>
-                )}
-                <Link to="/app/progress">Xem tiến độ</Link>
-              </section>
-              <section className="study-card">
-                <h2>Kiểm tra kiến thức</h2>
-                <p>Chọn bài kiểm tra của khóa học khi bạn đã sẵn sàng.</p>
-                <Link to={"/app/assessments?course=" + courseId}>Xem bài kiểm tra →</Link>
-              </section>
-            </div>
-            <div className="study-layout">
-              <aside className="study-card">
-                <details open>
-                  <summary>Nội dung khóa học</summary>
-                  <State query={lessons}>
-                    {lessons.data?.length ? (
-                      <div className="lesson-chapters">
-                        <label>
-                          Tìm bài trong khóa học
-                          <input
-                            type="search"
-                            value={lessonSearch}
-                            onChange={(e) => setLessonSearch(e.target.value)}
-                            placeholder="Tên bài hoặc chương"
-                          />
-                        </label>
-                        <small>{lessons.data.length} bài giảng</small>
-                        {[...new Set(lessons.data.map((l) => l.sectionTitle || "Bài giảng"))].map(
-                          (section, index) => {
-                            const group = lessons.data!.filter(
-                              (l) =>
-                                (l.sectionTitle || "Bài giảng") === section &&
-                                (!lessonSearch ||
-                                  (l.title + " " + section)
-                                    .toLocaleLowerCase("vi")
-                                    .includes(lessonSearch.toLocaleLowerCase("vi"))),
-                            );
-                            if (!group.length) return null;
-                            return (
-                              <details
-                                key={section}
-                                open={
-                                  !!lessonSearch || index === 0 || group.some((l) => l.lessonId === lessonId)
-                                }
-                              >
-                                <summary>
-                                  {section} <small>({group.length})</small>
-                                </summary>
-                                <ol className="lesson-nav">
-                                  {group.map((l) => (
-                                    <li key={l.lessonId}>
-                                      <Link
-                                        aria-current={l.lessonId === lessonId ? "page" : undefined}
-                                        to={`/app/learn/${courseId}/lessons/${l.lessonId}`}
-                                      >
-                                        {l.title}
-                                      </Link>
-                                      {l.preview && <small>Học thử</small>}
-                                    </li>
-                                  ))}
-                                </ol>
-                              </details>
-                            );
-                          },
-                        )}
-                      </div>
-                    ) : (
-                      <Empty>Khóa học chưa có bài học.</Empty>
+                <div className="study-grid">
+                  <section className="study-card">
+                    <h2>Tiến độ học tập</h2>
+                    <State query={progress}>{progress.data && <ProgressView value={progress.data} />}</State>
+                    {!progress.data && course.data.priceType === "FREE" && (
+                      <>
+                        <button
+                          className="button"
+                          disabled={command.busy}
+                          onClick={async () => {
+                            if (await command.run("/courses/" + courseId + "/enrollments", "POST")) {
+                              navigate("/app/result", {
+                                state: {
+                                  success: true,
+                                  title: "Đăng ký khóa học thành công",
+                                  message: "Khóa học miễn phí đã được thêm vào tài khoản của bạn.",
+                                  to: "/app/learn/" + courseId,
+                                  label: "Bắt đầu học",
+                                },
+                              });
+                            }
+                          }}
+                        >
+                          Đăng ký học miễn phí
+                        </button>
+                        <Status command={command} />
+                      </>
                     )}
-                  </State>
-                </details>
-              </aside>
-              <section className="study-card">
-                {lessonId ? (
-                  <LessonView
-                    key={lessonId}
-                    lessonId={lessonId}
-                    courseId={courseId}
-                    refresh={progress.retry}
-                  />
-                ) : (
-                  <>
-                    <h2>Chọn bài học để bắt đầu</h2>
-                    <p>Mỗi bài học gồm nội dung giảng dạy hoặc tài liệu để bạn thực hành.</p>
-                    {lessons.data?.[0] && (
-                      <Link
-                        className="button"
-                        to={`/app/learn/${courseId}/lessons/${lessons.data[0].lessonId}`}
-                      >
-                        Mở bài đầu tiên →
+                    {!progress.data && course.data.priceType === "PAID" && (
+                      <Link className="button" to={"/app/purchase/" + courseId}>
+                        Đăng ký khóa học có phí →
                       </Link>
                     )}
-                  </>
-                )}
-              </section>
-            </div>
-            <Discussion
-              type="COURSE"
-              id={courseId}
-              canWrite={!!progress.data}
-              canReview={!!progress.data && progress.data.percent >= 20}
-            />
+                    <Link to="/app/progress">Xem tiến độ</Link>
+                  </section>
+                  <section className="study-card">
+                    <h2>Kiểm tra kiến thức</h2>
+                    <p>Chọn bài kiểm tra của khóa học khi bạn đã sẵn sàng.</p>
+                    <Link to={"/app/assessments?course=" + courseId}>Xem bài kiểm tra →</Link>
+                  </section>
+                </div>
+                <div className="study-layout">
+                  <aside className="study-card">
+                    <details open>
+                      <summary>Nội dung khóa học</summary>
+                      <State query={lessons}>
+                        {lessons.data?.length ? (
+                          <div className="lesson-chapters">
+                            <label>
+                              Tìm bài trong khóa học
+                              <input
+                                type="search"
+                                value={lessonSearch}
+                                onChange={(e) => setLessonSearch(e.target.value)}
+                                placeholder="Tên bài hoặc chương"
+                              />
+                            </label>
+                            <small>{lessons.data.length} bài giảng</small>
+                            {[...new Set(lessons.data.map((l) => l.sectionTitle || "Bài giảng"))].map(
+                              (section, index) => {
+                                const group = lessons.data!.filter(
+                                  (l) =>
+                                    (l.sectionTitle || "Bài giảng") === section &&
+                                    (!lessonSearch ||
+                                      (l.title + " " + section)
+                                        .toLocaleLowerCase("vi")
+                                        .includes(lessonSearch.toLocaleLowerCase("vi"))),
+                                );
+                                if (!group.length) return null;
+                                return (
+                                  <details
+                                    key={section}
+                                    open={
+                                      !!lessonSearch ||
+                                      index === 0 ||
+                                      group.some((l) => l.lessonId === lessonId)
+                                    }
+                                  >
+                                    <summary>
+                                      {section} <small>({group.length})</small>
+                                    </summary>
+                                    <ol className="lesson-nav">
+                                      {group.map((l) => (
+                                        <li key={l.lessonId}>
+                                          <Link
+                                            aria-current={l.lessonId === lessonId ? "page" : undefined}
+                                            to={`/app/learn/${courseId}/lessons/${l.lessonId}`}
+                                          >
+                                            {l.title}
+                                          </Link>
+                                          {l.preview && <small>Học thử</small>}
+                                        </li>
+                                      ))}
+                                    </ol>
+                                  </details>
+                                );
+                              },
+                            )}
+                          </div>
+                        ) : (
+                          <Empty>Khóa học chưa có bài học.</Empty>
+                        )}
+                      </State>
+                    </details>
+                  </aside>
+                  <section className="study-card">
+                    {lessonId ? (
+                      <LessonView
+                        key={lessonId}
+                        lessonId={lessonId}
+                        courseId={courseId}
+                        refresh={progress.retry}
+                      />
+                    ) : (
+                      <>
+                        <h2>Chọn bài học để bắt đầu</h2>
+                        <p>Mỗi bài học gồm nội dung giảng dạy hoặc tài liệu để bạn thực hành.</p>
+                        {lessons.data?.[0] && (
+                          <Link
+                            className="button"
+                            to={`/app/learn/${courseId}/lessons/${lessons.data[0].lessonId}`}
+                          >
+                            Mở bài đầu tiên →
+                          </Link>
+                        )}
+                      </>
+                    )}
+                  </section>
+                </div>
+                <Discussion
+                  type="COURSE"
+                  id={courseId}
+                  canWrite={!!progress.data}
+                  canReview={!!progress.data && progress.data.percent >= 20}
+                />
               </>
             ) : (
               <section className="dashboard-section-card" style={{ marginTop: "16px" }}>
@@ -1109,10 +1194,14 @@ export function CourseLearning() {
                       <span className="badge">ÔN TẬP CHUYÊN ĐỀ</span>
                       <span className="red-badge-pill">● Chưa làm</span>
                     </div>
-                    <h3 className="home-activity-card-title">Trắc nghiệm ôn tập Chương 1: Kiến trúc & Mô hình quan hệ</h3>
+                    <h3 className="home-activity-card-title">
+                      Trắc nghiệm ôn tập Chương 1: Kiến trúc & Mô hình quan hệ
+                    </h3>
                     <div className="home-activity-card-meta">
                       <span>⏱️ 15 phút • 10 câu hỏi trắc nghiệm</span>
-                      <Link to={"/app/assessments?course=" + courseId} className="button small">Vào thi →</Link>
+                      <Link to={"/app/assessments?course=" + courseId} className="button small">
+                        Vào thi →
+                      </Link>
                     </div>
                   </div>
 
@@ -1121,10 +1210,14 @@ export function CourseLearning() {
                       <span className="badge">BÀI THỰC HÀNH</span>
                       <span className="red-badge-pill">● Chưa nộp</span>
                     </div>
-                    <h3 className="home-activity-card-title">Bài tập thực hành: Thiết kế lược đồ CSDL chuẩn hóa 3NF</h3>
+                    <h3 className="home-activity-card-title">
+                      Bài tập thực hành: Thiết kế lược đồ CSDL chuẩn hóa 3NF
+                    </h3>
                     <div className="home-activity-card-meta">
                       <span style={{ color: "#dc2626", fontWeight: 600 }}>⏰ Hạn nộp: 23:59 Chủ Nhật</span>
-                      <Link to={"/app/assessments?course=" + courseId} className="button small">Nộp bài tập →</Link>
+                      <Link to={"/app/assessments?course=" + courseId} className="button small">
+                        Nộp bài tập →
+                      </Link>
                     </div>
                   </div>
 
@@ -1174,10 +1267,12 @@ function LessonView({
           <>
             <p className="eyebrow">BÀI HỌC</p>
             <h2>{lesson.data.title}</h2>
-            {lesson.data.mediaAssetId ? <MediaPlayer key={lessonId} lessonId={lessonId} title={lesson.data.title} /> : lesson.data.externalVideo &&
-            /^https:\/\/(drive\.google\.com\/file\/d\/[A-Za-z0-9_-]+\/preview|www\.youtube-nocookie\.com\/embed\/[A-Za-z0-9_-]+)$/.test(
-              lesson.data.externalVideo,
-            ) ? (
+            {lesson.data.mediaAssetId ? (
+              <MediaPlayer key={lessonId} lessonId={lessonId} title={lesson.data.title} />
+            ) : lesson.data.externalVideo &&
+              /^https:\/\/(drive\.google\.com\/file\/d\/[A-Za-z0-9_-]+\/preview|www\.youtube-nocookie\.com\/embed\/[A-Za-z0-9_-]+)$/.test(
+                lesson.data.externalVideo,
+              ) ? (
               <div className="lesson-media">
                 <iframe
                   className="lesson-document"

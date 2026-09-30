@@ -1,11 +1,18 @@
 import { safeReturnTo, sessionRequest, useSession } from "../auth/session";
 import { useNavigate } from "react-router-dom";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { PageHero, Section, TextLink, Dialog, Picture } from "../components/ui";
 import { Faq } from "../components/Faq";
 import { VideoStory } from "../components/VideoStory";
 import { errorMessage } from "../lib/api";
+import {
+  mountGoogleSignInButton,
+  prepareAppleSignIn,
+  requestAppleIdToken,
+  type SocialWebConfig,
+} from "../auth/social";
+import { Icon } from "../components/Icon";
 export function FaqPage() {
   return (
     <>
@@ -90,7 +97,7 @@ export function Contact() {
     const data = new FormData(e.currentTarget);
     const blob = new Blob(
       [
-        `AILSS — bản nháp liên hệ\nTên: ${data.get("name")}\nEmail: ${data.get("email")}\nChủ đề: ${data.get("topic")}\n\n${data.get("message")}\n`,
+        `\uFEFFAILSS — bản nháp liên hệ\nTên: ${data.get("name")}\nEmail: ${data.get("email")}\nChủ đề: ${data.get("topic")}\n\n${data.get("message")}\n`,
       ],
       { type: "text/plain;charset=utf-8" },
     );
@@ -260,6 +267,14 @@ export function Auth() {
   const [show, setShow] = useState(false);
   const [emailVal, setEmailVal] = useState("");
   const [passwordVal, setPasswordVal] = useState("");
+  const busyRef = useRef(false);
+  const [socialConfig, setSocialConfig] = useState<SocialWebConfig | null>(null);
+  const [googleButtonReady, setGoogleButtonReady] = useState(false);
+  const [googleSdkFailed, setGoogleSdkFailed] = useState(false);
+  const [appleSdkReady, setAppleSdkReady] = useState(false);
+  const [appleSdkFailed, setAppleSdkFailed] = useState(false);
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const completeSsoRef = useRef<(provider: "google" | "apple", idToken: string) => void>(() => {});
   const key = useRef<string | null>(null);
   const fingerprint = useRef("");
   const title = forgot
@@ -270,17 +285,120 @@ export function Auth() {
         : "Hành trình mới bắt đầu ở đây."
       : "Chào mừng bạn trở lại.";
 
-  async function handleSsoLogin(provider: "google" | "apple") {
-    if (busy) return;
+  useEffect(() => {
+    if (register || choose || forgot) return;
+    let active = true;
+    sessionRequest<SocialWebConfig>("config")
+      .then((config) => {
+        if (active) setSocialConfig(config);
+      })
+      .catch(() => {
+        if (active) setSocialConfig({ googleClientId: "", appleClientId: "", appleRedirectUri: "" });
+      });
+    return () => {
+      active = false;
+    };
+  }, [register, choose, forgot]);
+
+  useEffect(() => {
+    if (register || choose || forgot) return;
+    const element = googleButtonRef.current;
+    if (!element || !socialConfig?.googleClientId) return;
+    let active = true;
+    setGoogleButtonReady(false);
+    setGoogleSdkFailed(false);
+    void mountGoogleSignInButton(element, socialConfig.googleClientId, (idToken) => {
+      completeSsoRef.current("google", idToken);
+    })
+      .then(() => {
+        if (active) setGoogleButtonReady(true);
+      })
+      .catch(() => {
+        if (active) setGoogleSdkFailed(true);
+      });
+    return () => {
+      active = false;
+      element.replaceChildren();
+    };
+  }, [socialConfig?.googleClientId, register, choose, forgot]);
+
+  useEffect(() => {
+    if (!socialConfig?.appleClientId) return;
+    let active = true;
+    setAppleSdkReady(false);
+    setAppleSdkFailed(false);
+    void prepareAppleSignIn()
+      .then(() => {
+        if (active) setAppleSdkReady(true);
+      })
+      .catch(() => {
+        if (active) setAppleSdkFailed(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [socialConfig?.appleClientId]);
+
+  async function completeSso(
+    provider: "google" | "apple",
+    idToken: string,
+    clientProfile?: { firstName?: string; lastName?: string },
+    alreadyBusy = false,
+  ) {
+    if ((busy || busyRef.current) && !alreadyBusy) return;
+    busyRef.current = true;
     setBusy(true);
     setStatus(
-      provider === "google"
-        ? "Đang kết nối tài khoản Google SSO…"
-        : "Đang kết nối tài khoản Apple ID…",
+      provider === "google" ? "Đang kết nối tài khoản Google SSO…" : "Đang kết nối tài khoản Apple ID…",
     );
     try {
-      throw new Error(`SSO ${provider === "google" ? "Google" : "Apple"} chưa được cấu hình cho môi trường này.`);
+      await auth.socialLogin(provider, idToken, clientProfile);
+      navigate("/auth/result", {
+        replace: true,
+        state: {
+          success: true,
+          title: "Đăng nhập thành công",
+          message: "Tài khoản đã sẵn sàng. Bạn có thể tiếp tục công việc của mình.",
+          to: safeReturnTo(new URLSearchParams(location.search).get("returnTo")),
+          label: "Tiếp tục",
+        },
+      });
     } catch (error) {
+      navigate("/auth/result", {
+        state: {
+          success: false,
+          title: "Đăng nhập chưa thành công",
+          message:
+            error instanceof Error && error.message === "ACCOUNT_LINK_REQUIRED"
+              ? "Email này đã có tài khoản AILSS. Hãy đăng nhập bằng phương thức đang liên kết với tài khoản đó."
+              : errorMessage(error),
+          to: location.pathname + location.search,
+          label: "Quay lại đăng nhập",
+        },
+      });
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
+  }
+  completeSsoRef.current = (provider, idToken) => {
+    void completeSso(provider, idToken);
+  };
+
+  async function handleAppleLogin() {
+    if (busy || busyRef.current || !socialConfig?.appleClientId || !appleSdkReady) return;
+    busyRef.current = true;
+    setBusy(true);
+    setStatus("Đang kết nối tài khoản Apple ID…");
+    try {
+      const result = await requestAppleIdToken(socialConfig);
+      await completeSso("apple", result.idToken, result.clientProfile, true);
+    } catch (error) {
+      const message = (error as { error?: string })?.error;
+      if (message === "user_cancelled_authorize") {
+        setStatus("Bạn đã hủy đăng nhập bằng Apple.");
+        return;
+      }
       navigate("/auth/result", {
         state: {
           success: false,
@@ -291,6 +409,7 @@ export function Auth() {
         },
       });
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   }
@@ -337,7 +456,9 @@ export function Auth() {
         });
       } else {
         await auth.login({
-          email: String(data.get("email") || emailVal).trim().toLowerCase(),
+          email: String(data.get("email") || emailVal)
+            .trim()
+            .toLowerCase(),
           password: data.get("password") || passwordVal,
         });
         navigate("/auth/result", {
@@ -377,6 +498,7 @@ export function Auth() {
       setBusy(false);
     }
   }
+
   async function logout() {
     if (!session) return;
     setBusy(true);
@@ -398,15 +520,10 @@ export function Auth() {
       setBusy(false);
     }
   }
-  const isRegister = register || choose;
 
   return (
     <section className="focused-auth">
-      <div
-        className={`auth-motion-panel ${
-          forgot ? "auth-slide-bottom auth-slide-up" : isRegister ? "auth-slide-right" : "auth-slide-left"
-        }`}
-      >
+      <div>
         <p className="eyebrow">
           {choose
             ? "BƯỚC TIẾP THEO CỦA BẠN"
@@ -437,7 +554,7 @@ export function Auth() {
                   <div>
                     <div className="choice-title-row">
                       <span className="role-emoji" aria-hidden="true">
-                        🎓
+                        <Icon name="graduation" size={20} />
                       </span>
                       <h2>Học viên</h2>
                     </div>
@@ -453,7 +570,7 @@ export function Auth() {
                   <div>
                     <div className="choice-title-row">
                       <span className="role-emoji" aria-hidden="true">
-                        👨‍🏫
+                        <Icon name="class" size={20} />
                       </span>
                       <h2>Giảng viên</h2>
                     </div>
@@ -470,68 +587,12 @@ export function Auth() {
               </p>
             </div>
           ) : forgot ? (
-            <div className="forgot-password-card auth-form-card">
-              <div className="forgot-header-badge">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <span>Xác thực &amp; Bảo mật</span>
-              </div>
+            <div className="forgot-password-card">
               <h2>Quên mật khẩu?</h2>
-              <div className="forgot-notice-box">
-                <p>
-                  Phiên bản hiện tại chưa hỗ trợ gửi email đặt lại mật khẩu trực tuyến để đảm bảo an toàn tài
-                  khoản học thuật và chính sách xác minh danh tính tập trung. Không có yêu cầu khôi phục nào
-                  được gửi từ trang này.
-                </p>
-              </div>
-              <div className="forgot-steps-list">
-                <div className="forgot-step-item">
-                  <span className="step-badge">1</span>
-                  <div>
-                    <strong>Kiểm tra lại email</strong>
-                    <p>
-                      Hãy đảm bảo bạn đang dùng đúng email đã dùng khi đăng ký (email cơ quan hoặc sinh viên).
-                    </p>
-                  </div>
-                </div>
-                <div className="forgot-step-item">
-                  <span className="step-badge">2</span>
-                  <div>
-                    <strong>Thử lại với mật khẩu cũ</strong>
-                    <p>
-                      Nếu còn nhớ mật khẩu, hãy thử đăng nhập lại hoặc kiểm tra trình quản lý mật khẩu của
-                      thiết bị.
-                    </p>
-                  </div>
-                </div>
-                <div className="forgot-step-item">
-                  <span className="step-badge">3</span>
-                  <div>
-                    <strong>Liên hệ Quản trị viên</strong>
-                    <p>
-                      Nếu không thể đăng nhập, liên hệ người quản trị của đơn vị triển khai qua kênh bạn đã
-                      được cung cấp để được cấp mã truy cập mới.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="forgot-support-contacts">
-                <p>
-                  <strong>Hỗ trợ kỹ thuật:</strong> support@ailss.edu.vn · Hotline: 1900-6888 (08:00 - 18:00)
-                </p>
-              </div>
+              <p>
+                Hệ thống chưa hỗ trợ gửi email đặt lại mật khẩu tự động. Hãy liên hệ với Quản trị viên hệ
+                thống hoặc bộ phận CNTT để được cấp lại mật khẩu.
+              </p>
               <div className="forgot-card-actions">
                 <Link to="/auth/login" className="button auth-submit-btn">
                   Quay lại đăng nhập
@@ -562,25 +623,48 @@ export function Auth() {
               {!register && (
                 <div className="auth-sso-section">
                   <div className="auth-sso-buttons">
-                    <button
-                      type="button"
-                      className="auth-sso-btn auth-sso-google"
-                      disabled={busy}
-                      onClick={() => void handleSsoLogin("google")}
-                      aria-label="Đăng nhập với Google"
-                    >
-                      <GoogleIcon />
-                      <span>Đăng nhập với Google</span>
-                    </button>
+                    <div className="auth-sso-google-slot">
+                      {socialConfig?.googleClientId ? (
+                        <>
+                          <div
+                            ref={googleButtonRef}
+                            className={`auth-sso-google-mount ${googleButtonReady ? "is-ready" : ""}`}
+                            aria-label="Đăng nhập với Google"
+                            aria-busy={!googleButtonReady && !googleSdkFailed}
+                          />
+                          {!googleButtonReady && (
+                            <button
+                              type="button"
+                              className="auth-sso-btn auth-sso-google auth-sso-google-loading"
+                              disabled
+                              aria-label="Đăng nhập với Google"
+                            >
+                              <GoogleIcon />
+                              <span>{googleSdkFailed ? "Không tải được Google" : "Đang tải Google…"}</span>
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className="auth-sso-btn auth-sso-google"
+                          disabled
+                          aria-label="Đăng nhập với Google"
+                        >
+                          <GoogleIcon />
+                          <span>{socialConfig ? "Google chưa được cấu hình" : "Đang tải Google…"}</span>
+                        </button>
+                      )}
+                    </div>
                     <button
                       type="button"
                       className="auth-sso-btn auth-sso-apple"
-                      disabled={busy}
-                      onClick={() => void handleSsoLogin("apple")}
+                      disabled={busy || !socialConfig?.appleClientId || !appleSdkReady}
+                      onClick={() => void handleAppleLogin()}
                       aria-label="Đăng nhập với Apple"
                     >
                       <AppleIcon />
-                      <span>Đăng nhập với Apple</span>
+                      <span>{appleSdkFailed ? "Không tải được Apple" : "Đăng nhập với Apple"}</span>
                     </button>
                   </div>
                   <div className="auth-divider" role="separator" aria-label="Hoặc tiếp tục với email">
@@ -599,7 +683,9 @@ export function Auth() {
                     role="tab"
                     aria-selected={!lecturer}
                   >
-                    <span aria-hidden="true">🎓</span>
+                    <span aria-hidden="true">
+                      <Icon name="graduation" size={15} />
+                    </span>
                     <span>Học viên</span>
                   </Link>
                   <Link
@@ -608,7 +694,9 @@ export function Auth() {
                     role="tab"
                     aria-selected={lecturer}
                   >
-                    <span aria-hidden="true">👨‍🏫</span>
+                    <span aria-hidden="true">
+                      <Icon name="class" size={15} />
+                    </span>
                     <span>Giảng viên</span>
                   </Link>
                 </div>
@@ -625,7 +713,7 @@ export function Auth() {
                 <label className="auth-field-label">
                   <span className="label-text">
                     <span className="label-icon" aria-hidden="true">
-                      👤
+                      <Icon name="user" size={14} />
                     </span>{" "}
                     Họ và tên
                   </span>
@@ -644,7 +732,7 @@ export function Auth() {
               <label className="auth-field-label">
                 <span className="label-text">
                   <span className="label-icon" aria-hidden="true">
-                    ✉️
+                    <Icon name="mail" size={14} />
                   </span>{" "}
                   Email
                 </span>
@@ -664,7 +752,7 @@ export function Auth() {
               <label className="auth-field-label">
                 <span className="label-text">
                   <span className="label-icon" aria-hidden="true">
-                    🔒
+                    <Icon name="lock" size={14} />
                   </span>{" "}
                   Mật khẩu
                 </span>
@@ -699,7 +787,10 @@ export function Auth() {
               {register ? (
                 <>
                   <div id="password-help" className="password-req-badge">
-                    <span aria-hidden="true">🛡️</span> Dùng 12–128 ký tự. Không chia sẻ mật khẩu.
+                    <span aria-hidden="true">
+                      <Icon name="shield" size={13} />
+                    </span>{" "}
+                    Dùng 12–128 ký tự. Không chia sẻ mật khẩu.
                   </div>
                   <label className="checkbox auth-terms-checkbox">
                     <input type="checkbox" required />
@@ -720,18 +811,17 @@ export function Auth() {
                 {busy ? "Đang xử lý…" : register ? "Tạo tài khoản" : "Đăng nhập"}
               </button>
 
-              <p className="form-status" role="status">
-                {status || auth.message}
-              </p>
+              {status ? (
+                <p className="form-status" role="status">
+                  {status}
+                </p>
+              ) : null}
               <p className="auth-switch-prompt">
                 {register ? "Đã có tài khoản?" : "Chưa có tài khoản?"}{" "}
                 <Link to={register ? "/auth/login" : "/auth/register"}>
                   {register ? "Đăng nhập ngay" : "Đăng ký ngay"}
                 </Link>
               </p>
-              <small className="auth-secure-note">
-                <span aria-hidden="true">🔒</span> Thông tin đăng nhập được mã hóa đầu cuối và bảo vệ an toàn.
-              </small>
             </form>
           )}
         </div>

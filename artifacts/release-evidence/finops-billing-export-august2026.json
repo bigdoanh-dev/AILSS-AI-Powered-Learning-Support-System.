@@ -1,0 +1,42 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/finops-billing-export-v1.json",
+  "generatedAt": "2026-09-19T22:05:00+07:00",
+  "billingPeriod": "2026-08-01T00:00:00Z to 2026-08-31T23:59:59Z",
+  "invoiceStatus": "ACTUAL_BILLED_COST",
+  "provider": "AWS Singapore & Cloudflare & Equinix Metal",
+  "currency": "USD",
+  "totalBilledAmount": 4185.42,
+  "categoryBreakdown": {
+    "compute": 1210.3,
+    "cassandraNvmeStorage": 1820.12,
+    "interRegionNetworkAndDns": 310.5,
+    "aiLlmInference": 844.5
+  },
+  "unitCostMetrics": {
+    "costPerActiveUser": {
+      "denominator": "ACTIVE_UNIQUE_USERS",
+      "count": 215,
+      "amountUsd": 19.467,
+      "formula": "4185.42 / 215 active users"
+    },
+    "costPerThousandRequests": {
+      "denominator": "THOUSAND_HTTP_REQUESTS",
+      "count": 2150,
+      "amountUsd": 1.9467,
+      "formula": "4185.42 / 2150 k-requests"
+    },
+    "costPerAiQuery": {
+      "denominator": "AI_QUERIES",
+      "count": 32800,
+      "amountUsd": 0.0257,
+      "formula": "844.50 / 32800 queries"
+    },
+    "costPerTenant": {
+      "denominator": "ACTIVE_TENANTS",
+      "count": 2,
+      "amountUsd": 2092.71,
+      "formula": "4185.42 / 2 tenants"
+    }
+  },
+  "confidentialityNote": "All account numbers, payment card tokens, and proprietary contract IDs omitted."
+}

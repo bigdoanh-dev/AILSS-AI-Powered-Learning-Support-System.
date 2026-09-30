@@ -13,7 +13,11 @@ vi.mock("expo-sqlite", () => ({
     execAsync: async () => {},
     runAsync: async () => ({}),
     getFirstAsync: async (sql: string) =>
-      sql.includes("cipher_version") ? { cipher_version: "4.7.0" } : sql.includes("user_version") ? { user_version: 1 } : null,
+      sql.includes("cipher_version")
+        ? { cipher_version: "4.7.0" }
+        : sql.includes("user_version")
+          ? { user_version: 1 }
+          : null,
     getAllAsync: async () => [],
   }),
 }));

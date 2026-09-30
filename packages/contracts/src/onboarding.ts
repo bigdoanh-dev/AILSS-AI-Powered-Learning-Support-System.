@@ -32,10 +32,7 @@ export type TenantOnboardingRecord = z.infer<typeof tenantOnboardingRecordSchema
 /**
  * Validates stage progression preconditions for institution onboarding.
  */
-export function assertOnboardingTransition(
-  record: TenantOnboardingRecord,
-  nextStage: OnboardingStage,
-): void {
+export function assertOnboardingTransition(record: TenantOnboardingRecord, nextStage: OnboardingStage): void {
   const stageOrder: Record<OnboardingStage, number> = {
     CREATED: 0,
     IDENTITY_CONFIGURED: 1,

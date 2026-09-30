@@ -8,7 +8,9 @@ export class FrictionDiagnosticService {
 
     // 1. Quiz Performance Analysis
     if (signal.averageQuizScorePercent < 55) {
-      diagnostics.push(`Sub-standard average quiz performance (${String(signal.averageQuizScorePercent)}% < 55%)`);
+      diagnostics.push(
+        `Sub-standard average quiz performance (${String(signal.averageQuizScorePercent)}% < 55%)`,
+      );
       suggestedInterventions.push("Add visual diagrams and worked step-by-step example solutions.");
       frictionScore += 2;
     } else if (signal.averageQuizScorePercent < 70) {
@@ -18,7 +20,9 @@ export class FrictionDiagnosticService {
 
     // 2. Retry Attempt Multiplier
     if (signal.averageAttemptsPerStudent >= 2.5) {
-      diagnostics.push(`High attempt churn (avg ${signal.averageAttemptsPerStudent.toFixed(1)} attempts/student)`);
+      diagnostics.push(
+        `High attempt churn (avg ${signal.averageAttemptsPerStudent.toFixed(1)} attempts/student)`,
+      );
       suggestedInterventions.push("Review quiz question wording for ambiguity or misleading distractors.");
       frictionScore += 2;
     } else if (signal.averageAttemptsPerStudent >= 1.8) {
@@ -28,8 +32,12 @@ export class FrictionDiagnosticService {
 
     // 3. AI Assistant Query Spike
     if (signal.assistantQueryCount >= 20) {
-      diagnostics.push(`High learner confusion volume (${String(signal.assistantQueryCount)} assistant queries recorded)`);
-      suggestedInterventions.push("Include an interactive FAQ or micro-video addressing recurring student doubts.");
+      diagnostics.push(
+        `High learner confusion volume (${String(signal.assistantQueryCount)} assistant queries recorded)`,
+      );
+      suggestedInterventions.push(
+        "Include an interactive FAQ or micro-video addressing recurring student doubts.",
+      );
       frictionScore += 2;
     } else if (signal.assistantQueryCount >= 8) {
       diagnostics.push(`Notable assistant inquiry activity (${String(signal.assistantQueryCount)} queries)`);

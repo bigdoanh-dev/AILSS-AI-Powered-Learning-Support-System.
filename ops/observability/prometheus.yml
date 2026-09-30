@@ -9,7 +9,7 @@ scrape_configs:
   - job_name: ailss-api-gateway
     metrics_path: /metrics
     static_configs:
-      - targets: ["api-gateway:8100"]
+      - targets: ["api-gateway:8080"]
   - job_name: ailss-identity
     metrics_path: /metrics
     static_configs:

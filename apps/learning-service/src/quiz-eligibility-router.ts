@@ -27,7 +27,7 @@ export function learningQuizEligibilityRouter(
         throw new AppError("SERVICE_CALLER_NOT_ALLOWED", 403, "Service caller is not allowed");
       const courseId = z.string().uuid().parse(request.params.id),
         course = await repository.getCanonicalCourse(courseId);
-      if (!course || course.state !== "PUBLISHED")
+      if (!course || !["PUBLISHED", "HIDDEN"].includes(course.state))
         throw new AppError("COURSE_NOT_QUIZ_ELIGIBLE", 404, "Course is not available for quizzes");
       const actorToken = optionalHeader(request, "x-actor-context");
       let studentEligible: boolean | undefined;
@@ -49,7 +49,7 @@ export function learningQuizEligibilityRouter(
         data: {
           courseId: course.courseId,
           ownerLecturerId: course.ownerLecturerId,
-          state: "PUBLISHED",
+          state: course.state,
           recordVersion: course.recordVersion,
           ...(studentEligible ? { studentEligible } : {}),
         },

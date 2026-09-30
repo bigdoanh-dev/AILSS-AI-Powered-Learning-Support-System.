@@ -17,6 +17,9 @@ export function createSessionAdapter({
   production = false,
   fetcher = fetch,
   maxSessions = 1000,
+  googleClientId = process.env.GOOGLE_WEB_CLIENT_ID || "",
+  appleClientId = process.env.APPLE_WEB_CLIENT_ID || "",
+  appleRedirectUri = process.env.APPLE_WEB_REDIRECT_URI || "",
 }) {
   const expected = new URL(origin);
   if (production && expected.protocol !== "https:")
@@ -168,8 +171,12 @@ export function createSessionAdapter({
       const route = req.url.split("?")[0];
       const allowed = {
         "/web-session/bootstrap": "GET",
+        "/web-session/config": "GET",
         "/web-session/login": "POST",
         "/web-session/register": "POST",
+        "/web-session/auth/password-reset/request": "POST",
+        "/web-session/auth/password-reset/verify": "POST",
+        "/web-session/auth/password-reset/complete": "POST",
         "/web-session/logout": "POST",
         "/web-session/profile": "PATCH",
         "/web-session/avatar": method === "GET" ? "GET" : "POST",
@@ -204,23 +211,26 @@ export function createSessionAdapter({
         const sseId = id;
         const sseSession = sseId ? sessions.get(sseId) : null;
         if (!sseSession) {
-          res.writeHead(401); res.end(JSON.stringify({ error: { code: "SESSION_EXPIRED" } }));
+          res.writeHead(401);
+          res.end(JSON.stringify({ error: { code: "SESSION_EXPIRED" } }));
           return true;
         }
         try {
           const profile = await protectedCall(sseSession, "/me");
           if (!["STUDENT", "LECTURER", "ADMIN"].includes(profile.role) || profile.status !== "ACTIVE") {
-            res.writeHead(403); res.end(JSON.stringify({ error: { code: "ACCOUNT_DISABLED" } }));
+            res.writeHead(403);
+            res.end(JSON.stringify({ error: { code: "ACCOUNT_DISABLED" } }));
             return true;
           }
         } catch {
-          res.writeHead(503); res.end(JSON.stringify({ error: { code: "GATEWAY_UNAVAILABLE" } }));
+          res.writeHead(503);
+          res.end(JSON.stringify({ error: { code: "GATEWAY_UNAVAILABLE" } }));
           return true;
         }
         res.writeHead(200, {
           "Content-Type": "text/event-stream; charset=utf-8",
           "Cache-Control": "no-cache, no-transform",
-          "Connection": "keep-alive",
+          Connection: "keep-alive",
           "X-Accel-Buffering": "no",
         });
         const sendEvent = (eventType, data) => {
@@ -229,7 +239,10 @@ export function createSessionAdapter({
         };
         sendEvent("ping", { ts: Date.now() });
         const pingTimer = setInterval(() => {
-          if (res.destroyed) { clearInterval(pingTimer); return; }
+          if (res.destroyed) {
+            clearInterval(pingTimer);
+            return;
+          }
           sendEvent("ping", { ts: Date.now() });
         }, 30_000);
         req.on("close", () => clearInterval(pingTimer));
@@ -237,12 +250,28 @@ export function createSessionAdapter({
       }
       if (!isStudent && !isLecturer && !isAdmin && !isSSE && allowed[route] !== method)
         throw new SessionError(405, "METHOD_NOT_ALLOWED");
+      if (route === "/web-session/config") {
+        send(200, {
+          data: {
+            googleClientId: googleClientId.trim(),
+            appleClientId: appleClientId.trim(),
+            appleRedirectUri: appleRedirectUri.trim() || new URL("/auth/login", expected).toString(),
+          },
+        });
+        return true;
+      }
       for (const [k, s] of sessions)
         if (s.closed || Date.parse(s.tokens.refreshExpiresAt) <= Date.now()) drop(k);
       const body = method === "GET" ? undefined : await bodyOf(req);
       const key = req.headers["idempotency-key"];
       if (route === "/web-session/register") {
         const data = await upstream("/auth/register", "POST", body, undefined, key);
+        send(200, { data });
+        return true;
+      }
+      if (route.startsWith("/web-session/auth/password-reset/")) {
+        const operation = route.slice("/web-session/auth/password-reset/".length);
+        const data = await upstream(`/auth/password-reset/${operation}`, "POST", body);
         send(200, { data });
         return true;
       }
@@ -360,6 +389,14 @@ export function createSessionAdapter({
         send(200, { data: await protectedCall(s, "/me/avatar", method, body) });
         return true;
       }
+      if (route === "/web-session/lecturer-profile") {
+        if (!["GET", "PATCH"].includes(method)) throw new SessionError(405, "METHOD_NOT_ALLOWED");
+        const profile = await protectedCall(s, "/me");
+        if (profile.role !== "LECTURER" || !profile.lecturerVerified || profile.status !== "ACTIVE")
+          throw new SessionError(403, "LECTURER_VERIFICATION_REQUIRED");
+        send(200, { data: await protectedCall(s, "/me/lecturer-profile", method, body) });
+        return true;
+      }
       if (isStudent) {
         let operation;
         try {
@@ -435,7 +472,7 @@ export function createSessionAdapter({
             });
             send(200, result);
             return true;
-          } catch (err) {
+          } catch {
             // When course is owned by another lecturer (403) or not found (404),
             // provide graceful roster fallback for lecturer web session.
             send(200, {

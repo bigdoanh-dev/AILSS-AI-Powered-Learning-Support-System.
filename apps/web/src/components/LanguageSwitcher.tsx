@@ -62,11 +62,7 @@ export function LanguageSwitcher() {
       </button>
 
       {open && (
-        <ul
-          className="language-dropdown-menu"
-          role="listbox"
-          aria-label={t("header.selectLanguage")}
-        >
+        <ul className="language-dropdown-menu" role="listbox" aria-label={t("header.selectLanguage")}>
           {languages.map((lang) => {
             const isSelected = lang.code === language;
             return (
@@ -77,15 +73,17 @@ export function LanguageSwitcher() {
                 className={`language-option-item ${isSelected ? "selected" : ""}`}
                 onClick={() => handleSelect(lang.code)}
               >
-                <span className="option-flag" aria-hidden="true">{lang.flag}</span>
+                <span className="option-flag" aria-hidden="true">
+                  {lang.flag}
+                </span>
                 <div className="option-text">
                   <span className="option-name">{lang.nativeName}</span>
-                  {lang.nativeName !== lang.name && (
-                    <span className="option-sub">({lang.name})</span>
-                  )}
+                  {lang.nativeName !== lang.name && <span className="option-sub">({lang.name})</span>}
                 </div>
                 {isSelected && (
-                  <span className="option-check" aria-hidden="true">✓</span>
+                  <span className="option-check" aria-hidden="true">
+                    ✓
+                  </span>
                 )}
               </li>
             );

@@ -43,8 +43,8 @@ export class LearningLifecycleRepository {
 
   public async transition(
     course: AuthoringCourse,
-    from: "DRAFT" | "IN_REVIEW" | "PUBLISHED",
-    to: "IN_REVIEW" | "PUBLISHED" | "ARCHIVED",
+    from: "DRAFT" | "IN_REVIEW" | "PUBLISHED" | "HIDDEN",
+    to: "IN_REVIEW" | "PUBLISHED" | "ARCHIVED" | "HIDDEN" | "DELETED",
     now: Date,
     publishedAt?: Date,
   ): Promise<boolean> {

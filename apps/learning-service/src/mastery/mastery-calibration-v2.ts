@@ -76,10 +76,38 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "loops_and_conditionals",
     description: "CS101: 4 quiz attempts with attempt dampening preventing inflation",
     evidences: [
-      { evidenceId: "ev-cs-2a", evidenceSource: "QUIZ", questionDifficulty: 0.4, rawScorePercent: 40, attemptNumber: 1, timestamp: "2026-09-02T10:00:00Z" },
-      { evidenceId: "ev-cs-2b", evidenceSource: "QUIZ", questionDifficulty: 0.4, rawScorePercent: 50, attemptNumber: 2, timestamp: "2026-09-03T10:00:00Z" },
-      { evidenceId: "ev-cs-2c", evidenceSource: "QUIZ", questionDifficulty: 0.4, rawScorePercent: 65, attemptNumber: 3, timestamp: "2026-09-04T10:00:00Z" },
-      { evidenceId: "ev-cs-2d", evidenceSource: "QUIZ", questionDifficulty: 0.4, rawScorePercent: 95, attemptNumber: 4, timestamp: "2026-09-05T10:00:00Z" },
+      {
+        evidenceId: "ev-cs-2a",
+        evidenceSource: "QUIZ",
+        questionDifficulty: 0.4,
+        rawScorePercent: 40,
+        attemptNumber: 1,
+        timestamp: "2026-09-02T10:00:00Z",
+      },
+      {
+        evidenceId: "ev-cs-2b",
+        evidenceSource: "QUIZ",
+        questionDifficulty: 0.4,
+        rawScorePercent: 50,
+        attemptNumber: 2,
+        timestamp: "2026-09-03T10:00:00Z",
+      },
+      {
+        evidenceId: "ev-cs-2c",
+        evidenceSource: "QUIZ",
+        questionDifficulty: 0.4,
+        rawScorePercent: 65,
+        attemptNumber: 3,
+        timestamp: "2026-09-04T10:00:00Z",
+      },
+      {
+        evidenceId: "ev-cs-2d",
+        evidenceSource: "QUIZ",
+        questionDifficulty: 0.4,
+        rawScorePercent: 95,
+        attemptNumber: 4,
+        timestamp: "2026-09-05T10:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 1,
@@ -94,8 +122,22 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "recursion_and_trees",
     description: "CS101: High-difficulty proctored exam with 92% raw score and verified lab",
     evidences: [
-      { evidenceId: "ev-cs-3a", evidenceSource: "LAB", questionDifficulty: 0.7, rawScorePercent: 88, attemptNumber: 1, timestamp: "2026-09-06T10:00:00Z" },
-      { evidenceId: "ev-cs-3b", evidenceSource: "PROCTORED_EXAM", questionDifficulty: 0.85, rawScorePercent: 92, attemptNumber: 1, timestamp: "2026-09-07T10:00:00Z" },
+      {
+        evidenceId: "ev-cs-3a",
+        evidenceSource: "LAB",
+        questionDifficulty: 0.7,
+        rawScorePercent: 88,
+        attemptNumber: 1,
+        timestamp: "2026-09-06T10:00:00Z",
+      },
+      {
+        evidenceId: "ev-cs-3b",
+        evidenceSource: "PROCTORED_EXAM",
+        questionDifficulty: 0.85,
+        rawScorePercent: 92,
+        attemptNumber: 1,
+        timestamp: "2026-09-07T10:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 3,
@@ -110,7 +152,14 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "graph_dijkstra",
     description: "CS101: 95% on advanced graph quiz but prerequisites not met -> clamped to DEVELOPING",
     evidences: [
-      { evidenceId: "ev-cs-4", evidenceSource: "QUIZ", questionDifficulty: 0.7, rawScorePercent: 95, attemptNumber: 1, timestamp: "2026-09-08T10:00:00Z" },
+      {
+        evidenceId: "ev-cs-4",
+        evidenceSource: "QUIZ",
+        questionDifficulty: 0.7,
+        rawScorePercent: 95,
+        attemptNumber: 1,
+        timestamp: "2026-09-08T10:00:00Z",
+      },
     ],
     hasMetPrerequisites: false,
     daysSinceLastActivity: 1,
@@ -125,8 +174,22 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "oop_inheritance",
     description: "CS101: Proficient learner inactive for 45 days -> decay risk triggered",
     evidences: [
-      { evidenceId: "ev-cs-5a", evidenceSource: "ASSIGNMENT", questionDifficulty: 0.6, rawScorePercent: 82, attemptNumber: 1, timestamp: "2026-08-01T10:00:00Z" },
-      { evidenceId: "ev-cs-5b", evidenceSource: "LAB", questionDifficulty: 0.7, rawScorePercent: 85, attemptNumber: 1, timestamp: "2026-08-05T10:00:00Z" },
+      {
+        evidenceId: "ev-cs-5a",
+        evidenceSource: "ASSIGNMENT",
+        questionDifficulty: 0.6,
+        rawScorePercent: 82,
+        attemptNumber: 1,
+        timestamp: "2026-08-01T10:00:00Z",
+      },
+      {
+        evidenceId: "ev-cs-5b",
+        evidenceSource: "LAB",
+        questionDifficulty: 0.7,
+        rawScorePercent: 85,
+        attemptNumber: 1,
+        timestamp: "2026-08-05T10:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 45,
@@ -143,9 +206,30 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "matrix_multiplication",
     description: "MATH201: Practice questions + diagnostic exam demonstrating solid proficiency",
     evidences: [
-      { evidenceId: "ev-m-1a", evidenceSource: "PRACTICE", questionDifficulty: 0.4, rawScorePercent: 80, attemptNumber: 1, timestamp: "2026-09-10T08:00:00Z" },
-      { evidenceId: "ev-m-1b", evidenceSource: "DIAGNOSTIC", questionDifficulty: 0.6, rawScorePercent: 82, attemptNumber: 1, timestamp: "2026-09-11T08:00:00Z" },
-      { evidenceId: "ev-m-1c", evidenceSource: "ASSIGNMENT", questionDifficulty: 0.65, rawScorePercent: 84, attemptNumber: 1, timestamp: "2026-09-12T08:00:00Z" },
+      {
+        evidenceId: "ev-m-1a",
+        evidenceSource: "PRACTICE",
+        questionDifficulty: 0.4,
+        rawScorePercent: 80,
+        attemptNumber: 1,
+        timestamp: "2026-09-10T08:00:00Z",
+      },
+      {
+        evidenceId: "ev-m-1b",
+        evidenceSource: "DIAGNOSTIC",
+        questionDifficulty: 0.6,
+        rawScorePercent: 82,
+        attemptNumber: 1,
+        timestamp: "2026-09-11T08:00:00Z",
+      },
+      {
+        evidenceId: "ev-m-1c",
+        evidenceSource: "ASSIGNMENT",
+        questionDifficulty: 0.65,
+        rawScorePercent: 84,
+        attemptNumber: 1,
+        timestamp: "2026-09-12T08:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 4,
@@ -160,7 +244,14 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "eigenvalues_eigenvectors",
     description: "MATH201: High difficulty exam attempt with 78% score -> PROFICIENT due to difficulty bonus",
     evidences: [
-      { evidenceId: "ev-m-2", evidenceSource: "PROCTORED_EXAM", questionDifficulty: 0.9, rawScorePercent: 78, attemptNumber: 1, timestamp: "2026-09-14T08:00:00Z" },
+      {
+        evidenceId: "ev-m-2",
+        evidenceSource: "PROCTORED_EXAM",
+        questionDifficulty: 0.9,
+        rawScorePercent: 78,
+        attemptNumber: 1,
+        timestamp: "2026-09-14T08:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 2,
@@ -175,7 +266,14 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "vector_calculus_divergence",
     description: "MATH201: 85% quiz but partial prerequisite missing",
     evidences: [
-      { evidenceId: "ev-m-3", evidenceSource: "QUIZ", questionDifficulty: 0.6, rawScorePercent: 85, attemptNumber: 1, timestamp: "2026-09-15T08:00:00Z" },
+      {
+        evidenceId: "ev-m-3",
+        evidenceSource: "QUIZ",
+        questionDifficulty: 0.6,
+        rawScorePercent: 85,
+        attemptNumber: 1,
+        timestamp: "2026-09-15T08:00:00Z",
+      },
     ],
     hasMetPrerequisites: false,
     daysSinceLastActivity: 1,
@@ -192,8 +290,22 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "b_tree_indexing",
     description: "DATA301: Project submission with 94% + Proctored exam with 90%",
     evidences: [
-      { evidenceId: "ev-d-1a", evidenceSource: "FINAL_PROJECT", questionDifficulty: 0.8, rawScorePercent: 94, attemptNumber: 1, timestamp: "2026-09-10T14:00:00Z" },
-      { evidenceId: "ev-d-1b", evidenceSource: "PROCTORED_EXAM", questionDifficulty: 0.85, rawScorePercent: 90, attemptNumber: 1, timestamp: "2026-09-12T14:00:00Z" },
+      {
+        evidenceId: "ev-d-1a",
+        evidenceSource: "FINAL_PROJECT",
+        questionDifficulty: 0.8,
+        rawScorePercent: 94,
+        attemptNumber: 1,
+        timestamp: "2026-09-10T14:00:00Z",
+      },
+      {
+        evidenceId: "ev-d-1b",
+        evidenceSource: "PROCTORED_EXAM",
+        questionDifficulty: 0.85,
+        rawScorePercent: 90,
+        attemptNumber: 1,
+        timestamp: "2026-09-12T14:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 5,
@@ -208,8 +320,22 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "cost_based_optimizer",
     description: "DATA301: Low scores across quiz (45%) and lab (52%) -> INTRODUCED state",
     evidences: [
-      { evidenceId: "ev-d-2a", evidenceSource: "QUIZ", questionDifficulty: 0.5, rawScorePercent: 45, attemptNumber: 1, timestamp: "2026-09-11T14:00:00Z" },
-      { evidenceId: "ev-d-2b", evidenceSource: "LAB", questionDifficulty: 0.6, rawScorePercent: 52, attemptNumber: 1, timestamp: "2026-09-13T14:00:00Z" },
+      {
+        evidenceId: "ev-d-2a",
+        evidenceSource: "QUIZ",
+        questionDifficulty: 0.5,
+        rawScorePercent: 45,
+        attemptNumber: 1,
+        timestamp: "2026-09-11T14:00:00Z",
+      },
+      {
+        evidenceId: "ev-d-2b",
+        evidenceSource: "LAB",
+        questionDifficulty: 0.6,
+        rawScorePercent: 52,
+        attemptNumber: 1,
+        timestamp: "2026-09-13T14:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 2,
@@ -224,8 +350,24 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "two_phase_locking",
     description: "DATA301: Late resubmission of project elevates score from 55 to 84",
     evidences: [
-      { evidenceId: "ev-d-3a", evidenceSource: "ASSIGNMENT", questionDifficulty: 0.5, rawScorePercent: 55, attemptNumber: 1, timestamp: "2026-09-01T14:00:00Z", recencyWeight: 0.8 },
-      { evidenceId: "ev-d-3b", evidenceSource: "ASSIGNMENT", questionDifficulty: 0.7, rawScorePercent: 88, attemptNumber: 2, timestamp: "2026-09-18T14:00:00Z", recencyWeight: 1.0 },
+      {
+        evidenceId: "ev-d-3a",
+        evidenceSource: "ASSIGNMENT",
+        questionDifficulty: 0.5,
+        rawScorePercent: 55,
+        attemptNumber: 1,
+        timestamp: "2026-09-01T14:00:00Z",
+        recencyWeight: 0.8,
+      },
+      {
+        evidenceId: "ev-d-3b",
+        evidenceSource: "ASSIGNMENT",
+        questionDifficulty: 0.7,
+        rawScorePercent: 88,
+        attemptNumber: 2,
+        timestamp: "2026-09-18T14:00:00Z",
+        recencyWeight: 1.0,
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 3,
@@ -242,8 +384,22 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "newtons_second_law",
     description: "PHYS101: 98% on proctored exam and 95% lab -> MASTERED",
     evidences: [
-      { evidenceId: "ev-p-1a", evidenceSource: "LAB", questionDifficulty: 0.6, rawScorePercent: 95, attemptNumber: 1, timestamp: "2026-09-10T11:00:00Z" },
-      { evidenceId: "ev-p-1b", evidenceSource: "PROCTORED_EXAM", questionDifficulty: 0.8, rawScorePercent: 98, attemptNumber: 1, timestamp: "2026-09-15T11:00:00Z" },
+      {
+        evidenceId: "ev-p-1a",
+        evidenceSource: "LAB",
+        questionDifficulty: 0.6,
+        rawScorePercent: 95,
+        attemptNumber: 1,
+        timestamp: "2026-09-10T11:00:00Z",
+      },
+      {
+        evidenceId: "ev-p-1b",
+        evidenceSource: "PROCTORED_EXAM",
+        questionDifficulty: 0.8,
+        rawScorePercent: 98,
+        attemptNumber: 1,
+        timestamp: "2026-09-15T11:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 2,
@@ -258,8 +414,22 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "moment_of_inertia",
     description: "PHYS101: 68% on quiz and 72% on lab -> DEVELOPING",
     evidences: [
-      { evidenceId: "ev-p-2a", evidenceSource: "QUIZ", questionDifficulty: 0.5, rawScorePercent: 68, attemptNumber: 1, timestamp: "2026-09-12T11:00:00Z" },
-      { evidenceId: "ev-p-2b", evidenceSource: "LAB", questionDifficulty: 0.6, rawScorePercent: 72, attemptNumber: 1, timestamp: "2026-09-14T11:00:00Z" },
+      {
+        evidenceId: "ev-p-2a",
+        evidenceSource: "QUIZ",
+        questionDifficulty: 0.5,
+        rawScorePercent: 68,
+        attemptNumber: 1,
+        timestamp: "2026-09-12T11:00:00Z",
+      },
+      {
+        evidenceId: "ev-p-2b",
+        evidenceSource: "LAB",
+        questionDifficulty: 0.6,
+        rawScorePercent: 72,
+        attemptNumber: 1,
+        timestamp: "2026-09-14T11:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 1,
@@ -274,7 +444,14 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "carnot_efficiency",
     description: "PHYS101: Inactive for 35 days -> recency decay applied",
     evidences: [
-      { evidenceId: "ev-p-3", evidenceSource: "ASSIGNMENT", questionDifficulty: 0.6, rawScorePercent: 82, attemptNumber: 1, timestamp: "2026-08-10T11:00:00Z" },
+      {
+        evidenceId: "ev-p-3",
+        evidenceSource: "ASSIGNMENT",
+        questionDifficulty: 0.6,
+        rawScorePercent: 82,
+        attemptNumber: 1,
+        timestamp: "2026-08-10T11:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 35,
@@ -291,8 +468,22 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "async_await",
     description: "CS101: AI tutor practice conversation with 85% + quiz 78%",
     evidences: [
-      { evidenceId: "ev-ai-1", evidenceSource: "AI_CONVERSATION", questionDifficulty: 0.4, rawScorePercent: 85, attemptNumber: 1, timestamp: "2026-09-16T16:00:00Z" },
-      { evidenceId: "ev-ai-2", evidenceSource: "QUIZ", questionDifficulty: 0.5, rawScorePercent: 78, attemptNumber: 1, timestamp: "2026-09-17T16:00:00Z" },
+      {
+        evidenceId: "ev-ai-1",
+        evidenceSource: "AI_CONVERSATION",
+        questionDifficulty: 0.4,
+        rawScorePercent: 85,
+        attemptNumber: 1,
+        timestamp: "2026-09-16T16:00:00Z",
+      },
+      {
+        evidenceId: "ev-ai-2",
+        evidenceSource: "QUIZ",
+        questionDifficulty: 0.5,
+        rawScorePercent: 78,
+        attemptNumber: 1,
+        timestamp: "2026-09-17T16:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 1,
@@ -307,11 +498,46 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "jordan_canonical_form",
     description: "MATH201: 5 attempts on tricky topic; dampening controls runaway score",
     evidences: [
-      { evidenceId: "ev-m-4a", evidenceSource: "PRACTICE", questionDifficulty: 0.6, rawScorePercent: 30, attemptNumber: 1, timestamp: "2026-09-01T09:00:00Z" },
-      { evidenceId: "ev-m-4b", evidenceSource: "PRACTICE", questionDifficulty: 0.6, rawScorePercent: 45, attemptNumber: 2, timestamp: "2026-09-02T09:00:00Z" },
-      { evidenceId: "ev-m-4c", evidenceSource: "PRACTICE", questionDifficulty: 0.6, rawScorePercent: 60, attemptNumber: 3, timestamp: "2026-09-03T09:00:00Z" },
-      { evidenceId: "ev-m-4d", evidenceSource: "QUIZ", questionDifficulty: 0.7, rawScorePercent: 70, attemptNumber: 4, timestamp: "2026-09-04T09:00:00Z" },
-      { evidenceId: "ev-m-4e", evidenceSource: "QUIZ", questionDifficulty: 0.7, rawScorePercent: 90, attemptNumber: 5, timestamp: "2026-09-05T09:00:00Z" },
+      {
+        evidenceId: "ev-m-4a",
+        evidenceSource: "PRACTICE",
+        questionDifficulty: 0.6,
+        rawScorePercent: 30,
+        attemptNumber: 1,
+        timestamp: "2026-09-01T09:00:00Z",
+      },
+      {
+        evidenceId: "ev-m-4b",
+        evidenceSource: "PRACTICE",
+        questionDifficulty: 0.6,
+        rawScorePercent: 45,
+        attemptNumber: 2,
+        timestamp: "2026-09-02T09:00:00Z",
+      },
+      {
+        evidenceId: "ev-m-4c",
+        evidenceSource: "PRACTICE",
+        questionDifficulty: 0.6,
+        rawScorePercent: 60,
+        attemptNumber: 3,
+        timestamp: "2026-09-03T09:00:00Z",
+      },
+      {
+        evidenceId: "ev-m-4d",
+        evidenceSource: "QUIZ",
+        questionDifficulty: 0.7,
+        rawScorePercent: 70,
+        attemptNumber: 4,
+        timestamp: "2026-09-04T09:00:00Z",
+      },
+      {
+        evidenceId: "ev-m-4e",
+        evidenceSource: "QUIZ",
+        questionDifficulty: 0.7,
+        rawScorePercent: 90,
+        attemptNumber: 5,
+        timestamp: "2026-09-05T09:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 4,
@@ -339,8 +565,22 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "schema_normalization",
     description: "DATA301: Solid Lab (86%) and Final Project (88%)",
     evidences: [
-      { evidenceId: "ev-d-4a", evidenceSource: "LAB", questionDifficulty: 0.65, rawScorePercent: 86, attemptNumber: 1, timestamp: "2026-09-12T10:00:00Z" },
-      { evidenceId: "ev-d-4b", evidenceSource: "FINAL_PROJECT", questionDifficulty: 0.75, rawScorePercent: 88, attemptNumber: 1, timestamp: "2026-09-14T10:00:00Z" },
+      {
+        evidenceId: "ev-d-4a",
+        evidenceSource: "LAB",
+        questionDifficulty: 0.65,
+        rawScorePercent: 86,
+        attemptNumber: 1,
+        timestamp: "2026-09-12T10:00:00Z",
+      },
+      {
+        evidenceId: "ev-d-4b",
+        evidenceSource: "FINAL_PROJECT",
+        questionDifficulty: 0.75,
+        rawScorePercent: 88,
+        attemptNumber: 1,
+        timestamp: "2026-09-14T10:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 2,
@@ -355,7 +595,14 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "general_relativity_basics",
     description: "PHYS101: 94% on exam without prerequisite foundation -> Clamped to 65 DEVELOPING",
     evidences: [
-      { evidenceId: "ev-p-4", evidenceSource: "PROCTORED_EXAM", questionDifficulty: 0.85, rawScorePercent: 94, attemptNumber: 1, timestamp: "2026-09-15T15:00:00Z" },
+      {
+        evidenceId: "ev-p-4",
+        evidenceSource: "PROCTORED_EXAM",
+        questionDifficulty: 0.85,
+        rawScorePercent: 94,
+        attemptNumber: 1,
+        timestamp: "2026-09-15T15:00:00Z",
+      },
     ],
     hasMetPrerequisites: false,
     daysSinceLastActivity: 1,
@@ -370,7 +617,14 @@ export const MASTERY_CALIBRATION_DATASET_V2: CalibrationTestCaseV2[] = [
     conceptId: "unit_testing",
     description: "CS101: Exactly on the border of proficient with 76% aggregate score",
     evidences: [
-      { evidenceId: "ev-cs-8", evidenceSource: "ASSIGNMENT", questionDifficulty: 0.5, rawScorePercent: 76, attemptNumber: 1, timestamp: "2026-09-18T10:00:00Z" },
+      {
+        evidenceId: "ev-cs-8",
+        evidenceSource: "ASSIGNMENT",
+        questionDifficulty: 0.5,
+        rawScorePercent: 76,
+        attemptNumber: 1,
+        timestamp: "2026-09-18T10:00:00Z",
+      },
     ],
     hasMetPrerequisites: true,
     daysSinceLastActivity: 2,
@@ -412,8 +666,7 @@ export class MasteryCalibrationRunnerV2 {
       });
 
       const scorePass =
-        record.masteryScore >= tc.expectedScoreRange[0] &&
-        record.masteryScore <= tc.expectedScoreRange[1];
+        record.masteryScore >= tc.expectedScoreRange[0] && record.masteryScore <= tc.expectedScoreRange[1];
       const statePass = record.masteryState === tc.expectedMasteryState;
       const pass = scorePass && statePass;
 
@@ -424,7 +677,11 @@ export class MasteryCalibrationRunnerV2 {
       }
 
       // Check for unexpected jump (e.g. cold start straight to MASTERED with 1 quiz)
-      if (tc.evidences.length <= 1 && record.masteryState === "MASTERED" && tc.evidences[0]?.evidenceSource === "QUIZ") {
+      if (
+        tc.evidences.length <= 1 &&
+        record.masteryState === "MASTERED" &&
+        tc.evidences[0]?.evidenceSource === "QUIZ"
+      ) {
         unexpectedJumps++;
       }
 
@@ -510,13 +767,15 @@ export class MasteryCalibrationRunnerV2 {
         courseId: "course-cs101",
         learningOutcomeId: "LO-1",
         conceptId: "test-concept",
-        evidences: [{
-          evidenceId: "ev-prop-1",
-          evidenceSource: "QUIZ",
-          rawScorePercent: score,
-          attemptNumber: 1,
-          timestamp: new Date().toISOString(),
-        }],
+        evidences: [
+          {
+            evidenceId: "ev-prop-1",
+            evidenceSource: "QUIZ",
+            rawScorePercent: score,
+            attemptNumber: 1,
+            timestamp: new Date().toISOString(),
+          },
+        ],
         hasMetPrerequisites: true,
         daysSinceLastActivity: 1,
       });
@@ -530,13 +789,15 @@ export class MasteryCalibrationRunnerV2 {
       courseId: "course-cs101",
       learningOutcomeId: "LO-1",
       conceptId: "test-concept",
-      evidences: [{
-        evidenceId: "ev-prop-2a",
-        evidenceSource: "QUIZ",
-        rawScorePercent: 70,
-        attemptNumber: 1,
-        timestamp: "2026-09-01T00:00:00Z",
-      }],
+      evidences: [
+        {
+          evidenceId: "ev-prop-2a",
+          evidenceSource: "QUIZ",
+          rawScorePercent: 70,
+          attemptNumber: 1,
+          timestamp: "2026-09-01T00:00:00Z",
+        },
+      ],
       hasMetPrerequisites: true,
       daysSinceLastActivity: 1,
     });
@@ -582,13 +843,15 @@ export class MasteryCalibrationRunnerV2 {
       courseId: "course-cs101",
       learningOutcomeId: "LO-1",
       conceptId: "test-concept",
-      evidences: [{
-        evidenceId: "ev-clamp",
-        evidenceSource: "PROCTORED_EXAM",
-        rawScorePercent: 100,
-        attemptNumber: 1,
-        timestamp: new Date().toISOString(),
-      }],
+      evidences: [
+        {
+          evidenceId: "ev-clamp",
+          evidenceSource: "PROCTORED_EXAM",
+          rawScorePercent: 100,
+          attemptNumber: 1,
+          timestamp: new Date().toISOString(),
+        },
+      ],
       hasMetPrerequisites: false, // NOT MET
       daysSinceLastActivity: 1,
     });
@@ -604,13 +867,15 @@ export class MasteryCalibrationRunnerV2 {
       courseId: "course-cs101",
       learningOutcomeId: "LO-1",
       conceptId: "test-concept",
-      evidences: [{
-        evidenceId: "ev-decay",
-        evidenceSource: "PROCTORED_EXAM",
-        rawScorePercent: 90,
-        attemptNumber: 1,
-        timestamp: "2026-08-01T00:00:00Z",
-      }],
+      evidences: [
+        {
+          evidenceId: "ev-decay",
+          evidenceSource: "PROCTORED_EXAM",
+          rawScorePercent: 90,
+          attemptNumber: 1,
+          timestamp: "2026-08-01T00:00:00Z",
+        },
+      ],
       hasMetPrerequisites: true,
       daysSinceLastActivity: 10,
     });
@@ -620,13 +885,15 @@ export class MasteryCalibrationRunnerV2 {
       courseId: "course-cs101",
       learningOutcomeId: "LO-1",
       conceptId: "test-concept",
-      evidences: [{
-        evidenceId: "ev-decay",
-        evidenceSource: "PROCTORED_EXAM",
-        rawScorePercent: 90,
-        attemptNumber: 1,
-        timestamp: "2026-08-01T00:00:00Z",
-      }],
+      evidences: [
+        {
+          evidenceId: "ev-decay",
+          evidenceSource: "PROCTORED_EXAM",
+          rawScorePercent: 90,
+          attemptNumber: 1,
+          timestamp: "2026-08-01T00:00:00Z",
+        },
+      ],
       hasMetPrerequisites: true,
       daysSinceLastActivity: 45,
       previousState: "PROFICIENT",
@@ -645,13 +912,15 @@ export class MasteryCalibrationRunnerV2 {
       courseId: "course-cs101",
       learningOutcomeId: "LO-1",
       conceptId: "test-concept",
-      evidences: [{
-        evidenceId: "ev-iso",
-        evidenceSource: "PROCTORED_EXAM",
-        rawScorePercent: 80,
-        attemptNumber: 1,
-        timestamp: new Date().toISOString(),
-      }],
+      evidences: [
+        {
+          evidenceId: "ev-iso",
+          evidenceSource: "PROCTORED_EXAM",
+          rawScorePercent: 80,
+          attemptNumber: 1,
+          timestamp: new Date().toISOString(),
+        },
+      ],
       hasMetPrerequisites: true,
       daysSinceLastActivity: 1,
     });
@@ -661,20 +930,21 @@ export class MasteryCalibrationRunnerV2 {
       courseId: "course-cs101",
       learningOutcomeId: "LO-1",
       conceptId: "test-concept",
-      evidences: [{
-        evidenceId: "ev-iso",
-        evidenceSource: "PROCTORED_EXAM",
-        rawScorePercent: 80,
-        attemptNumber: 1,
-        timestamp: new Date().toISOString(),
-      }],
+      evidences: [
+        {
+          evidenceId: "ev-iso",
+          evidenceSource: "PROCTORED_EXAM",
+          rawScorePercent: 80,
+          attemptNumber: 1,
+          timestamp: new Date().toISOString(),
+        },
+      ],
       hasMetPrerequisites: true,
       daysSinceLastActivity: 1,
     });
     // Standard threshold 75 -> PROFICIENT, custom threshold 90 -> DEVELOPING
     const tenantPolicyIsolation =
-      standardRec.masteryState === "PROFICIENT" &&
-      customRec.masteryState === "DEVELOPING";
+      standardRec.masteryState === "PROFICIENT" && customRec.masteryState === "DEVELOPING";
 
     return {
       scoreBounded,

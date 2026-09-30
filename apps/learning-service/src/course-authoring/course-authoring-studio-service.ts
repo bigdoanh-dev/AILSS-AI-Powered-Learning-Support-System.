@@ -48,7 +48,10 @@ export class CourseAuthoringStudioService {
     return this.courses.get(courseId);
   }
 
-  public addModule(courseId: string, moduleInput: { title: string; learningOutcomeIds: string[] }): CourseModuleV2 {
+  public addModule(
+    courseId: string,
+    moduleInput: { title: string; learningOutcomeIds: string[] },
+  ): CourseModuleV2 {
     const course = this.courses.get(courseId);
     if (!course) throw new Error(`Course ${courseId} not found`);
 
@@ -100,7 +103,9 @@ export class CourseAuthoringStudioService {
 
     // Invariant: Only APPROVED courses can be PUBLISHED
     if (newStatus === "PUBLISHED" && course.status !== "APPROVED") {
-      throw new Error(`Cannot publish course: status must be APPROVED before publication. Current: ${course.status}`);
+      throw new Error(
+        `Cannot publish course: status must be APPROVED before publication. Current: ${course.status}`,
+      );
     }
 
     // Invariant: Non-instructors cannot approve
@@ -123,7 +128,9 @@ export class CourseAuthoringStudioService {
     if (!course) throw new Error(`Course ${input.courseId} not found`);
 
     if (course.status !== "APPROVED") {
-      throw new Error("Cannot publish: Course must have APPROVED status before publishing a release version.");
+      throw new Error(
+        "Cannot publish: Course must have APPROVED status before publishing a release version.",
+      );
     }
 
     const snapshot: CourseVersionSnapshot = {
@@ -154,7 +161,8 @@ export class CourseAuthoringStudioService {
     const draftId = `draft-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
     const citations = request.sourceMaterialReferences.map(
-      (ref) => `Generated from ${ref.documentTitle}, Section ${ref.section}, Outcome ${request.learningOutcomeId}`,
+      (ref) =>
+        `Generated from ${ref.documentTitle}, Section ${ref.section}, Outcome ${request.learningOutcomeId}`,
     );
 
     const draftResponse: AiAuthoringDraftResponse = {

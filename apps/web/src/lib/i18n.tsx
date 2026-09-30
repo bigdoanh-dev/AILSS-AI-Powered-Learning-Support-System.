@@ -712,7 +712,7 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "Cần hỗ trợ?": "Need Help?",
     "Tìm kiếm...": "Search...",
     "Tìm kiếm": "Search",
-    "Lọc": "Filter",
+    Lọc: "Filter",
     "Tất cả": "All",
     "Thử lại": "Retry",
     "Làm mới": "Refresh",
@@ -754,7 +754,7 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "Bảo mật": "Security",
     "Quyền riêng tư": "Privacy Policy",
     "Điều khoản": "Terms of Service",
-    "Cookie": "Cookie Policy",
+    Cookie: "Cookie Policy",
     "Khả năng tiếp cận": "Accessibility",
     "Tôi muốn giảng dạy": "Teach on AILSS",
     "Nền tảng Giáo dục AI Thế hệ mới": "Next-Generation AI Education Platform",
@@ -763,7 +763,8 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "🛒 Tìm khóa học để mua": "🛒 Find courses to buy",
     "Tìm Kiếm Khóa Học Để Mua & Kích Hoạt Ngay": "Search & Purchase Courses for Instant Access",
     "Thanh toán tự động qua SePay QR": "Instant automated bank transfer via SePay QR",
-    "Tìm kiếm theo tên khóa học, giảng viên hoặc kỹ năng công nghệ cần học.": "Search by course title, instructor, or technology skills.",
+    "Tìm kiếm theo tên khóa học, giảng viên hoặc kỹ năng công nghệ cần học.":
+      "Search by course title, instructor, or technology skills.",
     "Xem toàn bộ khóa học ↗": "View all courses ↗",
     "✕ Xóa": "✕ Clear",
     "Trí tuệ nhân tạo (AI)": "Artificial Intelligence (AI)",
@@ -778,7 +779,8 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "Trung cấp": "Intermediate",
     "Nâng cao": "Advanced",
     "Chuyên sâu": "Expert",
-    "Kết nối tri thức, con người và công nghệ. Học một điều mới, mỗi ngày.": "Connecting knowledge, people, and technology. Learn something new every day.",
+    "Kết nối tri thức, con người và công nghệ. Học một điều mới, mỗi ngày.":
+      "Connecting knowledge, people, and technology. Learn something new every day.",
     "AI hỗ trợ. Con người quyết định.": "AI-Assisted. Human-Decided.",
   },
   ja: {
@@ -825,7 +827,7 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "Cần hỗ trợ?": "サポートが必要ですか？",
     "Tìm kiếm...": "検索...",
     "Tìm kiếm": "検索",
-    "Lọc": "絞り込み",
+    Lọc: "絞り込み",
     "Tất cả": "すべて",
     "Thử lại": "再試行",
     "Làm mới": "更新",
@@ -867,7 +869,7 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "Bảo mật": "セキュリティ",
     "Quyền riêng tư": "プライバシーポリシー",
     "Điều khoản": "利用規約",
-    "Cookie": "Cookieポリシー",
+    Cookie: "Cookieポリシー",
     "Khả năng tiếp cận": "アクセシビリティ",
     "Tôi muốn giảng dạy": "講師として参加",
     "Nền tảng Giáo dục AI Thế hệ mới": "次世代AI教育プラットフォーム",
@@ -876,7 +878,8 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "🛒 Tìm khóa học để mua": "🛒 コースを探して購入",
     "Tìm Kiếm Khóa Học Để Mua & Kích Hoạt Ngay": "コースを検索して即時受講開始",
     "Thanh toán tự động qua SePay QR": "SePay QRコード決済で即時有効化",
-    "Tìm kiếm theo tên khóa học, giảng viên hoặc kỹ năng công nghệ cần học.": "コース名、講師名、習得技術で検索。",
+    "Tìm kiếm theo tên khóa học, giảng viên hoặc kỹ năng công nghệ cần học.":
+      "コース名、講師名、習得技術で検索。",
     "Xem toàn bộ khóa học ↗": "全コース一覧 ↗",
     "✕ Xóa": "✕ クリア",
     "Trí tuệ nhân tạo (AI)": "人工知能 (AI)",
@@ -891,7 +894,8 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "Trung cấp": "中級",
     "Nâng cao": "上級",
     "Chuyên sâu": "専門",
-    "Kết nối tri thức, con người và công nghệ. Học một điều mới, mỗi ngày.": "知識・人・技術をつなぐ。毎日、新しい学びを。",
+    "Kết nối tri thức, con người và công nghệ. Học một điều mới, mỗi ngày.":
+      "知識・人・技術をつなぐ。毎日、新しい学びを。",
     "AI hỗ trợ. Con người quyết định.": "AIが支援し、人が決定する。",
   },
   ko: {
@@ -938,7 +942,7 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "Cần hỗ trợ?": "도움이 필요하신가요?",
     "Tìm kiếm...": "검색...",
     "Tìm kiếm": "검색",
-    "Lọc": "필터",
+    Lọc: "필터",
     "Tất cả": "전체",
     "Thử lại": "다시 시도",
     "Làm mới": "새로고침",
@@ -980,7 +984,7 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "Bảo mật": "보안 센터",
     "Quyền riêng tư": "개인정보처리방침",
     "Điều khoản": "서비스 이용약관",
-    "Cookie": "쿠키 정책",
+    Cookie: "쿠키 정책",
     "Khả năng tiếp cận": "웹 접근성",
     "Tôi muốn giảng dạy": "교수자 지원",
     "Nền tảng Giáo dục AI Thế hệ mới": "차세대 AI 교육 플랫폼",
@@ -989,7 +993,8 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "🛒 Tìm khóa học để mua": "🛒 수강 신청 강좌 찾기",
     "Tìm Kiếm Khóa Học Để Mua & Kích Hoạt Ngay": "강좌 탐색 및 즉시 수강 시작",
     "Thanh toán tự động qua SePay QR": "SePay QR 결제로 즉시 수강 권한 승인",
-    "Tìm kiếm theo tên khóa học, giảng viên hoặc kỹ năng công nghệ cần học.": "강좌명, 교수진, 기술 스택으로 검색하세요.",
+    "Tìm kiếm theo tên khóa học, giảng viên hoặc kỹ năng công nghệ cần học.":
+      "강좌명, 교수진, 기술 스택으로 검색하세요.",
     "Xem toàn bộ khóa học ↗": "전체 강좌 보기 ↗",
     "✕ Xóa": "✕ 삭제",
     "Trí tuệ nhân tạo (AI)": "인공지능 (AI)",
@@ -1004,7 +1009,8 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "Trung cấp": "중급",
     "Nâng cao": "고급",
     "Chuyên sâu": "전문",
-    "Kết nối tri thức, con người và công nghệ. Học một điều mới, mỗi ngày.": "지식, 사람, 기술을 연결합니다. 매일 새로운 것을 배워보세요.",
+    "Kết nối tri thức, con người và công nghệ. Học một điều mới, mỗi ngày.":
+      "지식, 사람, 기술을 연결합니다. 매일 새로운 것을 배워보세요.",
     "AI hỗ trợ. Con người quyết định.": "AI가 지원하고, 사람이 결정합니다.",
   },
   zh: {
@@ -1051,7 +1057,7 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "Cần hỗ trợ?": "需要帮助？",
     "Tìm kiếm...": "搜索...",
     "Tìm kiếm": "搜索",
-    "Lọc": "筛选",
+    Lọc: "筛选",
     "Tất cả": "全部",
     "Thử lại": "重试",
     "Làm mới": "刷新",
@@ -1093,7 +1099,7 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "Bảo mật": "安全合规",
     "Quyền riêng tư": "隐私政策",
     "Điều khoản": "服务条款",
-    "Cookie": "Cookie政策",
+    Cookie: "Cookie政策",
     "Khả năng tiếp cận": "无障碍访问",
     "Tôi muốn giảng dạy": "申请成为讲师",
     "Nền tảng Giáo dục AI Thế hệ mới": "新一代 AI 智能教育平台",
@@ -1102,7 +1108,8 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "🛒 Tìm khóa học để mua": "🛒 寻找可购课程",
     "Tìm Kiếm Khóa Học Để Mua & Kích Hoạt Ngay": "搜索并购买课程，即刻开通权限",
     "Thanh toán tự động qua SePay QR": "SePay 银行聚合码自动到账对账",
-    "Tìm kiếm theo tên khóa học, giảng viên hoặc kỹ năng công nghệ cần học.": "按课程名、授课讲师或技术技能搜索。",
+    "Tìm kiếm theo tên khóa học, giảng viên hoặc kỹ năng công nghệ cần học.":
+      "按课程名、授课讲师或技术技能搜索。",
     "Xem toàn bộ khóa học ↗": "查看全部课程 ↗",
     "✕ Xóa": "✕ 清除",
     "Trí tuệ nhân tạo (AI)": "人工智能 (AI)",
@@ -1117,7 +1124,8 @@ export const PHRASE_DICTIONARY: Record<SupportedLanguage, Record<string, string>
     "Trung cấp": "中级",
     "Nâng cao": "高级",
     "Chuyên sâu": "专家级",
-    "Kết nối tri thức, con người và công nghệ. Học một điều mới, mỗi ngày.": "连接知识、人与技术。每天探索一项新技能。",
+    "Kết nối tri thức, con người và công nghệ. Học một điều mới, mỗi ngày.":
+      "连接知识、人与技术。每天探索一项新技能。",
     "AI hỗ trợ. Con người quyết định.": "AI 赋能，人类主导。",
   },
 };
@@ -1151,7 +1159,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return "vi";
   });
 
-  const originalTextsRef = useRef<WeakMap<Node, string>>(new WeakMap());
+  const textRecordsRef = useRef<WeakMap<Node, { original: string; rendered: string }>>(new WeakMap());
 
   useEffect(() => {
     try {
@@ -1164,7 +1172,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined" || !window.document) return;
 
     const dict = PHRASE_DICTIONARY[language];
-    const originals = originalTextsRef.current;
+    const records = textRecordsRef.current;
 
     const translateNode = (node: Node) => {
       // Skip scripts, styles, code blocks
@@ -1177,26 +1185,23 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         const text = node.nodeValue;
         if (!text || !text.trim()) return;
 
-        let orig = originals.get(node);
-        if (!orig) {
-          orig = text;
-          originals.set(node, orig);
+        let record = records.get(node);
+        if (!record) {
+          record = { original: text, rendered: text };
+          records.set(node, record);
+        } else if (text !== record.rendered) {
+          // React updated the text node. Treat its new value as the source text
+          // instead of restoring the value from an earlier render.
+          record.original = text;
+          record.rendered = text;
         }
 
-        if (language === "vi") {
-          if (node.nodeValue !== orig) {
-            node.nodeValue = orig;
-          }
-          return;
-        }
-
-        const trimmed = orig.trim();
-        if (dict && dict[trimmed]) {
-          const replacement = dict[trimmed];
-          const newText = orig.replace(trimmed, replacement);
-          if (node.nodeValue !== newText) {
-            node.nodeValue = newText;
-          }
+        const trimmed = record.original.trim();
+        const replacement = language === "vi" ? undefined : dict?.[trimmed];
+        const newText = replacement ? record.original.replace(trimmed, replacement) : record.original;
+        if (node.nodeValue !== newText) {
+          record.rendered = newText;
+          node.nodeValue = newText;
         }
       }
     };

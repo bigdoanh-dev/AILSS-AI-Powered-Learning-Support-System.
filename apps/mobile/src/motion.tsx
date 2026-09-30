@@ -158,11 +158,7 @@ export function FadeSlideIn({
     };
   }, [delay, duration, fromY, opacity, reduceMotion, translateY]);
 
-  return (
-    <Animated.View style={[{ opacity, transform: [{ translateY }] }, style]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[{ opacity, transform: [{ translateY }] }, style]}>{children}</Animated.View>;
 }
 
 export function StaggerPop({
@@ -219,20 +215,10 @@ export function StaggerPop({
     };
   }, [baseDelay, index, opacity, reduceMotion, scale, staggerStep]);
 
-  return (
-    <Animated.View style={[{ opacity, transform: [{ scale }] }, style]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[{ opacity, transform: [{ scale }] }, style]}>{children}</Animated.View>;
 }
 
-export function PulseBadge({
-  children,
-  style,
-}: {
-  children: React.ReactNode;
-  style?: StyleProp<ViewStyle>;
-}) {
+export function PulseBadge({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(0.85)).current;
   const reduceMotion = useReducedMotionPreference();
@@ -276,11 +262,7 @@ export function PulseBadge({
     return () => anim.stop();
   }, [opacity, reduceMotion, scale]);
 
-  return (
-    <Animated.View style={[{ opacity, transform: [{ scale }] }, style]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[{ opacity, transform: [{ scale }] }, style]}>{children}</Animated.View>;
 }
 
 export function FloatingElement({
@@ -321,11 +303,7 @@ export function FloatingElement({
     return () => anim.stop();
   }, [distance, duration, reduceMotion, translateY]);
 
-  return (
-    <Animated.View style={[{ transform: [{ translateY }] }, style]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[{ transform: [{ translateY }] }, style]}>{children}</Animated.View>;
 }
 
 export function AnimatedProgressBar({
@@ -388,9 +366,15 @@ export function AnimatedProgressBar({
   );
 }
 
-function parseMobileNumber(input: number | string, explicitDecimals?: number): { target: number; decimals: number } {
+function parseMobileNumber(
+  input: number | string,
+  explicitDecimals?: number,
+): { target: number; decimals: number } {
   if (typeof input === "number") {
-    return { target: input, decimals: explicitDecimals !== undefined ? explicitDecimals : (input % 1 !== 0 ? 1 : 0) };
+    return {
+      target: input,
+      decimals: explicitDecimals !== undefined ? explicitDecimals : input % 1 !== 0 ? 1 : 0,
+    };
   }
   const str = String(input).trim();
   const match = str.match(/^([^\d\-+]*)([\-+]?\d(?:[\d.,]*\d)?)(.*)$/);

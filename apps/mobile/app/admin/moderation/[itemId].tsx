@@ -21,7 +21,7 @@ import {
   type ModerationReport,
   type ModerationAction,
 } from "../../../src/admin";
-import { Page, Button, styles, tokens } from "../../../src/ui";
+import { Page, Button, PasswordInput, styles, tokens } from "../../../src/ui";
 
 export default function AdminModerationDetailScreen() {
   const { itemId } = useLocalSearchParams<{ itemId: string }>();
@@ -227,8 +227,7 @@ export default function AdminModerationDetailScreen() {
                 accessibilityLabel="Lý do xử lý kiểm duyệt"
               />
 
-              <TextInput
-                secureTextEntry
+              <PasswordInput
                 placeholder="Mật khẩu quản trị viên hiện tại"
                 value={currentPassword}
                 onChangeText={setCurrentPassword}

@@ -29,15 +29,7 @@ import {
 } from "../../../../src/assessment";
 import { ApiError } from "../../../../src/api";
 import { runtime } from "../../../../src/runtime";
-import {
-  Button,
-  Page,
-  Badge,
-  ProgressBar,
-  Icon,
-  styles,
-  tokens,
-} from "../../../../src/ui";
+import { Button, Page, Badge, ProgressBar, Icon, styles, tokens } from "../../../../src/ui";
 
 export default function AttemptScreen() {
   const { quizId, attemptId, confirm } = useLocalSearchParams<{
@@ -61,7 +53,10 @@ export default function AttemptScreen() {
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(confirm === "1" || confirm === "true");
-  const submissionOperation = useRef<{ idempotencyKey: string; payload: ReturnType<typeof buildSubmitPayload> } | null>(null);
+  const submissionOperation = useRef<{
+    idempotencyKey: string;
+    payload: ReturnType<typeof buildSubmitPayload>;
+  } | null>(null);
   const submissionGate = useRef(new AttemptSubmissionGate());
 
   useEffect(() => {
@@ -96,9 +91,11 @@ export default function AttemptScreen() {
     } catch (cause) {
       setAttemptData(null);
       setQuizData(null);
-      setError(cause instanceof ApiError
-        ? cause.message
-        : "Không thể tải bài làm. Vui lòng kiểm tra kết nối và thử lại.");
+      setError(
+        cause instanceof ApiError
+          ? cause.message
+          : "Không thể tải bài làm. Vui lòng kiểm tra kết nối và thử lại.",
+      );
     } finally {
       setLoading(false);
     }
@@ -255,7 +252,10 @@ export default function AttemptScreen() {
         // Fall through to error presentation
       }
 
-      Alert.alert("Nộp bài chưa hoàn tất", "Không xác minh được kết quả với máy chủ. Bản trả lời đã được khóa để lần thử lại dùng cùng mã chống trùng; vui lòng thử nộp lại khi có mạng.");
+      Alert.alert(
+        "Nộp bài chưa hoàn tất",
+        "Không xác minh được kết quả với máy chủ. Bản trả lời đã được khóa để lần thử lại dùng cùng mã chống trùng; vui lòng thử nộp lại khi có mạng.",
+      );
       submissionGate.current.finish("RETRYABLE");
       setIsSubmitting(false);
     }
@@ -342,7 +342,8 @@ export default function AttemptScreen() {
           )}
           {submissionOperation.current && (
             <Text accessibilityRole="alert" style={[styles.text, { color: tokens.color.warning }]}>
-              Yêu cầu nộp trước đó chưa được xác minh. Lần thử lại sẽ gửi nguyên câu trả lời với cùng mã chống trùng.
+              Yêu cầu nộp trước đó chưa được xác minh. Lần thử lại sẽ gửi nguyên câu trả lời với cùng mã chống
+              trùng.
             </Text>
           )}
           <View style={screenStyles.confirmActions}>
@@ -353,11 +354,7 @@ export default function AttemptScreen() {
               disabled={isSubmitting}
               size="lg"
             />
-            <Button
-              label="Quay lại làm tiếp"
-              variant="outline"
-              onPress={() => setShowConfirmModal(false)}
-            />
+            <Button label="Quay lại làm tiếp" variant="outline" onPress={() => setShowConfirmModal(false)} />
           </View>
         </View>
       </Page>
@@ -411,7 +408,9 @@ export default function AttemptScreen() {
       {submissionOperation.current && (
         <View style={screenStyles.expiredBanner} accessibilityRole="alert">
           <Text style={screenStyles.expiredTitle}>Đáp án đã khóa để xác minh lần nộp</Text>
-          <Text style={screenStyles.expiredText}>Nếu mạng gián đoạn, thử nộp lại sẽ dùng cùng nội dung và mã chống trùng.</Text>
+          <Text style={screenStyles.expiredText}>
+            Nếu mạng gián đoạn, thử nộp lại sẽ dùng cùng nội dung và mã chống trùng.
+          </Text>
         </View>
       )}
 
@@ -635,7 +634,13 @@ export default function AttemptScreen() {
       <View style={screenStyles.footer}>
         <Button
           testID="student-assessment-submit"
-          label={isExpired ? "Thời gian đã hết" : submissionOperation.current ? "Thử xác minh nộp bài" : "Nộp bài thi"}
+          label={
+            isExpired
+              ? "Thời gian đã hết"
+              : submissionOperation.current
+                ? "Thử xác minh nộp bài"
+                : "Nộp bài thi"
+          }
           onPress={() => {
             if (!isExpired) setShowConfirmModal(true);
           }}

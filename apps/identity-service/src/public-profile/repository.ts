@@ -34,6 +34,18 @@ function numberValue(row: types.Row, name: string): number {
 export class PublicProfileRepository {
   public constructor(private readonly client: CassandraClient) {}
 
+  public async getAvatar(
+    lecturerId: string,
+  ): Promise<{ contentType: string; objectKey: string } | undefined> {
+    const rows = await this.client.execute(
+      `SELECT content_type,object_key FROM avatar_by_user WHERE user_id=?`,
+      [uuid(lecturerId)],
+      LOCAL_QUORUM,
+    );
+    const row = rows[0];
+    return row ? { contentType: text(row, "content_type"), objectKey: text(row, "object_key") } : undefined;
+  }
+
   public async getCanonicalSubject(userId: string): Promise<CanonicalPublicSubject | undefined> {
     // ERRATA-P7-007-01 / Q-IDN-001: canonical public-visibility guard.
     const rows = await this.client.execute(
@@ -57,7 +69,7 @@ export class PublicProfileRepository {
   public async getProjection(lecturerId: string): Promise<PublicLecturerProjection | undefined> {
     // Q-IDN-006: exact public projection read at the registry candidate consistency.
     const rows = await this.client.execute(
-      `SELECT lecturer_id,display_name,bio,avatar_object_key,verified,profile_version,updated_at
+      `SELECT lecturer_id,display_name,bio,avatar_object_key,experience,education,achievements,avatar_public,verified,profile_version,updated_at
        FROM public_lecturer_by_id WHERE lecturer_id=?`,
       [uuid(lecturerId)],
       LOCAL_ONE,
@@ -71,6 +83,10 @@ export class PublicProfileRepository {
       displayName: text(row, "display_name"),
       bio: nullableText(row, "bio"),
       avatarObjectKey: nullableText(row, "avatar_object_key"),
+      experience: nullableText(row, "experience"),
+      education: nullableText(row, "education"),
+      achievements: nullableText(row, "achievements"),
+      avatarPublic: row.get("avatar_public") === true,
       verified: Boolean(row.get("verified")),
       profileVersion: numberValue(row, "profile_version"),
       updatedAt,

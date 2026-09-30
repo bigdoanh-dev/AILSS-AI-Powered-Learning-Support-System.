@@ -1,0 +1,1537 @@
+{
+  "generatedAt": "2026-09-23T18:28:22.827Z",
+  "sourceRoots": ["app", "src"],
+  "routeCount": 61,
+  "summary": {
+    "connect": 22,
+    "refactor": 0,
+    "defer": 39,
+    "remove": 0
+  },
+  "routes": [
+    {
+      "route": "/",
+      "sourceFile": "app/index.tsx",
+      "component": "Home",
+      "intendedRole": "PUBLIC_OR_ROLE_BASED",
+      "apiDependencies": [
+        "/api/v1/courses",
+        "/api/v1/me/avatar",
+        "/api/v1/me/classes",
+        "/api/v1/me/courses",
+        "/api/v1/me/owned-offerings",
+        "/api/v1/me/schedule"
+      ],
+      "apiDependencySources": {
+        "/api/v1/courses": ["app/index.tsx"],
+        "/api/v1/me/avatar": ["app/index.tsx"],
+        "/api/v1/me/classes": ["app/index.tsx"],
+        "/api/v1/me/courses": ["app/index.tsx"],
+        "/api/v1/me/owned-offerings": ["app/index.tsx"],
+        "/api/v1/me/schedule": ["app/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": ["/student"],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/[screen]",
+      "sourceFile": "app/[screen].tsx",
+      "component": "Screen",
+      "intendedRole": "PUBLIC_OR_ROLE_BASED",
+      "apiDependencies": ["/api/v1/auth/register", "/api/v1/courses/search", "/api/v1/me/avatar"],
+      "apiDependencySources": {
+        "/api/v1/auth/register": ["app/[screen].tsx"],
+        "/api/v1/courses/search": ["app/[screen].tsx"],
+        "/api/v1/me/avatar": ["app/[screen].tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/account",
+      "sourceFile": "app/account.tsx",
+      "component": "AccountScreen",
+      "intendedRole": "AUTHENTICATED_ROLE",
+      "apiDependencies": ["/api/v1/me", "/api/v1/me/avatar", "/api/v1/me/password"],
+      "apiDependencySources": {
+        "/api/v1/me": ["app/account.tsx"],
+        "/api/v1/me/avatar": ["app/account.tsx"],
+        "/api/v1/me/password": ["app/account.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/admin",
+      "sourceFile": "app/admin/index.tsx",
+      "component": "AdminDashboard",
+      "intendedRole": "ADMIN",
+      "apiDependencies": ["/api/v1/admin/lecturer-applications", "/api/v1/admin/moderation/reports"],
+      "apiDependencySources": {
+        "/api/v1/admin/lecturer-applications": ["app/admin/index.tsx"],
+        "/api/v1/admin/moderation/reports": ["app/admin/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/admin/commerce",
+      "sourceFile": "app/admin/commerce/index.tsx",
+      "component": "AdminCommerceScreen",
+      "intendedRole": "ADMIN",
+      "apiDependencies": [],
+      "apiDependencySources": {},
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/admin/commerce/orders/[orderId]",
+      "sourceFile": "app/admin/commerce/orders/[orderId].tsx",
+      "component": "AdminOrderDetailScreen",
+      "intendedRole": "ADMIN",
+      "apiDependencies": ["/api/v1/orders/:param"],
+      "apiDependencySources": {
+        "/api/v1/orders/:param": ["app/admin/commerce/orders/[orderId].tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/admin/lecturers",
+      "sourceFile": "app/admin/lecturers/index.tsx",
+      "component": "AdminLecturerVerificationScreen",
+      "intendedRole": "ADMIN",
+      "apiDependencies": [
+        "/api/v1/admin/lecturer-applications",
+        "/api/v1/admin/lecturer-applications/:param/decision",
+        "/api/v1/admin/lecturers/:param/verify"
+      ],
+      "apiDependencySources": {
+        "/api/v1/admin/lecturer-applications": ["app/admin/lecturers/index.tsx"],
+        "/api/v1/admin/lecturer-applications/:param/decision": ["app/admin/lecturers/index.tsx"],
+        "/api/v1/admin/lecturers/:param/verify": ["app/admin/lecturers/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/admin/moderation",
+      "sourceFile": "app/admin/moderation/index.tsx",
+      "component": "AdminModerationQueueScreen",
+      "intendedRole": "ADMIN",
+      "apiDependencies": ["/api/v1/admin/reports"],
+      "apiDependencySources": {
+        "/api/v1/admin/reports": ["app/admin/moderation/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/admin/moderation/[itemId]",
+      "sourceFile": "app/admin/moderation/[itemId].tsx",
+      "component": "AdminModerationDetailScreen",
+      "intendedRole": "ADMIN",
+      "apiDependencies": ["/api/v1/admin/reports", "/api/v1/admin/reports/:param/moderate"],
+      "apiDependencySources": {
+        "/api/v1/admin/reports": ["app/admin/moderation/[itemId].tsx"],
+        "/api/v1/admin/reports/:param/moderate": ["app/admin/moderation/[itemId].tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/admin/revenue",
+      "sourceFile": "app/admin/revenue/index.tsx",
+      "component": "AdminRevenueDashboard",
+      "intendedRole": "ADMIN",
+      "apiDependencies": ["/api/v1/admin/dashboard/revenue"],
+      "apiDependencySources": {
+        "/api/v1/admin/dashboard/revenue": ["app/admin/revenue/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/admin/stats",
+      "sourceFile": "app/admin/stats/index.tsx",
+      "component": "AdminStatsDashboard",
+      "intendedRole": "ADMIN",
+      "apiDependencies": ["/api/v1/admin/dashboard/stats"],
+      "apiDependencySources": {
+        "/api/v1/admin/dashboard/stats": ["app/admin/stats/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/admin/users",
+      "sourceFile": "app/admin/users/index.tsx",
+      "component": "AdminUsersListScreen",
+      "intendedRole": "ADMIN",
+      "apiDependencies": ["/api/v1/admin/users"],
+      "apiDependencySources": {
+        "/api/v1/admin/users": ["app/admin/users/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/admin/users/[userId]",
+      "sourceFile": "app/admin/users/[userId].tsx",
+      "component": "AdminUserDetailScreen",
+      "intendedRole": "ADMIN",
+      "apiDependencies": [
+        "/api/v1/admin/lecturers/:param/verify",
+        "/api/v1/admin/users/:param",
+        "/api/v1/admin/users/:param/status"
+      ],
+      "apiDependencySources": {
+        "/api/v1/admin/lecturers/:param/verify": ["app/admin/users/[userId].tsx"],
+        "/api/v1/admin/users/:param": ["app/admin/users/[userId].tsx"],
+        "/api/v1/admin/users/:param/status": ["app/admin/users/[userId].tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/assessments",
+      "sourceFile": "app/assessments/index.tsx",
+      "component": "AssessmentListScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": [
+        "/api/v1/classes",
+        "/api/v1/me/courses",
+        "/api/v1/targets/CLASS/:param/quizzes",
+        "/api/v1/targets/COURSE/:param/quizzes"
+      ],
+      "apiDependencySources": {
+        "/api/v1/classes": ["app/assessments/index.tsx"],
+        "/api/v1/me/courses": ["app/assessments/index.tsx"],
+        "/api/v1/targets/CLASS/:param/quizzes": ["app/assessments/index.tsx"],
+        "/api/v1/targets/COURSE/:param/quizzes": ["app/assessments/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/assessments/[quizId]",
+      "sourceFile": "app/assessments/[quizId]/index.tsx",
+      "component": "QuizDetailScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": ["/api/v1/quizzes/:param", "/api/v1/quizzes/:param/attempts"],
+      "apiDependencySources": {
+        "/api/v1/quizzes/:param": ["app/assessments/[quizId]/index.tsx"],
+        "/api/v1/quizzes/:param/attempts": ["app/assessments/[quizId]/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/assessments/[quizId]/attempt/[attemptId]",
+      "sourceFile": "app/assessments/[quizId]/attempt/[attemptId].tsx",
+      "component": "AttemptScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": [
+        "/api/v1/attempts/:param",
+        "/api/v1/attempts/:param/submit",
+        "/api/v1/quizzes/:param"
+      ],
+      "apiDependencySources": {
+        "/api/v1/attempts/:param": ["app/assessments/[quizId]/attempt/[attemptId].tsx"],
+        "/api/v1/attempts/:param/submit": ["app/assessments/[quizId]/attempt/[attemptId].tsx"],
+        "/api/v1/quizzes/:param": ["app/assessments/[quizId]/attempt/[attemptId].tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/assessments/[quizId]/result/[resultId]",
+      "sourceFile": "app/assessments/[quizId]/result/[resultId].tsx",
+      "component": "QuizResultScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": ["/api/v1/attempts/:param/result", "/api/v1/quizzes/:param"],
+      "apiDependencySources": {
+        "/api/v1/attempts/:param/result": ["app/assessments/[quizId]/result/[resultId].tsx"],
+        "/api/v1/quizzes/:param": ["app/assessments/[quizId]/result/[resultId].tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/classes",
+      "sourceFile": "app/classes/index.tsx",
+      "component": "StudentClassesScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": ["/api/v1/me/attendance", "/api/v1/me/classes", "/api/v1/me/schedule"],
+      "apiDependencySources": {
+        "/api/v1/me/attendance": ["app/classes/index.tsx"],
+        "/api/v1/me/classes": ["app/classes/index.tsx"],
+        "/api/v1/me/schedule": ["app/classes/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/classes/[classId]",
+      "sourceFile": "app/classes/[classId]/index.tsx",
+      "component": "ClassDetails",
+      "intendedRole": "STUDENT",
+      "apiDependencies": ["/api/v1/classes/:param", "/api/v1/classes/:param/sessions"],
+      "apiDependencySources": {
+        "/api/v1/classes/:param": ["app/classes/[classId]/index.tsx"],
+        "/api/v1/classes/:param/sessions": ["app/classes/[classId]/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": ["/login", "/"],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/classes/[classId]/sessions/[sessionId]",
+      "sourceFile": "app/classes/[classId]/sessions/[sessionId].tsx",
+      "component": "SessionDetailScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": ["/api/v1/class-sessions/:param", "/api/v1/me/attendance"],
+      "apiDependencySources": {
+        "/api/v1/class-sessions/:param": ["app/classes/[classId]/sessions/[sessionId].tsx"],
+        "/api/v1/me/attendance": ["app/classes/[classId]/sessions/[sessionId].tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/courses",
+      "sourceFile": "app/courses/index.tsx",
+      "component": "CourseDiscoveryScreen",
+      "intendedRole": "PUBLIC_OR_ROLE_BASED",
+      "apiDependencies": ["/api/v1/courses", "/api/v1/courses/search"],
+      "apiDependencySources": {
+        "/api/v1/courses": ["src/catalog-preview.ts"],
+        "/api/v1/courses/search": ["app/courses/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/courses/[courseId]",
+      "sourceFile": "app/courses/[courseId].tsx",
+      "component": "CourseDetailScreen",
+      "intendedRole": "PUBLIC_OR_ROLE_BASED",
+      "apiDependencies": [
+        "/api/v1/courses/:param",
+        "/api/v1/courses/:param/enrollments",
+        "/api/v1/courses/:param/offerings",
+        "/api/v1/courses/:param/progress",
+        "/api/v1/courses/:param/reviews",
+        "/api/v1/reviews/:param"
+      ],
+      "apiDependencySources": {
+        "/api/v1/courses/:param": ["app/courses/[courseId].tsx"],
+        "/api/v1/courses/:param/enrollments": ["app/courses/[courseId].tsx"],
+        "/api/v1/courses/:param/offerings": ["app/courses/[courseId].tsx"],
+        "/api/v1/courses/:param/progress": ["app/courses/[courseId].tsx"],
+        "/api/v1/courses/:param/reviews": ["app/courses/[courseId].tsx"],
+        "/api/v1/reviews/:param": ["app/courses/[courseId].tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/learn",
+      "sourceFile": "app/learn/index.tsx",
+      "component": "MyLearningScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": ["/api/v1/courses/:param/progress", "/api/v1/me/courses"],
+      "apiDependencySources": {
+        "/api/v1/courses/:param/progress": ["app/learn/index.tsx"],
+        "/api/v1/me/courses": ["app/learn/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/learn/[courseId]",
+      "sourceFile": "app/learn/[courseId]/index.tsx",
+      "component": "CourseLearningScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": [
+        "/api/v1/courses/:param",
+        "/api/v1/courses/:param/lessons",
+        "/api/v1/courses/:param/progress",
+        "/api/v1/targets/COURSE/:param/quizzes"
+      ],
+      "apiDependencySources": {
+        "/api/v1/courses/:param": ["app/learn/[courseId]/index.tsx"],
+        "/api/v1/courses/:param/lessons": ["app/learn/[courseId]/index.tsx"],
+        "/api/v1/courses/:param/progress": ["app/learn/[courseId]/index.tsx"],
+        "/api/v1/targets/COURSE/:param/quizzes": ["app/learn/[courseId]/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/learn/[courseId]/lessons/[lessonId]",
+      "sourceFile": "app/learn/[courseId]/lessons/[lessonId].tsx",
+      "component": "LessonConsumptionScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": [
+        "/api/v1/courses/:param/progress",
+        "/api/v1/lessons/:param",
+        "/api/v1/lessons/:param/completion"
+      ],
+      "apiDependencySources": {
+        "/api/v1/courses/:param/progress": [
+          "app/learn/[courseId]/lessons/[lessonId].tsx",
+          "src/lesson-sync.ts"
+        ],
+        "/api/v1/lessons/:param": ["app/learn/[courseId]/lessons/[lessonId].tsx"],
+        "/api/v1/lessons/:param/completion": [
+          "app/learn/[courseId]/lessons/[lessonId].tsx",
+          "src/lesson-sync.ts"
+        ]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/login",
+      "sourceFile": "app/login.tsx",
+      "component": "LoginScreen",
+      "intendedRole": "PUBLIC_OR_ROLE_BASED",
+      "apiDependencies": ["/api/v1/auth/register", "/api/v1/courses/search", "/api/v1/me/avatar"],
+      "apiDependencySources": {
+        "/api/v1/auth/register": ["app/[screen].tsx"],
+        "/api/v1/courses/search": ["app/[screen].tsx"],
+        "/api/v1/me/avatar": ["app/[screen].tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/notifications",
+      "sourceFile": "app/notifications.tsx",
+      "component": "NotificationsScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": ["/api/v1/notifications", "/api/v1/notifications/:param/read"],
+      "apiDependencySources": {
+        "/api/v1/notifications": ["app/notifications.tsx"],
+        "/api/v1/notifications/:param/read": ["app/notifications.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/progress",
+      "sourceFile": "app/progress/index.tsx",
+      "component": "ProgressRedirect",
+      "intendedRole": "STUDENT",
+      "apiDependencies": [],
+      "apiDependencySources": {},
+      "localStorageDependencies": [],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": ["/student/mastery"],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/register",
+      "sourceFile": "app/register.tsx",
+      "component": "RegisterScreen",
+      "intendedRole": "PUBLIC_OR_ROLE_BASED",
+      "apiDependencies": ["/api/v1/auth/register", "/api/v1/courses/search", "/api/v1/me/avatar"],
+      "apiDependencySources": {
+        "/api/v1/auth/register": ["app/[screen].tsx"],
+        "/api/v1/courses/search": ["app/[screen].tsx"],
+        "/api/v1/me/avatar": ["app/[screen].tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/result",
+      "sourceFile": "app/result.tsx",
+      "component": "ResultScreen",
+      "intendedRole": "PUBLIC_OR_ROLE_BASED",
+      "apiDependencies": [],
+      "apiDependencySources": {},
+      "localStorageDependencies": [],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/settings",
+      "sourceFile": "app/settings.tsx",
+      "component": "SettingsScreen",
+      "intendedRole": "AUTHENTICATED_ROLE",
+      "apiDependencies": [],
+      "apiDependencySources": {},
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/student",
+      "sourceFile": "app/student/index.tsx",
+      "component": "StudentWorkspace",
+      "intendedRole": "STUDENT",
+      "apiDependencies": [
+        "/api/v1/assistant/chat",
+        "/api/v1/courses/:param/progress",
+        "/api/v1/lessons/:param/completion",
+        "/api/v1/mastery/courses/:param",
+        "/api/v1/me/courses",
+        "/api/v1/study-plan/current"
+      ],
+      "apiDependencySources": {
+        "/api/v1/assistant/chat": ["src/adaptive.ts"],
+        "/api/v1/courses/:param/progress": ["src/lesson-sync.ts"],
+        "/api/v1/lessons/:param/completion": ["src/lesson-sync.ts"],
+        "/api/v1/mastery/courses/:param": ["src/use-student-learning.ts"],
+        "/api/v1/me/courses": ["src/use-student-learning.ts"],
+        "/api/v1/study-plan/current": ["src/use-student-learning.ts"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": ["/login", "/"],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/student/mastery",
+      "sourceFile": "app/student/mastery.tsx",
+      "component": "MasteryScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": [
+        "/api/v1/assistant/chat",
+        "/api/v1/courses/:param/progress",
+        "/api/v1/lessons/:param/completion",
+        "/api/v1/mastery/courses/:param",
+        "/api/v1/me/courses",
+        "/api/v1/study-plan/current"
+      ],
+      "apiDependencySources": {
+        "/api/v1/assistant/chat": ["src/adaptive.ts"],
+        "/api/v1/courses/:param/progress": ["src/lesson-sync.ts"],
+        "/api/v1/lessons/:param/completion": ["src/lesson-sync.ts"],
+        "/api/v1/mastery/courses/:param": ["src/use-student-learning.ts"],
+        "/api/v1/me/courses": ["src/use-student-learning.ts"],
+        "/api/v1/study-plan/current": ["src/use-student-learning.ts"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": ["/login", "/"],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/student/study-plan",
+      "sourceFile": "app/student/study-plan.tsx",
+      "component": "StudyPlanScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": [
+        "/api/v1/assistant/chat",
+        "/api/v1/courses/:param/progress",
+        "/api/v1/lessons/:param/completion",
+        "/api/v1/mastery/courses/:param",
+        "/api/v1/me/courses",
+        "/api/v1/study-plan/current",
+        "/api/v1/study-plan/generate",
+        "/api/v1/study-plan/items/:param/:param"
+      ],
+      "apiDependencySources": {
+        "/api/v1/assistant/chat": ["src/adaptive.ts"],
+        "/api/v1/courses/:param/progress": ["src/lesson-sync.ts"],
+        "/api/v1/lessons/:param/completion": ["src/lesson-sync.ts"],
+        "/api/v1/mastery/courses/:param": ["src/use-student-learning.ts"],
+        "/api/v1/me/courses": ["src/use-student-learning.ts"],
+        "/api/v1/study-plan/current": ["src/use-student-learning.ts"],
+        "/api/v1/study-plan/generate": ["app/student/study-plan.tsx"],
+        "/api/v1/study-plan/items/:param/:param": ["app/student/study-plan.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": ["/login", "/"],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/student/tutor",
+      "sourceFile": "app/student/tutor.tsx",
+      "component": "TutorScreen",
+      "intendedRole": "STUDENT",
+      "apiDependencies": [
+        "/api/v1/assistant/chat",
+        "/api/v1/courses/:param/progress",
+        "/api/v1/lessons/:param/completion",
+        "/api/v1/mastery/courses/:param",
+        "/api/v1/me/courses",
+        "/api/v1/study-plan/current"
+      ],
+      "apiDependencySources": {
+        "/api/v1/assistant/chat": ["src/adaptive.ts"],
+        "/api/v1/courses/:param/progress": ["src/lesson-sync.ts"],
+        "/api/v1/lessons/:param/completion": ["src/lesson-sync.ts"],
+        "/api/v1/mastery/courses/:param": ["src/use-student-learning.ts"],
+        "/api/v1/me/courses": ["src/use-student-learning.ts"],
+        "/api/v1/study-plan/current": ["src/use-student-learning.ts"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": ["/login", "/"],
+      "productionReachable": true,
+      "decision": "CONNECT"
+    },
+    {
+      "route": "/teaching",
+      "sourceFile": "app/teaching/index.tsx",
+      "component": "TeachingDashboard",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/me/owned-offerings"],
+      "apiDependencySources": {
+        "/api/v1/me/owned-offerings": ["app/teaching/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/ai",
+      "sourceFile": "app/teaching/ai/index.tsx",
+      "component": "LecturerAiStudioScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/ai/jobs", "/api/v1/ai/quiz-jobs", "/api/v1/ai/usage"],
+      "apiDependencySources": {
+        "/api/v1/ai/jobs": ["app/teaching/ai/index.tsx"],
+        "/api/v1/ai/quiz-jobs": ["app/teaching/ai/index.tsx"],
+        "/api/v1/ai/usage": ["app/teaching/ai/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/ai/[jobId]",
+      "sourceFile": "app/teaching/ai/[jobId]/index.tsx",
+      "component": "AiJobDetailScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": [
+        "/api/v1/ai/drafts/:param/approve",
+        "/api/v1/ai/jobs/:param",
+        "/api/v1/ai/jobs/:param/cancel",
+        "/api/v1/ai/jobs/:param/drafts"
+      ],
+      "apiDependencySources": {
+        "/api/v1/ai/drafts/:param/approve": ["app/teaching/ai/[jobId]/index.tsx"],
+        "/api/v1/ai/jobs/:param": ["app/teaching/ai/[jobId]/index.tsx"],
+        "/api/v1/ai/jobs/:param/cancel": ["app/teaching/ai/[jobId]/index.tsx"],
+        "/api/v1/ai/jobs/:param/drafts": ["app/teaching/ai/[jobId]/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/assessments",
+      "sourceFile": "app/teaching/assessments/index.tsx",
+      "component": "LecturerAssessmentsScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": [
+        "/api/v1/me/owned-classes",
+        "/api/v1/me/owned-offerings",
+        "/api/v1/targets/:param/:param/quizzes"
+      ],
+      "apiDependencySources": {
+        "/api/v1/me/owned-classes": ["app/teaching/assessments/index.tsx"],
+        "/api/v1/me/owned-offerings": ["app/teaching/assessments/index.tsx"],
+        "/api/v1/targets/:param/:param/quizzes": ["app/teaching/assessments/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/assessments/[quizId]",
+      "sourceFile": "app/teaching/assessments/[quizId]/index.tsx",
+      "component": "AssessmentDetailScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/quizzes/:param", "/api/v1/quizzes/:param/publish"],
+      "apiDependencySources": {
+        "/api/v1/quizzes/:param": ["app/teaching/assessments/[quizId]/index.tsx"],
+        "/api/v1/quizzes/:param/publish": ["app/teaching/assessments/[quizId]/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/assessments/[quizId]/questions",
+      "sourceFile": "app/teaching/assessments/[quizId]/questions/index.tsx",
+      "component": "QuestionsEditorScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/quizzes/:param"],
+      "apiDependencySources": {
+        "/api/v1/quizzes/:param": ["app/teaching/assessments/[quizId]/questions/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/assessments/[quizId]/results",
+      "sourceFile": "app/teaching/assessments/[quizId]/results/index.tsx",
+      "component": "LecturerQuizResultsScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/quizzes/:param/grades/:param", "/api/v1/quizzes/:param/results"],
+      "apiDependencySources": {
+        "/api/v1/quizzes/:param/grades/:param": ["app/teaching/assessments/[quizId]/results/index.tsx"],
+        "/api/v1/quizzes/:param/results": ["app/teaching/assessments/[quizId]/results/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/assessments/create",
+      "sourceFile": "app/teaching/assessments/create.tsx",
+      "component": "CreateAssessmentScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/quizzes"],
+      "apiDependencySources": {
+        "/api/v1/quizzes": ["app/teaching/assessments/create.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/classes",
+      "sourceFile": "app/teaching/classes/index.tsx",
+      "component": "OwnedClassesList",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/me/owned-classes"],
+      "apiDependencySources": {
+        "/api/v1/me/owned-classes": ["app/teaching/classes/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/classes/[classId]",
+      "sourceFile": "app/teaching/classes/[classId]/index.tsx",
+      "component": "ClassDetail",
+      "intendedRole": "LECTURER",
+      "apiDependencies": [
+        "/api/v1/classes/:param",
+        "/api/v1/classes/:param/members",
+        "/api/v1/classes/:param/schedule/publish"
+      ],
+      "apiDependencySources": {
+        "/api/v1/classes/:param": ["app/teaching/classes/[classId]/index.tsx"],
+        "/api/v1/classes/:param/members": ["app/teaching/classes/[classId]/index.tsx"],
+        "/api/v1/classes/:param/schedule/publish": ["app/teaching/classes/[classId]/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/classes/[classId]/announcements",
+      "sourceFile": "app/teaching/classes/[classId]/announcements.tsx",
+      "component": "ClassAnnouncementsScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/classes/:param/announcements"],
+      "apiDependencySources": {
+        "/api/v1/classes/:param/announcements": ["app/teaching/classes/[classId]/announcements.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/classes/[classId]/sessions",
+      "sourceFile": "app/teaching/classes/[classId]/sessions/index.tsx",
+      "component": "ClassSessionsList",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/classes/:param", "/api/v1/classes/:param/sessions"],
+      "apiDependencySources": {
+        "/api/v1/classes/:param": ["app/teaching/classes/[classId]/sessions/index.tsx"],
+        "/api/v1/classes/:param/sessions": ["app/teaching/classes/[classId]/sessions/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/classes/[classId]/sessions/[sessionId]",
+      "sourceFile": "app/teaching/classes/[classId]/sessions/[sessionId]/index.tsx",
+      "component": "SessionDetailScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": [
+        "/api/v1/class-sessions/:param",
+        "/api/v1/class-sessions/:param/presence-tickets",
+        "/api/v1/classes/:param/sessions/:param"
+      ],
+      "apiDependencySources": {
+        "/api/v1/class-sessions/:param": ["app/teaching/classes/[classId]/sessions/[sessionId]/index.tsx"],
+        "/api/v1/class-sessions/:param/presence-tickets": [
+          "app/teaching/classes/[classId]/sessions/[sessionId]/index.tsx"
+        ],
+        "/api/v1/classes/:param/sessions/:param": [
+          "app/teaching/classes/[classId]/sessions/[sessionId]/index.tsx"
+        ]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/classes/[classId]/sessions/[sessionId]/attendance",
+      "sourceFile": "app/teaching/classes/[classId]/sessions/[sessionId]/attendance.tsx",
+      "component": "AttendanceScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": [
+        "/api/v1/class-sessions/:param",
+        "/api/v1/class-sessions/:param/attendance",
+        "/api/v1/class-sessions/:param/attendance/:param"
+      ],
+      "apiDependencySources": {
+        "/api/v1/class-sessions/:param": [
+          "app/teaching/classes/[classId]/sessions/[sessionId]/attendance.tsx"
+        ],
+        "/api/v1/class-sessions/:param/attendance": [
+          "app/teaching/classes/[classId]/sessions/[sessionId]/attendance.tsx"
+        ],
+        "/api/v1/class-sessions/:param/attendance/:param": [
+          "app/teaching/classes/[classId]/sessions/[sessionId]/attendance.tsx"
+        ]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/classes/[classId]/sessions/create",
+      "sourceFile": "app/teaching/classes/[classId]/sessions/create.tsx",
+      "component": "CreateSessionScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/classes/:param/sessions"],
+      "apiDependencySources": {
+        "/api/v1/classes/:param/sessions": ["app/teaching/classes/[classId]/sessions/create.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/courses",
+      "sourceFile": "app/teaching/courses/index.tsx",
+      "component": "OwnedCoursesList",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/me/owned-offerings"],
+      "apiDependencySources": {
+        "/api/v1/me/owned-offerings": ["app/teaching/courses/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/courses/[courseId]",
+      "sourceFile": "app/teaching/courses/[courseId]/index.tsx",
+      "component": "CourseDetail",
+      "intendedRole": "LECTURER",
+      "apiDependencies": [
+        "/api/v1/courses/:param",
+        "/api/v1/courses/:param/lessons",
+        "/api/v1/courses/:param/offerings",
+        "/api/v1/courses/:param/reviews"
+      ],
+      "apiDependencySources": {
+        "/api/v1/courses/:param": ["app/teaching/courses/[courseId]/index.tsx"],
+        "/api/v1/courses/:param/lessons": ["app/teaching/courses/[courseId]/index.tsx"],
+        "/api/v1/courses/:param/offerings": ["app/teaching/courses/[courseId]/index.tsx"],
+        "/api/v1/courses/:param/reviews": ["app/teaching/courses/[courseId]/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/courses/[courseId]/edit",
+      "sourceFile": "app/teaching/courses/[courseId]/edit.tsx",
+      "component": "CourseEdit",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/courses/:param"],
+      "apiDependencySources": {
+        "/api/v1/courses/:param": ["app/teaching/courses/[courseId]/edit.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/courses/[courseId]/lessons",
+      "sourceFile": "app/teaching/courses/[courseId]/lessons/index.tsx",
+      "component": "LessonList",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/courses/:param/lessons"],
+      "apiDependencySources": {
+        "/api/v1/courses/:param/lessons": ["app/teaching/courses/[courseId]/lessons/index.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/courses/[courseId]/lessons/[lessonId]",
+      "sourceFile": "app/teaching/courses/[courseId]/lessons/[lessonId].tsx",
+      "component": "LessonDetailEdit",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/lessons/:param"],
+      "apiDependencySources": {
+        "/api/v1/lessons/:param": ["app/teaching/courses/[courseId]/lessons/[lessonId].tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/courses/[courseId]/lessons/create",
+      "sourceFile": "app/teaching/courses/[courseId]/lessons/create.tsx",
+      "component": "CreateLesson",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/courses/:param/lessons"],
+      "apiDependencySources": {
+        "/api/v1/courses/:param/lessons": ["app/teaching/courses/[courseId]/lessons/create.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/courses/[courseId]/reviews",
+      "sourceFile": "app/teaching/courses/[courseId]/reviews.tsx",
+      "component": "CourseReviewsAndCommentsScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": [
+        "/api/v1/comments/:param",
+        "/api/v1/courses/:param/reviews",
+        "/api/v1/resources/COURSE/:param/comments"
+      ],
+      "apiDependencySources": {
+        "/api/v1/comments/:param": ["app/teaching/courses/[courseId]/reviews.tsx"],
+        "/api/v1/courses/:param/reviews": ["app/teaching/courses/[courseId]/reviews.tsx"],
+        "/api/v1/resources/COURSE/:param/comments": ["app/teaching/courses/[courseId]/reviews.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/courses/create",
+      "sourceFile": "app/teaching/courses/create.tsx",
+      "component": "CreateCourse",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/courses"],
+      "apiDependencySources": {
+        "/api/v1/courses": ["app/teaching/courses/create.tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/offerings/[offeringId]",
+      "sourceFile": "app/teaching/offerings/[offeringId].tsx",
+      "component": "OfferingDetailScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": ["/api/v1/offerings/:param", "/api/v1/offerings/:param/publish"],
+      "apiDependencySources": {
+        "/api/v1/offerings/:param": ["app/teaching/offerings/[offeringId].tsx"],
+        "/api/v1/offerings/:param/publish": ["app/teaching/offerings/[offeringId].tsx"]
+      },
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/reports",
+      "sourceFile": "app/teaching/reports/index.tsx",
+      "component": "LecturerReportsScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": [],
+      "apiDependencySources": {},
+      "localStorageDependencies": [
+        "Refresh credential/session secret in SecureStore; access token memory-only",
+        "User-scoped encrypted SQLCipher cache and lesson-completion queue"
+      ],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    },
+    {
+      "route": "/teaching/schedule",
+      "sourceFile": "app/teaching/schedule.tsx",
+      "component": "TeachingScheduleScreen",
+      "intendedRole": "LECTURER",
+      "apiDependencies": [],
+      "apiDependencySources": {},
+      "localStorageDependencies": [],
+      "fixtureUsage": false,
+      "fixtureFiles": [],
+      "mockUsage": false,
+      "mockFiles": [],
+      "unresolvedImports": [],
+      "redirectTargets": [],
+      "productionReachable": false,
+      "decision": "DEFER"
+    }
+  ]
+}

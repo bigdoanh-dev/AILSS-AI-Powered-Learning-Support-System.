@@ -7,6 +7,26 @@ const command = { "idempotency-key": "logical-command-1" };
 
 test("Lecturer allowlist accepts documented reads and commands", () => {
   assert.equal(
+    lecturerOperation("/web-session/lecturer/me/owned-courses", "GET", undefined, {}).path,
+    "/me/owned-courses",
+  );
+  assert.equal(
+    lecturerOperation(`/web-session/lecturer/me/courses/${id}`, "GET", undefined, {}).path,
+    `/me/courses/${id}`,
+  );
+  assert.equal(
+    lecturerOperation(`/web-session/lecturer/courses/${id}/retire`, "POST", { mode: "LOCK" }, command).path,
+    `/courses/${id}/retire`,
+  );
+  assert.throws(() =>
+    lecturerOperation(
+      `/web-session/lecturer/courses/${id}/retire`,
+      "POST",
+      { mode: "DELETE", studentId: id },
+      command,
+    ),
+  );
+  assert.equal(
     lecturerOperation("/web-session/lecturer/me/owned-classes", "GET", undefined, {}).path,
     "/me/owned-classes",
   );
@@ -40,6 +60,14 @@ test("Lecturer allowlist rejects undocumented routes, duplicate query and missin
     ),
   );
   assert.throws(() => lecturerOperation(`/web-session/lecturer/quizzes/${id}/publish`, "POST", {}, {}));
+});
+
+test("Lecturer payout account route accepts bank details and rejects card data", () => {
+  const path = "/web-session/lecturer/me/payout-account";
+  assert.equal(lecturerOperation(path, "GET", undefined, {}).path, "/me/payout-account");
+  const bank = { bankName: "Ngân hàng A", accountNumber: "1234567890", accountHolder: "NGUYEN VAN A" };
+  assert.equal(lecturerOperation(path, "POST", bank, command).path, "/me/payout-account");
+  assert.throws(() => lecturerOperation(path, "POST", { ...bank, cardNumber: "4111111111111111" }, command));
 });
 
 test("manual attendance forwards only a validated optimistic version", () => {

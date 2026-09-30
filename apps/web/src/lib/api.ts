@@ -32,10 +32,20 @@ export function errorMessage(error: unknown): string {
       ACCOUNT_DISABLED: "Tài khoản đã bị vô hiệu hóa. Liên hệ quản trị viên.",
       INVALID_REFRESH_CREDENTIALS: "Phiên đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.",
       SESSION_EXPIRED: "Phiên đã hết hạn. Vui lòng đăng nhập lại.",
+      SOCIAL_PROVIDER_NOT_CONFIGURED: "Đăng nhập xã hội chưa được cấu hình cho môi trường này.",
+      AUDIENCE_MISMATCH: "Ứng dụng đăng nhập chưa khớp cấu hình Google/Apple. Vui lòng báo quản trị viên.",
+      UNTRUSTED_ISSUER: "Không xác thực được nhà cung cấp đăng nhập. Vui lòng thử lại.",
+      UNVERIFIED_EMAIL: "Nhà cung cấp chưa xác minh email của tài khoản này.",
+      INVALID_TOKEN: "Token đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.",
       REFRESH_OUTCOME_UNKNOWN:
         "Không xác nhận được lần gia hạn phiên. Vui lòng đăng nhập lại để tiếp tục an toàn.",
       ORIGIN_REJECTED: "Không thể xác nhận nguồn yêu cầu. Mở lại trang trên địa chỉ chính thức.",
       LOGOUT_PENDING: "Phiên đang được đăng xuất. Vui lòng chờ.",
+      PASSWORD_RESET_EMAIL_UNAVAILABLE:
+        "Chức năng gửi mã đặt lại mật khẩu chưa được cấu hình email. Vui lòng báo quản trị viên.",
+      INVALID_PASSWORD_RESET_CODE: "Mã OTP không đúng, đã hết hạn hoặc đã vượt quá số lần thử.",
+      INVALID_PASSWORD_RESET_TOKEN: "Phiên đặt lại mật khẩu không còn hợp lệ. Hãy yêu cầu mã OTP mới.",
+      PASSWORD_RESET_UNAVAILABLE: "Chưa thể lưu mật khẩu mới. Vui lòng thử lại sau.",
     };
     if (messages[error.code]) return messages[error.code];
     return (

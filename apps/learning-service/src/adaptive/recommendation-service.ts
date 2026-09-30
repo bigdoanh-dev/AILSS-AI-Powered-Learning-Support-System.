@@ -1,10 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { CANONICAL_PREREQUISITE_POLICY, type CandidateEligibilityStatus } from "../../../../packages/contracts/src/index.js";
-import type {
-  CourseRecommendation,
-  RecommendationFeedback,
-  RecommendationFeedbackType,
-} from "./model.js";
+import {
+  CANONICAL_PREREQUISITE_POLICY,
+  type CandidateEligibilityStatus,
+} from "../../../../packages/contracts/src/index.js";
+import type { CourseRecommendation, RecommendationFeedback, RecommendationFeedbackType } from "./model.js";
 
 export interface CandidatePrerequisite {
   conceptId: string;
@@ -38,9 +37,7 @@ export class InMemoryRecommendationRepository implements RecommendationRepositor
   }
 
   async getFeedbackForStudent(studentId: string): Promise<RecommendationFeedback[]> {
-    return Promise.resolve(
-      Array.from(this.feedbackStore.values()).filter((f) => f.studentId === studentId),
-    );
+    return Promise.resolve(Array.from(this.feedbackStore.values()).filter((f) => f.studentId === studentId));
   }
 }
 
@@ -68,7 +65,12 @@ export class CourseRecommendationService {
     const previousFeedback = await this.repository.getFeedbackForStudent(input.studentId);
     const negativeFeedbackCourses = new Set(
       previousFeedback
-        .filter((f) => f.feedbackType === "not_useful" || f.feedbackType === "already_know" || f.feedbackType === "not_interested")
+        .filter(
+          (f) =>
+            f.feedbackType === "not_useful" ||
+            f.feedbackType === "already_know" ||
+            f.feedbackType === "not_interested",
+        )
         .map((f) => f.courseId),
     );
 
@@ -88,7 +90,11 @@ export class CourseRecommendationService {
       // Exclude courses with prior negative feedback
       if (negativeFeedbackCourses.has(course.courseId)) continue;
       // Budget constraint filtering
-      if (input.budgetMinor !== undefined && course.priceMinor !== undefined && course.priceMinor > input.budgetMinor) {
+      if (
+        input.budgetMinor !== undefined &&
+        course.priceMinor !== undefined &&
+        course.priceMinor > input.budgetMinor
+      ) {
         continue;
       }
 
@@ -154,7 +160,8 @@ export class CourseRecommendationService {
 
       // Learning goals match
       if (goalsSet.size > 0) {
-        const matchesGoal = (course.learningGoals ?? []).some((g) => goalsSet.has(g.toLowerCase())) ||
+        const matchesGoal =
+          (course.learningGoals ?? []).some((g) => goalsSet.has(g.toLowerCase())) ||
           course.tags.some((t) => goalsSet.has(t.toLowerCase()));
         if (matchesGoal) {
           score += 20;
@@ -163,7 +170,11 @@ export class CourseRecommendationService {
       }
 
       // Budget fit match
-      if (input.budgetMinor !== undefined && course.priceMinor !== undefined && course.priceMinor <= input.budgetMinor) {
+      if (
+        input.budgetMinor !== undefined &&
+        course.priceMinor !== undefined &&
+        course.priceMinor <= input.budgetMinor
+      ) {
         score += 15;
         reasonCodes.push("BUDGET_MATCH");
       }
@@ -230,7 +241,6 @@ export class CourseRecommendationService {
       prerequisiteGaps: s.prerequisiteGaps,
     }));
   }
-
 
   async recordFeedback(input: {
     studentId: string;
@@ -365,4 +375,3 @@ export class AdaptiveNextActionEngine {
     return candidates.slice(0, 5);
   }
 }
-

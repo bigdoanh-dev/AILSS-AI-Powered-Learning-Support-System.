@@ -1,0 +1,38 @@
+{
+  "$schema": "https://ailss.edu.vn/schemas/payment-pci-scope-assessment-v1.json",
+  "assessedAt": "2026-09-19T22:05:30+07:00",
+  "system": "AILSS Commercial Commerce Engine",
+  "architecturalClassification": "HOSTED_PROVIDER_INTEGRATION",
+  "pciScopeClassification": "LIMITED_PAYMENT_SCOPE",
+  "flowPattern": "FULL_REDIRECT",
+  "cardholderDataBoundary": {
+    "panHandled": false,
+    "cvvHandled": false,
+    "trackDataHandled": false,
+    "pinHandled": false,
+    "cardDataStoredInDatabase": false,
+    "cardDataLogged": false,
+    "cardDataTransmittedThroughBackend": false
+  },
+  "storedTransactionAttributes": [
+    "provider_transaction_id",
+    "order_id",
+    "amount",
+    "currency",
+    "status",
+    "created_at",
+    "completed_at",
+    "reconciliation_metadata"
+  ],
+  "securityControls": {
+    "httpsEnforced": true,
+    "returnUrlAllowlistEnforced": true,
+    "openRedirectDeflected": true,
+    "webhookHmacSha256Verified": true,
+    "webhookTimestampExpiryEnforced": true,
+    "webhookIdempotencyEnforced": true,
+    "amountCurrencyIntegrityEnforced": true
+  },
+  "pilotGateStatus": "SANDBOX_ONLY",
+  "payoutGateStatus": "BLOCKED_GATED"
+}
