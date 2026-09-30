@@ -25,6 +25,7 @@ export interface LessonCompletionOperation {
 
 type SqlValue = string | number | null;
 interface Database {
+  closeAsync?(): Promise<void>;
   execAsync(sql: string): Promise<void>;
   runAsync(sql: string, ...params: SqlValue[]): Promise<unknown>;
   getFirstAsync<T>(sql: string, ...params: SqlValue[]): Promise<T | null>;
@@ -85,7 +86,10 @@ export class OfflineStore {
     // Key material is generated hex, never user-controlled. Apply before any schema/data read.
     await database.execAsync(`PRAGMA key = "x'${key}'"; PRAGMA foreign_keys = ON;`);
     const cipher = await database.getFirstAsync<{ cipher_version?: string }>("PRAGMA cipher_version");
-    if (!cipher?.cipher_version) throw new Error("SQLCIPHER_REQUIRED_FOR_OFFLINE_STORAGE");
+    if (!cipher?.cipher_version) {
+      await database.closeAsync?.().catch(() => {});
+      throw new Error("SQLCIPHER_REQUIRED_FOR_OFFLINE_STORAGE");
+    }
     const version = await database.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
     const currentVersion = Number(version?.user_version ?? 0);
     if (currentVersion > schemaVersion) throw new Error("OFFLINE_DATABASE_NEWER_THAN_APP");

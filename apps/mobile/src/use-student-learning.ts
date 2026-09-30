@@ -46,7 +46,7 @@ export function useStudentLearning(session: Session, userId?: string, authState:
   useEffect(() => {
     const abort = new AbortController();
     const store = offlineStore;
-    if (!userId || !store) {
+    if (!userId) {
       setCourses([]);
       setError(null);
       setDataSource("LIVE");
@@ -69,15 +69,15 @@ export function useStudentLearning(session: Session, userId?: string, authState:
       try {
         if (authState === "OFFLINE_CACHE") throw new ApiError("network");
         enrolled = decodeCourses(await session.request("/api/v1/me/courses", { signal: abort.signal }));
-        courseSyncedAt = await store
-          .writeCache(userId, "COURSES", "__all__", enrolled)
-          .catch(() => undefined);
+        courseSyncedAt = store
+          ? await store.writeCache(userId, "COURSES", "__all__", enrolled).catch(() => undefined)
+          : undefined;
       } catch (reason) {
         if (authState !== "OFFLINE_CACHE" && !canUseCache(reason)) {
           if (!abort.signal.aborted) setError(errorText(reason, "Không tải được không gian học tập."));
           return;
         }
-        const cached = await store.readCache<unknown>(userId, "COURSES", "__all__");
+        const cached = store ? await store.readCache<unknown>(userId, "COURSES", "__all__") : null;
         if (!cached) {
           if (!abort.signal.aborted)
             setError(
@@ -101,9 +101,9 @@ export function useStudentLearning(session: Session, userId?: string, authState:
                   signal: abort.signal,
                 }),
               );
-              const syncedAt = await store
-                .writeCache(userId, "MASTERY", course.courseId, value)
-                .catch(() => "");
+              const syncedAt = store
+                ? await store.writeCache(userId, "MASTERY", course.courseId, value).catch(() => "")
+                : "";
               return { value, source: "LIVE" as const, syncedAt };
             })(),
             (async () => {
@@ -116,9 +116,9 @@ export function useStudentLearning(session: Session, userId?: string, authState:
                   },
                 ),
               );
-              const syncedAt = await store
-                .writeCache(userId, "STUDY_PLAN", course.courseId, value)
-                .catch(() => "");
+              const syncedAt = store
+                ? await store.writeCache(userId, "STUDY_PLAN", course.courseId, value).catch(() => "")
+                : "";
               return { value, source: "LIVE" as const, syncedAt };
             })(),
           ]);
@@ -129,7 +129,7 @@ export function useStudentLearning(session: Session, userId?: string, authState:
           if (masteryResult.status === "fulfilled") {
             ({ value: mastery, source: masterySource, syncedAt: masterySyncedAt } = masteryResult.value);
           } else if (authState === "OFFLINE_CACHE" || canUseCache(masteryResult.reason)) {
-            const cached = await store.readCache<unknown>(userId, "MASTERY", course.courseId);
+            const cached = store ? await store.readCache<unknown>(userId, "MASTERY", course.courseId) : null;
             if (cached) {
               mastery = masteryRecords(cached.value);
               masterySource = "OFFLINE_CACHE";
@@ -154,9 +154,11 @@ export function useStudentLearning(session: Session, userId?: string, authState:
           if (planResult.status === "fulfilled") {
             ({ value: currentPlan, source: studyPlanSource, syncedAt: studyPlanSyncedAt } = planResult.value);
           } else if (missingPlan && authState !== "OFFLINE_CACHE") {
-            await store.deleteCache(userId, "STUDY_PLAN", course.courseId);
+            await store?.deleteCache(userId, "STUDY_PLAN", course.courseId);
           } else if (authState === "OFFLINE_CACHE" || canUseCache(planResult.reason)) {
-            const cached = await store.readCache<unknown>(userId, "STUDY_PLAN", course.courseId);
+            const cached = store
+              ? await store.readCache<unknown>(userId, "STUDY_PLAN", course.courseId)
+              : null;
             if (cached) {
               currentPlan = studyPlan(cached.value);
               studyPlanSource = "OFFLINE_CACHE";

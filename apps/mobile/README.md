@@ -23,6 +23,11 @@ Production requires HTTPS and has no fabricated domain. Expo public variables
 are bundled public configuration: NEVER put secrets there. Non-production HTTP
 gets explicit native development network exceptions; production disables them.
 Changing native configuration requires rebuilding the development client.
+SQLCipher is unavailable in Expo Go. In that client the app runs online with
+encrypted offline cache and lesson queue disabled. If a custom client reports
+`SQLCIPHER_REQUIRED_FOR_OFFLINE_STORAGE`, rebuild and reinstall it with
+`pnpm --filter @ailss/mobile ios` (or `android`); a Metro reload cannot change
+the native SQLite library. The app never writes private offline data to plain SQLite.
 
 Run `pnpm --filter @ailss/mobile start`, then launch an installed development
 client. `pnpm --filter @ailss/mobile ios` / `android` build and launch local debug
