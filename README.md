@@ -9,7 +9,7 @@
 
 AILSS là nền tảng học tập đa nền tảng theo kiến trúc microservices, contract-first và event-driven. Hệ thống quản lý danh tính, khóa học, lớp học, tiến độ, đánh giá, tương tác, thông báo, thương mại và các quy trình AI có con người kiểm soát.
 
-> Web responsive là bề mặt pilot chính. Repository có thêm ứng dụng Expo/React Native cho Student, Lecturer và Admin; việc phát hành native production vẫn ngoài phạm vi hiện tại.
+> Web responsive là bề mặt pilot chính. Repository có ứng dụng Expo/React Native cho Student, Lecturer và Admin; player media đã được kiểm chứng trên iOS Simulator và Android Emulator. Native production release và kiểm tra hỗ trợ tiếp cận trên thiết bị thật chưa được xác nhận.
 
 > **Triết lý thiết kế:** Contract-First, Service Ownership, Query-Driven Cassandra, Event-Driven Processing và Human-in-the-loop AI.
 
@@ -29,6 +29,7 @@ AILSS là nền tảng học tập đa nền tảng theo kiến trúc microservi
   - [7. Assessment và Quiz](#7-assessment-và-quiz)
   - [8. Interaction và Notification](#8-interaction-và-notification)
   - [9. Document và AI Quiz Generation](#9-document-và-ai-quiz-generation)
+  - [10. Media và phát video](#10-media-và-phát-video)
 - [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
   - [Sơ đồ tổng quan](#sơ-đồ-tổng-quan)
   - [Service Ownership](#service-ownership)
@@ -72,13 +73,14 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 ## Trạng thái hiện tại
 
 - 4 actor: `GUEST`, `STUDENT`, `LECTURER`, `ADMIN`.
-- Phiên bản package hiện tại: `6.1.4`; nhánh phát triển chứa công việc hướng tới 6.2.
-- 6 business services: Identity, Learning, Classroom, Assessment, Interaction và AI; phía trước là API Gateway.
-- Contract registry hiện khai báo 101 public APIs, 15 internal APIs, 78 Query IDs và 22 Event Types.
-- Cassandra 5 cho dữ liệu theo domain, RabbitMQ cho xử lý bất đồng bộ và MinIO cho tài liệu riêng tư.
+- Phiên bản trong `package.json`: `6.1.4`; baseline release candidate hiện có là `v6.2.0-rc.7`, chưa phải bản phát hành 6.2 ổn định.
+- 6 business services: Identity, Learning, Classroom, Assessment, Interaction và AI; API Gateway là public entry point. Media Delivery và Media Worker là hai runtime riêng cho luồng video.
+- API, Query ID và Event Type được quản lý trong các registry tại `contracts/`.
+- Cassandra 5 lưu dữ liệu theo domain, RabbitMQ xử lý sự kiện bất đồng bộ và MinIO lưu tài liệu cùng media ở chế độ private.
 - Redis không được sử dụng.
-- Web có workspace theo vai trò; mobile dùng Expo Router và SecureStore cho dữ liệu phiên nhạy cảm.
-- Trạng thái Phase 40 Revision H là `RUNTIME_INTEGRATION_INCOMPLETE`; controlled pilot đang `REVOKED` cho đến khi các acceptance gate còn thiếu được đóng.
+- Web có workspace theo vai trò; mobile dùng Expo Router và SecureStore cho dữ liệu phiên nhạy cảm, kèm player HLS native đã kiểm chứng trên simulator/emulator.
+- Phase 42 Revision B đạt `OPEN_REVISION_B_LOCAL_PLATFORM_COMPLETE`; Revision C đang mở để chuẩn bị cấu hình và hạ tầng staging/production. Template, policy và validator hiện có chưa phải bằng chứng đã triển khai môi trường thật.
+- Các acceptance gate còn thiếu của Phase 40 Revision H vẫn mở; controlled product pilot đang `REVOKED` cho đến khi được nghiệm thu lại.
 
 ## Tính năng chính
 
@@ -159,6 +161,14 @@ Upload intent → Direct private upload → Confirm → Extraction
 - AI output được validate theo schema trước khi tạo draft.
 - `QUIZ_GENERATION` không dùng trạng thái `COMPLETED`; AI không tự approve hoặc publish.
 
+### 10. Media và phát video
+
+- Lecturer tải media lên private object storage; hệ thống áp dụng quota, xác thực nguồn và tách quyền cho API, worker và delivery.
+- Media Worker kiểm tra đầu vào và tạo HLS ở các mức 360p, 480p và 720p; job, output journal và phục hồi được theo dõi bền vững.
+- Student phát nội dung theo quyền ghi danh qua playback token giới hạn theo asset; video trailer được mở công khai theo policy của Course.
+- Phụ đề WebVTT, poster và các segment HLS được phân phối qua Media Delivery từ MinIO private; thay video đã xuất bản dùng chuyển đổi nguyên tử.
+- Revision B có acceptance cục bộ cho upload, quota, transcode, playback, phụ đề, cô lập tenant và tải giới hạn. Kết quả cục bộ không xác nhận cloud staging hay production.
+
 ---
 
 ## Kiến trúc hệ thống
@@ -180,19 +190,21 @@ users/session/tenant      course/commerce/mastery   class/schedule/presence
        ▼                       ▼                       ▼
 Assessment :8104          Interaction :8105         AI :8106
 quiz/attempt/grading      comment/review/moderation document/quiz/assistant
+                         Media Delivery :8211
+                         private HLS/poster/captions
        └───────────────────────┴───────────────────────┘
               Internal HTTP • Service JWS • signed Actor Context
                                                 │
        ┌───────────────────────┼───────────────────────┐
        ▼                       ▼                       ▼
 Cassandra 5              RabbitMQ 4.1              Private MinIO
-keyspace per service     exchange/retry/DLQ        document/provider data
+keyspace per service     exchange/retry/DLQ        document/media objects
                                │
           ┌───────────────┼───────────────┐
           ▼               ▼               ▼
     Domain relays    Async workers    Reconciliation worker
     outbox+confirm   AI/Document/     repair interrupted work
-                     Notification/Audit
+                     Notification/Audit/Media
 
 All runtimes → structured logs + Prometheus metrics → Alertmanager / Grafana
 ```
@@ -207,9 +219,11 @@ Kiến trúc có ba đường giao tiếp chính:
 
 Luồng ghi quan trọng không dựa vào distributed transaction. Service ghi canonical state và outbox trong domain của mình; relay claim event bằng lease/fence, publish có confirm, sau đó consumer hội tụ projection bằng operation/event ID ổn định. Mastery consumer là một ví dụ: nhận assessment event, lưu evidence bền vững, tính lại Mastery V2 và sinh Study Plan retry-safe. Delivery là at-least-once, không tuyên bố distributed exactly-once.
 
+Media jobs được lưu và quét từ Cassandra; worker xử lý file rồi ghi rendition vào MinIO private. Gateway proxy playback tới Media Delivery, nơi xác thực token trước khi trả HLS, poster hoặc phụ đề.
+
 ### Service Ownership
 
-Repository có **14 application package**: 2 client, 1 gateway, 6 business service và 5 worker. Cassandra, RabbitMQ, MinIO, Prometheus, Alertmanager và Grafana là dependency hạ tầng, không được tính là business service.
+Repository có **16 application package**: 2 client, 1 gateway, 6 business service, 6 worker và 1 Media Delivery runtime. Cassandra, RabbitMQ, MinIO, Prometheus, Alertmanager và Grafana là dependency hạ tầng, không được tính là business service.
 
 | Nhóm             | Package/runtime                |      Cổng local | Trách nhiệm chính                                                                                                                | Dữ liệu sở hữu/phụ thuộc                                |
 | ---------------- | ------------------------------ | --------------: | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
@@ -222,8 +236,10 @@ Repository có **14 application package**: 2 client, 1 gateway, 6 business servi
 | Business service | `@ailss/assessment-service`    |          `8104` | Quiz/question authoring, publish, attempt, submission, objective/manual grading và result projection                             | `assessment_keyspace`                                   |
 | Business service | `@ailss/interaction-service`   |          `8105` | Comment/reply, review/rating, report và moderation queue                                                                         | `interaction_keyspace`                                  |
 | Business service | `@ailss/ai-service`            |          `8106` | Upload intent, document/extraction state, AI quiz job/draft/approval và AI Assistant conversation/tool orchestration             | `ai_keyspace`, private MinIO objects                    |
+| Media delivery   | `@ailss/media-delivery`        |          `8211` | Xác thực playback token và phân phối HLS, poster, WebVTT từ storage private                                                      | MinIO với quyền đọc riêng; không sở hữu business data   |
 | Worker           | `@ailss/ai-worker`             |          `8201` | Nhận quiz-generation event, gọi AI provider, validate `objective-v1`, ghi kết quả/draft xác định                                 | AI-owned repository, private MinIO, RabbitMQ            |
 | Worker           | `@ailss/document-worker`       |          `8202` | Tải object riêng tư, kiểm tra checksum/MIME/magic bytes, trích xuất nội dung có giới hạn                                         | AI-owned repository, private MinIO, RabbitMQ            |
+| Worker           | `@ailss/media-worker`          |          `8210` | Poll media jobs, kiểm tra nguồn, tạo HLS bằng FFmpeg và phục hồi/dọn output gián đoạn                                            | `learning_keyspace`, quota ledger, private MinIO        |
 | Worker           | `@ailss/notification-worker`   |          `8203` | Chuyển domain event thành notification projection theo user/tháng                                                                | `notification_keyspace`, RabbitMQ                       |
 | Worker           | `@ailss/audit-worker`          |          `8204` | Ghi audit event tách khỏi synchronous request path                                                                               | `audit_support_keyspace`, RabbitMQ                      |
 | Worker           | `@ailss/reconciliation-worker` |          `8205` | Quét và repair operation/projection bị gián đoạn; hội tụ entitlement và các eventual workflow                                    | Không tạo business authority mới                        |
@@ -239,6 +255,7 @@ Các luồng tham chiếu chi tiết cho registration/outbox, SePay/entitlement,
 | Runtime             | Node.js 24, TypeScript 5.9, pnpm 11            |
 | Web                 | React 19, React Router 7, Vite 7, Three.js     |
 | Mobile              | Expo 57, React Native 0.86, Expo Router        |
+| Media               | FFmpeg, adaptive HLS, WebVTT                   |
 | HTTP                | Express 5                                      |
 | Database            | Apache Cassandra 5.0.9                         |
 | Messaging           | RabbitMQ 4.1                                   |
@@ -270,6 +287,7 @@ Các luồng tham chiếu chi tiết cho registration/outbox, SePay/entitlement,
 - Internal call dùng Ed25519 Service JWS và signed Actor Context.
 - Password dùng Argon2id; thao tác Admin nhạy cảm yêu cầu current-password reauthentication theo operation.
 - Cursor/locator là opaque; private answer, AI provider payload và object secret không đi vào public projection.
+- Media gốc và rendition ở MinIO private; API, worker và delivery dùng credential riêng, playback token giới hạn theo asset và thời hạn.
 - Secrets/keys được inject từ môi trường và không được commit.
 
 ### Web UX, Accessibility và Motion
@@ -328,14 +346,23 @@ Lệnh reset xóa Cassandra/RabbitMQ/MinIO volumes local. Không chạy khi cầ
 
 ### Development profiles
 
-| Lệnh                 | Mục đích                                       |
-| -------------------- | ---------------------------------------------- |
-| `pnpm env:dev-core`  | Cassandra và các service đồng bộ cốt lõi       |
-| `pnpm env:dev-async` | Môi trường đầy đủ, gồm RabbitMQ/MinIO/workers  |
-| `pnpm env:research`  | Môi trường thí nghiệm resilience               |
-| `pnpm env:demo`      | Demo HTTPS local                               |
-| `pnpm env:down`      | Dừng môi trường và giữ volume                  |
-| `pnpm env:reset`     | Xóa môi trường/volume khi đã đặt biến xác nhận |
+| Lệnh                 | Mục đích                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| `pnpm env:dev-core`  | Cassandra và các service đồng bộ cốt lõi                                                 |
+| `pnpm env:dev-async` | Môi trường đầy đủ, gồm RabbitMQ/MinIO/workers                                            |
+| `pnpm env:research`  | Môi trường thí nghiệm resilience                                                         |
+| `pnpm env:demo`      | Demo HTTPS local                                                                         |
+| `pnpm env:down`      | Dừng môi trường và giữ volume                                                            |
+| `pnpm env:reset`     | Xóa môi trường/volume khi đã đặt biến xác nhận                                           |
+| Media overlay        | `docker-compose.media.yml`; cần policy kích thước/thời lượng và credential storage riêng |
+
+Media là overlay tùy chọn. Sau khi khai báo các biến bắt buộc trong `.env.media`, có thể bật cùng profile bất đồng bộ:
+
+```bash
+docker compose --env-file .env --env-file .env.media \
+  -f docker-compose.yml -f docker-compose.async.yml -f docker-compose.media.yml \
+  --profile dev-async up -d api-gateway learning-service media-delivery media-worker
+```
 
 ### Kiểm tra chất lượng
 
@@ -410,12 +437,15 @@ artifacts/, evidence/     Bằng chứng runtime/release sinh bởi tooling
 - [x] Local clean bootstrap và event consumer recovery
 - [x] Assessment evidence → durable Mastery V2 → Study Plan feedback path
 - [x] Finance projection/backfill, durable refund và observability stack
+- [x] Phase 42 Revision B: media upload, quota, HLS, playback token và WebVTT; acceptance cục bộ trên Docker/Web/mobile simulator
+- [x] Phase 42 Revision C: redacted staging config, IAM/S3/CDN templates và validator/runbook scripts trong source
 - [ ] Hoàn tất các authoritative mastery evidence producer còn lại
 - [ ] AI Tutor tool registry và Mastery/Study Plan tools đầy đủ
 - [ ] Full-stack Student/Teacher/Admin/failure E2E cho Phase 40 Revision H
-- [ ] Native mobile production release, production deployment và provider telemetry
+- [ ] Staging/cloud deployment với credential thật, external S3/CDN acceptance và production telemetry
+- [ ] VoiceOver/TalkBack trên thiết bị thật và native mobile production release
 
-Theo báo cáo mới nhất trong repository, `PHASE_40_STATUS = RUNTIME_INTEGRATION_INCOMPLETE` và `CONTROLLED_PRODUCT_PILOT_STATUS = REVOKED`. Local typecheck, các test tập trung và migration checks đã pass, nhưng điều này không đồng nghĩa production deployment hay external assurance đã hoàn tất.
+Phase 40 Revision H vẫn được ghi nhận là `RUNTIME_INTEGRATION_INCOMPLETE` và `CONTROLLED_PRODUCT_PILOT_STATUS = REVOKED`. Báo cáo Phase 42 Revision B ghi nhận acceptance trên môi trường cục bộ; Revision C bổ sung cấu hình mẫu và kiểm tra sẵn sàng. Các kết quả này chưa chứng minh staging/production deployment hay external assurance.
 
 ## Phạm vi và giới hạn của AI
 
@@ -443,8 +473,9 @@ AI không được:
 - Course requirement, deadline, assessment schedule và teacher-priority adapter cho Study Plan còn thiếu.
 - AI Tutor authorized tool registry và các Mastery/Study Plan tool thật chưa hoàn tất.
 - Teacher Copilot, Question Bank V2, Institution Onboarding, Curriculum Intelligence, Fleet Operations và Advanced Experimentation đang `DEFERRED_UNSHIPPED`; không nên xem route/UI thử nghiệm là runtime production-ready.
-- Full failure-injection retry/DLQ và full-stack Student/Teacher/Admin/failure E2E chưa có bằng chứng hoàn tất cho revision hiện tại.
-- Chưa tuyên bố external SAML, LTI, Vault, staging, load acceptance, penetration test hay ASV đã hoàn tất.
+- Full failure-injection retry/DLQ và full-stack Student/Teacher/Admin/failure E2E cho Phase 40 Revision H chưa có bằng chứng hoàn tất.
+- Phase 42 có bounded-load acceptance cục bộ; chưa có production load/SLO acceptance hoặc staging/production deployment với cloud storage thật. Template staging và policy IaC hiện chỉ là cấu hình mẫu.
+- External SAML/LTI, Vault-backed deployment, penetration test và ASV chưa được xác nhận hoàn tất.
 - Thanh toán thương mại production và payout vẫn bị chặn theo cơ chế fail-closed.
 - Mobile có trong repository và có test, nhưng phát hành native production chưa nằm trong phạm vi đã xác nhận.
 

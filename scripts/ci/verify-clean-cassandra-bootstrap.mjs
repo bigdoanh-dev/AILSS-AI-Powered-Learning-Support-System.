@@ -113,6 +113,59 @@ try {
     cql(text);
   }
 
+  // Exercise the new migrations against populated tables, then apply them
+  // again. This runs only in the uniquely named disposable Cassandra container.
+  const studentId = randomUUID();
+  const entryId = randomUUID();
+  const usageId = randomUUID();
+  const sessionId = randomUUID();
+  const lecturerId = randomUUID();
+  const instructionId = randomUUID();
+  const auditEventId = randomUUID();
+  const cacheKey = `bootstrap-rerun-${suffix}`;
+  cql(`
+    INSERT INTO classroom_keyspace.student_schedule_by_day
+      (student_id,schedule_day,start_at,entry_id,title)
+      VALUES (${studentId},'2026-09-29','2026-09-29T12:00:00Z',${entryId},'rerun fixture');
+    INSERT INTO ai_service.ai_token_usage
+      (user_id,usage_day,timestamp,usage_id,session_id,provider,prompt_tokens,completion_tokens)
+      VALUES (${studentId},'2026-09-29','2026-09-29T12:00:00Z',${usageId},${sessionId},'fixture',7,3);
+    INSERT INTO ai_service.assistant_response_cache (cache_key,content)
+      VALUES ('${cacheKey}','rerun answer') USING TTL 3600;
+    INSERT INTO learning_keyspace.payout_instruction_by_month
+      (payout_month,lecturer_id,instruction_id,amount_minor,currency,status,approved_by)
+      VALUES ('2026-08',${lecturerId},${instructionId},9000,'VND','PENDING_TRANSFER',${studentId});
+    INSERT INTO learning_keyspace.payout_audit_by_instruction
+      (instruction_id,event_id,state,actor_id,occurred_at)
+      VALUES (${instructionId},${auditEventId},'PENDING_TRANSFER',${studentId},'2026-09-29T12:00:00Z');
+  `);
+  for (const filename of expected.filter((name) => /^09[3-6]_/.test(name)))
+    cql(await readFile(join(dir, filename), "utf8"));
+  const populatedChecks = [
+    [
+      `SELECT JSON entry_id,title FROM classroom_keyspace.student_schedule_by_day WHERE student_id=${studentId} AND schedule_day='2026-09-29';`,
+      entryId,
+    ],
+    [
+      `SELECT JSON usage_id,prompt_tokens FROM ai_service.ai_token_usage WHERE user_id=${studentId} AND usage_day='2026-09-29';`,
+      usageId,
+    ],
+    [
+      `SELECT JSON content FROM ai_service.assistant_response_cache WHERE cache_key='${cacheKey}';`,
+      "rerun answer",
+    ],
+    [
+      `SELECT JSON instruction_id,approved_by FROM learning_keyspace.payout_instruction_by_month WHERE payout_month='2026-08' AND lecturer_id=${lecturerId};`,
+      instructionId,
+    ],
+    [
+      `SELECT JSON event_id FROM learning_keyspace.payout_audit_by_instruction WHERE instruction_id=${instructionId};`,
+      auditEventId,
+    ],
+  ];
+  for (const [query, marker] of populatedChecks)
+    if (!cql(query).includes(marker)) throw new Error(`POPULATED_MIGRATION_RERUN_LOST_DATA ${marker}`);
+
   const keyspaces = cql("SELECT keyspace_name FROM system_schema.keyspaces;");
   for (const keyspace of registry.canonicalKeyspaces)
     if (!keyspaces.includes(keyspace)) throw new Error(`CLEAN_BOOTSTRAP_MISSING_KEYSPACE ${keyspace}`);
@@ -126,6 +179,7 @@ try {
       status: "PASS",
       migrations: expected.length,
       keyspaces: registry.canonicalKeyspaces.length,
+      populatedRerun: true,
       schemaAgreement: schemas.includes("schema_version"),
     }),
   );

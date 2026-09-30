@@ -98,7 +98,7 @@ describe("P11 BLOCK-P11-001 same-ID contract remediation", () => {
     const events = await json("contracts/event-registry.json");
     const manifest = await json("contracts/notification-manifest.json");
     expect([api.public.length, api.internal.length, queries.queries.length, events.events.length]).toEqual([
-      115, 15, 83, 22,
+      116, 15, 84, 22,
     ]);
     expect(api.internal.filter((entry: { owner?: string }) => entry.owner === "Notification")).toEqual([]);
     expect(manifest).toMatchObject({

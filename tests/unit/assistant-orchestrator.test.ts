@@ -105,9 +105,11 @@ describe("Phase 16B & 17 — Assistant Orchestrator (Study Buddy & Lecturer Copi
   it("Study Buddy executes search_course_materials and returns verified lesson citations", async () => {
     const studentId = randomUUID();
     const mockRepo = createMockRepo();
+    let usageContext: { readonly userId: string; readonly sessionId: string } | undefined;
 
     const mockLlm: AssistantLlmProvider = {
       generate: (req) => {
+        usageContext = req.usageContext;
         expect(req.systemPrompt).toContain("Vietnamese learning companion");
         expect(req.systemPrompt).toContain("Never invent scores");
         expect(req.systemPrompt).toContain("Return only the final learner-facing message");
@@ -136,6 +138,7 @@ describe("Phase 16B & 17 — Assistant Orchestrator (Study Buddy & Lecturer Copi
     );
 
     expect(res.citations).toHaveLength(1);
+    expect(usageContext).toEqual({ userId: studentId, sessionId: res.conversationId });
     expect(res.citations[0]?.lessonId).toBe("lesson-05-consistency");
     expect(res.citations[0]?.snippet).toContain("LOCAL_QUORUM ensures strong consistency");
     expect(res.toolInvocations.map((call) => call.name)).toEqual([

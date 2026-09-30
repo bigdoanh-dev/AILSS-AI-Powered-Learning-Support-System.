@@ -151,7 +151,7 @@ describe("P10.3 same-ID contract authority", () => {
       registry.internal.length,
       queries.queries.length,
       events.events.length,
-    ]).toEqual([115, 15, 83, 22]);
+    ]).toEqual([116, 15, 84, 22]);
     const publicApis = registry.public as RegistryEntry[];
     const internalApis = registry.internal as RegistryEntry[];
     expect(publicApis.find(({ id }) => id === "AI-05")).toMatchObject({

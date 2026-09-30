@@ -2,7 +2,7 @@
 
 - Owner domain: Identity.
 - Owned Cassandra: `identity_keyspace`; runtime role `svc_identity`.
-- Public API IDs: `IDN-01..12`.
+- Public API IDs: `IDN-01..22`.
 - Owned internal API IDs: `INT-IDN-01`; outbound internal calls: none.
 - Produced events: `identity.user.registered.v1`, `identity.user.status_changed.v1`, `system.audit.requested.v1`.
 - Consumed queues: none.
@@ -14,6 +14,7 @@ Implemented Phase 7 handlers:
 - `IDN-01 POST /api/v1/auth/register`: `Q-IDN-001`, `Q-IDN-002`, `Q-IDN-007`.
 - `IDN-02 POST /api/v1/auth/login`: `Q-IDN-001`, `Q-IDN-002`, `Q-IDN-003`.
 - `IDN-03 POST /api/v1/auth/refresh`: `Q-IDN-001`, `Q-IDN-003`.
+- `IDN-20..22 POST /api/v1/auth/password-reset/{request,verify,complete}`: email OTP recovery with short-lived, hashed challenges.
 
 Login signs Ed25519 access JWTs from injected key files, persists only an opaque refresh-token fingerprint, and revalidates canonical account authorization after session creation. Refresh proves the current 256-bit opaque credential, signs before mutation, rotates the fingerprint/generation/version with a one-row Cassandra LWT, preserves the absolute family expiry, and conservatively revokes the canonical family on a known-session mismatch or losing replay. Both paths revalidate canonical account authorization before returning credentials.
 

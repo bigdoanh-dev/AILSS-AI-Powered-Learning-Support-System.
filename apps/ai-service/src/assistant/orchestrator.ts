@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { responseCacheKey, type AssistantResponseCache } from "./response-cache.js";
 import { AppError } from "../../../../packages/http/src/index.js";
 import type { AssistantLlmProvider, LlmCompletionRequest, LlmMessage } from "./llm-provider.js";
 import type {
@@ -119,6 +120,13 @@ function isTutorMetaCommentary(content: string): boolean {
   );
 }
 
+function isRefusal(content: string): boolean {
+  const opening = content.trim().slice(0, 240);
+  return /(?:i (?:cannot|can't|won't|am unable to) (?:help|assist|provide|comply)|i (?:must|have to) refuse|cannot comply|unable to assist|(?:sorry|apologize).{0,100}(?:cannot|can't|unable|won't)|không thể (?:hỗ trợ|giúp|cung cấp|trả lời)|từ chối (?:yêu cầu|trả lời)|vi phạm chính sách|xin lỗi.{0,100}(?:không thể|từ chối))/iu.test(
+    opening,
+  );
+}
+
 function asksForCourseRecommendation(message: string): boolean {
   return /(?:tìm|kiếm|gợi ý|đề xuất|chọn|recommend|find|suggest).{0,45}(?:khóa học|khoá học|course)|(?:khóa học|khoá học|course).{0,45}(?:liên quan|phù hợp|nào|về|about)|(?:muốn học|nên học).{0,45}(?:khóa học|khoá học|course)/iu.test(
     message,
@@ -153,6 +161,10 @@ export interface AssistantOrchestratorOptions {
   readonly llmProvider: AssistantLlmProvider;
   readonly safetyEngine?: LearnerSafetyPolicyEngine;
   readonly now?: () => Date;
+  readonly responseCache?: AssistantResponseCache;
+  readonly responseCacheTtlSeconds?: number;
+  readonly providerIdentity?: string;
+  readonly tenantId?: string;
 }
 
 export class AssistantOrchestrator {
@@ -162,6 +174,10 @@ export class AssistantOrchestrator {
   readonly #llmProvider: AssistantLlmProvider;
   readonly #safetyEngine: LearnerSafetyPolicyEngine;
   readonly #now: () => Date;
+  readonly #responseCache: AssistantResponseCache | undefined;
+  readonly #responseCacheTtlSeconds: number;
+  readonly #providerIdentity: string;
+  readonly #tenantId: string;
 
   public constructor(options: AssistantOrchestratorOptions) {
     this.#repo = options.repository;
@@ -170,6 +186,10 @@ export class AssistantOrchestrator {
     this.#llmProvider = options.llmProvider;
     this.#safetyEngine = options.safetyEngine ?? new LearnerSafetyPolicyEngine();
     this.#now = options.now ?? (() => new Date());
+    this.#responseCache = options.responseCache;
+    this.#responseCacheTtlSeconds = options.responseCacheTtlSeconds ?? 86_400;
+    this.#providerIdentity = options.providerIdentity ?? "unspecified";
+    this.#tenantId = options.tenantId ?? "platform-default";
   }
 
   public async chat(
@@ -466,13 +486,37 @@ export class AssistantOrchestrator {
       systemPrompt,
       messages: llmMessages,
       availableTools,
+      usageContext: { userId: user.userId, sessionId: conversationId },
       integrationContext: { mode: request.mode, toolResults },
       temperature: 0.2,
       // Student-facing chat should return promptly; this is ample for a concise grounded answer.
       maxTokens: request.mode === "STUDY_BUDDY" ? 768 : 2048,
     };
 
-    const completion = await this.#llmProvider.generate(completionReq);
+    // Tool calls can have side effects or depend on rapidly changing permissions/data.
+    // Only pure model responses are eligible for replay.
+    const cache = toolCalls.length === 0 ? this.#responseCache : undefined;
+    const cacheKey = cache
+      ? responseCacheKey({
+          tenantId: this.#tenantId,
+          userId: user.userId,
+          role: user.role,
+          ...(request.courseId ? { courseId: request.courseId } : {}),
+          providerIdentity: this.#providerIdentity,
+          request: completionReq,
+        })
+      : undefined;
+    let cachedContent: string | null = null;
+    if (cache && cacheKey) {
+      try {
+        cachedContent = await cache.get(cacheKey);
+      } catch {
+        // Cache availability must never prevent a normal model response.
+      }
+    }
+    const completion = cachedContent
+      ? { content: cachedContent }
+      : await this.#llmProvider.generate(completionReq);
     const assistantContent = completion.content.trim();
     if (!assistantContent) {
       throw new AppError(
@@ -516,6 +560,20 @@ export class AssistantOrchestrator {
       ...(acceptedCitations.length > 0 ? { citations: acceptedCitations } : {}),
       now: this.#now(),
     });
+
+    if (
+      !cachedContent &&
+      cache &&
+      cacheKey &&
+      !completion.toolCalls?.length &&
+      !isRefusal(assistantContent)
+    ) {
+      try {
+        await cache.set(cacheKey, assistantContent, this.#responseCacheTtlSeconds);
+      } catch {
+        // A failed cache write does not change the response.
+      }
+    }
 
     return {
       conversationId,

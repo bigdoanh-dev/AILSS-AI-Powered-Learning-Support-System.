@@ -1,12 +1,13 @@
 {
   "schemaVersion": "1.0.0",
-  "totalMigrations": 58,
+  "totalMigrations": 62,
   "canonicalKeyspaces": [
     "identity_keyspace",
     "learning_keyspace",
     "assessment_keyspace",
     "classroom_keyspace",
     "ai_keyspace",
+    "ai_service",
     "audit_support_keyspace",
     "interaction_keyspace",
     "notification_keyspace"
@@ -241,7 +242,7 @@
       "classification": "TABLE_OPTION_CHANGE",
       "status": "DEPLOYED_VERIFIED",
       "predecessor": "032",
-      "environmentParity": "FORMAT_OR_REPLICATION_DIFFERENCE"
+      "environmentParity": "RECONCILED_TABLE_OPTION_DRIFT"
     },
     {
       "id": "034",
@@ -648,6 +649,50 @@
       "classification": "SAFE_ADDITIVE",
       "status": "SOURCE_READY_DEPLOYMENT_PENDING",
       "predecessor": "091",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "093",
+      "filename": "093_classroom_schedule_compaction_parity.cql",
+      "sha256Dev": "19bbad40ca4688a483e902330b0ae376cdd16985c6c2cc0f7f1dd1f3949d3626",
+      "sha256Research": "19bbad40ca4688a483e902330b0ae376cdd16985c6c2cc0f7f1dd1f3949d3626",
+      "keyspace": "classroom_keyspace",
+      "classification": "TABLE_OPTION_CHANGE",
+      "status": "SOURCE_READY_DEPLOYMENT_PENDING",
+      "predecessor": "092",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "094",
+      "filename": "094_ai_token_usage.cql",
+      "sha256Dev": "92f2197668a87697e2d98bd585f1d1f53115dd8e9bd6640412741b344a6ac18f",
+      "sha256Research": "fdcbb876acab27d710f42f9c3fc460893d4f32d4411beb4fef06f98b43ec45a7",
+      "keyspace": "ai_service",
+      "classification": "SAFE_ADDITIVE",
+      "status": "SOURCE_READY_DEPLOYMENT_PENDING",
+      "predecessor": "093",
+      "environmentParity": "FORMAT_OR_REPLICATION_DIFFERENCE"
+    },
+    {
+      "id": "095",
+      "filename": "095_ai_assistant_response_cache.cql",
+      "sha256Dev": "39849a5eaad8443de6234b947b9fa22dcc27479a910f68bd8aabe05d3f050d8b",
+      "sha256Research": "39849a5eaad8443de6234b947b9fa22dcc27479a910f68bd8aabe05d3f050d8b",
+      "keyspace": "ai_service",
+      "classification": "SAFE_ADDITIVE",
+      "status": "SOURCE_READY_DEPLOYMENT_PENDING",
+      "predecessor": "094",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "096",
+      "filename": "096_lecturer_payout_execution.cql",
+      "sha256Dev": "e579f57a91c38dbc949d54960067b62ee495ab157bb62a5a8d0ba15782c81b3a",
+      "sha256Research": "e579f57a91c38dbc949d54960067b62ee495ab157bb62a5a8d0ba15782c81b3a",
+      "keyspace": "learning_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "SOURCE_READY_DEPLOYMENT_PENDING",
+      "predecessor": "095",
       "environmentParity": "IDENTICAL"
     }
   ]

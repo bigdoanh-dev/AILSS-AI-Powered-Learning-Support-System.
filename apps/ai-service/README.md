@@ -1,5 +1,7 @@
 # AI service
 
+Assistant responses use `ai_service.assistant_response_cache` after migration 095. The cache stores only successful, validated model text for requests that executed no tools. Authorization and learner safety checks run on every request before cache lookup; cache failures fall through to the provider. `AI_ASSISTANT_CACHE_TTL_SECONDS` defaults to 86400 (24 hours), and `AI_ASSISTANT_CACHE_TENANT_ID` scopes keys to one deployment tenant. The actor context currently has no per-request tenant claim, so a deployment serving multiple tenant contexts must provide that scope before enabling shared response caching for them.
+
 - Owner domain: AI.
 - Owned Cassandra: `ai_keyspace`; runtime role `svc_ai` shared only with the two AI workers.
 - Public API IDs: `AI-01..10`.

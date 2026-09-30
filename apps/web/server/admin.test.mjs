@@ -59,6 +59,23 @@ test("Admin payout allowlist scopes one or all lecturers", () => {
       { "idempotency-key": "bad" },
     ),
   );
+  assert.deepEqual(
+    adminOperation(
+      `/web-session/admin/payouts/2026-08/${id}/approve`,
+      "POST",
+      {},
+      { "idempotency-key": "approve-one" },
+    ),
+    { path: `/admin/payouts/2026-08/${id}/approve`, headers: {}, key: "approve-one" },
+  );
+  assert.throws(() =>
+    adminOperation(
+      `/web-session/admin/payouts/2026-08/${id}/approve`,
+      "POST",
+      { accountNumber: "123" },
+      { "idempotency-key": "bad" },
+    ),
+  );
 });
 test("Admin moderation allowlist preserves cursor, optimistic version and password reauth body", () => {
   assert.equal(

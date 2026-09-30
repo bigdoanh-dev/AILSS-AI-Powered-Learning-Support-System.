@@ -69,6 +69,30 @@ if (
   );
 }
 const checksums = [];
+// A fresh bootstrap has no schedule tables before 033. On an existing target,
+// changing a compaction strategy needs an operator review of data and capacity.
+const scheduleTables = ["student_schedule_by_day", "schedule_reservations_by_expiry_bucket"];
+const scheduleTableOptions = scheduleTables.map((table) =>
+  cql(
+    `SELECT compaction FROM system_schema.tables WHERE keyspace_name = 'classroom_keyspace' AND table_name = '${table}';`,
+  ),
+);
+const needsCompactionChange = scheduleTableOptions.some(
+  (output) =>
+    output.includes("1 row") &&
+    !(
+      output.includes("TimeWindowCompactionStrategy") &&
+      output.includes("compaction_window_unit") &&
+      output.includes("DAYS") &&
+      output.includes("compaction_window_size") &&
+      output.includes("'1'")
+    ),
+);
+if (needsCompactionChange && process.env.AILSS_APPROVE_093_COMPACTION !== "true") {
+  throw new Error(
+    "MIGRATION_093_PRECHECK_REQUIRED: existing schedule tables require a reviewed target snapshot and AILSS_APPROVE_093_COMPACTION=true",
+  );
+}
 for (const [index, file] of files.entries()) {
   const text = await readFile(new URL(file, migrationDir), "utf8");
   const digest = createHash("sha256").update(text).digest("hex");

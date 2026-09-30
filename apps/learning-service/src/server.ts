@@ -36,6 +36,7 @@ import { learningQuizEligibilityRouter } from "./quiz-eligibility-router.js";
 import { LearningCommerceRepository } from "./commerce/repository.js";
 import { LearningCommerceService } from "./commerce/service.js";
 import { learningCommerceRouter } from "./commerce/router.js";
+import { payoutProviderFromEnv } from "./commerce/bank-api-provider.js";
 import { createCommerceClassroomClient } from "./commerce/classroom-client.js";
 import { EntitlementFulfillmentConsumer } from "./commerce/worker.js";
 import { learningInteractionEligibilityRouter } from "./interaction-eligibility-router.js";
@@ -330,6 +331,7 @@ await startService(manifest, {
       classroomContext,
       config.LEARNING_CURSOR_HMAC_KEY,
       paymentRecovery,
+      payoutProviderFromEnv(),
     );
     app.use(
       learningCommerceRouter(commerce, {

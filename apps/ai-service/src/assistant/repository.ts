@@ -46,8 +46,37 @@ export interface LogToolInvocationInput {
   readonly now: Date;
 }
 
+export interface SaveTokenUsageInput {
+  readonly usageId: string;
+  readonly userId: string;
+  readonly sessionId: string;
+  readonly provider: string;
+  readonly promptTokens: number;
+  readonly completionTokens: number;
+  readonly timestamp: Date;
+}
+
 export class AssistantRepository {
   public constructor(private readonly client: CassandraClient) {}
+
+  public async saveTokenUsage(input: SaveTokenUsageInput): Promise<void> {
+    await this.client.execute(
+      `INSERT INTO ai_service.ai_token_usage (
+         user_id, usage_day, timestamp, usage_id, session_id, provider, prompt_tokens, completion_tokens
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuid(input.userId),
+        types.LocalDate.fromString(input.timestamp.toISOString().slice(0, 10)),
+        input.timestamp,
+        uuid(input.usageId),
+        uuid(input.sessionId),
+        input.provider,
+        input.promptTokens,
+        input.completionTokens,
+      ],
+      LOCAL_QUORUM,
+    );
+  }
 
   public async getConversation(conversationId: string): Promise<ConversationSummary | null> {
     const rows = await this.client.execute(

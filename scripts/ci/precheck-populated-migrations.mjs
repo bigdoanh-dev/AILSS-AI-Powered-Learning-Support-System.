@@ -168,6 +168,22 @@ export const canonicalPolicy = {
     "SAFE_ADDITIVE",
     "Verify effective-time commission history before enabling admin rate changes.",
   ),
+  "093_classroom_schedule_compaction_parity.cql": P(
+    "TABLE_OPTION_CHANGE",
+    "Inspect both schedule tables, current compaction, population and capacity before approving TWCS convergence.",
+  ),
+  "094_ai_token_usage.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify ai_service replication, grants and daily user-partitioned token usage storage before writer rollout.",
+  ),
+  "095_ai_assistant_response_cache.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify ai_service grants and cache write TTL before enabling assistant response caching.",
+  ),
+  "096_lecturer_payout_execution.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify payout approval columns and audit table before enabling mock payout execution.",
+  ),
 };
 
 export function findUnsafeStatements(body) {
@@ -267,7 +283,7 @@ export function evaluateTargetSnapshot(snapshot) {
   if (!Number.isFinite(snapshot.diskFreeBytes) || snapshot.diskFreeBytes <= 0)
     reasons.push("free disk missing");
   if (snapshot.capacityApproved !== true) reasons.push("capacity not approved");
-  const requiredReviews = ["013", "024", "026", "033", "052", "076"];
+  const requiredReviews = ["013", "024", "026", "033", "052", "076", "093"];
   if (
     !snapshot.populationFacts ||
     typeof snapshot.populationFacts !== "object" ||

@@ -1,6 +1,6 @@
 {
   "version": "P12.9R",
-  "publicCount": 115,
+  "publicCount": 116,
   "internalCount": 15,
   "public": [
     {
@@ -1332,6 +1332,17 @@
       "auth": "Bearer",
       "roles": "admin",
       "queryIds": ["Q-LRN-030"],
+      "event": null
+    },
+    {
+      "id": "LRN-41",
+      "service": "Learning",
+      "method": "POST",
+      "path": "/api/v1/admin/payouts/{month}/{lecturerId}/approve",
+      "summary": "Duyệt phiếu chi kỳ trước qua nhà cung cấp giả lập",
+      "auth": "Bearer",
+      "roles": "admin",
+      "queryIds": ["Q-LRN-029", "Q-LRN-031"],
       "event": null
     }
   ],

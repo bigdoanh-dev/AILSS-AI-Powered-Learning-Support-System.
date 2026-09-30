@@ -43,6 +43,11 @@ import { federationProxy } from "./federation-proxy.js";
 import { adaptiveLearningProxyFactory } from "./adaptive-learning-proxy.js";
 import { createUpstreamReadinessHandler, gatewayReadinessDependencies } from "./readiness.js";
 import { monitoringHandler } from "./monitoring.js";
+import {
+  createGatewayCircuitBreakers,
+  gatewayCircuitBreakerMiddleware,
+  installGatewayFetchInterceptor,
+} from "./circuit-breaker.js";
 
 const config = loadConfig({
   APP_NAME: "api-gateway",
@@ -193,6 +198,9 @@ app.use(express.json({ limit: config.HTTP_BODY_LIMIT }));
 // Keep volumetric protection separate from route budgets. Reusing readLimiter here
 // charged every read twice and cut the advertised per-route allowance in half.
 app.use(globalLimiter.middleware(Number(process.env.RATE_LIMIT_GLOBAL_PER_MINUTE ?? 1_200)));
+const circuitBreakers = createGatewayCircuitBreakers(config, logger);
+const uninstallFetchInterceptor = installGatewayFetchInterceptor(circuitBreakers, config);
+app.use(gatewayCircuitBreakerMiddleware(circuitBreakers));
 app.post(
   "/api/v1/auth/register",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
@@ -767,6 +775,11 @@ app.get("/api/v1/me/payout-account", learningCommerce.payoutAccountRead);
 app.post("/api/v1/me/payout-account", authLimiter.middleware(30), learningCommerce.payoutAccountSave);
 app.get("/api/v1/admin/payouts", learningCommerce.adminPayouts);
 app.post("/api/v1/admin/payouts/prepare", authLimiter.middleware(30), learningCommerce.preparePayouts);
+app.post(
+  "/api/v1/admin/payouts/:month/:lecturerId/approve",
+  authLimiter.middleware(30),
+  learningCommerce.approvePayout,
+);
 app.get("/api/v1/me/commission", learningCommerce.lecturerCommission);
 app.get("/api/v1/admin/commission", authLimiter.middleware(30), learningCommerce.adminCommissionRead);
 app.post("/api/v1/admin/commission", authLimiter.middleware(30), learningCommerce.adminCommissionSave);
@@ -818,4 +831,6 @@ logger.info({ operation: "startup", port: config.PORT }, "gateway started");
 installFatalHandlers(logger, async () => {
   await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
   gatewayWebSocketCleanup();
+  uninstallFetchInterceptor();
+  circuitBreakers.disposeAll();
 });

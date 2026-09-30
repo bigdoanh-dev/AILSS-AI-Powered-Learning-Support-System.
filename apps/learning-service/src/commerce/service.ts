@@ -22,6 +22,7 @@ import {
   type PaymentRequest,
 } from "./model.js";
 import type { LearningCommerceRepository } from "./repository.js";
+import type { IPayoutProvider, PayoutExecutionResult } from "./bank-api-provider.js";
 
 export class LearningCommerceService {
   public constructor(
@@ -30,6 +31,7 @@ export class LearningCommerceService {
     private readonly classroomContext: ClassroomOfferingContextClient,
     private readonly secret: string,
     private readonly recovery?: SepayRecoveryRepository,
+    private readonly payoutProvider?: IPayoutProvider,
   ) {}
 
   async revenueDashboard(actor: ActorContext, range: string) {
@@ -135,6 +137,79 @@ export class LearningCommerceService {
       await this.repo.preparePayoutInstruction(month, item.lecturerId, item.estimatedEarningsMinor, account);
     }
     return { month, instructions: await this.repo.payoutInstructions(month), skipped };
+  }
+
+  async approvePayout(actor: ActorContext, lecturerId: string, month: string) {
+    if (!actor.roles.includes("ADMIN")) throw new AppError("ADMIN_REQUIRED", 403, "Admin required");
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || month !== previousMonth())
+      throw new AppError("PAYOUT_MONTH_INVALID", 422, "Only the previous payout month can be approved");
+    if (new Date().getUTCDate() <= 7)
+      throw new AppError("PAYOUT_REFUND_WINDOW_OPEN", 409, "Refund window is still open");
+    if (!this.payoutProvider)
+      throw new AppError("PAYOUT_PROVIDER_DISABLED", 503, "Payout mock is not configured");
+    const instruction = await this.repo.payoutInstruction(month, lecturerId);
+    if (!instruction) throw new AppError("PAYOUT_NOT_FOUND", 404, "Payout instruction not found");
+    if (instruction.status !== "PENDING_TRANSFER")
+      throw new AppError("PAYOUT_ALREADY_HANDLED", 409, "Payout already approved or requires review");
+    if (
+      instruction.currency !== "VND" ||
+      !/^[1-9]\d*$/.test(instruction.amountMinor) ||
+      BigInt(instruction.amountMinor) > BigInt(Number.MAX_SAFE_INTEGER) ||
+      !/^[0-9]{6,24}$/.test(instruction.accountNumber) ||
+      !instruction.bankName ||
+      !instruction.accountHolder
+    )
+      throw new AppError("PAYOUT_INSTRUCTION_INVALID", 422, "Payout instruction is invalid");
+    const claimed = await this.repo.claimPayoutApproval(
+      month,
+      lecturerId,
+      instruction.instructionId,
+      actor.userId,
+    );
+    if (!claimed)
+      throw new AppError("PAYOUT_ALREADY_HANDLED", 409, "Payout already approved or requires review");
+    await this.repo.auditPayout({
+      instructionId: instruction.instructionId,
+      eventId: randomUUID(),
+      state: "SUBMITTING",
+      actorId: actor.userId,
+    });
+    // SUBMITTING is a durable fence. An interrupted call remains there for manual reconciliation.
+    let result: PayoutExecutionResult;
+    try {
+      result = await this.payoutProvider.executePayout(
+        { minor: instruction.amountMinor, currency: "VND" },
+        {
+          bankName: instruction.bankName,
+          accountNumber: instruction.accountNumber,
+          accountHolder: instruction.accountHolder,
+        },
+        `AILSS-PAYOUT-${instruction.instructionId}`,
+      );
+    } catch {
+      result = { status: "RECONCILIATION_REQUIRED", reason: "PROVIDER_CALL_UNCERTAIN" };
+    }
+    const completed = await this.repo.finishPayoutApproval(
+      month,
+      lecturerId,
+      result.status,
+      result.status === "PAID" ? result.providerReference : null,
+      result.status === "PAID" ? null : result.reason,
+    );
+    if (!completed)
+      throw new AppError("PAYOUT_RECONCILIATION_REQUIRED", 409, "Payout requires manual reconciliation");
+    await this.repo.auditPayout({
+      instructionId: instruction.instructionId,
+      eventId: randomUUID(),
+      state: result.status,
+      actorId: actor.userId,
+      ...(result.status === "PAID" ? {} : { reason: result.reason }),
+    });
+    return this.repo.payoutInstruction(month, lecturerId);
+  }
+
+  async approvePreviousMonthPayout(actor: ActorContext, lecturerId: string) {
+    return this.approvePayout(actor, lecturerId, previousMonth());
   }
 
   async freeEnroll(input: { courseId: string; actor: ActorContext; key: string; correlationId: string }) {

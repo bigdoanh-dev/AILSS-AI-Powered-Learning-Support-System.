@@ -17,6 +17,7 @@ import { aiQuizRouter } from "./quiz/router.js";
 import {
   AssistantRepository,
   AssistantOrchestrator,
+  CassandraAssistantResponseCache,
   ToolRunner,
   HttpAssistantLlmProvider,
   IntegrationOnlyAssistantLlmProvider,
@@ -146,12 +147,23 @@ await startService(manifest, {
             apiKey: config.AI_PROVIDER_API_KEY || "synthetic-api-key",
             model: config.AI_PROVIDER_MODEL || "gemini-1.5-flash",
             timeoutMs: config.AI_PROVIDER_TIMEOUT_MS,
+            tokenUsageRepository: assistantRepo,
+            onTokenUsageError: (error) => {
+              context.logger.error(
+                { operation: "ai.assistant.token_usage.save", err: safeError(error) },
+                "AI assistant token usage write failed",
+              );
+            },
           });
     const assistantOrchestrator = new AssistantOrchestrator({
       repository: assistantRepo,
       toolRunner: assistantToolRunner,
       domainClient: assistantDomainClient,
       llmProvider: assistantLlmProvider,
+      responseCache: new CassandraAssistantResponseCache(context.cassandra),
+      responseCacheTtlSeconds: config.AI_ASSISTANT_CACHE_TTL_SECONDS,
+      tenantId: config.AI_ASSISTANT_CACHE_TENANT_ID,
+      providerIdentity: `${config.AI_ASSISTANT_PROVIDER_MODE}:${config.AI_PROVIDER_ENDPOINT}:${config.AI_PROVIDER_MODEL}`,
     });
     app.use(
       assistantRouter(

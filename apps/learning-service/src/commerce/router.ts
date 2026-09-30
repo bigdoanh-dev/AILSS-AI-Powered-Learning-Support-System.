@@ -229,10 +229,34 @@ export function learningCommerceRouter(
     try {
       const c = context();
       const actor = await requiredActor(req, verify.adminPayouts ?? verify.orderRead, c.correlationId);
-      const input = body(() => z.object({ lecturerId: uuid.optional() }).strict().parse(req.body));
+      const input = body(() =>
+        z.object({ lecturerId: uuid.optional(), approve: z.boolean().optional() }).strict().parse(req.body),
+      );
+      if (input.approve) {
+        if (!input.lecturerId)
+          throw new AppError("PAYOUT_LECTURER_REQUIRED", 422, "Lecturer is required for approval");
+        res.status(200).json({
+          data: await service.approvePreviousMonthPayout(actor, input.lecturerId),
+          meta: meta(c.requestId),
+        });
+        return;
+      }
       res
         .status(200)
         .json({ data: await service.preparePayouts(actor, input.lecturerId), meta: meta(c.requestId) });
+    } catch (e) {
+      next(e);
+    }
+  });
+  r.post("/api/v1/admin/payouts/:month/:lecturerId/approve", async (req, res, next) => {
+    try {
+      const c = context();
+      const actor = await requiredActor(req, verify.adminPayouts ?? verify.orderRead, c.correlationId);
+      strictEmpty(req.body);
+      res.status(200).json({
+        data: await service.approvePayout(actor, id(req.params.lecturerId), req.params.month),
+        meta: meta(c.requestId),
+      });
     } catch (e) {
       next(e);
     }

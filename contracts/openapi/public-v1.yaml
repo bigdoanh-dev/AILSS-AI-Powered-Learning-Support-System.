@@ -137,6 +137,36 @@
                 },
             },
         },
+      "/api/v1/admin/payouts/{month}/{lecturerId}/approve":
+        {
+          "post":
+            {
+              "operationId": "LRN-41",
+              "summary": "Duyệt phiếu chi kỳ trước qua nhà cung cấp giả lập",
+              "security": [{ "bearerAuth": [] }],
+              "parameters":
+                [
+                  {
+                    "name": "month",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "pattern": "^\\d{4}-(0[1-9]|1[0-2])$" },
+                  },
+                  {
+                    "name": "lecturerId",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" },
+                  },
+                ],
+              "responses":
+                {
+                  "200": { "description": "Payout state persisted" },
+                  "409": { "description": "Already handled or reconciliation required" },
+                  "503": { "description": "Mock payout provider unavailable" },
+                },
+            },
+        },
       "/api/v1/admin/dashboard/revenue":
         {
           "get":

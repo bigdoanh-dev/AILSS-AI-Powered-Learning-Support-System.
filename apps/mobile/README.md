@@ -14,9 +14,10 @@ From repository root, run `pnpm install --frozen-lockfile`. Copy
 - `EXPO_PUBLIC_AILSS_API_BASE_URL`: the Gateway origin only, without a path.
 
 Simulator examples (not defaults): iOS `http://127.0.0.1:8080`, Android emulator
-`http://10.0.2.2:8080`. For a physical device, use your explicitly configured LAN
-Gateway. Current Docker Gateway binds loopback; a physical device cannot reach
-that binding. Do not expose it publicly merely to run mobile.
+`http://10.0.2.2:8080`. For a physical device, bind the Gateway's mobile port
+`18080` to the host's trusted LAN IP and use `http://<host-LAN-IP>:18080`.
+The default binding stays on loopback. Do not expose this development HTTP
+Gateway publicly.
 
 Production requires HTTPS and has no fabricated domain. Expo public variables
 are bundled public configuration: NEVER put secrets there. Non-production HTTP
@@ -45,9 +46,10 @@ in process memory. It does not seed/reset data or call live payment/AI providers
 
 ## Boundaries and behavior
 
-Only public Gateway operations are used: IDN-01/02/03/04/05, avatar IDN-18,
+Only Gateway API operations are used: IDN-01/02/03/04/05, avatar IDN-18,
 LRN-02 search, LRN-15 enrolled courses, LRN-28 owned offerings, CLS-05/06 classes,
-and notification list NOT-01 (verify identifiers against contracts/api-registry.json).
+notification list NOT-01, and lecturer media asset upload/status/attach (verify
+identifiers against contracts/api-registry.json).
 Student registration omits role/status; server chooses them. Direct Lecturer
 onboarding remains available through the existing Web journey, not exposed here.
 No client verification, Admin registration, service credentials or internal imports.
@@ -61,10 +63,19 @@ Transient restore failures preserve refresh material for retry; revoked/invalid
 sessions clear it. Local logout clears memory/storage even if remote revocation
 fails; failure is surfaced separately. Storage failures fail closed with retry.
 
-Guest supports keyword search/login/Student registration. Student and Lecturer
-have read-only collection entry points; Admin has an honest foundation entry,
-account and notifications. No dead product tabs or full parity claims. Lists show
-loading, empty, error and retry; first-page/current-month scope is intentional.
+Guest supports keyword search/login/Student registration. Students have the
+learning flows described above. Lecturers can open a scoped native media workflow
+from Home: choose an owned course and non-preview lesson, pick an MP4/WebM video,
+upload resumable multipart chunks, watch server processing, then attach only a
+READY asset. A user/Gateway-scoped SecureStore record lets the lecturer reselect
+a video with matching name, size and type to resume after leaving or restarting
+the app; only upload metadata is stored, and signed object-store URLs are never
+persisted. The server enforces ownership, quota and file policy. Mobile also has
+role-specific Student, Lecturer and Admin AI entry points; Lecturer revenue,
+payout account and public profile editing; Admin commission and payout preparation;
+and public course reviews and lecturer profiles. Payout preparation creates manual
+transfer instructions, not a bank transfer. Lists show loading, empty, error and retry; first-page/current-month
+scope is intentional.
 Avatar is authenticated Gateway JSON containing a bounded validated image data
 URI; never a direct MinIO URL. Sensitive server responses are not persisted.
 Animations are disabled (also honors reduced motion), labels/touch targets/text

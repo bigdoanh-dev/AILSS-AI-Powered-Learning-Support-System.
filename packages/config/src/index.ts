@@ -84,6 +84,8 @@ const baseSchema = z.object({
   AI_PROVIDER_API_KEY: optionalInjected,
   AI_PROVIDER_MODE: z.enum(["production", "deterministic-test"]).default("production"),
   AI_ASSISTANT_PROVIDER_MODE: z.enum(["external", "integration-only"]).default("external"),
+  AI_ASSISTANT_CACHE_TTL_SECONDS: z.coerce.number().int().min(1).max(604_800).default(86_400),
+  AI_ASSISTANT_CACHE_TENANT_ID: z.string().min(1).max(200).default("platform-default"),
   AI_ASSISTANT_INTEGRATION_ENABLED: bool,
   AI_PROVIDER_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(120_000).default(30_000),
   AI_CIRCUIT_BREAKER_FAILURE_THRESHOLD: z.coerce.number().int().min(1).max(100).default(5),

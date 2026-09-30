@@ -111,6 +111,15 @@ export function adminOperation(url, method, body, headers) {
     z.object({ lecturerId: z.string().uuid().optional() }).strict().parse(body);
     return { path: "/admin/payouts/prepare", headers: {}, key: keyOf(headers) };
   }
+  const payoutApproval = new RegExp(`^/payouts/(\\d{4}-(?:0[1-9]|1[0-2]))/(${uuid})/approve$`).exec(path);
+  if (method === "POST" && payoutApproval && !query) {
+    z.object({}).strict().parse(body);
+    return {
+      path: `/admin/payouts/${payoutApproval[1]}/${payoutApproval[2]}/approve`,
+      headers: {},
+      key: keyOf(headers),
+    };
+  }
   if (method === "GET" && path === "/dashboard/stats" && !query) {
     return { path: "/admin/dashboard/stats", headers: {} };
   }

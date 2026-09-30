@@ -691,21 +691,74 @@ export class LearningCommerceRepository {
 
   public async payoutInstructions(month: string) {
     const rows = await this.db.execute(
-      `SELECT lecturer_id,instruction_id,amount_minor,currency,bank_name,account_number,account_holder,status,created_at FROM payout_instruction_by_month WHERE payout_month=?`,
+      `SELECT lecturer_id,instruction_id,amount_minor,currency,bank_name,account_number,account_holder,status,created_at,approved_by,approved_at,provider_reference,failure_reason,updated_at FROM payout_instruction_by_month WHERE payout_month=?`,
       [month],
       LQ,
     );
-    return rows.map((row) => ({
-      lecturerId: String(row.lecturer_id),
-      instructionId: String(row.instruction_id),
-      amountMinor: big(row.amount_minor).toString(),
-      currency: String(row.currency),
-      bankName: String(row.bank_name),
-      accountNumber: String(row.account_number),
-      accountHolder: String(row.account_holder),
-      status: String(row.status),
-      createdAt: date(row.created_at).toISOString(),
-    }));
+    return rows.map(payoutInstructionRow);
+  }
+
+  public async payoutInstruction(month: string, lecturerId: string) {
+    const rows = await this.db.execute(
+      `SELECT lecturer_id,instruction_id,amount_minor,currency,bank_name,account_number,account_holder,status,created_at,approved_by,approved_at,provider_reference,failure_reason,updated_at FROM payout_instruction_by_month WHERE payout_month=? AND lecturer_id=?`,
+      [month, uuid(lecturerId)],
+      LQ,
+    );
+    return rows[0] ? payoutInstructionRow(rows[0]) : null;
+  }
+
+  public async claimPayoutApproval(
+    month: string,
+    lecturerId: string,
+    instructionId: string,
+    adminId: string,
+  ) {
+    const now = new Date();
+    const rows = await this.db.execute(
+      `UPDATE payout_instruction_by_month SET status='SUBMITTING',approved_by=?,approved_at=?,updated_at=? WHERE payout_month=? AND lecturer_id=? IF status='PENDING_TRANSFER' AND instruction_id=?`,
+      [uuid(adminId), now, now, month, uuid(lecturerId), uuid(instructionId)],
+      LQ,
+      LS,
+    );
+    return rows[0]?.["[applied]"] === true;
+  }
+
+  public async finishPayoutApproval(
+    month: string,
+    lecturerId: string,
+    status: "PAID" | "PAYOUT_FAILED" | "RECONCILIATION_REQUIRED",
+    providerReference: string | null,
+    failureReason: string | null,
+  ) {
+    const rows = await this.db.execute(
+      `UPDATE payout_instruction_by_month SET status=?,provider_reference=?,failure_reason=?,updated_at=? WHERE payout_month=? AND lecturer_id=? IF status='SUBMITTING'`,
+      [status, providerReference, failureReason, new Date(), month, uuid(lecturerId)],
+      LQ,
+      LS,
+    );
+    return rows[0]?.["[applied]"] === true;
+  }
+
+  public async auditPayout(input: {
+    instructionId: string;
+    eventId: string;
+    state: string;
+    actorId: string;
+    reason?: string;
+  }) {
+    await this.db.execute(
+      `INSERT INTO payout_audit_by_instruction (instruction_id,event_id,state,actor_id,reason,occurred_at) VALUES (?,?,?,?,?,?) IF NOT EXISTS`,
+      [
+        uuid(input.instructionId),
+        uuid(input.eventId),
+        input.state,
+        uuid(input.actorId),
+        input.reason ?? null,
+        new Date(),
+      ],
+      LQ,
+      LS,
+    );
   }
 
   public async preparePayoutInstruction(
@@ -1006,6 +1059,25 @@ function big(value: unknown): bigint {
     return BigInt(stringifiable.toString());
   }
   return 0n;
+}
+
+function payoutInstructionRow(row: types.Row) {
+  return {
+    lecturerId: String(row.lecturer_id),
+    instructionId: String(row.instruction_id),
+    amountMinor: big(row.amount_minor).toString(),
+    currency: String(row.currency),
+    bankName: String(row.bank_name),
+    accountNumber: String(row.account_number),
+    accountHolder: String(row.account_holder),
+    status: String(row.status),
+    createdAt: date(row.created_at).toISOString(),
+    approvedBy: row.approved_by ? String(row.approved_by) : null,
+    approvedAt: row.approved_at ? date(row.approved_at).toISOString() : null,
+    providerReference: row.provider_reference ? String(row.provider_reference) : null,
+    failureReason: row.failure_reason ? String(row.failure_reason) : null,
+    updatedAt: row.updated_at ? date(row.updated_at).toISOString() : null,
+  };
 }
 
 function orderRow(r: types.Row): LearningOrder {

@@ -42,6 +42,7 @@ For an external static host/reverse proxy:
 - Course art is explicitly generic illustration. Production never seeds courses. API fixtures exist only in tests.
 - Registration uses `IDN-01` with email/password/displayName and a stable idempotency key for retries until fields change. Login uses `IDN-02`; logout uses `IDN-04`.
 - Authentication uses `/web-session/*` on the same origin. Identity access/refresh tokens remain in the Web server memory; only a random HttpOnly session handle is sent to the browser. `/app` and `/app/account` load canonical `/me` data. Password change uses IDN-07 and requires sign-in again.
+- Google and Apple web sign-in use their official browser SDKs to obtain provider ID tokens, then submit those tokens through the same-origin session adapter. The Identity service verifies provider signatures and audiences before issuing the normal AILSS session. Only public client identifiers are returned by `/web-session/config`.
 - No forgot-password or contact submission endpoint was found. Recovery guidance is truthful; Contact downloads a local draft and never reports that it sent a message.
 
 ## Visual and media system
@@ -67,6 +68,10 @@ These scripts use an isolated headless Chrome session, not the user's profile. B
 Use the Node runtime for authenticated routes. A static-only host cannot provide this session architecture. Keep the current single process; its bounded in-memory store holds at most 1,000 sessions until their absolute Identity refresh expiry. Restarting it signs browsers out of the Web host, without claiming Identity revocation. No Redis or business data is introduced. Multi-instance shared sessions, durable persistence and rolling session continuity are outside this implementation; do not scale this process horizontally without a separate deployment design.
 
 Set `NODE_ENV=production` and `AILSS_WEB_ORIGIN` to the exact external HTTPS origin. The server refuses production HTTP origins. Use the trusted TLS ingress to forward the original Host and Origin to the loopback Node port. The adapter does not trust `X-Forwarded-Host` to derive security policy. Development origin is `http://127.0.0.1:5173` (strict port); preview is `http://127.0.0.1:4174`. Use the configured hostname consistently.
+
+### Google and Apple sign-in setup
+
+Set `GOOGLE_WEB_CLIENT_ID` to a Google OAuth Web client ID and set the same ID in `GOOGLE_CLIENT_IDS` for the Identity service. Register the exact web origin (including the development port) in Google Cloud. For Apple, create a Sign in with Apple Services ID, set it in both `APPLE_WEB_CLIENT_ID` and `APPLE_CLIENT_IDS`, and register the web domain and exact return URL from `APPLE_WEB_REDIRECT_URI` (defaults to `<AILSS_WEB_ORIGIN>/auth/login`). Apple requires a public domain for web authentication; local IP/localhost origins are not accepted by Apple. The preview CSP permits the Google Identity Services and Apple JS SDK endpoints. Configure the same values in the real web-server and Identity-service environments; provider client IDs are public, while any Apple signing key must remain server-side if another flow later requires it.
 
 Cookies: production `__Host-ailss`, HttpOnly, Secure, SameSite=Lax, Path=/, no Domain; local HTTP `ailss` omits Secure. Cookie contains an opaque random handle, never a refresh token. It is replaced at login and cleared after confirmed logout or session invalidation. Refresh credentials rotate only in server memory; keeping the opaque handle stable avoids concurrent Set-Cookie rollback. State-changing adapter calls require an exact Origin and expected Host plus application/json; cross-site fetch metadata is rejected. All adapter results have Cache-Control: no-store. No service worker caches auth.
 

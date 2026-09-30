@@ -23,6 +23,7 @@ type Name =
   | "payoutAccountSave"
   | "adminPayouts"
   | "preparePayouts"
+  | "approvePayout"
   | "lecturerCommission"
   | "adminCommissionRead"
   | "adminCommissionSave";
@@ -148,6 +149,11 @@ export async function learningCommerceProxyFactory(config: AppConfig): Promise<R
     payoutAccountSave: handler("POST", "learning.lecturer.payout-account", () => "/api/v1/me/payout-account"),
     adminPayouts: handler("GET", "learning.admin.payouts", () => "/api/v1/admin/payouts"),
     preparePayouts: handler("POST", "learning.admin.payouts", () => "/api/v1/admin/payouts/prepare"),
+    approvePayout: handler(
+      "POST",
+      "learning.admin.payouts",
+      (r) => `/api/v1/admin/payouts/${enc(r.params.month)}/${enc(r.params.lecturerId)}/approve`,
+    ),
     lecturerCommission: handler("GET", "learning.lecturer.commission", () => "/api/v1/me/commission"),
     adminCommissionRead: handler("GET", "learning.admin.commission", () => "/api/v1/admin/commission"),
     adminCommissionSave: handler("POST", "learning.admin.commission", () => "/api/v1/admin/commission"),
