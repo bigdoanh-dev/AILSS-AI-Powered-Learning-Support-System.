@@ -3,7 +3,7 @@ import { AppState, StatusBar, Text } from "react-native";
 import * as Network from "expo-network";
 import { router, Stack, usePathname } from "expo-router";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { offlineStore, restoreMobilePreferences, runtime } from "../src/runtime";
+import { offlineStore, prepareOfflineStore, restoreMobilePreferences, runtime } from "../src/runtime";
 import { getSystemSettings } from "../src/settings";
 import { Button, Page, styles, tokens } from "../src/ui";
 import { syncPendingLessonCompletions } from "../src/lesson-sync";
@@ -14,9 +14,9 @@ function Shell() {
   const pathname = usePathname();
   useEffect(() => {
     let mounted = true;
-    // Run TTL cleanup on cold start; the store also purges before cache reads/writes.
-    void offlineStore?.purgeExpiredCache().catch(() => {});
     void (async () => {
+      // Probe the native cipher before exposing the offline store to any screen.
+      await prepareOfflineStore();
       // Resolve the persisted security choice before deciding whether to restore credentials.
       await restoreMobilePreferences();
       if (!mounted) return;
@@ -28,14 +28,18 @@ function Shell() {
     })();
     const listener = AppState.addEventListener("change", (state) => {
       if (state === "active") {
-        void offlineStore?.purgeExpiredCache().catch(() => {});
-        void session.revalidate();
+        void prepareOfflineStore()
+          .then((store) => store?.purgeExpiredCache())
+          .catch(() => {});
+        void session.revalidate().catch(() => {});
         const current = session.snapshot;
         if (current.state === "AUTHENTICATED" && current.user?.role === "STUDENT") {
-          void Network.getNetworkStateAsync().then((network) => {
-            if (network.isConnected && network.isInternetReachable !== false)
-              return syncPendingLessonCompletions(session, current.user!.userId, offlineStore);
-          });
+          void Network.getNetworkStateAsync()
+            .then((network) => {
+              if (network.isConnected && network.isInternetReachable !== false)
+                return syncPendingLessonCompletions(session, current.user!.userId, offlineStore);
+            })
+            .catch(() => {});
         }
       }
     });
@@ -54,9 +58,9 @@ function Shell() {
         await syncPendingLessonCompletions(session, userId, offlineStore);
     };
     const subscription = Network.addNetworkStateListener((network) => {
-      if (network.isConnected && network.isInternetReachable !== false) void syncIfOnline();
+      if (network.isConnected && network.isInternetReachable !== false) void syncIfOnline().catch(() => {});
     });
-    void syncIfOnline();
+    void syncIfOnline().catch(() => {});
     return () => subscription.remove();
   }, [session, snapshot.state, snapshot.user?.role, snapshot.user?.userId]);
   if (snapshot.state === "BOOTING")
