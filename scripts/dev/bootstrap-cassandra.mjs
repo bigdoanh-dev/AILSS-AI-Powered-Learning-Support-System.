@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { readEnv, required } from "./env.mjs";
+import { synchronizeCassandraRoles } from "./cassandra-roles.mjs";
 
 const env = await readEnv();
 const profile = process.env.AILSS_PROFILE ?? "dev-core";
@@ -48,7 +49,7 @@ const roleSecrets = [
 ];
 for (const name of roleSecrets)
   roles = roles.replaceAll(`{{${name}}}`, required(env, name).replaceAll("'", "''"));
-cql(roles);
+await synchronizeCassandraRoles(roles, cql);
 
 const migrationDir = new URL(`../../database/migrations/${migrationProfile}/`, import.meta.url);
 const registry = JSON.parse(

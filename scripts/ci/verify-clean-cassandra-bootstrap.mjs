@@ -4,6 +4,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readEnv, required } from "../dev/env.mjs";
+import { synchronizeCassandraRoles } from "../dev/cassandra-roles.mjs";
 
 const root = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const suffix = randomUUID().slice(0, 8);
@@ -98,7 +99,7 @@ try {
     "CASSANDRA_SVC_AUDIT_PASSWORD",
   ])
     roles = roles.replaceAll(`{{${name}}}`, required(env, name).replaceAll("'", "''"));
-  cql(roles);
+  await synchronizeCassandraRoles(roles, cql);
 
   const registry = JSON.parse(await readFile(join(root, "database/migration-registry.json"), "utf8"));
   const dir = join(root, "database/migrations/dev");
