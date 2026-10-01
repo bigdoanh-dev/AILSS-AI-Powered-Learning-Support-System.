@@ -58,7 +58,6 @@ export default function Purchase() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [countdownSeconds, setCountdownSeconds] = useState(900); // 15 mins
 
   const abort = useRef(new AbortController());
   const keys = useRef(new Map<string, string>());
@@ -125,15 +124,6 @@ export default function Purchase() {
       controller.abort();
     };
   }, [order?.orderId, order?.state, order?.fulfillmentState]);
-
-  // Countdown timer for pending payment
-  useEffect(() => {
-    if (order?.state !== "PENDING") return;
-    const timer = setInterval(() => {
-      setCountdownSeconds((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [order?.state]);
 
   function copyToClipboard(text: string, fieldName: string) {
     void navigator.clipboard.writeText(text);
@@ -209,10 +199,6 @@ export default function Purchase() {
       setBusy(false);
     }
   }
-
-  const minutes = Math.floor(countdownSeconds / 60);
-  const seconds = countdownSeconds % 60;
-  const timeFormatted = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 
   const selectedOffering = available.find((item) => item.offeringId === selectedOfferingId) ?? available[0];
   const cleanNumericPrice = (order?.price ?? selectedOffering?.price ?? "").replace(/[^\d]/g, "");
@@ -385,10 +371,10 @@ export default function Purchase() {
                   />
                   <div className="sepay-timer-pill">
                     <span className="pulse-dot-blue" />
-                    <span>Hết hạn sau: {timeFormatted}</span>
+                    <span>Đang chờ xác nhận từ ngân hàng</span>
                   </div>
                   <small style={{ marginTop: 8, color: "var(--muted)", textAlign: "center" }}>
-                    Quét bằng App Ngân Hàng hoặc Ví MoMo
+                    Quét bằng ứng dụng ngân hàng
                   </small>
                   <a
                     href={qrSrc || vietQrOfficialUrl}

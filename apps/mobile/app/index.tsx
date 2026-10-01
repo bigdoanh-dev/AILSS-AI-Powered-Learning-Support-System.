@@ -1,3 +1,4 @@
+import { loadAssignedQuizzes } from "../src/assigned-quizzes";
 import { useSyncExternalStore, useState, useEffect, useRef } from "react";
 import {
   Text,
@@ -201,30 +202,9 @@ export default function Home() {
     const abort = new AbortController();
     setHomeQuizzes([]);
     if (snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT") {
-      void Promise.all([
-        session.request("/api/v1/me/courses", { signal: abort.signal }),
-        session.request("/api/v1/me/classes", { signal: abort.signal }),
-      ])
-        .then(async ([courses, classes]) => {
-          const paths = [
-            ...decodeCourses(courses).map((c) => `/api/v1/targets/COURSE/${c.courseId}/quizzes`),
-            ...studentClasses(classes).map((c) => `/api/v1/targets/CLASS/${c.classId}/quizzes`),
-          ];
-          const quizzes = [] as ReturnType<typeof quizSummaries>;
-          for (let i = 0; i < paths.length; i += 3)
-            quizzes.push(
-              ...(
-                await Promise.all(
-                  paths
-                    .slice(i, i + 3)
-                    .map((path) => session.request(path, { signal: abort.signal }).then(quizSummaries)),
-                )
-              ).flat(),
-            );
-          if (!abort.signal.aborted)
-            setHomeQuizzes([
-              ...new Map(quizzes.filter((q) => q.state === "PUBLISHED").map((q) => [q.quizId, q])).values(),
-            ]);
+      void loadAssignedQuizzes((path, options) => session.request(path, options), abort.signal)
+        .then((quizzes) => {
+          if (!abort.signal.aborted) setHomeQuizzes(quizzes);
         })
         .catch((cause: unknown) => {
           if (!abort.signal.aborted)

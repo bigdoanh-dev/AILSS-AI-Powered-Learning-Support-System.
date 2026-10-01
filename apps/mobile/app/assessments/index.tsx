@@ -1,86 +1,44 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { type Href, router } from "expo-router";
-import { quizSummaries, type QuizSummary } from "../../src/assessment";
-import { courses as decodeCourses } from "../../src/learning";
-import { studentClasses as decodeStudentClasses } from "../../src/classroom";
+import { loadAssignedQuizzes, type AssignedQuiz } from "../../src/assigned-quizzes";
 import { runtime } from "../../src/runtime";
 import { Button, Badge, Icon, EmptyState, BottomNavBar, Page, styles, tokens } from "../../src/ui";
-
-interface QuizWithTarget extends QuizSummary {
-  targetName?: string;
-}
 
 export default function AssessmentListScreen() {
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
-  const [quizzes, setQuizzes] = useState<QuizWithTarget[]>([]);
+  const [quizzes, setQuizzes] = useState<AssignedQuiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadAssessments = useCallback(async () => {
-    if (snapshot.state !== "AUTHENTICATED") return;
-    try {
-      setLoading(true);
-      setError(null);
-
-      const [coursesRes, classesRes] = await Promise.all([
-        session.request("/api/v1/me/courses"),
-        session.request("/api/v1/me/classes"),
-      ]);
-
-      const courseList = decodeCourses(coursesRes);
-      const classList = decodeStudentClasses(classesRes);
-
-      const targetMap = new Map<string, string>();
-      for (const c of courseList) targetMap.set(c.courseId, c.title);
-      for (const cl of classList) targetMap.set(cl.classId, cl.name);
-
-      const quizPromises: Promise<{ targetId: string; data: unknown }>[] = [];
-      for (const c of courseList) {
-        quizPromises.push(
-          session
-            .request(`/api/v1/targets/COURSE/${c.courseId}/quizzes`)
-            .then((data: unknown) => ({ targetId: c.courseId, data })),
-        );
-      }
-      for (const cl of classList) {
-        quizPromises.push(
-          session
-            .request(`/api/v1/targets/CLASS/${cl.classId}/quizzes`)
-            .then((data: unknown) => ({ targetId: cl.classId, data })),
-        );
-      }
-
-      const results = await Promise.all(quizPromises);
-      const allQuizzes: QuizWithTarget[] = [];
-      const seenIds = new Set<string>();
-
-      for (const res of results) {
-        const parsed = quizSummaries(res.data);
-        for (const q of parsed) {
-          if (!seenIds.has(q.quizId) && q.state === "PUBLISHED") {
-            seenIds.add(q.quizId);
-            allQuizzes.push({
-              ...q,
-              targetName: targetMap.get(q.targetId) || undefined,
-            });
-          }
-        }
-      }
-
-      setQuizzes(allQuizzes);
-    } catch {
-      setError("Không thể tải danh sách bài kiểm tra. Vui lòng thử lại sau.");
-    } finally {
-      setLoading(false);
-    }
-  }, [session, snapshot.state]);
-
+  const [revision, setRevision] = useState(0);
+  const [loadedUserId, setLoadedUserId] = useState<string | undefined>();
   useEffect(() => {
-    void loadAssessments();
-  }, [loadAssessments]);
+    const abort = new AbortController();
+    setQuizzes([]);
+    setLoadedUserId(undefined);
+    setError(null);
+    setLoading(true);
+    if (snapshot.state === "AUTHENTICATED") {
+      void loadAssignedQuizzes((path, options) => session.request(path, options), abort.signal)
+        .then((assigned) => {
+          if (!abort.signal.aborted) {
+            setQuizzes(assigned);
+            setLoadedUserId(snapshot.user?.userId);
+          }
+        })
+        .catch(() => {
+          if (!abort.signal.aborted) setError("Không thể tải danh sách bài kiểm tra. Vui lòng thử lại sau.");
+        })
+        .finally(() => {
+          if (!abort.signal.aborted) setLoading(false);
+        });
+    }
+    return () => abort.abort();
+  }, [session, snapshot.state, snapshot.user?.userId, revision]);
+  const visibleQuizzes = loadedUserId === snapshot.user?.userId ? quizzes : [];
 
   if (snapshot.state !== "AUTHENTICATED") {
     return (
@@ -119,13 +77,13 @@ export default function AssessmentListScreen() {
         {error && (
           <View style={[styles.card, { borderColor: tokens.color.dangerLight, backgroundColor: "#FEF2F2" }]}>
             <Text style={styles.error}>{error}</Text>
-            <Button label="Thử lại" size="sm" onPress={() => void loadAssessments()} />
+            <Button label="Thử lại" size="sm" onPress={() => setRevision((value) => value + 1)} />
           </View>
         )}
 
         {!loading &&
           !error &&
-          quizzes.some((quiz) => {
+          visibleQuizzes.some((quiz) => {
             const now = Date.now();
             return (
               (quiz.opensAt && Date.parse(quiz.opensAt) > now) ||
@@ -141,7 +99,7 @@ export default function AssessmentListScreen() {
             </View>
           )}
 
-        {!loading && !error && quizzes.length === 0 && (
+        {!loading && !error && visibleQuizzes.length === 0 && (
           <EmptyState
             icon="sparkles"
             title="Chưa có bài kiểm tra"
@@ -151,9 +109,9 @@ export default function AssessmentListScreen() {
           />
         )}
 
-        {!loading && !error && quizzes.length > 0 && (
+        {!loading && !error && visibleQuizzes.length > 0 && (
           <View style={screenStyles.listContent}>
-            {quizzes.map((item) => (
+            {visibleQuizzes.map((item) => (
               <Pressable
                 key={item.quizId}
                 testID={`student-assessment-${item.quizId}`}

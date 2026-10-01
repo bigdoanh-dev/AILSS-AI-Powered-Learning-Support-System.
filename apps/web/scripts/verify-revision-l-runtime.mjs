@@ -37,7 +37,8 @@ page.on("response", (response) => {
 const docker = (action, name) => {
   const result = spawnSync("docker", [action, name], { encoding: "utf8" });
   if (result.status !== 0) throw new Error(`docker ${action} ${name}: ${result.stderr}`);
-  action === "stop" ? servicesStopped.add(name) : servicesStopped.delete(name);
+  if (action === "stop") servicesStopped.add(name);
+  else servicesStopped.delete(name);
 };
 const waitForReady = async (url, timeoutMs = 90_000) => {
   const deadline = Date.now() + timeoutMs;

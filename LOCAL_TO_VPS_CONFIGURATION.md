@@ -76,6 +76,24 @@ Prometheus thu thập mỗi 15 giây; Web làm mới mỗi 30 giây. Sau khi kh�
 
 Gateway và các business service ghi metric HTTP khi phản hồi kết thúc, gồm lưu lượng, mã trạng thái và thời gian xử lý. Health check và lượt thu thập `/metrics` được loại khỏi số liệu lưu lượng ứng dụng. Nhãn dùng mẫu route thay vì ID tài khoản, URL hoặc query của người dùng. Tỷ lệ 5xx chỉ hiển thị 0% khi có dữ liệu lưu lượng hợp lệ và không ghi nhận lỗi 5xx; mất kết nối hoặc chưa đủ mẫu vẫn hiện “Chưa có dữ liệu”.
 
+### Cảnh báo local và kênh nhận trên VPS
+
+Alertmanager local dùng receiver `local`, không gửi cảnh báo ra ngoài. Xem cảnh báo tại `http://127.0.0.1:9093`. Không đặt `${ALERT_WEBHOOK_URL}` trong YAML: Alertmanager không tự thay biến này và sẽ khởi động lỗi `unsupported scheme`.
+
+Khi lên VPS, tạo file cấu hình riêng ngoài Git, thay receiver bằng kênh thật và mount file đó vào `/etc/alertmanager/alertmanager.yml`. Ví dụ cấu trúc receiver (thay URL bằng địa chỉ HTTPS thực tế trong file riêng):
+
+```yaml
+route:
+  receiver: operations
+receivers:
+  - name: operations
+    webhook_configs:
+      - url: https://dia-chi-nhan-canh-bao-cua-ban
+        send_resolved: true
+```
+
+Giữ lại quy tắc nhóm và khoảng gửi cảnh báo phù hợp từ cấu hình local. Kiểm tra file bằng `amtool check-config` trong image Alertmanager trước khi khởi động; kiểm tra cả một cảnh báo thử và thông báo phục hồi trên kênh nhận. URL chứa token được xem là bí mật, không commit lên GitHub.
+
 ## 2. Những giá trị đổi khi lên VPS
 
 | Cấu hình                                  | Local                                    | VPS                                                              |
@@ -226,21 +244,16 @@ Prometheus không nên đưa các endpoint giám sát ra Internet không có bi�
 | Không thấy nhãn hướng dẫn local                         | Kiểm tra API `GET /web-session/admin/assistant/admin-status` khi đã đăng nhập quản trị; nó phải trả `mode: local-guide`.                                           |
 | Grafana không nhận mật khẩu trong secret sau khi chuyển | Database hiện có giữ mật khẩu đã đổi; thay env không tự đặt lại mật khẩu. Dùng tài khoản hiện tại hoặc quy trình khôi phục của Grafana.                            |
 
-## 8. Kết quả kiểm tra local
+## 8. Google đăng nhập trên local
 
-Nguyên nhân được đối chiếu với backend:
+Nếu nút Google đã hiện nhưng trình duyệt báo `The given origin is not allowed for the given client ID`, Gateway đã đọc Client ID, còn Google Cloud chưa cho phép địa chỉ Web hiện tại. Đây là cấu hình ở Google Cloud, không tự thay đổi khi sửa `.env.local`.
 
-- AI quản trị ở chế độ external bị nhà cung cấp từ chối credential với HTTP 401. Theo lựa chọn của người dùng, local dùng hướng dẫn thao tác; VPS sẽ cấu hình provider thật sau.
-- Prometheus/Grafana đã chạy nhưng Gateway thiếu overlay observability, nên gọi loopback trong container thay vì địa chỉ collector.
-- Metric HTTP đã khai báo nhưng chưa được nối vào luồng xử lý yêu cầu; target có thể “Hoạt động” mà các ô lưu lượng/độ trễ vẫn trống. Bản sửa ghi metric thực tế ở Gateway và runtime chung của các service.
+1. Mở Google Cloud → Google Auth Platform → Clients; chọn **Web client** khớp `GOOGLE_WEB_CLIENT_ID` đang dùng.
+2. Trong **Authorized JavaScript origins**, thêm `http://localhost`, `http://localhost:5173`, và `http://127.0.0.1:5173` nếu mở Web bằng địa chỉ này. Origin gồm giao thức, tên máy và cổng, không thêm `/auth/login` hay đường dẫn khác.
+3. Lưu cấu hình, tải lại trang đăng nhập và thử lại. Khi đổi cổng Web hoặc chuyển sang HTTPS trên VPS, đăng ký origin tương ứng.
+4. Luồng dùng redirect phải đăng ký thêm URI callback chính xác trong **Authorized redirect URIs**; luồng nút Google trả credential qua callback JavaScript không yêu cầu thêm đường dẫn đăng nhập vào origins.
 
-Đã xác nhận API chế độ quản trị trả `local-guide`, câu hỏi quản trị nhận hướng dẫn và giao diện hiển thị nhãn local. API giám sát và giao diện đều kết nối được Prometheus/Grafana, với 7/7 target hoạt động.
-
-Sau khi cập nhật và khởi động lại các dịch vụ, trang quản trị vẫn giữ chế độ local và mở lại được lịch sử hướng dẫn. Nút “Làm mới” trên giám sát đã hiển thị số liệu thật; mẫu lúc 21:49 ngày 01/10/2026 là 0,07 yêu cầu/giây, 0% lỗi 5xx và p95 566,07 ms. Các giá trị này sẽ thay đổi theo lưu lượng, không phải dữ liệu cố định.
-
-Đã qua 48 kiểm thử backend trọng tâm, 9 kiểm thử Web và 10 kiểm thử BFF; typecheck, lint, định dạng và build Web đã qua. Trình duyệt local xác nhận hai luồng trên, không có trang trắng hoặc overlay lỗi. Log đăng nhập có lỗi riêng từ Google: origin hiện tại chưa được cho phép cho Client ID; cần khai báo origin local chính xác (`http://127.0.0.1:5173` và/hoặc `http://localhost:5173` theo địa chỉ sử dụng) trên Google Cloud. Lỗi đó không ngăn tài khoản kiểm thử đăng nhập bằng email và không thuộc kết nối giám sát/chế độ hướng dẫn local.
-
-Chưa kiểm tra giao diện mobile ở lần cấu hình này. Kết quả VPS chỉ được xác nhận sau khi triển khai và thực hiện mục 6; không suy ra từ kiểm thử local.
+Xem [hướng dẫn thiết lập Google Identity Services](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid). Client ID Web không thay thế iOS/Android Client ID của ứng dụng native. Với Expo Go, dùng luồng trình duyệt được ứng dụng hỗ trợ; đăng nhập Google native cần development build có module `RNGoogleSignin`.
 
 ## Khóa học và các luồng mobile sau khi cập nhật
 

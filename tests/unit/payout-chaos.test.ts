@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ActorContext } from "../../packages/security/src/index.js";
 import type { LearningCommerceRepository } from "../../apps/learning-service/src/commerce/repository.js";
 import {
@@ -9,6 +9,12 @@ import {
 } from "../../apps/learning-service/src/finance/index.js";
 
 describe("Phase 21.11: Payout Idempotency Chaos & Failover Simulation", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-15T12:00:00.000Z"));
+  });
+  afterEach(() => vi.useRealTimers());
+
   const adminActor: ActorContext = {
     userId: randomUUID(),
     sessionId: randomUUID(),
