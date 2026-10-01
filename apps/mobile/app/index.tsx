@@ -1,4 +1,4 @@
-import { useSyncExternalStore, useState, useEffect } from "react";
+import { useSyncExternalStore, useState, useEffect, useRef } from "react";
 import {
   Text,
   View,
@@ -23,7 +23,7 @@ import {
 } from "../src/classroom";
 import { ownedOfferings, uniqueCoursesFromOfferings } from "../src/teaching";
 import { courses as decodeCourses, type Course } from "../src/learning";
-import { Button, Badge, Icon, tokens, styles, BottomNavBar, type IconName } from "../src/ui";
+import { Button, Badge, Icon, tokens, styles, BottomNavBar, notifyNavScroll, type IconName } from "../src/ui";
 import { CinematicIntro } from "../src/CinematicIntro";
 import { FadeSlideIn, ScalePressable, StaggerPop, PulseBadge, FloatingElement } from "../src/motion";
 import { TutorAvatar } from "../src/TutorAvatar";
@@ -68,6 +68,7 @@ export default function Home() {
   const [showAllModal, setShowAllModal] = useState(false);
   const [showLangModal, setShowLangModal] = useState(false);
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
+  const lastScrollY = useRef(0);
 
   const settings = useSyncExternalStore(subscribeSystemSettings, getSystemSettings);
   const currentLang = LANGUAGES.find((l) => l.code === settings.language) ?? LANGUAGES[0];
@@ -245,6 +246,13 @@ export default function Home() {
         testID="student-home"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 116 }}
+        scrollEventThrottle={16}
+        onScroll={(event) => {
+          const currentY = event.nativeEvent.contentOffset.y;
+          const deltaY = currentY - lastScrollY.current;
+          lastScrollY.current = currentY;
+          notifyNavScroll(currentY, deltaY);
+        }}
       >
         {/* Top Deep Navy/Teal Banner matching Screenshot */}
         <FadeSlideIn delay={0} duration={400} fromY={-12}>
@@ -1705,14 +1713,24 @@ export default function Home() {
         <ScalePressable
           testID="student-home-tutor-launcher"
           style={hStyles.tutorLauncher}
-          scaleTo={0.94}
+          scaleTo={0.93}
           onPress={() => router.push("/student/tutor" as Href)}
           accessibilityRole="button"
           accessibilityLabel="Trò chuyện với Gia sư AI"
           accessibilityHint="Hỏi bài học hoặc tìm khóa học phù hợp"
         >
-          <TutorAvatar size={58} decorative />
-          <Text style={hStyles.tutorLauncherLabel}>Hỏi AI</Text>
+          {/* Web-identical Speech Bubble */}
+          <View style={hStyles.tutorSpeechBubble}>
+            <Text style={hStyles.tutorSpeechText}>Hỏi AI ✨</Text>
+            <View style={hStyles.tutorSpeechArrow} />
+          </View>
+
+          {/* Web-identical Mascot Pod */}
+          <View style={hStyles.tutorMascotPod}>
+            <TutorAvatar size={48} decorative />
+            {/* Green online status indicator dot */}
+            <View style={hStyles.tutorStatusDot} />
+          </View>
         </ScalePressable>
       )}
 
@@ -1859,21 +1877,75 @@ const hStyles = StyleSheet.create({
   tutorLauncher: {
     position: "absolute",
     right: 18,
-    bottom: 82,
-    width: 76,
-    minHeight: 82,
+    bottom: 70,
+    alignItems: "center",
+    zIndex: 25,
+  },
+  tutorSpeechBubble: {
+    backgroundColor: "rgba(15, 23, 42, 0.94)",
+    borderColor: "rgba(56, 189, 248, 0.45)",
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    marginBottom: 6,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 23,
-    borderWidth: 1,
-    borderColor: "#B8EDE5",
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#0A5264",
-    shadowOpacity: 0.19,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  tutorLauncherLabel: { color: "#0A5E6A", fontSize: 11, fontWeight: "800", marginTop: -4 },
+  tutorSpeechText: {
+    color: "#F8FAFC",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  tutorSpeechArrow: {
+    position: "absolute",
+    bottom: -4,
+    width: 8,
+    height: 8,
+    backgroundColor: "rgba(15, 23, 42, 0.94)",
+    borderColor: "rgba(56, 189, 248, 0.45)",
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    transform: [{ rotate: "45deg" }],
+  },
+  tutorMascotPod: {
+    position: "relative",
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: "#0B1528",
+    borderWidth: 2,
+    borderColor: "rgba(56, 189, 248, 0.65)",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#38BDF8",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  tutorStatusDot: {
+    position: "absolute",
+    bottom: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#22C55E",
+    borderWidth: 2.5,
+    borderColor: "#0B1528",
+    shadowColor: "#22C55E",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   academicMetricsStrip: {
     flexDirection: "row",
     backgroundColor: "#FFFFFF",

@@ -227,6 +227,52 @@ export class ClassroomRepository {
     );
     return r[0]?.["[applied]"] === true;
   }
+  async restoreRemovedMembership(previous: Membership, next: Membership) {
+    const rows = await this.db.execute(
+      `UPDATE membership_by_class_student SET membership_id=?,state=?,source='JOIN_CODE',joined_at=?,version=? WHERE class_id=? AND student_id=? IF membership_id=? AND state='REMOVED' AND version=?`,
+      [
+        uuid(next.membershipId),
+        next.state,
+        next.joinedAt,
+        long(next.version),
+        uuid(next.classId),
+        uuid(next.studentId),
+        uuid(previous.membershipId),
+        long(previous.version),
+      ],
+      LQ,
+      LS,
+    );
+    return rows[0]?.["[applied]"] === true;
+  }
+  async removeMembership(current: Membership) {
+    const rows = await this.db.execute(
+      `UPDATE membership_by_class_student SET state='REMOVED',version=? WHERE class_id=? AND student_id=? IF membership_id=? AND state='ACTIVE' AND version=?`,
+      [
+        long(current.version + 1),
+        uuid(current.classId),
+        uuid(current.studentId),
+        uuid(current.membershipId),
+        long(current.version),
+      ],
+      LQ,
+      LS,
+    );
+    return rows[0]?.["[applied]"] === true;
+  }
+  async removeMembershipProjections(current: Membership) {
+    const shard = (createHash("sha256").update(current.studentId).digest()[0] ?? 0) % 16;
+    await this.db.execute(
+      `DELETE FROM students_by_class WHERE class_id=? AND state='ACTIVE' AND shard=? AND joined_at=? AND student_id=?`,
+      [uuid(current.classId), shard, current.joinedAt, uuid(current.studentId)],
+      LQ,
+    );
+    await this.db.execute(
+      `DELETE FROM classes_by_student WHERE student_id=? AND joined_at=? AND class_id=?`,
+      [uuid(current.studentId), current.joinedAt, uuid(current.classId)],
+      LQ,
+    );
+  }
   async createPurchaseMembership(v: Membership) {
     const r = await this.db.execute(
       `INSERT INTO membership_by_class_student (class_id,student_id,membership_id,state,source,offering_id,enrollment_id,schedule_reservation_id,joined_at,version) VALUES (?,?,?,'PENDING','PURCHASE',?,?,?,?,1) IF NOT EXISTS`,
@@ -301,7 +347,9 @@ export class ClassroomRepository {
       [uuid(id)],
       LQ,
     );
-    return this.resolveClasses(rows);
+    const classes = await this.resolveClasses(rows);
+    const active = await Promise.all(classes.map((klass) => this.membership(klass.classId, id)));
+    return classes.filter((_klass, index) => active[index]?.state === "ACTIVE");
   }
   async listLecturer(id: string) {
     const rows = await this.db.execute(
@@ -322,15 +370,22 @@ export class ClassroomRepository {
   async roster(classId: string) {
     const out: Membership[] = [];
     for (let shard = 0; shard < 16; shard++) {
-      const rows = await this.db.execute(
-        `SELECT student_id FROM students_by_class WHERE class_id=? AND state='ACTIVE' AND shard=? LIMIT 500`,
-        [uuid(classId), shard],
-        LQ,
-      );
-      for (const r of rows) {
-        const v = await this.membership(classId, String(r.student_id));
-        if (v) out.push(v);
-      }
+      let pageState: string | undefined;
+      do {
+        const page = await this.db.executePage(
+          `SELECT student_id FROM students_by_class WHERE class_id=? AND state='ACTIVE' AND shard=?`,
+          [uuid(classId), shard],
+          LQ,
+          500,
+          pageState,
+        );
+        for (const row of page.rows) {
+          const value = await this.membership(classId, String(row.student_id));
+          if (value?.state === "ACTIVE") out.push(value);
+        }
+        pageState = page.pageState;
+        if (out.length > 10000) throw new Error("CLASS_ROSTER_LIMIT_EXCEEDED");
+      } while (pageState);
     }
     return out;
   }

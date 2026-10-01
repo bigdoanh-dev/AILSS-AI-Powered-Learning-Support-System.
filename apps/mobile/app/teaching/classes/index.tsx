@@ -14,7 +14,7 @@ interface ClassCardMeta {
   classKind: string;
   schedule: string;
   room: string;
-  studentCount: number;
+  capacity: number;
   completedSessions: number;
   totalSessions: number;
   attendanceRate: string;
@@ -79,7 +79,7 @@ export default function OwnedClassesList() {
     classKind: cls.classKind,
     schedule: "Chưa có lịch được tải",
     room: "—",
-    studentCount: cls.maxMembers ?? 0,
+    capacity: cls.maxMembers ?? 0,
     completedSessions: 0,
     totalSessions: 0,
     attendanceRate: "—",
@@ -94,6 +94,7 @@ export default function OwnedClassesList() {
           subtitle={`${displayClasses.length} lớp học đang giảng dạy`}
           onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching"))}
         />
+        <Button label="+ Tạo lớp học" onPress={() => router.push("/teaching/classes/create" as Href)} />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -103,10 +104,8 @@ export default function OwnedClassesList() {
           {/* Quick Stats Strip */}
           <View style={cs.statsStrip}>
             <View style={cs.statItem}>
-              <Text style={cs.statNum}>
-                {displayClasses.reduce((sum, item) => sum + item.studentCount, 0)}
-              </Text>
-              <Text style={cs.statLabel}>Tổng SV</Text>
+              <Text style={cs.statNum}>{displayClasses.reduce((sum, item) => sum + item.capacity, 0)}</Text>
+              <Text style={cs.statLabel}>Tổng sức chứa</Text>
             </View>
             <View style={cs.statDivider} />
             <View style={cs.statItem}>
@@ -194,7 +193,7 @@ export default function OwnedClassesList() {
                   <View style={cs.metricBadge}>
                     <Icon name="people" size={14} color="#475569" />
                     <Text style={cs.metricBadgeText}>
-                      <Text style={{ fontWeight: "800" }}>{item.studentCount}</Text> SV
+                      Tối đa <Text style={{ fontWeight: "800" }}>{item.capacity}</Text> SV
                     </Text>
                   </View>
                   <View style={cs.metricBadge}>

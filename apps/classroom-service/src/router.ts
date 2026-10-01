@@ -7,6 +7,7 @@ import {
   parseClassCreate,
   parseClassJoin,
   parseClassPatch,
+  parseStudentWarning,
   parseManualAttendance,
   parseSessionPatch,
   parseSessionWrite,
@@ -23,6 +24,8 @@ export function classroomRouter(
     | "studentList"
     | "ownedList"
     | "roster"
+    | "warnStudent"
+    | "removeStudent"
     | "reset"
     | "announce"
     | "announcements"
@@ -144,6 +147,33 @@ export function classroomRouter(
           c.requestId,
         ),
       },
+    })),
+  );
+  r.post(
+    "/api/v1/classes/:classId/members/:studentId/warnings",
+    handler(async (req, c) => ({
+      status: 201,
+      result: await service.warnStudent({
+        classId: id(req.params.classId),
+        studentId: student(req.params.studentId),
+        actor: await actor(req, verify.warnStudent, c.correlationId),
+        request: body(() => parseStudentWarning(req.body)),
+        key: idempotency(req),
+        requestId: c.requestId,
+      }),
+    })),
+  );
+  r.delete(
+    "/api/v1/classes/:classId/members/:studentId",
+    handler(async (req, c) => ({
+      status: 200,
+      result: await service.removeStudent({
+        classId: id(req.params.classId),
+        studentId: student(req.params.studentId),
+        actor: await actor(req, verify.removeStudent, c.correlationId),
+        key: idempotency(req),
+        requestId: c.requestId,
+      }),
     })),
   );
   r.post(

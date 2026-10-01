@@ -10,7 +10,7 @@ import {
   type ClassSession,
   type AttendanceEntry,
 } from "../../../../../../src/teaching";
-import { Page, Button, NonVirtualizedList, styles, tokens } from "../../../../../../src/ui";
+import { Page, Button, ScreenHeader, NonVirtualizedList, styles, tokens } from "../../../../../../src/ui";
 
 const STATUS_LABELS: Record<string, string> = {
   PRESENT: "Có mặt",
@@ -200,13 +200,15 @@ export default function AttendanceScreen() {
 
   return (
     <Page>
-      <Text style={styles.title}>Điểm danh buổi học</Text>
-      {classSessionItem && (
-        <Text style={[styles.small, { marginBottom: 8 }]}>
-          {classSessionItem.title} · {classSessionItem.mode === "ONLINE" ? "Trực tuyến" : "Trực tiếp"} ·{" "}
-          {classSessionItem.status}
-        </Text>
-      )}
+      <ScreenHeader
+        title="Điểm danh buổi học"
+        subtitle={
+          classSessionItem
+            ? `${classSessionItem.title} · ${classSessionItem.mode === "ONLINE" ? "Online" : "Offline"}`
+            : "Xác nhận chuyên cần học viên"
+        }
+        onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching/schedule"))}
+      />
 
       {/* Quick Summary Strip */}
       {roster && roster.length > 0 && (
@@ -216,7 +218,7 @@ export default function AttendanceScreen() {
             <Text style={at.statLbl}>Sĩ số</Text>
           </View>
           <View style={at.statCol}>
-            <Text style={[at.statNum, { color: "#16A34A" }]}>
+            <Text style={[at.statNum, { color: "#059669" }]}>
               {roster.filter((r) => r.attendanceStatus === "PRESENT").length}
             </Text>
             <Text style={at.statLbl}>Có mặt</Text>
@@ -238,7 +240,7 @@ export default function AttendanceScreen() {
 
       {/* Quick Action Button */}
       {roster && roster.length > 0 && (
-        <View style={{ marginBottom: 10 }}>
+        <View style={{ marginBottom: 12 }}>
           <Pressable
             accessibilityRole="button"
             disabled={busyStudentId !== null}
@@ -270,17 +272,37 @@ export default function AttendanceScreen() {
           data={roster}
           keyExtractor={(item) => item.studentId}
           renderItem={renderAttendanceRow}
-          contentContainerStyle={{ gap: 8, paddingBottom: 16 }}
+          contentContainerStyle={{ gap: 10, paddingBottom: 16 }}
         />
       )}
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {error ? <Button label="Thử lại" onPress={() => setRetry((v) => v + 1)} /> : null}
-
-      <Button
-        label="Quay lại"
-        onPress={() => (router.canGoBack() ? router.back() : router.replace("/teaching/schedule"))}
-      />
+      {error ? (
+        <View style={at.errorCard}>
+          <View style={at.errorIconBox}>
+            <Text style={{ fontSize: 24 }}>⚠️</Text>
+          </View>
+          <Text style={at.errorTitle}>Lỗi kết nối điểm danh</Text>
+          <Text style={at.errorDesc}>{error}</Text>
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 6, width: "100%" }}>
+            <View style={{ flex: 1 }}>
+              <Button label="Thử lại" variant="primary" onPress={() => setRetry((v) => v + 1)} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                label="Quay lại"
+                variant="outline"
+                onPress={() => (router.canGoBack() ? router.back() : router.replace("/teaching/schedule"))}
+              />
+            </View>
+          </View>
+        </View>
+      ) : (
+        <Button
+          label="Quay lại"
+          variant="outline"
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/teaching/schedule"))}
+        />
+      )}
     </Page>
   );
 }
@@ -410,5 +432,38 @@ const at = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     color: "#15803D",
+  },
+  errorCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+    ...tokens.shadow.subtle,
+  },
+  errorIconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#FEE2E2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  errorTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#991B1B",
+    textAlign: "center",
+  },
+  errorDesc: {
+    fontSize: 13,
+    color: "#64748B",
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: 8,
   },
 });

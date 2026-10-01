@@ -39,6 +39,7 @@ import {
   type ScheduleSegment,
   type SessionPatchRequest,
   type SessionWriteRequest,
+  type StudentWarningRequest,
 } from "./model.js";
 import type { ClassroomRepository } from "./repository.js";
 
@@ -1088,6 +1089,11 @@ export class ClassroomService {
     if (cmd.status === "COMPLETE" && cmd.receipt.resource)
       return { data: cmd.receipt.resource, replayed: true };
     const existingMembership = await this.repo.membership(klass.classId, input.actor.userId);
+    if (
+      (!existingMembership || existingMembership.state === "REMOVED") &&
+      (await this.repo.roster(klass.classId)).length >= klass.maxMembers
+    )
+      throw conflict("CLASS_FULL", "Class has reached its member limit");
     if (!existingMembership && klass.linkedCourseId)
       await this.link(klass.linkedCourseId, klass.ownerLecturerId, input.requestId);
     const occurredAt = new Date(cmd.receipt.occurredAt),
@@ -1110,9 +1116,19 @@ export class ClassroomService {
         offeringId,
         classId: klass.classId,
       });
-    await this.repo.createMembership(proposed);
+    if (existingMembership?.state === "REMOVED") {
+      if (existingMembership.source !== "JOIN_CODE")
+        throw conflict("MEMBERSHIP_REMOVED", "Purchased membership cannot be restored by join code");
+      await this.repo.restoreRemovedMembership(existingMembership, {
+        ...proposed,
+        version: existingMembership.version + 1,
+      });
+    } else {
+      await this.repo.createMembership(proposed);
+    }
     let membership = await this.repo.membership(klass.classId, input.actor.userId);
     if (!membership) throw unavailable();
+    if (membership.state === "REMOVED") throw conflict("MEMBERSHIP_REMOVED", "Membership was removed");
     if (scheduled && membership.state === "PENDING") {
       await this.confirmSchedule(reservationId, {
         operationId: deterministicUuid(this.secret, "join-confirm", cmd.operationId),
@@ -1255,7 +1271,7 @@ export class ClassroomService {
       await this.lecturer(actor, requestId);
       return classDto(klass);
     }
-    if (!(await this.repo.membership(classId, actor.userId)))
+    if ((await this.repo.membership(classId, actor.userId))?.state !== "ACTIVE")
       throw new AppError("CLASS_ACCESS_REQUIRED", 403, "Class membership is required");
     return classDto(klass);
   }
@@ -1277,7 +1293,186 @@ export class ClassroomService {
       );
     await this.lecturer(actor, requestId);
     await this.owned(classId, actor.userId);
-    return (await this.repo.roster(classId)).map(membershipDto);
+    const members = await this.repo.roster(classId);
+    const result = [];
+    for (let offset = 0; offset < members.length; offset += 16) {
+      result.push(
+        ...(await Promise.all(
+          members.slice(offset, offset + 16).map(async (member) => ({
+            ...membershipDto(member),
+            ...(await this.clients.student(member.studentId, requestId)),
+          })),
+        )),
+      );
+    }
+    return result;
+  }
+  async warnStudent(input: {
+    classId: string;
+    studentId: string;
+    actor: ActorContext;
+    request: StudentWarningRequest;
+    key: string;
+    requestId: string;
+  }) {
+    await this.lecturer(input.actor, input.requestId);
+    const klass = await this.owned(input.classId, input.actor.userId);
+    const now = new Date();
+    const scope = `CLS-WARN:${input.actor.userId}:${input.classId}:${input.studentId}`;
+    const hash = keyHash(this.secret, input.key);
+    const operationId = randomUUID();
+    const eventId = randomUUID();
+    const fp = fingerprint(this.secret, {
+      method: "POST",
+      route: "/api/v1/classes/{id}/members/{studentId}/warnings",
+      actor: input.actor.userId,
+      classId: input.classId,
+      studentId: input.studentId,
+      body: input.request,
+    });
+    const previous = await this.repo.command(scope, hash, input.key);
+    if (previous) {
+      const replay = await this.requiredCommand(scope, hash, input.key, fp);
+      if (replay.status === "COMPLETE" && replay.receipt.resource)
+        return { data: replay.receipt.resource, replayed: true };
+    }
+    const member = await this.repo.membership(input.classId, input.studentId);
+    if (member?.state !== "ACTIVE") throw notFound("MEMBER_NOT_FOUND", "Member is not active");
+    await this.repo.reserve(
+      scope,
+      hash,
+      input.key,
+      operationId,
+      eventId,
+      {
+        fingerprint: fp,
+        eventId,
+        occurredAt: now.toISOString(),
+      },
+      now,
+    );
+    const cmd = await this.requiredCommand(scope, hash, input.key, fp);
+    if (cmd.status === "COMPLETE" && cmd.receipt.resource)
+      return { data: cmd.receipt.resource, replayed: true };
+    const occurredAt = new Date(cmd.receipt.occurredAt);
+    await this.repo.prepareEvent({
+      eventId: cmd.receipt.eventId ?? cmd.resourceId,
+      eventType: "system.notification.requested.v1",
+      aggregateId: cmd.resourceId,
+      aggregateType: "CLASS_WARNING",
+      version: 1,
+      occurredAt,
+      correlationId: input.requestId,
+      actor: { type: "USER", id: input.actor.userId },
+      data: {
+        recipientId: input.studentId,
+        notificationType: "ACADEMIC",
+        title: `Cảnh báo từ lớp ${klass.name}`.slice(0, 200),
+        body: input.request.reason,
+        source: { sourceType: "CLASS_WARNING", sourceId: cmd.resourceId, classId: input.classId },
+      },
+    });
+    await this.repo.readyEvent(cmd.receipt.eventId ?? cmd.resourceId, occurredAt);
+    const data = { warningId: cmd.resourceId, studentId: input.studentId, sentAt: occurredAt.toISOString() };
+    await this.repo.complete(
+      scope,
+      hash,
+      input.key,
+      cmd.operationId,
+      { ...cmd.receipt, resource: data },
+      201,
+    );
+    return { data, replayed: false };
+  }
+  async removeStudent(input: {
+    classId: string;
+    studentId: string;
+    actor: ActorContext;
+    key: string;
+    requestId: string;
+  }) {
+    await this.lecturer(input.actor, input.requestId);
+    const klass = await this.owned(input.classId, input.actor.userId);
+    const scope = `CLS-REMOVE:${input.actor.userId}:${input.classId}:${input.studentId}`;
+    const hash = keyHash(this.secret, input.key);
+    const previous = await this.repo.command(scope, hash, input.key);
+    const current = await this.repo.membership(input.classId, input.studentId);
+    const membershipId = previous?.resourceId ?? current?.membershipId;
+    if (!membershipId) throw notFound("MEMBER_NOT_FOUND", "Member is not active");
+    const fp = fingerprint(this.secret, {
+      method: "DELETE",
+      route: "/api/v1/classes/{id}/members/{studentId}",
+      actor: input.actor.userId,
+      classId: input.classId,
+      studentId: input.studentId,
+      membershipId,
+    });
+    if (previous) {
+      const replay = await this.requiredCommand(scope, hash, input.key, fp);
+      if (replay.status === "COMPLETE" && replay.receipt.resource)
+        return { data: replay.receipt.resource, replayed: true };
+    }
+    if (
+      !current ||
+      current.membershipId !== membershipId ||
+      (current.state !== "ACTIVE" && !(previous && current.state === "REMOVED"))
+    )
+      throw notFound("MEMBER_NOT_FOUND", "Member is not active");
+    const member =
+      current.state === "REMOVED"
+        ? { ...current, state: "ACTIVE" as const, version: current.version - 1 }
+        : current;
+    if (member.source !== "JOIN_CODE")
+      throw conflict(
+        "PURCHASE_MEMBERSHIP_MANAGED_BY_ENROLLMENT",
+        "Purchased membership requires enrollment management",
+      );
+    if (klass.scheduleState === "PUBLISHED")
+      throw conflict(
+        "PUBLISHED_SCHEDULE_MEMBERSHIP_LOCKED",
+        "Published schedule membership cannot be removed",
+      );
+    const now = new Date();
+    const op = randomUUID();
+    const eventId = randomUUID();
+    await this.repo.reserve(
+      scope,
+      hash,
+      input.key,
+      op,
+      member.membershipId,
+      {
+        fingerprint: fp,
+        eventId,
+        occurredAt: now.toISOString(),
+      },
+      now,
+    );
+    const cmd = await this.requiredCommand(scope, hash, input.key, fp);
+    if (cmd.status === "COMPLETE" && cmd.receipt.resource)
+      return { data: cmd.receipt.resource, replayed: true };
+    if (!(await this.repo.removeMembership(member))) {
+      const current = await this.repo.membership(input.classId, input.studentId);
+      if (current?.membershipId !== member.membershipId || current.state !== "REMOVED")
+        throw conflict("MEMBERSHIP_VERSION_CONFLICT", "Membership changed concurrently");
+    }
+    await this.repo.removeMembershipProjections(member);
+    const occurredAt = new Date(cmd.receipt.occurredAt);
+    await this.repo.prepareEvent({
+      eventId: cmd.receipt.eventId ?? eventId,
+      eventType: "classroom.student.removed.v1",
+      aggregateId: member.membershipId,
+      aggregateType: "CLASS_MEMBERSHIP",
+      version: member.version + 1,
+      occurredAt,
+      correlationId: input.requestId,
+      actor: { type: "USER", id: input.actor.userId },
+      data: { classId: klass.classId, studentId: member.studentId, membershipId: member.membershipId },
+    });
+    await this.repo.readyEvent(cmd.receipt.eventId ?? eventId, occurredAt);
+    const data = { classId: klass.classId, studentId: member.studentId, removed: true };
+    await this.repo.complete(scope, hash, input.key, cmd.operationId, { ...cmd.receipt, resource: data });
+    return { data, replayed: false };
   }
   async announcements(classId: string, actor: ActorContext, requestId: string, month: string) {
     await this.detail(classId, actor, requestId);
@@ -1503,7 +1698,7 @@ export class ClassroomService {
     const klass = await this.repo.getClass(classId);
     if (!klass) throw notFound();
     if (actor.userId === klass.ownerLecturerId) await this.lecturer(actor, requestId);
-    else if (!(await this.repo.membership(classId, actor.userId)))
+    else if ((await this.repo.membership(classId, actor.userId))?.state !== "ACTIVE")
       throw new AppError("CLASS_ACCESS_REQUIRED", 403, "Class membership is required");
     if (from > to) throw new AppError("INVALID_DATE_RANGE", 400, "from must not be after to");
     const days = daysBetween(from, to);
@@ -1526,7 +1721,7 @@ export class ClassroomService {
     const klass = await this.repo.getClass(session.classId);
     if (!klass) throw unavailable();
     if (actor.userId === klass.ownerLecturerId) await this.lecturer(actor, requestId);
-    else if (!(await this.repo.membership(klass.classId, actor.userId)))
+    else if ((await this.repo.membership(klass.classId, actor.userId))?.state !== "ACTIVE")
       throw new AppError("CLASS_ACCESS_REQUIRED", 403, "Class membership is required");
     const dto = sessionDto(session);
     if (session.meetingUrl && inMeetingWindow(session.startAt, session.endAt, new Date()))

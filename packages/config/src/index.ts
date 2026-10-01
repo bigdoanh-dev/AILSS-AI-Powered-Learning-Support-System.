@@ -149,6 +149,7 @@ const baseSchema = z.object({
   MEDIA_QUOTA_LIMITS: z.string().optional(),
   MEDIA_PLAYBACK_TTL_SECONDS: z.coerce.number().int().min(1).max(300).default(120),
   GOOGLE_CLIENT_IDS: z.string().default(""),
+  GOOGLE_WEB_CLIENT_ID: z.string().default(""),
   APPLE_CLIENT_IDS: z.string().default(""),
   SEPAY_WEBHOOK_API_KEY: optionalInjected,
   SEPAY_REFUND_API_URL: z.string().url().optional(),

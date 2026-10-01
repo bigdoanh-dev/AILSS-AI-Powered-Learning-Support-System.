@@ -3,7 +3,14 @@ import { Text, View, StyleSheet, ScrollView, RefreshControl } from "react-native
 import { router, type Href } from "expo-router";
 import { ApiError } from "../../src/api";
 import { runtime } from "../../src/runtime";
-import { ownedOfferings, uniqueCoursesFromOfferings, type OwnedOffering } from "../../src/teaching";
+import {
+  ownedClasses,
+  lecturerCourses,
+  ownedOfferings,
+  type LecturerCourse,
+  type OwnedClass,
+  type OwnedOffering,
+} from "../../src/teaching";
 import { Page, Button, Icon, Badge, ScreenHeader, BottomNavBar, styles, tokens } from "../../src/ui";
 import { ScalePressable } from "../../src/motion";
 
@@ -11,6 +18,8 @@ export default function TeachingDashboard() {
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [items, setItems] = useState<OwnedOffering[] | null>(null);
+  const [courses, setCourses] = useState<LecturerCourse[] | null>(null);
+  const [classes, setClasses] = useState<OwnedClass[] | null>(null);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -20,9 +29,22 @@ export default function TeachingDashboard() {
       if (snapshot.user?.role !== "LECTURER") return;
       setError("");
       try {
-        const value = await session.request("/api/v1/me/owned-offerings", { signal });
+        const [offeringsResult, coursesResult, classesResult] = await Promise.allSettled([
+          session.request("/api/v1/me/owned-offerings", { signal }),
+          session.request("/api/v1/me/owned-courses", { signal }),
+          session.request("/api/v1/me/owned-classes", { signal }),
+        ]);
         if (!signal?.aborted) {
-          setItems(ownedOfferings(value));
+          setItems(offeringsResult.status === "fulfilled" ? ownedOfferings(offeringsResult.value) : null);
+          setCourses(coursesResult.status === "fulfilled" ? lecturerCourses(coursesResult.value) : null);
+          setClasses(classesResult.status === "fulfilled" ? ownedClasses(classesResult.value) : null);
+          if (
+            offeringsResult.status === "rejected" ||
+            coursesResult.status === "rejected" ||
+            classesResult.status === "rejected"
+          ) {
+            setError("Một số dữ liệu giảng dạy chưa tải được. Kéo xuống để thử lại.");
+          }
         }
       } catch (e: unknown) {
         if (!signal?.aborted) {
@@ -73,9 +95,8 @@ export default function TeachingDashboard() {
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
       <Page scroll={false}>
         <ScreenHeader
-          title="Bàn làm việc Giảng dạy"
+          title="Tổng quan giảng dạy"
           subtitle={`${snapshot.user.displayName} · Giảng viên AILSS`}
-          onBack={() => router.replace("/account")}
           rightElement={
             <ScalePressable
               onPress={() => router.push("/teaching/courses/create" as Href)}
@@ -93,21 +114,66 @@ export default function TeachingDashboard() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           contentContainerStyle={{ gap: 14, paddingBottom: 90 }}
         >
-          {/* Owned course totals from the lecturer's API response. */}
-          {items && (
-            <View style={ds.kpiGrid}>
-              <View style={ds.kpiCard}>
-                <Text style={ds.kpiNumber}>{uniqueCoursesFromOfferings(items).length}</Text>
-                <Text style={ds.kpiTitle}>Khóa học</Text>
-              </View>
-              <View style={ds.kpiCard}>
-                <Text style={ds.kpiNumber}>{items.length}</Text>
-                <Text style={ds.kpiTitle}>Gói giảng dạy</Text>
-              </View>
-            </View>
-          )}
-          {/* Quick Actions 3x2 Grid */}
-          <Text style={ds.sectionHeader}>Công cụ quản trị giảng dạy</Text>
+          <View style={ds.hero}>
+            <Text style={ds.heroEyebrow}>GIẢNG VIÊN · TỔNG QUAN HOẠT ĐỘNG</Text>
+            <Text style={ds.heroTitle}>Điều hành lớp học của bạn</Text>
+            <Text style={ds.heroDescription}>
+              Quản lý khóa học, lớp phụ trách, lịch dạy và công việc giảng dạy tại một nơi.
+            </Text>
+            <ScalePressable
+              style={ds.heroAction}
+              onPress={() => router.push("/teaching/courses" as Href)}
+              accessibilityRole="button"
+              accessibilityLabel="Quản lý khóa học"
+            >
+              <Text style={ds.heroActionText}>Quản lý khóa học</Text>
+              <Icon name="chevronRight" size={16} color="#063B4A" />
+            </ScalePressable>
+          </View>
+
+          <View style={ds.kpiGrid}>
+            <ScalePressable
+              style={ds.kpiCard}
+              onPress={() => router.push("/teaching/courses" as Href)}
+              accessibilityRole="button"
+              accessibilityLabel="Xem khóa học"
+            >
+              <Icon name="book" size={20} color={tokens.color.brand} />
+              <Text style={ds.kpiNumber}>{courses?.length ?? "—"}</Text>
+              <Text style={ds.kpiTitle}>Khóa học</Text>
+            </ScalePressable>
+            <ScalePressable
+              style={ds.kpiCard}
+              onPress={() => router.push("/teaching/classes" as Href)}
+              accessibilityRole="button"
+              accessibilityLabel="Xem lớp phụ trách"
+            >
+              <Icon name="class" size={20} color="#0891B2" />
+              <Text style={ds.kpiNumber}>{classes?.length ?? "—"}</Text>
+              <Text style={ds.kpiTitle}>Lớp phụ trách</Text>
+            </ScalePressable>
+            <ScalePressable
+              style={ds.kpiCard}
+              onPress={() => router.push("/teaching/courses" as Href)}
+              accessibilityRole="button"
+              accessibilityLabel="Xem gói giảng dạy"
+            >
+              <Icon name="award" size={20} color="#7C3AED" />
+              <Text style={ds.kpiNumber}>{items?.length ?? "—"}</Text>
+              <Text style={ds.kpiTitle}>Gói giảng dạy</Text>
+            </ScalePressable>
+            <ScalePressable
+              style={ds.kpiCard}
+              onPress={() => router.push("/teaching/schedule" as Href)}
+              accessibilityRole="button"
+              accessibilityLabel="Xem lịch dạy"
+            >
+              <Icon name="calendar" size={20} color="#15803D" />
+              <Text style={ds.kpiNumber}>→</Text>
+              <Text style={ds.kpiTitle}>Lịch dạy</Text>
+            </ScalePressable>
+          </View>
+          <Text style={ds.sectionHeader}>Thao tác giảng dạy nhanh</Text>
           <View style={ds.actionGrid}>
             <ScalePressable
               style={ds.actionItem}
@@ -225,11 +291,57 @@ export default function TeachingDashboard() {
             </ScalePressable>
           </View>
 
+          <View style={ds.listHeaderRow}>
+            <Text style={ds.sectionHeader}>Lớp phụ trách ({classes?.length ?? "—"})</Text>
+            <ScalePressable
+              scaleTo={0.92}
+              onPress={() => router.push("/teaching/classes" as Href)}
+              accessibilityRole="button"
+              accessibilityLabel="Xem tất cả lớp phụ trách"
+            >
+              <Text style={ds.viewAllText}>Xem tất cả →</Text>
+            </ScalePressable>
+          </View>
+          {classes && classes.length === 0 && (
+            <View style={ds.emptyBox}>
+              <Text style={styles.text}>Bạn chưa phụ trách lớp học nào.</Text>
+            </View>
+          )}
+          {classes?.slice(0, 3).map((item) => (
+            <ScalePressable
+              key={item.classId}
+              style={ds.card}
+              onPress={() => router.push("/teaching/classes" as Href)}
+              accessibilityRole="button"
+              accessibilityLabel={`Xem lớp ${item.name}`}
+            >
+              <View style={ds.classCardRow}>
+                <View style={ds.classIcon}>
+                  <Icon name="class" size={20} color={tokens.color.brand} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={ds.cardTitle} numberOfLines={2}>
+                    {item.name}
+                  </Text>
+                  <Text style={ds.meta}>
+                    {item.scheduleState === "PUBLISHED" ? "Đã có lịch dạy" : "Chưa công bố lịch dạy"}
+                  </Text>
+                </View>
+                <Icon name="chevronRight" size={17} color={tokens.color.muted} />
+              </View>
+            </ScalePressable>
+          ))}
+
           {/* Offerings and Courses List */}
           <View style={ds.listHeaderRow}>
-            <Text style={ds.sectionHeader}>Danh sách gói giảng dạy ({items?.length ?? 0})</Text>
-            <ScalePressable scaleTo={0.92} onPress={() => router.push("/teaching/courses" as Href)}>
-              <Text style={ds.viewAllText}>Xem tất cả &gt;</Text>
+            <Text style={ds.sectionHeader}>Danh sách gói giảng dạy ({items?.length ?? "—"})</Text>
+            <ScalePressable
+              scaleTo={0.92}
+              onPress={() => router.push("/teaching/courses" as Href)}
+              accessibilityRole="button"
+              accessibilityLabel="Xem tất cả khóa học"
+            >
+              <Text style={ds.viewAllText}>Khóa học →</Text>
             </ScalePressable>
           </View>
 
@@ -240,7 +352,7 @@ export default function TeachingDashboard() {
             </View>
           ) : null}
 
-          {items === null && !error && (
+          {items === null && courses === null && classes === null && !error && (
             <Text accessibilityRole="alert" style={styles.text}>
               Đang tải dữ liệu giảng dạy…
             </Text>
@@ -260,14 +372,14 @@ export default function TeachingDashboard() {
 
           {items && items.length > 0 && (
             <View style={{ gap: 10 }}>
-              {items.map((item) => (
+              {items.slice(0, 3).map((item) => (
                 <ScalePressable
                   key={item.offeringId}
                   style={ds.card}
                   scaleTo={0.97}
-                  onPress={() => router.push(`/teaching/courses/${item.courseId}` as Href)}
+                  onPress={() => router.push(`/teaching/offerings/${item.offeringId}` as Href)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Khóa học ${item.title ?? item.offeringId}`}
+                  accessibilityLabel={`Xem gói giảng dạy ${item.title ?? item.offeringId}`}
                 >
                   <View style={ds.cardTop}>
                     <View style={{ flex: 1, gap: 4 }}>
@@ -288,7 +400,7 @@ export default function TeachingDashboard() {
                   </View>
 
                   <View style={ds.cardFooter}>
-                    <Text style={ds.footerLink}>Chi tiết khóa học &amp; bài giảng →</Text>
+                    <Text style={ds.footerLink}>Chi tiết gói giảng dạy →</Text>
                   </View>
                 </ScalePressable>
               ))}
@@ -298,7 +410,7 @@ export default function TeachingDashboard() {
       </Page>
 
       <BottomNavBar
-        currentRoute="teaching"
+        currentRoute="home"
         role={snapshot.user?.role}
         onNavigate={(path) => router.push(path as Href)}
       />
@@ -307,6 +419,36 @@ export default function TeachingDashboard() {
 }
 
 const ds = StyleSheet.create({
+  hero: {
+    backgroundColor: "#073B4C",
+    borderRadius: 22,
+    padding: 22,
+    gap: 10,
+  },
+  heroEyebrow: { color: "#89E7DA", fontSize: 11, fontWeight: "800", letterSpacing: 1 },
+  heroTitle: { color: "#FFFFFF", fontSize: 24, lineHeight: 30, fontWeight: "800" },
+  heroDescription: { color: "#D3E6E9", fontSize: 13, lineHeight: 19 },
+  heroAction: {
+    backgroundColor: "#C8F7E8",
+    borderRadius: 11,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginTop: 4,
+  },
+  heroActionText: { color: "#063B4A", fontSize: 13, fontWeight: "800" },
+  classCardRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  classIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 11,
+    backgroundColor: "#E0F2FE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   addBtnHeader: {
     width: 36,
     height: 36,
@@ -329,7 +471,7 @@ const ds = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 4,
     shadowColor: "#000",
     shadowOpacity: 0.03,

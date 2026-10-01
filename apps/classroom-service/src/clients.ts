@@ -23,6 +23,24 @@ export class ClassroomClients {
       this.config.INTERNAL_HTTP_TIMEOUT_MS,
     );
   }
+  public async student(userId: string, correlationId: string) {
+    const value = await this.get(
+      new URL(`/internal/v1/users/${userId}/classroom-profile`, this.config.IDENTITY_SERVICE_URL),
+      userId,
+      correlationId,
+      "identity-service",
+      this.config.SERVICE_TOKEN_PURPOSE,
+      this.config.INTERNAL_HTTP_TIMEOUT_MS,
+    );
+    return z
+      .object({
+        userId: z.string().uuid(),
+        displayName: z.string(),
+        emailMasked: z.string(),
+        createdAt: z.string().datetime(),
+      })
+      .parse(value);
+  }
   public async course(courseId: string, correlationId: string) {
     const value = await this.get(
       new URL(`/internal/v1/courses/${courseId}/class-link-eligibility`, this.config.LEARNING_SERVICE_URL),

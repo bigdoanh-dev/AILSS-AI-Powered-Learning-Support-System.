@@ -66,6 +66,39 @@ Sau đó chạy `pnpm env:dev-async` để tạo lại Gateway với port mappin
 
 ## 4. Chạy app
 
+### Đăng nhập Google trên mobile
+
+Ứng dụng dùng Google Sign-In native để lấy **ID token**, sau đó gửi token tới
+`/api/v1/auth/social/google`; AILSS tự tạo phiên và lưu refresh token bằng SecureStore.
+Mobile tự lấy Web Client ID đang dùng cho bản web từ Gateway tại
+`GET /api/v1/auth/social/config`; không cần chép ID này vào cấu hình Expo.
+Để hoàn tất đăng nhập native:
+
+1. Gateway cần nhận cùng `GOOGLE_WEB_CLIENT_ID` đã cấu hình cho bản web. Với Docker
+   Compose, biến này được chuyển tự động từ `.env` gốc vào Gateway; khởi động lại Gateway
+   sau khi cập nhật mã. Identity service tiếp tục dùng `GOOGLE_CLIENT_IDS` như bản web.
+2. Trong cùng Google Cloud project, tạo OAuth **iOS client ID** với Bundle ID
+   `dev.ailss.mobile` và OAuth **Android client** với package `dev.ailss.mobile`
+   cùng SHA-1 của từng khóa ký debug/release.
+   - Lấy mã SHA-1 của debug keystore trên máy phát triển:
+     ```bash
+     keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep "SHA1:"
+     ```
+3. Riêng iOS, điền `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` vào `apps/mobile/.env.local`
+   (xem `apps/mobile/.env.example`). Đây là Client ID công khai; không đưa Client Secret
+   vào ứng dụng. Android không cần biến Client ID riêng trong mobile.
+4. Với iOS, chạy `pnpm --filter @ailss/mobile exec expo prebuild --platform ios` sau khi
+   đặt Client ID để cập nhật URL scheme trong dự án native đang có. Build và cài lại
+   development client bằng lệnh `ios` hoặc `android` bên dưới. Chỉ tải lại Metro sẽ
+   không thêm được thư viện native hay URL scheme.
+
+**Thử nghiệm nhanh trên thiết bị khi chưa cấu hình Google Cloud:**
+Màn hình đăng nhập di động tích hợp sẵn các nút **"Đăng nhập nhanh thử nghiệm trên thiết bị"**
+(Học viên, Giảng viên, Admin). Khi bấm vào, ứng dụng tự động xác thực trực tiếp qua Gateway mà
+không phụ thuộc vào Client ID iOS hay SHA-1 Android, cho phép kiểm thử toàn bộ chức năng ứng
+dụng trên thiết bị thật ngay lập tức. Nếu nhấn nút Google khi chưa cấu hình, ứng dụng sẽ hiện
+thông báo chẩn đoán và cho phép chọn tiếp tục bằng tài khoản thử nghiệm.
+
 Chọn một trong hai cách sau.
 
 ### Cài và chạy native lần đầu

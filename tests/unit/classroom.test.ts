@@ -164,6 +164,68 @@ describe("P7.15A Classroom core", () => {
     expect(first.data.announcementId).toBeTruthy();
   });
 
+  it("shows canonical learner profile, warns one learner, removes a join-code member, and permits rejoin", async () => {
+    const owner = randomUUID(),
+      studentId = randomUUID(),
+      store = new MemoryClassroom();
+    const service = classroom(store, owner);
+    const created = await service.create({
+      actor: actor(owner, "LECTURER"),
+      request: parseClassCreate({ name: "Trường học A", classKind: "INSTITUTIONAL" }),
+      key: "new-institutional-class",
+      requestId: randomUUID(),
+    });
+    const classId = String(created.data.classId);
+    await service.join({
+      actor: actor(studentId, "STUDENT"),
+      request: { code: String(created.data.joinCode) },
+      key: "join-institutional-class",
+      requestId: randomUUID(),
+    });
+    const member = (await service.roster(classId, actor(owner, "LECTURER"), randomUUID()))[0];
+    expect(member).toMatchObject({
+      studentId,
+      displayName: "Học viên thử nghiệm",
+      emailMasked: "h***@school.edu.vn",
+    });
+    const warning = await service.warnStudent({
+      classId,
+      studentId,
+      actor: actor(owner, "LECTURER"),
+      request: { reason: "Vui lòng cải thiện chuyên cần" },
+      key: "first-warning",
+      requestId: randomUUID(),
+    });
+    expect(warning.data.studentId).toBe(studentId);
+    expect(
+      store.events.find(
+        (event) => event.data?.recipientId === studentId && event.data?.notificationType === "ACADEMIC",
+      ),
+    ).toBeDefined();
+    const removal = {
+      classId,
+      studentId,
+      actor: actor(owner, "LECTURER"),
+      key: "remove-student",
+      requestId: randomUUID(),
+    };
+    await service.removeStudent(removal);
+    await expect(service.removeStudent({ ...removal, requestId: randomUUID() })).resolves.toMatchObject({
+      replayed: true,
+    });
+    expect(await service.roster(classId, actor(owner, "LECTURER"), randomUUID())).toHaveLength(0);
+    await expect(service.detail(classId, actor(studentId, "STUDENT"), randomUUID())).rejects.toMatchObject({
+      status: 403,
+    });
+    await service.join({
+      actor: actor(studentId, "STUDENT"),
+      request: { code: String(created.data.joinCode) },
+      key: "rejoin-institutional-class",
+      requestId: randomUUID(),
+    });
+    expect(await service.roster(classId, actor(owner, "LECTURER"), randomUUID())).toHaveLength(1);
+  });
+
   it("fails authoring closed when canonical Lecturer eligibility is absent", async () => {
     const owner = randomUUID(),
       store = new MemoryClassroom();
@@ -212,6 +274,12 @@ function classroom(store: MemoryClassroom, owner: string) {
         ownerLecturerId: owner,
         state: "PUBLISHED",
         recordVersion: 1,
+      }),
+      student: async (userId: string) => ({
+        userId,
+        displayName: "Học viên thử nghiệm",
+        emailMasked: "h***@school.edu.vn",
+        createdAt: "2026-09-01T00:00:00.000Z",
       }),
     } as unknown as ClassroomClients,
     "secret",
@@ -302,6 +370,26 @@ class MemoryClassroom {
     return true;
   }
   async syncMembership() {}
+  async roster(classId: string) {
+    return [...this.memberships.values()].filter(
+      (value) => value.classId === classId && value.state === "ACTIVE",
+    );
+  }
+  async removeMembership(value: Membership) {
+    const key = `${value.classId}:${value.studentId}`;
+    const current = this.memberships.get(key);
+    if (!current || current.state !== "ACTIVE" || current.version !== value.version) return false;
+    this.memberships.set(key, { ...current, state: "REMOVED", version: current.version + 1 });
+    return true;
+  }
+  async removeMembershipProjections() {}
+  async restoreRemovedMembership(previous: Membership, next: Membership) {
+    const key = `${previous.classId}:${previous.studentId}`;
+    const current = this.memberships.get(key);
+    if (current?.state !== "REMOVED" || current.version !== previous.version) return false;
+    this.memberships.set(key, next);
+    return true;
+  }
   async activeRecipientIds(classId: string) {
     return [...this.memberships.values()]
       .filter((value) => value.classId === classId && value.state === "ACTIVE")

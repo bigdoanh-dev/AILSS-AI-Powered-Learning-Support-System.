@@ -259,6 +259,11 @@ rule("POST", "/offerings/:id/publish", { command: true });
 rule("POST", "/classes", { body: klass, command: true });
 rule("PATCH", "/classes/:id", { body: classPatch, command: true });
 rule("POST", "/classes/:id/join-code/reset", { command: true });
+rule("POST", "/classes/:id/members/:id/warnings", {
+  body: z.object({ reason: txt(5, 500) }).strict(),
+  command: true,
+});
+rule("DELETE", "/classes/:id/members/:id", { command: true });
 rule("GET", "/classes/:id/announcements", {
   query: z.object({ month: z.string().regex(/^\d{4}-\d{2}-01$/) }).strict(),
 });

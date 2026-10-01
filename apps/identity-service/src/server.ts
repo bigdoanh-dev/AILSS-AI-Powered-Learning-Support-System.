@@ -34,6 +34,7 @@ import { logoutRouter } from "./logout/router.js";
 import { LogoutService } from "./logout/service.js";
 import { IdentityProfileRepository } from "./profile/repository.js";
 import { profileRouter } from "./profile/router.js";
+import { classroomStudentRouter } from "./profile/classroom-student.js";
 import { ProfileService } from "./profile/service.js";
 import { avatarRouter } from "./profile/avatar.js";
 import { ProtectedIdentityRequestValidator } from "./profile/validator.js";
@@ -341,6 +342,18 @@ await startService(manifest, {
     const classroomPublicKey = config.CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH
       ? await loadPublicKey(config.CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH)
       : undefined;
+    if (classroomPublicKey) {
+      app.use(
+        classroomStudentRouter(profileRepository, (token) =>
+          verifyServiceToken(token, classroomPublicKey, {
+            issuer: config.SERVICE_TOKEN_ISSUER,
+            audience: config.SERVICE_TOKEN_AUDIENCE,
+            purpose: config.SERVICE_TOKEN_PURPOSE,
+            kid: config.CLASSROOM_SERVICE_TOKEN_KID,
+          }),
+        ),
+      );
+    }
     const assessmentPublicKey = config.ASSESSMENT_SERVICE_TOKEN_PUBLIC_KEY_PATH
       ? await loadPublicKey(config.ASSESSMENT_SERVICE_TOKEN_PUBLIC_KEY_PATH)
       : undefined;

@@ -1,6 +1,7 @@
 import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
 import {
   Text,
+  TextInput,
   View,
   Pressable,
   ActivityIndicator,
@@ -9,6 +10,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
+import * as Crypto from "expo-crypto";
 import { runtime } from "../../src/runtime";
 import {
   studentClasses,
@@ -57,6 +59,36 @@ export default function StudentClassesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [joinCode, setJoinCode] = useState("");
+  const [joinBusy, setJoinBusy] = useState(false);
+  const [joinMessage, setJoinMessage] = useState("");
+  const [joinKey, setJoinKey] = useState(() => Crypto.randomUUID());
+
+  async function joinClass() {
+    const code = joinCode.trim().toUpperCase();
+    if (!/^[A-Z2-9]{6,32}$/.test(code)) {
+      setJoinMessage("Mã lớp cần từ 6 đến 32 ký tự chữ và số hợp lệ.");
+      return;
+    }
+    setJoinBusy(true);
+    setJoinMessage("");
+    try {
+      await session.request("/api/v1/classes/join", {
+        method: "POST",
+        idempotencyKey: joinKey,
+        body: { code },
+      });
+      setJoinCode("");
+      setJoinKey(Crypto.randomUUID());
+      setJoinMessage("Đã tham gia lớp học.");
+      const classes = await session.request("/api/v1/me/classes");
+      setClassesList(studentClasses(classes));
+    } catch (cause) {
+      setJoinMessage(cause instanceof ApiError ? cause.message : "Không thể tham gia lớp.");
+    } finally {
+      setJoinBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (tab === "schedule" || tab === "classes" || tab === "attendance") {
@@ -206,12 +238,19 @@ export default function StudentClassesScreen() {
             style={[localStyles.tabButton, activeTab === "classes" && localStyles.tabButtonActive]}
             onPress={() => setActiveTab("classes")}
           >
-            <Text
-              numberOfLines={1}
-              style={[localStyles.tabText, activeTab === "classes" && localStyles.tabTextActive]}
-            >
-              Lớp học ({classesList.length})
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+              <Icon
+                name="class"
+                size={14}
+                color={activeTab === "classes" ? tokens.color.brand : tokens.color.muted}
+              />
+              <Text
+                numberOfLines={1}
+                style={[localStyles.tabText, activeTab === "classes" && localStyles.tabTextActive]}
+              >
+                Lớp học ({classesList.length})
+              </Text>
+            </View>
           </ScalePressable>
 
           <ScalePressable
@@ -220,12 +259,19 @@ export default function StudentClassesScreen() {
             style={[localStyles.tabButton, activeTab === "schedule" && localStyles.tabButtonActive]}
             onPress={() => setActiveTab("schedule")}
           >
-            <Text
-              numberOfLines={1}
-              style={[localStyles.tabText, activeTab === "schedule" && localStyles.tabTextActive]}
-            >
-              Lịch học ({scheduleList.length})
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+              <Icon
+                name="calendar"
+                size={14}
+                color={activeTab === "schedule" ? tokens.color.brand : tokens.color.muted}
+              />
+              <Text
+                numberOfLines={1}
+                style={[localStyles.tabText, activeTab === "schedule" && localStyles.tabTextActive]}
+              >
+                Lịch học ({scheduleList.length})
+              </Text>
+            </View>
           </ScalePressable>
 
           <ScalePressable
@@ -234,12 +280,19 @@ export default function StudentClassesScreen() {
             style={[localStyles.tabButton, activeTab === "attendance" && localStyles.tabButtonActive]}
             onPress={() => setActiveTab("attendance")}
           >
-            <Text
-              numberOfLines={1}
-              style={[localStyles.tabText, activeTab === "attendance" && localStyles.tabTextActive]}
-            >
-              Điểm danh ({attendanceList.length})
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+              <Icon
+                name="checkCircle"
+                size={14}
+                color={activeTab === "attendance" ? tokens.color.brand : tokens.color.muted}
+              />
+              <Text
+                numberOfLines={1}
+                style={[localStyles.tabText, activeTab === "attendance" && localStyles.tabTextActive]}
+              >
+                Điểm danh ({attendanceList.length})
+              </Text>
+            </View>
           </ScalePressable>
         </View>
 
@@ -264,6 +317,29 @@ export default function StudentClassesScreen() {
         {/* Tab Content: Classes */}
         {!loading && !error && activeTab === "classes" && (
           <View style={localStyles.list}>
+            <View style={[styles.card, { gap: 10 }]}>
+              <Text style={styles.text}>Tham gia lớp bằng mã</Text>
+              <TextInput
+                style={styles.input}
+                value={joinCode}
+                onChangeText={setJoinCode}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={32}
+                placeholder="Nhập mã giảng viên cung cấp"
+                accessibilityLabel="Mã tham gia lớp"
+              />
+              <Button
+                label={joinBusy ? "Đang tham gia…" : "Tham gia lớp"}
+                disabled={joinBusy}
+                onPress={() => void joinClass()}
+              />
+              {joinMessage ? (
+                <Text accessibilityRole="alert" style={styles.small}>
+                  {joinMessage}
+                </Text>
+              ) : null}
+            </View>
             {classesList.length === 0 ? (
               <EmptyState
                 icon="calendar"
@@ -274,50 +350,96 @@ export default function StudentClassesScreen() {
               />
             ) : (
               classesList.map((item) => {
-                const kindLabel =
-                  item.classKind === "LIVE_COHORT"
-                    ? "Lớp trực tiếp"
-                    : item.classKind === "PRIVATE"
-                      ? "Lớp riêng"
-                      : "Lớp học";
+                const isLive = item.classKind === "LIVE_COHORT";
+                const isPrivate = item.classKind === "PRIVATE";
+                const kindLabel = isLive
+                  ? "Lớp trực tiếp LIVE"
+                  : isPrivate
+                    ? "Lớp riêng kèm 1-1"
+                    : "Lớp học trực tuyến";
+                const hasSchedule = item.scheduleState === "PUBLISHED";
+
                 return (
-                  <Pressable
+                  <ScalePressable
                     key={item.classId}
                     accessibilityRole="button"
                     accessibilityLabel={`Xem lớp ${item.name}`}
                     style={localStyles.classCard}
                     onPress={() => router.push(`/classes/${item.classId}`)}
                   >
-                    <View
-                      style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
-                    >
-                      <Badge label={kindLabel} variant="primary" />
-                      {item.scheduleState === "PUBLISHED" && (
-                        <Badge label="ĐÃ CÓ LỊCH" variant="success" icon="check" />
-                      )}
+                    <View style={localStyles.classCardTopRow}>
+                      <View
+                        style={[
+                          localStyles.classKindBadge,
+                          isLive
+                            ? localStyles.kindBadgeLive
+                            : isPrivate
+                              ? localStyles.kindBadgePrivate
+                              : localStyles.kindBadgeStandard,
+                        ]}
+                      >
+                        <Icon
+                          name={isLive ? "sparkles" : isPrivate ? "user" : "class"}
+                          size={12}
+                          color={isLive ? "#0D9488" : isPrivate ? "#7C3AED" : "#2563EB"}
+                        />
+                        <Text
+                          style={[
+                            localStyles.classKindText,
+                            {
+                              color: isLive ? "#0D9488" : isPrivate ? "#7C3AED" : "#2563EB",
+                            },
+                          ]}
+                        >
+                          {kindLabel}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          localStyles.scheduleStateBadge,
+                          hasSchedule ? localStyles.scheduleBadgeActive : localStyles.scheduleBadgePending,
+                        ]}
+                      >
+                        <Icon
+                          name={hasSchedule ? "check" : "clock"}
+                          size={11}
+                          color={hasSchedule ? "#16A34A" : "#D97706"}
+                        />
+                        <Text
+                          style={[
+                            localStyles.scheduleStateText,
+                            { color: hasSchedule ? "#16A34A" : "#D97706" },
+                          ]}
+                        >
+                          {hasSchedule ? "ĐÃ CÓ LỊCH" : "CHỜ LỊCH HỌC"}
+                        </Text>
+                      </View>
                     </View>
 
                     <Text style={localStyles.cardTitle}>{item.name}</Text>
 
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginTop: 4,
-                      }}
-                    >
-                      <Text style={styles.small}>
-                        {item.maxMembers ? `Tối đa ${item.maxMembers} thành viên` : "Lớp tiêu chuẩn"}
-                      </Text>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                        <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
-                          Vào lớp
+                    <View style={localStyles.classMetaRow}>
+                      <View style={localStyles.classMetaItem}>
+                        <Icon name="people" size={13} color={tokens.color.muted} />
+                        <Text style={localStyles.classMetaText}>
+                          {item.maxMembers ? `Tối đa ${item.maxMembers} thành viên` : "Lớp tiêu chuẩn"}
                         </Text>
-                        <Icon name="chevronRight" size={14} color={tokens.color.brand} />
+                      </View>
+                      <Text style={localStyles.classMetaDot}>•</Text>
+                      <View style={localStyles.classMetaItem}>
+                        <Icon name="calendar" size={13} color={tokens.color.muted} />
+                        <Text style={localStyles.classMetaText}>Học trực tuyến</Text>
                       </View>
                     </View>
-                  </Pressable>
+
+                    <View style={localStyles.classCardFooter}>
+                      <Text style={localStyles.classActionHelper}>Nhấn để xem lịch & tài liệu</Text>
+                      <View style={localStyles.enterClassPill}>
+                        <Text style={localStyles.enterClassText}>Vào lớp</Text>
+                        <Icon name="chevronRight" size={13} color="#FFFFFF" />
+                      </View>
+                    </View>
+                  </ScalePressable>
                 );
               })
             )}
@@ -1042,14 +1164,103 @@ const localStyles = StyleSheet.create({
     marginBottom: 8,
   },
   classCard: {
-    backgroundColor: tokens.color.surface,
-    borderRadius: 16,
-    padding: 18,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 16,
     borderWidth: 1,
     borderColor: tokens.color.border,
     marginBottom: 14,
-    gap: 8,
-    ...tokens.shadow.card,
+    gap: 10,
+    ...tokens.shadow.subtle,
+  },
+  classCardTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  classKindBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  kindBadgeLive: {
+    backgroundColor: "rgba(13, 148, 136, 0.1)",
+  },
+  kindBadgePrivate: {
+    backgroundColor: "rgba(124, 58, 237, 0.1)",
+  },
+  kindBadgeStandard: {
+    backgroundColor: "rgba(37, 99, 235, 0.1)",
+  },
+  classKindText: {
+    fontSize: 11.5,
+    fontWeight: "700",
+  },
+  scheduleStateBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  scheduleBadgeActive: {
+    backgroundColor: "#DCFCE7",
+  },
+  scheduleBadgePending: {
+    backgroundColor: "#FEF3C7",
+  },
+  scheduleStateText: {
+    fontSize: 10.5,
+    fontWeight: "800",
+  },
+  classMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  classMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  classMetaText: {
+    fontSize: 12,
+    color: tokens.color.muted,
+  },
+  classMetaDot: {
+    fontSize: 10,
+    color: tokens.color.borderStrong,
+  },
+  classCardFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderTopColor: "#F1F5F9",
+    paddingTop: 10,
+    marginTop: 2,
+  },
+  classActionHelper: {
+    fontSize: 11.5,
+    color: tokens.color.muted,
+  },
+  enterClassPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: tokens.color.brand,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  enterClassText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
   },
   sessionCardOnline: {
     borderColor: tokens.color.brandLight,

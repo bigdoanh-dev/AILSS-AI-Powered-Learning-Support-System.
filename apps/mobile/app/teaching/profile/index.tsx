@@ -115,6 +115,9 @@ export default function LecturerProfileEditor() {
               <Text style={ds.avatarLetter}>
                 {(snapshot.user.displayName?.trim()?.charAt(0) || "G").toUpperCase()}
               </Text>
+              <View style={ds.verifiedDot}>
+                <Icon name="check" size={10} color="#FFFFFF" />
+              </View>
             </View>
             <View style={{ flex: 1, gap: 4 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -125,9 +128,10 @@ export default function LecturerProfileEditor() {
                 />
               </View>
               <Text style={styles.small}>{snapshot.user.emailMasked}</Text>
-              <Text style={[styles.small, { fontSize: 11, color: tokens.color.muted }]}>
-                Mã định danh: {snapshot.user.userId.slice(0, 14)}…
-              </Text>
+              <View style={ds.idBadge}>
+                <Icon name="shield" size={12} color="#0D9488" />
+                <Text style={ds.idBadgeText}>Mã GV: {snapshot.user.userId.slice(0, 14)}…</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -146,7 +150,12 @@ export default function LecturerProfileEditor() {
                 <Icon name="check" size={12} color="#FFFFFF" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={ds.stepTitle}>1. Khởi tạo tài khoản Giảng viên</Text>
+                <View style={ds.stepTitleRow}>
+                  <Text style={ds.stepTitle}>1. Khởi tạo tài khoản Giảng viên</Text>
+                  <View style={[ds.stepPill, ds.stepPillSuccess]}>
+                    <Text style={ds.stepPillTextSuccess}>Hoàn thành</Text>
+                  </View>
+                </View>
                 <Text style={styles.small}>Đã hoàn thành đăng ký vai trò giảng viên AILSS.</Text>
               </View>
             </View>
@@ -166,10 +175,23 @@ export default function LecturerProfileEditor() {
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={ds.stepTitle}>
-                  2. Khai báo hồ sơ chuyên môn{" "}
-                  {details?.bio || details?.experience ? "(Đã lưu)" : "(Đang cập nhật)"}
-                </Text>
+                <View style={ds.stepTitleRow}>
+                  <Text style={ds.stepTitle}>2. Khai báo hồ sơ chuyên môn</Text>
+                  <View
+                    style={[
+                      ds.stepPill,
+                      details?.bio || details?.experience ? ds.stepPillSuccess : ds.stepPillActive,
+                    ]}
+                  >
+                    <Text
+                      style={
+                        details?.bio || details?.experience ? ds.stepPillTextSuccess : ds.stepPillTextActive
+                      }
+                    >
+                      {details?.bio || details?.experience ? "Đã lưu" : "Đang cập nhật"}
+                    </Text>
+                  </View>
+                </View>
                 <Text style={styles.small}>
                   Tiểu sử, học vị, kinh nghiệm giảng dạy và các chứng chỉ, bằng cấp.
                 </Text>
@@ -182,7 +204,12 @@ export default function LecturerProfileEditor() {
                 <Icon name="card" size={12} color="#FFFFFF" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={ds.stepTitle}>3. Thiết lập tài khoản nhận doanh thu (Payout)</Text>
+                <View style={ds.stepTitleRow}>
+                  <Text style={ds.stepTitle}>3. Thiết lập tài khoản Payout</Text>
+                  <View style={[ds.stepPill, ds.stepPillActive]}>
+                    <Text style={ds.stepPillTextActive}>Sẵn sàng</Text>
+                  </View>
+                </View>
                 <Text style={styles.small}>
                   Khai báo tài khoản ngân hàng để nhận chi trả tiền bán khóa học.
                 </Text>
@@ -195,9 +222,14 @@ export default function LecturerProfileEditor() {
                 <Icon name={isVerified ? "checkCircle" : "alert"} size={12} color="#FFFFFF" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={ds.stepTitle}>
-                  4. Quản trị viên thẩm định &amp; Cấp quyền {isVerified ? "(Đã duyệt)" : "(Chờ duyệt)"}
-                </Text>
+                <View style={ds.stepTitleRow}>
+                  <Text style={ds.stepTitle}>4. Quản trị viên thẩm định & Cấp quyền</Text>
+                  <View style={[ds.stepPill, isVerified ? ds.stepPillSuccess : ds.stepPillWarning]}>
+                    <Text style={isVerified ? ds.stepPillTextSuccess : ds.stepPillTextWarning}>
+                      {isVerified ? "Đã duyệt" : "Chờ duyệt"}
+                    </Text>
+                  </View>
+                </View>
                 <Text style={styles.small}>
                   {isVerified
                     ? "Tài khoản có toàn quyền xuất bản khóa học và đối soát doanh thu."
@@ -233,7 +265,16 @@ export default function LecturerProfileEditor() {
                 ] as const
               ).map(([key, label, maxLength]) => (
                 <View key={key} style={{ gap: 5 }}>
-                  <Text style={[styles.small, { fontWeight: "700", color: tokens.color.ink }]}>{label}</Text>
+                  <View
+                    style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
+                  >
+                    <Text style={[styles.small, { fontWeight: "700", color: tokens.color.ink }]}>
+                      {label}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: "#94A3B8" }}>
+                      {details[key].length}/{maxLength}
+                    </Text>
+                  </View>
                   <TextInput
                     accessibilityLabel={label}
                     style={[styles.input, { minHeight: 82, textAlignVertical: "top" }]}
@@ -253,10 +294,12 @@ export default function LecturerProfileEditor() {
                   flexDirection: "row",
                   alignItems: "center",
                   gap: 12,
-                  paddingVertical: 6,
-                  backgroundColor: tokens.color.surfaceSubtle,
+                  paddingVertical: 8,
+                  backgroundColor: "#F8FAFC",
                   padding: 12,
                   borderRadius: tokens.radius.md,
+                  borderWidth: 1,
+                  borderColor: "#E2E8F0",
                 }}
               >
                 <Switch
@@ -278,6 +321,8 @@ export default function LecturerProfileEditor() {
 
               <Button
                 label={busy ? "Đang lưu…" : "Lưu hồ sơ công khai"}
+                variant="primary"
+                icon={<Icon name="checkCircle" size={18} color="#FFFFFF" />}
                 disabled={busy}
                 onPress={() => void save()}
               />
@@ -291,7 +336,7 @@ export default function LecturerProfileEditor() {
                 styles.small,
                 {
                   color: messageType === "success" ? tokens.color.success : tokens.color.danger,
-                  fontWeight: "600",
+                  fontWeight: "700",
                 },
               ]}
             >
@@ -305,16 +350,19 @@ export default function LecturerProfileEditor() {
           <Button
             label="Xem trang hồ sơ công khai"
             variant="outline"
+            icon={<Icon name="eye" size={16} color={tokens.color.brand} />}
             onPress={() => router.push(`/lecturers/${snapshot.user!.userId}` as Href)}
           />
           <Button
             label="Cài đặt tài khoản nhận tiền (Payout)"
             variant="outline"
+            icon={<Icon name="card" size={16} color={tokens.color.brand} />}
             onPress={() => router.push("/teaching/revenue" as Href)}
           />
           <Button
             label="Đổi ảnh đại diện trong Tài khoản"
             variant="outline"
+            icon={<Icon name="user" size={16} color={tokens.color.brand} />}
             onPress={() => router.push("/account" as Href)}
           />
         </View>
@@ -394,5 +442,70 @@ const ds = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     color: tokens.color.ink,
+  },
+  stepTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  stepPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  stepPillSuccess: {
+    backgroundColor: "#DCFCE7",
+  },
+  stepPillActive: {
+    backgroundColor: "#E0F2FE",
+  },
+  stepPillWarning: {
+    backgroundColor: "#FEF3C7",
+  },
+  stepPillTextSuccess: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#15803D",
+  },
+  stepPillTextActive: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#0369A1",
+  },
+  stepPillTextWarning: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#B45309",
+  },
+  verifiedDot: {
+    position: "absolute",
+    bottom: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#10B981",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  idBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#F0FDFA",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#CCFBF1",
+  },
+  idBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#0D9488",
   },
 });

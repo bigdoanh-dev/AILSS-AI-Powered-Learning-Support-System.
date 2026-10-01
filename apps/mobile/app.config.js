@@ -61,6 +61,7 @@ function isLoopbackHost(hostname) {
 module.exports = ({ config }) => {
   const environment = process.env.EXPO_PUBLIC_AILSS_ENV;
   const origin = (process.env.EXPO_PUBLIC_AILSS_API_BASE_URL || "").trim();
+  const googleIosClientId = (process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "").trim();
   if (!["development", "research", "production"].includes(environment)) {
     throw Error("FATAL_CONFIGURATION_ERROR: Set EXPO_PUBLIC_AILSS_ENV explicitly");
   }
@@ -86,10 +87,27 @@ module.exports = ({ config }) => {
     throw Error("FATAL_CONFIGURATION_ERROR: Invalid Gateway origin");
   }
   const localHttp = environment !== "production" && url.protocol === "http:";
+  if (googleIosClientId && !/^[0-9]+-[a-z0-9-]+\.apps\.googleusercontent\.com$/.test(googleIosClientId)) {
+    throw Error("FATAL_CONFIGURATION_ERROR: Invalid Google iOS OAuth client ID");
+  }
+  const googlePlugin = googleIosClientId
+    ? [
+        [
+          "@react-native-google-signin/google-signin",
+          {
+            iosUrlScheme: `com.googleusercontent.apps.${googleIosClientId.replace(/\.apps\.googleusercontent\.com$/, "")}`,
+          },
+        ],
+      ]
+    : [];
   config.plugins = [
     ...(config.plugins ?? []).filter(
-      (plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) !== "expo-sqlite",
+      (plugin) =>
+        !["expo-sqlite", "@react-native-google-signin/google-signin"].includes(
+          Array.isArray(plugin) ? plugin[0] : plugin,
+        ),
     ),
+    ...googlePlugin,
     ["expo-sqlite", { useSQLCipher: true }],
   ];
   config.ios = {

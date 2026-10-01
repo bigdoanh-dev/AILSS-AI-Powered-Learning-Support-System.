@@ -531,7 +531,7 @@ export default function TeachingScheduleScreen() {
         </ScrollView>
       </Page>
       <BottomNavBar
-        currentRoute="teaching"
+        currentRoute="schedule"
         role="LECTURER"
         onNavigate={(path) => router.push(path as Href)}
       />

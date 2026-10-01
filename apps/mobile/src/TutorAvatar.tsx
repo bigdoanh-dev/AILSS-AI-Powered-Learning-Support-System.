@@ -75,7 +75,7 @@ export function TutorAvatar({
       <Animated.Image
         source={robot}
         resizeMode="contain"
-        style={{ width: size, height: size * 1.12, transform: [{ translateY: lift }] }}
+        style={{ width: size, height: size, transform: [{ translateY: lift }] }}
       />
     </View>
   );
@@ -83,5 +83,5 @@ export function TutorAvatar({
 
 const avatar = StyleSheet.create({
   frame: { alignItems: "center", justifyContent: "center" },
-  glow: { position: "absolute", backgroundColor: "#62E1D4" },
+  glow: { position: "absolute", backgroundColor: "rgba(56, 189, 248, 0.45)" },
 });

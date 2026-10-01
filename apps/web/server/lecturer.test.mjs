@@ -47,6 +47,27 @@ test("Lecturer allowlist accepts documented reads and commands", () => {
     lecturerOperation(`/web-session/lecturer/classes/${id}/join-code/reset`, "POST", {}, command).path,
     `/classes/${id}/join-code/reset`,
   );
+  assert.equal(
+    lecturerOperation(
+      `/web-session/lecturer/classes/${id}/members/${id}/warnings`,
+      "POST",
+      { reason: "Đi học đúng giờ" },
+      command,
+    ).path,
+    `/classes/${id}/members/${id}/warnings`,
+  );
+  assert.equal(
+    lecturerOperation(`/web-session/lecturer/classes/${id}/members/${id}`, "DELETE", {}, command).path,
+    `/classes/${id}/members/${id}`,
+  );
+  assert.throws(() =>
+    lecturerOperation(
+      `/web-session/lecturer/classes/${id}/members/${id}/warnings`,
+      "POST",
+      { reason: "x" },
+      command,
+    ),
+  );
 });
 
 test("Lecturer allowlist rejects undocumented routes, duplicate query and missing command key", () => {

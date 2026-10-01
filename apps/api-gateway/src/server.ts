@@ -39,6 +39,7 @@ import { learningProgressProxyFactory } from "./learning-progress-proxy.js";
 import { aiDocumentProxyFactory } from "./ai-document-proxy.js";
 import { assistantProxyFactory } from "./assistant-proxy.js";
 import { notificationProxyFactory } from "./notification-proxy.js";
+import { socialConfigHandler } from "./social-config.js";
 import { federationProxy } from "./federation-proxy.js";
 import { adaptiveLearningProxyFactory } from "./adaptive-learning-proxy.js";
 import { createUpstreamReadinessHandler, gatewayReadinessDependencies } from "./readiness.js";
@@ -228,6 +229,7 @@ app.post(
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
   logoutHandler,
 );
+app.get("/api/v1/auth/social/config", socialConfigHandler(config.GOOGLE_WEB_CLIENT_ID));
 app.post(
   "/api/v1/auth/social/:provider",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
@@ -445,6 +447,16 @@ app.patch(
   classroom.update,
 );
 app.get("/api/v1/classes/:classId/members", classroom.roster);
+app.post(
+  "/api/v1/classes/:classId/members/:studentId/warnings",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  classroom.warnStudent,
+);
+app.delete(
+  "/api/v1/classes/:classId/members/:studentId",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  classroom.removeStudent,
+);
 app.post(
   "/api/v1/classes/:classId/join-code/reset",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),

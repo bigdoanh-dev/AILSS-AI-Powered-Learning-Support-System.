@@ -240,22 +240,33 @@ export function ownedClasses(value: unknown): OwnedClass[] {
 // ============================================================================
 
 export interface ClassMember {
-  membershipId?: string;
-  userId: string;
+  membershipId: string;
+  studentId: string;
   displayName: string;
-  role: string;
-  joinedAt?: string;
+  emailMasked: string;
+  createdAt: string;
+  joinedAt: string;
+  source: string;
+  state: string;
 }
 
 export function classMember(value: unknown): ClassMember {
   const rec = record(value);
   return {
-    membershipId: optionalString(rec.membershipId),
-    userId: string(rec.userId),
+    membershipId: string(rec.membershipId),
+    studentId: string(rec.studentId),
     displayName: string(rec.displayName),
-    role: optionalString(rec.role) ?? "STUDENT",
-    joinedAt: optionalString(rec.joinedAt),
+    emailMasked: string(rec.emailMasked),
+    createdAt: string(rec.createdAt),
+    joinedAt: string(rec.joinedAt),
+    source: string(rec.source),
+    state: string(rec.state),
   };
+}
+
+export function isNewClassStudent(createdAt: string, now = Date.now()): boolean {
+  const registeredAt = Date.parse(createdAt);
+  return Number.isFinite(registeredAt) && registeredAt <= now && now - registeredAt < 21 * 86400000;
 }
 
 export function classMembers(value: unknown): ClassMember[] {

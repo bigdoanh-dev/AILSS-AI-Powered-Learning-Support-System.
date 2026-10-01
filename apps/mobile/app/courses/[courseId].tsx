@@ -1,4 +1,4 @@
-import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
+import { useSyncExternalStore, useState, useEffect, useCallback, useRef } from "react";
 import { Text, View, TextInput, Pressable, ActivityIndicator, StyleSheet, Alert, Image } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import * as Crypto from "expo-crypto";
@@ -19,6 +19,7 @@ import {
   type RatingSummary,
 } from "../../src/interaction";
 import { ApiError } from "../../src/api";
+import { order as decodeOrder } from "../../src/commerce";
 import { publicLecturer, type PublicLecturer } from "../../src/public-lecturer";
 import { Page, Button, Badge, Icon, BottomNavBar, styles, tokens } from "../../src/ui";
 
@@ -36,6 +37,9 @@ export default function CourseDetailScreen() {
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
   const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState(() => Crypto.randomUUID());
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderError, setOrderError] = useState("");
+  const orderKeys = useRef(new Map<string, string>());
 
   // Reviews state
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -153,6 +157,32 @@ export default function CourseDetailScreen() {
       }
     } finally {
       setEnrollmentLoading(false);
+    }
+  };
+
+  const handleCreateOrder = async (offeringId: string) => {
+    if (snapshot.state !== "AUTHENTICATED") {
+      router.push("/login");
+      return;
+    }
+    const key = orderKeys.current.get(offeringId) ?? Crypto.randomUUID();
+    orderKeys.current.set(offeringId, key);
+    setOrderLoading(true);
+    setOrderError("");
+    try {
+      const created = decodeOrder(
+        await session.request("/api/v1/orders", {
+          method: "POST",
+          idempotencyKey: key,
+          body: { offeringId },
+        }),
+      );
+      orderKeys.current.delete(offeringId);
+      router.push(`/checkout/${created.orderId}` as Href);
+    } catch (cause) {
+      setOrderError(cause instanceof ApiError ? cause.message : "Không thể tạo đơn hàng. Vui lòng thử lại.");
+    } finally {
+      setOrderLoading(false);
     }
   };
 
@@ -411,10 +441,28 @@ export default function CourseDetailScreen() {
               />
             </>
           ) : (
-            <Text style={styles.small}>
-              Khóa học chuyên sâu có học phí. Vui lòng liên hệ trung tâm đào tạo hoặc hoàn tất thanh toán trên
-              web.
-            </Text>
+            <View style={{ gap: 10 }}>
+              <Text style={styles.small}>Chọn hình thức học để tạo đơn thanh toán.</Text>
+              {offeringsList
+                .filter((item) => item.state === "PUBLISHED")
+                .map((item) => (
+                  <Button
+                    key={item.offeringId}
+                    label={`${item.offeringType === "SELF_PACED" ? "Tự học" : "Lớp theo lịch"} · ${item.price ?? course.price ?? "Có phí"} ${item.currency ?? course.currency ?? "VND"}`}
+                    variant="outline"
+                    disabled={orderLoading}
+                    onPress={() => void handleCreateOrder(item.offeringId)}
+                  />
+                ))}
+              {!offeringsList.some((item) => item.state === "PUBLISHED") ? (
+                <Text style={styles.small}>Hiện chưa có hình thức học mở bán.</Text>
+              ) : null}
+              {orderError ? (
+                <Text accessibilityRole="alert" style={styles.error}>
+                  {orderError}
+                </Text>
+              ) : null}
+            </View>
           )}
         </View>
 

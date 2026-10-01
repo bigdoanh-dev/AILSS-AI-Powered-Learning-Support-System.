@@ -1,10 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
-import { Text, View, StyleSheet } from "react-native";
+import { Alert, Text, TextInput, View, StyleSheet } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
+import * as Crypto from "expo-crypto";
 import { useSyncExternalStore } from "react";
 import { ApiError } from "../../../../src/api";
 import { runtime } from "../../../../src/runtime";
-import { ownedClass, classMembers, type OwnedClass, type ClassMember } from "../../../../src/teaching";
+import {
+  ownedClass,
+  classMembers,
+  isNewClassStudent,
+  type OwnedClass,
+  type ClassMember,
+} from "../../../../src/teaching";
 import { Page, Button, ScreenHeader, NonVirtualizedList, styles, tokens } from "../../../../src/ui";
 
 export default function ClassDetail() {
@@ -17,6 +24,9 @@ export default function ClassDetail() {
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [joinCode, setJoinCode] = useState("");
+  const [warningStudentId, setWarningStudentId] = useState("");
+  const [warningReason, setWarningReason] = useState("");
 
   useEffect(() => {
     if (!classId || snapshot.user?.role !== "LECTURER") return;
@@ -54,6 +64,81 @@ export default function ClassDetail() {
 
   const handleRetry = useCallback(() => setRetry((v) => v + 1), []);
 
+  async function resetCode() {
+    if (!classId || busy) return;
+    setBusy(true);
+    setMsg("");
+    try {
+      const value = await session.request(`/api/v1/classes/${classId}/join-code/reset`, {
+        method: "POST",
+        idempotencyKey: Crypto.randomUUID(),
+        body: {},
+      });
+      if (
+        !value ||
+        typeof value !== "object" ||
+        typeof (value as { joinCode?: unknown }).joinCode !== "string"
+      )
+        throw new ApiError("invalid");
+      setJoinCode((value as { joinCode: string }).joinCode);
+      setMsg("Mã cũ đã hết hiệu lực. Hãy chia sẻ mã mới với học viên.");
+    } catch (cause) {
+      setMsg(cause instanceof ApiError ? cause.message : "Không thể tạo mã lớp mới.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function warnStudent(item: ClassMember) {
+    if (!classId || busy || warningReason.trim().length < 5 || warningReason.trim().length > 500) {
+      setMsg("Nội dung cảnh báo cần từ 5 đến 500 ký tự.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await session.request(`/api/v1/classes/${classId}/members/${item.studentId}/warnings`, {
+        method: "POST",
+        idempotencyKey: Crypto.randomUUID(),
+        body: { reason: warningReason.trim() },
+      });
+      setWarningStudentId("");
+      setWarningReason("");
+      setMsg(`Đã gửi cảnh báo cho ${item.displayName}.`);
+    } catch (cause) {
+      setMsg(cause instanceof ApiError ? cause.message : "Không thể gửi cảnh báo.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function confirmRemove(item: ClassMember) {
+    if (!classId) return;
+    Alert.alert("Xóa học viên khỏi lớp", `Xóa ${item.displayName} khỏi lớp này?`, [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Xóa",
+        style: "destructive",
+        onPress: () => {
+          setBusy(true);
+          void session
+            .request(`/api/v1/classes/${classId}/members/${item.studentId}`, {
+              method: "DELETE",
+              idempotencyKey: Crypto.randomUUID(),
+              body: {},
+            })
+            .then(() => {
+              setMsg(`Đã xóa ${item.displayName} khỏi lớp.`);
+              setRetry((value) => value + 1);
+            })
+            .catch((cause: unknown) => {
+              setMsg(cause instanceof ApiError ? cause.message : "Không thể xóa học viên.");
+            })
+            .finally(() => setBusy(false));
+        },
+      },
+    ]);
+  }
+
   const handlePublishSchedule = useCallback(async () => {
     if (!classId) return;
     setBusy(true);
@@ -81,9 +166,49 @@ export default function ClassDetail() {
   }
 
   const renderMember = ({ item }: { item: ClassMember }) => (
-    <View style={cd.memberRow}>
-      <Text style={styles.text}>{item.displayName}</Text>
-      <Text style={styles.small}>{item.role}</Text>
+    <View
+      style={[cd.memberRow, { backgroundColor: isNewClassStudent(item.createdAt) ? "#ECFDF5" : "#F8FAFC" }]}
+    >
+      <Text style={styles.text}>
+        {item.displayName} · {isNewClassStudent(item.createdAt) ? "Mới" : "Cũ"}
+      </Text>
+      <Text style={styles.small}>{item.emailMasked}</Text>
+      <Text style={styles.small}>Đăng ký: {new Date(item.createdAt).toLocaleDateString("vi-VN")}</Text>
+      <Text style={styles.small}>Vào lớp: {new Date(item.joinedAt).toLocaleDateString("vi-VN")}</Text>
+      <Text style={styles.small}>Mã học viên: {item.studentId}</Text>
+      <Button
+        label="Cảnh báo"
+        size="sm"
+        variant="outline"
+        disabled={busy}
+        onPress={() => {
+          setWarningStudentId(item.studentId);
+          setWarningReason("");
+        }}
+      />
+      {warningStudentId === item.studentId && (
+        <View style={{ gap: 8 }}>
+          <TextInput
+            style={styles.input}
+            value={warningReason}
+            onChangeText={setWarningReason}
+            maxLength={500}
+            multiline
+            placeholder="Nội dung cảnh báo gửi cho học viên"
+          />
+          <Button label="Gửi cảnh báo" size="sm" disabled={busy} onPress={() => void warnStudent(item)} />
+          <Button label="Hủy" size="sm" variant="outline" onPress={() => setWarningStudentId("")} />
+        </View>
+      )}
+      {cls?.scheduleState !== "PUBLISHED" && item.source === "JOIN_CODE" && (
+        <Button
+          label="Xóa khỏi lớp"
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onPress={() => confirmRemove(item)}
+        />
+      )}
     </View>
   );
 
@@ -107,7 +232,13 @@ export default function ClassDetail() {
             <Text style={styles.small}>Loại lớp: {cls.classKind}</Text>
             <Text style={styles.small}>Trạng thái: {cls.state ?? "—"}</Text>
             {cls.maxMembers != null && <Text style={styles.small}>Tối đa: {cls.maxMembers} thành viên</Text>}
-            {cls.joinCode && <Text style={styles.small}>Mã tham gia: {cls.joinCode}</Text>}
+            {joinCode ? <Text style={styles.text}>Mã tham gia mới: {joinCode}</Text> : null}
+            <Button
+              label="Tạo mã tham gia mới"
+              variant="outline"
+              disabled={busy}
+              onPress={() => void resetCode()}
+            />
             {cls.scheduleState && <Text style={styles.small}>Lịch: {cls.scheduleState}</Text>}
             {cls.linkedCourseId && (
               <Text style={styles.small}>Khóa học liên kết: {cls.linkedCourseId.slice(0, 8)}…</Text>
@@ -138,12 +269,13 @@ export default function ClassDetail() {
           <Text style={[styles.text, { fontWeight: "600", marginTop: 12 }]}>
             Thành viên ({members?.length ?? "…"})
           </Text>
+          <Text style={styles.small}>Màu xanh: tài khoản mới trong 21 ngày. Màu xám: học viên cũ.</Text>
 
           {members && members.length === 0 && <Text style={styles.small}>Chưa có thành viên nào.</Text>}
           {members && members.length > 0 && (
             <NonVirtualizedList
               data={members}
-              keyExtractor={(item) => item.userId}
+              keyExtractor={(item) => item.studentId}
               renderItem={renderMember}
               contentContainerStyle={{ gap: 6 }}
             />
@@ -164,9 +296,7 @@ export default function ClassDetail() {
 
 const cd = StyleSheet.create({
   memberRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    gap: 6,
     padding: 12,
     backgroundColor: "#fff",
     borderRadius: 8,

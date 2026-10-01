@@ -1,8 +1,9 @@
+/// <reference types="node" />
 import assert from "node:assert/strict";
-import { createServer } from "node:http";
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { once } from "node:events";
 import { readFile, writeFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, URL } from "node:url";
 import { ApiError as MobileApiError, Transport } from "../src/api";
 import { ApiError as WebApiError, errorMessage, request as webRequest } from "../../web/src/lib/api";
 
@@ -75,7 +76,7 @@ function classifyMobile(error: unknown): Classification {
 }
 
 async function main() {
-  const server = createServer((request, response) => {
+  const server = createServer((request: IncomingMessage, response: ServerResponse) => {
     const url = new URL(request.url ?? "/", "http://127.0.0.1");
     const status = Number(url.searchParams.get("injectStatus"));
     const scenario = url.searchParams.get("scenario");

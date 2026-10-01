@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useSyncExternalStore } from "react";
-import { Text, TextInput, View, Image, Pressable } from "react-native";
+import { Text, TextInput, View, Image, Pressable, Platform, Alert } from "react-native";
 import { router, useLocalSearchParams, useGlobalSearchParams, usePathname, type Href } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { ApiError, record } from "../src/api";
@@ -56,6 +56,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
   const [avatarStatus, setAvatarStatus] = useState("loading");
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
+  const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() ?? "";
 
   const path =
     screen === "courses"
@@ -173,6 +174,101 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
       goToResult("logout-success");
     }
   }
+
+  async function handleQuickLogin(userEmail: string, userPass: string) {
+    setEmail(userEmail);
+    setPassword(userPass);
+    setBusy(true);
+    setError("");
+    try {
+      await session.login(userEmail, userPass);
+      const user = session.snapshot.user;
+      if (session.snapshot.state !== "AUTHENTICATED" || !user) {
+        throw new Error(session.snapshot.error ?? "Đăng nhập không thành công.");
+      }
+      const target = user.role === "ADMIN" ? "/admin" : user.role === "LECTURER" ? "/teaching" : "/";
+      goToResult("login-success", {
+        role: user.role,
+        name: user.displayName,
+        email: user.emailMasked,
+        target,
+      });
+    } catch (cause) {
+      setError(
+        cause instanceof ApiError
+          ? cause.message
+          : cause instanceof Error
+            ? cause.message
+            : "Đăng nhập không thành công. Hãy thử lại.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleGoogleLogin() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const socialConfig = record(await session.api.request("/api/v1/auth/social/config"));
+      const googleWebClientId = socialConfig.googleClientId;
+      if (typeof googleWebClientId !== "string" || !googleWebClientId.trim()) {
+        throw new Error("Gateway chưa có Google Web Client ID đang dùng cho bản web.");
+      }
+      const { getGoogleIdToken } = await import("../src/google-signin");
+      const idToken = await getGoogleIdToken(googleWebClientId.trim(), googleIosClientId);
+      if (!idToken) return;
+      await session.socialLogin("google", idToken);
+      const user = session.snapshot.user;
+      if (session.snapshot.state !== "AUTHENTICATED" || !user) {
+        throw new Error(session.snapshot.error ?? "Không thể hoàn tất đăng nhập Google.");
+      }
+      const target = user.role === "ADMIN" ? "/admin" : user.role === "LECTURER" ? "/teaching" : "/";
+      goToResult("login-success", {
+        role: user.role,
+        name: user.displayName,
+        email: user.emailMasked,
+        target,
+      });
+    } catch (cause) {
+      const { isGoogleCloudConfigMissingError } = await import("../src/google-signin");
+      if (isGoogleCloudConfigMissingError(cause)) {
+        Alert.alert(
+          "Chưa liên kết Google Cloud trên thiết bị",
+          Platform.OS === "ios"
+            ? "iOS cần Client ID riêng trong Google Cloud Console (EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID).\n\nBạn có muốn đăng nhập nhanh bằng tài khoản thử nghiệm để kiểm tra ngay trên thiết bị này không?"
+            : "Android cần đăng ký package dev.ailss.mobile và SHA-1 trong Google Cloud Console.\n\nBạn có muốn đăng nhập nhanh bằng tài khoản thử nghiệm để kiểm tra ngay trên thiết bị này không?",
+          [
+            {
+              text: "Học viên (Demo)",
+              onPress: () => void handleQuickLogin("student@ailss.internal", "AilssDemo!2026"),
+            },
+            {
+              text: "Giảng viên (Demo)",
+              onPress: () => void handleQuickLogin("lecturer@ailss.internal", "AilssDemo!2026"),
+            },
+            {
+              text: "Admin (Demo)",
+              onPress: () => void handleQuickLogin("admin@ailss.internal", "AilssAdmin!2026"),
+            },
+            { text: "Hủy", style: "cancel" },
+          ],
+        );
+        return;
+      }
+      setError(
+        cause instanceof ApiError
+          ? (session.snapshot.error ?? cause.message)
+          : cause instanceof Error
+            ? cause.message
+            : "Không thể đăng nhập bằng Google. Hãy thử lại.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <Page>
       <Text style={styles.title}>{destination.label}</Text>
@@ -333,12 +429,6 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
               </View>
             )}
 
-            {screen === "login" && (
-              <Text style={styles.small}>
-                Đăng nhập bằng Google và Apple đang chờ cấu hình OIDC cho ứng dụng.
-              </Text>
-            )}
-
             {screen === "register" && (
               <View style={{ gap: 6 }}>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.inkSecondary }}>
@@ -425,6 +515,97 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                 }}
               />
             </View>
+            {screen === "login" && (
+              <View style={{ gap: 10, marginTop: 4 }}>
+                <Text style={[styles.small, { textAlign: "center" }]}>hoặc tiếp tục với</Text>
+                <Button
+                  testID="mobile-google-signin"
+                  label="Đăng nhập bằng Google"
+                  icon={<Icon name="logoGoogle" size={20} color="#4285F4" />}
+                  variant="outline"
+                  size="lg"
+                  disabled={busy}
+                  onPress={() => void handleGoogleLogin()}
+                />
+
+                {/* Quick Test Accounts for Device Testing */}
+                <View
+                  style={{
+                    backgroundColor: tokens.color.surfaceSubtle,
+                    borderRadius: tokens.radius.md,
+                    borderWidth: 1,
+                    borderColor: tokens.color.border,
+                    padding: 12,
+                    gap: 8,
+                    marginTop: 6,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Icon name="sparkles" size={14} color={tokens.color.brand} />
+                    <Text style={{ fontSize: 12, fontWeight: "700", color: tokens.color.ink }}>
+                      Đăng nhập nhanh thử nghiệm trên thiết bị:
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    <Pressable
+                      style={{
+                        flex: 1,
+                        backgroundColor: "#FFFFFF",
+                        borderWidth: 1,
+                        borderColor: tokens.color.border,
+                        borderRadius: tokens.radius.sm,
+                        paddingVertical: 8,
+                        paddingHorizontal: 6,
+                        alignItems: "center",
+                        gap: 2,
+                      }}
+                      onPress={() => void handleQuickLogin("student@ailss.internal", "AilssDemo!2026")}
+                    >
+                      <Text style={{ fontSize: 16 }}>🎓</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "600", color: tokens.color.ink }}>
+                        Học viên
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={{
+                        flex: 1,
+                        backgroundColor: "#FFFFFF",
+                        borderWidth: 1,
+                        borderColor: tokens.color.border,
+                        borderRadius: tokens.radius.sm,
+                        paddingVertical: 8,
+                        paddingHorizontal: 6,
+                        alignItems: "center",
+                        gap: 2,
+                      }}
+                      onPress={() => void handleQuickLogin("lecturer@ailss.internal", "AilssDemo!2026")}
+                    >
+                      <Text style={{ fontSize: 16 }}>👨‍🏫</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "600", color: tokens.color.ink }}>
+                        Giảng viên
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={{
+                        flex: 1,
+                        backgroundColor: "#FFFFFF",
+                        borderWidth: 1,
+                        borderColor: tokens.color.border,
+                        borderRadius: tokens.radius.sm,
+                        paddingVertical: 8,
+                        paddingHorizontal: 6,
+                        alignItems: "center",
+                        gap: 2,
+                      }}
+                      onPress={() => void handleQuickLogin("admin@ailss.internal", "AilssAdmin!2026")}
+                    >
+                      <Text style={{ fontSize: 16 }}>🛡️</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "600", color: tokens.color.ink }}>Admin</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Security badge */}

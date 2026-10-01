@@ -1,11 +1,19 @@
 import { useEffect, useState, useCallback } from "react";
-import { Text, Pressable, StyleSheet } from "react-native";
+import { Text, Pressable, StyleSheet, View } from "react-native";
 import { router, type Href } from "expo-router";
 import { useSyncExternalStore } from "react";
 import { ApiError } from "../../../src/api";
 import { runtime } from "../../../src/runtime";
 import { lecturerCourse } from "../../../src/teaching";
-import { Page, Button, ScreenHeader, NonVirtualizedList, styles, tokens } from "../../../src/ui";
+import {
+  Page,
+  Button,
+  ScreenHeader,
+  NonVirtualizedList,
+  BottomNavBar,
+  styles,
+  tokens,
+} from "../../../src/ui";
 
 export default function OwnedCoursesList() {
   const session = runtime!;
@@ -58,43 +66,50 @@ export default function OwnedCoursesList() {
   );
 
   return (
-    <Page>
-      <ScreenHeader
-        title="Khóa giảng dạy"
-        subtitle={`${courses?.length ?? 0} khóa học`}
-        onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching"))}
-        rightElement={
-          <Button
-            label="+ Tạo mới"
-            size="sm"
-            onPress={() => router.push("/teaching/courses/create" as Href)}
-          />
-        }
-      />
-
-      {!error && courses === null && (
-        <Text accessibilityRole="alert" style={styles.text}>
-          Đang tải…
-        </Text>
-      )}
-      {courses && courses.length === 0 && <Text style={styles.text}>Bạn chưa có khóa học nào.</Text>}
-      {courses && courses.length > 0 && (
-        <NonVirtualizedList
-          data={courses}
-          keyExtractor={(item) => item.courseId}
-          renderItem={renderCourse}
-          contentContainerStyle={{ gap: 12 }}
+    <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
+      <Page>
+        <ScreenHeader
+          title="Khóa giảng dạy"
+          subtitle={`${courses?.length ?? 0} khóa học`}
+          onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching"))}
+          rightElement={
+            <Button
+              label="+ Tạo mới"
+              size="sm"
+              onPress={() => router.push("/teaching/courses/create" as Href)}
+            />
+          }
         />
-      )}
 
-      {error && (
-        <Text accessibilityRole="alert" style={styles.error}>
-          {error}
-        </Text>
-      )}
-      {error && <Button label="Thử lại" onPress={handleRetry} />}
-      <Button label="Quay lại" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />
-    </Page>
+        {!error && courses === null && (
+          <Text accessibilityRole="alert" style={styles.text}>
+            Đang tải…
+          </Text>
+        )}
+        {courses && courses.length === 0 && <Text style={styles.text}>Bạn chưa có khóa học nào.</Text>}
+        {courses && courses.length > 0 && (
+          <NonVirtualizedList
+            data={courses}
+            keyExtractor={(item) => item.courseId}
+            renderItem={renderCourse}
+            contentContainerStyle={{ gap: 12 }}
+          />
+        )}
+
+        {error && (
+          <Text accessibilityRole="alert" style={styles.error}>
+            {error}
+          </Text>
+        )}
+        {error && <Button label="Thử lại" onPress={handleRetry} />}
+        <Button label="Về trang chủ giảng viên" onPress={() => router.replace("/teaching")} />
+      </Page>
+      <BottomNavBar
+        currentRoute="courses"
+        role={snapshot.user.role}
+        onNavigate={(path) => router.push(path as Href)}
+      />
+    </View>
   );
 }
 

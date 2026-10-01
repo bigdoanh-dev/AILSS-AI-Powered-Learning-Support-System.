@@ -80,6 +80,23 @@ describe("mobile role route scope", () => {
     expect(phase41RouteAvailable("/lecturers/1", undefined)).toBe(true);
   });
 });
+describe("Google sign-in session", () => {
+  it("exchanges a Google ID token for an AILSS session and keeps only refresh credentials", async () => {
+    const { session, api, saved } = harness();
+    await session.socialLogin("google", "google-id-token");
+
+    expect(api.request).toHaveBeenCalledWith("/api/v1/auth/social/google", {
+      method: "POST",
+      body: { idToken: "google-id-token" },
+    });
+    expect(session.snapshot).toMatchObject({
+      state: "AUTHENTICATED",
+      user: { userId: user.userId, role: user.role },
+    });
+    expect(JSON.parse(saved() ?? "null")).toEqual({ sessionId: "s", refreshToken: "r" });
+  });
+});
+
 describe("transport", () => {
   it("explains an exhausted assessment attempt without calling it stale data", async () => {
     const request = vi.fn<Fetcher>().mockResolvedValue(

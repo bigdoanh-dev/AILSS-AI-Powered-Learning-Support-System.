@@ -10,6 +10,7 @@ import {
   ownedClasses,
   classMember,
   classMembers,
+  isNewClassStudent,
   classSession,
   classSessions,
   sessionDetail,
@@ -265,30 +266,46 @@ describe("teaching domain module", () => {
   });
 
   describe("classMember & classMembers", () => {
+    it("marks accounts new for 21 days from registration, regardless of class join date", () => {
+      const now = Date.parse("2026-09-30T00:00:00.000Z");
+      expect(isNewClassStudent("2026-09-09T00:00:00.001Z", now)).toBe(true);
+      expect(isNewClassStudent("2026-09-09T00:00:00.000Z", now)).toBe(false);
+      expect(isNewClassStudent("2026-10-01T00:00:00.000Z", now)).toBe(false);
+    });
     it("decodes valid class member", () => {
       const raw = {
-        userId: "usr-1",
+        membershipId: "member-1",
+        studentId: "usr-1",
         displayName: "Sinh viên A",
-        role: "STUDENT",
+        emailMasked: "s***@school.edu.vn",
+        createdAt: "2026-08-25T00:00:00Z",
         joinedAt: "2026-09-01T00:00:00Z",
+        source: "JOIN_CODE",
+        state: "ACTIVE",
       };
       const res = classMember(raw);
-      expect(res.userId).toBe("usr-1");
+      expect(res.studentId).toBe("usr-1");
       expect(res.displayName).toBe("Sinh viên A");
-      expect(res.role).toBe("STUDENT");
+      expect(res.emailMasked).toBe("s***@school.edu.vn");
     });
 
-    it("defaults role to STUDENT if missing", () => {
-      const raw = {
-        userId: "usr-2",
-        displayName: "Sinh viên B",
-      };
-      const res = classMember(raw);
-      expect(res.role).toBe("STUDENT");
+    it("rejects an incomplete member profile", () => {
+      expect(() => classMember({ studentId: "usr-2" })).toThrow();
     });
 
     it("decodes classMembers with array, data, and items", () => {
-      const members = [{ userId: "u1", displayName: "D1" }];
+      const members = [
+        {
+          membershipId: "m1",
+          studentId: "u1",
+          displayName: "D1",
+          emailMasked: "d***@school.edu.vn",
+          createdAt: "2026-09-01T00:00:00Z",
+          joinedAt: "2026-09-02T00:00:00Z",
+          source: "JOIN_CODE",
+          state: "ACTIVE",
+        },
+      ];
       expect(classMembers(members)).toHaveLength(1);
       expect(classMembers({ data: members })).toHaveLength(1);
       expect(classMembers({ items: members })).toHaveLength(1);

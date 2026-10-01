@@ -1,6 +1,6 @@
 import { attendanceLabel } from "../student/Planning";
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { lecturerError, lecturerRequest, month, range, useLecturer } from "./api";
 import { CatalogCourseSelect } from "./ui";
 import { Field, State } from "./ui";
@@ -33,7 +33,20 @@ type A = {
   source: string;
   presenceState: string;
 };
-type Member = { studentId: string; state: string; source: string; joinedAt: string; membershipId: string };
+type Member = {
+  studentId: string;
+  state: string;
+  source: string;
+  joinedAt: string;
+  membershipId: string;
+  displayName: string;
+  emailMasked: string;
+  createdAt: string;
+};
+export function isNewStudent(createdAt: string, now = Date.now()) {
+  const joined = Date.parse(createdAt);
+  return Number.isFinite(joined) && joined <= now && now - joined < 21 * 24 * 60 * 60 * 1000;
+}
 type Notice = { announcementId: string; title: string; body: string; createdAt: string };
 const arr = <T,>(v?: T[] | { classes?: T[]; sessions?: T[]; items?: T[] }) =>
   !v ? [] : Array.isArray(v) ? v : v.classes || v.sessions || v.items || [];
@@ -331,7 +344,9 @@ export function ClassCreate() {
         maxMembers: Number(f.get("maxMembers")),
       });
       if (r.data?.classId) {
-        nav(`/app/teaching/classes/${r.data.classId}`);
+        nav(`/app/teaching/classes/${r.data.classId}`, {
+          state: { joinCode: (r.data as C & { joinCode?: string }).joinCode },
+        });
       } else {
         nav("/app/teaching/classes");
       }
@@ -385,14 +400,14 @@ export function ClassCreate() {
         <label>
           Loại
           <select name="classKind">
-            <option value="LIVE_COHORT">Lớp theo khóa</option>
+            <option value="INSTITUTIONAL">Lớp trường học / tổ chức (tham gia bằng mã)</option>
+            <option value="LIVE_COHORT">Lớp theo khóa / thanh toán</option>
             <option value="PRIVATE">Lớp riêng</option>
-            <option value="INSTITUTIONAL">Lớp doanh nghiệp (INSTITUTIONAL)</option>
           </select>
         </label>
         <CatalogCourseSelect name="linkedCourseId" label="Liên kết khóa học" />
         <p className="subtext" style={{ marginTop: -8, marginBottom: 8 }}>
-          Catalog khóa học đã xuất bản. Quyền sử dụng được kiểm tra khi gửi.
+          Tùy chọn. Có thể tạo lớp độc lập với khóa học; nếu liên kết, chọn khóa học đã xuất bản.
         </p>
         <Field
           label="Số học viên tối đa"
@@ -415,10 +430,13 @@ export function ClassCreate() {
   );
 }
 export function ClassDetail() {
+  const location = useLocation();
   const { classId = "" } = useParams(),
     q = useLecturer<C>(`/classes/${classId}`),
     [msg, setMsg] = useState(""),
-    [joinCode, setJoinCode] = useState("");
+    [joinCode, setJoinCode] = useState(
+      () => (location.state as { joinCode?: string } | null)?.joinCode ?? "",
+    );
   async function reset() {
     try {
       if (!window.confirm("Đổi mã tham gia sẽ làm mã cũ mất hiệu lực. Tiếp tục?")) return;
@@ -540,7 +558,44 @@ export function ClassDetail() {
 export function ClassRoster() {
   const { classId = "" } = useParams(),
     q = useLecturer<Member[] | { members: Member[] }>(`/classes/${classId}/members`),
-    [search, setSearch] = useState("");
+    detail = useLecturer<C>(`/classes/${classId}`),
+    [search, setSearch] = useState(""),
+    [message, setMessage] = useState(""),
+    [busyId, setBusyId] = useState(""),
+    [warningStudentId, setWarningStudentId] = useState(""),
+    [warningReason, setWarningReason] = useState("");
+  async function warn(member: Member) {
+    if (warningReason.trim().length < 5 || warningReason.trim().length > 500) {
+      setMessage("Nội dung cảnh báo cần từ 5 đến 500 ký tự.");
+      return;
+    }
+    setBusyId(member.studentId);
+    try {
+      await lecturerRequest(`/classes/${classId}/members/${member.studentId}/warnings`, "POST", {
+        reason: warningReason.trim(),
+      });
+      setMessage(`Đã gửi cảnh báo đến ${member.displayName}.`);
+      setWarningStudentId("");
+      setWarningReason("");
+    } catch (error) {
+      setMessage(lecturerError(error));
+    } finally {
+      setBusyId("");
+    }
+  }
+  async function remove(member: Member) {
+    if (!window.confirm(`Xóa ${member.displayName} khỏi lớp? Học viên sẽ mất quyền truy cập lớp.`)) return;
+    setBusyId(member.studentId);
+    try {
+      await lecturerRequest(`/classes/${classId}/members/${member.studentId}`, "DELETE", {});
+      setMessage(`Đã xóa ${member.displayName} khỏi lớp.`);
+      q.retry();
+    } catch (error) {
+      setMessage(lecturerError(error));
+    } finally {
+      setBusyId("");
+    }
+  }
   return (
     <>
       <Breadcrumbs
@@ -555,14 +610,14 @@ export function ClassRoster() {
         <div>
           <p className="eyebrow">QUẢN TRỊ THÀNH VIÊN</p>
           <h1>Danh sách học viên trong lớp.</h1>
-          <p className="lead">
-            Theo dõi danh sách học viên ghi danh, nguồn tuyển sinh và thời điểm tham gia.
-          </p>
+          <p className="lead">Theo dõi hồ sơ học viên, ngày đăng ký tài khoản và thời điểm tham gia lớp.</p>
         </div>
         <Link className="button button-subtle" to={`/app/teaching/classes/${classId}`}>
           ← Quay lại lớp
         </Link>
       </div>
+      <p role="status">{message}</p>
+      <p className="subtext">Màu xanh: tài khoản đăng ký trong 21 ngày. Màu trung tính: học viên cũ.</p>
 
       <State q={q}>
         {(v) => {
@@ -570,6 +625,8 @@ export function ClassRoster() {
           const items = rawItems.filter(
             (m) =>
               m.studentId.toLowerCase().includes(search.toLowerCase()) ||
+              m.displayName.toLowerCase().includes(search.toLowerCase()) ||
+              m.emailMasked.toLowerCase().includes(search.toLowerCase()) ||
               m.source.toLowerCase().includes(search.toLowerCase()) ||
               m.state.toLowerCase().includes(search.toLowerCase()),
           );
@@ -583,7 +640,7 @@ export function ClassRoster() {
                 <div className="table-search-box">
                   <input
                     type="search"
-                    placeholder="Tìm theo mã học viên, trạng thái..."
+                    placeholder="Tìm theo tên, email, mã học viên..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     aria-label="Tìm kiếm học viên"
@@ -601,19 +658,32 @@ export function ClassRoster() {
                     <thead>
                       <tr>
                         <th>STT</th>
-                        <th>Mã Học Viên</th>
+                        <th>Học viên</th>
+                        <th>Ngày đăng ký</th>
                         <th>Nguồn Tham Gia</th>
                         <th>Ngày Tham Gia</th>
                         <th>Trạng Thái</th>
+                        <th>Quản lý</th>
                       </tr>
                     </thead>
                     <tbody>
                       {items.map((m, idx) => (
-                        <tr key={m.membershipId}>
+                        <tr
+                          key={m.membershipId}
+                          style={{ background: isNewStudent(m.createdAt) ? "#ECFDF5" : "#F8FAFC" }}
+                        >
                           <td>{idx + 1}</td>
                           <td>
+                            <strong>{m.displayName}</strong>{" "}
+                            <span style={{ color: isNewStudent(m.createdAt) ? "#047857" : "#475569" }}>
+                              {isNewStudent(m.createdAt) ? "Mới" : "Cũ"}
+                            </span>
+                            <br />
+                            <small>{m.emailMasked}</small>
+                            <br />
                             <code className="code-badge">{m.studentId}</code>
                           </td>
+                          <td>{new Date(m.createdAt).toLocaleDateString("vi-VN")}</td>
                           <td>
                             <strong>
                               {m.source === "OFFERING"
@@ -631,11 +701,55 @@ export function ClassRoster() {
                           <td>
                             <StateChip state={m.state} />
                           </td>
+                          <td>
+                            <button
+                              type="button"
+                              disabled={!!busyId}
+                              onClick={() => {
+                                setWarningStudentId(m.studentId);
+                                setWarningReason("");
+                              }}
+                            >
+                              Cảnh báo
+                            </button>{" "}
+                            {warningStudentId === m.studentId && (
+                              <div style={{ display: "grid", gap: 6, minWidth: 220, margin: "8px 0" }}>
+                                <label>
+                                  Nội dung gửi cho {m.displayName}
+                                  <textarea
+                                    value={warningReason}
+                                    onChange={(event) => setWarningReason(event.target.value)}
+                                    minLength={5}
+                                    maxLength={500}
+                                    rows={3}
+                                  />
+                                </label>
+                                <button type="button" disabled={!!busyId} onClick={() => void warn(m)}>
+                                  Gửi cảnh báo
+                                </button>
+                                <button type="button" onClick={() => setWarningStudentId("")}>
+                                  Hủy
+                                </button>
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              disabled={
+                                !!busyId ||
+                                detail.data?.scheduleState === "PUBLISHED" ||
+                                m.source !== "JOIN_CODE"
+                              }
+                              title="Chỉ xóa học viên tham gia bằng mã khi lịch lớp chưa xuất bản"
+                              onClick={() => void remove(m)}
+                            >
+                              Xóa khỏi lớp
+                            </button>
+                          </td>
                         </tr>
                       ))}
                       {items.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="table-empty-row">
+                          <td colSpan={7} className="table-empty-row">
                             Không tìm thấy học viên nào khớp với "{search}".
                           </td>
                         </tr>

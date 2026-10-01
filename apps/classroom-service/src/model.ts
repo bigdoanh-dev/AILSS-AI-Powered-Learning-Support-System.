@@ -38,6 +38,7 @@ const joinSchema = z
   })
   .strict();
 const announcementSchema = z.object({ title: text(3, 160), body: text(1, 5000) }).strict();
+const warningSchema = z.object({ reason: text(5, 500) }).strict();
 const manualAttendanceSchema = z
   .object({
     attendanceStatus: z.enum(["PRESENT", "ABSENT", "EXCUSED"]),
@@ -56,6 +57,8 @@ export const parseClassCreate = (v: unknown) => createSchema.parse(v);
 export const parseClassPatch = (v: unknown) => patchSchema.parse(v);
 export const parseClassJoin = (v: unknown) => joinSchema.parse(v);
 export const parseAnnouncement = (v: unknown) => announcementSchema.parse(v);
+export const parseStudentWarning = (v: unknown) => warningSchema.parse(v);
+export type StudentWarningRequest = z.infer<typeof warningSchema>;
 export const parseManualAttendance = (v: unknown) => manualAttendanceSchema.parse(v);
 
 export interface ClassroomClass {
@@ -77,7 +80,7 @@ export interface Membership {
   membershipId: string;
   classId: string;
   studentId: string;
-  state: "PENDING" | "ACTIVE";
+  state: "PENDING" | "ACTIVE" | "REMOVED";
   source: "JOIN_CODE" | "PURCHASE";
   offeringId?: string;
   enrollmentId?: string;

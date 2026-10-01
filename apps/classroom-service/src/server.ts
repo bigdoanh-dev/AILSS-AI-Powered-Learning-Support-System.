@@ -83,6 +83,8 @@ await startService(manifest, {
         studentList: actor("classroom.class.student-list"),
         ownedList: actor("classroom.class.owned-list"),
         roster: actor("classroom.class.roster"),
+        warnStudent: actor("classroom.class.member.warn"),
+        removeStudent: actor("classroom.class.member.remove"),
         reset: actor("classroom.class.join-code.reset"),
         announce: actor("classroom.announcement.create"),
         announcements: actor("classroom.announcement.list"),

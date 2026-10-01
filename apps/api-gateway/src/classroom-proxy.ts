@@ -23,6 +23,8 @@ type ClassroomHandler =
   | "studentList"
   | "ownedList"
   | "roster"
+  | "warnStudent"
+  | "removeStudent"
   | "reset"
   | "announce"
   | "announcements"
@@ -50,7 +52,7 @@ export async function classroomProxyFactory(config: AppConfig): Promise<Classroo
   ]);
   const handler =
     (
-      method: "GET" | "POST" | "PATCH" | "PUT",
+      method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
       purpose: string,
       path: (request: Request) => string,
       query = false,
@@ -135,6 +137,18 @@ export async function classroomProxyFactory(config: AppConfig): Promise<Classroo
       "classroom.class.roster",
       (request) => `/api/v1/classes/${id(request)}/members`,
       true,
+    ),
+    warnStudent: handler(
+      "POST",
+      "classroom.class.member.warn",
+      (request) =>
+        `/api/v1/classes/${id(request)}/members/${encodeURIComponent(String(request.params.studentId))}/warnings`,
+    ),
+    removeStudent: handler(
+      "DELETE",
+      "classroom.class.member.remove",
+      (request) =>
+        `/api/v1/classes/${id(request)}/members/${encodeURIComponent(String(request.params.studentId))}`,
     ),
     reset: handler(
       "POST",
