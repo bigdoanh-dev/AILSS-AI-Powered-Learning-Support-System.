@@ -6,6 +6,7 @@
 [![Cassandra](https://img.shields.io/badge/Cassandra-5.0-1287b1?logo=apachecassandra&logoColor=white)](https://cassandra.apache.org/)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-4.1-ff6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![CI dev](https://github.com/bigdoanh-dev/AILSS-AI-Powered-Learning-Support-System./actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/bigdoanh-dev/AILSS-AI-Powered-Learning-Support-System./actions/workflows/ci.yml?query=branch%3Adev)
 
 AILSS là nền tảng học tập đa nền tảng theo kiến trúc microservices, contract-first và event-driven. Hệ thống quản lý danh tính, khóa học, lớp học, tiến độ, đánh giá, tương tác, thông báo, thương mại và các quy trình AI có con người kiểm soát.
 
@@ -42,6 +43,8 @@ AILSS là nền tảng học tập đa nền tảng theo kiến trúc microservi
 - [Cài đặt và chạy dự án](#cài-đặt-và-chạy-dự-án)
   - [Yêu cầu môi trường](#yêu-cầu-môi-trường)
   - [Chạy nhanh](#chạy-nhanh)
+  - [Cấu hình tích hợp local](#cấu-hình-tích-hợp-local)
+  - [Chạy mobile và điện thoại thật](#chạy-mobile-và-điện-thoại-thật)
   - [Development profiles](#development-profiles)
   - [Kiểm tra chất lượng](#kiểm-tra-chất-lượng)
 - [Cấu trúc repository](#cấu-trúc-repository)
@@ -88,24 +91,30 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 
 - Trang giới thiệu, khám phá khóa học, AI learning, trợ giúp, liên hệ và pháp lý.
 - Đăng ký tạo tài khoản `STUDENT / ACTIVE`; không có role picker để tự tạo Lecturer.
-- Đăng nhập, refresh, logout, hồ sơ và đổi mật khẩu qua cookie phiên HttpOnly cùng origin.
+- Đăng nhập, refresh, logout, hồ sơ và đổi mật khẩu; Web dùng cookie phiên HttpOnly cùng origin, mobile dùng bearer token và SecureStore.
+- Google login trên Web/mobile dùng cấu hình Gateway và Identity; native cần client theo nền tảng và bản build có Google Sign-In.
+- Quên mật khẩu qua email SMTP: nhập email, xác nhận OTP, đặt mật khẩu mới; OTP dùng một lần và hết hạn sau 15 phút.
+- Dữ liệu cá nhân lấy từ backend theo tài khoản hiện tại. Tài khoản mới hiển thị trạng thái trống khi chưa có dữ liệu; không tự gán điểm, chuỗi học, khóa học hay doanh thu mẫu.
 - External authentication/federation có runtime repository, tenant policy và các migration riêng; rollout vẫn phụ thuộc cấu hình và acceptance theo môi trường.
 - Student muốn trở thành Lecturer phải nộp đơn, được Admin phê duyệt, đăng nhập lại, rồi được Admin xác minh riêng.
 
 ### 2. Student Learning
 
-- Khóa học miễn phí và luồng mua mô phỏng cho Offering trả phí.
+- Khám phá khóa học, đăng ký miễn phí hoặc tạo Order cho Offering trả phí bằng VietQR/SePay và chuyển khoản ngân hàng theo cấu hình backend.
 - Entitlement bất đồng bộ, bài học, hoàn thành bài và tiến độ.
 - Tham gia Class, xem lịch, session, announcement và attendance của chính mình.
 - Quiz/Attempt có thao tác bắt đầu và nộp bài rõ ràng; đáp án đúng không lộ trước policy.
+- Danh sách bài kiểm tra trên mobile chỉ lấy Quiz đã publish của khóa học/lớp mà học viên có quyền truy cập.
 - Comment, reply một cấp, review, report và notification với cursor opaque.
 - Study Plan, mastery projection và AI Tutor đã có đường runtime từ assessment evidence; các nguồn evidence khác và full-stack acceptance chưa hoàn tất.
 
 ### 3. Lecturer Teaching
 
 - Soạn Course/Lesson và gửi Course cho Admin duyệt; Lecturer không tự publish Course.
+- Tự nhập danh mục đào tạo, mô tả khóa học và tải ảnh bìa; dữ liệu được lưu phía backend và dùng chung cho Web/mobile.
 - Tạo và publish Offering cho Course phù hợp.
 - Quản lý Class thuộc sở hữu, roster, lịch, session, announcement và attendance thủ công.
+- Tạo lớp trường học/tổ chức, chia sẻ mã tham gia, tải ảnh/ảnh bìa, xem hồ sơ học viên, cảnh báo và xóa thành viên theo điều kiện backend; xuất roster khóa học ra CSV.
 - Tạo Quiz với bốn loại câu hỏi và xem kết quả theo contract.
 - Upload tài liệu, chạy extraction/generation, review AI draft và import thành Assessment Quiz `DRAFT`. AI không tự approve hoặc publish.
 
@@ -116,6 +125,7 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 - Publish/archive Course bằng UUID trực tiếp.
 - Xử lý report và moderation theo version/idempotency.
 - Dashboard thống kê, doanh thu, audit log và export; observability stack có Prometheus, Alertmanager và Grafana.
+- Hướng dẫn quản trị local hoạt động với `AI_ADMIN_SUPPORT_MODE=local-guide`, không cần API key AI. Chế độ này hướng dẫn thao tác và không tự thực hiện hành động quản trị.
 - Không có vai trò `MODERATOR` riêng và chưa có Admin Course review queue.
 
 ### 5. Course và Offering
@@ -123,7 +133,9 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 - Course và Offering là hai aggregate riêng; một Course có thể có nhiều Offering.
 - Offering hỗ trợ `SELF_PACED` và `LIVE_COHORT` với lifecycle `DRAFT → PUBLISHED → CLOSED`.
 - Course publication thuộc quyền Admin; Offering authoring/publishing tuân theo owner và trạng thái Course.
-- Free enrollment giữ legacy default-Offering behavior; paid access dùng Order và payment simulation.
+- Free enrollment giữ legacy default-Offering behavior; paid access dùng giá và Order do backend trả về.
+- Checkout Web/mobile chỉ mô phỏng khi backend trả `paymentMode=simulation`. Luồng SePay kiểm tra trạng thái Order và cấp quyền theo giao dịch được backend xác minh qua webhook; nút kiểm tra thanh toán không tự đánh dấu đã trả tiền.
+- MoMo, thẻ quốc tế và VNPAY chưa có tích hợp thanh toán thực tế trong checkout hiện tại.
 - Entitlement hội tụ qua at-least-once event delivery, idempotency và reconciliation.
 - Finance runtime có projection/backfill, durable refund và recovery cho SePay; thanh toán thương mại production vẫn fail-closed.
 
@@ -132,11 +144,15 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 - Class hỗ trợ `LIVE_COHORT`, `PRIVATE` và `INSTITUTIONAL`.
 - Student tham gia bằng canonical join code và chỉ xem tài nguyên được phép.
 - Lecturer quản lý roster, schedule, session, meeting rule và announcement của Class thuộc sở hữu.
+- Roster có tên, email che bớt và ngày đăng ký tài khoản. Nhãn/màu học viên mới áp dụng trong 21 ngày từ ngày đăng ký tài khoản, không tính từ ngày vào lớp.
+- Cảnh báo và xóa thành viên tuân theo quyền sở hữu cùng ràng buộc lịch/quyền học. Chỉ xóa lớp có lịch còn `DRAFT`, không liên kết khóa học, không có thành viên đang hoạt động và không có session.
+- Ảnh lớp và ảnh bìa được lưu để hiển thị trên cả Web và mobile.
 - Attendance online được bảo vệ bởi presence rule; attendance offline/manual dùng version và idempotency.
 
 ### 7. Assessment và Quiz
 
 - Quiz có `DRAFT`, version, bốn loại câu hỏi và thao tác publish riêng.
+- Hạn đóng bài (`closesAt`) được lưu tại backend; không có luồng bài luận/dự án độc lập ngoài contract Quiz hiện tại.
 - Xem Quiz detail không tự tạo Attempt; Student phải gọi start/resume rõ ràng.
 - Attempt submit idempotent và chấm điểm phía server.
 - Correct answer không xuất hiện trong Student projection trước policy cho phép.
@@ -147,6 +163,7 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 - Review yêu cầu eligibility và hỗ trợ create/update/delete.
 - Report queue và moderation dùng current-password reauthentication, `If-Match` và `Idempotency-Key`.
 - Notification phân trang theo tháng, cursor và locator opaque; không có fake global unread total.
+- Web/mobile giữ metadata và cursor phân trang của backend cho review, comment, hàng đợi quản trị và AI job.
 
 ### 9. Document và AI Quiz Generation
 
@@ -157,6 +174,7 @@ Upload intent → Direct private upload → Confirm → Extraction
 ```
 
 - Binary tài liệu không lưu trong Cassandra.
+- Mobile chọn PDF, DOCX hoặc TXT tối đa 25 MiB, tính SHA-256, tải lên bằng private upload intent và theo dõi extraction/generation trước khi review draft.
 - Document Worker kiểm tra checksum, kích thước, MIME/magic bytes và giới hạn giải nén/parser.
 - AI output được validate theo schema trước khi tạo draft.
 - `QUIZ_GENERATION` không dùng trạng thái `COMPLETED`; AI không tự approve hoặc publish.
@@ -314,10 +332,10 @@ Các luồng tham chiếu chi tiết cho registration/outbox, SePay/entitlement,
 ### Chạy nhanh
 
 ```bash
-corepack enable
-corepack prepare pnpm@11.19.0 --activate
+npm install --global pnpm@11.19.0
 pnpm install --frozen-lockfile
 test -f .env || cp .env.example .env
+test -f .env.local || touch .env.local
 pnpm keys:dev
 pnpm env:dev-async
 pnpm dev:web
@@ -326,25 +344,61 @@ pnpm dev:web
 > **Lưu ý cấu hình môi trường (`.env`):**
 > Chỉ sao chép file mẫu khi `.env` chưa tồn tại (`test -f .env || cp .env.example .env`).
 >
-> - **Nguyên nhân mất cấu hình Google/SePay:** `.env` đã bị ghi đè bởi `.env.example`, trong đó các biến Google và SePay để trống.
-> - **Lệnh gây ra tình trạng này là:** `cp .env.example .env` (khi chạy lại trên môi trường đã cấu hình trước đó).
+> - Chạy `cp .env.example .env` khi `.env` đã tồn tại sẽ thay cấu hình đã điền bằng giá trị mẫu, bao gồm các biến Google/SePay để trống.
 > - **Khắc phục:** Cấu hình riêng của máy nên đặt trong `.env.local`; file này được nạp sau `.env` và không bị ghi đè khi sao chép mẫu hoặc kéo code mới.
 
 Mở địa chỉ Vite hiển thị trong terminal, mặc định `http://127.0.0.1:5173`.
 
-`env:dev-async` khởi tạo Cassandra roles/migrations, RabbitMQ topology, MinIO, Gateway, business services và workers. Hướng dẫn chi tiết cho Web nằm tại [WEB_DEVELOPMENT_GUIDE.md](./WEB_DEVELOPMENT_GUIDE.md).
+`env:dev-async` khởi tạo Cassandra roles/migrations, RabbitMQ topology, MinIO, Gateway, business services, workers và observability. Hướng dẫn chi tiết cho Web nằm tại [WEB_DEVELOPMENT_GUIDE.md](./WEB_DEVELOPMENT_GUIDE.md).
 
-Cấu hình hướng dẫn quản trị local, Prometheus/Grafana và các bước chuyển lên VPS nằm tại [LOCAL_TO_VPS_CONFIGURATION.md](./LOCAL_TO_VPS_CONFIGURATION.md).
+### Cấu hình tích hợp local
 
-Để chạy mobile sau khi cài dependency:
+Giữ Google, SMTP và SePay trong `.env.local` ở **gốc repo**; các lệnh `pnpm env:*` nạp file này sau `.env` qua Docker Compose. Sau khi sửa biến môi trường, chạy lại `pnpm env:dev-async` để cập nhật container; chỉ `docker compose restart` không nạp giá trị mới.
 
-```bash
-pnpm --filter @ailss/mobile start
-# hoặc: pnpm --filter @ailss/mobile android
-# hoặc: pnpm --filter @ailss/mobile ios
+- **Google:** Gateway dùng `GOOGLE_WEB_CLIENT_ID`; Identity dùng `GOOGLE_CLIENT_IDS`. Đăng ký đúng origin Web đang mở trong Google Cloud, kể cả khác biệt giữa `localhost` và `127.0.0.1`. Client Secret không được đưa vào frontend.
+- **SMTP:** điền `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` và `SMTP_FROM` theo nhà cung cấp; Gmail dùng mật khẩu ứng dụng cho `SMTP_PASS`. Thư OTP dùng nội dung văn bản; kiểm tra đúng hộp thư nhận và thư rác khi thử luồng.
+- **SePay:** điền `SEPAY_ACCOUNT_NUMBER`, `SEPAY_ACCOUNT_NAME`, `SEPAY_BANK`, `SEPAY_WEBHOOK_API_KEY` và đặt `PAYMENT_MODE=sepay` để dùng giao dịch thật. API key cấu hình trong SePay phải khớp backend. URL nhận `/api/v1/payments/sepay/webhook` cần HTTPS public để SePay gọi được; local cần tunnel đang hoạt động. Không dùng `127.0.0.1` làm URL nhận webhook trên SePay.
+- **Quản trị và giám sát local:** cấu hình như dưới đây; Prometheus/Grafana giao tiếp giữa container qua địa chỉ nội bộ, còn nút mở trên Web dùng URL public của máy phát triển.
+
+```dotenv
+AI_ADMIN_SUPPORT_MODE=local-guide
+PROMETHEUS_PUBLIC_URL=http://127.0.0.1:9090
+GRAFANA_PUBLIC_URL=http://127.0.0.1:3001
 ```
 
-Để bootstrap sạch và xóa toàn bộ dữ liệu local hiện tại:
+Tên biến cấu hình nằm trong [.env.example](./.env.example); hướng dẫn Google origin, giám sát và chuyển các tích hợp lên VPS nằm tại [LOCAL_TO_VPS_CONFIGURATION.md](./LOCAL_TO_VPS_CONFIGURATION.md). Các trợ lý học viên/giảng viên và tạo đề vẫn cần cấu hình nhà cung cấp AI hợp lệ. Alertmanager local không gửi cảnh báo ra ngoài; kênh nhận thật cấu hình khi triển khai VPS.
+
+### Chạy mobile và điện thoại thật
+
+Tạo cấu hình riêng cho Expo mà không ghi đè file đã điền. Đặt địa chỉ API trong file theo bảng bên dưới trước khi khởi động app:
+
+```bash
+test -f apps/mobile/.env.local || cp apps/mobile/.env.example apps/mobile/.env.local
+pnpm --filter @ailss/mobile start
+```
+
+| Nơi chạy app     | `EXPO_PUBLIC_AILSS_API_BASE_URL`     |
+| ---------------- | ------------------------------------ |
+| iOS Simulator    | `http://127.0.0.1:8080`              |
+| Android Emulator | `http://10.0.2.2:8080`               |
+| Điện thoại thật  | `http://<IP-LAN-của-máy-tính>:18080` |
+
+Với điện thoại thật, đặt `AILSS_MOBILE_GATEWAY_BIND_ADDRESS=<IP-LAN-của-máy-tính>` trong `.env.local` gốc rồi chạy lại `pnpm env:dev-async`. Điện thoại cần truy cập được `http://<IP-LAN-của-máy-tính>:18080/health/ready` và có đường mạng tới máy tính. `127.0.0.1` trên điện thoại trỏ vào điện thoại. URL object storage cho upload cũng cần truy cập được từ thiết bị; cấu hình chi tiết trong [MOBILE_DEVELOPMENT_GUIDE.md](./MOBILE_DEVELOPMENT_GUIDE.md).
+
+Expo Go không chứa native module `RNGoogleSignin` hoặc SQLCipher. Để kiểm tra Google Sign-In native và lưu trữ offline mã hóa, build/cài development client với công cụ iOS/Android tương ứng:
+
+```bash
+pnpm --filter @ailss/mobile ios
+# hoặc trên Android:
+pnpm --filter @ailss/mobile android
+
+# Những lần chạy Metro tiếp theo cho development client:
+pnpm --filter @ailss/mobile start:development
+```
+
+Google native cần client iOS/Android, URL scheme hoặc SHA-1 đúng khóa ký theo hướng dẫn mobile. Sau khi đổi native module/plugin hoặc cấu hình Google native, cần build/cài lại app; reload Metro không bổ sung module vào binary đã cài.
+
+**Chỉ khi muốn xóa toàn bộ dữ liệu local và bootstrap lại**, dùng:
 
 ```bash
 AILSS_CONFIRM_RESET=YES pnpm env:reset
@@ -357,8 +411,8 @@ Lệnh reset xóa Cassandra/RabbitMQ/MinIO volumes local. Không chạy khi cầ
 
 | Lệnh                 | Mục đích                                                                                 |
 | -------------------- | ---------------------------------------------------------------------------------------- |
-| `pnpm env:dev-core`  | Cassandra và các service đồng bộ cốt lõi                                                 |
-| `pnpm env:dev-async` | Môi trường đầy đủ, gồm RabbitMQ/MinIO/workers                                            |
+| `pnpm env:dev-core`  | Cassandra, Gateway, Identity và observability                                            |
+| `pnpm env:dev-async` | Môi trường đầy đủ, gồm business services, RabbitMQ/MinIO/workers và observability        |
 | `pnpm env:research`  | Môi trường thí nghiệm resilience                                                         |
 | `pnpm env:demo`      | Demo HTTPS local                                                                         |
 | `pnpm env:down`      | Dừng môi trường và giữ volume                                                            |
@@ -368,8 +422,9 @@ Lệnh reset xóa Cassandra/RabbitMQ/MinIO volumes local. Không chạy khi cầ
 Media là overlay tùy chọn. Sau khi khai báo các biến bắt buộc trong `.env.media`, có thể bật cùng profile bất đồng bộ:
 
 ```bash
-docker compose --env-file .env --env-file .env.media \
-  -f docker-compose.yml -f docker-compose.async.yml -f docker-compose.media.yml \
+docker compose --env-file .env --env-file .env.local --env-file .env.media \
+  -f docker-compose.yml -f docker-compose.async.yml \
+  -f docker-compose.observability.yml -f docker-compose.media.yml \
   --profile dev-async up -d api-gateway learning-service media-delivery media-worker
 ```
 
@@ -377,11 +432,15 @@ docker compose --env-file .env --env-file .env.media \
 
 ```bash
 pnpm typecheck
-pnpm lint
+pnpm lint:no-regression
+pnpm audit:source-tracking
 pnpm test
 pnpm validate:contracts
+pnpm validate:migration-bootstrap
 pnpm validate:compose
+pnpm validate:production-config
 pnpm scan:secrets
+pnpm build
 pnpm format:check
 
 pnpm typecheck:web
@@ -390,9 +449,23 @@ pnpm test:web
 pnpm build:web
 
 pnpm --filter @ailss/mobile typecheck
+pnpm --filter @ailss/mobile lint:phase41
 pnpm --filter @ailss/mobile test
 pnpm --filter @ailss/mobile validate:config
+pnpm --filter @ailss/mobile build:development
 ```
+
+`pnpm test:all` chạy các bộ test backend, Web và mobile. CI trong [ci.yml](./.github/workflows/ci.yml) gồm `static-gates`, `web-gates`, `mobile-gates` và `dev-core-smoke`. Lint backend dùng baseline `lint:no-regression` để chặn lỗi mới; `validate:production-config` kiểm tra cấu hình mẫu, không xác nhận đã triển khai production. `build:development` của mobile là export bundle iOS/Android, không tạo bản native có thể cài.
+
+Kiểm tra kết nối dịch vụ sau khi môi trường tương ứng đã khởi động:
+
+```bash
+AILSS_PROFILE=dev-core pnpm smoke
+# Hoặc khi đã khởi động dev-async:
+AILSS_PROFILE=dev-async pnpm smoke
+```
+
+`pnpm verify:clean-cassandra-bootstrap` kiểm tra migration bằng container/volume Cassandra tạm riêng, tự dọn sau khi chạy và không reset volume phát triển hiện có.
 
 Acceptance thực phải chạy khi profile `dev-async` đã sẵn sàng. Ví dụ:
 
