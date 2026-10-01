@@ -3,6 +3,7 @@ import { ApiError, record, string } from "./api";
 export interface Course {
   courseId: string;
   lecturerId?: string;
+  coverDataUrl?: string;
   title: string;
   state?: string;
   priceType?: string;
@@ -21,6 +22,7 @@ export function course(value: unknown): Course {
         : typeof rec.ownerLecturerId === "string"
           ? rec.ownerLecturerId
           : undefined,
+    coverDataUrl: typeof rec.coverDataUrl === "string" ? rec.coverDataUrl : undefined,
     title: string(rec.title),
     state: typeof rec.state === "string" ? rec.state : undefined,
     priceType: typeof rec.priceType === "string" ? rec.priceType : undefined,
@@ -218,6 +220,21 @@ export type EnrolledCourse = Course;
 
 export function enrolledCourses(value: unknown): EnrolledCourse[] {
   return courses(value);
+}
+
+/** Student syllabus uses public course metadata and entitlement-protected learning APIs. */
+export async function loadCourseSyllabus(request: (path: string) => Promise<unknown>, courseId: string) {
+  const path = `/api/v1/courses/${encodeURIComponent(courseId)}`;
+  const [metadata, lessons, currentProgress] = await Promise.all([
+    request(path),
+    request(`${path}/lessons`),
+    request(`${path}/progress`),
+  ]);
+  return {
+    course: courseDetail(metadata),
+    lessons: lessonSummaries(lessons),
+    progress: progress(currentProgress),
+  };
 }
 
 export function resumeTarget(

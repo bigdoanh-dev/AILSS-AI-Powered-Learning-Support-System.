@@ -366,6 +366,8 @@ function compareCandidates(left: CatalogCandidate, right: CatalogCandidate): num
 function summaryFrom(candidate: CatalogCandidate, canonical: CanonicalCourse): CourseSummary {
   return {
     courseId: canonical.courseId,
+    description: canonical.description ?? "",
+    coverDataUrl: canonical.coverDataUrl ?? null,
     title: canonical.title,
     slug: canonical.slug,
     categoryId: canonical.categoryId,
@@ -380,6 +382,8 @@ function summaryFrom(candidate: CatalogCandidate, canonical: CanonicalCourse): C
 function detailFromCanonical(canonical: CanonicalCourse): CourseDetail {
   return {
     courseId: canonical.courseId,
+    description: canonical.description ?? "",
+    coverDataUrl: canonical.coverDataUrl ?? null,
     title: canonical.title,
     slug: canonical.slug,
     categoryId: canonical.categoryId,

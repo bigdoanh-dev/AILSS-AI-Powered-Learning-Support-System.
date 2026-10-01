@@ -19,6 +19,7 @@ type ClassroomHandler =
   | "create"
   | "detail"
   | "update"
+  | "deleteClass"
   | "join"
   | "studentList"
   | "ownedList"
@@ -129,6 +130,7 @@ export async function classroomProxyFactory(config: AppConfig): Promise<Classroo
     create: handler("POST", "classroom.class.create", () => "/api/v1/classes"),
     detail: handler("GET", "classroom.class.detail", (request) => `/api/v1/classes/${id(request)}`),
     update: handler("PATCH", "classroom.class.update", (request) => `/api/v1/classes/${id(request)}`),
+    deleteClass: handler("DELETE", "classroom.class.delete", (request) => `/api/v1/classes/${id(request)}`),
     join: handler("POST", "classroom.class.join", () => "/api/v1/classes/join"),
     studentList: handler("GET", "classroom.class.student-list", () => "/api/v1/me/classes", true),
     ownedList: handler("GET", "classroom.class.owned-list", () => "/api/v1/me/owned-classes", true),

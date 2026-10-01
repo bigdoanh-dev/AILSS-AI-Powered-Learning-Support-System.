@@ -371,7 +371,7 @@ describe("teaching domain module", () => {
       expect(CONTRACT_LIMITED.courseDelete).toContain("quản trị viên");
       expect(CONTRACT_LIMITED.offeringDelete).toContain("API không hỗ trợ xóa offering");
       expect(CONTRACT_LIMITED.lessonFileUpload).toContain("thiết bị di động");
-      expect(CONTRACT_LIMITED.courseImageUpload).toContain("thiết bị di động");
+      expect(CONTRACT_LIMITED.courseImageUpload).toContain("đồng bộ giữa các thiết bị");
       expect(CONTRACT_LIMITED.attendanceDelete).toContain("API không hỗ trợ xóa bản ghi điểm danh");
       expect(CONTRACT_LIMITED.onlineManualOverride).toContain("presence");
     });

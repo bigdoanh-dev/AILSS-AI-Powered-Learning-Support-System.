@@ -83,6 +83,61 @@ describe("P7.15A Classroom core", () => {
     expect(noOp).toMatchObject({ noOp: true, data: { version: 2 } });
   });
 
+  it("stores valid class images and closes an empty draft with idempotent deletion", async () => {
+    const owner = randomUUID();
+    const store = new MemoryClassroom();
+    const service = classroom(store, owner);
+    const created = await service.create({
+      actor: actor(owner, "LECTURER"),
+      request: parseClassCreate({ name: "Private Lab", classKind: "PRIVATE" }),
+      key: "create-image",
+      requestId: randomUUID(),
+    });
+    const classId = String(created.data.classId);
+    const image =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y3MHVYAAAAASUVORK5CYII=";
+    expect(() => parseClassPatch({ photoDataUrl: "data:image/png;base64,aGVsbG8=" })).toThrow();
+    await service.update({
+      classId,
+      actor: actor(owner, "LECTURER"),
+      request: parseClassPatch({ photoDataUrl: image, coverDataUrl: image }),
+      key: "images",
+      requestId: randomUUID(),
+    });
+    expect((await store.getClass(classId))?.photoDataUrl).toBe(image);
+    const input = { classId, actor: actor(owner, "LECTURER"), key: "delete-image", requestId: randomUUID() };
+    expect(await service.deleteClass(input)).toMatchObject({ data: { classId, deleted: true } });
+    expect((await store.getClass(classId))?.state).toBe("CLOSED");
+    expect(await service.deleteClass(input)).toMatchObject({ replayed: true });
+  });
+
+  it("refuses to delete a class with active students", async () => {
+    const owner = randomUUID(),
+      student = randomUUID(),
+      store = new MemoryClassroom();
+    const service = classroom(store, owner);
+    const created = await service.create({
+      actor: actor(owner, "LECTURER"),
+      request: parseClassCreate({ name: "Private Lab", classKind: "PRIVATE" }),
+      key: "create-members",
+      requestId: randomUUID(),
+    });
+    await service.join({
+      actor: actor(student, "STUDENT"),
+      request: { code: String(created.data.joinCode) },
+      key: "join-member",
+      requestId: randomUUID(),
+    });
+    await expect(
+      service.deleteClass({
+        classId: String(created.data.classId),
+        actor: actor(owner, "LECTURER"),
+        key: "delete-members",
+        requestId: randomUUID(),
+      }),
+    ).rejects.toMatchObject({ code: "CLASS_DELETE_NOT_EMPTY", status: 409 });
+  });
+
   it("allows PRIVATE DRAFT join once but denies LIVE_COHORT join-code activation", async () => {
     const owner = randomUUID(),
       student = randomUUID(),
@@ -356,6 +411,23 @@ class MemoryClassroom {
   }
   async insertLecturer() {}
   async deleteLecturer() {}
+  async closeClass(old: ClassroomClass, now: Date) {
+    const current = await this.getClass(old.classId);
+    if (!current || current.version !== old.version || current.state !== "ACTIVE") return false;
+    this.classes[this.classes.indexOf(current)] = {
+      ...current,
+      state: "CLOSED",
+      version: current.version + 1,
+      updatedAt: now,
+    };
+    return true;
+  }
+  async hasActiveMembers(classId: string) {
+    return (await this.roster(classId)).length > 0;
+  }
+  async listClassSessionIds() {
+    return [];
+  }
   async prepareEvent(input: { eventId: string; eventType: string; data?: Record<string, unknown> }) {
     if (!this.events.some((value) => value.eventId === input.eventId)) this.events.push(input);
   }

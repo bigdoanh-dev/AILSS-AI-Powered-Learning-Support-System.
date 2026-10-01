@@ -9,5 +9,20 @@ CREATE ROLE IF NOT EXISTS svc_interaction WITH LOGIN = true AND SUPERUSER = fals
 CREATE ROLE IF NOT EXISTS svc_ai WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_AI_PASSWORD}}';
 CREATE ROLE IF NOT EXISTS svc_notification WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_NOTIFICATION_PASSWORD}}';
 CREATE ROLE IF NOT EXISTS svc_audit WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_AUDIT_PASSWORD}}';
+
+-- CREATE ROLE IF NOT EXISTS preserves the previous password for an existing
+-- development volume. Keep every role synchronized with the current local
+-- environment so regenerating .env cannot leave services permanently locked
+-- out of Cassandra.
+ALTER ROLE cassandra_admin WITH LOGIN = true AND SUPERUSER = true AND PASSWORD = '{{CASSANDRA_ADMIN_PASSWORD}}';
+ALTER ROLE cassandra_migrator WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_MIGRATOR_PASSWORD}}';
+ALTER ROLE svc_identity WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_IDENTITY_PASSWORD}}';
+ALTER ROLE svc_learning WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_LEARNING_PASSWORD}}';
+ALTER ROLE svc_classroom WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_CLASSROOM_PASSWORD}}';
+ALTER ROLE svc_assessment WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_ASSESSMENT_PASSWORD}}';
+ALTER ROLE svc_interaction WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_INTERACTION_PASSWORD}}';
+ALTER ROLE svc_ai WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_AI_PASSWORD}}';
+ALTER ROLE svc_notification WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_NOTIFICATION_PASSWORD}}';
+ALTER ROLE svc_audit WITH LOGIN = true AND SUPERUSER = false AND PASSWORD = '{{CASSANDRA_SVC_AUDIT_PASSWORD}}';
 -- Media role credentials are provisioned separately; never borrow svc_learning.
 CREATE ROLE IF NOT EXISTS svc_media_worker WITH LOGIN = false AND SUPERUSER = false;

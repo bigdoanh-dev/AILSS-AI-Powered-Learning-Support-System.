@@ -11,6 +11,7 @@ import { parseBearerAuthorization } from "./protected-identity-proxy.js";
 
 export async function assistantProxyFactory(c: AppConfig): Promise<{
   chat: RequestHandler;
+  adminStatus: RequestHandler;
   conversationsList: RequestHandler;
   conversationDetail: RequestHandler;
 }> {
@@ -85,6 +86,7 @@ export async function assistantProxyFactory(c: AppConfig): Promise<{
     };
 
   return {
+    adminStatus: handler("GET", () => "/api/v1/assistant/admin-status"),
     chat: handler("POST", () => "/api/v1/assistant/chat"),
     conversationsList: handler("GET", () => "/api/v1/assistant/conversations"),
     conversationDetail: handler(

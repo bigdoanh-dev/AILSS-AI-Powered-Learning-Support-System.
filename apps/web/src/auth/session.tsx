@@ -35,6 +35,27 @@ export function safeReturnTo(value: string | null): string {
     return value;
   return /^\/app(?:\/account)?(?:\?[a-zA-Z0-9=&_-]*)?$/.test(value) ? value : "/app";
 }
+export function postLoginDestination(profile: Profile, returnTo: string | null): string {
+  const home =
+    profile.role === "ADMIN"
+      ? "/app/admin"
+      : profile.role === "LECTURER" && profile.lecturerVerified
+        ? "/app/teaching"
+        : "/app";
+  const target = safeReturnTo(returnTo);
+  if (target === "/app") return home;
+  if (/^\/app\/admin(?:\/|$)/.test(target) && profile.role !== "ADMIN") return home;
+  if (/^\/app\/teaching(?:\/|$)/.test(target) && (profile.role !== "LECTURER" || !profile.lecturerVerified))
+    return home;
+  if (
+    /^\/app\/(?:learn|purchase|classes|schedule|attendance|progress|assessments|attempts|resources)(?:\/|\?|$)/.test(
+      target,
+    ) &&
+    profile.role !== "STUDENT"
+  )
+    return home;
+  return target;
+}
 export function roleLabel(p: Profile) {
   if (p.role === "LECTURER")
     return p.lecturerVerified ? "Giảng viên đã xác minh" : "Giảng viên · Chưa xác minh";
@@ -54,7 +75,7 @@ export async function sessionRequest<T>(
     method,
     credentials: "same-origin",
     cache: "no-store",
-    signal: AbortSignal.timeout(20000),
+    signal: AbortSignal.timeout(route === "auth/password-reset/request" ? 55000 : 20000),
     headers: {
       Accept: "application/json",
       ...(method !== "GET" ? { "Content-Type": "application/json" } : {}),
@@ -71,12 +92,12 @@ interface Authority {
   profile: Profile | null;
   message: string;
   bootstrap: () => Promise<void>;
-  login: (body: unknown) => Promise<void>;
+  login: (body: unknown) => Promise<Profile>;
   socialLogin: (
     provider: "google" | "apple",
     idToken: string,
     clientProfile?: { firstName?: string; lastName?: string },
-  ) => Promise<void>;
+  ) => Promise<Profile>;
   logout: () => Promise<void>;
   update: (name: string, key: string) => Promise<void>;
   password: (body: unknown, key: string) => Promise<void>;
@@ -87,6 +108,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [message, setMessage] = useState("");
   const epoch = useRef(0);
+  const pendingLogin = useRef<number | null>(null);
   const currentState = useRef(state);
   currentState.current = state;
   function failure(error: unknown, isInitialBootstrap = false) {
@@ -102,6 +124,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     );
   }
   async function bootstrap() {
+    // Closing the Google popup fires focus before its login response arrives.
+    // An anonymous bootstrap must not supersede that explicit authentication.
+    if (pendingLogin.current !== null) return;
     const id = ++epoch.current;
     const initial = currentState.current === "BOOTSTRAPPING";
     setState(currentState.current === "AUTHENTICATED" ? "REFRESHING" : "BOOTSTRAPPING");
@@ -136,12 +161,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
   async function login(body: unknown) {
     const id = ++epoch.current;
+    pendingLogin.current = id;
     try {
       const p = await sessionRequest<Profile>("login", "POST", body);
-      if (id !== epoch.current) return;
+      if (id !== epoch.current) throw new ApiError(409, "SESSION_CHANGED");
       setProfile(p);
       setState("AUTHENTICATED");
       setMessage("");
+      return p;
     } catch (e) {
       if (id === epoch.current) {
         failure(e, true);
@@ -149,6 +176,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           setMessage("Email hoặc mật khẩu chưa đúng. Vui lòng kiểm tra lại.");
       }
       throw e;
+    } finally {
+      if (pendingLogin.current === id) pendingLogin.current = null;
     }
   }
   async function socialLogin(
@@ -157,18 +186,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     clientProfile?: { firstName?: string; lastName?: string },
   ) {
     const id = ++epoch.current;
+    pendingLogin.current = id;
     try {
       const p = await sessionRequest<Profile>(`auth/social/${provider}`, "POST", {
         idToken,
         ...(clientProfile ? { clientProfile } : {}),
       });
-      if (id !== epoch.current) return;
+      if (id !== epoch.current) throw new ApiError(409, "SESSION_CHANGED");
       setProfile(p);
       setState("AUTHENTICATED");
       setMessage("");
+      return p;
     } catch (e) {
       if (id === epoch.current) failure(e, true);
       throw e;
+    } finally {
+      if (pendingLogin.current === id) pendingLogin.current = null;
     }
   }
   async function logout() {

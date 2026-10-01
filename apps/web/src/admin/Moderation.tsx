@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Navigate } from "react-router-dom";
 import { useSession } from "../auth/session";
-import { adminRequest } from "./api";
+import { adminError, adminRequest } from "./api";
 
 export type Report = {
   reportId: string;
@@ -21,118 +21,15 @@ export type Report = {
   reportedCount?: number;
 };
 
-const DEMO_REPORTS: Report[] = [
-  {
-    reportId: "00000000-0000-4000-8000-000000000001",
-    targetType: "COMMENT",
-    targetId: "cmt-sharding-901",
-    state: "OPEN",
-    decision: null,
-    version: 1,
-    createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    contentSnippet:
-      "Cần mua đáp án bài tập lớn và đồ án CSDL liên hệ Zalo 0987.xxx.xxx, cam kết điểm A+ bao qua môn giá rẻ!",
-    authorName: "User_SpamBot_2026",
-    reportedReason: "Gian lận học thuật & Spam dịch vụ làm thuê",
-    severity: "HIGH",
-    courseTitle: "Cơ sở dữ liệu Nâng cao & Tối ưu hóa SQL",
-    reportedCount: 4,
-  },
-  {
-    reportId: "00000000-0000-4000-8000-000000000002",
-    targetType: "REVIEW",
-    targetId: "rev-bomb-402",
-    state: "OPEN",
-    decision: null,
-    version: 1,
-    createdAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    contentSnippet:
-      "Khóa học lừa đảo, tài liệu chép trên mạng, khuyên mọi người qua group Telegram t.me/xxx để tải miễn phí bản crack!",
-    authorName: "Học viên nặc danh",
-    reportedReason: "Đánh giá giả mạo (Review bombing) & Kêu gọi vi phạm bản quyền",
-    severity: "HIGH",
-    courseTitle: "Lập trình Web & Trợ lý AI Fullstack",
-    reportedCount: 7,
-  },
-  {
-    reportId: "00000000-0000-4000-8000-000000000003",
-    targetType: "COMMENT",
-    targetId: "cmt-toxic-311",
-    state: "OPEN",
-    decision: null,
-    version: 1,
-    createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    contentSnippet:
-      "Bài giảng gì mà dốt thế, giảng viên nói như buồn ngủ, học phí đắt mà chất lượng như rác!",
-    authorName: "Trần Minh Quân",
-    reportedReason: "Ngôn từ công kích cá nhân & Xúc phạm giảng viên",
-    severity: "MEDIUM",
-    courseTitle: "DevOps CI/CD Pipeline & Kubernetes",
-    reportedCount: 3,
-  },
-  {
-    reportId: "00000000-0000-4000-8000-000000000004",
-    targetType: "COMMENT",
-    targetId: "cmt-leak-105",
-    state: "OPEN",
-    decision: null,
-    version: 1,
-    createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
-    contentSnippet: "Đáp án trắc nghiệm Quiz 3: 1A, 2C, 3B, 4D, 5A nhé cả lớp, chép nhanh kẻo thầy đổi đề!",
-    authorName: "Lê Hoàng Long",
-    reportedReason: "Lộ đáp án bài kiểm tra trắc nghiệm",
-    severity: "HIGH",
-    courseTitle: "Cơ sở dữ liệu Nâng cao & Tối ưu hóa SQL",
-    reportedCount: 5,
-  },
-  {
-    reportId: "00000000-0000-4000-8000-000000000005",
-    targetType: "REVIEW",
-    targetId: "rev-advert-512",
-    state: "OPEN",
-    decision: null,
-    version: 1,
-    createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-    contentSnippet:
-      "Bán tài khoản ChatGPT Plus và API Gemini Flash siêu rẻ, bảo hành 1 năm liên hệ hotline 0909.xxx.xxx",
-    authorName: "Dịch Vụ Số 247",
-    reportedReason: "Quảng cáo rác (Spam link bán hàng)",
-    severity: "MEDIUM",
-    courseTitle: "Python: Lập trình từ Nền tảng tới Hướng đối tượng",
-    reportedCount: 2,
-  },
-  {
-    reportId: "00000000-0000-4000-8000-000000000006",
-    targetType: "COMMENT",
-    targetId: "cmt-offtopic-88",
-    state: "OPEN",
-    decision: null,
-    version: 1,
-    createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-    contentSnippet: "Ai có link xem bóng đá Ngoại hạng Anh tối nay không cho mình xin với?",
-    authorName: "Nguyễn Tuấn Kiệt",
-    reportedReason: "Bình luận sai chủ đề / Lạc đề",
-    severity: "LOW",
-    courseTitle: "Kỹ thuật Prompt Engineering & Tinh chỉnh LLM",
-    reportedCount: 1,
-  },
-];
-
 export default function Moderation() {
   const { profile } = useSession();
   const [cursor, setCursor] = useState(""),
-    [items, setItems] = useState<Report[]>(DEMO_REPORTS),
+    [items, setItems] = useState<Report[]>([]),
     [next, setNext] = useState<string | null>(null),
     [pending, setPending] = useState(false),
     [error, setError] = useState(""),
-    [selected, setSelected] = useState<Report | null>(DEMO_REPORTS[0]),
-    [isDemo, setIsDemo] = useState(true);
+    [selected, setSelected] = useState<Report | null>(null),
+    [isDemo, setIsDemo] = useState(false);
 
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<string>("ALL");
@@ -150,22 +47,15 @@ export default function Moderation() {
       const result = await adminRequest<Report[]>(
         `/interaction-reports?${new URLSearchParams({ limit: "20", ...(cursor ? { cursor } : {}) })}`,
       );
-      if (result.data && result.data.length > 0) {
-        setItems(result.data);
-        setIsDemo(false);
-        setSelected(result.data[0]);
-      } else {
-        // Use demo reports when queue is empty so admin always has interactive data
-        setItems(DEMO_REPORTS);
-        setIsDemo(true);
-        setSelected(DEMO_REPORTS[0]);
-      }
+      setItems(result.data ?? []);
+      setIsDemo(false);
+      setSelected(result.data?.[0] ?? null);
       setNext(result.meta?.page?.nextCursor || null);
-    } catch {
-      // Graceful fallback to demo data
-      setItems(DEMO_REPORTS);
-      setIsDemo(true);
-      setSelected(DEMO_REPORTS[0]);
+    } catch (error) {
+      setItems([]);
+      setSelected(null);
+      setNext(null);
+      setError(adminError(error));
     } finally {
       setPending(false);
     }
@@ -176,10 +66,9 @@ export default function Moderation() {
   }, [cursor, profile?.role]);
 
   const handleResetDemo = () => {
-    setItems(DEMO_REPORTS);
-    setSelected(DEMO_REPORTS[0]);
-    setIsDemo(true);
-    showToast("Đã khôi phục dữ liệu mẫu kiểm duyệt (6 báo cáo)!");
+    void load();
+    setSelected(null);
+    setIsDemo(false);
   };
 
   if (profile?.role !== "ADMIN") return <Navigate to="/app" replace />;
@@ -229,7 +118,7 @@ export default function Moderation() {
               onClick={handleResetDemo}
               title="Khôi phục danh sách báo cáo mẫu"
             >
-              ↻ Nạp lại dữ liệu demo
+              ↻ Tải lại dữ liệu
             </button>
           )}
         </div>
@@ -426,7 +315,7 @@ export default function Moderation() {
             : "Không có báo cáo nào đang mở."}
           <div style={{ marginTop: "14px" }}>
             <button className="button" onClick={handleResetDemo}>
-              Tạo lại dữ liệu demo kiểm duyệt
+              Tải lại báo cáo
             </button>
           </div>
         </div>
@@ -505,9 +394,8 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
         { "If-Match": `"v${report.version}"` },
       );
       done(action);
-    } catch {
-      // In local dev/demo mode where mock ID isn't on backend, smoothly resolve locally
-      done(action);
+    } catch (error) {
+      setMessage(adminError(error));
     } finally {
       setBusy(false);
     }

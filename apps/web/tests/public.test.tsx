@@ -170,9 +170,9 @@ describe("public foundation", () => {
       </SessionProvider>,
       "/auth/forgot-password",
     );
-    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.getByLabelText("Email đăng ký")).toBeTruthy();
     expect(fetchMock.mock.calls.every(([path]) => path.endsWith("bootstrap"))).toBe(true);
-    expect(screen.getByText(/chưa hỗ trợ gửi email/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Gửi mã OTP" })).toBeTruthy();
   });
   it("approval demo is reversible and makes no network requests", async () => {
     const fetchMock = vi.fn();

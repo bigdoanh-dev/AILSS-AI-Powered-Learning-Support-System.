@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { Text, View, TextInput, Pressable, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSyncExternalStore } from "react";
+import * as Crypto from "expo-crypto";
 import { ApiError } from "../../../../src/api";
 import { runtime } from "../../../../src/runtime";
 import {
@@ -24,6 +25,7 @@ export default function AiJobDetailScreen() {
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
+  const approvalKeys = useRef(new Map<string, string>());
   const [job, setJob] = useState<AiJob | null>(null);
   const [draft, setDraft] = useState<AiDraft | null>(null);
   const [selected, setSelected] = useState(0);
@@ -80,8 +82,11 @@ export default function AiJobDetailScreen() {
         if (list.length > 0) {
           setDraft(list[0]);
         }
-      } catch {
-        // Draft sync might lag slightly, handled gracefully
+      } catch (cause) {
+        if (!abort.signal.aborted)
+          setError(
+            cause instanceof ApiError ? cause.message : "Không thể tải bản nháp câu hỏi. Hãy thử lại.",
+          );
       }
     };
 
@@ -148,7 +153,11 @@ export default function AiJobDetailScreen() {
     setMsg("");
 
     try {
+      const fingerprint = JSON.stringify([draft.draftId, draft.draftVersion, draft.content]);
+      const key = approvalKeys.current.get(fingerprint) ?? Crypto.randomUUID();
+      approvalKeys.current.set(fingerprint, key);
       const res = await session.request(`/api/v1/ai/drafts/${draft.draftId}/approve`, {
+        idempotencyKey: key,
         method: "POST",
         headers: {
           "If-Match": `"v${draft.draftVersion}"`,
@@ -158,6 +167,7 @@ export default function AiJobDetailScreen() {
         },
       });
 
+      approvalKeys.current.delete(fingerprint);
       const approved = aiApprovalResult(res);
       setApproval(approved);
       setApproving(false);

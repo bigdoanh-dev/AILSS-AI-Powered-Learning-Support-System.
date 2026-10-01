@@ -6,12 +6,7 @@ import { File } from "expo-file-system";
 import { router } from "expo-router";
 import { ApiError } from "../../src/api";
 import { runtime } from "../../src/runtime";
-import {
-  lecturerLessons,
-  ownedOfferings,
-  uniqueCoursesFromOfferings,
-  type LecturerLesson,
-} from "../../src/teaching";
+import { lecturerLessons, lecturerCourses, type LecturerLesson } from "../../src/teaching";
 import {
   MEDIA_STATUS_COPY,
   clearPendingMediaUpload,
@@ -82,9 +77,9 @@ export default function LecturerMediaUpload() {
     setCourses(null);
     setError("");
     void session
-      .request("/api/v1/me/owned-offerings", { signal: controller.signal })
+      .request("/api/v1/me/owned-courses", { signal: controller.signal })
       .then((value) => {
-        if (!controller.signal.aborted) setCourses(uniqueCoursesFromOfferings(ownedOfferings(value)));
+        if (!controller.signal.aborted) setCourses(lecturerCourses(value));
       })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) setError(errorMessage(reason));

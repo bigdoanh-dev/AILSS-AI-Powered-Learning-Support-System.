@@ -66,6 +66,8 @@ export function validateProductionConfig(values, mode = "fixture") {
   exact("AI_PROVIDER_MODE", "production");
   exact("AI_ASSISTANT_PROVIDER_MODE", "external");
   exact("AI_ASSISTANT_INTEGRATION_ENABLED", "false");
+  if (values.AI_ADMIN_SUPPORT_MODE && values.AI_ADMIN_SUPPORT_MODE !== "external")
+    errors.push("AI_ADMIN_SUPPORT_MODE must equal external in production");
   exact("CASSANDRA_TLS_ENABLED", "true");
   exact("RABBITMQ_TLS_ENABLED", "true");
   exact("OBJECT_STORAGE_USE_SSL", "true");

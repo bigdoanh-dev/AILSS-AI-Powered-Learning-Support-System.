@@ -349,19 +349,16 @@ export class IdentityAdminRepository {
       for (const status of statuses) {
         let roleCount = 0;
         for (let shard = 0; shard < 16; shard += 1) {
-          try {
-            const rows = await this.client.execute(
-              `SELECT count(*) FROM users_by_role_status_bucket WHERE role=? AND status=? AND shard=?`,
-              [role, status, shard],
-              LOCAL_QUORUM,
-            );
-            const countVal: unknown = rows[0]?.get("count");
-            if (countVal !== undefined && countVal !== null) {
-              const n = typeof countVal === "number" ? countVal : Number(countVal);
-              roleCount += n;
-            }
-          } catch {
-            // ignore empty shard error
+          // A failed partition rejects the total rather than becoming a zero count.
+          const rows = await this.client.execute(
+            `SELECT count(*) FROM users_by_role_status_bucket WHERE role=? AND status=? AND shard=?`,
+            [role, status, shard],
+            LOCAL_QUORUM,
+          );
+          const countVal: unknown = rows[0]?.get("count");
+          if (countVal !== undefined && countVal !== null) {
+            const n = typeof countVal === "number" ? countVal : Number(countVal);
+            roleCount += n;
           }
         }
         if (status === "SUSPENDED") {
@@ -381,57 +378,14 @@ export class IdentityAdminRepository {
       lecturers,
       admins,
       suspended,
-      aiSessions: 3820,
-      completionRate: "76.4%",
-      avgScore: "8.4 / 10",
-      totalLearningHours: "12.450 giờ",
-      cognitiveLevels: [
-        {
-          level: "Nhận biết (Remember / Recognition)",
-          rate: 86,
-          desc: "Ghi nhớ thuật ngữ và khái niệm cốt lõi",
-          color: "#0284C7",
-        },
-        {
-          level: "Thông hiểu (Understand / Comprehension)",
-          rate: 78,
-          desc: "Giải thích nguyên lý và diễn giải lỗi",
-          color: "#7C3AED",
-        },
-        {
-          level: "Vận dụng (Apply / Execution)",
-          rate: 64,
-          desc: "Áp dụng công thức, viết mã lệnh thực tế",
-          color: "#D97706",
-        },
-        {
-          level: "Phân tích (Analyze / Decomposition)",
-          rate: 48,
-          desc: "Phân tích cấu trúc dữ liệu và tối ưu",
-          color: "#059669",
-        },
-        {
-          level: "Đánh giá (Evaluate / Critique)",
-          rate: 52,
-          desc: "Review mã nguồn và đánh giá hiệu năng",
-          color: "#DC2626",
-        },
-        {
-          level: "Sáng tạo (Create / Architecture)",
-          rate: 38,
-          desc: "Thiết kế kiến trúc và xây dựng giải pháp",
-          color: "#2563EB",
-        },
-      ],
-      weekdayEngagement: [
-        { day: "Thứ 2", hours: 1840, percent: 82 },
-        { day: "Thứ 3", hours: 2150, percent: 95 },
-        { day: "Thứ 4", hours: 1980, percent: 88 },
-        { day: "Thứ 5", hours: 2260, percent: 100 },
-        { day: "Thứ 6", hours: 1720, percent: 76 },
-        { day: "Thứ 7", hours: 1450, percent: 64 },
-        { day: "Chủ nhật", hours: 1050, percent: 46 },
-      ],
+      // Identity owns account counts. Learning, Assessment and AI metrics are not
+      // aggregated here; absence must not be replaced with sample measurements.
+      aiSessions: null,
+      completionRate: null,
+      avgScore: null,
+      totalLearningHours: null,
+      cognitiveLevels: [],
+      weekdayEngagement: [],
     };
   }
 }

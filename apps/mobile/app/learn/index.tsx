@@ -17,6 +17,7 @@ import {
   Icon,
   EmptyState,
   BottomNavBar,
+  SearchBar,
   tokens,
   styles,
 } from "../../src/ui";
@@ -29,6 +30,8 @@ export default function MyLearningScreen() {
   const [coursesList, setCoursesList] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"ALL" | "IN_PROGRESS" | "COMPLETED">("ALL");
 
   const fetchMyLearning = useCallback(async () => {
     if (snapshot.state !== "AUTHENTICATED") return;
@@ -66,7 +69,7 @@ export default function MyLearningScreen() {
     } finally {
       setLoading(false);
     }
-  }, [snapshot.state, session]);
+  }, [snapshot.state, snapshot.user?.userId, session]);
 
   useEffect(() => {
     void fetchMyLearning();
@@ -121,60 +124,154 @@ export default function MyLearningScreen() {
           />
         ) : (
           <View style={localStyles.list}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.muted }}>
-                ĐANG HỌC ({coursesList.length} KHÓA)
-              </Text>
+            {/* Quick summary strip */}
+            <View style={localStyles.summaryRow}>
+              <View style={localStyles.summaryItem}>
+                <Text style={localStyles.summaryNum}>{coursesList.length}</Text>
+                <Text style={localStyles.summaryLabel}>Khóa đang học</Text>
+              </View>
+              <View style={localStyles.summaryDivider} />
+              <View style={localStyles.summaryItem}>
+                <Text style={[localStyles.summaryNum, { color: tokens.color.brand }]}>
+                  {coursesList.length > 0
+                    ? Math.round(
+                        coursesList.reduce((acc, c) => acc + (c.progress?.percent ?? 0), 0) /
+                          coursesList.length,
+                      )
+                    : 0}
+                  %
+                </Text>
+                <Text style={localStyles.summaryLabel}>Tiến độ TB</Text>
+              </View>
+              <View style={localStyles.summaryDivider} />
+              <View style={localStyles.summaryItem}>
+                <Text style={[localStyles.summaryNum, { color: tokens.color.brand }]}>
+                  {coursesList.filter((c) => c.progress?.completed).length}
+                </Text>
+                <Text style={localStyles.summaryLabel}>Khóa hoàn thành</Text>
+              </View>
             </View>
 
-            {coursesList.map((item, index) => {
-              const pct = item.progress?.percent ?? 0;
-              const isDone = item.progress?.completed ?? false;
-              const bgGradient = index % 2 === 0 ? "#0A7E85" : "#6366F1";
-              return (
-                <Pressable
-                  key={item.courseId}
-                  style={localStyles.courseCard}
-                  onPress={() => router.push(`/learn/${item.courseId}` as Href)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Tiếp tục học ${item.title}`}
-                >
-                  <View style={{ flexDirection: "row", gap: 14, alignItems: "flex-start" }}>
-                    <View style={[localStyles.courseThumb, { backgroundColor: bgGradient }]}>
-                      <Icon name={isDone ? "award" : "book"} size={26} color="#FFF" />
-                    </View>
-                    <View style={{ flex: 1, gap: 4 }}>
-                      <Badge
-                        label={isDone ? "HOÀN THÀNH" : `${pct}% HOÀN TẤT`}
-                        variant={isDone ? "success" : "ai"}
-                      />
-                      <Text style={localStyles.courseTitle} numberOfLines={2}>
-                        {item.title}
-                      </Text>
-                    </View>
-                  </View>
+            {/* Search Bar */}
+            <SearchBar
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Tìm kiếm khóa học của tôi..."
+              onClear={() => setSearch("")}
+            />
 
-                  <View style={{ gap: 6, marginTop: 4 }}>
-                    <ProgressBar progress={pct} color={isDone ? tokens.color.success : "#6366F1"} />
-                    <View
-                      style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
-                    >
-                      <Text style={styles.small}>
-                        {item.progress
-                          ? `Đã học ${item.progress.completedCount}/${item.progress.publishedTotal} bài`
-                          : "Đang cập nhật tiến độ"}
-                      </Text>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                        <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
-                          {isDone ? "Ôn tập lại" : "Học tiếp"}
+            {/* Filter Chips */}
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <Pressable
+                onPress={() => setFilter("ALL")}
+                style={[localStyles.filterChip, filter === "ALL" && localStyles.filterChipActive]}
+              >
+                <Text
+                  style={[localStyles.filterChipText, filter === "ALL" && localStyles.filterChipTextActive]}
+                >
+                  Tất cả ({coursesList.length})
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setFilter("IN_PROGRESS")}
+                style={[localStyles.filterChip, filter === "IN_PROGRESS" && localStyles.filterChipActive]}
+              >
+                <Text
+                  style={[
+                    localStyles.filterChipText,
+                    filter === "IN_PROGRESS" && localStyles.filterChipTextActive,
+                  ]}
+                >
+                  Đang học ({coursesList.filter((c) => !(c.progress?.completed ?? false)).length})
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setFilter("COMPLETED")}
+                style={[localStyles.filterChip, filter === "COMPLETED" && localStyles.filterChipActive]}
+              >
+                <Text
+                  style={[
+                    localStyles.filterChipText,
+                    filter === "COMPLETED" && localStyles.filterChipTextActive,
+                  ]}
+                >
+                  Đã xong ({coursesList.filter((c) => c.progress?.completed ?? false).length})
+                </Text>
+              </Pressable>
+            </View>
+
+            {coursesList
+              .filter((item) => {
+                const isDone = item.progress?.completed ?? false;
+                const matchesFilter = filter === "ALL" || (filter === "COMPLETED" ? isDone : !isDone);
+                const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase());
+                return matchesFilter && matchesSearch;
+              })
+              .map((item, index) => {
+                const pct = item.progress?.percent ?? 0;
+                const isDone = item.progress?.completed ?? false;
+                const bgGradient = isDone ? "#10B981" : index % 2 === 0 ? "#0A7E85" : "#6366F1";
+                const category = /dữ liệu|sql|database/i.test(item.title)
+                  ? "Cơ sở dữ liệu"
+                  : /ai|trí tuệ|máy học/i.test(item.title)
+                    ? "Trí tuệ nhân tạo"
+                    : /web|react|javascript/i.test(item.title)
+                      ? "Lập trình Web"
+                      : "Công nghệ phần mềm";
+
+                return (
+                  <Pressable
+                    key={item.courseId}
+                    style={localStyles.courseCard}
+                    onPress={() => router.push(`/learn/${item.courseId}` as Href)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Tiếp tục học ${item.title}`}
+                  >
+                    <View style={{ flexDirection: "row", gap: 14, alignItems: "flex-start" }}>
+                      <View style={[localStyles.courseThumb, { backgroundColor: bgGradient }]}>
+                        <Icon name={isDone ? "award" : "book"} size={26} color="#FFF" />
+                      </View>
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <View
+                          style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", alignItems: "center" }}
+                        >
+                          <Badge label={category.toUpperCase()} variant="neutral" />
+                          <Badge
+                            label={isDone ? "HOÀN THÀNH" : `${pct}% HOÀN TẤT`}
+                            variant={isDone ? "success" : "ai"}
+                          />
+                        </View>
+                        <Text style={localStyles.courseTitle} numberOfLines={2}>
+                          {item.title}
                         </Text>
-                        <Icon name="chevronRight" size={14} color={tokens.color.brand} />
                       </View>
                     </View>
-                  </View>
-                </Pressable>
-              );
-            })}
+
+                    <View style={{ gap: 6, marginTop: 4 }}>
+                      <ProgressBar progress={pct} color={isDone ? tokens.color.success : "#6366F1"} />
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text style={styles.small}>
+                          {item.progress
+                            ? `Đã học ${item.progress.completedCount}/${item.progress.publishedTotal} bài`
+                            : "Đang cập nhật tiến độ"}
+                        </Text>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                          <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
+                            {isDone ? "Ôn tập lại" : "Học tiếp"}
+                          </Text>
+                          <Icon name="chevronRight" size={14} color={tokens.color.brand} />
+                        </View>
+                      </View>
+                    </View>
+                  </Pressable>
+                );
+              })}
           </View>
         )}
       </Page>
@@ -198,6 +295,59 @@ const localStyles = StyleSheet.create({
   },
   list: {
     gap: 14,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    backgroundColor: tokens.color.surface,
+    borderWidth: 1,
+    borderColor: tokens.color.border,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "space-around",
+    ...tokens.shadow.subtle,
+  },
+  summaryItem: {
+    alignItems: "center",
+    gap: 3,
+  },
+  summaryNum: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: tokens.color.ink,
+  },
+  summaryLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: tokens.color.muted,
+    textTransform: "uppercase",
+  },
+  summaryDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: tokens.color.border,
+  },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: tokens.color.surface,
+    borderWidth: 1,
+    borderColor: tokens.color.border,
+  },
+  filterChipActive: {
+    backgroundColor: tokens.color.brand,
+    borderColor: tokens.color.brand,
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: tokens.color.muted,
+  },
+  filterChipTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   courseCard: {
     backgroundColor: tokens.color.surface,

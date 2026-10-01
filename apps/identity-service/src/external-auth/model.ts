@@ -47,6 +47,7 @@ export interface UserIdentitiesSummary {
 }
 
 export interface SocialLoginResult {
+  readonly sessionId: string;
   readonly accessToken: string;
   readonly refreshToken: string;
   readonly tokenType: "Bearer";

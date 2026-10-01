@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import type { CassandraClient } from "../../packages/cassandra/src/index.js";
 import type { ActorContext } from "../../packages/security/src/index.js";
@@ -6,7 +6,6 @@ import { LearningCommerceRepository } from "../../apps/learning-service/src/comm
 import { LearningCommerceService } from "../../apps/learning-service/src/commerce/service.js";
 import {
   adminReport,
-  commission,
   lecturerReport,
   payoutAccount,
   payouts,
@@ -26,6 +25,13 @@ const actor = (role: "ADMIN" | "LECTURER" | "STUDENT", userId = randomUUID()): A
   issuedAt: 0,
   expiresAt: 9999999999,
 });
+
+// Keep ledger month and refund-window fixtures independent of the calendar.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-09-28T10:00:00Z"));
+});
+afterEach(() => vi.useRealTimers());
 
 describe("mobile role and finance links", () => {
   it("propagates an admin rate change to lecturer price preview and reconciled revenue without repricing an earlier sale", async () => {
@@ -178,7 +184,7 @@ describe("mobile role and finance links", () => {
     expect(before.candidates[0]?.accountConfigured).toBe(true);
     const api = {
       request: async (_path: string, options?: { body?: unknown }) =>
-        service.preparePayouts(admin, (options?.body as { lecturerId?: string })?.lecturerId),
+        service.preparePayouts(admin, (options?.body as { lecturerId?: string }).lecturerId),
     };
     const one = await preparePayouts(api, teacher.userId, randomUUID());
     const all = await preparePayouts(api, undefined, randomUUID());

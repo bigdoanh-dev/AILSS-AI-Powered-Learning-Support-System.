@@ -14,8 +14,7 @@ import {
   type Comment,
   type RatingSummary,
 } from "../../../../src/interaction";
-import { CONTRACT_LIMITED } from "../../../../src/teaching";
-import { Page, Button, Icon, NonVirtualizedList, ScreenHeader, styles, tokens } from "../../../../src/ui";
+import { Page, Button, NonVirtualizedList, ScreenHeader, styles, tokens } from "../../../../src/ui";
 
 export default function CourseReviewsAndCommentsScreen() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
@@ -31,6 +30,12 @@ export default function CourseReviewsAndCommentsScreen() {
   const [ratingInfo, setRatingInfo] = useState<RatingSummary>({ reviewCount: 0, ratingSum: 0, average: 0 });
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviewsError, setReviewsError] = useState<string | null>(null);
+
+  const [reviewCursor, setReviewCursor] = useState("");
+  const [commentCursor, setCommentCursor] = useState("");
+  const [nextReviewCursor, setNextReviewCursor] = useState<string | null>(null);
+  const [nextCommentCursor, setNextCommentCursor] = useState<string | null>(null);
+  const [commentsError, setCommentsError] = useState("");
 
   // Comments state
   const [comments, setComments] = useState<Comment[]>([]);
@@ -49,10 +54,14 @@ export default function CourseReviewsAndCommentsScreen() {
     try {
       setReviewsLoading(true);
       setReviewsError(null);
-      const rawReviews = await session.request(`/api/v1/courses/${courseId}/reviews`);
+      const rawReviews = await session.request(
+        `/api/v1/courses/${courseId}/reviews?limit=20${reviewCursor ? `&cursor=${encodeURIComponent(reviewCursor)}` : ""}`,
+        { includeMeta: true },
+      );
       const res = reviewList(rawReviews);
       setReviews(res.items);
       setRatingInfo(res.ratingSummary);
+      setNextReviewCursor(res.nextCursor);
     } catch (e: unknown) {
       setReviewsError(e instanceof ApiError ? e.message : "Không thể tải danh sách đánh giá.");
     } finally {
@@ -61,15 +70,20 @@ export default function CourseReviewsAndCommentsScreen() {
 
     try {
       setCommentsLoading(true);
-      const rawComments = await session.request(`/api/v1/resources/COURSE/${courseId}/comments`);
+      setCommentsError("");
+      const rawComments = await session.request(
+        `/api/v1/resources/COURSE/${courseId}/comments?limit=20${commentCursor ? `&cursor=${encodeURIComponent(commentCursor)}` : ""}`,
+        { includeMeta: true },
+      );
       const res = commentList(rawComments);
       setComments(res.items);
-    } catch {
-      setComments([]);
+      setNextCommentCursor(res.nextCursor);
+    } catch (cause) {
+      setCommentsError(cause instanceof ApiError ? cause.message : "Không thể tải thảo luận.");
     } finally {
       setCommentsLoading(false);
     }
-  }, [courseId, session, snapshot.user?.role]);
+  }, [courseId, session, snapshot.user?.role, snapshot.user?.userId, reviewCursor, commentCursor]);
 
   useEffect(() => {
     void loadReviewsAndComments();
@@ -108,9 +122,13 @@ export default function CourseReviewsAndCommentsScreen() {
       });
       setCommentInput("");
       setCommentMsg({ type: "success", text: "✓ Đăng phản hồi thành công." });
-      const rawComments = await session.request(`/api/v1/resources/COURSE/${courseId}/comments`);
+      const rawComments = await session.request(
+        `/api/v1/resources/COURSE/${courseId}/comments?limit=20${commentCursor ? `&cursor=${encodeURIComponent(commentCursor)}` : ""}`,
+        { includeMeta: true },
+      );
       const res = commentList(rawComments);
       setComments(res.items);
+      setNextCommentCursor(res.nextCursor);
     } catch (e: unknown) {
       setCommentMsg({
         type: "error",
@@ -249,6 +267,40 @@ export default function CourseReviewsAndCommentsScreen() {
         </Pressable>
       </View>
 
+      {activeTab === "reviews" ? (
+        <View>
+          {reviewCursor ? <Button label="Đánh giá: trang đầu" onPress={() => setReviewCursor("")} /> : null}
+          {nextReviewCursor ? (
+            <Button
+              label="Đánh giá: trang tiếp"
+              disabled={reviewsLoading}
+              onPress={() => setReviewCursor(nextReviewCursor)}
+            />
+          ) : null}
+          <Text style={styles.small}>
+            Bộ lọc và số lượng sao bên dưới tính trên trang hiện tại; điểm trung bình tính cho toàn khóa học.
+          </Text>
+        </View>
+      ) : (
+        <View>
+          {commentsError ? (
+            <View>
+              <Text style={styles.error}>{commentsError}</Text>
+              <Button label="Thử tải thảo luận" onPress={() => void loadReviewsAndComments()} />
+            </View>
+          ) : null}
+          {commentCursor ? (
+            <Button label="Thảo luận: trang đầu" onPress={() => setCommentCursor("")} />
+          ) : null}
+          {nextCommentCursor ? (
+            <Button
+              label="Thảo luận: trang tiếp"
+              disabled={commentsLoading}
+              onPress={() => setCommentCursor(nextCommentCursor)}
+            />
+          ) : null}
+        </View>
+      )}
       {/* TAB 1: REVIEWS */}
       {activeTab === "reviews" && (
         <View style={{ gap: 12 }}>
@@ -256,11 +308,11 @@ export default function CourseReviewsAndCommentsScreen() {
           <View style={[styles.card, revStyles.summaryCard]}>
             <View style={revStyles.scoreCol}>
               <Text style={revStyles.bigScore}>
-                {ratingInfo.average > 0 ? ratingInfo.average.toFixed(1) : "5.0"}
+                {ratingInfo.reviewCount > 0 ? ratingInfo.average.toFixed(1) : "Chưa có đánh giá"}
               </Text>
               <Text style={revStyles.stars}>
-                {"★".repeat(Math.round(ratingInfo.average || 5))}
-                {"☆".repeat(5 - Math.round(ratingInfo.average || 5))}
+                {"★".repeat(Math.round(ratingInfo.average))}
+                {"☆".repeat(5 - Math.round(ratingInfo.average))}
               </Text>
               <Text style={[styles.small, { textAlign: "center" }]}>{ratingInfo.reviewCount} đánh giá</Text>
             </View>
@@ -269,12 +321,7 @@ export default function CourseReviewsAndCommentsScreen() {
             <View style={revStyles.barsCol}>
               {[5, 4, 3, 2, 1].map((s) => {
                 const count = starCounts[s as keyof typeof starCounts] || 0;
-                const pct =
-                  ratingInfo.reviewCount > 0
-                    ? Math.round((count / ratingInfo.reviewCount) * 100)
-                    : s === 5
-                      ? 100
-                      : 0;
+                const pct = reviews.length > 0 ? Math.round((count / reviews.length) * 100) : 0;
                 return (
                   <View key={s} style={revStyles.barRow}>
                     <Text style={revStyles.barLabel}>{s}★</Text>

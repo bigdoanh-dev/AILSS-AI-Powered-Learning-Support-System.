@@ -1,12 +1,10 @@
-import { attendanceLabel } from "../student/Planning";
 import { useState, type FormEvent } from "react";
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { lecturerError, lecturerRequest, month, range, useLecturer } from "./api";
 import { CatalogCourseSelect } from "./ui";
 import { Field, State } from "./ui";
 import { Breadcrumbs, EmptyState, ScheduleTime, StateChip } from "../components/product";
 import { Icon } from "../components/Icon";
-import { AnimatedNumber } from "../components/AnimatedNumber";
 type C = {
   classId: string;
   name: string;
@@ -15,6 +13,8 @@ type C = {
   scheduleState: string;
   linkedCourseId?: string;
   maxMembers: number;
+  photoDataUrl?: string;
+  coverDataUrl?: string;
 };
 type S = {
   sessionId: string;
@@ -82,60 +82,15 @@ export function Classes() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="workspace-kpi-grid">
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <span className="kpi-icon" aria-hidden="true">
-              <Icon name="users" size={20} />
-            </span>
-            <span className="kpi-tag accent">Đang phụ trách</span>
-          </div>
-          <div className="kpi-value">
-            <AnimatedNumber value={classesList.length || 3} suffix=" Lớp" />
-          </div>
-          <div className="kpi-label">Tổng số lớp học phần</div>
-          <p className="kpi-subtext">Học kỳ 1 - Năm học 2026</p>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <span className="kpi-icon" aria-hidden="true">
-              <Icon name="user" size={20} />
-            </span>
-            <span className="kpi-tag accent">Quy mô</span>
-          </div>
-          <div className="kpi-value">
-            <AnimatedNumber value={50} suffix=" SV / lớp" />
-          </div>
-          <div className="kpi-label">Sĩ số trung bình</div>
-          <p className="kpi-subtext">Đảm bảo tương tác tối ưu</p>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <span className="kpi-icon" aria-hidden="true">
-              <Icon name="attendance" size={20} />
-            </span>
-            <span className="kpi-tag accent">94.2% Đạt</span>
-          </div>
-          <div className="kpi-value">
-            <AnimatedNumber value={94.2} suffix="%" decimals={1} />
-          </div>
-          <div className="kpi-label">Tỷ lệ điểm danh tích cực</div>
-          <p className="kpi-subtext">Ghi nhận qua mã QR &amp; định vị</p>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <span className="kpi-icon" aria-hidden="true">
-              <Icon name="calendar" size={20} />
-            </span>
-            <span className="kpi-tag">Tuần này</span>
-          </div>
-          <div className="kpi-value">
-            <AnimatedNumber value={6} suffix=" Buổi" />
-          </div>
-          <div className="kpi-label">Lịch giảng dạy &amp; Lab</div>
-          <p className="kpi-subtext">Phòng thực hành Lab B402 &amp; Online</p>
-        </div>
+      <div className="kpi-grid">
+        <article className="kpi-card">
+          <h2>Lớp phụ trách</h2>
+          <p className="kpi-value">{q.pending || q.error ? "—" : classesList.length}</p>
+        </article>
+        <article className="kpi-card">
+          <h2>Điểm danh và lịch học</h2>
+          <p>Mở từng lớp để xem lịch và dữ liệu điểm danh thực tế.</p>
+        </article>
       </div>
 
       {/* Search & Filter Toolbar */}
@@ -231,6 +186,19 @@ export function Classes() {
             <div className="workspace-cards">
               {list.map((x) => (
                 <article key={x.classId} className="study-card-rich">
+                  {x.coverDataUrl && (
+                    <img
+                      src={x.coverDataUrl}
+                      alt="Ảnh bìa lớp"
+                      style={{
+                        width: "100%",
+                        height: 130,
+                        objectFit: "cover",
+                        borderRadius: 12,
+                        marginBottom: 12,
+                      }}
+                    />
+                  )}
                   <div>
                     <div className="study-card-top">
                       <span className="study-card-icon" aria-hidden="true">
@@ -431,9 +399,11 @@ export function ClassCreate() {
 }
 export function ClassDetail() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { classId = "" } = useParams(),
     q = useLecturer<C>(`/classes/${classId}`),
     [msg, setMsg] = useState(""),
+    [imageBusy, setImageBusy] = useState(false),
     [joinCode, setJoinCode] = useState(
       () => (location.state as { joinCode?: string } | null)?.joinCode ?? "",
     );
@@ -449,6 +419,60 @@ export function ClassDetail() {
       setMsg("Đã tạo mã tham gia mới. Mã cũ không còn hiệu lực.");
     } catch (x) {
       setMsg(lecturerError(x));
+    }
+  }
+  async function uploadImage(kind: "photoDataUrl" | "coverDataUrl", file?: File) {
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 20 * 1024 * 1024) {
+      setMsg("Chọn ảnh PNG, JPEG hoặc WebP không quá 20 MB.");
+      return;
+    }
+    setImageBusy(true);
+    try {
+      const bitmap = await createImageBitmap(file);
+      let dataUrl = "";
+      try {
+        for (const width of [1200, 960, 720, 560]) {
+          const ratio = Math.min(1, width / bitmap.width);
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(bitmap.width * ratio));
+          canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
+          canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          const candidate = canvas.toDataURL("image/jpeg", 0.65);
+          if (Math.floor(((candidate.length - candidate.indexOf(",") - 1) * 3) / 4) <= 256 * 1024) {
+            dataUrl = candidate;
+            break;
+          }
+        }
+      } finally {
+        bitmap.close();
+      }
+      if (!dataUrl) throw new Error("IMAGE_TOO_LARGE");
+      await lecturerRequest(`/classes/${classId}`, "PATCH", { [kind]: dataUrl });
+      setMsg("Đã lưu ảnh lớp.");
+      q.retry();
+    } catch (error) {
+      setMsg(
+        error instanceof Error && error.message === "IMAGE_TOO_LARGE"
+          ? "Ảnh quá lớn sau khi nén. Hãy chọn ảnh khác."
+          : lecturerError(error),
+      );
+    } finally {
+      setImageBusy(false);
+    }
+  }
+  async function deleteClass() {
+    if (
+      !window.confirm(
+        "Xóa lớp này? Chỉ lớp nháp chưa có học viên, buổi học hoặc khóa học liên kết mới có thể xóa.",
+      )
+    )
+      return;
+    try {
+      await lecturerRequest(`/classes/${classId}`, "DELETE");
+      navigate("/app/teaching/classes", { replace: true });
+    } catch (error) {
+      setMsg(lecturerError(error));
     }
   }
   return (
@@ -467,9 +491,44 @@ export function ClassDetail() {
               ]}
             />
             <h1>{x.name}</h1>
+            {x.coverDataUrl && (
+              <img
+                src={x.coverDataUrl}
+                alt="Ảnh bìa lớp"
+                style={{ width: "100%", maxHeight: 240, objectFit: "cover", borderRadius: 16 }}
+              />
+            )}
+            {x.photoDataUrl && (
+              <img
+                src={x.photoDataUrl}
+                alt="Ảnh lớp"
+                style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 16, marginTop: 12 }}
+              />
+            )}
             <p>
               {x.classKind} · tối đa {x.maxMembers} học viên
             </p>
+            <div className="form-panel" style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              <label>
+                Ảnh lớp{" "}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  disabled={imageBusy}
+                  onChange={(e) => void uploadImage("photoDataUrl", e.currentTarget.files?.[0])}
+                />
+              </label>
+              <label>
+                Ảnh bìa{" "}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  disabled={imageBusy}
+                  onChange={(e) => void uploadImage("coverDataUrl", e.currentTarget.files?.[0])}
+                />
+              </label>
+              <span className="subtext">Ảnh được tự thu nhỏ trước khi lưu.</span>
+            </div>
             <form
               className="form-panel form-grid"
               onSubmit={async (e) => {
@@ -497,6 +556,9 @@ export function ClassDetail() {
               />
               <button className="button">Lưu lớp</button>
             </form>
+            <button type="button" className="button button-subtle" onClick={() => void deleteClass()}>
+              Xóa lớp
+            </button>
             {/* Quick Management Hub */}
             <div className="workspace-quick-actions" style={{ margin: "1.5rem 0" }}>
               <Link className="quick-action-chip" to={`/app/teaching/classes/${classId}/roster`}>
@@ -916,637 +978,91 @@ export function SessionDetail() {
     </State>
   );
 }
-interface AttendanceRow extends A {
-  studentName: string;
-  avatar: string;
-  email: string;
-  notes?: string;
-}
-
-const DEFAULT_DEMO_ATTENDANCE: AttendanceRow[] = [
-  {
-    studentId: "SV-202601",
-    studentName: "Lê Văn Đức",
-    avatar: "👨‍🎓",
-    email: "duc.le@student.edu.vn",
-    attendanceStatus: "PRESENT",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "ON_TIME",
-    notes: "Lớp trưởng · Điểm danh đúng giờ",
-  },
-  {
-    studentId: "SV-202602",
-    studentName: "Nguyễn Mai Phương",
-    avatar: "👩‍🎓",
-    email: "phuong.nguyen@student.edu.vn",
-    attendanceStatus: "PRESENT",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "ON_TIME",
-    notes: "Lớp phó học tập",
-  },
-  {
-    studentId: "SV-202603",
-    studentName: "Trần Anh Tuấn",
-    avatar: "👨‍💻",
-    email: "tuan.tran@student.edu.vn",
-    attendanceStatus: "PRESENT",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "ON_TIME",
-  },
-  {
-    studentId: "SV-202604",
-    studentName: "Phạm Hoàng Long",
-    avatar: "👨‍🎓",
-    email: "long.pham@student.edu.vn",
-    attendanceStatus: "PRESENT",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "ON_TIME",
-  },
-  {
-    studentId: "SV-202605",
-    studentName: "Đỗ Thị Bảo Ngọc",
-    avatar: "👩‍💻",
-    email: "ngoc.do@student.edu.vn",
-    attendanceStatus: "EXCUSED",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "EXCUSED",
-    notes: "Có phép: Trùng lịch thi Olympic",
-  },
-  {
-    studentId: "SV-202606",
-    studentName: "Vũ Minh Quân",
-    avatar: "👨‍🎓",
-    email: "quan.vu@student.edu.vn",
-    attendanceStatus: "PRESENT",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "ON_TIME",
-  },
-  {
-    studentId: "SV-202607",
-    studentName: "Hoàng Gia Huy",
-    avatar: "👨‍🎓",
-    email: "huy.hoang@student.edu.vn",
-    attendanceStatus: "ABSENT",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "ABSENT",
-    notes: "Vắng không phép",
-  },
-  {
-    studentId: "SV-202608",
-    studentName: "Ngô Thanh Thảo",
-    avatar: "👩‍🎓",
-    email: "thao.ngo@student.edu.vn",
-    attendanceStatus: "PRESENT",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "ON_TIME",
-  },
-  {
-    studentId: "SV-202609",
-    studentName: "Bùi Quốc Hưng",
-    avatar: "👨‍🎓",
-    email: "hung.bui@student.edu.vn",
-    attendanceStatus: "PRESENT",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "ON_TIME",
-  },
-  {
-    studentId: "SV-202610",
-    studentName: "Đặng Thùy Linh",
-    avatar: "👩‍💻",
-    email: "linh.dang@student.edu.vn",
-    attendanceStatus: "PRESENT",
-    attendanceVersion: 1,
-    source: "MANUAL",
-    presenceState: "ON_TIME",
-  },
-];
-
-const STUDENT_NAMES_LOOKUP: Record<string, { name: string; avatar: string; email: string }> = {
-  "SV-202601": { name: "Lê Văn Đức", avatar: "👨‍🎓", email: "duc.le@student.edu.vn" },
-  "SV-202602": { name: "Nguyễn Mai Phương", avatar: "👩‍🎓", email: "phuong.nguyen@student.edu.vn" },
-  "SV-202603": { name: "Trần Anh Tuấn", avatar: "👨‍💻", email: "tuan.tran@student.edu.vn" },
-  "SV-202604": { name: "Phạm Hoàng Long", avatar: "👨‍🎓", email: "long.pham@student.edu.vn" },
-  "SV-202605": { name: "Đỗ Thị Bảo Ngọc", avatar: "👩‍💻", email: "ngoc.do@student.edu.vn" },
-  "SV-202606": { name: "Vũ Minh Quân", avatar: "👨‍🎓", email: "quan.vu@student.edu.vn" },
-  "SV-202607": { name: "Hoàng Gia Huy", avatar: "👨‍🎓", email: "huy.hoang@student.edu.vn" },
-  "SV-202608": { name: "Ngô Thanh Thảo", avatar: "👩‍🎓", email: "thao.ngo@student.edu.vn" },
-  "SV-202609": { name: "Bùi Quốc Hưng", avatar: "👨‍🎓", email: "hung.bui@student.edu.vn" },
-  "SV-202610": { name: "Đặng Thùy Linh", avatar: "👩‍💻", email: "linh.dang@student.edu.vn" },
-};
-
-function getStudentInitials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  const first = parts[0][0] || "";
-  const last = parts[parts.length - 1][0] || "";
-  return (first + last).toUpperCase();
-}
-
 export function Attendance() {
-  const [params] = useSearchParams();
-  const [busy, setBusy] = useState(false);
   const { sessionId = "" } = useParams();
-  const q = useLecturer<A[] | { attendance: A[] }>(`/class-sessions/${sessionId}/attendance`);
-  const [notice, setNotice] = useState<string | null>(null);
+  const query = useLecturer<A[] | { attendance: A[] }>(`/class-sessions/${sessionId}/attendance`);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"ALL" | "PRESENT" | "ABSENT" | "EXCUSED">("ALL");
-
-  // Local state for interactive editing & demo fallback
-  const [demoRows, setDemoRows] = useState<AttendanceRow[]>(DEFAULT_DEMO_ATTENDANCE);
-
-  // Determine if using server data or demo fallback
-  const rawServerRows = q.data ? (Array.isArray(q.data) ? q.data : q.data.attendance || []) : [];
-  const isUsingDemo = Boolean(q.error || (!q.pending && rawServerRows.length === 0));
-
-  // Compute active list
-  const activeRows: AttendanceRow[] = isUsingDemo
-    ? demoRows
-    : rawServerRows.map((x) => {
-        const profile = STUDENT_NAMES_LOOKUP[x.studentId] || {
-          name: `Học viên ${x.studentId}`,
-          avatar: "👤",
-          email: `${x.studentId.toLowerCase()}@student.edu.vn`,
-        };
-        return {
-          ...x,
-          studentName: profile.name,
-          avatar: profile.avatar,
-          email: profile.email,
-        };
-      });
-
-  // Filtered rows
-  const filteredRows = activeRows.filter((row) => {
-    if (filterStatus !== "ALL" && row.attendanceStatus !== filterStatus) return false;
-    if (search.trim()) {
-      const qLower = search.toLowerCase();
-      return (
-        row.studentId.toLowerCase().includes(qLower) ||
-        row.studentName.toLowerCase().includes(qLower) ||
-        row.email.toLowerCase().includes(qLower)
-      );
-    }
-    return true;
-  });
-
-  const presentCount = activeRows.filter((x) => x.attendanceStatus === "PRESENT").length;
-  const absentCount = activeRows.filter((x) => x.attendanceStatus === "ABSENT").length;
-  const excusedCount = activeRows.filter((x) => x.attendanceStatus === "EXCUSED").length;
-  const attendanceRate = activeRows.length ? Math.round((presentCount / activeRows.length) * 100) : 0;
-
-  const handleUpdateStatus = async (
-    studentId: string,
-    newStatus: "PRESENT" | "ABSENT" | "EXCUSED",
-    currentVersion: number,
-  ) => {
+  const rows = (Array.isArray(query.data) ? query.data : query.data?.attendance) ?? [];
+  async function update(row: A, status: string) {
     setBusy(true);
-    const student = activeRows.find((x) => x.studentId === studentId);
-    const sName = student?.studentName || studentId;
-
-    // Optimistically update demoRows
-    setDemoRows((prev) =>
-      prev.map((r) =>
-        r.studentId === studentId
-          ? { ...r, attendanceStatus: newStatus, attendanceVersion: r.attendanceVersion + 1 }
-          : r,
-      ),
-    );
-
+    setMessage("");
     try {
-      if (!isUsingDemo) {
-        await lecturerRequest(
-          `/class-sessions/${sessionId}/attendance/${studentId}`,
-          "PUT",
-          { attendanceStatus: newStatus },
-          { "If-Match": `"v${currentVersion}"` },
-        );
-        q.retry();
-      }
-      setNotice(`✓ Đã ghi nhận ${sName}: ${attendanceLabel[newStatus]}`);
-    } catch {
-      // In demo mode or fallback, graceful interactive notification
-      setNotice(`✓ Đã ghi nhận ${sName}: ${attendanceLabel[newStatus]} (Chế độ minh họa trực tiếp)`);
+      await lecturerRequest(
+        `/class-sessions/${sessionId}/attendance/${row.studentId}`,
+        "PUT",
+        { attendanceStatus: status },
+        { "If-Match": `"v${row.attendanceVersion}"` },
+      );
+      query.retry();
+      setMessage("Đã lưu điểm danh.");
+    } catch (error) {
+      setMessage(lecturerError(error));
     } finally {
       setBusy(false);
-      setTimeout(() => setNotice(null), 3500);
     }
-  };
-
-  const handleMarkAllPresent = () => {
-    setDemoRows((prev) =>
-      prev.map((r) => ({
-        ...r,
-        attendanceStatus: "PRESENT",
-        attendanceVersion: r.attendanceVersion + 1,
-      })),
-    );
-    setNotice("✓ Đã đánh dấu TẤT CẢ học viên CÓ MẶT!");
-    setTimeout(() => setNotice(null), 3500);
-  };
-
-  const handleExportCsv = () => {
-    const csvContent = [
-      "STT,Mã Học Viên,Họ Và Tên,Email,Trạng Thái,Ghi Chú",
-      ...activeRows.map(
-        (r, i) =>
-          `${i + 1},${r.studentId},"${r.studentName}",${r.email},"${attendanceLabel[r.attendanceStatus] || r.attendanceStatus}","${r.notes || ""}"`,
-      ),
-    ].join("\n");
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `diem-danh-buoi-hoc-${sessionId || "demo"}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setNotice("✓ Đã xuất file CSV danh sách điểm danh thành công!");
-    setTimeout(() => setNotice(null), 3500);
-  };
-
-  const handleResetDemo = () => {
-    setDemoRows(DEFAULT_DEMO_ATTENDANCE);
-    setNotice("✓ Đã khôi phục danh sách điểm danh mẫu ban đầu.");
-    setTimeout(() => setNotice(null), 3000);
-  };
-
+  }
   return (
-    <div className="attendance-page-container">
-      <div style={{ marginBottom: 16 }}>
-        <Link
-          className="button button-subtle button-small"
-          to={`/app/teaching/attendance?${params.toString()}`}
-        >
-          ← Danh sách buổi điểm danh
-        </Link>
-      </div>
-
-      <div className="dashboard-heading" style={{ marginBottom: 20 }}>
-        <div>
-          <p className="eyebrow">GIẢNG VIÊN · ĐIỀU HÀNH LỚP HỌC</p>
-          <h1>Điểm danh buổi học</h1>
-          <p className="lead" style={{ margin: "4px 0 0" }}>
-            Ghi nhận chuyên cần, kiểm soát sĩ số sinh viên tham gia lớp học phần theo thời gian thực.
-          </p>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {isUsingDemo ? (
-            <span
-              className="kpi-tag accent"
-              style={{ backgroundColor: "#e0f2fe", color: "#0284c7", fontWeight: 700 }}
-            >
-              ⚡ Dữ liệu minh họa (Demo Live)
-            </span>
-          ) : (
-            <span
-              className="kpi-tag"
-              style={{ backgroundColor: "#dcfce7", color: "#166534", fontWeight: 700 }}
-            >
-              ● Máy chủ trực tuyến
-            </span>
-          )}
-        </div>
-      </div>
-
-      {notice && (
-        <div className="dashboard-banner-notice" role="status" style={{ marginBottom: 16 }}>
-          <span>✓</span>
-          <span>{notice}</span>
-        </div>
-      )}
-
-      {/* Demo Banner */}
-      {isUsingDemo && (
-        <div className="attendance-demo-banner" role="status">
-          <span
-            className="demo-banner-icon"
-            aria-hidden="true"
-            style={{ display: "inline-flex", color: "#f59e0b" }}
-          >
-            <Icon name="sparkles" size={16} />
-          </span>
-          <div style={{ flex: 1 }}>
-            <strong>Đang hiển thị dữ liệu điểm danh mẫu (10 sinh viên)</strong>
-            <p>
-              Hệ thống đã tự động nạp danh sách học viên mẫu để bạn trải nghiệm trọn vẹn quy trình điểm danh
-              có mặt, vắng, có phép và xuất báo cáo CSV.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="button button-subtle button-small"
-            onClick={q.retry}
-            disabled={q.pending}
-          >
-            {q.pending ? "Đang kết nối…" : "↻ Thử kết nối lại máy chủ"}
-          </button>
-        </div>
-      )}
-
-      {/* Summary KPI Cards */}
-      <div className="attendance-metric-grid">
-        <div className="attendance-metric-card">
-          <div className="stat-val">
-            <AnimatedNumber value={activeRows.length} suffix=" SV" />
-          </div>
-          <div className="stat-lbl">Tổng sĩ số lớp</div>
-        </div>
-        <div className="attendance-metric-card">
-          <div className="stat-val" style={{ color: "#16a34a" }}>
-            <AnimatedNumber value={presentCount} suffix={` SV (${attendanceRate}%)`} />
-          </div>
-          <div className="stat-lbl">Có mặt tham gia</div>
-        </div>
-        <div className="attendance-metric-card">
-          <div className="stat-val" style={{ color: "#d97706" }}>
-            <AnimatedNumber value={excusedCount} suffix=" SV" />
-          </div>
-          <div className="stat-lbl">Vắng có phép</div>
-        </div>
-        <div className="attendance-metric-card">
-          <div className="stat-val" style={{ color: "#dc2626" }}>
-            <AnimatedNumber value={absentCount} suffix=" SV" />
-          </div>
-          <div className="stat-lbl">Vắng không phép</div>
-        </div>
-      </div>
-
-      {/* Actions & Filters Toolbar */}
-      <div className="attendance-actions-toolbar">
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 240 }}>
-          <span style={{ color: "var(--muted, #64748b)", display: "inline-flex" }} aria-hidden="true">
-            <Icon name="search" size={15} />
-          </span>
-          <input
-            type="search"
-            placeholder="Tìm theo tên học viên hoặc mã SV..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              border: "none",
-              background: "transparent",
-              outline: "none",
-              width: "100%",
-              fontSize: 13.5,
-              color: "var(--ink)",
-            }}
-            aria-label="Tìm kiếm học viên"
-          />
-          {search && (
-            <button
-              type="button"
-              className="plain-button"
-              style={{ color: "var(--muted, #64748b)", fontSize: 13 }}
-              onClick={() => setSearch("")}
-            >
-              ✕
-            </button>
-          )}
-        </div>
-
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <button
-            type="button"
-            className={`catalog-filter-pill ${filterStatus === "ALL" ? "active" : ""}`}
-            onClick={() => setFilterStatus("ALL")}
-            style={{ fontSize: 12, padding: "5px 12px", textDecoration: "none" }}
-          >
-            Tất cả ({activeRows.length})
-          </button>
-          <button
-            type="button"
-            className={`catalog-filter-pill ${filterStatus === "PRESENT" ? "active" : ""}`}
-            onClick={() => setFilterStatus("PRESENT")}
-            style={{
-              fontSize: 12,
-              padding: "5px 12px",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              textDecoration: "none",
-            }}
-          >
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: "#16a34a",
-                display: "inline-block",
-              }}
-            />
-            <span>Có mặt ({presentCount})</span>
-          </button>
-          <button
-            type="button"
-            className={`catalog-filter-pill ${filterStatus === "EXCUSED" ? "active" : ""}`}
-            onClick={() => setFilterStatus("EXCUSED")}
-            style={{
-              fontSize: 12,
-              padding: "5px 12px",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              textDecoration: "none",
-            }}
-          >
-            <Icon name="clock" size={13} style={{ color: "#d97706" }} />
-            <span>Có phép ({excusedCount})</span>
-          </button>
-          <button
-            type="button"
-            className={`catalog-filter-pill ${filterStatus === "ABSENT" ? "active" : ""}`}
-            onClick={() => setFilterStatus("ABSENT")}
-            style={{
-              fontSize: 12,
-              padding: "5px 12px",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              textDecoration: "none",
-            }}
-          >
-            <Icon name="close" size={13} style={{ color: "#dc2626" }} />
-            <span>Vắng ({absentCount})</span>
-          </button>
-
-          <div style={{ width: 1, height: 24, background: "var(--line, #e2e8f0)", margin: "0 4px" }} />
-
-          <button
-            type="button"
-            className="button button-small"
-            style={{
-              backgroundColor: "#16a34a",
-              borderColor: "#16a34a",
-              color: "#fff",
-              fontSize: 12,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              textDecoration: "none",
-            }}
-            onClick={handleMarkAllPresent}
-          >
-            <Icon name="check" size={13} />
-            <span>Điểm danh tất cả Có mặt</span>
-          </button>
-          <button
-            type="button"
-            className="button button-subtle button-small"
-            style={{
-              fontSize: 12,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              textDecoration: "none",
-            }}
-            onClick={handleExportCsv}
-          >
-            <Icon name="download" size={13} />
-            <span>Xuất CSV</span>
-          </button>
-          {isUsingDemo && (
-            <button
-              type="button"
-              className="button button-subtle button-small"
-              style={{
-                fontSize: 12,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 5,
-                textDecoration: "none",
-              }}
-              onClick={handleResetDemo}
-              title="Khôi phục danh sách demo mặc định"
-            >
-              <Icon name="refresh" size={13} />
-              <span>Đặt lại</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Attendance Table */}
-      <div className="attendance-scroll">
-        <table className="attendance-table">
-          <caption>Bảng theo dõi điểm danh buổi học</caption>
-          <thead>
-            <tr>
-              <th style={{ width: 50 }}>STT</th>
-              <th style={{ textAlign: "left" }}>Thông tin học viên</th>
-              <th style={{ textAlign: "left" }}>Ghi chú / Vai trò</th>
-              <th style={{ width: 130 }}>Trạng thái</th>
-              <th style={{ width: 300 }}>Cập nhật điểm danh</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRows.map((x, i) => (
-              <tr key={x.studentId}>
-                <td>{i + 1}</td>
-                <td style={{ textAlign: "left" }}>
-                  <div className="student-info-cell">
-                    <span className="student-avatar-badge" aria-hidden="true">
-                      {getStudentInitials(x.studentName)}
-                    </span>
-                    <div className="student-text-wrap">
-                      <span className="student-name-text">{x.studentName}</span>
-                      <span className="student-id-sub">
-                        {x.studentId} • {x.email}
-                      </span>
-                    </div>
-                  </div>
-                </td>
-                <td style={{ textAlign: "left", fontSize: 12.5, color: "var(--muted, #64748b)" }}>
-                  {x.notes ? (
-                    <span
-                      style={{
-                        fontWeight: 600,
-                        color: x.attendanceStatus === "EXCUSED" ? "#d97706" : "inherit",
-                      }}
-                    >
-                      {x.notes}
-                    </span>
-                  ) : (
-                    <span style={{ opacity: 0.5 }}>—</span>
-                  )}
-                </td>
-                <td>
-                  <span className={`attendance-chip status-${x.attendanceStatus.toLowerCase()}`}>
-                    {attendanceLabel[x.attendanceStatus] || "Chưa ghi nhận"}
-                  </span>
-                </td>
-                <td>
-                  <div className="inline-actions" style={{ justifyContent: "center" }}>
-                    {(
-                      [
-                        {
-                          key: "PRESENT" as const,
-                          label: "Có mặt",
-                          icon: "check" as const,
-                          cls: "btn-attendance-present",
-                        },
-                        {
-                          key: "ABSENT" as const,
-                          label: "Vắng",
-                          icon: "close" as const,
-                          cls: "btn-attendance-absent",
-                        },
-                        {
-                          key: "EXCUSED" as const,
-                          label: "Có phép",
-                          icon: "clock" as const,
-                          cls: "btn-attendance-excused",
-                        },
-                      ] as const
-                    ).map(({ key: status, label, icon, cls }) => (
-                      <button
-                        className={`button small ${cls}`}
-                        key={status}
-                        disabled={busy || status === x.attendanceStatus}
-                        onClick={() => handleUpdateStatus(x.studentId, status, x.attendanceVersion)}
-                      >
-                        <span
-                          aria-hidden="true"
-                          style={{ display: "inline-flex", verticalAlign: "middle", marginRight: "3px" }}
-                        >
-                          <Icon name={icon} size={12} />
-                        </span>{" "}
-                        {label}
-                      </button>
+    <>
+      <h1>Điểm danh buổi học</h1>
+      <label>
+        Tìm mã học viên
+        <input value={search} onChange={(e) => setSearch(e.target.value)} />
+      </label>
+      {message && <p role="status">{message}</p>}
+      <State q={query}>
+        {() =>
+          rows.length ? (
+            <div className="attendance-scroll">
+              <table className="attendance-table">
+                <thead>
+                  <tr>
+                    <th>Học viên</th>
+                    <th>Trạng thái</th>
+                    <th>Cập nhật</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows
+                    .filter((r) => r.studentId.includes(search))
+                    .map((row) => (
+                      <tr key={row.studentId}>
+                        <td>{row.studentId}</td>
+                        <td>
+                          {row.attendanceStatus === "PRESENT"
+                            ? "Có mặt"
+                            : row.attendanceStatus === "EXCUSED"
+                              ? "Có phép"
+                              : row.attendanceStatus === "ABSENT"
+                                ? "Vắng"
+                                : "Chưa ghi nhận"}
+                        </td>
+                        <td>
+                          <select
+                            aria-label={`Điểm danh ${row.studentId}`}
+                            value={row.attendanceStatus}
+                            disabled={busy}
+                            onChange={(e) => void update(row, e.target.value)}
+                          >
+                            <option value="UNMARKED" disabled>
+                              Chưa ghi nhận
+                            </option>
+                            <option value="PRESENT">Có mặt</option>
+                            <option value="ABSENT">Vắng</option>
+                            <option value="EXCUSED">Có phép</option>
+                          </select>
+                        </td>
+                      </tr>
                     ))}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {filteredRows.length === 0 && (
-              <tr>
-                <td colSpan={5} style={{ padding: "32px 16px", color: "var(--muted, #64748b)" }}>
-                  Không tìm thấy học viên nào khớp với bộ lọc tìm kiếm.
-                </td>
-              </tr>
-            )}
-          </tbody>
-          <tfoot>
-            <tr>
-              <th colSpan={5} style={{ padding: "12px 16px", textAlign: "left" }}>
-                Tổng số: <strong>{activeRows.length}</strong> học viên · Có mặt:{" "}
-                <strong style={{ color: "#16a34a" }}>{presentCount}</strong> · Vắng có phép:{" "}
-                <strong style={{ color: "#d97706" }}>{excusedCount}</strong> · Vắng không phép:{" "}
-                <strong style={{ color: "#dc2626" }}>{absentCount}</strong> · Tỷ lệ chuyên cần:{" "}
-                <strong>{attendanceRate}%</strong>
-              </th>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p>Chưa có học viên để điểm danh trong buổi học này.</p>
+          )
+        }
+      </State>
+    </>
   );
 }

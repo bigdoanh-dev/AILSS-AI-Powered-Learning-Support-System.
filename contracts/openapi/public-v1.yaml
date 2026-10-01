@@ -6103,6 +6103,8 @@
                 ],
               "properties":
                 {
+                  "description": { "type": "string", "maxLength": 2000 },
+                  "coverDataUrl": { "type": ["string", "null"], "maxLength": 350000 },
                   "courseId": { "type": "string", "format": "uuid" },
                   "title": { "type": "string", "minLength": 3, "maxLength": 160 },
                   "slug": { "type": "string", "minLength": 1, "maxLength": 120 },
@@ -6166,6 +6168,8 @@
                 ],
               "properties":
                 {
+                  "description": { "type": "string", "maxLength": 2000 },
+                  "coverDataUrl": { "type": ["string", "null"], "maxLength": 350000 },
                   "courseId": { "type": "string", "format": "uuid" },
                   "title": { "type": "string", "minLength": 3, "maxLength": 160 },
                   "slug": { "type": "string", "minLength": 1, "maxLength": 120 },
@@ -6182,9 +6186,18 @@
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["title", "slug", "categoryId", "priceType", "price", "currency"],
+              "required": ["title", "slug", "priceType", "price", "currency"],
+              "anyOf": [{ "required": ["categoryId"] }, { "required": ["categoryName"] }],
               "properties":
                 {
+                  "categoryName": { "type": "string", "minLength": 2, "maxLength": 80 },
+                  "description": { "type": "string", "maxLength": 2000 },
+                  "coverDataUrl":
+                    {
+                      "type": ["string", "null"],
+                      "maxLength": 350000,
+                      "pattern": "^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$",
+                    },
                   "title": { "type": "string", "minLength": 3, "maxLength": 160 },
                   "slug": { "type": "string", "minLength": 1, "maxLength": 200 },
                   "categoryId": { "type": "string", "format": "uuid" },
@@ -6200,6 +6213,14 @@
               "minProperties": 1,
               "properties":
                 {
+                  "categoryName": { "type": "string", "minLength": 2, "maxLength": 80 },
+                  "description": { "type": "string", "maxLength": 2000 },
+                  "coverDataUrl":
+                    {
+                      "type": ["string", "null"],
+                      "maxLength": 350000,
+                      "pattern": "^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$",
+                    },
                   "title": { "type": "string", "minLength": 3, "maxLength": 160 },
                   "slug": { "type": "string", "minLength": 1, "maxLength": 200 },
                   "categoryId": { "type": "string", "format": "uuid" },
@@ -6230,6 +6251,8 @@
                 ],
               "properties":
                 {
+                  "description": { "type": "string", "maxLength": 2000 },
+                  "coverDataUrl": { "type": ["string", "null"], "maxLength": 350000 },
                   "courseId": { "type": "string", "format": "uuid" },
                   "ownerLecturerId": { "type": "string", "format": "uuid" },
                   "title": { "type": "string", "minLength": 3, "maxLength": 160 },

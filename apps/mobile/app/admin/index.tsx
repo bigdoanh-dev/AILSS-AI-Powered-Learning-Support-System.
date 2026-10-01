@@ -10,17 +10,16 @@ import {
 } from "react-native";
 import { router, type Href } from "expo-router";
 import { useSyncExternalStore } from "react";
-import { ApiError } from "../../src/api";
+import { ApiError, record } from "../../src/api";
 import { runtime } from "../../src/runtime";
-import { lecturerApplications, moderationReports } from "../../src/admin";
 import { Page, Button, Icon, ScreenHeader, BottomNavBar, styles, tokens } from "../../src/ui";
 
 export default function AdminDashboard() {
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
-  const [pendingAppsCount, setPendingAppsCount] = useState<number | null>(null);
-  const [openReportsCount, setOpenReportsCount] = useState<number | null>(null);
+  const [lecturerCount, setLecturerCount] = useState<number | null>(null);
+  const [studentCount, setStudentCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -30,17 +29,16 @@ export default function AdminDashboard() {
       if (snapshot.user?.role !== "ADMIN") return;
       setError("");
       try {
-        const [appsRes, repsRes] = await Promise.all([
-          session.request("/api/v1/admin/lecturer-applications?status=SUBMITTED", { signal }),
-          session.request("/api/v1/admin/moderation/reports?status=OPEN", { signal }),
-        ]);
+        const stats = record(await session.request("/api/v1/admin/dashboard/stats", { signal }));
         if (signal?.aborted) return;
-        const apps = lecturerApplications(appsRes);
-        const reps = moderationReports(repsRes);
-        setPendingAppsCount(apps.length);
-        setOpenReportsCount(reps.length);
+        if (typeof stats.students !== "number" || typeof stats.lecturers !== "number")
+          throw new ApiError("invalid");
+        setLecturerCount(stats.lecturers);
+        setStudentCount(stats.students);
       } catch (e: unknown) {
         if (!signal?.aborted) {
+          setLecturerCount(null);
+          setStudentCount(null);
           setError(e instanceof ApiError ? e.message : "Không thể tải số liệu tổng quan.");
         }
       } finally {
@@ -50,10 +48,13 @@ export default function AdminDashboard() {
         }
       }
     },
-    [session, snapshot.user?.role],
+    [session, snapshot.user?.role, snapshot.user?.userId],
   );
 
   useEffect(() => {
+    setLecturerCount(null);
+    setStudentCount(null);
+    setLoading(true);
     const abort = new AbortController();
     void loadData(abort.signal);
     return () => abort.abort();
@@ -139,15 +140,15 @@ export default function AdminDashboard() {
               <View style={ds.kpiIconWrap}>
                 <Icon name="academic" size={24} color={tokens.color.brand} />
               </View>
-              <Text style={ds.kpiValue}>{pendingAppsCount !== null ? `${pendingAppsCount}` : "—"}</Text>
-              <Text style={ds.kpiLabel}>Hồ sơ GV chờ duyệt</Text>
+              <Text style={ds.kpiValue}>{lecturerCount !== null ? `${lecturerCount}` : "—"}</Text>
+              <Text style={ds.kpiLabel}>Giảng viên đang hoạt động</Text>
             </View>
             <View style={ds.kpiCard}>
               <View style={ds.kpiIconWrap}>
                 <Icon name="shield" size={24} color={tokens.color.brand} />
               </View>
-              <Text style={ds.kpiValue}>{openReportsCount !== null ? `${openReportsCount}` : "—"}</Text>
-              <Text style={ds.kpiLabel}>Báo cáo kiểm duyệt mở</Text>
+              <Text style={ds.kpiValue}>{studentCount !== null ? `${studentCount}` : "—"}</Text>
+              <Text style={ds.kpiLabel}>Học viên đang hoạt động</Text>
             </View>
           </View>
 
@@ -157,6 +158,10 @@ export default function AdminDashboard() {
           </Text>
 
           <View style={ds.actionStack}>
+            <Button
+              label="Xuất bản và lưu trữ khóa học"
+              onPress={() => router.push("/admin/courses" as Href)}
+            />
             <Button
               label="Prometheus & Grafana"
               variant="outline"

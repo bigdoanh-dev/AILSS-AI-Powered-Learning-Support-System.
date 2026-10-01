@@ -1,6 +1,7 @@
 import { types } from "cassandra-driver";
 import type { CassandraClient } from "../../../../packages/cassandra/src/index.js";
 import { maskEmail } from "../registration/model.js";
+import { identitySearchShard } from "../admin/model.js";
 import type { ExternalIdentityRecord, SocialProvider, UserLinkedProvider } from "./model.js";
 
 const LOCAL_QUORUM = "LOCAL_QUORUM" as const;
@@ -136,7 +137,7 @@ export class IdentityExternalAuthRepository {
 
   public async createSocialUser(input: CreateSocialUserInput): Promise<StoredUser> {
     const uid = uuid(input.userId);
-    const shard = Math.floor(Math.random() * 16);
+    const shard = identitySearchShard(input.userId);
     const masked = maskEmail(input.email);
 
     // 1. Insert user
@@ -152,9 +153,10 @@ export class IdentityExternalAuthRepository {
 
     // 2. Shard index
     await this.client.execute(
-      `INSERT INTO users_by_role_status_bucket (role, status, shard, user_id)
-       VALUES ('STUDENT', 'ACTIVE', ?, ?)`,
-      [shard, uid],
+      `INSERT INTO users_by_role_status_bucket
+       (role, status, shard, updated_at, user_id, display_name, lecturer_verified, profile_version)
+       VALUES ('STUDENT', 'ACTIVE', ?, ?, ?, ?, false, ?)`,
+      [shard, input.now, uid, input.displayName, types.Long.fromNumber(1)],
       LOCAL_QUORUM,
     );
 

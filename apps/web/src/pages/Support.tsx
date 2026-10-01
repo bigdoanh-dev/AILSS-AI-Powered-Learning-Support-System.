@@ -1,4 +1,4 @@
-import { safeReturnTo, sessionRequest, useSession } from "../auth/session";
+import { postLoginDestination, sessionRequest, useSession } from "../auth/session";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, Link } from "react-router-dom";
@@ -13,6 +13,7 @@ import {
   type SocialWebConfig,
 } from "../auth/social";
 import { Icon } from "../components/Icon";
+import { PasswordReset } from "../auth/PasswordReset";
 export function FaqPage() {
   return (
     <>
@@ -275,6 +276,21 @@ export function Auth() {
   const [appleSdkFailed, setAppleSdkFailed] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const completeSsoRef = useRef<(provider: "google" | "apple", idToken: string) => void>(() => {});
+
+  useEffect(() => {
+    if (
+      !register &&
+      !choose &&
+      !forgot &&
+      !busyRef.current &&
+      auth.state === "AUTHENTICATED" &&
+      auth.profile
+    ) {
+      navigate(postLoginDestination(auth.profile, new URLSearchParams(location.search).get("returnTo")), {
+        replace: true,
+      });
+    }
+  }, [auth.state, auth.profile, register, choose, forgot, location.search, navigate]);
   const key = useRef<string | null>(null);
   const fingerprint = useRef("");
   const title = forgot
@@ -352,16 +368,9 @@ export function Auth() {
       provider === "google" ? "Đang kết nối tài khoản Google SSO…" : "Đang kết nối tài khoản Apple ID…",
     );
     try {
-      await auth.socialLogin(provider, idToken, clientProfile);
-      navigate("/auth/result", {
+      const profile = await auth.socialLogin(provider, idToken, clientProfile);
+      navigate(postLoginDestination(profile, new URLSearchParams(location.search).get("returnTo")), {
         replace: true,
-        state: {
-          success: true,
-          title: "Đăng nhập thành công",
-          message: "Tài khoản đã sẵn sàng. Bạn có thể tiếp tục công việc của mình.",
-          to: safeReturnTo(new URLSearchParams(location.search).get("returnTo")),
-          label: "Tiếp tục",
-        },
       });
     } catch (error) {
       navigate("/auth/result", {
@@ -455,21 +464,14 @@ export function Auth() {
           },
         });
       } else {
-        await auth.login({
+        const profile = await auth.login({
           email: String(data.get("email") || emailVal)
             .trim()
             .toLowerCase(),
           password: data.get("password") || passwordVal,
         });
-        navigate("/auth/result", {
+        navigate(postLoginDestination(profile, new URLSearchParams(location.search).get("returnTo")), {
           replace: true,
-          state: {
-            success: true,
-            title: "Đăng nhập thành công",
-            message: "Tài khoản đã sẵn sàng. Bạn có thể tiếp tục công việc của mình.",
-            to: safeReturnTo(new URLSearchParams(location.search).get("returnTo")),
-            label: "Tiếp tục",
-          },
         });
         form.reset();
       }
@@ -587,19 +589,7 @@ export function Auth() {
               </p>
             </div>
           ) : forgot ? (
-            <div className="forgot-password-card">
-              <h2>Quên mật khẩu?</h2>
-              <p>
-                Hệ thống chưa hỗ trợ gửi email đặt lại mật khẩu tự động. Hãy liên hệ với Quản trị viên hệ
-                thống hoặc bộ phận CNTT để được cấp lại mật khẩu.
-              </p>
-              <div className="forgot-card-actions">
-                <Link to="/auth/login" className="button auth-submit-btn">
-                  Quay lại đăng nhập
-                </Link>
-                <TextLink to="/help">Trợ giúp tài khoản</TextLink>
-              </div>
-            </div>
+            <PasswordReset />
           ) : session ? (
             <div className="auth-card-motion auth-form-card">
               <span className="eyebrow">ĐÃ XÁC THỰC</span>
@@ -652,7 +642,11 @@ export function Auth() {
                           aria-label="Đăng nhập với Google"
                         >
                           <GoogleIcon />
-                          <span>{socialConfig ? "Google chưa được cấu hình" : "Đang tải Google…"}</span>
+                          <span>
+                            {socialConfig
+                              ? "Google chưa được cấu hình trong Gateway (.env)"
+                              : "Đang tải Google…"}
+                          </span>
                         </button>
                       )}
                     </div>

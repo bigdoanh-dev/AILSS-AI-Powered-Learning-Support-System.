@@ -1,5 +1,6 @@
 import { createHash, createHmac, randomUUID } from "node:crypto";
 import { z } from "zod";
+import { categoryIdForName, normalizeCategoryName } from "../categories.js";
 import { normalizeSlug } from "../catalog/model.js";
 
 const titleSchema = z
@@ -20,26 +21,62 @@ const currencySchema = z
   .toUpperCase()
   .pipe(z.string().regex(/^[A-Z]{3}$/u));
 const fields = {
+  description: z.string().trim().max(2000).optional(),
+  coverDataUrl: z
+    .string()
+    .max(350000)
+    .regex(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/u)
+    .nullable()
+    .optional(),
   title: titleSchema,
   slug: slugSchema,
-  categoryId: z.string().uuid(),
+  categoryId: z.string().uuid().optional(),
+  categoryName: z
+    .string()
+    .trim()
+    .min(2)
+    .max(80)
+    .refine(
+      (value) =>
+        !Array.from(value).some(
+          (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,
+        ),
+      "Control characters are not allowed",
+    )
+    .transform(normalizeCategoryName)
+    .optional(),
   priceType: z.enum(["FREE", "PAID"]),
   price: moneySchema,
   currency: currencySchema,
 };
 
-const createSchema = z.object(fields).strict();
+const createSchema = z
+  .object(fields)
+  .strict()
+  .refine((value) => !!value.categoryName || !!value.categoryId, "Category is required")
+  .transform((value) => ({
+    ...value,
+    categoryId: value.categoryName
+      ? categoryIdForName(value.categoryName)
+      : z.string().uuid().parse(value.categoryId),
+  }));
 const patchSchema = z
   .object({
+    description: fields.description,
+    coverDataUrl: fields.coverDataUrl,
     title: fields.title.optional(),
     slug: fields.slug.optional(),
-    categoryId: fields.categoryId.optional(),
+    categoryId: fields.categoryId,
+    categoryName: fields.categoryName,
     priceType: fields.priceType.optional(),
     price: fields.price.optional(),
     currency: fields.currency.optional(),
   })
   .strict()
-  .refine((value) => Object.keys(value).length > 0, "PATCH body must not be empty");
+  .refine((value) => Object.keys(value).length > 0, "PATCH body must not be empty")
+  .transform((value) =>
+    value.categoryName ? { ...value, categoryId: categoryIdForName(value.categoryName) } : value,
+  );
 
 export type CourseWriteRequest = z.infer<typeof createSchema>;
 export type CoursePatchRequest = z.infer<typeof patchSchema>;
@@ -47,6 +84,8 @@ export type CoursePatchRequest = z.infer<typeof patchSchema>;
 export interface AuthoringCourse {
   readonly courseId: string;
   readonly ownerLecturerId: string;
+  readonly description?: string | undefined;
+  readonly coverDataUrl?: string | null | undefined;
   readonly title: string;
   readonly slug: string;
   readonly categoryId: string;
@@ -106,6 +145,8 @@ export function courseDto(course: AuthoringCourse) {
   return {
     courseId: course.courseId,
     ownerLecturerId: course.ownerLecturerId,
+    description: course.description ?? "",
+    coverDataUrl: course.coverDataUrl ?? null,
     title: course.title,
     slug: course.slug,
     categoryId: course.categoryId,

@@ -222,19 +222,7 @@ export class IdentityAdminService {
       if (this.store.getStats) {
         return await this.store.getStats();
       }
-      return {
-        totalAccounts: 0,
-        students: 0,
-        lecturers: 0,
-        admins: 0,
-        suspended: 0,
-        aiSessions: 0,
-        completionRate: "0%",
-        avgScore: "N/A",
-        totalLearningHours: "0 giờ",
-        cognitiveLevels: [],
-        weekdayEngagement: [],
-      };
+      throw unavailable("ADMIN_STATS_UNAVAILABLE", "Account statistics are not available");
     } catch (error) {
       if (error instanceof AppError) throw error;
       this.metrics.identityAdminReads.inc({ operation: "stats", outcome: "dependency_failure" });

@@ -1,22 +1,30 @@
+import { useCourseCategories } from "../lib/course-categories";
 import { CourseRating, CourseReviews, FeaturedInstructors } from "../components/CourseCommunity";
 import { LecturerLink } from "../components/PublicLecturer";
 import { useSession } from "../auth/session";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { CourseArtwork, categories, courseSubject } from "../components/CourseArtwork";
+import { CourseArtwork, courseSubject } from "../components/CourseArtwork";
 import { PageHero, Section, TextLink, Picture, ButtonLink } from "../components/ui";
 import { searchCourses, normalizeQuery, request, errorMessage, priceLabel, type Course } from "../lib/api";
 import { TiltCard } from "../components/TiltCard";
 import { Icon } from "../components/Icon";
 
 export function CourseCard({ course }: { course: Course }) {
-  const subject = courseSubject(course.title, course.categoryId);
+  const categoryOptions = useCourseCategories();
+  const subject =
+    categoryOptions.find((item) => item.id === course.categoryId) ??
+    courseSubject(course.title, course.categoryId);
   const paid = course.priceType !== "FREE";
   return (
     <TiltCard as="article" className="course-card learning-card" tiltOptions={{ maxTilt: 3, scale: 1.01 }}>
       <div className="course-artwork-container">
-        <CourseArtwork title={course.title} categoryId={course.categoryId} />
+        <CourseArtwork
+          imageUrl={course.coverDataUrl ?? undefined}
+          title={course.title}
+          categoryId={course.categoryId}
+        />
         <span className="course-ai-badge" aria-hidden="true">
           <span>⚡</span> AI Hỗ trợ
         </span>
@@ -56,6 +64,7 @@ export function CourseCard({ course }: { course: Course }) {
   );
 }
 export function CourseSearch({ compact = false }: { compact?: boolean }) {
+  const categories = useCourseCategories();
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState(params.get("q") || "");
   const [items, setItems] = useState<Course[]>([]);
@@ -138,7 +147,7 @@ export function CourseSearch({ compact = false }: { compact?: boolean }) {
       if (normalized.length >= 3 && normalized.length <= 20) void load(normalized);
     } else void load("");
     return () => controller.current?.abort();
-  }, [params]);
+  }, [params, categories]);
   function submit(e: FormEvent) {
     e.preventDefault();
     const q = normalizeQuery(query);
@@ -289,13 +298,21 @@ export default function Courses() {
   );
 }
 export function CourseDetail() {
+  const categoryOptions = useCourseCategories();
   const { profile } = useSession();
   const { id } = useParams();
   const [course, setCourse] = useState<Course | null>(null);
   const [trailer, setTrailer] = useState<{ playlistUrl: string; posterUrl?: string } | null>(null);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
-  const subject = course ? courseSubject(course.title, course.categoryId) : null;
+  const subject = course
+    ? {
+        ...courseSubject(course.title, course.categoryId),
+        name:
+          categoryOptions.find((item) => item.id === course.categoryId)?.name ??
+          courseSubject(course.title, course.categoryId).name,
+      }
+    : null;
   const paid = course?.priceType === "PAID";
   useEffect(() => {
     setError("");
@@ -366,7 +383,12 @@ export function CourseDetail() {
                   />
                 </div>
               ) : (
-                <CourseArtwork title={course.title} categoryId={course.categoryId} eager />
+                <CourseArtwork
+                  imageUrl={course.coverDataUrl ?? undefined}
+                  title={course.title}
+                  categoryId={course.categoryId}
+                  eager
+                />
               )}
               <div className="course-enroll-content">
                 <strong className={`course-detail-price ${paid ? "" : "free"}`}>{priceLabel(course)}</strong>

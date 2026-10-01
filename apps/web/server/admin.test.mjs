@@ -193,3 +193,15 @@ test("Admin AI proxy accepts only admin support chat and own conversation routes
     assert.throws(() => adminOperation("/web-session/admin/assistant/chat", "POST", body, {}));
   }
 });
+test("Admin assistant mode is read-only and cannot accept an arbitrary upstream", () => {
+  assert.equal(
+    adminOperation("/web-session/admin/assistant/admin-status", "GET", undefined, {}).path,
+    "/assistant/admin-status",
+  );
+  assert.throws(() =>
+    adminOperation("/web-session/admin/assistant/admin-status?url=http://private", "GET", undefined, {}),
+  );
+  assert.throws(() =>
+    adminOperation("/web-session/admin/assistant/admin-status", "POST", { mode: "local-guide" }, {}),
+  );
+});

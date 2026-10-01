@@ -8,6 +8,7 @@ import type {
 } from "./model.js";
 import { eventBucket } from "./model.js";
 import { types } from "cassandra-driver";
+import { registerCategory } from "../categories.js";
 import type { EventEnvelope } from "../../../../packages/contracts/src/index.js";
 
 export interface IdempotencyRecord {
@@ -194,8 +195,9 @@ export class LearningAuthoringRepository {
     input: CourseWriteRequest,
     now: Date,
   ): Promise<boolean> {
+    await registerCategory(this.db, input.categoryName);
     const rows = await this.db.execute(
-      `INSERT INTO course_by_id (course_id,owner_lecturer_id,title,slug,category_id,state,content_version,record_version,price_type,price,currency,created_at,updated_at) VALUES (?,?,?,?,?,'DRAFT',1,1,?,?,?,?,?) IF NOT EXISTS`,
+      `INSERT INTO course_by_id (course_id,owner_lecturer_id,title,slug,category_id,state,content_version,record_version,price_type,price,currency,description,cover_data_url,created_at,updated_at) VALUES (?,?,?,?,?,'DRAFT',1,1,?,?,?,?,?,?,?) IF NOT EXISTS`,
       [
         types.Uuid.fromString(courseId),
         types.Uuid.fromString(lecturerId),
@@ -205,6 +207,8 @@ export class LearningAuthoringRepository {
         input.priceType,
         types.BigDecimal.fromString(input.price),
         input.currency,
+        input.description ?? "",
+        input.coverDataUrl ?? null,
         now,
         now,
       ],
@@ -216,7 +220,7 @@ export class LearningAuthoringRepository {
 
   public async get(courseId: string): Promise<AuthoringCourse | undefined> {
     const rows = await this.db.execute(
-      `SELECT course_id,owner_lecturer_id,title,slug,category_id,state,content_version,record_version,price_type,price,currency,created_at,updated_at,published_at FROM course_by_id WHERE course_id=?`,
+      `SELECT course_id,owner_lecturer_id,title,slug,category_id,state,content_version,record_version,price_type,price,currency,description,cover_data_url,created_at,updated_at,published_at FROM course_by_id WHERE course_id=?`,
       [types.Uuid.fromString(courseId)],
       "LOCAL_QUORUM",
     );
@@ -225,6 +229,8 @@ export class LearningAuthoringRepository {
     return {
       courseId: String(r.course_id),
       ownerLecturerId: String(r.owner_lecturer_id),
+      description: typeof r.description === "string" ? r.description : "",
+      coverDataUrl: typeof r.cover_data_url === "string" ? r.cover_data_url : null,
       title: String(r.title),
       slug: String(r.slug),
       categoryId: String(r.category_id),
@@ -277,8 +283,11 @@ export class LearningAuthoringRepository {
   }
 
   public async update(current: AuthoringCourse, patch: CoursePatchRequest, now: Date): Promise<boolean> {
+    await registerCategory(this.db, patch.categoryName);
     const next: AuthoringCourse = {
       ...current,
+      description: patch.description ?? current.description ?? "",
+      coverDataUrl: patch.coverDataUrl === undefined ? (current.coverDataUrl ?? null) : patch.coverDataUrl,
       title: patch.title ?? current.title,
       slug: patch.slug ?? current.slug,
       categoryId: patch.categoryId ?? current.categoryId,
@@ -289,7 +298,7 @@ export class LearningAuthoringRepository {
       updatedAt: now,
     };
     const rows = await this.db.execute(
-      `UPDATE course_by_id SET title=?,slug=?,category_id=?,price_type=?,price=?,currency=?,record_version=?,updated_at=? WHERE course_id=? IF owner_lecturer_id=? AND state='DRAFT' AND record_version=?`,
+      `UPDATE course_by_id SET title=?,slug=?,category_id=?,price_type=?,price=?,currency=?,description=?,cover_data_url=?,record_version=?,updated_at=? WHERE course_id=? IF owner_lecturer_id=? AND state='DRAFT' AND record_version=?`,
       [
         next.title,
         next.slug,
@@ -297,6 +306,8 @@ export class LearningAuthoringRepository {
         next.priceType,
         types.BigDecimal.fromString(next.price),
         next.currency,
+        next.description,
+        next.coverDataUrl,
         types.Long.fromNumber(next.recordVersion),
         now,
         types.Uuid.fromString(current.courseId),

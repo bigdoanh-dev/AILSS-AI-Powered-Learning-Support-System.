@@ -1,3 +1,10 @@
+import { loadEnvFile } from "node:process";
+import { fileURLToPath } from "node:url";
+try {
+  loadEnvFile(fileURLToPath(new URL("../../../.env", import.meta.url)));
+} catch (error) {
+  if (error.code !== "ENOENT") throw error;
+}
 const contentOrigin = new URL(process.env.OBJECT_STORAGE_PUBLIC_URL || "http://127.0.0.1:9000").origin;
 import { createSessionAdapter } from "../server/session.mjs";
 import { attachAiRealtime } from "../server/realtime.mjs";

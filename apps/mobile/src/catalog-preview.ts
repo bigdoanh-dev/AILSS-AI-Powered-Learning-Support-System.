@@ -1,3 +1,4 @@
+import { record, string, ApiError } from "./api";
 import { courses as decodeCourses, type Course } from "./learning";
 
 // These are the product's configured category IDs (also used by the web catalog).
@@ -13,6 +14,23 @@ const PAGE_SIZE_PER_CATEGORY = 6;
 const MAX_PREVIEW_COURSES = 20;
 
 type CatalogRequest = (path: string, options: { signal?: AbortSignal }) => Promise<unknown>;
+
+export interface CourseCategory {
+  id: string;
+  name: string;
+}
+
+export async function loadCourseCategories(
+  request: CatalogRequest,
+  signal?: AbortSignal,
+): Promise<CourseCategory[]> {
+  const value = await request("/api/v1/course-categories", { signal });
+  if (!Array.isArray(value)) throw new ApiError("invalid");
+  return value.map((item) => {
+    const row = record(item);
+    return { id: string(row.id), name: string(row.name) };
+  });
+}
 
 export interface CatalogPreview {
   courses: Course[];
@@ -39,9 +57,10 @@ export function isSupportedTitleSearchTerm(value: string): boolean {
 export async function loadConfiguredCoursePreview(
   request: CatalogRequest,
   signal?: AbortSignal,
+  categories: readonly CourseCategory[] = configuredCourseCategories,
 ): Promise<CatalogPreview> {
   const results = await Promise.allSettled(
-    configuredCourseCategories.map(async (category) => {
+    categories.map(async (category) => {
       const params = new URLSearchParams({ categoryId: category.id, limit: String(PAGE_SIZE_PER_CATEGORY) });
       return decodeCourses(await request(`/api/v1/courses?${params.toString()}`, { signal }));
     }),
@@ -51,7 +70,7 @@ export async function loadConfiguredCoursePreview(
   let successfulCategories = 0;
   for (const [index, result] of results.entries()) {
     if (result.status === "rejected") {
-      failedCategories.push(configuredCourseCategories[index]!.name);
+      failedCategories.push(categories[index]!.name);
       continue;
     }
     successfulCategories += 1;

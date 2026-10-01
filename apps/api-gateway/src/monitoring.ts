@@ -80,7 +80,7 @@ export async function monitoringSnapshot(
       z.object({ database: z.literal("ok") }).parse(raw),
     ),
     query(rateQuery),
-    query('sum(rate(ailss_http_requests_total{job=~"ailss-.*",status=~"5.."}[5m]))'),
+    query(`sum(rate(ailss_http_requests_total{job=~"ailss-.*",status=~"5.."}[5m])) or (0 * ${rateQuery})`),
     query(
       'histogram_quantile(0.95, sum(rate(ailss_http_duration_seconds_bucket{job=~"ailss-.*"}[5m])) by (le))',
     ),

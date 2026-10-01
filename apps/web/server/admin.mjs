@@ -52,6 +52,9 @@ export function adminOperation(url, method, body, headers) {
   if (method === "GET" && path === "/assistant/conversations" && !query) {
     return { path: "/assistant/conversations", headers: {} };
   }
+  if (method === "GET" && path === "/assistant/admin-status" && !query) {
+    return { path: "/assistant/admin-status", headers: {} };
+  }
   const assistantConversation = new RegExp(`^/assistant/conversations/(${uuid})$`).exec(path);
   if (method === "GET" && assistantConversation && !query) {
     return { path: `/assistant/conversations/${assistantConversation[1]}`, headers: {} };

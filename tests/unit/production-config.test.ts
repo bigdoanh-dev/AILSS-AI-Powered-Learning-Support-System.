@@ -116,3 +116,35 @@ describe("production configuration validator", () => {
     );
   });
 });
+
+it("allows explicit local admin guidance in development", () => {
+  expect(
+    loadConfig({
+      APP_NAME: "ai-service",
+      SERVICE_ID: "ai-service",
+      PORT: "8106",
+      NODE_ENV: "development",
+      AI_ADMIN_SUPPORT_MODE: "local-guide",
+    }).AI_ADMIN_SUPPORT_MODE,
+  ).toBe("local-guide");
+});
+it.each([
+  { NODE_ENV: "production" },
+  { NODE_ENV: "development", AILSS_PROFILE: "production" },
+  { NODE_ENV: "development", DEPLOYMENT_ENV: "production" },
+])("rejects local admin guidance in a production environment", (profile) => {
+  expect(() =>
+    loadConfig({
+      APP_NAME: "ai-service",
+      SERVICE_ID: "ai-service",
+      PORT: "8106",
+      ...profile,
+      AI_ADMIN_SUPPORT_MODE: "local-guide",
+    }),
+  ).toThrow("Environment configuration is invalid");
+});
+it("rejects a local guide when validating VPS runtime configuration", () => {
+  expect(validateProductionConfig({ ...fixture, AI_ADMIN_SUPPORT_MODE: "local-guide" })).toContain(
+    "AI_ADMIN_SUPPORT_MODE must equal external in production",
+  );
+});

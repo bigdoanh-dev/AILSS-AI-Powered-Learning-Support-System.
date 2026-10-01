@@ -98,6 +98,24 @@ describe("Google sign-in session", () => {
 });
 
 describe("transport", () => {
+  it("explains a social provider outage without reporting an expired session", async () => {
+    const request = vi.fn<Fetcher>().mockResolvedValue(
+      new Response(JSON.stringify({ error: { code: "SOCIAL_PROVIDER_UNAVAILABLE", retryable: true } }), {
+        status: 503,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    await expect(
+      new Transport("https://api.example.org", request).request("/api/v1/auth/social/google", {
+        method: "POST",
+        body: { idToken: "test-token" },
+      }),
+    ).rejects.toMatchObject({
+      status: 503,
+      code: "SOCIAL_PROVIDER_UNAVAILABLE",
+      message: "Dịch vụ xác thực Google/Apple tạm thời không kết nối được. Vui lòng thử lại sau.",
+    });
+  });
   it("explains an exhausted assessment attempt without calling it stale data", async () => {
     const request = vi.fn<Fetcher>().mockResolvedValue(
       new Response(JSON.stringify({ error: { code: "ATTEMPT_LIMIT_REACHED" } }), {

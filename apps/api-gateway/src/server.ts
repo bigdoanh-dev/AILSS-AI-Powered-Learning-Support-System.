@@ -13,6 +13,7 @@ import {
 import { InProcessRateLimiter } from "../../../packages/http/src/rate-limiter.js";
 import { createLogger, httpRequestSerializer } from "../../../packages/logger/src/index.js";
 import { createMetrics } from "../../../packages/observability/src/index.js";
+import { httpMetricsMiddleware } from "../../../packages/observability/src/http.js";
 import { installFatalHandlers } from "../../../packages/runtime/src/index.js";
 import { protectedIdentityProxyFactory } from "./protected-identity-proxy.js";
 import { publicLecturerProxyFactory } from "./public-lecturer-proxy.js";
@@ -180,6 +181,7 @@ const identitiesUnlinkHandler = protectedProxy.handler({
 });
 const app = express();
 app.disable("x-powered-by");
+app.use(httpMetricsMiddleware(metrics));
 if (config.TRUST_PROXY_HOPS > 0) app.set("trust proxy", config.TRUST_PROXY_HOPS);
 app.use((_request, response, next) => {
   response.setHeader("X-Content-Type-Options", "nosniff");
@@ -228,6 +230,11 @@ app.post(
   "/api/v1/auth/logout",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
   logoutHandler,
+);
+app.get(
+  "/api/v1/course-categories",
+  readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)),
+  learningCourses.categories,
 );
 app.get("/api/v1/auth/social/config", socialConfigHandler(config.GOOGLE_WEB_CLIENT_ID));
 app.post(
@@ -446,6 +453,11 @@ app.patch(
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
   classroom.update,
 );
+app.delete(
+  "/api/v1/classes/:classId",
+  authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
+  classroom.deleteClass,
+);
 app.get("/api/v1/classes/:classId/members", classroom.roster);
 app.post(
   "/api/v1/classes/:classId/members/:studentId/warnings",
@@ -604,6 +616,11 @@ app.post(
   "/api/v1/assistant/chat",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),
   assistant.chat,
+);
+app.get(
+  "/api/v1/assistant/admin-status",
+  readLimiter.middleware(Number(process.env.RATE_LIMIT_READ_PER_MINUTE ?? 300)),
+  assistant.adminStatus,
 );
 app.get(
   "/api/v1/assistant/conversations",

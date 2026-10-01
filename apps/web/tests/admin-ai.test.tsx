@@ -48,3 +48,47 @@ describe("AI quản trị", () => {
     );
   });
 });
+
+describe("Admin local configuration display", () => {
+  it("shows the local guide mode from the backend and displays its real response", async () => {
+    request.mockImplementation((path: string) =>
+      Promise.resolve({
+        data:
+          path === "/assistant/admin-status"
+            ? { mode: "local-guide" }
+            : path === "/assistant/conversations"
+              ? []
+              : {
+                  conversationId: "local-chat",
+                  messageId: "local-message",
+                  content: "Hướng dẫn local — không gọi mô hình AI trực tuyến. Mở /app/admin/moderation.",
+                },
+      }),
+    );
+    render(
+      <MemoryRouter>
+        <AdminAi />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByRole("heading", { name: "Hướng dẫn quản trị local" })).toBeTruthy();
+    expect(screen.getByText("Hướng dẫn local")).toBeTruthy();
+    await userEvent.type(screen.getByLabelText("Câu hỏi cho AI quản trị"), "Xem báo cáo kiểm duyệt ở đâu?");
+    await userEvent.click(screen.getByRole("button", { name: "Gửi câu hỏi" }));
+    expect(
+      await screen.findByText("Hướng dẫn local — không gọi mô hình AI trực tuyến. Mở /app/admin/moderation."),
+    ).toBeTruthy();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+  it("shows the external provider mode when the backend is configured for VPS", async () => {
+    request.mockImplementation((path: string) =>
+      Promise.resolve({ data: path === "/assistant/admin-status" ? { mode: "external" } : [] }),
+    );
+    render(
+      <MemoryRouter>
+        <AdminAi />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("AI trực tuyến")).toBeTruthy();
+    expect(screen.queryByText("Hướng dẫn local")).toBeNull();
+  });
+});

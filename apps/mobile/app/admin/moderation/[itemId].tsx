@@ -93,11 +93,11 @@ export default function AdminModerationDetailScreen() {
           "Idempotency-Key": key,
           "If-Match": `"v${report.version}"`,
         },
-        body: JSON.stringify({
+        body: {
           action,
           reason: reason.trim(),
           currentPassword,
-        }),
+        },
       });
       setCurrentPassword("");
       setReason("");

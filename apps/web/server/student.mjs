@@ -38,6 +38,17 @@ rule(
     })
     .strict(),
 );
+rule(
+  "GET",
+  "/offerings",
+  z
+    .object({
+      type: z.enum(["SELF_PACED", "LIVE_COHORT"]),
+      ...page,
+      limit: z.coerce.number().int().min(1).max(50).optional(),
+    })
+    .strict(),
+);
 for (const path of [
   "/me/courses",
   "/me/courses/:id",

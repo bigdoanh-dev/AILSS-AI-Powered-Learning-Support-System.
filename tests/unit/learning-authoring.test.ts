@@ -88,6 +88,8 @@ class MemoryStore implements LearningAuthoringStore {
     if (!this.updateWins) return false;
     this.courses.set(c.courseId, {
       ...c,
+      description: p.description ?? c.description,
+      coverDataUrl: p.coverDataUrl === undefined ? c.coverDataUrl : p.coverDataUrl,
       title: p.title ?? c.title,
       slug: p.slug ?? c.slug,
       categoryId: p.categoryId ?? c.categoryId,
@@ -137,6 +139,51 @@ describe("P7.11 Learning authoring", () => {
   it("rejects unknown and server-owned fields", () => {
     expect(() => parseCreateCourse({ ...request, state: "PUBLISHED" })).toThrow();
     expect(() => parsePatchCourse({ ownerLecturerId: lecturerId })).toThrow();
+  });
+  it("persists descriptions and covers through create, patch and replay without bypassing ownership", async () => {
+    const store = new MemoryStore(),
+      service = new LearningAuthoringService(store, identity, "secret");
+    const cover = "data:image/png;base64,iVBORw0KGgo=";
+    const created = await service.create({
+      actor,
+      request: parseCreateCourse({ ...request, description: "Giới thiệu khóa học", coverDataUrl: cover }),
+      idempotencyKey: "metadata-create",
+      requestId,
+    });
+    expect(created.course).toMatchObject({ description: "Giới thiệu khóa học", coverDataUrl: cover });
+    const command = {
+      actor,
+      courseId: created.course.courseId,
+      request: parsePatchCourse({ description: "Nội dung mới", coverDataUrl: null }),
+      idempotencyKey: "metadata-patch",
+      requestId,
+    };
+    const updated = await service.update(command);
+    expect(updated.course).toMatchObject({ description: "Nội dung mới", coverDataUrl: null });
+    expect((await service.update(command)).replayed).toBe(true);
+    expect(store.courses.get(created.course.courseId)).toMatchObject({
+      description: "Nội dung mới",
+      coverDataUrl: null,
+    });
+    await expect(
+      service.update({
+        ...command,
+        actor: { ...actor, userId: randomUUID() },
+        idempotencyKey: "foreign-owner",
+      }),
+    ).rejects.toMatchObject({ status: 403 });
+  });
+  it("bounds course descriptions and allows only raster cover data URLs", () => {
+    expect(() => parsePatchCourse({ description: "x".repeat(2001) })).toThrow();
+    expect(() => parsePatchCourse({ coverDataUrl: "data:image/svg+xml;base64,PHN2Zz4=" })).toThrow();
+    expect(() => parsePatchCourse({ coverDataUrl: "https://other.example.org/image.png" })).toThrow();
+    expect(() =>
+      parsePatchCourse({ coverDataUrl: "data:image/jpeg;base64," + "A".repeat(350000) }),
+    ).toThrow();
+    expect(parsePatchCourse({ description: "", coverDataUrl: null })).toEqual({
+      description: "",
+      coverDataUrl: null,
+    });
   });
   it("rejects empty PATCH", () => expect(() => parsePatchCourse({})).toThrow());
   it("creates DRAFT version 1, projection and READY event", async () => {

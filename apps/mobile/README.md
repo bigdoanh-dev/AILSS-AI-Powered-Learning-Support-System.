@@ -35,6 +35,28 @@ clients when full native toolchains exist. SDK 57 requires Xcode 26.4+, an iOS
 simulator runtime, or Android SDK API 36, Java and an emulator/adb. No distribution
 signing, EAS upload, App Store or Play publication is configured.
 
+### Google login requires a native development build
+
+Expo Go does not contain `RNGoogleSignin`. A development build created before
+Google Sign-In was added also needs rebuilding; changing `.env` or restarting
+Metro cannot install native modules. The login screen reports this separately
+from missing Google OAuth configuration.
+
+Set `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` in `apps/mobile/.env.local` to the iOS OAuth
+client for bundle ID `dev.ailss.mobile` before building iOS. The Web OAuth client
+continues to come from Gateway `/api/v1/auth/social/config`. The app config derives
+the Google iOS URL scheme from the iOS client ID during native generation.
+
+If the native `ios` directory already exists, apply the iOS client ID's config
+plugin with `pnpm --filter @ailss/mobile exec expo prebuild --platform ios`
+before rebuilding; Metro and `run:ios` alone do not regenerate existing projects.
+For a connected iPhone with Xcode and development signing configured, run
+`pnpm --filter @ailss/mobile exec expo run:ios --device`. For Android run
+`pnpm --filter @ailss/mobile android`. Install and open the resulting **AILSS** app.
+For subsequent JavaScript changes, use
+`pnpm --filter @ailss/mobile start:development --clear` and open that installed
+development client. Do not scan its QR code with Expo Go for Google login.
+
 ## Quality
 
 Package scripts: `typecheck`, `lint`, `test`, `format:check`, `validate:config`,
@@ -87,3 +109,13 @@ Animations are disabled (also honors reduced motion), labels/touch targets/text
 scaling are included. Accessibility has not been certified on native devices.
 
 P13.2A RC is untouched. P13 target remains deferred; P13.2B is not started.
+
+## Khôi phục mật khẩu
+
+Từ trang đăng nhập, chọn **Quên mật khẩu?** để mở `/forgot-password`.
+Màn hình gọi API công khai `auth/password-reset/request`, `verify`, `complete`
+qua Gateway: nhập email → OTP 6 chữ số → mật khẩu mới và xác nhận (12–128 ký tự).
+OTP có hiệu lực 15 phút; nút gửi lại đợi 60 giây. Token khôi phục chỉ giữ trong
+bộ nhớ màn hình và được xóa khi hoàn tất hoặc rời màn hình. SMTP được cấu hình
+ở Identity, không đưa mật khẩu SMTP vào biến `EXPO_PUBLIC_*`.
+Sau khi cập nhật mã nguồn, tải lại app để thấy nút và màn hình mới.

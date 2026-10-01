@@ -12,9 +12,17 @@ const U = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-
 const partialNonempty = (s) => s.partial().refine((v) => Object.keys(v).length > 0);
 const course = z
   .object({
+    description: z.string().trim().max(2000).optional(),
+    coverDataUrl: z
+      .string()
+      .max(350000)
+      .regex(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/u)
+      .nullable()
+      .optional(),
     title: txt(3, 160),
     slug: txt(1, 200),
-    categoryId: id,
+    categoryId: id.optional(),
+    categoryName: txt(2, 80).optional(),
     priceType: z.enum(["FREE", "PAID"]),
     price: z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d{1,18})?$/),
     currency: z.string().regex(/^[A-Za-z]{3}$/),
@@ -82,6 +90,8 @@ const klass = z
       name: txt(3, 160).optional(),
       linkedCourseId: id.nullable().optional(),
       maxMembers: z.number().int().min(1).max(10000).optional(),
+      photoDataUrl: z.string().max(350000).nullable().optional(),
+      coverDataUrl: z.string().max(350000).nullable().optional(),
     })
     .strict()
     .refine((v) => Object.keys(v).length > 0);
@@ -185,7 +195,10 @@ for (const p of [
   "/ai/usage",
 ])
   rule("GET", p);
-rule("POST", "/courses", { body: course, command: true });
+rule("POST", "/courses", {
+  body: course.refine((value) => !!value.categoryId || !!value.categoryName),
+  command: true,
+});
 rule("PATCH", "/courses/:id", { body: partialNonempty(course), command: true });
 rule("POST", "/courses/:id/submit-review", { command: true });
 rule("POST", "/courses/:id/retire", {
@@ -258,6 +271,7 @@ rule("PATCH", "/offerings/:id", { body: offeringPatch, command: true });
 rule("POST", "/offerings/:id/publish", { command: true });
 rule("POST", "/classes", { body: klass, command: true });
 rule("PATCH", "/classes/:id", { body: classPatch, command: true });
+rule("DELETE", "/classes/:id", { command: true });
 rule("POST", "/classes/:id/join-code/reset", { command: true });
 rule("POST", "/classes/:id/members/:id/warnings", {
   body: z.object({ reason: txt(5, 500) }).strict(),
@@ -289,7 +303,9 @@ rule("PUT", "/class-sessions/:id/attendance/:id", {
 rule("POST", "/quizzes", { body: quiz, command: true });
 rule("GET", "/quizzes/:id");
 rule("PATCH", "/quizzes/:id", {
-  body: partialNonempty(quiz.omit({ targetType: true, targetId: true })),
+  body: partialNonempty(
+    quiz.omit({ targetType: true, targetId: true }).extend({ closesAt: dt.nullable().optional() }),
+  ),
   command: true,
 });
 rule("POST", "/quizzes/:id/publish", { command: true });
@@ -302,6 +318,19 @@ rule("GET", "/quizzes/:id/results", {
       cursor: z.string().min(1).max(4096).optional(),
     })
     .strict(),
+});
+rule("POST", "/quizzes/:id/grades/:id", {
+  body: z
+    .object({
+      score: z
+        .string()
+        .regex(/^(?:0|[1-9]\d{0,2})(?:\.\d{1,2})?$/u)
+        .refine((value) => Number(value) <= 100),
+      feedback: z.string().max(4000).optional(),
+      expectedResultVersion: z.number().int().nonnegative().optional(),
+    })
+    .strict(),
+  command: true,
 });
 rule("POST", "/ai/documents/upload-intents", {
   body: z

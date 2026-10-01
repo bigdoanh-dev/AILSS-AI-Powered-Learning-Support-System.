@@ -10,7 +10,14 @@ describe("SePay durable claim classification", () => {
     const execute = vi
       .fn()
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ order_id: orderId }])
+      .mockResolvedValueOnce([
+        {
+          order_id: orderId,
+          bucket_day: "2026-09-10",
+          shard: 3,
+          occurred_at: new Date("2026-09-10T01:00:00Z"),
+        },
+      ])
       .mockResolvedValueOnce([]);
     const repo = new LearningCommerceRepository({ execute } as unknown as CassandraClient);
 
@@ -31,6 +38,10 @@ describe("SePay durable claim classification", () => {
     expect(execute).toHaveBeenCalledTimes(3);
     expect(String(execute.mock.calls[0]?.[0])).toContain("IF NOT EXISTS");
     expect(String(execute.mock.calls[2]?.[0])).toContain("revenue_payment_facts_by_day_shard");
+    const params = execute.mock.calls[2]?.[1] as unknown[];
+    expect(String(params[0])).toBe("2026-09-10");
+    expect(params[1]).toBe(3);
+    expect(params[2]).toEqual(new Date("2026-09-10T01:00:00Z"));
   });
 
   it("aggregates only reconciled VND payment and refund facts", async () => {
@@ -77,13 +88,11 @@ describe("SePay durable claim classification", () => {
     const execute = vi.fn().mockResolvedValue([]);
     const repo = new LearningCommerceRepository({ execute } as unknown as CassandraClient);
 
-    await expect(repo.revenueDashboard("30d")).rejects.toMatchObject(
-      expect.objectContaining({
-        code: "REVENUE_PROJECTION_NOT_READY",
-        status: 503,
-        retryable: true,
-      }),
-    );
+    await expect(repo.revenueDashboard("30d")).rejects.toMatchObject({
+      code: "REVENUE_PROJECTION_NOT_READY",
+      status: 503,
+      retryable: true,
+    });
     expect(execute).toHaveBeenCalledTimes(1);
   });
 

@@ -25,7 +25,6 @@ export function CourseArtwork({
   title,
   categoryId,
   imageUrl,
-  courseId,
   eager = false,
 }: {
   title: string;
@@ -34,11 +33,7 @@ export function CourseArtwork({
   courseId?: string;
   eager?: boolean;
 }) {
-  const customCover =
-    imageUrl ||
-    (courseId && typeof window !== "undefined"
-      ? localStorage.getItem(`ailss_course_cover_${courseId}`)
-      : null);
+  const customCover = imageUrl;
 
   if (customCover) {
     return (

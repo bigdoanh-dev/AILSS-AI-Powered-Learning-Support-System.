@@ -18,49 +18,16 @@ const RANGES = [
   { id: "30d", label: "30 ngày gần nhất" },
 ];
 
-const MOCK_FALLBACK: LecturerRevenue = {
-  lecturerId: "lec_default",
-  grossMinor: "48500000",
-  refundMinor: "900000",
-  netMinor: "47600000",
-  estimatedPlatformMinor: "7140000",
-  estimatedEarningsMinor: "40460000",
-  orders: 142,
-  dailyRevenue: [
-    { day: "2026-09-21", grossMinor: "6500000", refundMinor: "0", netMinor: "6500000", orders: 18 },
-    { day: "2026-09-22", grossMinor: "8200000", refundMinor: "450000", netMinor: "7750000", orders: 24 },
-    { day: "2026-09-23", grossMinor: "7100000", refundMinor: "0", netMinor: "7100000", orders: 20 },
-    { day: "2026-09-24", grossMinor: "9800000", refundMinor: "0", netMinor: "9800000", orders: 29 },
-    { day: "2026-09-25", grossMinor: "5900000", refundMinor: "450000", netMinor: "5450000", orders: 17 },
-    { day: "2026-09-26", grossMinor: "4800000", refundMinor: "0", netMinor: "4800000", orders: 15 },
-    { day: "2026-09-27", grossMinor: "6200000", refundMinor: "0", netMinor: "6200000", orders: 19 },
-  ],
-  courses: [
-    {
-      courseId: "c1",
-      title: "Cơ sở dữ liệu Nâng cao & Tối ưu hóa Truy vấn",
-      grossMinor: "24800000",
-      refundMinor: "450000",
-      netMinor: "24350000",
-      orders: 72,
-    },
-    {
-      courseId: "c2",
-      title: "Lập trình Web Hiện đại & Trợ lý AI Fullstack",
-      grossMinor: "15200000",
-      refundMinor: "450000",
-      netMinor: "14750000",
-      orders: 45,
-    },
-    {
-      courseId: "c3",
-      title: "Kiểm thử Phần mềm & CI/CD DevOps Chuyên sâu",
-      grossMinor: "8500000",
-      refundMinor: "0",
-      netMinor: "8500000",
-      orders: 25,
-    },
-  ],
+const EMPTY_REVENUE: LecturerRevenue = {
+  lecturerId: "",
+  grossMinor: "0",
+  refundMinor: "0",
+  netMinor: "0",
+  estimatedPlatformMinor: "0",
+  estimatedEarningsMinor: "0",
+  orders: 0,
+  dailyRevenue: [],
+  courses: [],
 };
 
 export default function LecturerRevenueDashboard() {
@@ -94,7 +61,7 @@ export default function LecturerRevenueDashboard() {
       });
       account.retry();
       setAccountStatusType("success");
-      setAccountMessage("✓ Đã cập nhật và xác thực tài khoản nhận doanh thu thành công.");
+      setAccountMessage("✓ Đã lưu tài khoản nhận doanh thu.");
       setShowEditBank(false);
     } catch (error) {
       setAccountStatusType("error");
@@ -105,13 +72,13 @@ export default function LecturerRevenueDashboard() {
   }
 
   const isLive = Boolean(report.data?.lecturer);
-  const data = report.data?.lecturer ?? MOCK_FALLBACK;
+  const data = report.data?.lecturer ?? EMPTY_REVENUE;
 
   const backfillDate = useMemo(() => {
     if (report.data?.completeness?.backfillThrough) {
       return new Date(report.data.completeness.backfillThrough).toLocaleDateString("vi-VN");
     }
-    return new Date().toLocaleDateString("vi-VN");
+    return "chưa xác định";
   }, [report.data]);
 
   const refundRate = useMemo(() => {
@@ -147,11 +114,23 @@ export default function LecturerRevenueDashboard() {
 
   const maskedBankNumber = useMemo(() => {
     const raw = account.data?.accountNumber;
-    if (!raw) return "•••• •••• •••• 9821";
+    if (!raw) return "Chưa cấu hình";
     if (raw.length <= 4) return raw;
     return `•••• •••• •••• ${raw.slice(-4)}`;
   }, [account.data?.accountNumber]);
 
+  if (!isLive || report.error)
+    return (
+      <section className="dashboard-section-card">
+        <h1>Doanh Thu &amp; Quyền Lợi Giảng Viên</h1>
+        <p role={report.error ? "alert" : "status"}>
+          {report.error ? lecturerError(report.error) : "Đang tải báo cáo doanh thu…"}
+        </p>
+        <button className="button" onClick={report.retry} disabled={report.pending}>
+          Kiểm tra lại
+        </button>
+      </section>
+    );
   return (
     <div className="lecturer-revenue-container">
       {/* 1. Header & Navigation */}
@@ -192,17 +171,11 @@ export default function LecturerRevenueDashboard() {
             <span>Đã đối soát</span>
           </span>
           <span>
-            Dữ liệu đối soát tự động SePay Webhook đến <strong>{backfillDate}</strong>
+            Dữ liệu thanh toán và hoàn tiền được tổng hợp đến <strong>{backfillDate}</strong>
           </span>
         </div>
         <div className="rev-reconcile-right">
-          <span>
-            Chu kỳ thanh toán: <strong>Ngày 15 &amp; 30</strong> hàng tháng
-          </span>
-          <span>·</span>
-          <span>
-            Tỷ lệ chia sẻ: <strong>85% Giảng viên</strong> / <strong>15% Nền tảng</strong>
-          </span>
+          <span>Phí nền tảng được tính theo chính sách của từng giao dịch.</span>
         </div>
       </section>
 
@@ -231,7 +204,7 @@ export default function LecturerRevenueDashboard() {
           ) : (
             <>
               <span className="rev-mock-dot" />
-              <span>Dữ liệu minh họa hệ thống</span>
+              <span>Chưa có dữ liệu</span>
             </>
           )}
           <button
@@ -297,7 +270,7 @@ export default function LecturerRevenueDashboard() {
             <span className="rev-kpi-icon-box purple">
               <Icon name="receipt" size={18} />
             </span>
-            <span className="rev-kpi-tag">Cố định 15%</span>
+            <span className="rev-kpi-tag">Theo giao dịch</span>
           </div>
           <div className="rev-kpi-value">{money(data.estimatedPlatformMinor)}</div>
           <div className="rev-kpi-label">Phí nền tảng dự kiến</div>
@@ -310,11 +283,11 @@ export default function LecturerRevenueDashboard() {
             <span className="rev-kpi-icon-box">
               <Icon name="sparkles" size={18} />
             </span>
-            <span className="rev-kpi-tag">Sẵn sàng chi trả</span>
+            <span className="rev-kpi-tag">Thu nhập dự kiến</span>
           </div>
           <div className="rev-kpi-value">{money(data.estimatedEarningsMinor)}</div>
           <div className="rev-kpi-label">Thu nhập thực nhận dự kiến</div>
-          <p className="rev-kpi-subtext">Số dư ròng thực tế sẽ chuyển về tài khoản ngân hàng của bạn</p>
+          <p className="rev-kpi-subtext">Ước tính sau phí nền tảng; trạng thái chi trả được quản lý riêng</p>
         </article>
       </div>
 
@@ -364,7 +337,7 @@ export default function LecturerRevenueDashboard() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
               <h2>Tài Khoản Nhận Doanh Thu</h2>
-              <p className="subtext">Thông tin giải ngân đối soát tự động vào ngày 15 &amp; 30.</p>
+              <p className="subtext">Tài khoản ngân hàng nhận chi trả của bạn.</p>
             </div>
             <button
               type="button"
@@ -379,7 +352,7 @@ export default function LecturerRevenueDashboard() {
           <div className="rev-bank-card-preview" role="region" aria-label="Thẻ thông tin ngân hàng thụ hưởng">
             <div className="rev-card-top">
               <span className="rev-card-bank-name">
-                {account.data?.bankName ? account.data.bankName : "VIETCOMBANK / LIÊN NGÂN HÀNG"}
+                {account.data?.bankName ? account.data.bankName : "Chưa cấu hình ngân hàng"}
               </span>
               <div className="rev-card-chip" aria-hidden="true" />
             </div>
@@ -390,12 +363,12 @@ export default function LecturerRevenueDashboard() {
               <div>
                 <div className="rev-card-holder-label">Chủ tài khoản thụ hưởng</div>
                 <div className="rev-card-holder-name">
-                  {account.data?.accountHolder ? account.data.accountHolder : "NGUYEN VAN A"}
+                  {account.data?.accountHolder ? account.data.accountHolder : "Chưa cấu hình"}
                 </div>
               </div>
               <span className="rev-card-status-verified">
                 <Icon name="checkCircle" size={13} />
-                <span>Đã xác minh</span>
+                <span>{account.data ? "Đã lưu" : "Chưa cấu hình"}</span>
               </span>
             </div>
           </div>
@@ -464,7 +437,7 @@ export default function LecturerRevenueDashboard() {
             }}
           >
             <Icon name="shield" size={13} />
-            <span>Thông tin được bảo mật chuẩn ngân hàng. Chỉ dùng để thực hiện lệnh đối soát chi trả.</span>
+            <span>Thông tin tài khoản được dùng để nhận chi trả doanh thu của bạn.</span>
           </p>
         </section>
       </div>

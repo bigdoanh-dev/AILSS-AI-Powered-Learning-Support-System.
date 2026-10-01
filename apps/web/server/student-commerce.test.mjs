@@ -4,6 +4,10 @@ import { studentOperation } from "./student.mjs";
 const id = "00000000-0000-4000-8000-000000000001";
 test("Student commerce allowlist maps offering, order and payment simulation exactly", () => {
   assert.equal(
+    studentOperation("/web-session/student/offerings?type=SELF_PACED&limit=50", "GET", undefined, {}).path,
+    "/offerings?type=SELF_PACED&limit=50",
+  );
+  assert.equal(
     studentOperation(`/web-session/student/courses/${id}/offerings`, "GET", undefined, {}).path,
     `/courses/${id}/offerings`,
   );
@@ -31,6 +35,7 @@ test("Student commerce allowlist maps offering, order and payment simulation exa
   );
 });
 test("Student commerce rejects real payment fields and unsupported outcomes", () => {
+  assert.throws(() => studentOperation("/web-session/student/offerings?type=UNKNOWN", "GET", undefined, {}));
   assert.throws(() =>
     studentOperation(
       "/web-session/student/orders",

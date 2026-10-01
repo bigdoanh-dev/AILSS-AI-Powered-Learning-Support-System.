@@ -4,6 +4,7 @@ import {
   configuredCourseCategories,
   isSupportedTitleSearchTerm,
   loadConfiguredCoursePreview,
+  loadCourseCategories,
 } from "../src/catalog-preview";
 
 const sample = (courseId: string, categoryId: string) => ({
@@ -77,4 +78,18 @@ describe("configured mobile catalog preview", () => {
     expect(isSupportedTitleSearchTerm("khoa hoc")).toBe(false);
     expect(isSupportedTitleSearchTerm("a".repeat(21))).toBe(false);
   });
+});
+
+it("discovers and queries lecturer-entered categories", async () => {
+  const category = { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "Thiết kế đồ họa" };
+  const request = vi.fn(async (path: string) => {
+    if (path === "/api/v1/course-categories") return [category];
+    expect(new URL(path, "https://example.invalid").searchParams.get("categoryId")).toBe(category.id);
+    return [sample("design-course", category.id)];
+  });
+  const categories = await loadCourseCategories(request);
+  expect(categories).toEqual([category]);
+  const preview = await loadConfiguredCoursePreview(request, undefined, categories);
+  expect(preview.courses[0]?.courseId).toBe("design-course");
+  await expect(loadCourseCategories(async () => ({}))).rejects.toThrow();
 });

@@ -19,6 +19,7 @@ export function adminRouter(
   verifiers: {
     search(token: string): Promise<ActorContext>;
     detail(token: string): Promise<ActorContext>;
+    stats(token: string): Promise<ActorContext>;
     statusChange(token: string): Promise<ActorContext>;
   },
   metrics: ReturnType<typeof createMetrics>,
@@ -66,7 +67,7 @@ export function adminRouter(
     try {
       if (hasRequestBody(request))
         throw new AppError("ADMIN_STATS_BODY_NOT_ALLOWED", 422, "Request body is not allowed");
-      const { actor, requestId } = await verifiedActor(request, (token) => verifiers.detail(token), metrics);
+      const { actor, requestId } = await verifiedActor(request, (token) => verifiers.stats(token), metrics);
       const data = await service.stats(actor);
       response.status(200).json({ data, meta: responseMeta(requestId) });
     } catch (error) {

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
-import { router, type Href } from "expo-router";
+import { Image } from "react-native";
+import { router, useFocusEffect, type Href } from "expo-router";
 import { runtime } from "../../src/runtime";
 import { courses as decodeCourses, type Course } from "../../src/learning";
 import { ApiError } from "../../src/api";
 import {
-  configuredCategoryName,
+  loadCourseCategories,
+  type CourseCategory,
   configuredCourseCategories,
   isSupportedTitleSearchTerm,
   loadConfiguredCoursePreview,
@@ -18,7 +20,7 @@ function formatCoursePrice(price?: string, priceType?: string, currency?: string
   if (!price) return "Xem giá ở trang chi tiết";
   const num = Number(price);
   if (!Number.isNaN(num) && num > 0) {
-    return new Intl.NumberFormat("vi-VN").format(num) + " ₫";
+    return new Intl.NumberFormat("vi-VN").format(num) + ` ${currency === "VND" ? "₫" : (currency ?? "VND")}`;
   }
   return `${price}${currency ? ` ${currency}` : ""}`;
 }
@@ -74,12 +76,30 @@ export default function CourseDiscoveryScreen() {
   const [query, setQuery] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [categoryOptions, setCategoryOptions] = useState<CourseCategory[]>([...configuredCourseCategories]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [inputError, setInputError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
+
+  useFocusEffect(
+    useCallback(() => {
+      const abort = new AbortController();
+      setOwnedIds(new Set());
+      if (auth.state === "AUTHENTICATED" && auth.user?.role === "STUDENT") {
+        void session
+          .request("/api/v1/me/courses", { signal: abort.signal })
+          .then((data) => {
+            if (!abort.signal.aborted) setOwnedIds(new Set(decodeCourses(data).map((item) => item.courseId)));
+          })
+          .catch(() => {});
+      }
+      return () => abort.abort();
+    }, [session, auth.state, auth.user?.userId, auth.user?.role]),
+  );
 
   const load = useCallback(
     async (signal?: AbortSignal) => {
@@ -87,6 +107,11 @@ export default function CourseDiscoveryScreen() {
       setError(null);
       setWarning(null);
       try {
+        const availableCategories = await loadCourseCategories(
+          (path, options) => session.api.request(path, options),
+          signal,
+        );
+        if (!signal?.aborted) setCategoryOptions(availableCategories);
         if (activeQuery) {
           const params = new URLSearchParams({ q: activeQuery, limit: "20" });
           const result = decodeCourses(
@@ -97,6 +122,9 @@ export default function CourseDiscoveryScreen() {
           const result = await loadConfiguredCoursePreview(
             (path, options) => session.api.request(path, options),
             signal,
+            selectedCategory
+              ? availableCategories.filter((item) => item.id === selectedCategory)
+              : availableCategories,
           );
           if (!signal?.aborted) {
             setCourses(result.courses);
@@ -116,7 +144,7 @@ export default function CourseDiscoveryScreen() {
         if (!signal?.aborted) setLoading(false);
       }
     },
-    [activeQuery, session],
+    [activeQuery, selectedCategory, session],
   );
 
   useEffect(() => {
@@ -209,7 +237,7 @@ export default function CourseDiscoveryScreen() {
                 Tất cả ({courses.length})
               </Text>
             </ScalePressable>
-            {configuredCourseCategories.map((cat) => {
+            {categoryOptions.map((cat) => {
               const isSelected = selectedCategory === cat.id;
               const count = courses.filter((c) => c.categoryId === cat.id).length;
               return (
@@ -291,18 +319,27 @@ export default function CourseDiscoveryScreen() {
                   onPress={() => router.push(`/courses/${course.courseId}` as Href)}
                   style={screen.courseCard}
                 >
+                  {course.coverDataUrl ? (
+                    <Image
+                      source={{ uri: course.coverDataUrl }}
+                      accessibilityLabel={`Ảnh bìa ${course.title}`}
+                      style={{ width: "100%", height: 160 }}
+                      resizeMode="cover"
+                    />
+                  ) : null}
                   {/* Decorative Artwork Header */}
                   <View style={[screen.cardTopBanner, { backgroundColor: theme.bg }]}>
                     <View style={screen.bannerTagRow}>
                       <View style={[screen.categoryChip, { backgroundColor: theme.badgeBg }]}>
                         <Icon name={theme.icon} size={13} color={theme.text} />
                         <Text style={[screen.categoryChipText, { color: theme.text }]}>
-                          {configuredCategoryName(course.categoryId)}
+                          {categoryOptions.find((item) => item.id === course.categoryId)?.name ??
+                            "Chủ đề khác"}
                         </Text>
                       </View>
                       <View style={screen.ratingPill}>
                         <Icon name="star" size={12} color="#D97706" />
-                        <Text style={screen.ratingText}>4.9★</Text>
+                        <Text style={screen.ratingText}>Xem đánh giá</Text>
                       </View>
                     </View>
                   </View>
@@ -317,17 +354,7 @@ export default function CourseDiscoveryScreen() {
                     <View style={screen.metaRow}>
                       <View style={screen.metaItem}>
                         <Icon name="book" size={13} color={tokens.color.muted} />
-                        <Text style={screen.metaText}>12+ bài học</Text>
-                      </View>
-                      <Text style={screen.metaDot}>•</Text>
-                      <View style={screen.metaItem}>
-                        <Icon name="clock" size={13} color={tokens.color.muted} />
-                        <Text style={screen.metaText}>Tự học linh hoạt</Text>
-                      </View>
-                      <Text style={screen.metaDot}>•</Text>
-                      <View style={screen.metaItem}>
-                        <Icon name="award" size={13} color={tokens.color.muted} />
-                        <Text style={screen.metaText}>Chứng chỉ</Text>
+                        <Text style={screen.metaText}>Xem nội dung khóa học</Text>
                       </View>
                     </View>
 
@@ -338,7 +365,13 @@ export default function CourseDiscoveryScreen() {
                         <Text style={[screen.price, isFree && screen.priceFree]}>{priceFormatted}</Text>
                       </View>
                       <View style={screen.actionBtnPill}>
-                        <Text style={screen.actionBtnText}>Khám phá ngay</Text>
+                        <Text style={screen.actionBtnText}>
+                          {ownedIds.has(course.courseId)
+                            ? "Đã có quyền học"
+                            : isFree
+                              ? "Đăng ký miễn phí"
+                              : "Xem gói & mua"}
+                        </Text>
                         <Icon name="chevronRight" size={13} color="#FFFFFF" />
                       </View>
                     </View>

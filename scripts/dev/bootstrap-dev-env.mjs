@@ -13,9 +13,8 @@ try {
 }
 
 if (!existed || template.includes("<INJECTED>")) {
-  template = template.replace(
-    /^([^#=\r\n]+)=<INJECTED>$/gm,
-    (_line, name) => `${name}=${randomBytes(24).toString("base64url")}`,
+  template = template.replace(/^([^#=\r\n]+)=<INJECTED>$/gm, (_line, name) =>
+    name === "AI_PROVIDER_API_KEY" ? `${name}=` : `${name}=${randomBytes(24).toString("base64url")}`,
   );
   await writeFile(target, template, { mode: 0o600 });
   if (existed) {

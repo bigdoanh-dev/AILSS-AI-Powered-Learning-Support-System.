@@ -1,190 +1,138 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { useSyncExternalStore } from "react";
-import * as Crypto from "expo-crypto";
-import { ApiError, record, string } from "../../../src/api";
-import { runtime } from "../../../src/runtime";
-import { CONTRACT_LIMITED } from "../../../src/teaching";
-import { Page, Button, styles } from "../../../src/ui";
+import { record, string } from "../../../src/api";
+import { useMobileCommand, useMobileQuery } from "../../../src/queries";
+import { Page, Button, ScreenHeader, styles } from "../../../src/ui";
 import { RevenueQuote } from "../../../src/RevenueQuote";
-
-interface OfferingDetail {
-  offeringId: string;
-  courseId: string;
-  offeringType: string;
-  state: string;
-  price?: string;
-  currency?: string;
-}
-
-function decodeOffering(value: unknown): OfferingDetail {
-  const rec = record(value);
+function decode(value: unknown) {
+  const data = record(value);
   return {
-    offeringId: string(rec.offeringId),
-    courseId: string(rec.courseId),
-    offeringType: string(rec.offeringType),
-    state: string(rec.state),
-    price: typeof rec.price === "string" ? rec.price : undefined,
-    currency: typeof rec.currency === "string" ? rec.currency : undefined,
+    offeringId: string(data.offeringId),
+    courseId: string(data.courseId),
+    title: string(data.title),
+    state: string(data.state),
+    offeringType: string(data.offeringType),
+    price: string(data.price),
+    currency: string(data.currency),
+    salesStartAt: typeof data.salesStartAt === "string" ? data.salesStartAt : "",
+    salesEndAt: typeof data.salesEndAt === "string" ? data.salesEndAt : "",
   };
 }
-
 export default function OfferingDetailScreen() {
   const { offeringId } = useLocalSearchParams<{ offeringId: string }>();
-  const session = runtime!;
-  const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
-  const [offering, setOffering] = useState<OfferingDetail | null>(null);
+  const query = useMobileQuery(offeringId ? `/api/v1/offerings/${offeringId}` : null, decode);
+  const command = useMobileCommand();
+  const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
-  const [currency, setCurrency] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [currency, setCurrency] = useState("VND");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [idempotencyKey, setIdempotencyKey] = useState(() => Crypto.randomUUID());
-  const [retry, setRetry] = useState(0);
-
   useEffect(() => {
-    if (!offeringId || snapshot.user?.role !== "LECTURER") return;
-    const abort = new AbortController();
-    setError("");
-    void session
-      .request(`/api/v1/offerings/${offeringId}`, { signal: abort.signal })
-      .then((value) => {
-        if (abort.signal.aborted) return;
-        const o = decodeOffering(value);
-        setOffering(o);
-        setPrice(o.price ?? "");
-        setCurrency(o.currency ?? "");
-      })
-      .catch((e: unknown) => {
-        if (!abort.signal.aborted) setError(e instanceof ApiError ? e.message : "Không thể tải offering.");
-      });
-    return () => abort.abort();
-  }, [offeringId, session, snapshot.user?.userId, retry]);
-
-  const handleUpdate = useCallback(async () => {
-    if (!offeringId || !offering || offering.state !== "DRAFT") return;
-    setBusy(true);
-    setError("");
-    setMessage("");
+    setTitle(query.data?.title ?? "");
+    setPrice(query.data?.price ?? "");
+    setCurrency(query.data?.currency ?? "VND");
+    setStart(query.data?.salesStartAt ?? "");
+    setEnd(query.data?.salesEndAt ?? "");
+  }, [query.data]);
+  async function save() {
     try {
-      const body: Record<string, unknown> = {};
-      if (price !== (offering.price ?? "")) body.price = price;
-      if (currency !== (offering.currency ?? "")) body.currency = currency;
-      if (Object.keys(body).length === 0) {
-        setMessage("Không có thay đổi.");
-        return;
-      }
-      await session.request(`/api/v1/offerings/${offeringId}`, {
-        method: "PATCH",
-        body,
-        idempotencyKey,
-      });
-      setMessage("Đã lưu thành công.");
-      setIdempotencyKey(Crypto.randomUUID());
-      setRetry((v) => v + 1);
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Không thể lưu thay đổi.");
-    } finally {
-      setBusy(false);
+      setError("");
+      const body = {
+        title: title.trim(),
+        price: price.trim(),
+        currency: currency.trim().toUpperCase(),
+        salesStartAt: start.trim() ? new Date(start).toISOString() : null,
+        salesEndAt: end.trim() ? new Date(end).toISOString() : null,
+      };
+      if (body.salesStartAt && body.salesEndAt && body.salesEndAt <= body.salesStartAt)
+        throw new Error("Kết thúc bán phải sau bắt đầu bán.");
+      if (await command.run(`/api/v1/offerings/${offeringId}`, body, { method: "PATCH" })) query.retry();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Thông tin không hợp lệ.");
     }
-  }, [offeringId, offering, price, currency, session, idempotencyKey]);
-
-  const handlePublish = useCallback(async () => {
-    if (!offeringId || !offering || offering.state !== "DRAFT") return;
-    setBusy(true);
-    setError("");
-    setMessage("");
-    try {
-      await session.request(`/api/v1/offerings/${offeringId}/publish`, {
-        method: "POST",
-        idempotencyKey,
-      });
-      setMessage("Đã xuất bản offering.");
-      setIdempotencyKey(Crypto.randomUUID());
-      setRetry((v) => v + 1);
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Không thể xuất bản offering.");
-    } finally {
-      setBusy(false);
-    }
-  }, [offeringId, offering, session, idempotencyKey]);
-
-  if (snapshot.user?.role !== "LECTURER") {
-    return (
-      <Page>
-        <Text style={styles.error}>Bạn không có quyền truy cập.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
-      </Page>
-    );
   }
-
+  async function publish() {
+    if (await command.run(`/api/v1/offerings/${offeringId}/publish`, {})) query.retry();
+  }
   return (
     <Page>
-      <Text style={styles.title}>Chi tiết Offering</Text>
-
-      {!offering && !error && (
+      <ScreenHeader
+        title="Đợt mở bán"
+        onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching/offerings"))}
+      />
+      {query.loading ? <Text>Đang tải…</Text> : null}
+      {query.error ? (
+        <View>
+          <Text style={styles.error}>{query.error}</Text>
+          <Button label="Thử lại" onPress={query.retry} />
+        </View>
+      ) : null}
+      {query.data ? (
+        <View style={styles.card}>
+          <Text style={styles.title}>{query.data.title}</Text>
+          <Text>
+            {query.data.offeringType} · {query.data.state}
+          </Text>
+          <Text>
+            {query.data.price} {query.data.currency}
+          </Text>
+          <Text style={styles.small}>
+            Bán từ {query.data.salesStartAt || "không giới hạn"} đến{" "}
+            {query.data.salesEndAt || "không giới hạn"}.
+          </Text>
+        </View>
+      ) : null}
+      {query.data?.state === "DRAFT" ? (
+        <View style={styles.card}>
+          <Text>Tên đợt bán</Text>
+          <TextInput
+            style={styles.input}
+            accessibilityLabel="Tên đợt bán"
+            value={title}
+            onChangeText={setTitle}
+            maxLength={160}
+          />
+          <Text>Giá</Text>
+          <TextInput
+            style={styles.input}
+            accessibilityLabel="Giá"
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="decimal-pad"
+          />
+          <Text>Tiền tệ</Text>
+          <TextInput
+            style={styles.input}
+            accessibilityLabel="Tiền tệ"
+            value={currency}
+            onChangeText={setCurrency}
+            maxLength={3}
+          />
+          <RevenueQuote price={price} currency={currency || "VND"} />
+          <Text>Thời gian bán (ISO 8601 có múi giờ; để trống nếu không giới hạn)</Text>
+          <TextInput
+            style={styles.input}
+            accessibilityLabel="Bắt đầu bán"
+            value={start}
+            onChangeText={setStart}
+          />
+          <TextInput
+            style={styles.input}
+            accessibilityLabel="Kết thúc bán"
+            value={end}
+            onChangeText={setEnd}
+          />
+          <Button label="Lưu thay đổi" disabled={command.busy} onPress={() => void save()} />
+          <Button label="Xuất bản đợt bán" disabled={command.busy} onPress={() => void publish()} />
+        </View>
+      ) : null}
+      {error || command.message ? (
         <Text accessibilityRole="alert" style={styles.text}>
-          Đang tải…
+          {error || command.message}
         </Text>
-      )}
-
-      {offering && (
-        <>
-          <View style={styles.card}>
-            <Text style={styles.text}>Loại: {offering.offeringType}</Text>
-            <Text style={styles.text}>Trạng thái: {offering.state}</Text>
-            <Text style={styles.small}>Course: {offering.courseId}</Text>
-          </View>
-
-          {offering.state === "DRAFT" && (
-            <>
-              <Text style={styles.small}>Giá</Text>
-              <TextInput
-                accessibilityLabel="Giá"
-                style={styles.input}
-                value={price}
-                onChangeText={setPrice}
-                keyboardType="numeric"
-              />
-              <Text style={styles.small}>Đơn vị tiền tệ</Text>
-              <TextInput
-                accessibilityLabel="Đơn vị tiền tệ"
-                style={styles.input}
-                value={currency}
-                onChangeText={setCurrency}
-                placeholder="VND"
-              />
-              <RevenueQuote price={price} currency={currency || "VND"} />
-              <Button
-                label={busy ? "Đang lưu…" : "Lưu thay đổi"}
-                disabled={busy}
-                onPress={() => {
-                  void handleUpdate();
-                }}
-              />
-              <Button
-                label={busy ? "Đang xuất bản…" : "Xuất bản Offering"}
-                disabled={busy}
-                onPress={() => {
-                  void handlePublish();
-                }}
-              />
-            </>
-          )}
-
-          <Text style={styles.small}>{CONTRACT_LIMITED.offeringDelete}</Text>
-        </>
-      )}
-
-      {message && <Text style={styles.text}>{message}</Text>}
-      {error && (
-        <Text accessibilityRole="alert" style={styles.error}>
-          {error}
-        </Text>
-      )}
-      {error && <Button label="Thử lại" onPress={() => setRetry((v) => v + 1)} />}
-      <Button label="Quay lại" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />
+      ) : null}
     </Page>
   );
 }

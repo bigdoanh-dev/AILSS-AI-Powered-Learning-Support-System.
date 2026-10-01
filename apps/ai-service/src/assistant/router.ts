@@ -16,8 +16,23 @@ export function assistantRouter(
   repository: AssistantRepository,
   verifyActorContext: ActorContextVerifier,
   metrics: ReturnType<typeof createMetrics>,
+  options: { adminSupportMode: "external" | "local-guide" } = { adminSupportMode: "external" },
 ): Router {
   const router = Router();
+  router.get("/api/v1/assistant/admin-status", async (req, res, next) => {
+    try {
+      const actor = await getActor(req);
+      if (actor.role !== "ADMIN")
+        throw new AppError("ADMIN_REQUIRED", 403, "Admin authorization is required");
+      res.setHeader("Cache-Control", "no-store");
+      res.json({
+        data: { mode: options.adminSupportMode },
+        meta: { requestId: currentRequestContext()?.requestId, timestamp: new Date().toISOString() },
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   async function getActor(req: Request): Promise<{ userId: string; role: AssistantRole }> {
     const rawHeader =

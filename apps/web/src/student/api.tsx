@@ -122,6 +122,9 @@ export interface Attempt {
   questions: Question[];
 }
 export interface Result {
+  gradingStatus?: "AUTO_GRADED" | "PENDING_MANUAL_GRADING" | "MANUALLY_GRADED";
+  teacherFeedback?: string;
+  manualScore?: string;
   attemptId: string;
   quizId: string;
   score: string;

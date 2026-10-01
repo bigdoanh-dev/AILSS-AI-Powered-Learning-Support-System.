@@ -37,74 +37,13 @@ interface StatsData {
   lecturers: number;
   admins: number;
   suspended: number;
-  aiSessions: number;
-  completionRate: string;
-  avgScore: string;
-  totalLearningHours: string;
+  aiSessions: number | null;
+  completionRate: string | null;
+  avgScore: string | null;
+  totalLearningHours: string | null;
   cognitiveLevels: CognitiveLevel[];
   weekdayEngagement: WeekdayEngagement[];
 }
-
-const MOCK_COG: CognitiveLevel[] = [
-  {
-    level: "Nhận biết (Remember / Recognition)",
-    rate: 86,
-    desc: "Ghi nhớ thuật ngữ và khái niệm cốt lõi",
-    color: "#0284C7",
-  },
-  {
-    level: "Thông hiểu (Understand / Comprehension)",
-    rate: 78,
-    desc: "Giải thích nguyên lý và diễn giải lỗi",
-    color: "#7C3AED",
-  },
-  {
-    level: "Vận dụng (Apply / Execution)",
-    rate: 64,
-    desc: "Áp dụng công thức, viết mã lệnh thực tế",
-    color: "#D97706",
-  },
-  {
-    level: "Phân tích (Analyze / Decomposition)",
-    rate: 48,
-    desc: "Phân tích cấu trúc dữ liệu và tối ưu",
-    color: "#059669",
-  },
-  {
-    level: "Đánh giá (Evaluate / Critique)",
-    rate: 52,
-    desc: "Review mã nguồn và đánh giá hiệu năng",
-    color: "#DC2626",
-  },
-  {
-    level: "Sáng tạo (Create / Architecture)",
-    rate: 38,
-    desc: "Thiết kế kiến trúc và xây dựng giải pháp",
-    color: "#2563EB",
-  },
-];
-const MOCK_WEEK: WeekdayEngagement[] = [
-  { day: "Thứ 2", hours: 1840, percent: 82 },
-  { day: "Thứ 3", hours: 2150, percent: 95 },
-  { day: "Thứ 4", hours: 1980, percent: 88 },
-  { day: "Thứ 5", hours: 2260, percent: 100 },
-  { day: "Thứ 6", hours: 1720, percent: 76 },
-  { day: "Thứ 7", hours: 1450, percent: 64 },
-  { day: "Chủ nhật", hours: 1050, percent: 46 },
-];
-const MOCK: StatsData = {
-  totalAccounts: 1292,
-  students: 1240,
-  lecturers: 48,
-  admins: 4,
-  suspended: 2,
-  aiSessions: 3820,
-  completionRate: "76.4%",
-  avgScore: "8.4 / 10",
-  totalLearningHours: "12.450 giờ",
-  cognitiveLevels: MOCK_COG,
-  weekdayEngagement: MOCK_WEEK,
-};
 
 interface TooltipPayloadItem {
   name?: string;
@@ -151,8 +90,18 @@ export default function StatsDashboard() {
     isLive,
     refresh,
     lastUpdated,
-  } = useAdminData<StatsData>("/dashboard/stats", { fallback: MOCK, intervalMs: 60_000 });
-  const d = apiData ?? MOCK;
+  } = useAdminData<StatsData>("/dashboard/stats", { intervalMs: 60_000 });
+  if (!apiData || error)
+    return (
+      <section className="dashboard-section-card">
+        <h1>Dashboard Người Dùng & Năng Lực Học Tập AI</h1>
+        <p role={error ? "alert" : "status"}>{error || "Đang tải thống kê tài khoản…"}</p>
+        <button className="button" onClick={refresh} disabled={loading}>
+          Kiểm tra lại
+        </button>
+      </section>
+    );
+  const d = apiData;
 
   const userRoles = [
     { name: "Học viên", value: d.students, color: "#0284c7" },
@@ -160,7 +109,7 @@ export default function StatsDashboard() {
     { name: "Admin", value: d.admins, color: "#059669" },
     { name: "Tạm khóa", value: d.suspended, color: "#dc2626" },
   ];
-  const cogData = (d.cognitiveLevels ?? MOCK_COG).map((c) => ({
+  const cogData = (d.cognitiveLevels ?? []).map((c) => ({
     subject: c.level,
     A: c.rate,
     fullMark: 100,
@@ -239,7 +188,7 @@ export default function StatsDashboard() {
                 <AnimatedNumber value={d.students} />
               </div>
               <div className="user-stat-role">Học Viên (Students)</div>
-              <div className="user-stat-sub">94.2% hoạt động 30 ngày</div>
+              <div className="user-stat-sub">Tài khoản có trạng thái hoạt động</div>
             </div>
             <div className="user-stat-card">
               <span className="user-stat-icon">
@@ -249,7 +198,7 @@ export default function StatsDashboard() {
                 <AnimatedNumber value={d.lecturers} />
               </div>
               <div className="user-stat-role">Giảng Viên (Lecturers)</div>
-              <div className="user-stat-sub">3 hồ sơ chờ xét duyệt</div>
+              <div className="user-stat-sub">Xem hồ sơ trong mục xét duyệt giảng viên</div>
             </div>
             <div className="user-stat-card">
               <span className="user-stat-icon">
@@ -259,7 +208,7 @@ export default function StatsDashboard() {
                 <AnimatedNumber value={d.admins} />
               </div>
               <div className="user-stat-role">Quản Trị Viên</div>
-              <div className="user-stat-sub">Bảo mật 2FA kích hoạt</div>
+              <div className="user-stat-sub">Tài khoản có quyền quản trị</div>
             </div>
             <div className="user-stat-card">
               <span className="user-stat-icon">
@@ -269,7 +218,7 @@ export default function StatsDashboard() {
                 <AnimatedNumber value={d.suspended} />
               </div>
               <div className="user-stat-role">Tạm Khóa</div>
-              <div className="user-stat-sub">Vi phạm cộng đồng</div>
+              <div className="user-stat-sub">Tài khoản có trạng thái tạm khóa</div>
             </div>
           </div>
 
@@ -345,7 +294,11 @@ export default function StatsDashboard() {
             <span className="kpi-tag accent">AI Adaptive</span>
           </div>
           <div className="kpi-value">
-            <AnimatedNumber value={d.aiSessions} suffix=" lượt" />
+            {d.aiSessions === null ? (
+              "Chưa có dữ liệu"
+            ) : (
+              <AnimatedNumber value={d.aiSessions} suffix=" lượt" />
+            )}
           </div>
           <div className="kpi-label">Luyện đề thi thích ứng AI</div>
           <p className="kpi-subtext">Đề thi tự điều chỉnh theo năng lực</p>
@@ -355,10 +308,10 @@ export default function StatsDashboard() {
             <span className="kpi-icon">
               <Icon name="target" size={20} />
             </span>
-            <span className="kpi-tag accent">+5.2% tháng này</span>
+            <span className="kpi-tag">Kết quả học tập</span>
           </div>
           <div className="kpi-value">
-            <AnimatedNumber value={d.completionRate} />
+            <AnimatedNumber value={d.completionRate ?? "Chưa có dữ liệu"} />
           </div>
           <div className="kpi-label">Tỷ lệ hoàn thành khóa học</div>
           <p className="kpi-subtext">Học viên hoàn thành bài giảng và bài tập</p>
@@ -371,10 +324,10 @@ export default function StatsDashboard() {
             <span className="kpi-tag">Thang điểm 10</span>
           </div>
           <div className="kpi-value">
-            <AnimatedNumber value={d.avgScore} />
+            <AnimatedNumber value={d.avgScore ?? "Chưa có dữ liệu"} />
           </div>
           <div className="kpi-label">Điểm đánh giá trung bình</div>
-          <p className="kpi-subtext">Dựa trên 1.450 bài kiểm tra</p>
+          <p className="kpi-subtext">Chỉ hiển thị khi có kết quả đánh giá đã tổng hợp</p>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">
@@ -384,10 +337,10 @@ export default function StatsDashboard() {
             <span className="kpi-tag accent">Tích lũy</span>
           </div>
           <div className="kpi-value">
-            <AnimatedNumber value={d.totalLearningHours} />
+            <AnimatedNumber value={d.totalLearningHours ?? "Chưa có dữ liệu"} />
           </div>
           <div className="kpi-label">Tổng thời lượng học tập</div>
-          <p className="kpi-subtext">TB 10.2 giờ / học viên / tháng</p>
+          <p className="kpi-subtext">Chỉ hiển thị khi có thời lượng học đã tổng hợp</p>
         </div>
       </div>
 
@@ -400,6 +353,7 @@ export default function StatsDashboard() {
           </div>
         </div>
         <div className="stats-charts-row">
+          {cogData.length === 0 && <p>Chưa có dữ liệu tổng hợp năng lực học tập.</p>}
           <div className="recharts-radar-wrapper">
             <ResponsiveContainer width="100%" height={260}>
               <RadarChart data={cogData}>
@@ -421,7 +375,7 @@ export default function StatsDashboard() {
             </ResponsiveContainer>
           </div>
           <div className="cognitive-levels-list">
-            {(d.cognitiveLevels ?? MOCK_COG).map((cog, index) => (
+            {(d.cognitiveLevels ?? []).map((cog, index) => (
               <div key={index} className="cognitive-level-card">
                 <div className="cognitive-level-info">
                   <div className="cognitive-level-title-row">
@@ -453,11 +407,9 @@ export default function StatsDashboard() {
           </div>
         </div>
         <div className="recharts-wrapper">
+          {d.weekdayEngagement.length === 0 && <p>Chưa có dữ liệu tổng hợp thời lượng theo tuần.</p>}
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart
-              data={d.weekdayEngagement ?? MOCK_WEEK}
-              margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
-            >
+            <BarChart data={d.weekdayEngagement ?? []} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--line, #dce3ee)" />
               <XAxis dataKey="day" tick={{ fontSize: 12, fill: "var(--muted, #53617a)" }} />
               <YAxis tick={{ fontSize: 12, fill: "var(--muted, #53617a)" }} />
@@ -475,7 +427,7 @@ export default function StatsDashboard() {
           </ResponsiveContainer>
         </div>
         <div className="weekly-engagement-chart" aria-label="Thống kê theo ngày">
-          {(d.weekdayEngagement ?? MOCK_WEEK).map((w, index) => (
+          {(d.weekdayEngagement ?? []).map((w, index) => (
             <div key={index} className="weekly-bar-col">
               <span className="weekly-day-label">{w.day}</span>
               <span className="weekly-hours-val">{w.hours}h</span>

@@ -25,6 +25,7 @@ import {
   type AssistantRole,
 } from "./assistant/index.js";
 import { HttpAssistantDomainClient } from "./assistant/domain-client.js";
+import { LocalAdminGuideProvider } from "./assistant/local-admin-guide.js";
 const manifest: ServiceManifest = {
   serviceId: "ai-service",
   ownerDomain: "AI",
@@ -159,11 +160,14 @@ await startService(manifest, {
       repository: assistantRepo,
       toolRunner: assistantToolRunner,
       domainClient: assistantDomainClient,
-      llmProvider: assistantLlmProvider,
+      llmProvider:
+        config.AI_ADMIN_SUPPORT_MODE === "local-guide"
+          ? new LocalAdminGuideProvider(assistantLlmProvider)
+          : assistantLlmProvider,
       responseCache: new CassandraAssistantResponseCache(context.cassandra),
       responseCacheTtlSeconds: config.AI_ASSISTANT_CACHE_TTL_SECONDS,
       tenantId: config.AI_ASSISTANT_CACHE_TENANT_ID,
-      providerIdentity: `${config.AI_ASSISTANT_PROVIDER_MODE}:${config.AI_PROVIDER_ENDPOINT}:${config.AI_PROVIDER_MODEL}`,
+      providerIdentity: `${config.AI_ADMIN_SUPPORT_MODE}:${config.AI_ASSISTANT_PROVIDER_MODE}:${config.AI_PROVIDER_ENDPOINT}:${config.AI_PROVIDER_MODEL}`,
     });
     app.use(
       assistantRouter(
@@ -183,6 +187,7 @@ await startService(manifest, {
           };
         },
         context.metrics,
+        { adminSupportMode: config.AI_ADMIN_SUPPORT_MODE },
       ),
     );
     app.use((error: unknown, _request: unknown, _response: unknown, next: (error: unknown) => void) => {

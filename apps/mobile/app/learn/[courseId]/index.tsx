@@ -3,9 +3,7 @@ import { Text, View, ActivityIndicator, Pressable, StyleSheet } from "react-nati
 import { type Href, router, useLocalSearchParams } from "expo-router";
 import { runtime } from "../../../src/runtime";
 import {
-  lessonSummaries,
-  progress as decodeProgress,
-  courseDetail,
+  loadCourseSyllabus,
   resumeTarget,
   type LessonSummary,
   type Progress,
@@ -48,15 +46,10 @@ export default function CourseLearningScreen() {
       setLoading(true);
       setError(null);
 
-      const [cData, lData, pData] = await Promise.all([
-        session.request(`/api/v1/me/courses/${courseId}`),
-        session.request(`/api/v1/courses/${courseId}/lessons`),
-        session.request(`/api/v1/courses/${courseId}/progress`),
-      ]);
-
-      setCourse(courseDetail(cData));
-      setLessonsList(lessonSummaries(lData));
-      setCourseProgress(decodeProgress(pData));
+      const syllabus = await loadCourseSyllabus((path) => session.request(path), courseId);
+      setCourse(syllabus.course);
+      setLessonsList(syllabus.lessons);
+      setCourseProgress(syllabus.progress);
     } catch (e: unknown) {
       if (e instanceof ApiError) {
         if (e.status === 403) setError("Bạn chưa đăng ký hoặc không có quyền truy cập khóa học này.");

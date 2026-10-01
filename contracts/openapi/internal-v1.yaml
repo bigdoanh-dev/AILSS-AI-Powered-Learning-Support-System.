@@ -9,7 +9,7 @@
             {
               "operationId": "INT-LRN-01",
               "summary": "Assessment to Learning internal contract",
-              "description": "Assessment-only exact PUBLISHED Course quiz-eligibility lookup with canonical owner and record version.",
+              "description": "Assessment-only canonical Course ownership and lifecycle lookup (DRAFT, IN_REVIEW, PUBLISHED, HIDDEN). Assessment restricts unpublished course quizzes to the eligible owning lecturer. Student Actor Context requires PUBLISHED/HIDDEN and an ACTIVE entitlement.",
               "responses":
                 {
                   "200": { "description": "Minimal eligible Course facts" },

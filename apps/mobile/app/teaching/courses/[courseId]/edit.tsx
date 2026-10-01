@@ -1,3 +1,4 @@
+import { loadCourseCategories } from "../../../../src/catalog-preview";
 import { useEffect, useState, useCallback } from "react";
 import { Text, TextInput, View, Pressable, StyleSheet, ScrollView } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -9,15 +10,6 @@ import { lecturerCourse, type LecturerCourse, CONTRACT_LIMITED } from "../../../
 import { Page, Button, ScreenHeader, styles, tokens } from "../../../../src/ui";
 import { RevenueQuote } from "../../../../src/RevenueQuote";
 
-const CATEGORY_PRESETS = [
-  { id: "cat-web", name: "Web & AI" },
-  { id: "cat-db", name: "Cơ sở dữ liệu" },
-  { id: "cat-ai", name: "AI & ML" },
-  { id: "cat-devops", name: "DevOps / Cloud" },
-  { id: "cat-mobile", name: "Di động" },
-  { id: "cat-security", name: "An ninh mạng" },
-];
-
 export default function CourseEdit() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const session = runtime!;
@@ -25,7 +17,8 @@ export default function CourseEdit() {
   const [course, setCourse] = useState<LecturerCourse | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [categoryName, setCategoryName] = useState("");
+  const [originalCategoryName, setOriginalCategoryName] = useState("");
   const [priceType, setPriceType] = useState<"FREE" | "PAID">("FREE");
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("VND");
@@ -41,13 +34,20 @@ export default function CourseEdit() {
     setError("");
     void session
       .request(`/api/v1/me/courses/${courseId}`, { signal: abort.signal })
-      .then((value) => {
+      .then(async (value) => {
         if (abort.signal.aborted) return;
         const c = lecturerCourse(value);
         setCourse(c);
         setTitle(c.title);
         setDescription(c.description ?? "");
-        setCategoryId(c.categoryId ?? "");
+        const categories = await loadCourseCategories(
+          (path, options) => session.api.request(path, options),
+          abort.signal,
+        );
+        if (abort.signal.aborted) return;
+        const name = categories.find((item) => item.id === c.categoryId)?.name ?? "";
+        setCategoryName(name);
+        setOriginalCategoryName(name);
         setPriceType(c.priceType === "PAID" ? "PAID" : "FREE");
         setPrice(c.price ?? "");
         setCurrency(c.currency ?? "VND");
@@ -67,7 +67,7 @@ export default function CourseEdit() {
       const body: Record<string, unknown> = {};
       if (title !== course.title) body.title = title;
       if (description !== (course.description ?? "")) body.description = description;
-      if (categoryId !== (course.categoryId ?? "")) body.categoryId = categoryId;
+      if (categoryName.trim() !== originalCategoryName) body.categoryName = categoryName.trim();
       if (priceType !== (course.priceType ?? "")) body.priceType = priceType;
       if (price !== (course.price ?? "")) body.price = price;
       if (currency !== (course.currency ?? "")) body.currency = currency;
@@ -90,7 +90,19 @@ export default function CourseEdit() {
     } finally {
       setBusy(false);
     }
-  }, [courseId, course, title, description, categoryId, priceType, price, currency, session, idempotencyKey]);
+  }, [
+    courseId,
+    course,
+    title,
+    description,
+    categoryName,
+    originalCategoryName,
+    priceType,
+    price,
+    currency,
+    session,
+    idempotencyKey,
+  ]);
 
   if (snapshot.user?.role !== "LECTURER") {
     return (
@@ -135,7 +147,7 @@ export default function CourseEdit() {
               <Text style={ed.previewPrice}>
                 {priceType === "FREE" ? "Miễn phí" : `${price.trim() || "0"} ${currency}`}
               </Text>
-              <Text style={ed.previewCat}>📁 {categoryId || "Chưa phân loại"}</Text>
+              <Text style={ed.previewCat}>📁 {categoryName || "Chưa phân loại"}</Text>
             </View>
           </View>
 
@@ -176,26 +188,13 @@ export default function CourseEdit() {
 
             <View style={ed.fieldGroup}>
               <Text style={ed.fieldLabel}>Danh mục đào tạo</Text>
-              {/* Quick Select Chips */}
-              <View style={ed.chipsRow}>
-                {CATEGORY_PRESETS.map((cat) => (
-                  <Pressable
-                    key={cat.id}
-                    style={[ed.categoryChip, categoryId === cat.id && ed.categoryChipActive]}
-                    onPress={() => setCategoryId(cat.id)}
-                  >
-                    <Text style={[ed.categoryChipText, categoryId === cat.id && ed.categoryChipTextActive]}>
-                      {cat.name}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
               <TextInput
-                accessibilityLabel="Mã danh mục"
-                style={[styles.input, ed.input, { marginTop: 6 }]}
-                value={categoryId}
-                onChangeText={setCategoryId}
-                placeholder="Nhập hoặc chỉnh sửa mã danh mục..."
+                accessibilityLabel="Danh mục đào tạo"
+                style={[styles.input, ed.input]}
+                value={categoryName}
+                onChangeText={setCategoryName}
+                maxLength={80}
+                placeholder="Nhập danh mục đào tạo"
               />
             </View>
           </View>

@@ -86,11 +86,11 @@ export default function AdminUserDetailScreen() {
         headers: {
           "Idempotency-Key": key,
         },
-        body: JSON.stringify({
+        body: {
           status: newStatus,
           currentPassword: statusPassword,
           ...(reason.trim() ? { reason: reason.trim() } : {}),
-        }),
+        },
       });
       setStatusPassword("");
       setReason("");
@@ -128,9 +128,9 @@ export default function AdminUserDetailScreen() {
         headers: {
           "Idempotency-Key": key,
         },
-        body: JSON.stringify({
+        body: {
           currentPassword: verifyPassword,
-        }),
+        },
       });
       setVerifyPassword("");
       setSuccessMessage("Xác minh giảng viên thành công. Tài khoản có thể bắt đầu giảng dạy.");

@@ -13,7 +13,7 @@ import {
 } from "./api";
 import { Heading, State, Empty, Status } from "./ui";
 import Discussion from "./Discussion";
-import { Breadcrumbs, ScheduleTime, StateChip } from "../components/product";
+import { ScheduleTime, StateChip } from "../components/product";
 import { Icon } from "../components/Icon";
 import { CourseArtwork } from "../components/CourseArtwork";
 export function Classes() {
@@ -142,548 +142,94 @@ export function Classes() {
     </>
   );
 }
-interface ClassDocument {
-  id: string;
-  title: string;
-  category: "SYLLABUS" | "SLIDE" | "EXERCISE" | "SOURCE_CODE";
-  categoryLabel: string;
-  fileType: "PDF" | "ZIP" | "SQL" | "DOCX";
-  fileSize: string;
-  updatedAt: string;
-  uploadedBy: string;
-  downloadsCount: number;
-}
-
-const MOCK_CLASS_DOCS: ClassDocument[] = [
-  {
-    id: "doc-1",
-    title: "Đề cương chi tiết học phần & Ma trận chuẩn đầu ra (Syllabus 2026)",
-    category: "SYLLABUS",
-    categoryLabel: "Đề Cương",
-    fileType: "PDF",
-    fileSize: "1.4 MB",
-    updatedAt: "05/09/2026",
-    uploadedBy: "TS. Trần Hoàng Minh",
-    downloadsCount: 48,
-  },
-  {
-    id: "doc-2",
-    title: "Slide Chương 1-3: Mô hình Thực thể - Liên kết (ERD) & Đại số quan hệ",
-    category: "SLIDE",
-    categoryLabel: "Bài Giảng",
-    fileType: "PDF",
-    fileSize: "4.8 MB",
-    updatedAt: "10/09/2026",
-    uploadedBy: "TS. Trần Hoàng Minh",
-    downloadsCount: 46,
-  },
-  {
-    id: "doc-3",
-    title: "Slide Chương 4-6: Chuẩn hóa lược đồ CSDL (1NF - 3NF - BCNF) & Tối ưu hóa Index",
-    category: "SLIDE",
-    categoryLabel: "Bài Giảng",
-    fileType: "PDF",
-    fileSize: "5.6 MB",
-    updatedAt: "14/09/2026",
-    uploadedBy: "TS. Trần Hoàng Minh",
-    downloadsCount: 42,
-  },
-  {
-    id: "doc-4",
-    title: "Sổ tay bài tập thực hành Lab SQL nâng cao (DML, DDL, Trigger & Procedure)",
-    category: "EXERCISE",
-    categoryLabel: "Thực Hành",
-    fileType: "PDF",
-    fileSize: "2.8 MB",
-    updatedAt: "12/09/2026",
-    uploadedBy: "ThS. Nguyễn Thị Thu Hà",
-    downloadsCount: 44,
-  },
-  {
-    id: "doc-5",
-    title: "Mã nguồn Schema mẫu & Dataset E-Commerce thực chiến (PostgreSQL 16)",
-    category: "SOURCE_CODE",
-    categoryLabel: "Dữ Liệu Mẫu",
-    fileType: "SQL",
-    fileSize: "12.3 MB",
-    updatedAt: "15/09/2026",
-    uploadedBy: "TS. Trần Hoàng Minh",
-    downloadsCount: 39,
-  },
-];
-
-interface ClassRosterMember {
-  studentId: string;
-  name: string;
-  role: "STUDENT" | "LEADER" | "VICE_LEADER";
-  roleLabel: string;
-  attendanceRate: string;
-  completedTasks: number;
-  totalTasks: number;
-  status: "ONLINE" | "RECENTLY_ACTIVE" | "ABSENT";
-}
-
-const MOCK_CLASS_ROSTER: ClassRosterMember[] = [
-  {
-    studentId: "SV-202601",
-    name: "Lê Văn Đức",
-    role: "LEADER",
-    roleLabel: "Lớp trưởng",
-    attendanceRate: "100%",
-    completedTasks: 6,
-    totalTasks: 6,
-    status: "ONLINE",
-  },
-  {
-    studentId: "SV-202602",
-    name: "Nguyễn Mai Phương",
-    role: "VICE_LEADER",
-    roleLabel: "Lớp phó học tập",
-    attendanceRate: "100%",
-    completedTasks: 6,
-    totalTasks: 6,
-    status: "ONLINE",
-  },
-  {
-    studentId: "SV-202603",
-    name: "Trần Anh Tuấn",
-    role: "STUDENT",
-    roleLabel: "Học viên",
-    attendanceRate: "95%",
-    completedTasks: 5,
-    totalTasks: 6,
-    status: "RECENTLY_ACTIVE",
-  },
-  {
-    studentId: "SV-202604",
-    name: "Phạm Hoàng Long",
-    role: "STUDENT",
-    roleLabel: "Học viên",
-    attendanceRate: "92%",
-    completedTasks: 5,
-    totalTasks: 6,
-    status: "ONLINE",
-  },
-  {
-    studentId: "SV-202605",
-    name: "Đỗ Thị Bảo Ngọc",
-    role: "STUDENT",
-    roleLabel: "Học viên",
-    attendanceRate: "100%",
-    completedTasks: 6,
-    totalTasks: 6,
-    status: "RECENTLY_ACTIVE",
-  },
-  {
-    studentId: "SV-202606",
-    name: "Vũ Minh Quân",
-    role: "STUDENT",
-    roleLabel: "Học viên",
-    attendanceRate: "90%",
-    completedTasks: 4,
-    totalTasks: 6,
-    status: "RECENTLY_ACTIVE",
-  },
-  {
-    studentId: "SV-202607",
-    name: "Hoàng Gia Huy",
-    role: "STUDENT",
-    roleLabel: "Học viên",
-    attendanceRate: "88%",
-    completedTasks: 4,
-    totalTasks: 6,
-    status: "ONLINE",
-  },
-  {
-    studentId: "SV-202608",
-    name: "Ngô Thanh Thảo",
-    role: "STUDENT",
-    roleLabel: "Học viên",
-    attendanceRate: "96%",
-    completedTasks: 6,
-    totalTasks: 6,
-    status: "RECENTLY_ACTIVE",
-  },
-];
-
 export function ClassDetail() {
-  const { classId = "" } = useParams(),
-    q = useStudent<ClassItem>("/classes/" + classId),
-    [month, setMonth] = useState(monthNow()),
-    [classTab, setClassTab] = useState<"lessons" | "assignments" | "documents" | "members">("lessons"),
-    [docSearch, setDocSearch] = useState(""),
-    [memberSearch, setMemberSearch] = useState(""),
-    [docNotice, setDocNotice] = useState<string | null>(null);
-
-  const filteredDocs = MOCK_CLASS_DOCS.filter(
-    (d) =>
-      d.title.toLowerCase().includes(docSearch.toLowerCase()) ||
-      d.categoryLabel.toLowerCase().includes(docSearch.toLowerCase()) ||
-      d.fileType.toLowerCase().includes(docSearch.toLowerCase()),
-  );
-
-  const filteredMembers = MOCK_CLASS_ROSTER.filter(
-    (m) =>
-      m.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
-      m.studentId.toLowerCase().includes(memberSearch.toLowerCase()) ||
-      m.roleLabel.toLowerCase().includes(memberSearch.toLowerCase()),
-  );
-
-  const handleDownloadDoc = (doc: ClassDocument) => {
-    setDocNotice(`Đang tải xuống: "${doc.title}" (${doc.fileSize})...`);
-    setTimeout(() => {
-      setDocNotice(`✓ Đã tải xuống thành công: ${doc.title}`);
-      setTimeout(() => setDocNotice(null), 3500);
-    }, 800);
-  };
-
+  const { classId = "" } = useParams();
+  const query = useStudent<ClassItem>(`/classes/${classId}`);
+  const [month, setMonth] = useState(monthNow());
   return (
-    <>
-      <Link to="/app/classes">← Lớp học của tôi</Link>
-      <Breadcrumbs
-        items={[{ label: "Lớp học", to: "/app/classes" }, { label: q.data?.name || "Đang tải…" }]}
-      />
-      <Heading title={q.data?.name || "Lớp học"} />
-
-      <div
-        className="module-segmented-bar"
-        role="tablist"
-        aria-label="Phân hệ lớp học"
-        style={{ marginBottom: "20px" }}
-      >
-        <button
-          type="button"
-          className={`segmented-tab ${classTab === "lessons" ? "active" : ""}`}
-          onClick={() => setClassTab("lessons")}
-        >
-          <Icon name="book" size={15} />
-          <span>Buổi Học & Lịch Trình</span>
-        </button>
-        <button
-          type="button"
-          className={`segmented-tab ${classTab === "assignments" ? "active" : ""}`}
-          onClick={() => setClassTab("assignments")}
-        >
-          <Icon name="quiz" size={15} />
-          <span>Bài Tập & Đánh Giá</span>
-          <span className="red-badge-dot" title="Có bài tập chưa nộp" />
-        </button>
-        <button
-          type="button"
-          className={`segmented-tab ${classTab === "documents" ? "active" : ""}`}
-          onClick={() => setClassTab("documents")}
-        >
-          <Icon name="receipt" size={15} />
-          <span>Tài Liệu & Học Liệu ({MOCK_CLASS_DOCS.length})</span>
-        </button>
-        <button
-          type="button"
-          className={`segmented-tab ${classTab === "members" ? "active" : ""}`}
-          onClick={() => setClassTab("members")}
-        >
-          <Icon name="users" size={15} />
-          <span>Danh Sách Lớp (48)</span>
-        </button>
+    <div className="class-detail-page-container">
+      <div style={{ marginBottom: 12 }}>
+        <Link className="button button-subtle button-small" to="/app/classes">
+          ← Lớp học của tôi
+        </Link>
       </div>
 
-      {docNotice && (
-        <div className="dashboard-banner-notice" role="status" style={{ marginBottom: "1rem" }}>
-          <span>✓</span>
-          <span>{docNotice}</span>
-        </div>
-      )}
-
-      <State query={q}>
-        {q.data && classTab === "lessons" && (
+      <State query={query}>
+        {query.data && (
           <>
-            <section className="study-card">
-              <p>{q.data.state === "ACTIVE" ? "Lớp đang hoạt động" : "Lớp đã đóng"}</p>
-              {q.data.linkedCourseId && (
-                <Link to={"/app/learn/" + q.data.linkedCourseId}>Mở khóa học của lớp →</Link>
-              )}
-              <label style={{ marginTop: "12px" }}>
-                Tháng xem lịch & thông báo (UTC)
-                <input
-                  type="month"
-                  value={month}
-                  required
-                  onChange={(e) => {
-                    if (e.target.value) setMonth(e.target.value);
-                  }}
-                />
-              </label>
-            </section>
-            <ClassContent key={month} id={classId} month={month} />
-            <Discussion type="CLASS" id={classId} canWrite />
-          </>
-        )}
-
-        {q.data && classTab === "assignments" && (
-          <div className="home-card-list">
-            <section className="dashboard-section-card">
-              <div className="section-card-header">
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <h2>Bài Tập & Kiểm Tra Của Lớp</h2>
-                  <span className="red-badge-pill">● 2 bài chưa nộp</span>
+            {/* Hero Class Card */}
+            <div className="class-hero-card">
+              <div className="class-hero-accent-stripe" />
+              <div className="class-hero-body">
+                <div className="class-hero-icon-box">
+                  <Icon name="class" size={28} />
                 </div>
-                <Link to={"/app/assessments?class=" + classId} className="button small">
-                  Tất cả bài thi →
+                <div className="class-hero-content">
+                  <div className="class-badge-row">
+                    <span className="badge">Lớp học trực tiếp</span>
+                    <span className="green-badge-pill">● Đang hoạt động</span>
+                    <span className="class-meta-chip">
+                      <Icon name="users" size={13} />
+                      <span>{query.data.scheduleState || "Lịch học định kỳ"}</span>
+                    </span>
+                  </div>
+                  <h1 className="class-hero-title">{query.data.name}</h1>
+                  <p className="class-hero-desc">
+                    Không gian học tập tương tác, cập nhật lịch trình các buổi học, thông báo từ giảng viên và
+                    bài kiểm tra định kỳ.
+                  </p>
+                </div>
+              </div>
+
+              {/* Class Quick Actions */}
+              <div className="class-hero-actions-bar">
+                {query.data.linkedCourseId && (
+                  <Link className="button" to={`/app/learn/${query.data.linkedCourseId}`}>
+                    <Icon name="book" size={15} />
+                    <span>Xem giáo trình khóa học →</span>
+                  </Link>
+                )}
+                <Link className="button button-subtle" to={`/app/assessments?target=CLASS/${classId}`}>
+                  <Icon name="quiz" size={15} />
+                  <span>Bài kiểm tra của lớp</span>
                 </Link>
               </div>
-
-              <div className="home-card-list">
-                <div className="home-activity-card">
-                  <div className="home-activity-card-top">
-                    <span className="badge">BÀI TẬP LỚN</span>
-                    <span className="red-badge-pill">● Chưa nộp</span>
-                  </div>
-                  <h3 className="home-activity-card-title">Thiết kế lược đồ CSDL quan hệ chuẩn hóa 3NF</h3>
-                  <div className="home-activity-card-meta">
-                    <span style={{ color: "#dc2626", fontWeight: 600 }}>⏰ Hạn nộp: 23:59 Hôm nay</span>
-                    <Link to={"/app/assessments?class=" + classId} className="button small">
-                      Nộp bài →
-                    </Link>
-                  </div>
-                </div>
-
-                <div className="home-activity-card">
-                  <div className="home-activity-card-top">
-                    <span className="badge">THỰC HÀNH</span>
-                    <span className="green-badge-pill">✓ Đã nộp · 9.0/10</span>
-                  </div>
-                  <h3 className="home-activity-card-title">
-                    Bài thực hành 02: Tối ưu hóa truy vấn với Index
-                  </h3>
-                  <div className="home-activity-card-meta">
-                    <span>Hạn nộp: 15/09/2026</span>
-                    <span style={{ color: "#16a34a", fontWeight: 600 }}>Giảng viên đã chấm</span>
-                  </div>
-                </div>
-
-                <div className="home-activity-card">
-                  <div className="home-activity-card-top">
-                    <span className="badge">QUIZ AI THÍCH ỨNG</span>
-                    <span className="red-badge-pill">● Chưa làm</span>
-                  </div>
-                  <h3 className="home-activity-card-title">
-                    Kiểm tra trắc nghiệm 15 phút: Ràng buộc toàn vẹn & Trigger
-                  </h3>
-                  <div className="home-activity-card-meta">
-                    <span>⏱️ 15 phút • 10 câu hỏi</span>
-                    <Link to={"/app/assessments?class=" + classId} className="button small">
-                      Vào thi →
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-        )}
-
-        {/* TAB 3: DOCUMENTS & STUDY MATERIALS */}
-        {q.data && classTab === "documents" && (
-          <section className="dashboard-section-card">
-            <div className="section-card-header">
-              <div>
-                <h2>Tài Liệu & Học Liệu Của Lớp</h2>
-                <p className="subtext">
-                  Giáo trình, slide bài giảng, đề cương chi tiết và bộ dữ liệu thực hành do giảng viên cung
-                  cấp.
-                </p>
-              </div>
-              <div className="table-search-box">
-                <input
-                  type="search"
-                  placeholder="Tìm tài liệu, slide, đề cương..."
-                  value={docSearch}
-                  onChange={(e) => setDocSearch(e.target.value)}
-                  aria-label="Tìm kiếm tài liệu"
-                />
-              </div>
             </div>
 
-            <div className="workspace-cards" style={{ marginTop: "1rem" }}>
-              {filteredDocs.map((doc) => (
-                <article key={doc.id} className="home-activity-card" style={{ padding: "1.25rem" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      marginBottom: "0.5rem",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span className="kpi-tag accent">{doc.categoryLabel}</span>
-                      <span className="badge">{doc.fileType}</span>
-                    </div>
-                    <small style={{ color: "var(--muted, #64748b)" }}>
-                      {doc.fileSize} · {doc.updatedAt}
-                    </small>
-                  </div>
-
-                  <h3 style={{ margin: "0.5rem 0 0.25rem 0", fontSize: "1.05rem" }}>{doc.title}</h3>
-                  <p style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)", margin: "0 0 1rem 0" }}>
-                    Tải lên bởi: <strong>{doc.uploadedBy}</strong> · {doc.downloadsCount} lượt tải
-                  </p>
-
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-                    <button
-                      className="button button-subtle button-small"
-                      onClick={() => handleDownloadDoc(doc)}
-                    >
-                      <Icon name="eye" size={14} /> Xem thử
-                    </button>
-                    <button className="button button-small" onClick={() => handleDownloadDoc(doc)}>
-                      <Icon name="card" size={14} /> Tải tài liệu ({doc.fileSize})
-                    </button>
-                  </div>
-                </article>
-              ))}
-
-              {filteredDocs.length === 0 && (
-                <div className="table-empty-row" style={{ padding: "2rem", textAlign: "center" }}>
-                  Không tìm thấy tài liệu phù hợp với từ khóa "{docSearch}".
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* TAB 4: CLASS ROSTER & MEMBERS */}
-        {q.data && classTab === "members" && (
-          <section className="dashboard-section-card">
-            <div className="section-card-header">
-              <div>
-                <h2>Danh Sách Lớp & Bạn Học</h2>
-                <p className="subtext">
-                  Danh sách thành viên lớp học, giảng viên phụ trách và ban cán sự lớp.
-                </p>
+            {/* Month Filter Toolbar */}
+            <div className="class-month-toolbar">
+              <div className="class-month-label">
+                <Icon name="calendar" size={16} />
+                <span>Chọn tháng học:</span>
               </div>
-              <div className="table-search-box">
-                <input
-                  type="search"
-                  placeholder="Tìm học viên theo tên, mã SV..."
-                  value={memberSearch}
-                  onChange={(e) => setMemberSearch(e.target.value)}
-                  aria-label="Tìm kiếm thành viên"
-                />
-              </div>
+              <input
+                className="class-month-input"
+                type="month"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+                aria-label="Tháng học"
+              />
             </div>
 
-            {/* Class Info Cards */}
-            <div className="workspace-kpi-grid" style={{ marginBottom: "1.5rem" }}>
-              <div className="kpi-card">
-                <div className="kpi-header">
-                  <span className="kpi-icon">
-                    <Icon name="users" size={20} />
-                  </span>
-                  <span className="kpi-tag accent">Sĩ số</span>
-                </div>
-                <div className="kpi-value">48 / 50</div>
-                <div className="kpi-label">Học viên trong lớp</div>
-              </div>
+            <ClassContent id={classId} month={month} />
 
-              <div className="kpi-card">
-                <div className="kpi-header">
-                  <span className="kpi-icon">
-                    <Icon name="graduation" size={20} />
-                  </span>
-                  <span className="kpi-tag accent">Giảng viên</span>
+            <div className="dashboard-section-card" style={{ marginTop: 24 }}>
+              <div className="section-card-header">
+                <div>
+                  <p className="eyebrow">TRAO ĐỔI &amp; HỎI ĐÁP</p>
+                  <h2>Thảo luận lớp học</h2>
                 </div>
-                <div className="kpi-value" style={{ fontSize: "1.1rem" }}>
-                  TS. Trần Hoàng Minh
-                </div>
-                <div className="kpi-label">Giảng viên phụ trách môn</div>
+                <span className="kpi-tag">Cộng đồng lớp</span>
               </div>
-
-              <div className="kpi-card">
-                <div className="kpi-header">
-                  <span className="kpi-icon">
-                    <Icon name="trophy" size={20} />
-                  </span>
-                  <span className="kpi-tag accent">Ban cán sự</span>
-                </div>
-                <div className="kpi-value" style={{ fontSize: "1.1rem" }}>
-                  Lê Văn Đức
-                </div>
-                <div className="kpi-label">Lớp trưởng · Liên hệ nhóm</div>
-              </div>
-
-              <div className="kpi-card">
-                <div className="kpi-header">
-                  <span className="kpi-icon">
-                    <Icon name="checkCircle" size={20} />
-                  </span>
-                  <span className="kpi-tag accent">96.8%</span>
-                </div>
-                <div className="kpi-value">Xuất sắc</div>
-                <div className="kpi-label">Tỷ lệ chuyên cần chung của lớp</div>
-              </div>
+              <Discussion type="CLASS" id={classId} canWrite />
             </div>
-
-            {/* Members Table */}
-            <div className="table-responsive">
-              <table className="dashboard-data-table" role="table">
-                <thead>
-                  <tr>
-                    <th>STT</th>
-                    <th>Mã SV</th>
-                    <th>Họ và Tên</th>
-                    <th>Vai Trò</th>
-                    <th>Chuyên Cần</th>
-                    <th>Bài Tập Đã Nộp</th>
-                    <th>Trạng Thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMembers.map((m, idx) => (
-                    <tr key={m.studentId}>
-                      <td>{idx + 1}</td>
-                      <td>
-                        <code className="code-badge">{m.studentId}</code>
-                      </td>
-                      <td>
-                        <strong>{m.name}</strong>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-pill ${m.role !== "STUDENT" ? "status-success" : "status-reconciled"}`}
-                        >
-                          {m.roleLabel}
-                        </span>
-                      </td>
-                      <td>
-                        <strong>{m.attendanceRate}</strong>
-                      </td>
-                      <td>
-                        {m.completedTasks} / {m.totalTasks} bài
-                      </td>
-                      <td>
-                        <span
-                          className={`status-pill ${m.status === "ONLINE" ? "status-success" : "status-pending"}`}
-                        >
-                          ● {m.status === "ONLINE" ? "Đang học" : "Vừa hoạt động"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredMembers.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="table-empty-row">
-                        Không tìm thấy học viên nào phù hợp với "{memberSearch}".
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
+          </>
         )}
       </State>
-    </>
+    </div>
   );
 }
+
 function ClassContent({ id, month }: { id: string; month: string }) {
   const q = useStudent<SessionItem[]>(
     "/classes/" + id + "/sessions?" + new URLSearchParams(rangeForMonth(month)),
@@ -693,25 +239,62 @@ function ClassContent({ id, month }: { id: string; month: string }) {
   );
   return (
     <>
-      <section className="study-card">
-        <h2>Các buổi học</h2>
+      <section className="dashboard-section-card" style={{ marginTop: 20 }}>
+        <div className="section-card-header">
+          <div>
+            <p className="eyebrow">LỊCH TRÌNH</p>
+            <h2>Các buổi học trong tháng</h2>
+          </div>
+          <span className="kpi-tag accent">{q.data?.length ?? 0} buổi học</span>
+        </div>
         <State query={q}>
-          {q.data?.length ? <Sessions items={q.data} /> : <Empty>Chưa có buổi học trong tháng này.</Empty>}
+          {q.data?.length ? (
+            <Sessions items={q.data} />
+          ) : (
+            <div className="class-empty-notice-box">
+              <div className="class-empty-icon-circle">
+                <Icon name="calendar" size={26} />
+              </div>
+              <h3>Chưa có buổi học trong tháng này</h3>
+              <p>Giảng viên sẽ sớm công bố lịch trình chi tiết và link tham gia buổi học trực tuyến.</p>
+            </div>
+          )}
         </State>
       </section>
-      <section className="study-card">
-        <h2>Thông báo của lớp</h2>
+
+      <section className="dashboard-section-card" style={{ marginTop: 20 }}>
+        <div className="section-card-header">
+          <div>
+            <p className="eyebrow">BẢNG TIN</p>
+            <h2>Thông báo của lớp</h2>
+          </div>
+          <span className="kpi-tag">{a.data?.length ?? 0} thông báo</span>
+        </div>
         <State query={a}>
           {a.data?.length ? (
-            a.data.map((v) => (
-              <article key={v.announcementId}>
-                <h3>{v.title}</h3>
-                <p className="study-text">{v.body}</p>
-                <small>{dateLabel(v.createdAt)} · Asia/Ho_Chi_Minh</small>
-              </article>
-            ))
+            <div className="class-announcements-list">
+              {a.data.map((v) => (
+                <article key={v.announcementId} className="class-announcement-card">
+                  <div className="class-announcement-header">
+                    <Icon name="bell" size={16} />
+                    <h3>{v.title}</h3>
+                    <span className="class-announcement-time">{dateLabel(v.createdAt)}</span>
+                  </div>
+                  <p className="study-text">{v.body}</p>
+                </article>
+              ))}
+            </div>
           ) : (
-            <Empty>Chưa có thông báo trong tháng.</Empty>
+            <div className="class-empty-notice-box">
+              <div
+                className="class-empty-icon-circle"
+                style={{ background: "rgba(100, 116, 139, 0.12)", color: "var(--muted)" }}
+              >
+                <Icon name="bell" size={26} />
+              </div>
+              <h3>Chưa có thông báo trong tháng</h3>
+              <p>Các thông tin và dặn dò quan trọng từ giảng viên sẽ được gửi trực tiếp tại đây.</p>
+            </div>
           )}
         </State>
       </section>
@@ -721,29 +304,73 @@ function ClassContent({ id, month }: { id: string; month: string }) {
 function Sessions({ items }: { items: SessionItem[] }) {
   const [selected, setSelected] = useState("");
   return (
-    <>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
       {items.map((v) => (
-        <article className="study-session" key={v.sessionId}>
-          <h3>{v.title}</h3>
-          {v.className && <Link to={"/app/classes/" + v.classId}>{v.className}</Link>}
-          <p>
-            <ScheduleTime start={v.startAt} end={v.endAt} timezone={v.timezone} />
-          </p>
-          <p>
-            Múi giờ: {v.timezone} · {v.mode === "ONLINE" ? "Trực tuyến" : "Trực tiếp"}
-          </p>
-          {v.location && <p>{v.location}</p>}
-          {v.status === "CANCELLED" ? (
-            <p>Buổi học đã hủy.</p>
-          ) : (
-            <button className="plain-button" onClick={() => setSelected(v.sessionId)}>
-              Xem thông tin tham gia
-            </button>
+        <article className="study-session-card" key={v.sessionId}>
+          <div className="study-session-header-row">
+            <div>
+              <h3 className="study-session-title">{v.title}</h3>
+              {v.className && (
+                <div style={{ fontSize: 13, marginTop: 4 }}>
+                  <Link
+                    to={"/app/classes/" + v.classId}
+                    style={{ color: "var(--blue, #0284c7)", fontWeight: 600 }}
+                  >
+                    {v.className}
+                  </Link>
+                </div>
+              )}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span className={`study-session-mode-badge ${v.mode === "ONLINE" ? "online" : "offline"}`}>
+                <Icon name={v.mode === "ONLINE" ? "sparkles" : "users"} size={13} />
+                {v.mode === "ONLINE" ? "Trực tuyến" : "Trực tiếp"}
+              </span>
+              {v.location && <span className="study-session-location-tag">📍 {v.location}</span>}
+            </div>
+          </div>
+
+          <div className="study-session-meta-row">
+            <span className="study-session-meta-item">
+              <Icon name="clock" size={14} />
+              <ScheduleTime start={v.startAt} end={v.endAt} timezone={v.timezone} />
+            </span>
+            <span className="study-session-meta-item">
+              <span>Múi giờ: {v.timezone}</span>
+            </span>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+            {v.status === "CANCELLED" ? (
+              <span className="kpi-tag" style={{ color: "#ef4444" }}>
+                Buổi học đã hủy
+              </span>
+            ) : (
+              <button
+                type="button"
+                className={`button button-small ${selected === v.sessionId ? "button-subtle" : ""}`}
+                onClick={() => setSelected((prev) => (prev === v.sessionId ? "" : v.sessionId))}
+              >
+                {selected === v.sessionId ? "Ẩn thông tin tham gia" : "Xem thông tin tham gia →"}
+              </button>
+            )}
+          </div>
+          {selected === v.sessionId && (
+            <div
+              style={{
+                marginTop: 10,
+                padding: "12px 14px",
+                borderRadius: 8,
+                background: "var(--surface-subtle, #f8fafc)",
+                border: "1px solid var(--line, #e2e8f0)",
+              }}
+            >
+              <SessionAccess key={selected} id={selected} />
+            </div>
           )}
-          {selected === v.sessionId && <SessionAccess key={selected} id={selected} />}
         </article>
       ))}
-    </>
+    </div>
   );
 }
 function SessionAccess({ id }: { id: string }) {

@@ -25,7 +25,7 @@ const course = envelope(
     .object({
       courseId: z.string().uuid(),
       ownerLecturerId: z.string().uuid(),
-      state: z.enum(["PUBLISHED", "HIDDEN"]),
+      state: z.enum(["DRAFT", "IN_REVIEW", "PUBLISHED", "HIDDEN"]),
       recordVersion: z.number().int().positive(),
       studentEligible: z.boolean().optional(),
     })
@@ -52,6 +52,7 @@ export interface TargetFacts {
   targetId: string;
   ownerLecturerId: string;
   version: number;
+  courseState?: "DRAFT" | "IN_REVIEW" | "PUBLISHED" | "HIDDEN";
 }
 
 export class AssessmentDependencyError extends Error {
@@ -108,6 +109,7 @@ export class AssessmentClients {
         targetId: value.data.courseId,
         ownerLecturerId: value.data.ownerLecturerId,
         version: value.data.recordVersion,
+        courseState: value.data.state,
       };
     }
     const value = await this.get(
@@ -161,13 +163,14 @@ export class AssessmentClients {
         dependency,
         actorContext,
       );
-      if (value.data.studentEligible !== true)
+      if (!["PUBLISHED", "HIDDEN"].includes(value.data.state) || value.data.studentEligible !== true)
         throw new AssessmentDependencyError(dependency, "REJECTED", 403);
       return {
         targetType,
         targetId: value.data.courseId,
         ownerLecturerId: value.data.ownerLecturerId,
         version: value.data.recordVersion,
+        courseState: value.data.state,
       };
     }
     const value = await this.get(

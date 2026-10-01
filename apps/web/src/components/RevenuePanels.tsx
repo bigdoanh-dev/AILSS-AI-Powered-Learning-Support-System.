@@ -77,7 +77,7 @@ export function RevenueChart({ rows }: { rows: RevenueDay[] }) {
                   <div className="rev-custom-tooltip">
                     <div className="rev-tooltip-date">Ngày {label}</div>
                     <div className="rev-tooltip-row">
-                      <span style={{ color: "#0284c7", fontWeight: 600 }}>Thực nhận:</span>
+                      <span style={{ color: "#0284c7", fontWeight: 600 }}>Sau hoàn tiền:</span>
                       <strong>{money(netVal)}</strong>
                     </div>
                     <div className="rev-tooltip-row">
@@ -112,7 +112,7 @@ export function RevenueChart({ rows }: { rows: RevenueDay[] }) {
       <div className="rev-chart-legend" style={{ justifyContent: "center", marginTop: 12 }}>
         <span className="rev-chart-legend-item">
           <span className="rev-legend-dot net" />
-          <span>Thu nhập thực nhận (Sau khấu trừ)</span>
+          <span>Doanh thu ròng (sau hoàn tiền, trước phí nền tảng)</span>
         </span>
         <span className="rev-chart-legend-item">
           <span className="rev-legend-dot gross" />

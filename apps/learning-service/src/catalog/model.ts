@@ -37,6 +37,8 @@ export interface SearchQuery {
 
 export interface CourseSummary {
   readonly courseId: string;
+  readonly description?: string;
+  readonly coverDataUrl?: string | null;
   readonly title: string;
   readonly slug: string;
   readonly categoryId: string;
@@ -49,6 +51,8 @@ export interface CourseSummary {
 
 export interface CourseDetail {
   readonly courseId: string;
+  readonly description?: string;
+  readonly coverDataUrl?: string | null;
   readonly title: string;
   readonly slug: string;
   readonly categoryId: string;

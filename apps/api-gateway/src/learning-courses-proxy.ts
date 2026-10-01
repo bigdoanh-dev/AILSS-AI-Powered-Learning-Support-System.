@@ -9,6 +9,7 @@ const uuidSchema = z.string().uuid();
 
 export interface LearningCoursesProxy {
   readonly catalog: RequestHandler;
+  readonly categories: RequestHandler;
   readonly search: RequestHandler;
   readonly detail: RequestHandler;
   readonly bySlug: RequestHandler;
@@ -79,6 +80,10 @@ export async function learningCoursesProxyFactory(config: AppConfig): Promise<Le
     };
 
   return {
+    categories: wrap(async (request, response) => {
+      assertAllowedQueryKeys(request, new Set());
+      await forward(request, response, "/api/v1/course-categories", new URLSearchParams());
+    }),
     catalog: wrap(async (request, response) => {
       assertAllowedQueryKeys(request, new Set(["categoryId", "limit", "cursor"]));
       const query = new URLSearchParams();

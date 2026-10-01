@@ -246,11 +246,11 @@ export default function Comments() {
               }}
             >
               <div style={{ fontSize: "3rem", fontWeight: "800", color: "#f59e0b", lineHeight: 1 }}>
-                {ratingInfo.average > 0 ? ratingInfo.average.toFixed(1) : "5.0"}
+                {ratingInfo.reviewCount > 0 ? ratingInfo.average.toFixed(1) : "Chưa có đánh giá"}
               </div>
               <div style={{ fontSize: "1.4rem", color: "#f59e0b", margin: "0.25rem 0" }}>
-                {"★".repeat(Math.round(ratingInfo.average || 5))}
-                {"☆".repeat(5 - Math.round(ratingInfo.average || 5))}
+                {"★".repeat(Math.round(ratingInfo.average))}
+                {"☆".repeat(5 - Math.round(ratingInfo.average))}
               </div>
               <div style={{ fontSize: "0.875rem", color: "var(--muted, #64748b)" }}>
                 Dựa trên {ratingInfo.reviewCount} lượt đánh giá thực tế
@@ -265,11 +265,7 @@ export default function Comments() {
               {[5, 4, 3, 2, 1].map((stars) => {
                 const count = starCounts[stars as keyof typeof starCounts] || 0;
                 const pct =
-                  ratingInfo.reviewCount > 0
-                    ? Math.round((count / ratingInfo.reviewCount) * 100)
-                    : stars === 5
-                      ? 100
-                      : 0;
+                  ratingInfo.reviewCount > 0 ? Math.round((count / ratingInfo.reviewCount) * 100) : 0;
                 return (
                   <div
                     key={stars}

@@ -15,6 +15,8 @@ export interface StudentClass {
   maxMembers?: number;
   state?: string;
   joinCode?: string;
+  photoDataUrl?: string;
+  coverDataUrl?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -44,6 +46,8 @@ export function studentClass(value: unknown): StudentClass {
     maxMembers: optionalNumber(rec.maxMembers),
     state: typeof rec.state === "string" ? rec.state : undefined,
     joinCode: typeof rec.joinCode === "string" ? rec.joinCode : undefined,
+    photoDataUrl: typeof rec.photoDataUrl === "string" ? rec.photoDataUrl : undefined,
+    coverDataUrl: typeof rec.coverDataUrl === "string" ? rec.coverDataUrl : undefined,
     createdAt: typeof rec.createdAt === "string" ? rec.createdAt : undefined,
     updatedAt: typeof rec.updatedAt === "string" ? rec.updatedAt : undefined,
   };

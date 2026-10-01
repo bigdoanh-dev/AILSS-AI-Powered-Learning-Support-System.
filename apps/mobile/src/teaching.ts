@@ -73,6 +73,7 @@ export interface LecturerCourse {
   title: string;
   state?: string;
   activeStudentCount?: number;
+  coverDataUrl?: string;
   description?: string;
   slug?: string;
   priceType?: string;
@@ -94,6 +95,7 @@ export function lecturerCourse(value: unknown): LecturerCourse {
     title: string(rec.title),
     state: optionalString(rec.state),
     activeStudentCount: optionalNumber(rec.activeStudentCount),
+    coverDataUrl: optionalString(rec.coverDataUrl),
     description: optionalString(rec.description),
     slug: optionalString(rec.slug),
     priceType: optionalString(rec.priceType),
@@ -197,6 +199,8 @@ export interface OwnedClass {
   state?: string;
   maxMembers?: number;
   joinCode?: string;
+  photoDataUrl?: string;
+  coverDataUrl?: string;
   scheduleState?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -212,6 +216,8 @@ export function ownedClass(value: unknown): OwnedClass {
     state: optionalString(rec.state),
     maxMembers: optionalNumber(rec.maxMembers),
     joinCode: optionalString(rec.joinCode),
+    photoDataUrl: optionalString(rec.photoDataUrl),
+    coverDataUrl: optionalString(rec.coverDataUrl),
     scheduleState: optionalString(rec.scheduleState),
     createdAt: optionalString(rec.createdAt),
     updatedAt: optionalString(rec.updatedAt),
@@ -531,7 +537,7 @@ export const CONTRACT_LIMITED = {
   courseDelete: "Lưu trữ khóa học cần quyền quản trị viên (Admin).",
   offeringDelete: "API không hỗ trợ xóa offering.",
   lessonFileUpload: "Tải tệp bài học chưa được hỗ trợ trên thiết bị di động.",
-  courseImageUpload: "Tải ảnh khóa học chưa được hỗ trợ trên thiết bị di động.",
+  courseImageUpload: "Ảnh bìa được lưu cùng khóa học và đồng bộ giữa các thiết bị.",
   attendanceDelete: "API không hỗ trợ xóa bản ghi điểm danh.",
   onlineManualOverride: "Buổi học trực tuyến ghi nhận điểm danh tự động qua kết nối presence.",
   announcementEdit: "Hệ thống chưa hỗ trợ chỉnh sửa thông báo đã đăng.",

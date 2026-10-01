@@ -84,6 +84,7 @@ const baseSchema = z.object({
   AI_PROVIDER_API_KEY: optionalInjected,
   AI_PROVIDER_MODE: z.enum(["production", "deterministic-test"]).default("production"),
   AI_ASSISTANT_PROVIDER_MODE: z.enum(["external", "integration-only"]).default("external"),
+  AI_ADMIN_SUPPORT_MODE: z.enum(["external", "local-guide"]).default("external"),
   AI_ASSISTANT_CACHE_TTL_SECONDS: z.coerce.number().int().min(1).max(604_800).default(86_400),
   AI_ASSISTANT_CACHE_TENANT_ID: z.string().min(1).max(200).default("platform-default"),
   AI_ASSISTANT_INTEGRATION_ENABLED: bool,
@@ -187,6 +188,11 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     result.data.NODE_ENV === "production" ||
     source.AILSS_PROFILE?.trim().toLowerCase() === "production" ||
     source.DEPLOYMENT_ENV?.trim().toLowerCase() === "production";
+  if (
+    result.data.AI_ADMIN_SUPPORT_MODE === "local-guide" &&
+    (productionLike || !["development", "research"].includes(result.data.NODE_ENV))
+  )
+    throw new ConfigurationError(["Local admin guidance is only available in development or research"]);
   if (
     productionLike &&
     (result.data.AI_ASSISTANT_PROVIDER_MODE !== "external" || result.data.AI_ASSISTANT_INTEGRATION_ENABLED)

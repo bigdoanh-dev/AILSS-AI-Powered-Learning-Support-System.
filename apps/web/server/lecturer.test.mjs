@@ -142,3 +142,46 @@ test("AI distribution survives the BFF and rejects mismatched totals", () => {
     lecturerOperation("/web-session/lecturer/ai/quiz-jobs", "POST", { ...body, questionCount: 9 }, command),
   );
 });
+
+test("course authoring accepts lecturer-entered category names", () => {
+  const body = {
+    title: "Thiết kế đồ họa",
+    slug: "thiet-ke-do-hoa",
+    categoryName: "Thiết kế",
+    priceType: "FREE",
+    price: "0",
+    currency: "VND",
+  };
+  const created = lecturerOperation("/web-session/lecturer/courses", "POST", body, command);
+  assert.equal(created.path, "/courses");
+  const patched = lecturerOperation(
+    `/web-session/lecturer/courses/${id}`,
+    "PATCH",
+    { categoryName: "Hội họa" },
+    { ...command, "if-match": '"v1"' },
+  );
+  assert.equal(patched.path, `/courses/${id}`);
+  const missingCategory = { ...body };
+  delete missingCategory.categoryName;
+  assert.throws(() => lecturerOperation("/web-session/lecturer/courses", "POST", missingCategory, command));
+});
+
+test("class management permits image updates and an idempotent delete", () => {
+  const path = `/web-session/lecturer/classes/${id}`;
+  assert.equal(lecturerOperation(path, "PATCH", { photoDataUrl: null }, command).path, `/classes/${id}`);
+  assert.equal(lecturerOperation(path, "PATCH", { coverDataUrl: null }, command).path, `/classes/${id}`);
+  assert.equal(lecturerOperation(path, "DELETE", {}, command).path, `/classes/${id}`);
+  assert.throws(() => lecturerOperation(path, "DELETE", {}, {}));
+});
+
+test("manual grades persist only a validated score and result version", () => {
+  const path = `/web-session/lecturer/quizzes/${id}/grades/${id}`;
+  const body = { score: "8.5", feedback: "Nhận xét", expectedResultVersion: 3 };
+  assert.equal(lecturerOperation(path, "POST", body, command).path, `/quizzes/${id}/grades/${id}`);
+  assert.throws(() => lecturerOperation(path, "POST", { ...body, studentId: id }, command));
+  assert.throws(() => lecturerOperation(path, "POST", { ...body, score: "101" }, command));
+});
+test("quiz deadline can be persisted or cleared without browser storage", () => {
+  const path = `/web-session/lecturer/quizzes/${id}`;
+  assert.equal(lecturerOperation(path, "PATCH", { closesAt: null }, command).path, `/quizzes/${id}`);
+});

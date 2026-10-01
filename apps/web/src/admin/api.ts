@@ -5,6 +5,7 @@ export async function adminRequest<T>(
   method = "GET",
   body?: unknown,
   headers: Record<string, string> = {},
+  signal?: AbortSignal,
 ) {
   const fingerprint = method === "GET" ? "" : `${method}|${path}|${JSON.stringify(body)}`;
   const key = fingerprint ? keys.get(fingerprint) || crypto.randomUUID() : "";
@@ -19,7 +20,9 @@ export async function adminRequest<T>(
       ...headers,
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    signal: AbortSignal.timeout(path === "/assistant/chat" ? 65000 : 20000),
+    signal: signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(path === "/assistant/chat" ? 65000 : 20000)])
+      : AbortSignal.timeout(path === "/assistant/chat" ? 65000 : 20000),
   });
   const value = await response.json();
   if (!response.ok) throw new ApiError(response.status, value.error?.code || "UNAVAILABLE");

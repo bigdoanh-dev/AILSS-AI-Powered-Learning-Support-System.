@@ -251,10 +251,10 @@ export interface AdminStatsData {
   readonly lecturers: number;
   readonly admins: number;
   readonly suspended: number;
-  readonly aiSessions: number;
-  readonly completionRate: string;
-  readonly avgScore: string;
-  readonly totalLearningHours: string;
+  readonly aiSessions: number | null;
+  readonly completionRate: string | null;
+  readonly avgScore: string | null;
+  readonly totalLearningHours: string | null;
   readonly cognitiveLevels: readonly {
     readonly level: string;
     readonly rate: number;

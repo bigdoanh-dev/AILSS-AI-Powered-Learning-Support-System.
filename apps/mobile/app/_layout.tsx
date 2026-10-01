@@ -96,7 +96,13 @@ function Shell() {
         />
       </Page>
     );
-  return <Stack initialRouteName="index" screenOptions={{ headerShown: false, animation: "none" }} />;
+  return (
+    <Stack
+      key={snapshot.user?.userId ?? "anonymous"}
+      initialRouteName="index"
+      screenOptions={{ headerShown: false, animation: "none" }}
+    />
+  );
 }
 export default function Layout() {
   const pathname = usePathname();

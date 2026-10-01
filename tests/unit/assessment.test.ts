@@ -1389,3 +1389,57 @@ describe("P8.4 result reads", () => {
     });
   });
 });
+
+describe("Lecturer gradebook for unpublished courses", () => {
+  for (const courseState of ["DRAFT", "IN_REVIEW"] as const) {
+    const unpublishedClients = {
+      ...clients,
+      target: async (targetType: "COURSE" | "CLASS", id: string) => ({
+        ...(await clients.target(targetType, id)),
+        courseState,
+      }),
+    };
+    it(`allows the owner to list quizzes and an empty gradebook for ${courseState}`, async () => {
+      const store = new MemoryAssessmentStore();
+      const service = new AssessmentService(store, unpublishedClients, "secret");
+      expect(await service.list("COURSE", targetId, actor, requestId)).toEqual([]);
+      const created = await service.create({
+        actor,
+        request: parseQuizCreate(createBody),
+        idempotencyKey: randomUUID(),
+        requestId,
+      });
+      const list = await service.list("COURSE", targetId, actor, requestId);
+      expect(list).toHaveLength(1);
+      expect(list[0]?.quizId).toBe(created.quiz.quizId);
+      expect((await service.detail(created.quiz.quizId, actor, requestId)).quizId).toBe(created.quiz.quizId);
+    });
+    for (const role of ["STUDENT", "LECTURER"]) {
+      it(`rejects ${role} non-owner access to list and published quiz detail in ${courseState}`, async () => {
+        const store = new MemoryAssessmentStore();
+        const service = new AssessmentService(store, unpublishedClients, "secret");
+        const created = await service.create({
+          actor,
+          request: parseQuizCreate(createBody),
+          idempotencyKey: randomUUID(),
+          requestId,
+        });
+        await service.publish({
+          actor,
+          quizId: created.quiz.quizId,
+          idempotencyKey: randomUUID(),
+          requestId,
+        });
+        const other = { ...actor, userId: randomUUID(), roles: [role] };
+        await expect(service.list("COURSE", targetId, other, requestId)).rejects.toMatchObject({
+          code: "QUIZ_TARGET_NOT_AVAILABLE",
+          status: 404,
+        });
+        await expect(service.detail(created.quiz.quizId, other, requestId)).rejects.toMatchObject({
+          code: "QUIZ_NOT_FOUND",
+          status: 404,
+        });
+      });
+    }
+  }
+});

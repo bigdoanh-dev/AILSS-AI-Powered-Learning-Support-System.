@@ -441,6 +441,7 @@ await startService(manifest, {
     const admin = new IdentityAdminService(
       {
         getUser: (userId) => adminRepository.getUser(userId),
+        getStats: () => adminRepository.getStats(),
         listShard: (input) => adminRepository.listShard(input),
         getProjection: (input) => adminRepository.getProjection(input),
         insertProjection: (input) => adminRepository.insertProjection(input),
@@ -473,6 +474,7 @@ await startService(manifest, {
         {
           search: adminVerifier("identity.admin.users.search"),
           detail: adminVerifier("identity.admin.user.detail"),
+          stats: adminVerifier("identity.admin.dashboard.stats"),
           statusChange: adminVerifier("identity.admin.user.status.change"),
         },
         context.metrics,

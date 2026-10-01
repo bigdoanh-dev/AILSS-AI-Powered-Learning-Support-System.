@@ -64,7 +64,7 @@ export interface QuizResultPage {
 
 export const CONTRACT_LIMITED = {
   quizDelete: "API không hỗ trợ xóa bài kiểm tra. Vui lòng liên hệ Quản trị viên.",
-  manualGrading: "Hệ thống hỗ trợ chấm tự động và chấm thủ công kết hợp (bài tự luận / đồ án).",
+  manualGrading: "Giảng viên có thể điều chỉnh điểm và nhận xét của bài kiểm tra khách quan.",
   questionReorder: "Sắp xếp lại câu hỏi được thực hiện qua cập nhật danh sách trong bản nháp.",
 } as const;
 

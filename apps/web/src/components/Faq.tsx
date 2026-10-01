@@ -48,7 +48,7 @@ export const questions = [
   [
     "Accounts",
     "Tôi quên mật khẩu thì làm gì?",
-    "Phiên bản này chưa có quy trình đặt lại mật khẩu qua email. Xem hướng dẫn tài khoản và liên hệ người quản trị triển khai của bạn; không gửi mật khẩu qua biểu mẫu.",
+    "Chọn Quên mật khẩu? trên trang đăng nhập, nhập email đã đăng ký, xác nhận mã OTP gồm 6 chữ số rồi đặt mật khẩu mới. Mã có hiệu lực 15 phút. Nếu dùng Google để đăng nhập, bạn có thể tiếp tục bằng nút Google.",
   ],
 ];
 export function Faq({ compact = false }: { compact?: boolean }) {

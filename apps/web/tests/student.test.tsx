@@ -88,17 +88,13 @@ describe("Student contracts and privacy", () => {
       expect(f.mock.calls.some((c) => c[0].endsWith("/attempts") && c[1].body === "{}")).toBe(true),
     );
   });
-  it("shows safe metadata instead of a retry error for an unpublished demo quiz", async () => {
-    const demoQuizId = "00000000-0000-4000-8000-000000000010";
-    setup(<QuizDetail />, "/app/assessments/" + demoQuizId, "STUDENT", () => notFound());
-
-    await screen.findByText(/Nội dung giới thiệu/);
-    expect(screen.getByText(/Kiểm tra 15 phút: Đại số quan hệ/)).toBeTruthy();
-    expect(screen.queryByText("Không tìm thấy nội dung hoặc nội dung không còn khả dụng.")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Thử lại" })).toBeNull();
-    expect(
-      (screen.getByRole("button", { name: "Chưa mở nội dung bài kiểm tra" }) as HTMLButtonElement).disabled,
-    ).toBe(true);
+  it("shows the server not-found response without invented quiz metadata", async () => {
+    setup(<QuizDetail />, "/app/assessments/00000000-0000-4000-8000-000000000010", "STUDENT", () =>
+      notFound(),
+    );
+    await screen.findByText("Không tìm thấy nội dung hoặc nội dung không còn khả dụng.");
+    expect(screen.queryByText(/Kiểm tra 15 phút: Đại số quan hệ/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Bắt đầu / tiếp tục làm bài" })).toBeNull();
   });
   it("result renders only score summary even if unexpected private fields arrive", async () => {
     setup(<ResultPage />, "/app/attempts/" + id + "/result", "STUDENT", () =>

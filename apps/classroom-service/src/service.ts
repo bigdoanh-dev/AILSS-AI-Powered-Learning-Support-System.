@@ -959,6 +959,10 @@ export class ClassroomService {
         name: input.request.name ?? old.name,
         ...(linkedCourseId ? { linkedCourseId } : {}),
         maxMembers: input.request.maxMembers ?? old.maxMembers,
+        photoDataUrl:
+          input.request.photoDataUrl === null ? undefined : (input.request.photoDataUrl ?? old.photoDataUrl),
+        coverDataUrl:
+          input.request.coverDataUrl === null ? undefined : (input.request.coverDataUrl ?? old.coverDataUrl),
         version: old.version + 1,
         updatedAt: new Date(cmd.receipt.occurredAt),
       };
@@ -994,6 +998,57 @@ export class ClassroomService {
       resource: data,
     });
     return { data, replayed: false, noOp: false };
+  }
+  async deleteClass(input: { classId: string; actor: ActorContext; key: string; requestId: string }) {
+    await this.lecturer(input.actor, input.requestId);
+    const now = new Date();
+    const scope = `CLS-DELETE:${input.actor.userId}:${input.classId}`;
+    const hash = keyHash(this.secret, input.key);
+    const fp = fingerprint(this.secret, {
+      method: "DELETE",
+      route: "/api/v1/classes/{id}",
+      actor: input.actor.userId,
+      id: input.classId,
+    });
+    await this.repo.reserve(
+      scope,
+      hash,
+      input.key,
+      randomUUID(),
+      input.classId,
+      { fingerprint: fp, occurredAt: now.toISOString() },
+      now,
+    );
+    const cmd = await this.requiredCommand(scope, hash, input.key, fp);
+    if (cmd.status === "COMPLETE" && cmd.receipt.resource)
+      return { data: cmd.receipt.resource, replayed: true };
+    const klass = await this.owned(input.classId, input.actor.userId);
+    if (klass.state === "ACTIVE") {
+      if (
+        klass.scheduleState !== "DRAFT" ||
+        klass.linkedCourseId ||
+        (await this.repo.hasActiveMembers(klass.classId)) ||
+        (await this.repo.listClassSessionIds(klass.classId, 1)).length > 0
+      )
+        throw conflict(
+          "CLASS_DELETE_NOT_EMPTY",
+          "Remove members, sessions and course links before deleting a draft class",
+        );
+      await this.repo.checkpoint(scope, hash, input.key, cmd.operationId, {
+        ...cmd.receipt,
+        oldUpdatedAt: klass.updatedAt.toISOString(),
+      });
+      if (!(await this.repo.closeClass(klass, new Date(cmd.receipt.occurredAt))))
+        throw conflict("CLASS_VERSION_CONFLICT", "Class changed concurrently");
+    }
+    await this.repo.retireCode(klass.activeCodeHash, klass.classId);
+    await this.repo.deleteLecturer({
+      ...klass,
+      updatedAt: new Date(cmd.receipt.oldUpdatedAt ?? klass.updatedAt),
+    });
+    const data = { classId: klass.classId, deleted: true };
+    await this.repo.complete(scope, hash, input.key, cmd.operationId, { ...cmd.receipt, resource: data });
+    return { data, replayed: false };
   }
   async resetCode(input: { classId: string; actor: ActorContext; key: string; requestId: string }) {
     await this.lecturer(input.actor, input.requestId);
@@ -1958,13 +2013,21 @@ function samePurchaseMembership(current: Membership, expected: Membership) {
   );
 }
 function sameClass(a: ClassroomClass, b: ClassroomClass) {
-  return a.name === b.name && a.linkedCourseId === b.linkedCourseId && a.maxMembers === b.maxMembers;
+  return (
+    a.name === b.name &&
+    a.linkedCourseId === b.linkedCourseId &&
+    a.maxMembers === b.maxMembers &&
+    a.photoDataUrl === b.photoDataUrl &&
+    a.coverDataUrl === b.coverDataUrl
+  );
 }
 function serializeTarget(value: ClassroomClass): Record<string, unknown> {
   return {
     name: value.name,
     linkedCourseId: value.linkedCourseId ?? null,
     maxMembers: value.maxMembers,
+    photoDataUrl: value.photoDataUrl ?? null,
+    coverDataUrl: value.coverDataUrl ?? null,
     activeCodeHash: value.activeCodeHash,
     version: value.version,
     updatedAt: value.updatedAt.toISOString(),
@@ -1980,6 +2043,8 @@ function restoreTarget(
     name: String(target.name),
     ...(typeof target.linkedCourseId === "string" ? { linkedCourseId: target.linkedCourseId } : {}),
     maxMembers: Number(target.maxMembers),
+    photoDataUrl: typeof target.photoDataUrl === "string" ? target.photoDataUrl : undefined,
+    coverDataUrl: typeof target.coverDataUrl === "string" ? target.coverDataUrl : undefined,
     activeCodeHash: String(target.activeCodeHash),
     version: Number(target.version),
     updatedAt: new Date(String(target.updatedAt)),
@@ -1990,6 +2055,8 @@ function sameTarget(value: ClassroomClass, target: ClassroomClass) {
     value.name === target.name &&
     value.linkedCourseId === target.linkedCourseId &&
     value.maxMembers === target.maxMembers &&
+    value.photoDataUrl === target.photoDataUrl &&
+    value.coverDataUrl === target.coverDataUrl &&
     value.activeCodeHash === target.activeCodeHash &&
     value.version === target.version &&
     value.updatedAt.getTime() === target.updatedAt.getTime()

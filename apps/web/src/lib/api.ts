@@ -33,6 +33,8 @@ export function errorMessage(error: unknown): string {
       INVALID_REFRESH_CREDENTIALS: "Phiên đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.",
       SESSION_EXPIRED: "Phiên đã hết hạn. Vui lòng đăng nhập lại.",
       SOCIAL_PROVIDER_NOT_CONFIGURED: "Đăng nhập xã hội chưa được cấu hình cho môi trường này.",
+      SOCIAL_PROVIDER_UNAVAILABLE:
+        "Dịch vụ xác thực Google/Apple tạm thời không kết nối được. Vui lòng thử lại sau.",
       AUDIENCE_MISMATCH: "Ứng dụng đăng nhập chưa khớp cấu hình Google/Apple. Vui lòng báo quản trị viên.",
       UNTRUSTED_ISSUER: "Không xác thực được nhà cung cấp đăng nhập. Vui lòng thử lại.",
       UNVERIFIED_EMAIL: "Nhà cung cấp chưa xác minh email của tài khoản này.",
@@ -46,6 +48,7 @@ export function errorMessage(error: unknown): string {
       INVALID_PASSWORD_RESET_CODE: "Mã OTP không đúng, đã hết hạn hoặc đã vượt quá số lần thử.",
       INVALID_PASSWORD_RESET_TOKEN: "Phiên đặt lại mật khẩu không còn hợp lệ. Hãy yêu cầu mã OTP mới.",
       PASSWORD_RESET_UNAVAILABLE: "Chưa thể lưu mật khẩu mới. Vui lòng thử lại sau.",
+      PASSWORD_RESET_VALIDATION_FAILED: "Vui lòng kiểm tra email, mã OTP và mật khẩu đã nhập.",
     };
     if (messages[error.code]) return messages[error.code];
     return (
@@ -65,6 +68,8 @@ export function errorMessage(error: unknown): string {
   return "Không thể kết nối dịch vụ. Kiểm tra kết nối và thử lại.";
 }
 export interface Course {
+  coverDataUrl?: string | null;
+  description?: string;
   courseId: string;
   title: string;
   slug: string;

@@ -1,12 +1,44 @@
 import { describe, expect, it } from "vitest";
 import type { CassandraClient } from "../../packages/cassandra/src/index.js";
 import { LearningCommerceRepository } from "../../apps/learning-service/src/commerce/repository.js";
+import { LearningCommerceService } from "../../apps/learning-service/src/commerce/service.js";
+import type { ActorContext } from "../../packages/security/src/index.js";
 
 const courseId = "11111111-1111-4111-8111-111111111111";
 const lecturerId = "22222222-2222-4222-8222-222222222222";
 const oldOrderId = "33333333-3333-4333-8333-333333333333";
 
 describe("authoritative lecturer revenue breakdown", () => {
+  it("returns a zero-valued daily series for a lecturer without sales, scoped to that lecturer", async () => {
+    const service = new LearningCommerceService(
+      {
+        revenueDashboard: async () => ({
+          dataSource: "AUTHORITATIVE_PAYMENT_REFUND_PROJECTION",
+          range: "today",
+          currency: "VND",
+          dailyRevenue: [
+            { day: "2026-10-01", grossMinor: "100000", refundMinor: "0", netMinor: "100000", orders: 1 },
+          ],
+          lecturers: [{ lecturerId: "other-lecturer", grossMinor: "100000" }],
+          completeness: { status: "READY" },
+        }),
+      } as unknown as LearningCommerceRepository,
+      {} as never,
+      {} as never,
+      "test",
+    );
+    const report = await service.lecturerRevenueDashboard(
+      { userId: lecturerId, roles: ["LECTURER"] } as ActorContext,
+      "today",
+    );
+    expect(report.lecturer).toMatchObject({
+      lecturerId,
+      grossMinor: "0",
+      orders: 0,
+      courses: [],
+      dailyRevenue: [{ day: "2026-10-01", grossMinor: "0", refundMinor: "0", netMinor: "0", orders: 0 }],
+    });
+  });
   it("uses the original order fee when reversing an earlier sale", async () => {
     const db = {
       execute: async (query: string, params: unknown[]) => {

@@ -46,6 +46,8 @@ export async function lecturerRequest<T>(
 }
 export function lecturerError(e: unknown) {
   if (e instanceof ApiError) {
+    if (e.code === "REVENUE_PROJECTION_NOT_READY")
+      return "Báo cáo doanh thu đang chờ đồng bộ dữ liệu thanh toán và hoàn tiền. Vui lòng kiểm tra lại sau ít phút.";
     if (e.status === 403)
       return e.code === "LECTURER_VERIFICATION_REQUIRED"
         ? "Tài khoản Giảng viên cần được xác minh."

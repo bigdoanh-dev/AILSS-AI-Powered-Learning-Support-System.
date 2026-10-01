@@ -216,6 +216,9 @@ services:
 
   identity-service:
     <<: *app-common
+    # Google/Apple token verification fetches provider JWKS over HTTPS. Internal
+    # networks alone cannot resolve or reach those providers.
+    networks: [service_net, data_net, auth_egress_net]
     profiles: [dev-core, dev-async, research, demo]
     container_name: ailss-identity-service
     command: ["dist/apps/identity-service/src/server.js"]
@@ -465,6 +468,7 @@ services:
         AI_PROVIDER_ENDPOINT: "${AI_PROVIDER_ENDPOINT:-https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent}",
         AI_PROVIDER_API_KEY: "${AI_PROVIDER_API_KEY:-${GEMINI_API_KEY:-}}",
         AI_PROVIDER_MODEL: "${AI_PROVIDER_MODEL:-gemini-2.5-flash}",
+        AI_ADMIN_SUPPORT_MODE: "${AI_ADMIN_SUPPORT_MODE:-external}",
         AI_PROVIDER_TIMEOUT_MS: "${AI_PROVIDER_TIMEOUT_MS:-45000}",
         AI_ASSISTANT_PROVIDER_MODE: "${AI_ASSISTANT_PROVIDER_MODE:-external}",
         AI_ASSISTANT_INTEGRATION_ENABLED: "${AI_ASSISTANT_INTEGRATION_ENABLED:-false}",
@@ -615,6 +619,7 @@ networks:
   ops_net: { name: ailss_ops_net }
   service_net: { name: ailss_service_net, internal: true }
   data_net: { name: ailss_data_net, internal: true }
+  auth_egress_net: { name: ailss_auth_egress_net }
 
 volumes:
   cassandra_dev_data: {}

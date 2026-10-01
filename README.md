@@ -317,15 +317,24 @@ Các luồng tham chiếu chi tiết cho registration/outbox, SePay/entitlement,
 corepack enable
 corepack prepare pnpm@11.19.0 --activate
 pnpm install --frozen-lockfile
-cp .env.example .env
+test -f .env || cp .env.example .env
 pnpm keys:dev
 pnpm env:dev-async
 pnpm dev:web
 ```
 
+> **Lưu ý cấu hình môi trường (`.env`):**
+> Chỉ sao chép file mẫu khi `.env` chưa tồn tại (`test -f .env || cp .env.example .env`).
+>
+> - **Nguyên nhân mất cấu hình Google/SePay:** `.env` đã bị ghi đè bởi `.env.example`, trong đó các biến Google và SePay để trống.
+> - **Lệnh gây ra tình trạng này là:** `cp .env.example .env` (khi chạy lại trên môi trường đã cấu hình trước đó).
+> - **Khắc phục:** Cấu hình riêng của máy nên đặt trong `.env.local`; file này được nạp sau `.env` và không bị ghi đè khi sao chép mẫu hoặc kéo code mới.
+
 Mở địa chỉ Vite hiển thị trong terminal, mặc định `http://127.0.0.1:5173`.
 
 `env:dev-async` khởi tạo Cassandra roles/migrations, RabbitMQ topology, MinIO, Gateway, business services và workers. Hướng dẫn chi tiết cho Web nằm tại [WEB_DEVELOPMENT_GUIDE.md](./WEB_DEVELOPMENT_GUIDE.md).
+
+Cấu hình hướng dẫn quản trị local, Prometheus/Grafana và các bước chuyển lên VPS nằm tại [LOCAL_TO_VPS_CONFIGURATION.md](./LOCAL_TO_VPS_CONFIGURATION.md).
 
 Để chạy mobile sau khi cài dependency:
 

@@ -20,6 +20,7 @@ export function classroomRouter(
     | "create"
     | "detail"
     | "update"
+    | "deleteClass"
     | "join"
     | "studentList"
     | "ownedList"
@@ -131,6 +132,18 @@ export function classroomRouter(
         classId: id(req.params.classId),
         actor: await actor(req, verify.update, c.correlationId),
         request: body(() => parseClassPatch(req.body)),
+        key: idempotency(req),
+        requestId: c.requestId,
+      }),
+    })),
+  );
+  r.delete(
+    "/api/v1/classes/:classId",
+    handler(async (req, c) => ({
+      status: 200,
+      result: await service.deleteClass({
+        classId: id(req.params.classId),
+        actor: await actor(req, verify.deleteClass, c.correlationId),
         key: idempotency(req),
         requestId: c.requestId,
       }),

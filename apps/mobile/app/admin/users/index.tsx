@@ -39,7 +39,9 @@ export default function AdminUsersListScreen() {
           limit: "25",
           ...(targetCursor ? { cursor: targetCursor } : {}),
         });
-        const res = await session.request(`/api/v1/admin/users?${queryParams.toString()}`);
+        const res = await session.request(`/api/v1/admin/users?${queryParams.toString()}`, {
+          includeMeta: true,
+        });
         const parsed = adminUserListResponse(res);
         setUsers(parsed.items);
         setNextCursor(parsed.nextCursor);

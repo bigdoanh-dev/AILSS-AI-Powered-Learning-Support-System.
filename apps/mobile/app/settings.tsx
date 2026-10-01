@@ -17,7 +17,6 @@ export default function SettingsScreen() {
       ? "HTTP (chỉ môi trường development)"
       : "Chưa xác định";
 
-  const [cacheMessage, setCacheMessage] = useState("");
   const [busyLogout, setBusyLogout] = useState(false);
   const [savingColdStartPreference, setSavingColdStartPreference] = useState(false);
   const [coldStartPreferenceError, setColdStartPreferenceError] = useState("");
@@ -36,12 +35,6 @@ export default function SettingsScreen() {
 
   const handleToggleContrast = (val: boolean) => {
     updateSystemSettings({ highContrast: val });
-  };
-
-  const handleClearCache = () => {
-    updateSystemSettings({ cacheClearedAt: new Date().toLocaleTimeString("vi-VN") });
-    setCacheMessage("Đã dọn dẹp bộ nhớ đệm (0 MB).");
-    setTimeout(() => setCacheMessage(""), 3000);
   };
 
   const handleLogout = async () => {
@@ -185,20 +178,10 @@ export default function SettingsScreen() {
               <View style={s.rowBetween}>
                 <View>
                   <Text style={s.rowLabel}>Bộ nhớ đệm (Cache)</Text>
-                  <Text style={s.rowSub}>
-                    {settings.cacheClearedAt
-                      ? `Đã xóa gần nhất lúc: ${settings.cacheClearedAt}`
-                      : "Dung lượng hiện tại: ~12.4 MB"}
-                  </Text>
+                  <Text style={s.rowSub}>Chưa có thông tin dung lượng bộ nhớ đệm.</Text>
                 </View>
-                <Button label="Xóa Cache" size="sm" variant="outline" onPress={handleClearCache} />
+                <Text style={s.rowSub}>Chưa hỗ trợ dọn bộ nhớ đệm tại đây.</Text>
               </View>
-
-              {cacheMessage ? (
-                <Text style={{ color: "#15803D", fontSize: 13, fontWeight: "600", marginTop: 6 }}>
-                  {cacheMessage}
-                </Text>
-              ) : null}
             </View>
           </View>
 

@@ -27,7 +27,7 @@ export function learningQuizEligibilityRouter(
         throw new AppError("SERVICE_CALLER_NOT_ALLOWED", 403, "Service caller is not allowed");
       const courseId = z.string().uuid().parse(request.params.id),
         course = await repository.getCanonicalCourse(courseId);
-      if (!course || !["PUBLISHED", "HIDDEN"].includes(course.state))
+      if (!course || !["DRAFT", "IN_REVIEW", "PUBLISHED", "HIDDEN"].includes(course.state))
         throw new AppError("COURSE_NOT_QUIZ_ELIGIBLE", 404, "Course is not available for quizzes");
       const actorToken = optionalHeader(request, "x-actor-context");
       let studentEligible: boolean | undefined;
@@ -39,6 +39,10 @@ export function learningQuizEligibilityRouter(
           throw new AppError("INVALID_ACTOR_CONTEXT", 401, "Invalid actor context");
         }
         if (actor.correlationId !== context.correlationId || !actor.roles.includes("STUDENT"))
+          throw new AppError("STUDENT_NOT_ELIGIBLE", 403, "Student is not eligible");
+        // Owners prepare quizzes before publication. Student access still requires
+        // a released course and an active entitlement, even if a quiz is published.
+        if (!["PUBLISHED", "HIDDEN"].includes(course.state))
           throw new AppError("STUDENT_NOT_ELIGIBLE", 403, "Student is not eligible");
         const entitlement = await repository.entitlement(actor.userId, courseId);
         if (!entitlement || entitlement.state !== "ACTIVE")

@@ -10,6 +10,7 @@ import {
   lessonDetail,
   progress,
   enrolledCourses,
+  loadCourseSyllabus,
   resumeTarget,
   safeContentUrl,
   isAlreadyEnrolledConflict,
@@ -44,6 +45,34 @@ const sampleProgress = {
   courseContentVersion: 1,
   completed: false,
 };
+
+describe("student course syllabus", () => {
+  it("loads learning data without requesting the lecturer authoring endpoint", async () => {
+    const responses: Record<string, unknown> = {
+      "/api/v1/courses/c-1": sampleCourse,
+      "/api/v1/courses/c-1/lessons": [sampleLesson],
+      "/api/v1/courses/c-1/progress": sampleProgress,
+    };
+    const request = vi.fn(async (path: string) => {
+      if (!(path in responses)) throw new ApiError("server", 501);
+      return responses[path];
+    });
+    const result = await loadCourseSyllabus(request, "c-1");
+    expect(result.course.title).toBe(sampleCourse.title);
+    expect(result.lessons[0]?.lessonId).toBe("l-1");
+    expect(result.progress.percent).toBe(50);
+  });
+
+  it("does not expose a ready syllabus when course entitlement is denied", async () => {
+    const denied = new ApiError("403", 403, undefined, "COURSE_ACCESS_DENIED");
+    await expect(
+      loadCourseSyllabus(async (path) => {
+        if (path.endsWith("/progress")) throw denied;
+        return path.endsWith("/lessons") ? [sampleLesson] : sampleCourse;
+      }, "c-1"),
+    ).rejects.toBe(denied);
+  });
+});
 
 describe("course decoder", () => {
   it("decodes a valid course", () => {

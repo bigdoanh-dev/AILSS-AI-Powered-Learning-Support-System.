@@ -140,7 +140,7 @@ export default function RevenueDashboard() {
   }
 
   return (
-    <div className="admin-dashboard-container">
+    <div className="admin-dashboard-container animate-fade-in">
       <div className="dashboard-heading">
         <div>
           <p className="eyebrow">TÀI CHÍNH &amp; THƯƠNG MẠI</p>
@@ -149,15 +149,22 @@ export default function RevenueDashboard() {
             Chỉ hiển thị số liệu đã được tổng hợp từ thanh toán và hoàn tiền có thể kiểm toán.
           </p>
         </div>
-        <Link className="button button-subtle" to="/app">
-          ← Tổng quan Admin
-        </Link>
+        <div className="dashboard-header-actions">
+          <Link className="button button-subtle" to="/app">
+            ← Tổng quan Admin
+          </Link>
+        </div>
       </div>
 
-      <section className="dashboard-section-card">
+      <section className="dashboard-section-card admin-commission-card">
         <div className="section-card-header">
-          <div>
-            <h2>Chiết khấu nền tảng</h2>
+          <div className="admin-commission-header-text">
+            <div className="admin-commission-title-row">
+              <div className="admin-commission-icon-box">
+                <Icon name="card" size={20} />
+              </div>
+              <h2>Chiết khấu nền tảng</h2>
+            </div>
             <p className="subtext">
               Tỷ lệ mới áp dụng cho các khoản thanh toán từ thời điểm lưu. Doanh thu và hoàn tiền của đơn cũ
               giữ tỷ lệ lúc mua.
@@ -170,21 +177,26 @@ export default function RevenueDashboard() {
               </p>
             )}
           </div>
-          <div className="inline-actions">
-            <label>
-              Chiết khấu (%){" "}
-              <input
-                type="number"
-                min="0"
-                max="50"
-                step="0.01"
-                value={commissionPercent}
-                onChange={(event) => setCommissionPercent(event.target.value)}
-                disabled={!commission.data || savingCommission}
-              />
+          <div className="inline-actions admin-commission-actions">
+            <label className="admin-commission-label">
+              <span className="admin-commission-label-title">Chiết khấu (%)</span>
+              <div className="admin-commission-input-wrap">
+                <input
+                  type="number"
+                  min="0"
+                  max="50"
+                  step="0.01"
+                  value={commissionPercent}
+                  onChange={(event) => setCommissionPercent(event.target.value)}
+                  disabled={!commission.data || savingCommission}
+                  className="admin-commission-input"
+                  placeholder="0.00"
+                />
+                <span className="admin-commission-suffix">%</span>
+              </div>
             </label>
             <button
-              className="button"
+              className="button admin-save-commission-btn"
               type="button"
               disabled={!commission.data || savingCommission}
               onClick={() => void saveCommission()}
@@ -193,8 +205,18 @@ export default function RevenueDashboard() {
             </button>
           </div>
         </div>
-        {commission.error && <p role="alert">Không tải được tỷ lệ chiết khấu: {commission.error}</p>}
-        {commissionMessage && <p role="status">{commissionMessage}</p>}
+        {commission.error && (
+          <div className="admin-notice-callout warning" role="alert">
+            <Icon name="alert" size={16} />
+            <span>Không tải được tỷ lệ chiết khấu: {commission.error}</span>
+          </div>
+        )}
+        {commissionMessage && (
+          <div className="admin-notice-callout success" role="status">
+            <Icon name="checkCircle" size={16} />
+            <span>{commissionMessage}</span>
+          </div>
+        )}
       </section>
 
       <div className="dashboard-toolbar-row">
@@ -228,18 +250,30 @@ export default function RevenueDashboard() {
       </div>
 
       {!hasAuthoritativeData ? (
-        <section className="dashboard-section-card" role="status" aria-live="polite">
-          <div className="section-card-header">
-            <div>
+        <section className="dashboard-section-card admin-finance-empty-card" role="status" aria-live="polite">
+          <div className="admin-finance-empty-body">
+            <div className="admin-finance-empty-icon-wrap">
+              <Icon name="shield" size={32} />
+            </div>
+            <div className="admin-finance-empty-content">
+              <div className="admin-finance-badge-row">
+                <span className="badge">KIỂM TOÁN TÀI CHÍNH</span>
+                <span className="status-pill status-pending">Đang chờ đối soát</span>
+              </div>
               <h2>Chưa có báo cáo doanh thu có thẩm quyền</h2>
               <p className="subtext">
                 Hệ thống không dùng KPI, giao dịch hoặc số liệu dự phòng giả. Báo cáo sẽ chỉ xuất hiện sau khi
                 projection thanh toán và hoàn tiền đã sẵn sàng.
               </p>
-              {error ? <p className="subtext">Máy chủ: {error}</p> : null}
+              {error ? <p className="admin-server-error-text">Máy chủ: {error}</p> : null}
             </div>
-            <button className="button button-subtle" onClick={refresh} disabled={loading}>
-              <Icon name="refresh" size={15} /> {loading ? "Đang kiểm tra…" : "Kiểm tra lại"}
+            <button
+              className="button button-subtle admin-retry-finance-btn"
+              onClick={refresh}
+              disabled={loading}
+            >
+              <Icon name="refresh" size={15} />
+              <span>{loading ? "Đang kiểm tra…" : "Kiểm tra lại"}</span>
             </button>
           </div>
         </section>

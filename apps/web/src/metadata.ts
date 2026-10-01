@@ -42,8 +42,8 @@ export const pages: Record<string, [string, string]> = {
   "/auth/login": ["Đăng nhập", "Đăng nhập tài khoản AILSS bằng email và mật khẩu."],
   "/auth/register": ["Tạo tài khoản", "Đăng ký tài khoản sinh viên để bắt đầu cùng AILSS."],
   "/auth/forgot-password": [
-    "Trợ giúp quên mật khẩu",
-    "Tìm hiểu các bước khi bạn không thể đăng nhập tài khoản.",
+    "Đặt lại mật khẩu",
+    "Khôi phục tài khoản bằng mã OTP gửi qua email và đặt mật khẩu mới.",
   ],
   "/legal/privacy": [
     "Quyền riêng tư",

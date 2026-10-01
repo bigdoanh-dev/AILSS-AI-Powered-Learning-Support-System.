@@ -41,7 +41,7 @@ export default function LecturerProfileScreen() {
         match.slice(0, 3).map(async (course) => {
           try {
             const result = reviewList(
-              await api.request(`/api/v1/courses/${course.courseId}/reviews?limit=5`),
+              await api.request(`/api/v1/courses/${course.courseId}/reviews?limit=5`, { includeMeta: true }),
             );
             return result.items
               .filter((item) => item.state === "ACTIVE")

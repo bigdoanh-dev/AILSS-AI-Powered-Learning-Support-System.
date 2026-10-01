@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { generateKeyPair, SignJWT } from "jose";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import {
   SocialAuthError,
   verifyAppleIdToken,
@@ -105,6 +105,38 @@ describe("Phase 16A — Social Authentication & Account Linking", () => {
     it("rejects an expired Google token", async () => {
       const expiredToken = await createGoogleToken({ sub: "google-102" }, -60);
       await expect(verifyGoogleIdToken(expiredToken, verificationConfig)).rejects.toThrow(SocialAuthError);
+    });
+
+    it.each(["GOOGLE", "APPLE"] as const)(
+      "classifies %s JWKS DNS failures as provider outages",
+      async (provider) => {
+        const getKey = vi.fn().mockRejectedValue(
+          new TypeError("fetch failed", {
+            cause: Object.assign(new Error("DNS lookup failed"), { code: "EAI_AGAIN" }),
+          }),
+        );
+        const config = { ...verificationConfig, customGoogleJwks: getKey, customAppleJwks: getKey };
+        const token = provider === "GOOGLE" ? await createGoogleToken({}) : await createAppleToken({});
+        await expect(
+          provider === "GOOGLE" ? verifyGoogleIdToken(token, config) : verifyAppleIdToken(token, config),
+        ).rejects.toMatchObject({ code: "NETWORK_ERROR" });
+      },
+    );
+
+    it("classifies a JWKS timeout as a provider outage", async () => {
+      const getKey = vi
+        .fn()
+        .mockRejectedValue(Object.assign(new Error("request timed out"), { code: "ERR_JWKS_TIMEOUT" }));
+      const token = await createGoogleToken({});
+      await expect(
+        verifyGoogleIdToken(token, { ...verificationConfig, customGoogleJwks: getKey }),
+      ).rejects.toMatchObject({ code: "NETWORK_ERROR" });
+    });
+
+    it("still rejects a malformed token as INVALID_TOKEN", async () => {
+      await expect(verifyGoogleIdToken("not-a-jwt", verificationConfig)).rejects.toMatchObject({
+        code: "INVALID_TOKEN",
+      });
     });
 
     it("rejects a token with audience mismatch", async () => {
@@ -289,6 +321,7 @@ describe("Phase 16A — Social Authentication & Account Linking", () => {
       expect(result.user.status).toBe("ACTIVE");
       expect(result.accessToken).toBe(`jwt.${result.user.userId}.STUDENT`);
       expect(result.refreshToken).toBeDefined();
+      expect(result.sessionId).toMatch(/^[0-9a-f-]{36}$/);
 
       // Check external identity was linked
       const link = await mock.repo.findExternalIdentity("GOOGLE", "google-new-1");
@@ -312,6 +345,26 @@ describe("Phase 16A — Social Authentication & Account Linking", () => {
       const second = await service.socialLogin("GOOGLE", token);
       expect(second.isNewUser).toBe(false);
       expect(second.user.userId).toBe(first.user.userId);
+    });
+
+    it("returns a retryable HTTP 503 when Google keys cannot be fetched", async () => {
+      const mock = createMockRepo();
+      const service = new IdentityExternalAuthService({
+        repository: mock.repo,
+        loginStore: mockLoginStore,
+        verificationConfig: {
+          ...verificationConfig,
+          customGoogleJwks: () => Promise.reject(new TypeError("fetch failed")),
+        },
+        accessTokenSigner: dummySigner,
+        logger: createLogger({ service: "test-auth", environment: "test", level: "info" }),
+      });
+      const token = await createGoogleToken({});
+      await expect(service.socialLogin("GOOGLE", token)).rejects.toMatchObject({
+        code: "SOCIAL_PROVIDER_UNAVAILABLE",
+        status: 503,
+        retryable: true,
+      });
     });
 
     it("enforces safe account linking: rejects automatic merge when email exists on a local account", async () => {

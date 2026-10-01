@@ -22,10 +22,14 @@ pnpm install --frozen-lockfile
 Mobile gọi API qua Gateway, vì vậy cần bật backend trước. Nếu đây là lần đầu chạy repo:
 
 ```bash
-cp .env.example .env
+test -f .env || cp .env.example .env
 pnpm keys:dev
 pnpm env:dev-async
 ```
+
+Không chạy lại `cp .env.example .env` nếu `.env` đã tồn tại, vì thao tác đó
+sẽ thay cấu hình Google và SePay bằng giá trị rỗng. Cấu hình riêng của máy
+có thể đặt trong `.env.local`; các lệnh `pnpm env:*` sẽ ưu tiên file này.
 
 Lệnh cuối khởi động các dịch vụ local và Gateway. Chờ tới khi lệnh báo `environment-up` thành công. Gateway mặc định kiểm tra tại `http://127.0.0.1:8080/health/ready`.
 
@@ -137,6 +141,10 @@ Nếu chưa có tài khoản, có thể thử luồng đăng ký Student trong a
 - **Không kết nối được từ điện thoại:** kiểm tra IP LAN, cùng Wi-Fi, firewall của máy tính và port mapping Gateway; `127.0.0.1` trên điện thoại là chính điện thoại.
 - **Cấu hình URL vừa đổi nhưng app vẫn dùng URL cũ:** tải lại toàn bộ ứng dụng trong development client để nạp giá trị `EXPO_PUBLIC_` mới; nếu đổi native config, build lại development client.
 - **Lỗi thiếu iOS/Android toolchain:** cài phiên bản yêu cầu ở mục 1, sau đó chạy lại lệnh `ios` hoặc `android`.
+- **Mất cấu hình Google Login hoặc SePay:**
+  - **Nguyên nhân:** .env đã bị ghi đè bởi .env.example, trong đó các biến Google và SePay để trống.
+  - **Lệnh gây ra tình trạng này là:** `cp .env.example .env` (khi chạy lại trên môi trường đã cấu hình).
+  - **Cách khắc phục:** Luôn dùng `test -f .env || cp .env.example .env` khi khởi tạo. Khôi phục lại các biến cấu hình trong `.env` hoặc đưa vào `.env.local`.
 
 ## Phạm vi mobile hiện tại
 

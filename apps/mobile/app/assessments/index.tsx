@@ -27,7 +27,7 @@ export default function AssessmentListScreen() {
 
       const [coursesRes, classesRes] = await Promise.all([
         session.request("/api/v1/me/courses"),
-        session.request("/api/v1/classes"),
+        session.request("/api/v1/me/classes"),
       ]);
 
       const courseList = decodeCourses(coursesRes);

@@ -31,6 +31,47 @@ function setup() {
     }
     if (url.includes("/me/classes")) return Promise.resolve(ok([]));
     if (url.includes("/notifications")) return Promise.resolve(ok({ items: [] }));
+    if (url.includes("/offerings?type=SELF_PACED"))
+      return Promise.resolve(
+        ok([
+          {
+            offeringId: "20000000-0000-4000-8000-000000000001",
+            courseId: "10000000-0000-4000-8000-000000000001",
+            title: "Cơ sở dữ liệu Nâng cao & Tối ưu hóa truy vấn",
+            offeringType: "SELF_PACED",
+            price: "490000",
+            currency: "VND",
+            state: "PUBLISHED",
+          },
+          {
+            offeringId: "20000000-0000-4000-8000-000000000002",
+            courseId: "10000000-0000-4000-8000-000000000002",
+            title: "Lập trình Web & Trợ lý AI Fullstack",
+            offeringType: "SELF_PACED",
+            price: "590000",
+            currency: "VND",
+            state: "PUBLISHED",
+          },
+          {
+            offeringId: "20000000-0000-4000-8000-000000000003",
+            courseId: "10000000-0000-4000-8000-000000000003",
+            title: "DevOps CI/CD Pipeline & Kubernetes Thực chiến",
+            offeringType: "SELF_PACED",
+            price: "450000",
+            currency: "VND",
+            state: "PUBLISHED",
+          },
+          {
+            offeringId: "20000000-0000-4000-8000-000000000006",
+            courseId: "10000000-0000-4000-8000-000000000006",
+            title: "Python: Lập trình từ Nền tảng tới Hướng đối tượng",
+            offeringType: "SELF_PACED",
+            price: "0",
+            currency: "VND",
+            state: "PUBLISHED",
+          },
+        ]),
+      );
     return Promise.resolve(ok({}));
   });
 
@@ -63,7 +104,7 @@ describe("Student Marketplace Course Search on StudentHome", () => {
 
     // Check quick action chip
     await waitFor(() => {
-      expect(screen.getByText("🛒 Tìm khóa học để mua")).toBeDefined();
+      expect(screen.getByText("Tìm khóa học để mua")).toBeDefined();
     });
 
     const marketplaceSection = document.getElementById("marketplace-search");
@@ -78,9 +119,11 @@ describe("Student Marketplace Course Search on StudentHome", () => {
     );
     expect(searchInput).toBeDefined();
 
-    // Check course cards inside marketplace section
-    expect(m.getByText("Lập trình Web & Trợ lý AI Fullstack")).toBeDefined();
-    expect(m.getByText("Cơ sở dữ liệu Nâng cao & Tối ưu hóa truy vấn")).toBeDefined();
+    // Course cards are populated asynchronously from the authoritative offering catalog.
+    await waitFor(() => {
+      expect(m.getByText("Lập trình Web & Trợ lý AI Fullstack")).toBeDefined();
+      expect(m.getByText("Cơ sở dữ liệu Nâng cao & Tối ưu hóa truy vấn")).toBeDefined();
+    });
 
     // Wait for async /me/courses to resolve so owned course has "✓ Đã sở hữu"
     await waitFor(() => {
@@ -106,6 +149,10 @@ describe("Student Marketplace Course Search on StudentHome", () => {
     const marketplaceSection = document.getElementById("marketplace-search")!;
     const m = within(marketplaceSection);
 
+    await waitFor(() => {
+      expect(m.getByText("Python: Lập trình từ Nền tảng tới Hướng đối tượng")).toBeDefined();
+    });
+
     const searchInput = m.getByPlaceholderText(/Tìm kiếm khóa học để mua/i);
     fireEvent.change(searchInput, { target: { value: "DevOps" } });
 
@@ -129,6 +176,10 @@ describe("Student Marketplace Course Search on StudentHome", () => {
 
     const marketplaceSection = document.getElementById("marketplace-search")!;
     const m = within(marketplaceSection);
+
+    await waitFor(() => {
+      expect(m.getByText("Lập trình Web & Trợ lý AI Fullstack")).toBeDefined();
+    });
 
     const paidFilterBtn = m.getByText("💳 Khóa có phí (Mua ngay)");
     fireEvent.click(paidFilterBtn);

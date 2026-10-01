@@ -79,6 +79,7 @@ await startService(manifest, {
         create: actor("classroom.class.create"),
         detail: actor("classroom.class.detail"),
         update: actor("classroom.class.update"),
+        deleteClass: actor("classroom.class.delete"),
         join: actor("classroom.class.join"),
         studentList: actor("classroom.class.student-list"),
         ownedList: actor("classroom.class.owned-list"),

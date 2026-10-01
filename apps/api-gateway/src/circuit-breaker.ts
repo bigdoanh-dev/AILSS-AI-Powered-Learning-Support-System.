@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import type { RequestHandler, Response as ExpressResponse } from "express";
 import type { AppConfig } from "../../../packages/config/src/index.js";
 import { AppError, errorEnvelope } from "../../../packages/http/src/index.js";
+import { PASSWORD_RESET_REQUEST_TIMEOUT_MS } from "./auth-timeouts.js";
 
 /**
  * Tracks circuit breaker probe admittance and single-source result recording per request.
@@ -482,7 +483,7 @@ export class CircuitBreaker {
    * Short-circuits with 503 immediately when OPEN.
    * Excludes Gateway local errors (e.g. INTERNAL_ERROR) from upstream failure calculations.
    */
-  public middleware(): RequestHandler {
+  public middleware(timeoutMs = this.timeoutMs): RequestHandler {
     return (request, response, next): void => {
       const existingTracker = requestBreakerStorage.getStore();
       const tracker = existingTracker ?? new RequestBreakerTracker();
@@ -552,7 +553,7 @@ export class CircuitBreaker {
           }
         };
 
-        if (this.timeoutMs > 0) {
+        if (timeoutMs > 0) {
           timeoutTimer = setTimeout(() => {
             if (completed) return;
             completed = true;
@@ -567,7 +568,7 @@ export class CircuitBreaker {
                 .json(
                   errorEnvelope(
                     "GATEWAY_TIMEOUT",
-                    `Service "${this.service}" request timed out after ${String(this.timeoutMs)}ms`,
+                    `Service "${this.service}" request timed out after ${String(timeoutMs)}ms`,
                     [],
                     true,
                   ),
@@ -575,7 +576,7 @@ export class CircuitBreaker {
             } else {
               response.destroy();
             }
-          }, this.timeoutMs);
+          }, timeoutMs);
           timeoutTimer.unref();
         }
 
@@ -990,7 +991,12 @@ export function gatewayCircuitBreakerMiddleware(registry: CircuitBreakerRegistry
         return;
       }
       const breaker = registry.get(service);
-      breaker.middleware()(request, response, next);
+      const timeoutMs =
+        request.method === "POST" &&
+        request.path.replace(/\/+$/u, "") === "/api/v1/auth/password-reset/request"
+          ? PASSWORD_RESET_REQUEST_TIMEOUT_MS
+          : undefined;
+      breaker.middleware(timeoutMs)(request, response, next);
     };
 
     if (!existingTracker) {

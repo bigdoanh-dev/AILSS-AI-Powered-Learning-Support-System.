@@ -33,47 +33,7 @@ type Order = {
 
 const offeringsOf = (v?: Offering[] | { items: Offering[] }) => (Array.isArray(v) ? v : v?.items || []);
 
-const COURSE_CATALOG_MAP: Record<
-  string,
-  { title: string; price: number; originalPrice?: number; level: string }
-> = {
-  "10000000-0000-4000-8000-000000000002": {
-    title: "Lập trình Web & Trợ lý AI Fullstack",
-    price: 590000,
-    originalPrice: 750000,
-    level: "Trung cấp",
-  },
-  "10000000-0000-4000-8000-000000000001": {
-    title: "Cơ sở dữ liệu Nâng cao & Tối ưu hóa truy vấn",
-    price: 490000,
-    originalPrice: 650000,
-    level: "Nâng cao",
-  },
-  "10000000-0000-4000-8000-000000000003": {
-    title: "DevOps CI/CD Pipeline & Kubernetes Thực chiến",
-    price: 450000,
-    originalPrice: 550000,
-    level: "Chuyên sâu",
-  },
-  "10000000-0000-4000-8000-000000000004": {
-    title: "Kỹ thuật Prompt Engineering & Tinh chỉnh LLM Cơ bản",
-    price: 350000,
-    originalPrice: 490000,
-    level: "Nhập môn",
-  },
-  "10000000-0000-4000-8000-000000000005": {
-    title: "Nhập môn Kiểm thử Phần mềm & Automation Test",
-    price: 0,
-    level: "Nhập môn",
-  },
-  "10000000-0000-4000-8000-000000000006": {
-    title: "Python: Lập trình từ Nền tảng tới Hướng đối tượng",
-    price: 0,
-    level: "Cơ bản",
-  },
-};
-
-type PaymentMethodType = "VIETQR_SEPAY" | "BANK_TRANSFER" | "MOMO" | "CARD" | "VNPAY";
+type PaymentMethodType = "VIETQR_SEPAY" | "BANK_TRANSFER";
 
 export default function Purchase() {
   const navigate = useNavigate();
@@ -87,11 +47,8 @@ export default function Purchase() {
     entitled ? null : `/courses/${courseId}/offerings`,
   );
 
-  const courseMeta = COURSE_CATALOG_MAP[courseId] || {
-    title: "Khóa học Chuyên sâu AILSS",
-    price: 490000,
-    level: "Tiêu chuẩn",
-  };
+  const course = useStudent<{ title: string }>(`/courses/${courseId}`);
+  const courseTitle = course.data?.title ?? "Khóa học";
 
   const available: Offering[] = offeringsOf(offerings.data).filter((o) => o.state === "PUBLISHED");
 
@@ -102,12 +59,6 @@ export default function Purchase() {
   const [message, setMessage] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [countdownSeconds, setCountdownSeconds] = useState(900); // 15 mins
-
-  // Card form states
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvc, setCardCvc] = useState("");
-  const [cardHolder, setCardHolder] = useState("");
 
   const abort = useRef(new AbortController());
   const keys = useRef(new Map<string, string>());
@@ -192,6 +143,10 @@ export default function Purchase() {
 
   async function handleCreateOrder(offeringIdToBuy?: string) {
     const targetOfferingId = offeringIdToBuy || selectedOfferingId || available[0]?.offeringId;
+    if (!targetOfferingId) {
+      setMessage("Khóa học này chưa có gói học được mở bán từ backend.");
+      return;
+    }
     const path = "/orders";
     const body = { offeringId: targetOfferingId };
     const fingerprint = path + JSON.stringify(body);
@@ -217,6 +172,7 @@ export default function Purchase() {
   }
 
   async function handleSimulateSuccess() {
+    if (!order || order.paymentMode !== "simulation") return;
     setBusy(true);
     try {
       if (order) {
@@ -236,11 +192,30 @@ export default function Purchase() {
     }
   }
 
+  async function checkPayment() {
+    if (!order) return;
+    setBusy(true);
+    try {
+      const response = await studentRequest<Order>(`/orders/${order.orderId}`, abort.current.signal);
+      setOrder(response.data);
+      setMessage(
+        response.data.state === "PENDING"
+          ? "Chưa nhận được xác nhận thanh toán từ ngân hàng. Hệ thống tiếp tục đối soát tự động."
+          : "Đã cập nhật trạng thái từ máy chủ.",
+      );
+    } catch {
+      setMessage("Không thể kiểm tra thanh toán. Vui lòng thử lại.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const minutes = Math.floor(countdownSeconds / 60);
   const seconds = countdownSeconds % 60;
   const timeFormatted = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 
-  const cleanNumericPrice = order?.price.replace(/[^\d]/g, "") || "";
+  const selectedOffering = available.find((item) => item.offeringId === selectedOfferingId) ?? available[0];
+  const cleanNumericPrice = (order?.price ?? selectedOffering?.price ?? "").replace(/[^\d]/g, "");
   const formattedDisplayPrice = Number(cleanNumericPrice).toLocaleString("vi-VN") + " ₫";
   const paymentContent = order?.payment?.content || "";
   const vietQrOfficialUrl = order?.payment?.qrUrl || "";
@@ -257,7 +232,7 @@ export default function Purchase() {
         ← Quay lại danh mục khóa học
       </Link>
       <Heading title="Thanh toán khóa học">
-        Hỗ trợ chuyển khoản VietQR tự động 24/7, ví điện tử MoMo, thẻ quốc tế và VNPAY.
+        Thanh toán chuyển khoản bằng mã VietQR hoặc thông tin ngân hàng từ đơn hàng.
       </Heading>
 
       {/* Already Entitled */}
@@ -349,30 +324,6 @@ export default function Purchase() {
               >
                 <Icon name="receipt" size={16} />
                 <span>Chuyển khoản Ngân hàng</span>
-              </button>
-              <button
-                type="button"
-                className={`payment-tab-btn ${method === "MOMO" ? "active" : ""}`}
-                disabled
-              >
-                <Icon name="card" size={16} />
-                <span>Ví MoMo</span>
-              </button>
-              <button
-                type="button"
-                className={`payment-tab-btn ${method === "CARD" ? "active" : ""}`}
-                disabled
-              >
-                <Icon name="lock" size={16} />
-                <span>Thẻ Quốc Tế</span>
-              </button>
-              <button
-                type="button"
-                className={`payment-tab-btn ${method === "VNPAY" ? "active" : ""}`}
-                disabled
-              >
-                <Icon name="shield" size={16} />
-                <span>Cổng VNPAY</span>
               </button>
             </div>
 
@@ -574,9 +525,13 @@ export default function Purchase() {
                       className="button"
                       style={{ width: "100%", justifyContent: "center" }}
                       disabled={busy}
-                      onClick={handleSimulateSuccess}
+                      onClick={order.paymentMode === "simulation" ? handleSimulateSuccess : checkPayment}
                     >
-                      {busy ? "Đang xác nhận thanh toán..." : "✓ Xác nhận đã chuyển khoản"}
+                      {busy
+                        ? "Đang kiểm tra…"
+                        : order.paymentMode === "simulation"
+                          ? "Mô phỏng thanh toán thành công (local)"
+                          : "Kiểm tra thanh toán"}
                     </button>
                     <button
                       type="button"
@@ -597,30 +552,113 @@ export default function Purchase() {
             {/* Bank Transfer View */}
             {method === "BANK_TRANSFER" && (
               <div style={{ padding: "8px 0" }}>
-                <p className="eyebrow">CHUYỂN KHOẢN TRỰC TIẾP</p>
-                <h3>Hướng Dẫn Chuyển Khoản Internet Banking</h3>
-                <ol style={{ lineHeight: 1.8, paddingLeft: 20, color: "var(--muted)", margin: "14px 0" }}>
-                  <li>Mở ứng dụng ngân hàng của bạn trên điện thoại.</li>
-                  <li>
-                    Chọn <strong>Chuyển tiền nhanh 24/7 (Naphas)</strong>.
-                  </li>
-                  <li>
-                    Nhập STK <strong>{order.payment?.accountNumber}</strong> tại ngân hàng{" "}
-                    <strong>{order.payment?.bank}</strong>.
-                  </li>
-                  <li>
-                    Nhập chính xác số tiền:{" "}
-                    <strong>
-                      {order.price} {order.currency}
-                    </strong>
-                  </li>
-                  <li>
-                    Điền đúng nội dung: <strong style={{ color: "var(--blue)" }}>{paymentContent}</strong>
-                  </li>
-                </ol>
-                <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-                  <button type="button" className="button" disabled={busy} onClick={handleSimulateSuccess}>
-                    Tôi đã chuyển khoản xong
+                <p className="eyebrow" style={{ color: "var(--blue)" }}>
+                  CHUYỂN KHOẢN TRỰC TIẾP
+                </p>
+                <h3 style={{ margin: "4px 0 16px" }}>Hướng Dẫn Chuyển Khoản Internet Banking</h3>
+
+                <div className="bank-transfer-steps-list">
+                  <div className="bank-transfer-step-item">
+                    <span className="step-number-badge">1</span>
+                    <div className="step-content">
+                      <strong>Mở ứng dụng ngân hàng</strong>
+                      <p>Mở ứng dụng Mobile Banking của ngân hàng bạn đang sử dụng trên điện thoại.</p>
+                    </div>
+                  </div>
+
+                  <div className="bank-transfer-step-item">
+                    <span className="step-number-badge">2</span>
+                    <div className="step-content">
+                      <strong>Chọn chuyển tiền nhanh Napas 24/7</strong>
+                      <p>
+                        Chọn tính năng Chuyển tiền nhanh liên ngân hàng 24/7 để giao dịch được xử lý ngay lập
+                        tức.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bank-transfer-step-item">
+                    <span className="step-number-badge">3</span>
+                    <div className="step-content">
+                      <strong>Nhập số tài khoản &amp; Ngân hàng nhận</strong>
+                      <p>
+                        Ngân hàng <strong>{order.payment?.bank}</strong> · STK:{" "}
+                        <strong style={{ color: "var(--blue)" }}>{order.payment?.accountNumber}</strong>
+                      </p>
+                      <button
+                        type="button"
+                        className="copy-btn-mini"
+                        style={{ marginTop: 6 }}
+                        onClick={() => copyToClipboard(order.payment?.accountNumber || "", "stk")}
+                      >
+                        {copiedField === "stk" ? "✓ Đã chép STK" : "Sao chép STK"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bank-transfer-step-item">
+                    <span className="step-number-badge">4</span>
+                    <div className="step-content">
+                      <strong>Nhập chính xác số tiền</strong>
+                      <p>
+                        Số tiền:{" "}
+                        <strong style={{ color: "#16a34a" }}>
+                          {order.price} {order.currency}
+                        </strong>
+                      </p>
+                      <button
+                        type="button"
+                        className="copy-btn-mini"
+                        style={{ marginTop: 6 }}
+                        onClick={() => copyToClipboard(cleanNumericPrice, "amount")}
+                      >
+                        {copiedField === "amount" ? "✓ Đã chép số tiền" : "Sao chép số tiền"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bank-transfer-step-item highlight">
+                    <span className="step-number-badge accent">5</span>
+                    <div className="step-content">
+                      <strong>Điền đúng nội dung chuyển khoản</strong>
+                      <p>
+                        Nội dung:{" "}
+                        <strong
+                          style={{
+                            background: "#fef3c7",
+                            color: "#92400e",
+                            padding: "2px 6px",
+                            borderRadius: 6,
+                          }}
+                        >
+                          {paymentContent}
+                        </strong>
+                      </p>
+                      <button
+                        type="button"
+                        className="copy-btn-mini"
+                        style={{ marginTop: 6 }}
+                        onClick={() => copyToClipboard(paymentContent, "content")}
+                      >
+                        {copiedField === "content" ? "✓ Đã chép nội dung" : "Sao chép nội dung"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 12, marginTop: 24, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="button"
+                    style={{ flex: 1, minWidth: 200, justifyContent: "center" }}
+                    disabled={busy}
+                    onClick={order.paymentMode === "simulation" ? handleSimulateSuccess : checkPayment}
+                  >
+                    {busy
+                      ? "Đang kiểm tra…"
+                      : order.paymentMode === "simulation"
+                        ? "Mô phỏng thanh toán thành công (local)"
+                        : "Kiểm tra thanh toán"}
                   </button>
                   <button
                     type="button"
@@ -632,167 +670,12 @@ export default function Purchase() {
                 </div>
               </div>
             )}
-
-            {/* MoMo View */}
-            {method === "MOMO" && (
-              <div style={{ padding: "8px 0" }}>
-                <p className="eyebrow" style={{ color: "#a21caf" }}>
-                  VÍ ĐIỆN TỬ MOMO
-                </p>
-                <h3>Quét Mã Thanh Toán Qua MoMo</h3>
-                <p style={{ color: "var(--muted)", fontSize: "0.9rem", margin: "8px 0 16px" }}>
-                  Mở ứng dụng MoMo trên điện thoại và quét mã QR hoặc chuyển đến số điện thoại bên dưới:
-                </p>
-                <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
-                  <div className="sepay-qr-card" style={{ borderColor: "#f0abfc" }}>
-                    <img
-                      className="sepay-qr-img"
-                      src={order.payment?.qrUrl || ""}
-                      alt="MoMo QR"
-                      width="200"
-                      height="200"
-                    />
-                    <small style={{ marginTop: 8, color: "#a21caf", fontWeight: 700 }}>
-                      Ví MoMo / Chuyển tiền
-                    </small>
-                  </div>
-                  <div style={{ display: "grid", gap: 10, flex: 1, minWidth: 260 }}>
-                    <div className="bank-copy-row">
-                      <span className="bank-copy-label">Số điện thoại MoMo</span>
-                      <span className="bank-copy-value">{order.payment?.accountNumber}</span>
-                    </div>
-                    <div className="bank-copy-row">
-                      <span className="bank-copy-label">Người nhận</span>
-                      <span className="bank-copy-value">{order.payment?.accountName}</span>
-                    </div>
-                    <div className="bank-copy-row">
-                      <span className="bank-copy-label">Số tiền</span>
-                      <span className="bank-copy-value" style={{ color: "#a21caf" }}>
-                        {order.price} {order.currency}
-                      </span>
-                    </div>
-                    <div className="bank-copy-row">
-                      <span className="bank-copy-label">Lời nhắn</span>
-                      <span className="bank-copy-value">{paymentContent}</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="button"
-                      style={{ marginTop: 12 }}
-                      disabled={busy}
-                      onClick={handleSimulateSuccess}
-                    >
-                      Xác nhận đã thanh toán MoMo
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* International Card Form */}
-            {method === "CARD" && (
-              <div style={{ padding: "8px 0" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 12,
-                  }}
-                >
-                  <div>
-                    <p className="eyebrow">THẺ TÍN DỤNG / GHI NỢ</p>
-                    <h3>Thanh Toán Qua Thẻ Visa / Mastercard</h3>
-                  </div>
-                </div>
-
-                <div className="payment-card-form">
-                  <div className="payment-card-field">
-                    <label>Số thẻ</label>
-                    <input
-                      type="text"
-                      placeholder="4111 2222 3333 4444"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                    />
-                  </div>
-                  <div className="payment-card-grid-2">
-                    <div className="payment-card-field">
-                      <label>Hạn sử dụng (MM/YY)</label>
-                      <input
-                        type="text"
-                        placeholder="MM/YY"
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(e.target.value)}
-                      />
-                    </div>
-                    <div className="payment-card-field">
-                      <label>Mã bảo mật (CVC/CVV)</label>
-                      <input
-                        type="password"
-                        placeholder="123"
-                        maxLength={4}
-                        value={cardCvc}
-                        onChange={(e) => setCardCvc(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="payment-card-field">
-                    <label>Tên in trên thẻ (không dấu)</label>
-                    <input
-                      type="text"
-                      placeholder="NGUYEN VAN A"
-                      value={cardHolder}
-                      onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="button"
-                    style={{ marginTop: 8 }}
-                    disabled={busy}
-                    onClick={handleSimulateSuccess}
-                  >
-                    Thanh toán {order.price} {order.currency} bằng Thẻ
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* VNPAY View */}
-            {method === "VNPAY" && (
-              <div style={{ padding: "8px 0" }}>
-                <p className="eyebrow" style={{ color: "#0284c7" }}>
-                  CỔNG VNPAY-QR
-                </p>
-                <h3>Thanh Toán Qua Cổng VNPAY / ZaloPay</h3>
-                <p style={{ color: "var(--muted)", fontSize: "0.9rem", margin: "8px 0 16px" }}>
-                  Hỗ trợ thanh toán nhanh bằng tính năng QR Pay trên ứng dụng của hơn 30 ngân hàng tại Việt
-                  Nam.
-                </p>
-                <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
-                  <img
-                    className="sepay-qr-img"
-                    src={order.payment?.qrUrl || ""}
-                    alt="VNPAY QR"
-                    width="180"
-                    height="180"
-                  />
-                  <div style={{ display: "grid", gap: 10 }}>
-                    <p style={{ fontWeight: 600 }}>Quét mã QR bằng ứng dụng ngân hàng hoặc ví VNPAY</p>
-                    <button type="button" className="button" disabled={busy} onClick={handleSimulateSuccess}>
-                      Xác nhận thanh toán VNPAY
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </section>
 
           {/* Right Summary Panel for Active Order */}
           <section className="checkout-summary">
             <p className="eyebrow">TỔNG KẾT ĐƠN HÀNG</p>
-            <h2 style={{ fontSize: "1.25rem", margin: "4px 0 12px" }}>{courseMeta.title}</h2>
+            <h2 style={{ fontSize: "1.25rem", margin: "4px 0 12px" }}>{courseTitle}</h2>
             <dl className="profile-facts" style={{ margin: "16px 0" }}>
               <dt>Mã đơn</dt>
               <dd>
@@ -848,7 +731,7 @@ export default function Purchase() {
                 <span className="payment-method-icon">⚡</span>
                 <span>
                   <strong>Chuyển khoản VietQR (Tự động 24/7)</strong>
-                  <small>Quét mã bằng app ngân hàng · Đối soát tự động trong 3 giây</small>
+                  <small>Quét mã bằng ứng dụng ngân hàng · Chờ máy chủ xác nhận</small>
                 </span>
                 <span className="recommended-chip">Nhanh nhất</span>
               </label>
@@ -866,48 +749,6 @@ export default function Purchase() {
                   <small>Xem số tài khoản MB Bank và nội dung để chuyển khoản</small>
                 </span>
               </label>
-
-              <label className={method === "MOMO" ? "payment-method selected" : "payment-method"}>
-                <input
-                  type="radio"
-                  name="payment-method"
-                  checked={method === "MOMO"}
-                  onChange={() => setMethod("MOMO")}
-                />
-                <span className="payment-method-icon">📱</span>
-                <span>
-                  <strong>Ví điện tử MoMo</strong>
-                  <small>Thanh toán tức thì bằng ứng dụng Ví MoMo</small>
-                </span>
-              </label>
-
-              <label className={method === "CARD" ? "payment-method selected" : "payment-method"}>
-                <input
-                  type="radio"
-                  name="payment-method"
-                  checked={method === "CARD"}
-                  onChange={() => setMethod("CARD")}
-                />
-                <span className="payment-method-icon">💳</span>
-                <span>
-                  <strong>Thẻ Quốc Tế (Visa / Mastercard)</strong>
-                  <small>Thanh toán bảo mật chuẩn 3D-Secure</small>
-                </span>
-              </label>
-
-              <label className={method === "VNPAY" ? "payment-method selected" : "payment-method"}>
-                <input
-                  type="radio"
-                  name="payment-method"
-                  checked={method === "VNPAY"}
-                  onChange={() => setMethod("VNPAY")}
-                />
-                <span className="payment-method-icon">🛡️</span>
-                <span>
-                  <strong>Cổng VNPAY / ZaloPay</strong>
-                  <small>Hỗ trợ hơn 30 ngân hàng nội địa tại Việt Nam</small>
-                </span>
-              </label>
             </div>
 
             <div className="sepay-assurance">
@@ -920,10 +761,8 @@ export default function Purchase() {
 
           <section className="checkout-summary">
             <p className="eyebrow">BƯỚC 2: CHỌN GÓI HỌC</p>
-            <h2>{courseMeta.title}</h2>
-            <p className="subtext" style={{ marginBottom: 16 }}>
-              Trình độ: <strong>{courseMeta.level}</strong>
-            </p>
+            <h2>{selectedOffering?.title ?? courseTitle}</h2>
+            <p className="subtext" style={{ marginBottom: 16 }}></p>
 
             <div style={{ display: "grid", gap: 12 }}>
               {available.map((o) => {
@@ -984,13 +823,18 @@ export default function Purchase() {
               <button
                 type="button"
                 className="button checkout-pay-button"
-                disabled={busy}
+                disabled={busy || !selectedOffering}
                 onClick={() => handleCreateOrder(selectedOfferingId)}
               >
                 {busy
                   ? "Đang tạo đơn hàng..."
-                  : `Tiếp tục thanh toán (${method === "VIETQR_SEPAY" ? "VietQR 24/7" : method === "MOMO" ? "Ví MoMo" : method === "CARD" ? "Thẻ Quốc Tế" : "Chuyển khoản"})`}
+                  : `Tiếp tục thanh toán (${method === "VIETQR_SEPAY" ? "VietQR" : "Chuyển khoản"})`}
               </button>
+              {!offerings.pending && !selectedOffering ? (
+                <p role="alert" style={{ marginTop: 10, color: "var(--danger)" }}>
+                  Khóa học này không tồn tại hoặc chưa có gói học được mở bán trên backend.
+                </p>
+              ) : null}
             </div>
 
             <p className="checkout-terms" style={{ marginTop: 12 }}>

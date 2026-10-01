@@ -61,7 +61,9 @@ export default function LecturerRevenueScreen() {
           .map(async (course) => {
             try {
               const summary = reviewList(
-                await session.request(`/api/v1/courses/${course.courseId}/reviews?limit=1`),
+                await session.request(`/api/v1/courses/${course.courseId}/reviews?limit=1`, {
+                  includeMeta: true,
+                }),
               ).ratingSummary;
               return [
                 course.courseId,

@@ -60,13 +60,16 @@ export default function TeachingDashboard() {
         }
       }
     },
-    [session, snapshot.user?.role],
+    [session, snapshot.user?.role, snapshot.user?.userId],
   );
 
   useEffect(() => {
     if (snapshot.user?.role !== "LECTURER") {
       return;
     }
+    setItems(null);
+    setCourses(null);
+    setClasses(null);
     const abort = new AbortController();
     void loadData(abort.signal);
     return () => abort.abort();
@@ -174,6 +177,7 @@ export default function TeachingDashboard() {
             </ScalePressable>
           </View>
           <Text style={ds.sectionHeader}>Thao tác giảng dạy nhanh</Text>
+          <Button label="Đợt mở bán" onPress={() => router.push("/teaching/offerings" as Href)} />
           <View style={ds.actionGrid}>
             <ScalePressable
               style={ds.actionItem}

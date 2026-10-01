@@ -60,6 +60,13 @@ export class LearningCommerceService {
         estimatedPlatformMinor: "0",
         estimatedEarningsMinor: "0",
         orders: 0,
+        dailyRevenue: report.dailyRevenue.map(({ day }) => ({
+          day,
+          grossMinor: "0",
+          refundMinor: "0",
+          netMinor: "0",
+          orders: 0,
+        })),
         courses: [],
       },
       completeness: report.completeness,

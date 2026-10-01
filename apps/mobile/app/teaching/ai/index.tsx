@@ -1,8 +1,19 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Text, View, TextInput, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import { useSyncExternalStore } from "react";
-import { ApiError } from "../../../src/api";
+import * as Crypto from "expo-crypto";
+import * as DocumentPicker from "expo-document-picker";
+import { File } from "expo-file-system";
+import {
+  DOCUMENT_TYPES,
+  uploadDocument,
+  type DocumentFile,
+  type DocumentUpload,
+} from "../../../src/document-upload";
+import { useMobileQuery } from "../../../src/queries";
+import { lecturerCourses, ownedClasses } from "../../../src/teaching";
+import { ApiError, record } from "../../../src/api";
 import { runtime } from "../../../src/runtime";
 import {
   aiJobs,
@@ -25,7 +36,99 @@ export default function LecturerAiStudioScreen() {
     params.targetType === "CLASS" ? "CLASS" : "COURSE",
   );
   const [targetId, setTargetId] = useState(params.targetId ?? "");
+  const [retry, setRetry] = useState(0);
   const [documentId, setDocumentId] = useState("");
+  const courses = useMobileQuery("/api/v1/me/owned-courses", lecturerCourses);
+  const classes = useMobileQuery("/api/v1/me/owned-classes", ownedClasses);
+  const [questionTypes, setQuestionTypes] = useState<string[]>(["SINGLE_CHOICE"]);
+  const [difficulty, setDifficulty] = useState<"EASY" | "MEDIUM" | "HARD">("MEDIUM");
+  const [uploading, setUploading] = useState(false);
+  const uploadFlight = useRef(false);
+  const uploadAttempt = useRef<{ file: DocumentFile; receipt: DocumentUpload } | null>(null);
+  const [documentStatus, setDocumentStatus] = useState("");
+
+  async function chooseDocument(retryUpload = false) {
+    if (uploadFlight.current) return;
+    uploadFlight.current = true;
+    setUploading(true);
+    setError("");
+    try {
+      if (!retryUpload || !uploadAttempt.current) {
+        const selected = await DocumentPicker.getDocumentAsync({
+          type: DOCUMENT_TYPES,
+          copyToCacheDirectory: true,
+        });
+        if (selected.canceled) return;
+        const asset = selected.assets[0];
+        const file = new File(asset.uri);
+        if (!file.size || file.size > 25 * 1024 * 1024)
+          throw new Error("Tài liệu phải có nội dung và không quá 25 MiB.");
+        const contentType =
+          asset.mimeType ||
+          (asset.name.toLowerCase().endsWith(".txt")
+            ? "text/plain"
+            : asset.name.toLowerCase().endsWith(".pdf")
+              ? "application/pdf"
+              : "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        const bytes = await file.arrayBuffer();
+        const digest = await Crypto.digest(Crypto.CryptoDigestAlgorithm.SHA256, bytes);
+        const sha256 = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join(
+          "",
+        );
+        uploadAttempt.current = {
+          file: { fileName: asset.name, contentType, bytes, sha256 },
+          receipt: { intentKey: Crypto.randomUUID(), completeKey: Crypto.randomUUID() },
+        };
+        setDocumentId("");
+      }
+      const attempt = uploadAttempt.current!;
+      setDocumentStatus("Đang tải tài liệu…");
+      const id = await uploadDocument(
+        (path, options) => session.request(path, options),
+        attempt.file,
+        attempt.receipt,
+      );
+      setDocumentId(id);
+      setDocumentStatus("Đang xử lý nội dung…");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không thể tải tài liệu.");
+    } finally {
+      uploadFlight.current = false;
+      setUploading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!documentId || snapshot.user?.role !== "LECTURER") return;
+    const abort = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    async function poll() {
+      try {
+        const document = record(
+          await session.request(`/api/v1/ai/documents/${documentId}`, { signal: abort.signal }),
+        );
+        if (abort.signal.aborted) return;
+        const status = typeof document.status === "string" ? document.status : "";
+        setDocumentStatus(
+          status === "EXTRACTED"
+            ? "Tài liệu đã sẵn sàng."
+            : status === "FAILED" || status === "QUARANTINED"
+              ? "Tài liệu không thể xử lý. Chọn tài liệu khác."
+              : "Đang xử lý nội dung…",
+        );
+        if (!["EXTRACTED", "FAILED", "QUARANTINED"].includes(status))
+          timer = setTimeout(() => void poll(), 3000);
+      } catch (cause) {
+        if (!abort.signal.aborted)
+          setError(cause instanceof Error ? cause.message : "Không thể đọc trạng thái tài liệu.");
+      }
+    }
+    void poll();
+    return () => {
+      abort.abort();
+      clearTimeout(timer);
+    };
+  }, [documentId, retry, session, snapshot.user?.userId, snapshot.user?.role]);
 
   // Cognitive distribution state
   const [distribution, setDistribution] = useState<Record<CognitiveLevel, number>>({
@@ -42,8 +145,10 @@ export default function LecturerAiStudioScreen() {
 
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const commandKeys = useRef(new Map<string, string>());
+  const [cursor, setCursor] = useState("");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [retry, setRetry] = useState(0);
 
   const totalQuestions =
     (distribution.RECOGNITION || 0) +
@@ -57,18 +162,26 @@ export default function LecturerAiStudioScreen() {
     if (snapshot.user?.role !== "LECTURER") return;
     const abort = new AbortController();
     setLoading(true);
+    setJobs(null);
+    setUsage(null);
+    setNextCursor(null);
     setError("");
 
     Promise.all([
-      session.request("/api/v1/ai/usage", { signal: abort.signal }).catch(() => null),
-      session
-        .request(`/api/v1/ai/jobs?state=${filter}&month=${currentMonth}`, { signal: abort.signal })
-        .catch(() => null),
+      session.request("/api/v1/ai/usage", { signal: abort.signal }),
+      session.request(
+        `/api/v1/ai/jobs?state=${filter}&month=${currentMonth}&limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+        { signal: abort.signal, includeMeta: true },
+      ),
     ])
       .then(([usageData, jobsData]) => {
         if (abort.signal.aborted) return;
         if (usageData) setUsage(aiUsage(usageData));
-        if (jobsData) setJobs(aiJobs(jobsData));
+        if (jobsData) {
+          setJobs(aiJobs(jobsData));
+          const meta = record(record(jobsData).meta);
+          setNextCursor(typeof meta.nextCursor === "string" ? meta.nextCursor : null);
+        }
         setLoading(false);
       })
       .catch((e: unknown) => {
@@ -79,7 +192,7 @@ export default function LecturerAiStudioScreen() {
       });
 
     return () => abort.abort();
-  }, [session, retry, filter, snapshot.user?.role]);
+  }, [session, retry, filter, cursor, currentMonth, snapshot.user?.role, snapshot.user?.userId]);
 
   const handleCreateJob = async () => {
     if (!targetId.trim()) {
@@ -99,17 +212,24 @@ export default function LecturerAiStudioScreen() {
     setError("");
 
     try {
+      const body = {
+        targetType,
+        targetId: targetId.trim(),
+        documentId: documentId.trim(),
+        questionCount: totalQuestions,
+        questionTypes,
+        difficulty,
+        cognitiveDistribution: distribution,
+      };
+      const fingerprint = JSON.stringify(body);
+      const key = commandKeys.current.get(fingerprint) ?? Crypto.randomUUID();
+      commandKeys.current.set(fingerprint, key);
       const res = (await session.request("/api/v1/ai/quiz-jobs", {
         method: "POST",
-        body: {
-          targetType,
-          targetId: targetId.trim(),
-          documentId: documentId.trim(),
-          numberOfQuestions: totalQuestions,
-          cognitiveDistribution: distribution,
-        },
+        body,
+        idempotencyKey: key,
       })) as { jobId: string; data?: { jobId: string } };
-
+      commandKeys.current.delete(fingerprint);
       const newJobId = res.jobId || res.data?.jobId;
       setGenerating(false);
       if (newJobId) {
@@ -158,14 +278,44 @@ export default function LecturerAiStudioScreen() {
         <View style={s.row}>
           <Button
             label={targetType === "COURSE" ? "● Khóa học" : "○ Khóa học"}
-            onPress={() => setTargetType("COURSE")}
+            onPress={() => {
+              setTargetType("COURSE");
+              setTargetId("");
+            }}
           />
           <Button
             label={targetType === "CLASS" ? "● Lớp học" : "○ Lớp học"}
-            onPress={() => setTargetType("CLASS")}
+            onPress={() => {
+              setTargetType("CLASS");
+              setTargetId("");
+            }}
           />
         </View>
 
+        {(targetType === "COURSE" ? courses.error : classes.error) ? (
+          <View>
+            <Text style={styles.error}>{targetType === "COURSE" ? courses.error : classes.error}</Text>
+            <Button
+              label="Tải lại danh sách"
+              onPress={targetType === "COURSE" ? courses.retry : classes.retry}
+            />
+          </View>
+        ) : null}
+        {targetType === "COURSE"
+          ? courses.data?.map((c) => (
+              <Button
+                key={c.courseId}
+                label={`${targetId === c.courseId ? "✓ " : ""}${c.title}`}
+                onPress={() => setTargetId(c.courseId)}
+              />
+            ))
+          : classes.data?.map((c) => (
+              <Button
+                key={c.classId}
+                label={`${targetId === c.classId ? "✓ " : ""}${c.name}`}
+                onPress={() => setTargetId(c.classId)}
+              />
+            ))}
         <Text style={s.fieldLabel}>Mã đối tượng (Target ID) *</Text>
         <TextInput
           accessibilityLabel="Mã đối tượng"
@@ -186,6 +336,48 @@ export default function LecturerAiStudioScreen() {
           autoCapitalize="none"
         />
 
+        <Button
+          label={uploading ? "Đang tải…" : "Chọn tài liệu PDF, DOCX hoặc TXT"}
+          disabled={uploading}
+          onPress={() => void chooseDocument()}
+        />
+        {uploadAttempt.current && !uploadAttempt.current.receipt.completed ? (
+          <Button
+            label="Tiếp tục tải tài liệu"
+            disabled={uploading}
+            onPress={() => void chooseDocument(true)}
+          />
+        ) : null}
+        {documentStatus ? (
+          <Text accessibilityLiveRegion="polite" style={styles.small}>
+            {documentStatus}
+          </Text>
+        ) : null}
+        <Text style={s.fieldLabel}>Dạng câu hỏi</Text>
+        {[
+          ["SINGLE_CHOICE", "Một đáp án"],
+          ["MULTIPLE_CHOICE", "Nhiều đáp án"],
+          ["TRUE_FALSE", "Đúng/sai"],
+          ["SHORT_ANSWER", "Trả lời ngắn"],
+        ].map(([type, label]) => (
+          <Button
+            key={type}
+            label={`${questionTypes.includes(type) ? "✓ " : ""}${label}`}
+            onPress={() =>
+              setQuestionTypes((current) =>
+                current.includes(type) ? current.filter((t) => t !== type) : [...current, type],
+              )
+            }
+          />
+        ))}
+        <Text style={s.fieldLabel}>Độ khó</Text>
+        {(["EASY", "MEDIUM", "HARD"] as const).map((level, index) => (
+          <Button
+            key={level}
+            label={`${difficulty === level ? "✓ " : ""}${["Dễ", "Trung bình", "Khó"][index]}`}
+            onPress={() => setDifficulty(level)}
+          />
+        ))}
         {/* Presets */}
         <Text style={s.fieldLabel}>Mẫu phân bổ câu hỏi:</Text>
         <View style={s.presetRow}>
@@ -225,6 +417,7 @@ export default function LecturerAiStudioScreen() {
 
         <Button
           label={generating ? "Đang gửi yêu cầu…" : "Tạo bản nháp câu hỏi"}
+          disabled={generating || uploading || !questionTypes.length}
           onPress={() => void handleCreateJob()}
         />
       </View>
@@ -236,6 +429,8 @@ export default function LecturerAiStudioScreen() {
         </View>
       ) : null}
 
+      {cursor ? <Button label="Trang đầu" onPress={() => setCursor("")} /> : null}
+      {nextCursor ? <Button label="Trang tiếp" onPress={() => setCursor(nextCursor)} /> : null}
       {/* Jobs List Section */}
       <View style={s.jobsHeader}>
         <Text style={s.sectionTitle}>Công việc của tôi</Text>
@@ -243,18 +438,23 @@ export default function LecturerAiStudioScreen() {
 
       {/* Filter Chips */}
       <View style={s.filterRow}>
-        {["AI_DRAFT", "APPROVED", "PROCESSING", "FAILED"].map((stateKey) => (
-          <Pressable
-            key={stateKey}
-            accessibilityRole="button"
-            style={[s.filterChip, filter === stateKey && s.filterChipActive]}
-            onPress={() => setFilter(stateKey)}
-          >
-            <Text style={[s.filterText, filter === stateKey && s.filterTextActive]}>
-              {AI_JOB_STATE_COPY[stateKey as AiJobState] ?? stateKey}
-            </Text>
-          </Pressable>
-        ))}
+        {["QUEUED", "PROCESSING", "VALIDATING", "AI_DRAFT", "APPROVED", "FAILED", "CANCELLED"].map(
+          (stateKey) => (
+            <Pressable
+              key={stateKey}
+              accessibilityRole="button"
+              style={[s.filterChip, filter === stateKey && s.filterChipActive]}
+              onPress={() => {
+                setFilter(stateKey);
+                setCursor("");
+              }}
+            >
+              <Text style={[s.filterText, filter === stateKey && s.filterTextActive]}>
+                {AI_JOB_STATE_COPY[stateKey as AiJobState] ?? stateKey}
+              </Text>
+            </Pressable>
+          ),
+        )}
       </View>
 
       {loading && (

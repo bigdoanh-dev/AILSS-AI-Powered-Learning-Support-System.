@@ -7,6 +7,7 @@ import "./commercial.css";
 import "./components/floating-ai-tutor.css";
 import "./student/ai-tutor-archive.css";
 import "./pages/ai-learning.css";
+import "./pages/account.css";
 initDarkMode(); // Áp dụng theme trước render để tránh FOWT
 const root = document.getElementById("root")!;
 const app = (

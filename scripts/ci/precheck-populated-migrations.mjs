@@ -184,6 +184,18 @@ export const canonicalPolicy = {
     "SAFE_ADDITIVE",
     "Verify payout approval columns and audit table before enabling mock payout execution.",
   ),
+  "097_course_categories.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify Learning keyspace grants and category catalog storage before enabling lecturer-entered categories.",
+  ),
+  "098_class_images.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify Classroom class image columns before enabling photo and cover uploads.",
+  ),
+  "099_course_details.cql": P(
+    "SAFE_ADDITIVE",
+    "Verify Learning description and cover columns before enabling persistent course metadata.",
+  ),
 };
 
 export function findUnsafeStatements(body) {

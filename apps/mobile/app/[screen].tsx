@@ -6,6 +6,11 @@ import { ApiError, record } from "../src/api";
 import { runtime } from "../src/runtime";
 import { destinations } from "../src/navigation";
 import { items } from "../src/domain";
+import {
+  getGoogleIdToken,
+  isGoogleCloudConfigMissingError,
+  isGoogleNativeModuleMissingError,
+} from "../src/google-signin";
 import { Page, Button, Icon, PasswordInput, tokens, styles } from "../src/ui";
 
 function goToResult(
@@ -216,7 +221,6 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
       if (typeof googleWebClientId !== "string" || !googleWebClientId.trim()) {
         throw new Error("Gateway chưa có Google Web Client ID đang dùng cho bản web.");
       }
-      const { getGoogleIdToken } = await import("../src/google-signin");
       const idToken = await getGoogleIdToken(googleWebClientId.trim(), googleIosClientId);
       if (!idToken) return;
       await session.socialLogin("google", idToken);
@@ -232,7 +236,12 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
         target,
       });
     } catch (cause) {
-      const { isGoogleCloudConfigMissingError } = await import("../src/google-signin");
+      if (isGoogleNativeModuleMissingError(cause)) {
+        setError(
+          "Bản ứng dụng hiện tại chưa hỗ trợ đăng nhập Google. Hãy cài bản AILSS development build mới có Google Sign-In; Expo Go không hỗ trợ tính năng này.",
+        );
+        return;
+      }
       if (isGoogleCloudConfigMissingError(cause)) {
         Alert.alert(
           "Chưa liên kết Google Cloud trên thiết bị",
@@ -502,6 +511,14 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
               />
             </View>
 
+            {screen === "login" && (
+              <Button
+                variant="ghost"
+                label="Quên mật khẩu?"
+                onPress={() => router.push("/forgot-password")}
+                disabled={busy}
+              />
+            )}
             <View style={{ marginTop: 6 }}>
               <Button
                 testID={screen === "login" ? "student-login-submit" : undefined}
@@ -527,83 +544,6 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                   disabled={busy}
                   onPress={() => void handleGoogleLogin()}
                 />
-
-                {/* Quick Test Accounts for Device Testing */}
-                <View
-                  style={{
-                    backgroundColor: tokens.color.surfaceSubtle,
-                    borderRadius: tokens.radius.md,
-                    borderWidth: 1,
-                    borderColor: tokens.color.border,
-                    padding: 12,
-                    gap: 8,
-                    marginTop: 6,
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <Icon name="sparkles" size={14} color={tokens.color.brand} />
-                    <Text style={{ fontSize: 12, fontWeight: "700", color: tokens.color.ink }}>
-                      Đăng nhập nhanh thử nghiệm trên thiết bị:
-                    </Text>
-                  </View>
-                  <View style={{ flexDirection: "row", gap: 8 }}>
-                    <Pressable
-                      style={{
-                        flex: 1,
-                        backgroundColor: "#FFFFFF",
-                        borderWidth: 1,
-                        borderColor: tokens.color.border,
-                        borderRadius: tokens.radius.sm,
-                        paddingVertical: 8,
-                        paddingHorizontal: 6,
-                        alignItems: "center",
-                        gap: 2,
-                      }}
-                      onPress={() => void handleQuickLogin("student@ailss.internal", "AilssDemo!2026")}
-                    >
-                      <Text style={{ fontSize: 16 }}>🎓</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "600", color: tokens.color.ink }}>
-                        Học viên
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      style={{
-                        flex: 1,
-                        backgroundColor: "#FFFFFF",
-                        borderWidth: 1,
-                        borderColor: tokens.color.border,
-                        borderRadius: tokens.radius.sm,
-                        paddingVertical: 8,
-                        paddingHorizontal: 6,
-                        alignItems: "center",
-                        gap: 2,
-                      }}
-                      onPress={() => void handleQuickLogin("lecturer@ailss.internal", "AilssDemo!2026")}
-                    >
-                      <Text style={{ fontSize: 16 }}>👨‍🏫</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "600", color: tokens.color.ink }}>
-                        Giảng viên
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      style={{
-                        flex: 1,
-                        backgroundColor: "#FFFFFF",
-                        borderWidth: 1,
-                        borderColor: tokens.color.border,
-                        borderRadius: tokens.radius.sm,
-                        paddingVertical: 8,
-                        paddingHorizontal: 6,
-                        alignItems: "center",
-                        gap: 2,
-                      }}
-                      onPress={() => void handleQuickLogin("admin@ailss.internal", "AilssAdmin!2026")}
-                    >
-                      <Text style={{ fontSize: 16 }}>🛡️</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "600", color: tokens.color.ink }}>Admin</Text>
-                    </Pressable>
-                  </View>
-                </View>
               </View>
             )}
           </View>

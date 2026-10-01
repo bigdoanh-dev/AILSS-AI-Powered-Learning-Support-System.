@@ -16,7 +16,7 @@ export default function CreateAssessmentScreen() {
     params.targetType === "CLASS" ? "CLASS" : "COURSE",
   );
   const [targetId, setTargetId] = useState(params.targetId ?? "");
-  const [format, setFormat] = useState<"OBJECTIVE_QUIZ" | "ESSAY" | "PROJECT_FILE">("OBJECTIVE_QUIZ");
+  const [deadline, setDeadline] = useState("");
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -44,6 +44,7 @@ export default function CreateAssessmentScreen() {
           targetType,
           targetId: targetId.trim(),
           questions: [],
+          ...(deadline.trim() ? { closesAt: new Date(deadline).toISOString() } : {}),
         },
       });
 
@@ -77,34 +78,18 @@ export default function CreateAssessmentScreen() {
           editable={!busy}
         />
 
-        <Text style={s.label}>Hình thức & Chế độ chấm điểm</Text>
-        <View style={{ gap: 8, marginVertical: 4 }}>
-          <Button
-            label={
-              format === "OBJECTIVE_QUIZ"
-                ? "● ⚡ Trắc nghiệm (Hệ thống chấm tự động)"
-                : "○ ⚡ Trắc nghiệm (Hệ thống chấm tự động)"
-            }
-            onPress={() => setFormat("OBJECTIVE_QUIZ")}
-          />
-          <Button
-            label={
-              format === "ESSAY"
-                ? "● ✍️ Tự luận (Giảng viên chấm thủ công)"
-                : "○ ✍️ Tự luận (Giảng viên chấm thủ công)"
-            }
-            onPress={() => setFormat("ESSAY")}
-          />
-          <Button
-            label={
-              format === "PROJECT_FILE"
-                ? "● 📁 Đồ án / Nộp file (Giảng viên chấm thủ công)"
-                : "○ 📁 Đồ án / Nộp file (Giảng viên chấm thủ công)"
-            }
-            onPress={() => setFormat("PROJECT_FILE")}
-          />
-        </View>
-
+        <Text style={styles.small}>
+          Bài kiểm tra khách quan gồm trắc nghiệm và câu trả lời ngắn. Bài tự luận dài/nộp file chưa được hỗ
+          trợ.
+        </Text>
+        <Text style={s.label}>Hạn đóng bài (ISO 8601, có múi giờ)</Text>
+        <TextInput
+          accessibilityLabel="Hạn đóng bài"
+          style={s.input}
+          value={deadline}
+          onChangeText={setDeadline}
+          placeholder="2026-10-20T23:59:00+07:00"
+        />
         <Text style={s.label}>Loại đối tượng liên kết</Text>
         <View style={s.radioRow}>
           <Button

@@ -20,13 +20,16 @@ export class ApiError extends Error {
     public code?: string,
   ) {
     super(
-      code === "ATTEMPT_LIMIT_REACHED"
-        ? "Bạn đã dùng hết số lần làm bài cho phép."
-        : (API_ERROR_MESSAGES[kind] ?? "Không thể hoàn tất yêu cầu."),
+      code === "SOCIAL_PROVIDER_UNAVAILABLE"
+        ? "Dịch vụ xác thực Google/Apple tạm thời không kết nối được. Vui lòng thử lại sau."
+        : code === "ATTEMPT_LIMIT_REACHED"
+          ? "Bạn đã dùng hết số lần làm bài cho phép."
+          : (API_ERROR_MESSAGES[kind] ?? "Không thể hoàn tất yêu cầu."),
     );
   }
 }
 export type RequestOptions = {
+  includeMeta?: boolean;
   method?: string;
   body?: unknown;
   token?: string;
@@ -108,7 +111,7 @@ export class Transport {
       });
       if (!payload || typeof payload !== "object" || !("data" in payload))
         throw new ApiError("invalid", response.status, id);
-      return payload.data;
+      return options.includeMeta ? payload : payload.data;
     } catch (error) {
       if (error instanceof ApiError) throw error;
       throw new ApiError(timedOut ? "timeout" : controller.signal.aborted ? "cancelled" : "network");

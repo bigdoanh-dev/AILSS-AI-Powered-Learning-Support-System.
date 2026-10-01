@@ -5,19 +5,19 @@
   "baselineTag": "v6.2.0-rc.7",
   "sourceLine": "Phase 42 Revision B historical baseline plus additive schedule parity and AI token usage migrations (source only)",
   "summary": {
-    "CANONICAL_LOGICAL_MIGRATIONS": 62,
-    "DEV_FILES": 62,
-    "RESEARCH_FILES": 62,
-    "TOTAL_CQL_FILES": 124,
-    "PAIRED_FILES": 62,
-    "IDENTICAL_PAIRS": 55,
+    "CANONICAL_LOGICAL_MIGRATIONS": 65,
+    "DEV_FILES": 65,
+    "RESEARCH_FILES": 65,
+    "TOTAL_CQL_FILES": 130,
+    "PAIRED_FILES": 65,
+    "IDENTICAL_PAIRS": 58,
     "ENVIRONMENT_SPECIFIC_PAIRS": 2,
     "SEMANTIC_EQUIVALENT_PAIRS": 4,
     "RECONCILED_TABLE_OPTION_PAIRS": 1,
     "INVALID_DRIFT": 0
   },
-  "highestMigrationIndex": "096",
-  "highestMigrationFile": "096_lecturer_payout_execution.cql",
+  "highestMigrationIndex": "099",
+  "highestMigrationFile": "099_course_details.cql",
   "reconciliationRationale": "Historical checksums remain locked. Migration 093 converges schedule compaction after populated-target review; migration 094 creates ai_service with environment-specific replication and bounded assistant token usage partitions. Migration 095 adds a TTL-written assistant response cache table in ai_service with identical schema in both profiles. Migration 096 adds payout approval audit and reconciliation fields with identical schema in dev and research.",
   "driftAnalysis": {
     "001_keyspaces.cql": {

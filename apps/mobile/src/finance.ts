@@ -25,7 +25,9 @@ export function commission(value: unknown): Commission {
 }
 export const percent = (basisPoints: number) =>
   `${(basisPoints / 100).toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`;
-export const vnd = (amount: string | bigint) => `${new Intl.NumberFormat("vi-VN").format(BigInt(amount))} ₫`;
+// Format exact integer digits without passing BigInt to native Intl implementations.
+const groupedInteger = (amount: bigint) => amount.toString().replace(/\B(?=(\d{3})+(?!\d))/gu, ".");
+export const vnd = (amount: string | bigint) => `${groupedInteger(BigInt(amount))} ₫`;
 export function quote(price: string, currency: string, basisPoints: number) {
   points(basisPoints);
   const scale = currency === "VND" ? 1n : 100n;
@@ -35,7 +37,7 @@ export function quote(price: string, currency: string, basisPoints: number) {
     BigInt(match[1]!) * scale + (scale === 100n ? BigInt((match[2] ?? "").padEnd(2, "0") || "0") : 0n);
   const fee = (amount * BigInt(basisPoints)) / 10_000n;
   const format = (value: bigint) =>
-    `${new Intl.NumberFormat("vi-VN").format(value / scale)}${scale === 100n ? `,${String(value % scale).padStart(2, "0")}` : ""} ${currency}`;
+    `${groupedInteger(value / scale)}${scale === 100n ? `,${String(value % scale).padStart(2, "0")}` : ""} ${currency}`;
   return { gross: format(amount), fee: format(fee), earnings: format(amount - fee) };
 }
 export async function readCommission(api: Requester, role: "ADMIN" | "LECTURER") {

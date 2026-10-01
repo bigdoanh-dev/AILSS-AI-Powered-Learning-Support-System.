@@ -587,6 +587,7 @@ export class AssessmentService {
         owner = false;
       }
     }
+    if (!owner && ["DRAFT", "IN_REVIEW"].includes(target.courseState ?? "")) throw notFound();
     return quizDetailDto(quiz, await this.verifiedCurrentSnapshot(quiz), owner);
   }
 
@@ -599,6 +600,8 @@ export class AssessmentService {
       } catch {
         owner = false;
       }
+    if (!owner && ["DRAFT", "IN_REVIEW"].includes(target.courseState ?? ""))
+      throw new AppError("QUIZ_TARGET_NOT_AVAILABLE", 404, "Quiz target is not available");
     const candidates = [
       ...(owner ? await this.repository.listProjection(targetType, targetId, "DRAFT") : []),
       ...(await this.repository.listProjection(targetType, targetId, "PUBLISHED")),

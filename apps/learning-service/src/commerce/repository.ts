@@ -350,9 +350,9 @@ export class LearningCommerceRepository {
     await this.db.execute(
       `INSERT INTO revenue_payment_facts_by_day_shard (bucket_day,shard,occurred_at,order_id,payment_event_id,provider_transaction_id,student_id,course_id,offering_id,gross_minor,currency) VALUES (?,?,?,?,?,?,?,?,?,?,?) IF NOT EXISTS`,
       [
-        localDate(day),
-        shard,
-        occurredAt,
+        localDate(String(guard.bucket_day)),
+        guard.shard,
+        date(guard.occurred_at),
         uuid(order.orderId),
         uuid(order.paidEventId),
         providerTransactionId,

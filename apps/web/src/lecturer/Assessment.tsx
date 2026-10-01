@@ -3,9 +3,9 @@ import { createPortal } from "react-dom";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ApiError } from "../lib/api";
 import { Breadcrumbs, EmptyState, StateChip, useUnsavedChanges } from "../components/product";
-import { lecturerError, lecturerRequest, month, useLecturer } from "./api";
+import { lecturerError, lecturerRequest, useLecturer } from "./api";
 import { Field, State } from "./ui";
-import GradebookDashboard from "./GradebookDashboard";
+import GradebookDashboard, { QuizResults } from "./GradebookDashboard";
 
 type QType = "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
 type Question = {
@@ -26,16 +26,10 @@ type Quiz = {
   currentVersion: number;
   recordVersion: number;
   closesAt?: string;
-  latePolicy?: "BLOCK_LATE" | "ALLOW_LATE_WITH_FLAG";
   questions?: Question[];
 };
 type Course = { courseId: string; title: string };
 type ClassItem = { classId: string; name: string };
-type ResultPage = {
-  items: { attemptId: string; studentId: string; score: string; maxScore: string; submittedAt: string }[];
-  nextCursor?: string;
-};
-
 const blank = (type: QType = "SINGLE_CHOICE"): Question => {
   if (type === "SINGLE_CHOICE")
     return { prompt: "", questionType: type, points: "1", options: ["", ""], correctAnswer: "" };
@@ -78,7 +72,7 @@ const validate = (questions: Question[]) =>
 
 export function Assessments() {
   const [params, setParams] = useSearchParams(),
-    courses = useLecturer<Course[] | { items: Course[] }>("/courses?limit=50"),
+    courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses"),
     classes = useLecturer<ClassItem[] | { classes: ClassItem[] }>("/me/owned-classes");
   const [activeTab, setActiveTab] = useState<"assessments" | "gradebook">(
     params.get("tab") === "grades" ? "gradebook" : "assessments",
@@ -91,10 +85,7 @@ export function Assessments() {
           : "",
     ),
     [msg, setMsg] = useState(""),
-    [createLatePolicy, setCreateLatePolicy] = useState<"BLOCK_LATE" | "ALLOW_LATE_WITH_FLAG">(
-      "ALLOW_LATE_WITH_FLAG",
-    ),
-    [createDeadline, setCreateDeadline] = useState("2026-09-18T14:00");
+    [createDeadline, setCreateDeadline] = useState("");
   const quizzes = useLecturer<Quiz[] | { quizzes: Quiz[] }>(target ? `/targets/${target}/quizzes` : null),
     courseItems = courses.data ? (Array.isArray(courses.data) ? courses.data : courses.data.items || []) : [],
     classItems = classes.data
@@ -107,26 +98,14 @@ export function Assessments() {
     const [targetType, targetId] = target.split("/"),
       f = new FormData(e.currentTarget);
     const rawTitle = String(f.get("title")).trim();
-    const format = String(f.get("assessmentFormat") || "OBJECTIVE");
-    let finalTitle = rawTitle;
-    if (format === "ESSAY" && !rawTitle.toLowerCase().includes("tự luận")) {
-      finalTitle = `${rawTitle} (Tự luận - Giảng viên chấm)`;
-    } else if (format === "PROJECT" && !rawTitle.toLowerCase().includes("đồ án")) {
-      finalTitle = `${rawTitle} (Đồ án nộp file - Giảng viên chấm)`;
-    }
     try {
       const r = await lecturerRequest<Quiz>("/quizzes", "POST", {
-        title: finalTitle,
+        title: rawTitle,
         targetType,
         targetId,
         questions: [],
+        ...(createDeadline ? { closesAt: new Date(createDeadline).toISOString() } : {}),
       });
-      try {
-        localStorage.setItem("ailss_quiz_policy_" + r.data.quizId, createLatePolicy);
-        localStorage.setItem("ailss_quiz_deadline_" + r.data.quizId, createDeadline);
-      } catch {
-        /* ignore localStorage error */
-      }
       location.assign(`/app/teaching/assessments/${r.data.quizId}`);
     } catch (x) {
       setMsg(lecturerError(x));
@@ -207,14 +186,9 @@ export function Assessments() {
                   <div style={{ flex: "1 1 280px" }}>
                     <Field label="Tên bài kiểm tra / bài tập mới" name="title" required />
                   </div>
-                  <label style={{ flex: "1 1 260px" }}>
-                    Hình thức & Chế độ chấm điểm
-                    <select name="assessmentFormat" defaultValue="OBJECTIVE">
-                      <option value="OBJECTIVE">⚡ Trắc nghiệm (Hệ thống chấm tự động)</option>
-                      <option value="ESSAY">✍️ Tự luận (Giảng viên chấm thủ công)</option>
-                      <option value="PROJECT">📁 Đồ án / Nộp file (Giảng viên chấm thủ công)</option>
-                    </select>
-                  </label>
+                  <p className="muted" style={{ flex: "1 1 260px" }}>
+                    Câu hỏi trắc nghiệm và trả lời ngắn được hệ thống chấm tự động.
+                  </p>
                   <label style={{ flex: "1 1 200px" }}>
                     ⏰ Lịch hạn nộp bài (Deadline)
                     <input
@@ -236,47 +210,8 @@ export function Assessments() {
                   <div className="deadline-config-title">
                     <span>⚙️ Chính sách xử lý khi học viên quá hạn nộp bài (Do giảng viên quy định):</span>
                   </div>
-                  <div className="deadline-policy-radio-group">
-                    <label
-                      className={`deadline-policy-radio-label ${createLatePolicy === "BLOCK_LATE" ? "active" : ""}`}
-                    >
-                      <input
-                        type="radio"
-                        name="latePolicyRadio"
-                        value="BLOCK_LATE"
-                        checked={createLatePolicy === "BLOCK_LATE"}
-                        onChange={() => setCreateLatePolicy("BLOCK_LATE")}
-                      />
-                      <div>
-                        <strong>Phương án 1: Khóa nộp bài khi quá hạn (Cảnh báo đỏ)</strong>
-                        <div style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)", marginTop: "2px" }}>
-                          Học viên nộp quá giờ sẽ không được phép nộp, hệ thống khóa nút gửi bài và hiển thị
-                          cảnh báo đỏ vi phạm hạn chót.
-                        </div>
-                      </div>
-                    </label>
-
-                    <label
-                      className={`deadline-policy-radio-label ${createLatePolicy === "ALLOW_LATE_WITH_FLAG" ? "active" : ""}`}
-                    >
-                      <input
-                        type="radio"
-                        name="latePolicyRadio"
-                        value="ALLOW_LATE_WITH_FLAG"
-                        checked={createLatePolicy === "ALLOW_LATE_WITH_FLAG"}
-                        onChange={() => setCreateLatePolicy("ALLOW_LATE_WITH_FLAG")}
-                      />
-                      <div>
-                        <strong>Phương án 2: Cho phép nộp muộn (Đánh dấu cờ đỏ cho Giảng viên)</strong>
-                        <div style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)", marginTop: "2px" }}>
-                          Học viên quá hạn vẫn được phép nộp bài, nhưng hệ thống sẽ đánh dấu đỏ cảnh báo [⚠️
-                          NỘP MUỘN] trên bài nộp và sổ điểm để Giảng viên biết và trừ điểm.
-                        </div>
-                      </div>
-                    </label>
-                  </div>
+                  <p>Bài kiểm tra sẽ đóng khi đến hạn do máy chủ xác thực.</p>
                 </div>
-
                 <button className="button" type="submit" style={{ marginTop: "4px" }}>
                   + Tạo bản nháp bài kiểm tra
                 </button>
@@ -291,10 +226,8 @@ export function Assessments() {
                 return items.length ? (
                   <div className="workspace-cards">
                     {items.map((x) => {
-                      const storedPolicy =
-                        localStorage.getItem("ailss_quiz_policy_" + x.quizId) || "ALLOW_LATE_WITH_FLAG";
-                      const storedDeadline =
-                        localStorage.getItem("ailss_quiz_deadline_" + x.quizId) || x.closesAt;
+                      const storedPolicy = "BLOCK_LATE";
+                      const storedDeadline = x.closesAt;
                       const formattedDeadline = storedDeadline
                         ? new Date(storedDeadline).toLocaleString("vi-VN", {
                             hour: "2-digit",
@@ -303,7 +236,7 @@ export function Assessments() {
                             month: "2-digit",
                             year: "numeric",
                           })
-                        : "14:00 - 18/09/2026";
+                        : "Chưa đặt hạn đóng";
                       const isObjective =
                         !x.title.toLowerCase().includes("tự luận") &&
                         !x.title.toLowerCase().includes("đồ án");
@@ -390,16 +323,22 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
     [preview, setPreview] = useState(false),
     [msg, setMsg] = useState(""),
     [conflict, setConflict] = useState(false),
-    [deadline, setDeadline] = useState(
-      () => localStorage.getItem("ailss_quiz_deadline_" + quiz.quizId) || quiz.closesAt || "2026-09-18T14:00",
-    ),
-    [latePolicy, setLatePolicy] = useState<"BLOCK_LATE" | "ALLOW_LATE_WITH_FLAG">(
-      () =>
-        (localStorage.getItem("ailss_quiz_policy_" + quiz.quizId) as "BLOCK_LATE" | "ALLOW_LATE_WITH_FLAG") ||
-        "ALLOW_LATE_WITH_FLAG",
+    [deadline, setDeadline] = useState(() =>
+      quiz.closesAt
+        ? new Date(new Date(quiz.closesAt).getTime() - new Date(quiz.closesAt).getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 16)
+        : "",
     );
   useEffect(() => {
     setTitle(quiz.title);
+    setDeadline(
+      quiz.closesAt
+        ? new Date(new Date(quiz.closesAt).getTime() - new Date(quiz.closesAt).getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 16)
+        : "",
+    );
     setQuestions(quiz.questions || []);
     setDirty(false);
     setConflict(false);
@@ -417,13 +356,8 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
       const r = await lecturerRequest<Quiz>(`/quizzes/${quiz.quizId}`, "PATCH", {
         title,
         questions: questions.map(clean),
+        closesAt: deadline ? new Date(deadline).toISOString() : null,
       });
-      try {
-        localStorage.setItem("ailss_quiz_deadline_" + quiz.quizId, deadline);
-        localStorage.setItem("ailss_quiz_policy_" + quiz.quizId, latePolicy);
-      } catch {
-        /* ignore localStorage error */
-      }
       setMsg(`Đã lưu phiên bản v${r.data.currentVersion}.`);
       setDirty(false);
       reload();
@@ -614,60 +548,7 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
                 }}
               />
             </label>
-            <div style={{ marginTop: 10 }}>
-              <div style={{ fontSize: "0.8rem", fontWeight: 700, marginBottom: 4 }}>
-                Quy định xử lý quá hạn:
-              </div>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 6,
-                  fontSize: "0.8rem",
-                  cursor: "pointer",
-                  marginBottom: 6,
-                }}
-              >
-                <input
-                  type="radio"
-                  name={`latePolicyEditor_${quiz.quizId}`}
-                  value="BLOCK_LATE"
-                  disabled={!editable}
-                  checked={latePolicy === "BLOCK_LATE"}
-                  onChange={() => {
-                    setLatePolicy("BLOCK_LATE");
-                    setDirty(true);
-                  }}
-                />
-                <span>
-                  <strong>Khóa nộp bài</strong> (Cảnh báo đỏ học viên)
-                </span>
-              </label>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 6,
-                  fontSize: "0.8rem",
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="radio"
-                  name={`latePolicyEditor_${quiz.quizId}`}
-                  value="ALLOW_LATE_WITH_FLAG"
-                  disabled={!editable}
-                  checked={latePolicy === "ALLOW_LATE_WITH_FLAG"}
-                  onChange={() => {
-                    setLatePolicy("ALLOW_LATE_WITH_FLAG");
-                    setDirty(true);
-                  }}
-                />
-                <span>
-                  <strong>Cho nộp muộn</strong> (Đánh dấu cờ đỏ)
-                </span>
-              </label>
-            </div>
+            <p>Bài kiểm tra sẽ đóng khi đến hạn do máy chủ xác thực.</p>
           </div>
 
           <div className="builder-actions">
@@ -869,270 +750,12 @@ function Preview({ title, questions, close }: { title: string; questions: Questi
 }
 
 export function Results() {
-  const { quizId = "" } = useParams(),
-    [selectedMonth, setSelectedMonth] = useState(month()),
-    [cursor, setCursor] = useState(""),
-    [gradingAttempt, setGradingAttempt] = useState<{
-      attemptId: string;
-      studentId: string;
-      maxScore: string;
-    } | null>(null),
-    [manualScore, setManualScore] = useState("8.5"),
-    [manualFeedback, setManualFeedback] = useState(
-      "Bài làm thể hiện tốt tư duy giải quyết vấn đề, phân tích đúng trọng tâm.",
-    ),
-    [, setVersion] = useState(0),
-    q = useLecturer<ResultPage>(
-      `/quizzes/${quizId}/results?month=${selectedMonth}&limit=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
-    );
-
-  const getManualGrade = (attemptId: string) => {
-    try {
-      const raw = localStorage.getItem("ailss_manual_grade_" + attemptId);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const getStudentSub = (attemptId: string) => {
-    try {
-      const raw = localStorage.getItem("ailss_student_submission_" + attemptId);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const handleOpenGrading = (attemptId: string, studentId: string, maxScore: string) => {
-    const existing = getManualGrade(attemptId);
-    setGradingAttempt({ attemptId, studentId, maxScore });
-    setManualScore(existing?.manualScore ?? "8.5");
-    setManualFeedback(
-      existing?.teacherFeedback ?? "Bài làm thể hiện tốt tư duy giải quyết vấn đề, phân tích đúng trọng tâm.",
-    );
-  };
-
-  const handleSaveGrading = () => {
-    if (!gradingAttempt) return;
-    const scoreVal = parseFloat(manualScore);
-    const maxVal = parseFloat(gradingAttempt.maxScore || "10");
-    if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxVal) {
-      alert(`Điểm số không hợp lệ. Vui lòng nhập từ 0 đến ${maxVal}`);
-      return;
-    }
-    localStorage.setItem(
-      "ailss_manual_grade_" + gradingAttempt.attemptId,
-      JSON.stringify({
-        manualScore,
-        teacherFeedback: manualFeedback,
-        gradedAt: new Date().toISOString(),
-        status: "GRADED",
-      }),
-    );
-    setGradingAttempt(null);
-    setVersion((v) => v + 1);
-  };
-
+  const { quizId = "" } = useParams();
   return (
     <>
-      <Breadcrumbs
-        items={[
-          { label: "Bài kiểm tra", to: `/app/teaching/assessments/${quizId}` },
-          { label: "Kết quả & Chấm điểm" },
-        ]}
-      />
-      <p className="eyebrow">KẾT QUẢ & CHẤM ĐIỂM HỌC VIÊN</p>
-      <h1>Kết quả bài kiểm tra & Chấm bài thủ công</h1>
-      <p className="subtext">
-        Hệ thống tự động chấm điểm bài trắc nghiệm khách quan; hỗ trợ Giảng viên chấm thủ công bài tự luận và
-        đồ án nộp file.
-      </p>
-      <label>
-        Tháng
-        <input
-          type="month"
-          value={selectedMonth}
-          onChange={(e) => {
-            setSelectedMonth(e.target.value);
-            setCursor("");
-          }}
-        />
-      </label>
-      <State q={q}>
-        {(v) =>
-          v.items.length ? (
-            <>
-              <div className="result-table" role="table" aria-label="Kết quả">
-                <div
-                  className="result-row result-head"
-                  role="row"
-                  style={{ gridTemplateColumns: "1.5fr 1.5fr 1fr 1.5fr 1fr" }}
-                >
-                  <span>Mã học viên</span>
-                  <span>Chế độ chấm</span>
-                  <span>Điểm</span>
-                  <span>Thời gian nộp</span>
-                  <span>Thao tác</span>
-                </div>
-                {v.items.map((x) => {
-                  const manualGrade = getManualGrade(x.attemptId);
-                  const studentSub = getStudentSub(x.attemptId);
-                  const isGraded = manualGrade?.status === "GRADED";
-                  const isPending = !isGraded && !!studentSub?.answers?.length;
-
-                  return (
-                    <div
-                      className="result-row"
-                      role="row"
-                      key={x.attemptId}
-                      style={{ gridTemplateColumns: "1.5fr 1.5fr 1fr 1.5fr 1fr", alignItems: "center" }}
-                    >
-                      <span>
-                        <strong>{x.studentId}</strong>
-                      </span>
-                      <span>
-                        {isGraded ? (
-                          <span className="status-pill status-success" style={{ fontSize: "11px" }}>
-                            ✍️ Đã chấm thủ công
-                          </span>
-                        ) : isPending ? (
-                          <span className="status-pill status-pending" style={{ fontSize: "11px" }}>
-                            ⏳ Chờ GV chấm
-                          </span>
-                        ) : (
-                          <span className="status-pill status-reconciled" style={{ fontSize: "11px" }}>
-                            ⚡ Chấm tự động
-                          </span>
-                        )}
-                      </span>
-                      <strong>
-                        {manualGrade?.manualScore ?? x.score} / {x.maxScore}
-                      </strong>
-                      <time dateTime={x.submittedAt}>{new Date(x.submittedAt).toLocaleString("vi-VN")}</time>
-                      <div>
-                        <button
-                          type="button"
-                          className="button button-subtle button-small"
-                          onClick={() => handleOpenGrading(x.attemptId, x.studentId, x.maxScore)}
-                        >
-                          ✏️ Chấm điểm
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {v.nextCursor && (
-                <button className="button secondary" onClick={() => setCursor(v.nextCursor!)}>
-                  Trang tiếp theo
-                </button>
-              )}
-            </>
-          ) : (
-            <EmptyState title="Chưa có kết quả trong tháng này.">
-              Kết quả sẽ xuất hiện sau khi học viên nộp bài.
-            </EmptyState>
-          )
-        }
-      </State>
-
-      {/* Manual Grading Modal */}
-      {gradingAttempt &&
-        createPortal(
-          <div
-            className="preview-overlay"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Chấm điểm bài làm học viên"
-          >
-            <section className="preview-panel" style={{ maxWidth: 640 }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 12,
-                }}
-              >
-                <h2>Chấm Điểm Bài Làm: {gradingAttempt.studentId}</h2>
-                <button className="button secondary button-small" onClick={() => setGradingAttempt(null)}>
-                  ✕ Đóng
-                </button>
-              </div>
-
-              <div
-                style={{
-                  padding: 12,
-                  backgroundColor: "var(--surface-sunken, #f8fafc)",
-                  borderRadius: 8,
-                  border: "1px solid var(--line, #e2e8f0)",
-                  marginBottom: 16,
-                }}
-              >
-                <p style={{ margin: "0 0 6px 0", fontWeight: 700, fontSize: "13px" }}>
-                  Bài làm của học viên (Tự luận / Đồ án):
-                </p>
-                <div
-                  style={{
-                    fontSize: "13px",
-                    color: "var(--ink, #1e293b)",
-                    whiteSpace: "pre-wrap",
-                    maxHeight: 180,
-                    overflowY: "auto",
-                  }}
-                >
-                  {getStudentSub(gradingAttempt.attemptId)
-                    ?.answers?.map((a: { text?: string }) => a.text)
-                    .filter(Boolean)
-                    .join("\n\n") ||
-                    "Học viên đã nộp câu trả lời tự luận và tệp báo cáo đồ án đúng hạn. Đạt yêu cầu về cấu trúc giải pháp và kỹ thuật."}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <label>
-                  Điểm số (Thang điểm tối đa {gradingAttempt.maxScore}):
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max={gradingAttempt.maxScore}
-                    value={manualScore}
-                    onChange={(e) => setManualScore(e.target.value)}
-                    style={{ fontWeight: 700, fontSize: "16px", color: "var(--brand, #0284c7)" }}
-                  />
-                </label>
-
-                <label>
-                  Nhận xét & Lời phê của Giảng viên:
-                  <textarea
-                    rows={4}
-                    value={manualFeedback}
-                    onChange={(e) => setManualFeedback(e.target.value)}
-                    placeholder="Ghi nhận xét chi tiết, khen ngợi điểm tốt hoặc chỉ dẫn phần cần cải thiện..."
-                    style={{
-                      width: "100%",
-                      padding: 10,
-                      borderRadius: 8,
-                      border: "1px solid var(--line, #cbd5e1)",
-                    }}
-                  />
-                </label>
-              </div>
-
-              <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "flex-end" }}>
-                <button className="button secondary" onClick={() => setGradingAttempt(null)}>
-                  Hủy
-                </button>
-                <button className="button" onClick={handleSaveGrading}>
-                  💾 Lưu điểm & Gửi nhận xét
-                </button>
-              </div>
-            </section>
-          </div>,
-          document.body,
-        )}
+      <h1>Kết quả &amp; Chấm điểm</h1>
+      <Link to={`/app/teaching/assessments/${quizId}`}>← Bài kiểm tra</Link>
+      <QuizResults key={quizId} quizId={quizId} />
     </>
   );
 }

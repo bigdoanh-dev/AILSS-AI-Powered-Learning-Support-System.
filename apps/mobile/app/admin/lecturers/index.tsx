@@ -3,7 +3,7 @@ import { Text, View, TextInput, FlatList, StyleSheet, ActivityIndicator, Modal }
 import { router } from "expo-router";
 import { useSyncExternalStore } from "react";
 import * as Crypto from "expo-crypto";
-import { ApiError } from "../../../src/api";
+import { ApiError, record } from "../../../src/api";
 import { runtime } from "../../../src/runtime";
 import { lecturerApplications, validatePassword, type LecturerApplication } from "../../../src/admin";
 import { Page, Button, PasswordInput, styles, tokens } from "../../../src/ui";
@@ -12,6 +12,9 @@ export default function AdminLecturerVerificationScreen() {
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [shard, setShard] = useState(0);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [applications, setApplications] = useState<LecturerApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -31,19 +34,20 @@ export default function AdminLecturerVerificationScreen() {
   const [showDirectConfirm, setShowDirectConfirm] = useState(false);
 
   const loadApplications = useCallback(
-    async (isRefresh = false) => {
+    async (isRefresh = false, cursor = "") => {
       if (snapshot.user?.role !== "ADMIN") return;
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
       setError("");
 
       try {
-        const currentMonth = new Date().toISOString().slice(0, 7);
         const res = await session.request(
-          `/api/v1/admin/lecturer-applications?month=${currentMonth}&shard=0`,
+          `/api/v1/admin/lecturer-applications?month=${encodeURIComponent(month)}&shard=${shard}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
         );
         const list = lecturerApplications(res);
         setApplications(list);
+        const page = record(res);
+        setNextCursor(typeof page.nextCursor === "string" ? page.nextCursor : null);
       } catch (e: unknown) {
         if (e instanceof ApiError) {
           setError(e.message);
@@ -55,7 +59,7 @@ export default function AdminLecturerVerificationScreen() {
         setRefreshing(false);
       }
     },
-    [session, snapshot.user?.role],
+    [session, snapshot.user?.role, month, shard],
   );
 
   useEffect(() => {
@@ -78,10 +82,10 @@ export default function AdminLecturerVerificationScreen() {
         headers: {
           "Idempotency-Key": key,
         },
-        body: JSON.stringify({
+        body: {
           decision: decisionType,
           currentPassword: decisionPassword,
-        }),
+        },
       });
       setSelectedApp(null);
       setDecisionPassword("");
@@ -122,9 +126,9 @@ export default function AdminLecturerVerificationScreen() {
         headers: {
           "Idempotency-Key": key,
         },
-        body: JSON.stringify({
+        body: {
           currentPassword: directPassword,
-        }),
+        },
       });
       setDirectUserId("");
       setDirectPassword("");
@@ -208,6 +212,25 @@ export default function AdminLecturerVerificationScreen() {
 
   return (
     <Page scroll={false}>
+      <Text style={styles.small}>Tháng đăng ký (YYYY-MM)</Text>
+      <TextInput
+        accessibilityLabel="Tháng hồ sơ"
+        style={styles.input}
+        value={month}
+        onChangeText={(v) => {
+          setMonth(v);
+          setNextCursor(null);
+        }}
+      />
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        <Button label="Shard trước" disabled={shard === 0} onPress={() => setShard(shard - 1)} />
+        <Text style={styles.text}>Shard {shard}/15</Text>
+        <Button label="Shard sau" disabled={shard === 15} onPress={() => setShard(shard + 1)} />
+      </View>
+      {nextCursor ? (
+        <Button label="Trang tiếp" onPress={() => void loadApplications(false, nextCursor)} />
+      ) : null}
+      <Button label="Trang đầu" onPress={() => void loadApplications()} />
       <Text style={styles.title}>Xác minh giảng viên</Text>
       <Text style={styles.small}>Thẩm định hồ sơ chuyển vai trò và cấp quyền giảng dạy hệ thống</Text>
 

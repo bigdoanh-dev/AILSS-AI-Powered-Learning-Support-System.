@@ -61,7 +61,7 @@ export class IdentityPasswordResetRepository {
     const rows = await this.client.execute(
       `INSERT INTO password_reset_by_email
        (normalized_email,user_id,otp_hmac,verified_token_hmac,token_version,credential_version,attempts,issued_at,sent_at,expires_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?) USING TTL 900 IF NOT EXISTS`,
+       VALUES (?,?,?,?,?,?,?,?,?,?) IF NOT EXISTS USING TTL 900`,
       [
         input.normalizedEmail,
         uuid(input.userId),

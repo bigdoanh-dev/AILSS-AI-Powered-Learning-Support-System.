@@ -214,10 +214,14 @@ export class LearningAuthoringService {
 }
 
 function isNoOp(c: AuthoringCourse, p: CoursePatchRequest) {
-  return Object.entries(p).every(([k, v]) => c[k as keyof AuthoringCourse] === v);
+  return Object.entries(p)
+    .filter(([key]) => key !== "categoryName")
+    .every(([k, v]) => c[k as keyof AuthoringCourse] === v);
 }
 function matchesPatch(c: AuthoringCourse, p: CoursePatchRequest) {
-  return Object.entries(p).every(([k, v]) => c[k as keyof AuthoringCourse] === v);
+  return Object.entries(p)
+    .filter(([key]) => key !== "categoryName")
+    .every(([k, v]) => c[k as keyof AuthoringCourse] === v);
 }
 function sameCreate(c: AuthoringCourse, owner: string, r: CourseWriteRequest) {
   return (

@@ -1,0 +1,870 @@
+/* ==========================================================================
+   AILSS Modern Account & Profile Styles (Admin - Lecturer - Student)
+   ========================================================================== */
+
+.account-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 8px 0 48px;
+  animation: accountFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes accountFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header Area */
+.account-header {
+  margin-bottom: 24px;
+}
+
+.account-header .account-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blue, #1760ef);
+  margin-bottom: 6px;
+}
+
+.account-header h1 {
+  font-size: clamp(26px, 3.2vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  margin: 0 0 6px;
+  line-height: 1.2;
+}
+
+.account-header .account-lead {
+  font-size: 15px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* Status Alert Message */
+.account-status-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+  background: var(--surface-soft, #f8fafc);
+  color: var(--ink);
+}
+
+.account-status-alert.error {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.account-status-alert.success {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.08);
+  color: #10b981;
+}
+
+/* ==========================================================================
+   Hero Identity Banner
+   ========================================================================== */
+
+.account-hero {
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+  padding: 32px;
+  margin-bottom: 28px;
+  overflow: hidden;
+  transition:
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+:root[data-theme="dark"] .account-hero {
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Subtle background accent glow */
+.account-hero::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(60px);
+  opacity: 0.6;
+  z-index: 0;
+}
+
+/* Role Specific Accents */
+.account-hero.role-student::before {
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, transparent 70%);
+}
+.account-hero.role-student {
+  border-top: 3px solid #38bdf8;
+}
+
+.account-hero.role-lecturer::before {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%);
+}
+.account-hero.role-lecturer {
+  border-top: 3px solid #10b981;
+}
+
+.account-hero.role-admin::before {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.28) 0%, transparent 70%);
+}
+.account-hero.role-admin {
+  border-top: 3px solid #a855f7;
+}
+
+.account-hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .account-hero-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+}
+
+/* Avatar Wrapper */
+.account-avatar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.account-avatar-frame {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  padding: 4px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2));
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+:root[data-theme="dark"] .account-avatar-frame {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.role-student .account-avatar-frame {
+  box-shadow:
+    0 0 0 2px rgba(56, 189, 248, 0.35),
+    0 8px 20px rgba(56, 189, 248, 0.15);
+}
+.role-lecturer .account-avatar-frame {
+  box-shadow:
+    0 0 0 2px rgba(16, 185, 129, 0.35),
+    0 8px 20px rgba(16, 185, 129, 0.15);
+}
+.role-admin .account-avatar-frame {
+  box-shadow:
+    0 0 0 2px rgba(168, 85, 247, 0.35),
+    0 8px 20px rgba(168, 85, 247, 0.15);
+}
+
+.account-avatar-frame .user-avatar.large {
+  width: 100%;
+  height: 100%;
+  font-size: 38px;
+  font-weight: 700;
+  border-radius: 50%;
+}
+
+.account-avatar-frame .user-avatar.large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Online Pulse Dot */
+.account-online-dot {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  background: #10b981;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+/* Avatar Action Buttons */
+.account-avatar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.account-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 10px;
+  background: var(--blue, #1760ef);
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(23, 96, 239, 0.25);
+}
+
+.account-upload-btn:hover {
+  background: var(--blue-hover, #104bcb);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(23, 96, 239, 0.32);
+}
+
+.account-upload-btn input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.account-delete-avatar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.account-delete-avatar-btn:hover {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.account-avatar-hint {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* User Info In Hero */
+.account-hero-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-hero-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.account-hero-name {
+  font-size: clamp(22px, 2.5vw, 28px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0;
+}
+
+/* Role Badges */
+.account-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.account-role-badge.badge-student {
+  background: rgba(56, 189, 248, 0.12);
+  color: #0284c7;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+:root[data-theme="dark"] .account-role-badge.badge-student {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.account-role-badge.badge-lecturer {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+:root[data-theme="dark"] .account-role-badge.badge-lecturer {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.account-role-badge.badge-admin {
+  background: rgba(168, 85, 247, 0.12);
+  color: #7c3aed;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+:root[data-theme="dark"] .account-role-badge.badge-admin {
+  color: #c084fc;
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.account-verification-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.account-verification-pill.pending {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.account-hero-tagline {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 18px;
+  max-width: 620px;
+}
+
+/* Info Ribbon in Hero */
+.account-hero-ribbon {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.account-ribbon-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.account-ribbon-item strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.account-copy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface-soft, #f1f5f9);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.account-copy-chip:hover {
+  background: var(--surface-active, #e2e8f0);
+  border-color: var(--blue, #1760ef);
+}
+
+/* ==========================================================================
+   Role Shortcuts Grid
+   ========================================================================== */
+
+.account-shortcuts-section {
+  margin-bottom: 28px;
+}
+
+.account-shortcuts-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.account-shortcuts-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .account-shortcuts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .account-shortcuts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.account-shortcut-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.account-shortcut-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--blue, #1760ef);
+  box-shadow: 0 8px 20px -4px rgba(23, 96, 239, 0.12);
+}
+
+:root[data-theme="dark"] .account-shortcut-card:hover {
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
+  border-color: var(--blue, #38bdf8);
+}
+
+.account-shortcut-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.account-shortcut-card:hover .account-shortcut-icon {
+  transform: scale(1.08);
+}
+
+/* Icon colors by role */
+.role-student .account-shortcut-icon {
+  background: rgba(56, 189, 248, 0.12);
+  color: #0284c7;
+}
+:root[data-theme="dark"] .role-student .account-shortcut-icon {
+  color: #38bdf8;
+}
+
+.role-lecturer .account-shortcut-icon {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+:root[data-theme="dark"] .role-lecturer .account-shortcut-icon {
+  color: #10b981;
+}
+
+.role-admin .account-shortcut-icon {
+  background: rgba(168, 85, 247, 0.12);
+  color: #7c3aed;
+}
+:root[data-theme="dark"] .role-admin .account-shortcut-icon {
+  color: #c084fc;
+}
+
+.account-shortcut-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-shortcut-label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-shortcut-desc {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   Two Column Cards Grid
+   ========================================================================== */
+
+.account-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 860px) {
+  .account-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.account-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+:root[data-theme="dark"] .account-card {
+  box-shadow: 0 6px 24px -2px rgba(0, 0, 0, 0.35);
+}
+
+.account-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.account-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-card-icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-soft, #f1f5f9);
+  color: var(--blue, #1760ef);
+  border: 1px solid var(--line);
+}
+
+.account-card-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 2px;
+}
+
+.account-card-header p {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.account-pill-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+/* Facts List */
+.account-facts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.account-fact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--surface-soft, #f8fafc);
+  border: 1px solid var(--line);
+  font-size: 13.5px;
+}
+
+.account-fact-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.account-fact-value {
+  font-weight: 600;
+  color: var(--ink);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.account-status-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #10b981;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.account-status-active::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+/* Modern Forms */
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.account-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.account-form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.account-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.account-input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.account-input-box input {
+  width: 100%;
+  padding: 11px 14px 11px 40px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface-soft, #fff);
+  color: var(--ink);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.account-input-box input:focus {
+  outline: none;
+  border-color: var(--blue, #1760ef);
+  box-shadow: 0 0 0 3px rgba(23, 96, 239, 0.15);
+  background: var(--surface);
+}
+
+.account-password-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.account-password-toggle:hover {
+  color: var(--ink);
+}
+
+.account-form-hint {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Password Strength Bar */
+.account-pwd-strength {
+  margin-top: 4px;
+}
+
+.account-pwd-strength-bar {
+  display: flex;
+  gap: 4px;
+  height: 4px;
+  margin-bottom: 6px;
+}
+
+.account-pwd-strength-bar span {
+  flex: 1;
+  background: var(--line);
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.account-pwd-strength.weak span:nth-child(1) {
+  background: #ef4444;
+}
+
+.account-pwd-strength.medium span:nth-child(1),
+.account-pwd-strength.medium span:nth-child(2) {
+  background: #f59e0b;
+}
+
+.account-pwd-strength.strong span:nth-child(1),
+.account-pwd-strength.strong span:nth-child(2),
+.account-pwd-strength.strong span:nth-child(3) {
+  background: #10b981;
+}
+
+.account-pwd-strength.very-strong span {
+  background: #059669;
+}
+
+.account-pwd-strength-text {
+  font-size: 11.5px;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Security Notice Box */
+.account-security-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(23, 96, 239, 0.06);
+  border: 1px solid rgba(23, 96, 239, 0.18);
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+.account-security-notice .notice-icon {
+  color: var(--blue, #1760ef);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Submit Buttons */
+.account-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--blue, #1760ef);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+  box-shadow: 0 4px 14px rgba(23, 96, 239, 0.25);
+}
+
+.account-submit-btn:hover:not(:disabled) {
+  background: var(--blue-hover, #104bcb);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(23, 96, 239, 0.32);
+}
+
+.account-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Lecturer Public Profile Section Wrapper */
+.account-lecturer-profile-wrap {
+  margin-top: 16px;
+  padding-top: 24px;
+  border-top: 2px dashed var(--line);
+}

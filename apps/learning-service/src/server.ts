@@ -1,3 +1,4 @@
+import { listCourseCategories } from "./categories.js";
 import { SepayRecoveryRepository } from "./commerce/recovery-repository.js";
 import { SepayRecoveryRunner } from "./commerce/recovery-runner.js";
 import { startService, type ServiceManifest } from "../../../packages/runtime/src/index.js";
@@ -34,6 +35,7 @@ import { learningOfferingRouter } from "./offerings/router.js";
 import { learningClassLinkRouter } from "./class-link-router.js";
 import { learningQuizEligibilityRouter } from "./quiz-eligibility-router.js";
 import { LearningCommerceRepository } from "./commerce/repository.js";
+import { reconcileRevenueProjection } from "./commerce/revenue-reconciliation.js";
 import { LearningCommerceService } from "./commerce/service.js";
 import { learningCommerceRouter } from "./commerce/router.js";
 import { payoutProviderFromEnv } from "./commerce/bank-api-provider.js";
@@ -107,6 +109,13 @@ await startService(manifest, {
       config.LEARNING_CURSOR_HMAC_KEY,
       context.metrics,
     );
+    app.get("/api/v1/course-categories", async (_req, res, next) => {
+      try {
+        res.json({ data: await listCourseCategories(cassandra) });
+      } catch (error) {
+        next(error);
+      }
+    });
     app.use(learningCatalogRouter(service, context.metrics));
     if (!config.CLASSROOM_SERVICE_TOKEN_PUBLIC_KEY_PATH)
       throw new Error("Learning INT-LRN-02 requires Classroom public key");
@@ -418,6 +427,20 @@ await startService(manifest, {
     });
     const reconcileTimer = setInterval(() => void runner.runOnce(), 1_000);
     reconcileTimer.unref();
+    let revenueRefresh: Promise<void> | undefined;
+    const refreshRevenue = () => {
+      revenueRefresh ??= reconcileRevenueProjection(cassandra)
+        .then((result) => {
+          if (result.status === "READY") context.logger.info(result, "Revenue projection reconciled");
+        })
+        .catch((error: unknown) => context.logger.error({ error }, "Revenue reconciliation failed"))
+        .finally(() => {
+          revenueRefresh = undefined;
+        });
+    };
+    refreshRevenue();
+    const revenueTimer = setInterval(refreshRevenue, 60_000);
+    revenueTimer.unref();
     const relay = config.ENABLE_RABBITMQ
       ? new LearningOutboxRelay(authoringRepository, authenticatedRabbitUrl(config), context.logger)
       : undefined;
@@ -444,6 +467,8 @@ await startService(manifest, {
     await masteryConsumer?.start();
     return async () => {
       clearInterval(reconcileTimer);
+      clearInterval(revenueTimer);
+      await revenueRefresh;
       if (paymentTimer) clearInterval(paymentTimer);
       await fulfillment?.close();
       await masteryConsumer?.close();

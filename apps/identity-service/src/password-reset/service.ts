@@ -20,7 +20,7 @@ import {
   type PasswordResetChallenge,
 } from "./model.js";
 import type { IdentityPasswordResetRepository } from "./repository.js";
-import type { PasswordResetMailer } from "./mailer.js";
+import type { PasswordResetMailer, PasswordResetEmailDelivery } from "./mailer.js";
 
 const COMPLETION_STATES = [
   "IN_PROGRESS",
@@ -100,8 +100,9 @@ export class PasswordResetService {
       : await this.resets.insertChallenge(challenge);
     if (!stored) return { accepted: true };
 
+    let delivery: PasswordResetEmailDelivery;
     try {
-      await this.mailer.sendResetCode(input.email, code, PASSWORD_RESET_TTL_SECONDS / 60);
+      delivery = await this.mailer.sendResetCode(input.email, code, PASSWORD_RESET_TTL_SECONDS / 60);
     } catch (error) {
       await this.resets.deleteChallenge(input.email, challenge.otpHmac).catch(() => {});
       this.logger.error(
@@ -118,7 +119,13 @@ export class PasswordResetService {
     }
 
     this.logger.info(
-      { operation: "identity.password_reset.request", requestId: input.requestId },
+      {
+        operation: "identity.password_reset.request",
+        requestId: input.requestId,
+        smtpAccepted: delivery.accepted,
+        smtpResponseCode: delivery.smtpResponseCode,
+        messageId: delivery.messageId,
+      },
       "password reset code requested",
     );
     return { accepted: true };

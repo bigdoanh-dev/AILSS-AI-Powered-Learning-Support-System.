@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
-import { Text, View, StyleSheet, ActivityIndicator } from "react-native";
+import { Text, TextInput, View, StyleSheet, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSyncExternalStore } from "react";
+import { useMobileCommand } from "../../../../src/queries";
 import { ApiError } from "../../../../src/api";
 import { runtime } from "../../../../src/runtime";
 import { authoringQuiz, CONTRACT_LIMITED, type AuthoringQuiz } from "../../../../src/assessment-authoring";
@@ -12,24 +13,29 @@ export default function AssessmentDetailScreen() {
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
+  const [deadline, setDeadline] = useState("");
   const [quiz, setQuiz] = useState<AuthoringQuiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
   const [retry, setRetry] = useState(0);
+  const command = useMobileCommand();
 
   useEffect(() => {
     if (!quizId || snapshot.user?.role !== "LECTURER") return;
     const abort = new AbortController();
     setLoading(true);
+    setQuiz(null);
     setError("");
 
     session
       .request(`/api/v1/quizzes/${quizId}`, { signal: abort.signal })
       .then((data: unknown) => {
         if (!abort.signal.aborted) {
-          setQuiz(authoringQuiz(data));
+          const loaded = authoringQuiz(data);
+          setQuiz(loaded);
+          setDeadline(loaded.closesAt ?? "");
           setLoading(false);
         }
       })
@@ -41,7 +47,7 @@ export default function AssessmentDetailScreen() {
       });
 
     return () => abort.abort();
-  }, [session, quizId, retry, snapshot.user?.role]);
+  }, [session, quizId, retry, snapshot.user?.role, snapshot.user?.userId]);
 
   const handlePublish = async () => {
     if (!quiz) return;
@@ -55,13 +61,7 @@ export default function AssessmentDetailScreen() {
     setMsg("");
 
     try {
-      const res = await session.request(`/api/v1/quizzes/${quizId}/publish`, {
-        method: "POST",
-        body: {},
-      });
-      const updated = authoringQuiz(res);
-      setQuiz(updated);
-      setMsg(`Đã xuất bản thành công phiên bản v${updated.currentVersion}!`);
+      if (await command.run(`/api/v1/quizzes/${quizId}/publish`, {})) handleRefresh();
       setPublishing(false);
     } catch (e: unknown) {
       setPublishing(false);
@@ -72,6 +72,23 @@ export default function AssessmentDetailScreen() {
   const handleRefresh = useCallback(() => {
     setRetry((v) => v + 1);
   }, []);
+
+  async function saveDeadline() {
+    setError("");
+    const date = deadline.trim() ? new Date(deadline) : null;
+    if (date && !Number.isFinite(date.getTime())) {
+      setError("Hạn đóng bài không hợp lệ. Nhập ngày giờ có múi giờ, ví dụ 2026-10-20T23:59:00+07:00.");
+      return;
+    }
+    if (
+      await command.run(
+        `/api/v1/quizzes/${quizId}`,
+        { closesAt: date?.toISOString() ?? null },
+        { method: "PATCH" },
+      )
+    )
+      handleRefresh();
+  }
 
   return (
     <Page>
@@ -99,6 +116,11 @@ export default function AssessmentDetailScreen() {
         <View style={[styles.card, s.successCard]}>
           <Text style={s.successText}>{msg}</Text>
         </View>
+      ) : null}
+      {command.message ? (
+        <Text accessibilityRole="alert" style={styles.text}>
+          {command.message}
+        </Text>
       ) : null}
 
       {!loading && quiz && (
@@ -142,6 +164,7 @@ export default function AssessmentDetailScreen() {
             {quiz.state === "DRAFT" && (
               <Button
                 label={publishing ? "Đang xuất bản…" : "Xuất bản bài kiểm tra"}
+                disabled={publishing || command.busy}
                 onPress={() => void handlePublish()}
               />
             )}
@@ -165,6 +188,18 @@ export default function AssessmentDetailScreen() {
         </>
       )}
 
+      {quiz?.state === "DRAFT" ? (
+        <View style={styles.card}>
+          <Text style={styles.text}>Hạn đóng bài (ISO 8601, có múi giờ; để trống để bỏ hạn)</Text>
+          <TextInput
+            accessibilityLabel="Hạn đóng bài"
+            style={styles.input}
+            value={deadline}
+            onChangeText={setDeadline}
+          />
+          <Button label="Lưu hạn đóng bài" disabled={command.busy} onPress={() => void saveDeadline()} />
+        </View>
+      ) : null}
       <Button label="Quay lại danh sách" onPress={() => router.replace("/teaching/assessments")} />
     </Page>
   );

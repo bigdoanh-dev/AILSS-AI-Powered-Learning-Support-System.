@@ -43,6 +43,8 @@ function decimalText(row: types.Row, name: string): string {
 export interface CanonicalCourse {
   readonly courseId: string;
   readonly ownerLecturerId: string;
+  readonly description?: string;
+  readonly coverDataUrl?: string | null;
   readonly title: string;
   readonly slug: string;
   readonly categoryId: string;
@@ -83,7 +85,7 @@ export class LearningCatalogRepository {
   public async getCanonicalCourse(courseId: string): Promise<CanonicalCourse | undefined> {
     // Q-LRN-001: exact canonical read, strong consistency for visibility correctness.
     const rows = await this.client.execute(
-      `SELECT course_id,owner_lecturer_id,title,slug,category_id,state,record_version,price_type,price,currency,created_at,updated_at
+      `SELECT course_id,owner_lecturer_id,title,slug,category_id,state,record_version,price_type,price,currency,description,cover_data_url,created_at,updated_at
        FROM course_by_id WHERE course_id=?`,
       [uuid(courseId)],
       LOCAL_QUORUM,
@@ -93,6 +95,8 @@ export class LearningCatalogRepository {
     return {
       courseId: text(row, "course_id"),
       ownerLecturerId: text(row, "owner_lecturer_id"),
+      description: typeof row.get("description") === "string" ? String(row.get("description")) : "",
+      coverDataUrl: typeof row.get("cover_data_url") === "string" ? String(row.get("cover_data_url")) : null,
       title: text(row, "title"),
       slug: text(row, "slug"),
       categoryId: text(row, "category_id"),

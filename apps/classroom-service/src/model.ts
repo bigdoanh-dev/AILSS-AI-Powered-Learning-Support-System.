@@ -11,6 +11,20 @@ const text = (min: number, max: number) =>
       (v) => !Array.from(v).some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127),
       "Control characters are not allowed",
     );
+const classImage = z
+  .string()
+  .max(350000)
+  .refine((value) => {
+    const match = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/u.exec(value);
+    if (!match?.[2]) return false;
+    const bytes = Buffer.from(match[2], "base64");
+    if (bytes.length < 12 || bytes.length > 256 * 1024 || bytes.toString("base64") !== match[2]) return false;
+    return match[1] === "png"
+      ? bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+      : match[1] === "jpeg"
+        ? bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255
+        : bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP";
+  }, "Use a PNG, JPEG or WebP image up to 256 KiB");
 export const classKinds = ["LIVE_COHORT", "PRIVATE", "INSTITUTIONAL"] as const;
 const createSchema = z
   .object({
@@ -25,6 +39,8 @@ const patchSchema = z
     name: text(3, 160).optional(),
     linkedCourseId: z.string().uuid().nullable().optional(),
     maxMembers: z.number().int().min(1).max(10000).optional(),
+    photoDataUrl: classImage.nullable().optional(),
+    coverDataUrl: classImage.nullable().optional(),
   })
   .strict()
   .refine((v) => Object.keys(v).length > 0, "PATCH body must not be empty");
@@ -70,6 +86,8 @@ export interface ClassroomClass {
   scheduleState: "DRAFT" | "PUBLISHED";
   scheduleVersion: number;
   maxMembers: number;
+  photoDataUrl?: string | undefined;
+  coverDataUrl?: string | undefined;
   state: "ACTIVE" | "CLOSED";
   activeCodeHash: string;
   version: number;
@@ -144,6 +162,8 @@ export function classDto(v: ClassroomClass) {
     scheduleState: v.scheduleState,
     scheduleVersion: v.scheduleVersion,
     maxMembers: v.maxMembers,
+    ...(v.photoDataUrl ? { photoDataUrl: v.photoDataUrl } : {}),
+    ...(v.coverDataUrl ? { coverDataUrl: v.coverDataUrl } : {}),
     state: v.state,
     version: v.version,
     createdAt: v.createdAt.toISOString(),

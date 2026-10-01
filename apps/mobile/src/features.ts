@@ -21,7 +21,7 @@ export function phase41RouteAvailable(pathname: string, role?: string): boolean 
 export function getFeaturesForRole(role?: string): FeatureItem[] {
   if (role === "LECTURER" || role === "ADMIN") return [];
 
-  // STUDENT or Guest: Gồm Lớp học, Khóa học, Bài tập (chấm đỏ), Bài kiểm tra (chấm đỏ)
+  // Student and guest destinations; indicators come from assigned work.
   return [
     {
       id: "classes",
@@ -40,22 +40,12 @@ export function getFeaturesForRole(role?: string): FeatureItem[] {
       path: "/courses",
     },
     {
-      id: "assignments",
-      label: "Bài tập",
-      icon: "assignment",
-      bgColor: "#FEE2E2",
-      iconColor: "#DC2626",
-      path: "/classes",
-      hasBadge: true,
-    },
-    {
       id: "assessments",
       label: "Bài kiểm tra",
       icon: "quiz",
       bgColor: "#FEF3C7",
       iconColor: "#D97706",
       path: "/assessments",
-      hasBadge: true,
     },
     {
       id: "learn",

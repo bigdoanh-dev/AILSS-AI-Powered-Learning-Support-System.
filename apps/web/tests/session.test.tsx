@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
-import { SessionProvider, useSession, safeReturnTo, roleLabel, type Profile } from "../src/auth/session";
+import { render, screen, fireEvent, cleanup, waitFor, act } from "@testing-library/react";
+import {
+  SessionProvider,
+  useSession,
+  safeReturnTo,
+  postLoginDestination,
+  roleLabel,
+  sessionRequest,
+  type Profile,
+} from "../src/auth/session";
 const profile = {
   userId: "fixture",
   displayName: "Test",
@@ -30,6 +38,7 @@ function Probe() {
       >
         login
       </button>
+      <button onClick={() => void s.socialLogin("google", "fixture-id-token").catch(() => {})}>google</button>
       <button onClick={() => void s.logout().catch(() => {})}>logout</button>
     </>
   );
@@ -40,6 +49,86 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 describe("session authority", () => {
+  it("allows SMTP delivery time for an OTP request and keeps other requests bounded", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ accepted: true })));
+    await sessionRequest("auth/password-reset/request", "POST", { email: "test@example.invalid" });
+    expect(timeout).toHaveBeenLastCalledWith(55_000);
+    await sessionRequest("auth/password-reset/verify", "POST", { code: "123456" });
+    expect(timeout).toHaveBeenLastCalledWith(20_000);
+  });
+  it("uses the backend role and keeps return paths within that role's workspace", () => {
+    const lecturer = { ...profile, role: "LECTURER" as const, lecturerVerified: true };
+    const admin = { ...profile, role: "ADMIN" as const };
+    expect(postLoginDestination(profile, null)).toBe("/app");
+    expect(postLoginDestination(lecturer, null)).toBe("/app/teaching");
+    expect(postLoginDestination(admin, null)).toBe("/app/admin");
+    expect(postLoginDestination({ ...lecturer, lecturerVerified: false }, null)).toBe("/app");
+    expect(postLoginDestination(profile, "/app/classes")).toBe("/app/classes");
+    expect(postLoginDestination(profile, "/app/admin/users")).toBe("/app");
+    expect(postLoginDestination(lecturer, "/app/learn")).toBe("/app/teaching");
+    expect(postLoginDestination(admin, "/auth/login")).toBe("/app/admin");
+    expect(postLoginDestination(admin, "https://evil.test")).toBe("/app/admin");
+    expect(postLoginDestination(lecturer, "/app/account")).toBe("/app/account");
+  });
+
+  it("does not revive a pending Google login after logout", async () => {
+    let finishLogin: (value: unknown) => void = () => {};
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(fail(401, "SESSION_EXPIRED"))
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishLogin = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(ok({ loggedOut: true }));
+    vi.stubGlobal("fetch", fetch);
+    render(
+      <SessionProvider>
+        <Probe />
+      </SessionProvider>,
+    );
+    await screen.findByText("UNAUTHENTICATED");
+    fireEvent.click(screen.getByText("google"));
+    fireEvent.click(screen.getByText("logout"));
+    await screen.findByText("Đã đăng xuất và thu hồi phiên hiện tại.");
+    await act(async () => {
+      finishLogin(ok(profile));
+    });
+    expect(screen.getByTestId("state").textContent).toBe("UNAUTHENTICATED");
+    expect(screen.queryByText("Test")).toBeNull();
+  });
+
+  it("does not let Google popup focus replace a pending social login with anonymous bootstrap", async () => {
+    let finishLogin: (value: unknown) => void = () => {};
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(fail(401, "SESSION_EXPIRED"))
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishLogin = resolve;
+          }),
+      )
+      .mockResolvedValue(fail(401, "SESSION_EXPIRED"));
+    vi.stubGlobal("fetch", fetch);
+    render(
+      <SessionProvider>
+        <Probe />
+      </SessionProvider>,
+    );
+    await screen.findByText("UNAUTHENTICATED");
+    fireEvent.click(screen.getByText("google"));
+    fireEvent(window, new Event("focus"));
+    await act(async () => {
+      finishLogin(ok(profile));
+    });
+    await screen.findByText("Test");
+    expect(screen.getByTestId("state").textContent).toBe("AUTHENTICATED");
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
   it("rejects unsafe and encoded return paths", () => {
     for (const v of [
       null,

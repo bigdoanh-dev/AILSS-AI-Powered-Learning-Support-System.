@@ -67,11 +67,16 @@ export class IdentityExternalAuthService {
     } catch (error) {
       if (!(error instanceof SocialAuthError)) throw error;
       const notConfigured = error.code === "PROVIDER_NOT_CONFIGURED";
+      const unavailable = error.code === "NETWORK_ERROR";
       throw new AppError(
-        notConfigured ? "SOCIAL_PROVIDER_NOT_CONFIGURED" : error.code,
-        notConfigured ? 503 : 401,
+        notConfigured
+          ? "SOCIAL_PROVIDER_NOT_CONFIGURED"
+          : unavailable
+            ? "SOCIAL_PROVIDER_UNAVAILABLE"
+            : error.code,
+        notConfigured || unavailable ? 503 : 401,
         error.message,
-        notConfigured,
+        notConfigured || unavailable,
       );
     }
   }
@@ -167,6 +172,7 @@ export class IdentityExternalAuthService {
     await this.#loginStore.insertSession(session);
 
     return {
+      sessionId: identifiers.sessionId,
       accessToken,
       refreshToken: refresh.rawToken,
       tokenType: "Bearer",

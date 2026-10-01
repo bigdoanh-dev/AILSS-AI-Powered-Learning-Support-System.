@@ -6,6 +6,7 @@ import { CassandraClient } from "../../cassandra/src/index.js";
 import { errorEnvelope, errorMiddleware, requestContextMiddleware } from "../../http/src/index.js";
 import { createLogger, httpRequestSerializer, safeError } from "../../logger/src/index.js";
 import { createMetrics } from "../../observability/src/index.js";
+import { httpMetricsMiddleware } from "../../observability/src/http.js";
 import { RabbitHealthClient } from "../../rabbitmq/src/index.js";
 import type { ReadinessSnapshot, ServiceId } from "../../types/src/index.js";
 import { hydrateRuntimeSecrets } from "../../security/src/index.js";
@@ -106,6 +107,7 @@ export async function startService(manifest: ServiceManifest, hooks: RuntimeHook
 
   const app = express();
   app.disable("x-powered-by");
+  app.use(httpMetricsMiddleware(metrics));
   app.use(requestContextMiddleware());
   app.use(pinoHttp({ logger, serializers: { req: httpRequestSerializer } }));
   app.use("/api/v1/payments/sepay/webhook", express.json({ limit: "16kb", strict: true }));

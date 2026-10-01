@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ActorContext } from "../../packages/security/src/index.js";
 import type { LearningCommerceRepository } from "../../apps/learning-service/src/commerce/repository.js";
 import {
@@ -7,6 +7,13 @@ import {
   SimulationPaymentProvider,
   SimulationPayoutProvider,
 } from "../../apps/learning-service/src/finance/index.js";
+
+// Keep ledger month and refund-window fixtures independent of the calendar.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-09-28T10:00:00Z"));
+});
+afterEach(() => vi.useRealTimers());
 
 describe("Phase 21.11: Payout Idempotency Chaos & Failover Simulation", () => {
   const adminActor: ActorContext = {

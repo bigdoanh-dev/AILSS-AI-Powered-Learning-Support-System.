@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "totalMigrations": 62,
+  "totalMigrations": 65,
   "canonicalKeyspaces": [
     "identity_keyspace",
     "learning_keyspace",
@@ -693,6 +693,39 @@
       "classification": "SAFE_ADDITIVE",
       "status": "SOURCE_READY_DEPLOYMENT_PENDING",
       "predecessor": "095",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "097",
+      "filename": "097_course_categories.cql",
+      "sha256Dev": "348bac2e9b6880d8d14db5eda3e6775ab4f5662895371c2141edb08c67017ce0",
+      "sha256Research": "348bac2e9b6880d8d14db5eda3e6775ab4f5662895371c2141edb08c67017ce0",
+      "keyspace": "learning_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "SOURCE_READY_DEPLOYMENT_PENDING",
+      "predecessor": "096",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "098",
+      "filename": "098_class_images.cql",
+      "sha256Dev": "7555602c03f087ce5e07e0fec4c4a6f81777023fb1aa68d46b307c51a2b31539",
+      "sha256Research": "7555602c03f087ce5e07e0fec4c4a6f81777023fb1aa68d46b307c51a2b31539",
+      "keyspace": "classroom_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "SOURCE_READY_DEPLOYMENT_PENDING",
+      "predecessor": "097",
+      "environmentParity": "IDENTICAL"
+    },
+    {
+      "id": "099",
+      "filename": "099_course_details.cql",
+      "sha256Dev": "727ab08c6199365171702909ebf096c592d3323fe257b73283b1ae75c11edf79",
+      "sha256Research": "727ab08c6199365171702909ebf096c592d3323fe257b73283b1ae75c11edf79",
+      "keyspace": "learning_keyspace",
+      "classification": "SAFE_ADDITIVE",
+      "status": "SOURCE_ONLY",
+      "predecessor": "098",
       "environmentParity": "IDENTICAL"
     }
   ]

@@ -31,29 +31,10 @@ import { TutorAvatar } from "../src/TutorAvatar";
 import { getFeaturesForRole, type FeatureItem } from "../src/features";
 export { getFeaturesForRole, type FeatureItem };
 import { getSystemSettings, updateSystemSettings, subscribeSystemSettings } from "../src/settings";
+import { loadCourseCategories, loadConfiguredCoursePreview } from "../src/catalog-preview";
+import { quizSummaries } from "../src/assessment";
+import { ApiError } from "../src/api";
 import { LANGUAGES, getTranslation } from "../src/i18n";
-
-interface HomeAssignment {
-  id: string;
-  title: string;
-  className: string;
-  dueDate: string;
-  status: "PENDING" | "SUBMITTED";
-}
-
-interface HomeAssessment {
-  id: string;
-  title: string;
-  className: string;
-  questionsCount: number;
-  durationMinutes: number;
-  status: "PENDING" | "COMPLETED";
-  score?: number;
-}
-
-// The sections stay empty until they can display authoritative assignments/results.
-const DEFAULT_ASSIGNMENTS: HomeAssignment[] = [];
-const DEFAULT_ASSESSMENTS: HomeAssessment[] = [];
 
 export default function Home() {
   const session = runtime!;
@@ -64,6 +45,9 @@ export default function Home() {
   const [lecturerInfo, setLecturerInfo] = useState<{ courses: number; offerings: number } | null>(null);
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
   const [enrolledList, setEnrolledList] = useState<Course[]>([]);
+  const [homeError, setHomeError] = useState("");
+  const [homeRevision, setHomeRevision] = useState(0);
+  const [homeQuizzes, setHomeQuizzes] = useState<ReturnType<typeof quizSummaries>>([]);
   const [classList, setClassList] = useState<StudentClass[]>([]);
   const [showAllModal, setShowAllModal] = useState(false);
   const [showLangModal, setShowLangModal] = useState(false);
@@ -118,19 +102,20 @@ export default function Home() {
     return () => {
       active = false;
     };
-  }, [snapshot.state, snapshot.user?.role, snapshot.user?.userId, session]);
+  }, [snapshot.state, snapshot.user?.role, snapshot.user?.userId, session, homeRevision]);
 
   useEffect(() => {
     let active = true;
     async function loadLecturer() {
       if (snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "LECTURER") {
+        setLecturerInfo(null);
         try {
           const data = await session.request("/api/v1/me/owned-offerings");
           const items = ownedOfferings(data);
           const courses = uniqueCoursesFromOfferings(items);
           if (active) setLecturerInfo({ courses: courses.length, offerings: items.length });
         } catch {
-          // Non-fatal enhancement
+          if (active) setHomeError("Không tải được khóa nổi bật. Hãy thử lại.");
         }
       } else {
         if (active) setLecturerInfo(null);
@@ -140,27 +125,31 @@ export default function Home() {
     return () => {
       active = false;
     };
-  }, [snapshot.state, snapshot.user?.role, session]);
+  }, [snapshot.state, snapshot.user?.role, snapshot.user?.userId, session, homeRevision]);
 
   useEffect(() => {
     let active = true;
     async function loadCourses() {
       try {
-        const path = "/api/v1/courses?categoryId=10000000-0000-4000-8000-000000000001&limit=4";
-        const data =
-          snapshot.state === "AUTHENTICATED" ? await session.request(path) : await session.api.request(path);
+        const request = (path: string, options: { signal?: AbortSignal }) =>
+          snapshot.state === "AUTHENTICATED"
+            ? session.request(path, options)
+            : session.api.request(path, options);
+        const categories = await loadCourseCategories(request);
+        const preview = await loadConfiguredCoursePreview(request, undefined, categories);
         if (active) {
-          setFeaturedCourses(decodeCourses(data));
+          setFeaturedCourses(preview.courses.slice(0, 4));
+          if (preview.failedCategories.length) setHomeError("Một số danh mục chưa tải được. Hãy thử lại.");
         }
       } catch {
-        // Non-fatal enhancement
+        if (active) setHomeError("Không tải được khóa nổi bật. Hãy thử lại.");
       }
     }
     void loadCourses();
     return () => {
       active = false;
     };
-  }, [snapshot.state, session]);
+  }, [snapshot.state, session, homeRevision]);
 
   useEffect(() => {
     let active = true;
@@ -173,7 +162,7 @@ export default function Home() {
             setEnrolledList(decodeCourses(data));
           }
         } catch {
-          if (active) setEnrolledList([]);
+          if (active) setHomeError("Không tải được khóa học của bạn. Hãy thử lại.");
         }
       } else {
         if (active) setEnrolledList([]);
@@ -183,7 +172,7 @@ export default function Home() {
     return () => {
       active = false;
     };
-  }, [snapshot.state, snapshot.user?.role, snapshot.user?.userId, session]);
+  }, [snapshot.state, snapshot.user?.role, snapshot.user?.userId, session, homeRevision]);
 
   useEffect(() => {
     let active = true;
@@ -196,7 +185,7 @@ export default function Home() {
             setClassList(studentClasses(data));
           }
         } catch {
-          if (active) setClassList([]);
+          if (active) setHomeError("Không tải được lớp học của bạn. Hãy thử lại.");
         }
       } else {
         if (active) setClassList([]);
@@ -206,7 +195,44 @@ export default function Home() {
     return () => {
       active = false;
     };
-  }, [snapshot.state, snapshot.user?.role, snapshot.user?.userId, session]);
+  }, [snapshot.state, snapshot.user?.role, snapshot.user?.userId, session, homeRevision]);
+
+  useEffect(() => {
+    const abort = new AbortController();
+    setHomeQuizzes([]);
+    if (snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT") {
+      void Promise.all([
+        session.request("/api/v1/me/courses", { signal: abort.signal }),
+        session.request("/api/v1/me/classes", { signal: abort.signal }),
+      ])
+        .then(async ([courses, classes]) => {
+          const paths = [
+            ...decodeCourses(courses).map((c) => `/api/v1/targets/COURSE/${c.courseId}/quizzes`),
+            ...studentClasses(classes).map((c) => `/api/v1/targets/CLASS/${c.classId}/quizzes`),
+          ];
+          const quizzes = [] as ReturnType<typeof quizSummaries>;
+          for (let i = 0; i < paths.length; i += 3)
+            quizzes.push(
+              ...(
+                await Promise.all(
+                  paths
+                    .slice(i, i + 3)
+                    .map((path) => session.request(path, { signal: abort.signal }).then(quizSummaries)),
+                )
+              ).flat(),
+            );
+          if (!abort.signal.aborted)
+            setHomeQuizzes([
+              ...new Map(quizzes.filter((q) => q.state === "PUBLISHED").map((q) => [q.quizId, q])).values(),
+            ]);
+        })
+        .catch((cause: unknown) => {
+          if (!abort.signal.aborted)
+            setHomeError(cause instanceof ApiError ? cause.message : "Không tải được đề đã giao.");
+        });
+    }
+    return () => abort.abort();
+  }, [snapshot.state, snapshot.user?.userId, snapshot.user?.role, session, homeRevision]);
 
   const activeCourse = enrolledList[0];
   const displayName = snapshot.user?.displayName || "HỌC VIÊN AILSS";
@@ -254,7 +280,22 @@ export default function Home() {
           notifyNavScroll(currentY, deltaY);
         }}
       >
-        {/* Top Deep Navy/Teal Banner matching Screenshot */}
+        {homeError ? (
+          <View style={styles.card}>
+            <Text accessibilityRole="alert" style={styles.error}>
+              {homeError}
+            </Text>
+            <Button
+              label="Thử tải lại"
+              onPress={() => {
+                setHomeError("");
+                setHomeRevision((v) => v + 1);
+              }}
+            />
+          </View>
+        ) : null}
+
+        {/* Top Deep Navy/Teal Banner */}
         <FadeSlideIn delay={0} duration={400} fromY={-12}>
           <View style={hStyles.topBanner}>
             <View style={[hStyles.headerRow, largeText && hStyles.headerRowLarge]}>
@@ -745,411 +786,45 @@ export default function Home() {
         )}
 
         {/* Role-Specific Work Sections */}
-        {snapshot.state === "AUTHENTICATED" &&
-          (snapshot.user?.role === "LECTURER" ? (
-            <>
-              {/* LECTURER SECTION 1: Lớp giảng dạy phụ trách */}
-              <FadeSlideIn delay={160} duration={450}>
-                <View style={hStyles.sectionContainer}>
-                  <View style={hStyles.sectionHeader}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={hStyles.sectionTitle}>Lớp giảng dạy phụ trách</Text>
-                      <Badge label="3 LỚP ĐANG DẠY" variant="primary" />
-                    </View>
-                    <ScalePressable scaleTo={0.92} onPress={() => router.push("/teaching/classes" as Href)}>
-                      <Text style={hStyles.sectionLink}>Tất cả lớp &gt;</Text>
-                    </ScalePressable>
+        {snapshot.state === "AUTHENTICATED" && (
+          <>
+            {/* STUDENT SECTION 1: Lớp học của tôi */}
+            <FadeSlideIn delay={160} duration={450}>
+              <View style={hStyles.sectionContainer}>
+                <View style={hStyles.sectionHeader}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Text style={hStyles.sectionTitle}>Lớp học của tôi</Text>
+                    <Badge label="CHÍNH KHÓA" variant="primary" />
                   </View>
-
-                  <View style={{ gap: 10 }}>
-                    <ScalePressable
-                      style={hStyles.compactCard}
-                      scaleTo={0.97}
-                      onPress={() =>
-                        router.push("/teaching/classes/10000000-0000-4000-8000-000000000001" as Href)
-                      }
-                    >
-                      <View style={hStyles.cardBadgeRow}>
-                        <Badge label="LỚP TRỰC TIẾP (P.302)" variant="neutral" />
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                          <View
-                            style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }}
-                          />
-                          <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>Đang dạy</Text>
-                        </View>
-                      </View>
-                      <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                        Cơ sở dữ liệu Nâng cao & Tối ưu hóa - Nhóm 01
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginTop: 4,
-                          gap: 8,
-                        }}
-                      >
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                          👥 62 Học viên · 12/15 buổi · 96.4%
-                        </Text>
-                        <View style={hStyles.actionMiniBtn}>
-                          <Text style={hStyles.actionMiniBtnText}>Vào lớp</Text>
-                          <Icon name="chevronRight" size={12} color="#FFFFFF" />
-                        </View>
-                      </View>
-                    </ScalePressable>
-
-                    <ScalePressable
-                      style={hStyles.compactCard}
-                      scaleTo={0.97}
-                      onPress={() =>
-                        router.push("/teaching/classes/10000000-0000-4000-8000-000000000002" as Href)
-                      }
-                    >
-                      <View style={hStyles.cardBadgeRow}>
-                        <Badge label="LIVE CLASSROOM" variant="ai" />
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                          <View
-                            style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }}
-                          />
-                          <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>Đang dạy</Text>
-                        </View>
-                      </View>
-                      <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                        Lập trình Web & Trợ lý AI Fullstack - Nhóm 02
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginTop: 4,
-                          gap: 8,
-                        }}
-                      >
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                          👥 58 Học viên · 10/16 buổi · 97.2%
-                        </Text>
-                        <View style={hStyles.actionMiniBtn}>
-                          <Text style={hStyles.actionMiniBtnText}>Vào lớp</Text>
-                          <Icon name="chevronRight" size={12} color="#FFFFFF" />
-                        </View>
-                      </View>
-                    </ScalePressable>
-                  </View>
-                </View>
-              </FadeSlideIn>
-
-              {/* LECTURER SECTION 2: Hàng đợi bài tập cần chấm */}
-              <FadeSlideIn delay={180} duration={450}>
-                <View style={hStyles.sectionContainer}>
-                  <View style={hStyles.sectionHeader}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={hStyles.sectionTitle}>Bài tập sinh viên cần chấm</Text>
-                      <View style={hStyles.pendingHeaderDot}>
-                        <Text style={hStyles.pendingHeaderDotText}>14</Text>
-                      </View>
-                    </View>
-                    <ScalePressable
-                      scaleTo={0.92}
-                      onPress={() => router.push("/teaching/assessments" as Href)}
-                    >
-                      <Text style={hStyles.sectionLink}>Chấm tất cả &gt;</Text>
-                    </ScalePressable>
-                  </View>
-
-                  <View style={{ gap: 10 }}>
-                    <ScalePressable
-                      style={hStyles.compactCard}
-                      scaleTo={0.97}
-                      onPress={() => router.push("/teaching/assessments" as Href)}
-                    >
-                      <View style={hStyles.cardBadgeRow}>
-                        <Text style={{ fontSize: 12, fontWeight: "700", color: "#0284C7" }}>
-                          CSDL NÂNG CAO
-                        </Text>
-                        <View style={hStyles.pendingDotBadge}>
-                          <View style={hStyles.pendingDot} />
-                          <Text style={hStyles.pendingDotText}>⏰ Nộp 35 phút trước</Text>
-                        </View>
-                      </View>
-                      <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                        Lê Văn Đức (SV-202601) — Bài tập lớn: Thiết kế CSDL 3NF
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginTop: 4,
-                          gap: 8,
-                        }}
-                      >
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                          Tệp đính kèm: schema_3nf.sql (245 KB)
-                        </Text>
-                        <View style={[hStyles.actionMiniBtn, { backgroundColor: "#0284C7" }]}>
-                          <Text style={hStyles.actionMiniBtnText}>Chấm bài →</Text>
-                        </View>
-                      </View>
-                    </ScalePressable>
-
-                    <ScalePressable
-                      style={hStyles.compactCard}
-                      scaleTo={0.97}
-                      onPress={() => router.push("/teaching/assessments" as Href)}
-                    >
-                      <View style={hStyles.cardBadgeRow}>
-                        <Text style={{ fontSize: 12, fontWeight: "700", color: "#7C3AED" }}>
-                          WEB & AI FULLSTACK
-                        </Text>
-                        <View style={hStyles.pendingDotBadge}>
-                          <View style={hStyles.pendingDot} />
-                          <Text style={hStyles.pendingDotText}>⏰ Nộp 2 giờ trước</Text>
-                        </View>
-                      </View>
-                      <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                        Nguyễn Mai Phương (SV-202602) — Lab 03: REST API & Vector DB
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginTop: 4,
-                          gap: 8,
-                        }}
-                      >
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                          Tệp đính kèm: fast_api_lab03.zip (1.2 MB)
-                        </Text>
-                        <View style={[hStyles.actionMiniBtn, { backgroundColor: "#0284C7" }]}>
-                          <Text style={hStyles.actionMiniBtnText}>Chấm bài →</Text>
-                        </View>
-                      </View>
-                    </ScalePressable>
-                  </View>
-                </View>
-              </FadeSlideIn>
-
-              {/* LECTURER SECTION 3: Lịch giảng dạy sắp tới */}
-              <FadeSlideIn delay={200} duration={450}>
-                <View style={hStyles.sectionContainer}>
-                  <View style={hStyles.sectionHeader}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={hStyles.sectionTitle}>Lịch dạy hôm nay & tuần này</Text>
-                      <Badge label="2 CA DẠY HÔM NAY" variant="ai" />
-                    </View>
-                    <ScalePressable scaleTo={0.92} onPress={() => router.push("/teaching/schedule" as Href)}>
-                      <Text style={hStyles.sectionLink}>Xem lịch dạy &gt;</Text>
-                    </ScalePressable>
-                  </View>
-
-                  <View style={{ gap: 10 }}>
-                    <ScalePressable
-                      style={hStyles.compactCard}
-                      scaleTo={0.97}
-                      onPress={() => router.push("/teaching/schedule" as Href)}
-                    >
-                      <View style={hStyles.cardBadgeRow}>
-                        <Badge label="07:30 - 09:30 · TIẾT 1-3" variant="neutral" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#059669" }}>
-                          Phòng P.302 (Tòa H1)
-                        </Text>
-                      </View>
-                      <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                        Cơ sở dữ liệu Nâng cao & Tối ưu hóa - Nhóm 01
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginTop: 4,
-                          gap: 8,
-                        }}
-                      >
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                          Chương 4: Chỉ mục B-Tree & Tối ưu truy vấn EXPLAIN
-                        </Text>
-                        <View style={[hStyles.actionMiniBtn, { backgroundColor: "#059669" }]}>
-                          <Text style={hStyles.actionMiniBtnText}>Điểm danh SV</Text>
-                        </View>
-                      </View>
-                    </ScalePressable>
-
-                    <ScalePressable
-                      style={hStyles.compactCard}
-                      scaleTo={0.97}
-                      onPress={() => router.push("/teaching/schedule" as Href)}
-                    >
-                      <View style={hStyles.cardBadgeRow}>
-                        <Badge label="13:30 - 15:30 · TIẾT 7-9" variant="ai" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#0284C7" }}>
-                          Live Classroom Trực tuyến
-                        </Text>
-                      </View>
-                      <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                        Lập trình Web & Trợ lý AI Fullstack - Nhóm 02
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginTop: 4,
-                          gap: 8,
-                        }}
-                      >
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                          Thực hành REST API với FastAPI & Vector DB Pinecone
-                        </Text>
-                        <View style={[hStyles.actionMiniBtn, { backgroundColor: "#0284C7" }]}>
-                          <Text style={hStyles.actionMiniBtnText}>Vào phòng Live</Text>
-                        </View>
-                      </View>
-                    </ScalePressable>
-                  </View>
-                </View>
-              </FadeSlideIn>
-            </>
-          ) : snapshot.user?.role === "ADMIN" ? (
-            <>
-              {/* ADMIN SECTION 1: Hồ sơ Giảng viên chờ phê duyệt */}
-              <FadeSlideIn delay={160} duration={450}>
-                <View style={hStyles.sectionContainer}>
-                  <View style={hStyles.sectionHeader}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={hStyles.sectionTitle}>Hồ sơ Giảng viên chờ duyệt</Text>
-                      <Badge label="3 CHỜ XÉT" variant="danger" />
-                    </View>
-                    <ScalePressable scaleTo={0.92} onPress={() => router.push("/admin/lecturers" as Href)}>
-                      <Text style={hStyles.sectionLink}>Duyệt tất cả &gt;</Text>
-                    </ScalePressable>
-                  </View>
-
-                  <View style={{ gap: 10 }}>
-                    <ScalePressable
-                      style={hStyles.compactCard}
-                      scaleTo={0.97}
-                      onPress={() => router.push("/admin/lecturers" as Href)}
-                    >
-                      <View style={hStyles.cardBadgeRow}>
-                        <Badge label="TIẾN SĨ CNTT" variant="neutral" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#D97706" }}>
-                          Chờ phê duyệt
-                        </Text>
-                      </View>
-                      <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                        TS. Nguyễn Minh Trí — Cơ sở dữ liệu & Big Data
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginTop: 4,
-                          gap: 8,
-                        }}
-                      >
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                          12 năm kinh nghiệm · Đầy đủ bằng cấp & minh chứng
-                        </Text>
-                        <View style={[hStyles.actionMiniBtn, { backgroundColor: "#7C3AED" }]}>
-                          <Text style={hStyles.actionMiniBtnText}>Thẩm định →</Text>
-                        </View>
-                      </View>
-                    </ScalePressable>
-
-                    <ScalePressable
-                      style={hStyles.compactCard}
-                      scaleTo={0.97}
-                      onPress={() => router.push("/admin/lecturers" as Href)}
-                    >
-                      <View style={hStyles.cardBadgeRow}>
-                        <Badge label="THẠC SĨ AI" variant="neutral" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#D97706" }}>
-                          Chờ phê duyệt
-                        </Text>
-                      </View>
-                      <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                        ThS. Hoàng Quốc Bảo — Web & Trợ lý AI Copilot
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginTop: 4,
-                          gap: 8,
-                        }}
-                      >
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                          8 năm kinh nghiệm · Hồ sơ chứng chỉ hoàn tất
-                        </Text>
-                        <View style={[hStyles.actionMiniBtn, { backgroundColor: "#7C3AED" }]}>
-                          <Text style={hStyles.actionMiniBtnText}>Thẩm định →</Text>
-                        </View>
-                      </View>
-                    </ScalePressable>
-                  </View>
-                </View>
-              </FadeSlideIn>
-
-              {/* ADMIN SECTION 2: Giao dịch Thanh toán & Đối soát tự động */}
-              <FadeSlideIn delay={180} duration={450}>
-                <View style={hStyles.sectionContainer}>
-                  <View style={hStyles.sectionHeader}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={hStyles.sectionTitle}>Giao dịch Thanh toán tự động</Text>
-                      <Badge label="CHỜ DỮ LIỆU" variant="neutral" />
-                    </View>
-                    <ScalePressable scaleTo={0.92} onPress={() => router.push("/admin/commerce" as Href)}>
-                      <Text style={hStyles.sectionLink}>Xem đối soát &gt;</Text>
-                    </ScalePressable>
-                  </View>
-
-                  <ScalePressable
-                    style={hStyles.compactCard}
-                    scaleTo={0.97}
-                    onPress={() => router.push("/admin/revenue" as Href)}
-                  >
-                    <Text style={hStyles.compactCardTitle}>Chưa có giao dịch đã đối soát để hiển thị</Text>
-                    <Text style={styles.small}>
-                      Không sử dụng giao dịch mẫu. Mở dashboard để kiểm tra trạng thái projection tài chính.
-                    </Text>
+                  <ScalePressable scaleTo={0.92} onPress={() => router.push("/classes" as Href)}>
+                    <Text style={hStyles.sectionLink}>Tất cả lớp &gt;</Text>
                   </ScalePressable>
                 </View>
-              </FadeSlideIn>
 
-              {/* ADMIN SECTION 3: Vận hành & Giám sát Hệ thống */}
-              <FadeSlideIn delay={200} duration={450}>
-                <View style={hStyles.sectionContainer}>
-                  <View style={hStyles.sectionHeader}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={hStyles.sectionTitle}>Hạ tầng & Dịch vụ AILSS</Text>
-                      <Badge label="CHƯA XÁC MINH" variant="neutral" />
-                    </View>
-                    <ScalePressable scaleTo={0.92} onPress={() => router.push("/admin" as Href)}>
-                      <Text style={hStyles.sectionLink}>Trung tâm Admin &gt;</Text>
-                    </ScalePressable>
-                  </View>
-
-                  <View style={{ gap: 10 }}>
+                <View style={{ gap: 10 }}>
+                  {classList.slice(0, 2).map((c) => (
                     <ScalePressable
+                      key={c.classId}
                       style={hStyles.compactCard}
                       scaleTo={0.97}
-                      onPress={() => router.push("/admin" as Href)}
+                      onPress={() => router.push(`/classes/${c.classId}` as Href)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Lớp học ${c.name}`}
                     >
                       <View style={hStyles.cardBadgeRow}>
-                        <Badge label="CHỜ TELEMETRY" variant="neutral" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: tokens.color.muted }}>
-                          Độ trễ: —
-                        </Text>
+                        <Badge
+                          label={c.classKind === "LIVE_COHORT" ? "LỚP TRỰC TUYẾN" : "LỚP HỌC"}
+                          variant="neutral"
+                        />
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                          <View
+                            style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }}
+                          />
+                          <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>Đang học</Text>
+                        </View>
                       </View>
                       <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                        Cổng Webhook Đối Soát Tự Động
+                        {c.name}
                       </Text>
                       <View
                         style={{
@@ -1161,268 +836,57 @@ export default function Home() {
                         }}
                       >
                         <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                          Tự động nhận biến động số dư VietQR & kích hoạt học viên
+                          Mở chi tiết lớp để xem giảng viên phụ trách
                         </Text>
                         <View style={hStyles.actionMiniBtn}>
-                          <Text style={hStyles.actionMiniBtnText}>Kiểm tra</Text>
+                          <Text style={hStyles.actionMiniBtnText}>Vào lớp</Text>
+                          <Icon name="chevronRight" size={12} color="#FFFFFF" />
                         </View>
                       </View>
                     </ScalePressable>
-                  </View>
+                  ))}
+                  {classList.length === 0 && (
+                    <Text style={styles.small}>Lớp được ghi danh sẽ xuất hiện ở đây.</Text>
+                  )}
                 </View>
-              </FadeSlideIn>
-            </>
-          ) : (
-            <>
-              {/* STUDENT SECTION 1: Lớp học của tôi */}
-              <FadeSlideIn delay={160} duration={450}>
-                <View style={hStyles.sectionContainer}>
-                  <View style={hStyles.sectionHeader}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={hStyles.sectionTitle}>Lớp học của tôi</Text>
-                      <Badge label="CHÍNH KHÓA" variant="primary" />
-                    </View>
-                    <ScalePressable scaleTo={0.92} onPress={() => router.push("/classes" as Href)}>
-                      <Text style={hStyles.sectionLink}>Tất cả lớp &gt;</Text>
+              </View>
+            </FadeSlideIn>
+
+            {/* STUDENT SECTION 3: Bài kiểm tra & Đề thi AI */}
+            <FadeSlideIn delay={200} duration={450}>
+              <View style={hStyles.sectionContainer}>
+                <View style={hStyles.sectionHeader}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Text style={hStyles.sectionTitle}>Bài kiểm tra &amp; Đề thi AI</Text>
+                  </View>
+                  <ScalePressable scaleTo={0.92} onPress={() => router.push("/assessments" as Href)}>
+                    <Text style={hStyles.sectionLink}>Tất cả đề thi &gt;</Text>
+                  </ScalePressable>
+                </View>
+
+                <View style={{ gap: 10 }}>
+                  {!homeError && !homeQuizzes.length ? (
+                    <Text style={styles.small}>Chưa có bài kiểm tra đã phát hành cho bạn.</Text>
+                  ) : null}
+                  {homeQuizzes.map((quiz) => (
+                    <ScalePressable
+                      key={quiz.quizId}
+                      style={hStyles.compactCard}
+                      onPress={() => router.push(`/assessments/${quiz.quizId}` as Href)}
+                      accessibilityRole="button"
+                      accessibilityLabel={quiz.title}
+                    >
+                      <Text style={hStyles.compactCardTitle}>{quiz.title}</Text>
+                      <Text style={styles.small}>
+                        {quiz.questionCount} câu hỏi · Xem chi tiết và trạng thái làm bài
+                      </Text>
                     </ScalePressable>
-                  </View>
-
-                  <View style={{ gap: 10 }}>
-                    {classList.slice(0, 2).map((c) => (
-                      <ScalePressable
-                        key={c.classId}
-                        style={hStyles.compactCard}
-                        scaleTo={0.97}
-                        onPress={() => router.push(`/classes/${c.classId}` as Href)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Lớp học ${c.name}`}
-                      >
-                        <View style={hStyles.cardBadgeRow}>
-                          <Badge
-                            label={c.classKind === "LIVE_COHORT" ? "LỚP TRỰC TUYẾN" : "LỚP HỌC"}
-                            variant="neutral"
-                          />
-                          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                            <View
-                              style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }}
-                            />
-                            <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>
-                              Đang học
-                            </Text>
-                          </View>
-                        </View>
-                        <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                          {c.name}
-                        </Text>
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginTop: 4,
-                            gap: 8,
-                          }}
-                        >
-                          <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                            Mở chi tiết lớp để xem giảng viên phụ trách
-                          </Text>
-                          <View style={hStyles.actionMiniBtn}>
-                            <Text style={hStyles.actionMiniBtnText}>Vào lớp</Text>
-                            <Icon name="chevronRight" size={12} color="#FFFFFF" />
-                          </View>
-                        </View>
-                      </ScalePressable>
-                    ))}
-                    {classList.length === 0 && (
-                      <Text style={styles.small}>Lớp được ghi danh sẽ xuất hiện ở đây.</Text>
-                    )}
-                  </View>
+                  ))}
                 </View>
-              </FadeSlideIn>
-
-              {/* STUDENT SECTION 2: Bài tập cần hoàn thành */}
-              <FadeSlideIn delay={180} duration={450}>
-                <View style={hStyles.sectionContainer}>
-                  <View style={hStyles.sectionHeader}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={hStyles.sectionTitle}>Bài tập</Text>
-                    </View>
-                    <ScalePressable scaleTo={0.92} onPress={() => router.push("/classes" as Href)}>
-                      <Text style={hStyles.sectionLink}>Xem tất cả &gt;</Text>
-                    </ScalePressable>
-                  </View>
-
-                  <View style={{ gap: 10 }}>
-                    {DEFAULT_ASSIGNMENTS.length === 0 && (
-                      <ScalePressable
-                        style={hStyles.compactCard}
-                        scaleTo={0.97}
-                        onPress={() => router.push("/classes?tab=assignments" as Href)}
-                        accessibilityRole="button"
-                        accessibilityLabel="Mở lớp học để xem bài tập được giao"
-                      >
-                        <Text style={hStyles.compactCardTitle}>Xem bài tập trong lớp học</Text>
-                        <Text style={styles.small}>Bài được giao hiển thị trong từng lớp bạn đang học.</Text>
-                      </ScalePressable>
-                    )}
-                    {DEFAULT_ASSIGNMENTS.map((asg) => (
-                      <ScalePressable
-                        key={asg.id}
-                        style={hStyles.compactCard}
-                        scaleTo={0.97}
-                        onPress={() => {
-                          const targetClassId =
-                            classList[0]?.classId || "10000000-0000-4000-8000-000000000001";
-                          router.push(
-                            `/classes/${targetClassId}?tab=assignments&action=${asg.status === "PENDING" ? "submit" : "review"}&asgId=${asg.id}` as Href,
-                          );
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel={asg.title}
-                      >
-                        <View style={hStyles.cardBadgeRow}>
-                          <Text style={{ fontSize: 12, fontWeight: "700", color: "#0284C7" }}>
-                            {asg.className}
-                          </Text>
-                          {asg.status === "PENDING" ? (
-                            <View style={hStyles.pendingDotBadge}>
-                              <View style={hStyles.pendingDot} />
-                              <Text style={hStyles.pendingDotText}>Chưa nộp</Text>
-                            </View>
-                          ) : (
-                            <View style={hStyles.completedBadge}>
-                              <Icon name="check" size={11} color="#16A34A" />
-                              <Text style={hStyles.completedBadgeText}>Đã nộp</Text>
-                            </View>
-                          )}
-                        </View>
-                        <Text style={hStyles.compactCardTitle} numberOfLines={2}>
-                          {asg.title}
-                        </Text>
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginTop: 4,
-                            gap: 8,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: 12,
-                              color: asg.status === "PENDING" ? "#DC2626" : "#64748B",
-                              fontWeight: asg.status === "PENDING" ? "600" : "500",
-                              flex: 1,
-                            }}
-                            numberOfLines={1}
-                          >
-                            ⏰ Hạn nộp: {asg.dueDate}
-                          </Text>
-                          <View
-                            style={[
-                              hStyles.actionMiniBtn,
-                              asg.status === "PENDING"
-                                ? { backgroundColor: "#DC2626" }
-                                : { backgroundColor: "#64748B" },
-                            ]}
-                          >
-                            <Text style={hStyles.actionMiniBtnText}>
-                              {asg.status === "PENDING" ? "Làm bài →" : "Xem lại"}
-                            </Text>
-                          </View>
-                        </View>
-                      </ScalePressable>
-                    ))}
-                  </View>
-                </View>
-              </FadeSlideIn>
-
-              {/* STUDENT SECTION 3: Bài kiểm tra & Đề thi AI */}
-              <FadeSlideIn delay={200} duration={450}>
-                <View style={hStyles.sectionContainer}>
-                  <View style={hStyles.sectionHeader}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={hStyles.sectionTitle}>Bài kiểm tra &amp; Đề thi AI</Text>
-                    </View>
-                    <ScalePressable scaleTo={0.92} onPress={() => router.push("/assessments" as Href)}>
-                      <Text style={hStyles.sectionLink}>Tất cả đề thi &gt;</Text>
-                    </ScalePressable>
-                  </View>
-
-                  <View style={{ gap: 10 }}>
-                    {DEFAULT_ASSESSMENTS.length === 0 && (
-                      <ScalePressable
-                        style={hStyles.compactCard}
-                        scaleTo={0.97}
-                        onPress={() => router.push("/assessments" as Href)}
-                        accessibilityRole="button"
-                        accessibilityLabel="Mở bài kiểm tra đã phát hành"
-                      >
-                        <Text style={hStyles.compactCardTitle}>Xem bài kiểm tra đã phát hành</Text>
-                        <Text style={styles.small}>Chọn đề và xem kết quả chính thức tại đây.</Text>
-                      </ScalePressable>
-                    )}
-                    {DEFAULT_ASSESSMENTS.map((quiz) => (
-                      <ScalePressable
-                        key={quiz.id}
-                        style={hStyles.compactCard}
-                        scaleTo={0.97}
-                        onPress={() => {
-                          router.push(`/assessments/${quiz.id}` as Href);
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel={quiz.title}
-                      >
-                        <View style={hStyles.cardBadgeRow}>
-                          <Badge label="AI ADAPTIVE" variant="ai" icon="sparkles" />
-                          {quiz.status === "PENDING" ? (
-                            <View style={hStyles.pendingDotBadge}>
-                              <View style={hStyles.pendingDot} />
-                              <Text style={hStyles.pendingDotText}>Chưa làm</Text>
-                            </View>
-                          ) : (
-                            <View style={hStyles.completedBadge}>
-                              <Icon name="award" size={11} color="#16A34A" />
-                              <Text style={hStyles.completedBadgeText}>Đã thi: {quiz.score}/10</Text>
-                            </View>
-                          )}
-                        </View>
-                        <Text style={hStyles.compactCardTitle} numberOfLines={2}>
-                          {quiz.title}
-                        </Text>
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginTop: 4,
-                            gap: 8,
-                          }}
-                        >
-                          <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                            ⏱️ {quiz.durationMinutes} phút • {quiz.questionsCount} câu hỏi
-                          </Text>
-                          <View
-                            style={[
-                              hStyles.actionMiniBtn,
-                              quiz.status === "PENDING"
-                                ? { backgroundColor: "#D97706" }
-                                : { backgroundColor: "#059669" },
-                            ]}
-                          >
-                            <Text style={hStyles.actionMiniBtnText}>
-                              {quiz.status === "PENDING" ? "Vào thi →" : "Xem điểm"}
-                            </Text>
-                          </View>
-                        </View>
-                      </ScalePressable>
-                    ))}
-                  </View>
-                </View>
-              </FadeSlideIn>
-            </>
-          ))}
+              </View>
+            </FadeSlideIn>
+          </>
+        )}
 
         {/* ============================================================
             GUEST LANDING PAGE — chỉ hiển thị khi chưa đăng nhập

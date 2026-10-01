@@ -1,6 +1,6 @@
 import { useSyncExternalStore, useState, useEffect, useCallback, useRef } from "react";
 import { Text, View, TextInput, Pressable, ActivityIndicator, StyleSheet, Alert, Image } from "react-native";
-import { router, useLocalSearchParams, type Href } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect, type Href } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { runtime } from "../../src/runtime";
 import {
@@ -56,6 +56,7 @@ export default function CourseDetailScreen() {
 
   const fetchDetails = useCallback(async () => {
     if (!courseId) return;
+    setEnrolled(false);
     try {
       setLoading(true);
       setError(null);
@@ -73,8 +74,8 @@ export default function CourseDetailScreen() {
         try {
           await session.request(`/api/v1/courses/${courseId}/progress`);
           setEnrolled(true);
-        } catch {
-          setEnrolled(false);
+        } catch (cause) {
+          if (!(cause instanceof ApiError) || cause.status !== 403) throw cause;
         }
       }
     } catch (e: unknown) {
@@ -88,27 +89,44 @@ export default function CourseDetailScreen() {
     }
   }, [courseId, snapshot.state, session]);
 
-  const fetchReviews = useCallback(async () => {
-    if (!courseId) return;
-    try {
-      setReviewsLoading(true);
-      setReviewsError(false);
-      const api = snapshot.state === "AUTHENTICATED" ? session : session.api;
-      const data = await api.request(`/api/v1/courses/${courseId}/reviews?limit=20`);
-      const res = reviewList(data);
-      setReviews(res.items);
-      setRatingInfo(res.ratingSummary);
-    } catch {
-      setReviewsError(true);
-    } finally {
-      setReviewsLoading(false);
-    }
-  }, [courseId, snapshot.state, session]);
+  const [nextReviewCursor, setNextReviewCursor] = useState<string | null>(null);
+  const fetchReviews = useCallback(
+    async (cursor = "") => {
+      if (!courseId) return;
+      try {
+        setReviewsLoading(true);
+        setReviewsError(false);
+        const api = snapshot.state === "AUTHENTICATED" ? session : session.api;
+        const data = await api.request(
+          `/api/v1/courses/${courseId}/reviews?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+          { includeMeta: true },
+        );
+        const res = reviewList(data);
+        setReviews((current) =>
+          cursor
+            ? [
+                ...current,
+                ...res.items.filter((item) => !current.some((old) => old.reviewId === item.reviewId)),
+              ]
+            : res.items,
+        );
+        setNextReviewCursor(res.nextCursor);
+        setRatingInfo(res.ratingSummary);
+      } catch {
+        setReviewsError(true);
+      } finally {
+        setReviewsLoading(false);
+      }
+    },
+    [courseId, snapshot.state, session],
+  );
 
-  useEffect(() => {
-    void fetchDetails();
-    void fetchReviews();
-  }, [fetchDetails, fetchReviews]);
+  useFocusEffect(
+    useCallback(() => {
+      void fetchDetails();
+      void fetchReviews();
+    }, [fetchDetails, fetchReviews]),
+  );
 
   useEffect(() => {
     setLecturerProfile(null);
@@ -331,6 +349,14 @@ export default function CourseDetailScreen() {
             </View>
           </View>
 
+          {course.coverDataUrl ? (
+            <Image
+              source={{ uri: course.coverDataUrl }}
+              accessibilityLabel={`Ảnh bìa ${course.title}`}
+              style={{ width: "100%", height: 170, borderRadius: 12 }}
+              resizeMode="cover"
+            />
+          ) : null}
           <Text style={localStyles.heroTitle}>{course.title}</Text>
 
           <Pressable
@@ -448,7 +474,7 @@ export default function CourseDetailScreen() {
                 .map((item) => (
                   <Button
                     key={item.offeringId}
-                    label={`${item.offeringType === "SELF_PACED" ? "Tự học" : "Lớp theo lịch"} · ${item.price ?? course.price ?? "Có phí"} ${item.currency ?? course.currency ?? "VND"}`}
+                    label={`Mua ${item.offeringType === "SELF_PACED" ? "khóa tự học" : "lớp theo lịch"} · ${item.price ?? course.price ?? "Có phí"} ${item.currency ?? course.currency ?? "VND"}`}
                     variant="outline"
                     disabled={orderLoading}
                     onPress={() => void handleCreateOrder(item.offeringId)}
@@ -566,6 +592,9 @@ export default function CourseDetailScreen() {
             </View>
           )}
 
+          {nextReviewCursor && !reviewsLoading ? (
+            <Button label="Xem thêm đánh giá" onPress={() => void fetchReviews(nextReviewCursor)} />
+          ) : null}
           {/* Reviews List */}
           {reviewsError ? (
             <View style={{ gap: 8 }}>

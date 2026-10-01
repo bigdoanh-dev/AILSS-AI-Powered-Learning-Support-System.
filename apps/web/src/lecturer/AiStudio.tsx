@@ -258,7 +258,7 @@ export function AiStudio() {
       `/ai/jobs?state=${filter}&month=${month()}&limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
     ),
     usage = useAiUsage(currentJob?.jobId, currentJob?.state),
-    courses = useLecturer<Course[] | { items: Course[] }>("/courses?limit=50"),
+    courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses"),
     classes = useLecturer<ClassItem[] | { classes: ClassItem[] }>("/me/owned-classes"),
     documentQuery = useDocument(documentId);
   const courseItems = courses.data

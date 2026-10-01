@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import type { AppConfig } from "../../../packages/config/src/index.js";
 import { AppError, currentRequestContext } from "../../../packages/http/src/index.js";
+import { PASSWORD_RESET_REQUEST_TIMEOUT_MS } from "./auth-timeouts.js";
 
 export function registrationProxy(config: AppConfig): RequestHandler {
   return identityPostProxy(config, "/api/v1/auth/register", true);
@@ -18,7 +19,14 @@ export function passwordResetProxy(
   config: AppConfig,
   operation: "request" | "verify" | "complete",
 ): RequestHandler {
-  return identityPostProxy(config, `/api/v1/auth/password-reset/${operation}`, false);
+  // Sending OTP mail includes SMTP connection, TLS and delivery. Keep the
+  // timeout override on this operation, including the intercepted fetch breaker.
+  return identityPostProxy(
+    config,
+    `/api/v1/auth/password-reset/${operation}`,
+    false,
+    operation === "request" ? PASSWORD_RESET_REQUEST_TIMEOUT_MS : undefined,
+  );
 }
 
 export function socialLoginProxy(config: AppConfig): RequestHandler {
@@ -53,12 +61,17 @@ export function socialLoginProxy(config: AppConfig): RequestHandler {
   };
 }
 
-function identityPostProxy(config: AppConfig, path: string, forwardIdempotencyKey: boolean): RequestHandler {
+function identityPostProxy(
+  config: AppConfig,
+  path: string,
+  forwardIdempotencyKey: boolean,
+  timeoutMs?: number,
+): RequestHandler {
   return async (request, response, next): Promise<void> => {
     try {
       const context = currentRequestContext();
       const idempotencyKey = request.header("idempotency-key");
-      const upstream = await fetch(new URL(path, config.IDENTITY_SERVICE_URL), {
+      const options: RequestInit & { timeoutMs?: number } = {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -66,8 +79,10 @@ function identityPostProxy(config: AppConfig, path: string, forwardIdempotencyKe
           ...(context ? { "x-correlation-id": context.correlationId } : {}),
         },
         body: JSON.stringify(request.body),
-        signal: AbortSignal.timeout(config.INTERNAL_HTTP_TIMEOUT_MS),
-      });
+        signal: AbortSignal.timeout(timeoutMs ?? config.INTERNAL_HTTP_TIMEOUT_MS),
+        ...(timeoutMs === undefined ? {} : { timeoutMs }),
+      };
+      const upstream = await fetch(new URL(path, config.IDENTITY_SERVICE_URL), options);
       const contentType = upstream.headers.get("content-type");
       if (contentType) response.type(contentType);
       response.status(upstream.status).send(await upstream.text());

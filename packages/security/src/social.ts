@@ -27,6 +27,23 @@ const APPLE_ISSUER = "https://appleid.apple.com";
 let defaultGoogleJwks: JWTVerifyGetKey | null = null;
 let defaultAppleJwks: JWTVerifyGetKey | null = null;
 
+function isProviderNetworkError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const code = "code" in error ? String(error.code) : "";
+  if (
+    ["ERR_JWKS_TIMEOUT", "ENOTFOUND", "EAI_AGAIN", "ECONNRESET", "ECONNREFUSED", "ETIMEDOUT"].includes(
+      code,
+    ) ||
+    error.name === "AbortError" ||
+    error.name === "TimeoutError" ||
+    (error instanceof TypeError && error.message === "fetch failed") ||
+    /(?:Expected 200 OK|Failed to parse).*JSON Web Key Set HTTP response/.test(error.message)
+  ) {
+    return true;
+  }
+  return isProviderNetworkError(error.cause);
+}
+
 function getGoogleJwks(): JWTVerifyGetKey {
   if (!defaultGoogleJwks) {
     defaultGoogleJwks = createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));
@@ -75,6 +92,9 @@ export async function verifyGoogleIdToken(
     });
     payload = result.payload;
   } catch (error: unknown) {
+    if (isProviderNetworkError(error)) {
+      throw new SocialAuthError("NETWORK_ERROR", "Google verification service is temporarily unavailable");
+    }
     const msg = error instanceof Error ? error.message : "Token verification failed";
     if (/expired/i.test(msg)) throw new SocialAuthError("EXPIRED_TOKEN", "Google ID token has expired");
     if (/issuer/i.test(msg)) throw new SocialAuthError("UNTRUSTED_ISSUER", "Untrusted Google token issuer");
@@ -138,6 +158,9 @@ export async function verifyAppleIdToken(
     });
     payload = result.payload;
   } catch (error: unknown) {
+    if (isProviderNetworkError(error)) {
+      throw new SocialAuthError("NETWORK_ERROR", "Apple verification service is temporarily unavailable");
+    }
     const msg = error instanceof Error ? error.message : "Token verification failed";
     if (/expired/i.test(msg)) throw new SocialAuthError("EXPIRED_TOKEN", "Apple ID token has expired");
     if (/issuer/i.test(msg)) throw new SocialAuthError("UNTRUSTED_ISSUER", "Untrusted Apple token issuer");

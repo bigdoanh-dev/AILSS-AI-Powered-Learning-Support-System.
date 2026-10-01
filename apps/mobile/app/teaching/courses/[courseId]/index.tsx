@@ -1,7 +1,9 @@
+import { loadCourseCategories, type CourseCategory } from "../../../../src/catalog-preview";
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, Pressable, StyleSheet } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import { useSyncExternalStore } from "react";
+import { useMobileCommand } from "../../../../src/queries";
 import { ApiError } from "../../../../src/api";
 import { runtime } from "../../../../src/runtime";
 import {
@@ -13,16 +15,19 @@ import {
   type OwnedOffering,
 } from "../../../../src/teaching";
 import { reviewList } from "../../../../src/interaction";
-import { Page, Button, ScreenHeader, styles, tokens } from "../../../../src/ui";
+import { Page, Button, ScreenHeader, Icon, styles, tokens } from "../../../../src/ui";
+import { ScalePressable, FadeSlideIn } from "../../../../src/motion";
 
 export default function CourseDetail() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const session = runtime!;
+  const command = useMobileCommand();
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
+  const [categoryOptions, setCategoryOptions] = useState<CourseCategory[]>([]);
   const [course, setCourse] = useState<LecturerCourse | null>(null);
   const [lessons, setLessons] = useState<LecturerLesson[] | null>(null);
   const [offerings, setOfferings] = useState<OwnedOffering[] | null>(null);
-  const [ratingAvg, setRatingAvg] = useState("5.0");
+  const [ratingAvg, setRatingAvg] = useState("—");
   const [reviewCount, setReviewCount] = useState(0);
   const [activeTab, setActiveTab] = useState<"lessons" | "offerings">("lessons");
   const [error, setError] = useState("");
@@ -35,6 +40,13 @@ export default function CourseDetail() {
     setCourse(null);
     setLessons(null);
     setOfferings(null);
+    setRatingAvg("—");
+    setReviewCount(0);
+    void loadCourseCategories((path, options) => session.api.request(path, options), abort.signal)
+      .then((items) => {
+        if (!abort.signal.aborted) setCategoryOptions(items);
+      })
+      .catch(() => {});
 
     // Course detail (LRN-03)
     void session
@@ -53,7 +65,7 @@ export default function CourseDetail() {
         if (!abort.signal.aborted) setLessons(lecturerLessons(value));
       })
       .catch(() => {
-        if (!abort.signal.aborted) setLessons([]);
+        if (!abort.signal.aborted) setError("Không tải được bài học. Hãy thử lại.");
       });
 
     // Offerings (LRN-27)
@@ -63,19 +75,21 @@ export default function CourseDetail() {
         if (!abort.signal.aborted) setOfferings(ownedOfferings(value));
       })
       .catch(() => {
-        if (!abort.signal.aborted) setOfferings([]);
+        if (!abort.signal.aborted) setError("Không tải được đợt mở bán. Hãy thử lại.");
       });
 
     // Reviews summary
     void session
-      .request(`/api/v1/courses/${courseId}/reviews`, { signal: abort.signal })
+      .request(`/api/v1/courses/${courseId}/reviews`, { signal: abort.signal, includeMeta: true })
       .then((raw) => {
         if (abort.signal.aborted) return;
         try {
           const res = reviewList(raw);
           setReviewCount(res.ratingSummary.reviewCount);
-          if (res.ratingSummary.average > 0) {
+          if (res.ratingSummary.reviewCount > 0) {
             setRatingAvg(res.ratingSummary.average.toFixed(1));
+          } else {
+            setRatingAvg("Chưa có đánh giá");
           }
         } catch {
           // ignore parsing error
@@ -99,6 +113,11 @@ export default function CourseDetail() {
 
   return (
     <Page>
+      {command.message ? (
+        <Text accessibilityRole="alert" style={styles.text}>
+          {command.message}
+        </Text>
+      ) : null}
       <ScreenHeader
         title={course ? course.title : "Chi tiết khóa học"}
         subtitle="Quản trị nội dung bài giảng & gói đào tạo"
@@ -109,6 +128,7 @@ export default function CourseDetail() {
               label="Sửa"
               size="sm"
               variant="outline"
+              icon={<Icon name="pencil" size={14} color={tokens.color.ink} />}
               onPress={() => router.push(`/teaching/courses/${courseId}/edit` as Href)}
             />
           ) : undefined
@@ -121,21 +141,43 @@ export default function CourseDetail() {
         </Text>
       )}
 
+      {course?.state === "DRAFT" ? (
+        <Button
+          label="Gửi khóa học để duyệt"
+          onPress={() => {
+            void command.run(`/api/v1/courses/${courseId}/submit-review`, {}).then((ok) => {
+              if (ok) handleRetry();
+            });
+          }}
+        />
+      ) : null}
+      <Button
+        label="Học viên khóa học"
+        onPress={() => router.push(`/teaching/courses/${courseId}/roster` as Href)}
+      />
       {course && (
-        <>
+        <FadeSlideIn duration={320}>
           {/* Hero Overview Card */}
           <View style={[styles.card, ds.heroCard]}>
+            <View style={ds.heroAccentStripe} />
             <View style={ds.heroTopRow}>
               <View style={[ds.badge, course.state === "PUBLISHED" ? ds.published : ds.draft]}>
+                <View
+                  style={[
+                    ds.statusDot,
+                    { backgroundColor: course.state === "PUBLISHED" ? tokens.color.success : "#D97706" },
+                  ]}
+                />
                 <Text style={[ds.badgeText, course.state === "PUBLISHED" ? ds.publishedText : ds.draftText]}>
                   {course.state === "PUBLISHED"
-                    ? "● ĐÃ XUẤT BẢN"
+                    ? "ĐÃ XUẤT BẢN"
                     : course.state === "HIDDEN"
-                      ? "○ ĐÃ ẨN"
-                      : "○ BẢN NHÁP"}
+                      ? "ĐÃ ẨN"
+                      : "BẢN NHÁP"}
                 </Text>
               </View>
               <View style={ds.pricePill}>
+                <Icon name="card" size={13} color="#1D4ED8" />
                 <Text style={ds.pricePillText}>
                   {course.priceType === "FREE"
                     ? "Miễn phí"
@@ -152,33 +194,51 @@ export default function CourseDetail() {
             ) : null}
 
             <View style={ds.metaRow}>
-              <Text style={ds.metaChip}>📁 {course.categoryId ?? "Chung"}</Text>
-              {course.slug ? <Text style={ds.metaChip}>🔗 {course.slug}</Text> : null}
+              <View style={ds.metaChip}>
+                <Icon name="book" size={13} color={tokens.color.brand} />
+                <Text style={ds.metaChipText}>
+                  {categoryOptions.find((item) => item.id === course.categoryId)?.name ?? "Chưa phân loại"}
+                </Text>
+              </View>
+              {course.slug ? (
+                <View style={ds.metaChip}>
+                  <Icon name="grid" size={13} color={tokens.color.muted} />
+                  <Text style={ds.metaChipText}>{course.slug}</Text>
+                </View>
+              ) : null}
             </View>
           </View>
 
           {/* 4 KPI Metric Cards */}
           <View style={ds.kpiGrid}>
             <View style={ds.kpiCard}>
-              <Text style={ds.kpiIcon}>📖</Text>
+              <View style={[ds.kpiIconBox, { backgroundColor: "#E6F7F7" }]}>
+                <Icon name="book" size={18} color={tokens.color.brand} />
+              </View>
               <Text style={ds.kpiValue}>{lessons?.length ?? 0}</Text>
               <Text style={ds.kpiLabel}>Bài học</Text>
             </View>
             <View style={ds.kpiCard}>
-              <Text style={ds.kpiIcon}>🏷️</Text>
+              <View style={[ds.kpiIconBox, { backgroundColor: "#CCFBF1" }]}>
+                <Icon name="tag" size={18} color="#0D9488" />
+              </View>
               <Text style={ds.kpiValue}>{offerings?.length ?? 0}</Text>
               <Text style={ds.kpiLabel}>Đợt mở bán</Text>
             </View>
-            <Pressable
+            <ScalePressable
               style={ds.kpiCard}
               onPress={() => router.push(`/teaching/courses/${courseId}/reviews` as Href)}
             >
-              <Text style={ds.kpiIcon}>⭐</Text>
-              <Text style={[ds.kpiValue, { color: "#f59e0b" }]}>{ratingAvg}</Text>
+              <View style={[ds.kpiIconBox, { backgroundColor: "#FEF3C7" }]}>
+                <Icon name="starFilled" size={18} color="#F59E0B" />
+              </View>
+              <Text style={[ds.kpiValue, { color: "#D97706" }]}>{ratingAvg}</Text>
               <Text style={ds.kpiLabel}>{reviewCount} đánh giá</Text>
-            </Pressable>
+            </ScalePressable>
             <View style={ds.kpiCard}>
-              <Text style={ds.kpiIcon}>💰</Text>
+              <View style={[ds.kpiIconBox, { backgroundColor: "#D1FAE5" }]}>
+                <Icon name="card" size={18} color="#059669" />
+              </View>
               <Text style={[ds.kpiValue, { fontSize: 13 }]} numberOfLines={1}>
                 {course.priceType === "FREE" ? "Free" : `${course.price ?? "0"}`}
               </Text>
@@ -188,32 +248,34 @@ export default function CourseDetail() {
 
           {/* Quick Studio Actions */}
           <View style={ds.quickActionsRow}>
-            <Pressable
+            <ScalePressable
               style={ds.actionButton}
               onPress={() => router.push(`/teaching/courses/${courseId}/settings` as Href)}
             >
-              <Text style={ds.actionButtonText}>⚙️ Cài đặt</Text>
-            </Pressable>
-            <Pressable
+              <Icon name="settings" size={15} color={tokens.color.ink} />
+              <Text style={ds.actionButtonText}>Cài đặt</Text>
+            </ScalePressable>
+            <ScalePressable
               style={ds.actionButton}
               onPress={() => router.push(`/teaching/courses/${courseId}/edit` as Href)}
             >
-              <Text style={ds.actionButtonText}>✏️ Sửa khóa học</Text>
-            </Pressable>
-            <Pressable
+              <Icon name="pencil" size={15} color={tokens.color.ink} />
+              <Text style={ds.actionButtonText}>Sửa khóa học</Text>
+            </ScalePressable>
+            <ScalePressable
               style={ds.actionButton}
               onPress={() => router.push(`/teaching/courses/${courseId}/lessons` as Href)}
             >
-              <Text style={ds.actionButtonText}>➕ Thêm bài học</Text>
-            </Pressable>
-            <Pressable
+              <Icon name="add" size={15} color={tokens.color.brand} />
+              <Text style={[ds.actionButtonText, { color: tokens.color.brand }]}>Thêm bài học</Text>
+            </ScalePressable>
+            <ScalePressable
               style={[ds.actionButton, ds.actionButtonAccent]}
               onPress={() => router.push(`/teaching/courses/${courseId}/reviews` as Href)}
             >
-              <Text style={[ds.actionButtonText, ds.actionButtonAccentText]}>
-                ⭐ Đánh giá ({reviewCount})
-              </Text>
-            </Pressable>
+              <Icon name="starFilled" size={15} color="#D97706" />
+              <Text style={[ds.actionButtonText, ds.actionButtonAccentText]}>Đánh giá ({reviewCount})</Text>
+            </ScalePressable>
           </View>
 
           {/* Segmented Tab Switcher */}
@@ -222,16 +284,26 @@ export default function CourseDetail() {
               style={[ds.tabItem, activeTab === "lessons" && ds.tabItemActive]}
               onPress={() => setActiveTab("lessons")}
             >
+              <Icon
+                name="book"
+                size={15}
+                color={activeTab === "lessons" ? tokens.color.brand : tokens.color.muted}
+              />
               <Text style={[ds.tabItemText, activeTab === "lessons" && ds.tabItemTextActive]}>
-                📖 Bài Giảng ({lessons?.length ?? 0})
+                Bài Giảng ({lessons?.length ?? 0})
               </Text>
             </Pressable>
             <Pressable
               style={[ds.tabItem, activeTab === "offerings" && ds.tabItemActive]}
               onPress={() => setActiveTab("offerings")}
             >
+              <Icon
+                name="tag"
+                size={15}
+                color={activeTab === "offerings" ? tokens.color.brand : tokens.color.muted}
+              />
               <Text style={[ds.tabItemText, activeTab === "offerings" && ds.tabItemTextActive]}>
-                🏷️ Đợt Mở Bán ({offerings?.length ?? 0})
+                Đợt Mở Bán ({offerings?.length ?? 0})
               </Text>
             </Pressable>
           </View>
@@ -243,7 +315,7 @@ export default function CourseDetail() {
                 lessons.map((lesson, idx) => (
                   <View key={lesson.lessonId} style={[styles.card, ds.lessonCard]}>
                     <View style={ds.lessonCardHeader}>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                         <View style={ds.orderPill}>
                           <Text style={ds.orderPillText}>{String(idx + 1).padStart(2, "0")}</Text>
                         </View>
@@ -254,7 +326,8 @@ export default function CourseDetail() {
                       <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
                         {lesson.preview ? (
                           <View style={ds.previewBadge}>
-                            <Text style={ds.previewBadgeText}>👁️ Xem thử</Text>
+                            <Icon name="eye" size={12} color="#047857" />
+                            <Text style={ds.previewBadgeText}>Xem thử</Text>
                           </View>
                         ) : null}
                         <View style={[ds.badge, lesson.state === "PUBLISHED" ? ds.published : ds.draft]}>
@@ -266,12 +339,14 @@ export default function CourseDetail() {
                   </View>
                 ))
               ) : (
-                <View style={[styles.card, { alignItems: "center", paddingVertical: 24 }]}>
-                  <Text style={[styles.text, { marginBottom: 12 }]}>
-                    Chưa có bài học nào trong khóa học này.
-                  </Text>
+                <View style={[styles.card, { alignItems: "center", paddingVertical: 28, gap: 10 }]}>
+                  <View style={ds.emptyIconRing}>
+                    <Icon name="book" size={26} color={tokens.color.brand} />
+                  </View>
+                  <Text style={ds.emptyText}>Chưa có bài học nào trong khóa học này.</Text>
                   <Button
-                    label="➕ Thêm bài học đầu tiên"
+                    label="Thêm bài học đầu tiên"
+                    icon={<Icon name="add" size={16} color="#FFFFFF" />}
                     onPress={() => router.push(`/teaching/courses/${courseId}/lessons` as Href)}
                   />
                 </View>
@@ -299,23 +374,30 @@ export default function CourseDetail() {
                       </Text>
                     </View>
                     <Text style={ds.offeringTypeTitle}>Gói: {o.offeringType}</Text>
-                    <Text style={[styles.small, { color: tokens.color.brand }]}>
-                      Quản lý đợt tuyển sinh →
-                    </Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                      <Text style={[styles.small, { color: tokens.color.brand, fontWeight: "700" }]}>
+                        Quản lý đợt tuyển sinh
+                      </Text>
+                      <Icon name="chevronRight" size={14} color={tokens.color.brand} />
+                    </View>
                   </Pressable>
                 ))
               ) : (
-                <View style={[styles.card, { alignItems: "center", paddingVertical: 24 }]}>
-                  <Text style={[styles.text, { marginBottom: 12 }]}>Chưa có đợt mở bán nào.</Text>
+                <View style={[styles.card, { alignItems: "center", paddingVertical: 28, gap: 10 }]}>
+                  <View style={ds.emptyIconRing}>
+                    <Icon name="tag" size={26} color={tokens.color.brand} />
+                  </View>
+                  <Text style={ds.emptyText}>Chưa có đợt mở bán nào.</Text>
                   <Button
                     label="Tạo đợt mở bán mới"
-                    onPress={() => router.push("/teaching/offerings" as Href)}
+                    icon={<Icon name="add" size={16} color="#FFFFFF" />}
+                    onPress={() => router.push(`/teaching/offerings/create?courseId=${courseId}` as Href)}
                   />
                 </View>
               )}
             </View>
           )}
-        </>
+        </FadeSlideIn>
       )}
 
       {error && (
@@ -324,9 +406,10 @@ export default function CourseDetail() {
         </Text>
       )}
       {error && <Button label="Thử lại" onPress={handleRetry} />}
-      <View style={{ marginTop: 12 }}>
+      <View style={{ marginTop: 14 }}>
         <Button
           label="Quay lại danh sách"
+          variant="outline"
           onPress={() => (router.canGoBack() ? router.back() : router.replace("/teaching/courses"))}
         />
       </View>
@@ -337,129 +420,173 @@ export default function CourseDetail() {
 const ds = StyleSheet.create({
   heroCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: tokens.color.border,
     padding: 16,
-    gap: 8,
+    gap: 10,
+    overflow: "hidden",
+    position: "relative",
+    ...tokens.shadow.subtle,
+  },
+  heroAccentStripe: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: tokens.color.brand,
   },
   heroTopRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingTop: 2,
   },
   badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 6,
   },
-  published: { backgroundColor: "#dcfce7" },
-  draft: { backgroundColor: "#fef3c7" },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  published: { backgroundColor: "#DCFCE7" },
+  draft: { backgroundColor: "#FEF3C7" },
   badgeText: { fontSize: 11, fontWeight: "700", letterSpacing: 0.3 },
   publishedText: { color: "#166534" },
-  draftText: { color: "#92400e" },
+  draftText: { color: "#92400E" },
   pricePill: {
-    backgroundColor: "#eff6ff",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#EFF6FF",
     paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#bfdbfe",
+    borderColor: "#BFDBFE",
   },
   pricePillText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#1d4ed8",
+    color: "#1D4ED8",
   },
   courseTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 19,
+    fontWeight: "800",
     color: tokens.color.ink,
-    lineHeight: 24,
+    lineHeight: 25,
+    letterSpacing: -0.3,
   },
   courseDesc: {
     fontSize: 13,
     color: tokens.color.muted,
-    lineHeight: 18,
+    lineHeight: 19,
   },
   metaRow: {
     flexDirection: "row",
     gap: 8,
     flexWrap: "wrap",
-    marginTop: 4,
+    marginTop: 2,
   },
   metaChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  metaChipText: {
     fontSize: 12,
-    color: tokens.color.muted,
-    backgroundColor: "#f1f5f9",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    fontWeight: "600",
+    color: tokens.color.inkSecondary,
   },
   kpiGrid: {
     flexDirection: "row",
     gap: 8,
-    marginVertical: 10,
+    marginVertical: 12,
   },
   kpiCard: {
     flex: 1,
     backgroundColor: tokens.color.surface,
-    borderRadius: 10,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: tokens.color.border,
     padding: 10,
     alignItems: "center",
-    gap: 2,
+    gap: 4,
+    ...tokens.shadow.subtle,
   },
-  kpiIcon: { fontSize: 16 },
-  kpiValue: { fontSize: 15, fontWeight: "700", color: tokens.color.ink },
-  kpiLabel: { fontSize: 11, color: tokens.color.muted },
+  kpiIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 2,
+  },
+  kpiValue: { fontSize: 16, fontWeight: "800", color: tokens.color.ink },
+  kpiLabel: { fontSize: 11, color: tokens.color.muted, fontWeight: "500" },
   quickActionsRow: {
     flexDirection: "row",
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   actionButton: {
     flex: 1,
-    backgroundColor: "#f1f5f9",
-    paddingVertical: 9,
-    borderRadius: 8,
+    flexDirection: "row",
+    gap: 5,
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 10,
+    borderRadius: 12,
     alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: tokens.color.border,
+    ...tokens.shadow.subtle,
   },
   actionButtonText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#334155",
+    fontSize: 11,
+    fontWeight: "700",
+    color: tokens.color.ink,
   },
   actionButtonAccent: {
-    backgroundColor: "#fef3c7",
-    borderColor: "#fde68a",
+    backgroundColor: "#FEF3C7",
+    borderColor: "#FDE68A",
   },
   actionButtonAccentText: {
-    color: "#92400e",
+    color: "#92400E",
   },
   tabBar: {
     flexDirection: "row",
-    backgroundColor: "#e2e8f0",
-    borderRadius: 8,
-    padding: 3,
+    backgroundColor: tokens.color.surfaceSubtle,
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: tokens.color.border,
     marginBottom: 12,
+    gap: 4,
   },
   tabItem: {
     flex: 1,
-    paddingVertical: 8,
+    flexDirection: "row",
     alignItems: "center",
-    borderRadius: 6,
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 9,
+    borderRadius: 8,
   },
   tabItemActive: {
-    backgroundColor: "#ffffff",
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 2,
+    backgroundColor: "#FFFFFF",
+    ...tokens.shadow.subtle,
   },
   tabItemText: {
     fontSize: 13,
@@ -471,10 +598,15 @@ const ds = StyleSheet.create({
     fontWeight: "700",
   },
   lessonCard: {
-    padding: 12,
-    gap: 6,
-    borderLeftWidth: 3,
+    padding: 14,
+    gap: 8,
+    borderRadius: 14,
+    borderLeftWidth: 4,
     borderLeftColor: tokens.color.brand,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: tokens.color.border,
+    ...tokens.shadow.subtle,
   },
   lessonCardHeader: {
     flexDirection: "row",
@@ -482,46 +614,67 @@ const ds = StyleSheet.create({
     alignItems: "center",
   },
   orderPill: {
-    backgroundColor: "#eff6ff",
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+    backgroundColor: "#E6F7F7",
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
   },
   orderPillText: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     color: tokens.color.brand,
   },
   previewBadge: {
-    backgroundColor: "#ecfdf5",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#ECFDF5",
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#a7f3d0",
+    borderColor: "#A7F3D0",
   },
   previewBadgeText: {
-    fontSize: 10,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "700",
     color: "#047857",
   },
   lessonTitle: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "700",
     color: tokens.color.ink,
+    lineHeight: 20,
+  },
+  emptyIconRing: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: "#E6F7F7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyText: {
+    color: tokens.color.muted,
+    fontSize: 13,
   },
   offeringCard: {
     padding: 14,
-    gap: 6,
+    gap: 8,
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: tokens.color.border,
+    ...tokens.shadow.subtle,
   },
   offeringPrice: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     color: tokens.color.brand,
   },
   offeringTypeTitle: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
     color: tokens.color.ink,
   },
 });

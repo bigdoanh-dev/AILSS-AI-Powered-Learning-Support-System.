@@ -4,12 +4,7 @@ import { router, type Href } from "expo-router";
 import { useSyncExternalStore } from "react";
 import { ApiError } from "../../../src/api";
 import { runtime } from "../../../src/runtime";
-import {
-  ownedClasses,
-  ownedOfferings,
-  uniqueCoursesFromOfferings,
-  type OwnedClass,
-} from "../../../src/teaching";
+import { ownedClasses, lecturerCourses, type OwnedClass } from "../../../src/teaching";
 import { authoringQuizSummaries, type AuthoringQuizSummary } from "../../../src/assessment-authoring";
 import { Page, Button, ScreenHeader, NonVirtualizedList, styles, tokens } from "../../../src/ui";
 
@@ -34,13 +29,12 @@ export default function LecturerAssessmentsScreen() {
     const abort = new AbortController();
 
     Promise.all([
-      session.request("/api/v1/me/owned-offerings", { signal: abort.signal }),
+      session.request("/api/v1/me/owned-courses", { signal: abort.signal }),
       session.request("/api/v1/me/owned-classes", { signal: abort.signal }),
     ])
       .then(([offeringData, classData]) => {
         if (abort.signal.aborted) return;
-        const offs = ownedOfferings(offeringData);
-        const crs = uniqueCoursesFromOfferings(offs);
+        const crs = lecturerCourses(offeringData);
         setCourses(crs);
 
         const cls = ownedClasses(classData);

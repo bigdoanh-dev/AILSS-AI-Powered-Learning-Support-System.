@@ -97,6 +97,24 @@ test("login profile is canonical, HttpOnly and no credentials in browser payload
   assert.doesNotMatch(r.raw, /secret|Token|password/);
   assert.equal(f.calls[1].route, "/api/v1/me");
 });
+
+test("OTP delivery has a longer upstream deadline than verification", async (t) => {
+  const deadlines = [];
+  const timeout = AbortSignal.timeout.bind(AbortSignal);
+  t.mock.method(AbortSignal, "timeout", (milliseconds) => {
+    deadlines.push(milliseconds);
+    return timeout(milliseconds);
+  });
+  const f = fixture();
+  await f.request("auth/password-reset/request", "POST", { email: "test@example.invalid" });
+  assert.deepEqual(deadlines, [50000]);
+  await f.request("auth/password-reset/verify", "POST", {
+    email: "test@example.invalid",
+    code: "123456",
+  });
+  assert.deepEqual(deadlines, [50000, 15000]);
+  assert.equal(f.calls[0].headers.Authorization, undefined);
+});
 test("production requires HTTPS and uses host-only Secure cookie", async () => {
   assert.throws(() =>
     createSessionAdapter({ gateway: "http://g", origin: "http://web.test", production: true }),

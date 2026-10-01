@@ -1,15 +1,16 @@
 import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
-import { Text, View, StyleSheet, ScrollView, RefreshControl } from "react-native";
+import { Image, Text, View, StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { router, type Href } from "expo-router";
 import { ApiError } from "../../../src/api";
 import { runtime } from "../../../src/runtime";
 import { ownedClasses, type OwnedClass } from "../../../src/teaching";
-import { Page, Button, ScreenHeader, Icon, Badge, BottomNavBar, tokens, styles } from "../../../src/ui";
+import { Page, Button, ScreenHeader, Icon, Badge, BottomNavBar, styles } from "../../../src/ui";
 import { ScalePressable } from "../../../src/motion";
 
 interface ClassCardMeta {
   classId: string;
   name: string;
+  coverDataUrl?: string;
   code: string;
   classKind: string;
   schedule: string;
@@ -27,7 +28,6 @@ export default function OwnedClassesList() {
   const [items, setItems] = useState<OwnedClass[] | null>(null);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [retry, setRetry] = useState(0);
   const [tab, setTab] = useState<"ALL" | "ACTIVE" | "COMPLETED">("ALL");
 
   const loadData = useCallback(
@@ -55,7 +55,7 @@ export default function OwnedClassesList() {
     const abort = new AbortController();
     void loadData(abort.signal);
     return () => abort.abort();
-  }, [loadData, retry, snapshot.user?.role]);
+  }, [loadData, snapshot.user?.role]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -75,6 +75,7 @@ export default function OwnedClassesList() {
   const displayClasses: ClassCardMeta[] = (items ?? []).map((cls) => ({
     classId: cls.classId,
     name: cls.name,
+    coverDataUrl: cls.coverDataUrl,
     code: cls.joinCode ?? "—",
     classKind: cls.classKind,
     schedule: "Chưa có lịch được tải",
@@ -95,6 +96,11 @@ export default function OwnedClassesList() {
           onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching"))}
         />
         <Button label="+ Tạo lớp học" onPress={() => router.push("/teaching/classes/create" as Href)} />
+        {error ? (
+          <Text accessibilityRole="alert" style={styles.error}>
+            {error}
+          </Text>
+        ) : null}
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -161,6 +167,13 @@ export default function OwnedClassesList() {
           <View style={{ gap: 14 }}>
             {displayClasses.map((item) => (
               <View key={item.classId} style={cs.card}>
+                {item.coverDataUrl && (
+                  <Image
+                    source={{ uri: item.coverDataUrl }}
+                    style={{ width: "100%", height: 128, borderRadius: 12, marginBottom: 10 }}
+                    resizeMode="cover"
+                  />
+                )}
                 {/* Header */}
                 <View style={cs.cardHeader}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>

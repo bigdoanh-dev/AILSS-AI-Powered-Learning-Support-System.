@@ -109,7 +109,7 @@ export class ClassroomRepository {
   async getClass(id: string) {
     const r = (
       await this.db.execute(
-        `SELECT class_id,owner_lecturer_id,name,linked_course_id,class_kind,schedule_state,schedule_version,max_members,state,active_code_hash,version,created_at,updated_at FROM class_by_id WHERE class_id=?`,
+        `SELECT class_id,owner_lecturer_id,name,linked_course_id,class_kind,schedule_state,schedule_version,max_members,photo_data_url,cover_data_url,state,active_code_hash,version,created_at,updated_at FROM class_by_id WHERE class_id=?`,
         [uuid(id)],
         LQ,
       )
@@ -191,11 +191,13 @@ export class ClassroomRepository {
   }
   async updateClass(old: ClassroomClass, next: ClassroomClass) {
     const r = await this.db.execute(
-      `UPDATE class_by_id SET name=?,linked_course_id=?,max_members=?,active_code_hash=?,version=?,updated_at=? WHERE class_id=? IF owner_lecturer_id=? AND state='ACTIVE' AND version=?`,
+      `UPDATE class_by_id SET name=?,linked_course_id=?,max_members=?,photo_data_url=?,cover_data_url=?,active_code_hash=?,version=?,updated_at=? WHERE class_id=? IF owner_lecturer_id=? AND state='ACTIVE' AND version=?`,
       [
         next.name,
         next.linkedCourseId ? uuid(next.linkedCourseId) : null,
         next.maxMembers,
+        next.photoDataUrl ?? null,
+        next.coverDataUrl ?? null,
         next.activeCodeHash,
         long(next.version),
         next.updatedAt,
@@ -203,6 +205,15 @@ export class ClassroomRepository {
         uuid(old.ownerLecturerId),
         long(old.version),
       ],
+      LQ,
+      LS,
+    );
+    return r[0]?.["[applied]"] === true;
+  }
+  async closeClass(old: ClassroomClass, now: Date) {
+    const r = await this.db.execute(
+      `UPDATE class_by_id SET state='CLOSED',version=?,updated_at=? WHERE class_id=? IF owner_lecturer_id=? AND state='ACTIVE' AND schedule_state='DRAFT' AND version=?`,
+      [long(old.version + 1), now, uuid(old.classId), uuid(old.ownerLecturerId), long(old.version)],
       LQ,
       LS,
     );
@@ -357,7 +368,7 @@ export class ClassroomRepository {
       [uuid(id)],
       LQ,
     );
-    return this.resolveClasses(rows);
+    return (await this.resolveClasses(rows)).filter((value) => value.state === "ACTIVE");
   }
   private async resolveClasses(rows: readonly types.Row[]) {
     const out: ClassroomClass[] = [];
@@ -1317,6 +1328,8 @@ function classRow(r: types.Row): ClassroomClass {
     scheduleState: String(r.schedule_state) as ClassroomClass["scheduleState"],
     scheduleVersion: num(r.schedule_version),
     maxMembers: Number(r.max_members),
+    ...(r.photo_data_url ? { photoDataUrl: String(r.photo_data_url) } : {}),
+    ...(r.cover_data_url ? { coverDataUrl: String(r.cover_data_url) } : {}),
     state: String(r.state) as ClassroomClass["state"],
     activeCodeHash: String(r.active_code_hash),
     version: num(r.version),

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { adminRequest } from "./api";
-
+import { useSession } from "../auth/session";
+import { adminRequest, adminError } from "./api";
 export interface AdminDataState<T> {
   data: T | null;
   loading: boolean;
@@ -9,58 +9,57 @@ export interface AdminDataState<T> {
   refresh: () => void;
   lastUpdated: Date | null;
 }
-
-/**
- * Hook polling dữ liệu từ Admin BFF API.
- * - Tự động refresh theo `intervalMs` (mặc định 30s).
- * - Khi backend trả 404/503 → giữ fallback data, isLive=false.
- * - AbortController cleanup khi unmount.
- */
 export function useAdminData<T>(
   path: string,
-  options: {
-    intervalMs?: number;
-    fallback?: T | null;
-    enabled?: boolean;
-  } = {},
+  options: { intervalMs?: number; fallback?: T | null; enabled?: boolean } = {},
 ): AdminDataState<T> {
-  const { intervalMs = 30_000, fallback = null, enabled = true } = options;
-
-  const [data, setData] = useState<T | null>(fallback);
-  const [loading, setLoading] = useState(enabled);
-  const [error, setError] = useState<string | null>(null);
-  const [isLive, setIsLive] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const rev = useRef(0);
-
+  const { profile } = useSession();
+  const identity = profile?.role === "ADMIN" ? profile.userId : "";
+  const scope = `${identity}|${path}`;
+  const enabled = options.enabled !== false && !!identity;
+  const intervalMs = options.intervalMs ?? 30_000;
+  const [result, setResult] = useState<{
+    scope: string;
+    data: T | null;
+    loading: boolean;
+    error: string | null;
+    lastUpdated: Date | null;
+  }>({ scope: "", data: null, loading: enabled, error: null, lastUpdated: null });
+  const active = useRef<AbortController | null>(null);
   const doFetch = useCallback(async () => {
+    active.current?.abort();
     if (!enabled) return;
-    const epoch = ++rev.current;
-    setLoading(true);
+    const controller = new AbortController();
+    active.current = controller;
+    setResult((previous) =>
+      previous.scope === scope
+        ? { ...previous, loading: true }
+        : { scope, data: null, loading: true, error: null, lastUpdated: null },
+    );
     try {
-      const result = await adminRequest<T>(path);
-      if (epoch !== rev.current) return;
-      setData(result.data);
-      setIsLive(true);
-      setError(null);
-      setLastUpdated(new Date());
-    } catch (e) {
-      if (epoch !== rev.current) return;
-      setError(e instanceof Error ? e.message : "Không thể tải dữ liệu từ máy chủ");
-      setIsLive(false);
-    } finally {
-      if (epoch === rev.current) setLoading(false);
+      const result = await adminRequest<T>(path, "GET", undefined, {}, controller.signal);
+      if (!controller.signal.aborted)
+        setResult({ scope, data: result.data, loading: false, error: null, lastUpdated: new Date() });
+    } catch (error) {
+      if (!controller.signal.aborted)
+        setResult({ scope, data: null, loading: false, error: adminError(error), lastUpdated: null });
     }
-  }, [path, enabled]);
-
-  const refresh = useCallback(() => void doFetch(), [doFetch]);
-
+  }, [scope, path, enabled]);
   useEffect(() => {
     void doFetch();
-    if (!intervalMs) return;
-    const timer = setInterval(() => void doFetch(), intervalMs);
-    return () => clearInterval(timer);
-  }, [doFetch, intervalMs]);
-
-  return { data, loading, error, isLive, refresh, lastUpdated };
+    const timer = enabled && intervalMs ? setInterval(() => void doFetch(), intervalMs) : null;
+    return () => {
+      active.current?.abort();
+      if (timer) clearInterval(timer);
+    };
+  }, [doFetch, intervalMs, enabled]);
+  const current = result.scope === scope && enabled ? result : undefined;
+  return {
+    data: current?.data ?? null,
+    loading: current?.loading ?? enabled,
+    error: current?.error ?? null,
+    isLive: !!current?.data,
+    lastUpdated: current?.lastUpdated ?? null,
+    refresh: () => void doFetch(),
+  };
 }

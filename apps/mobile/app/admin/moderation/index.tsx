@@ -30,7 +30,9 @@ export default function AdminModerationQueueScreen() {
           limit: "20",
           ...(targetCursor ? { cursor: targetCursor } : {}),
         });
-        const res = await session.request(`/api/v1/admin/reports?${queryParams.toString()}`);
+        const res = await session.request(`/api/v1/admin/reports?${queryParams.toString()}`, {
+          includeMeta: true,
+        });
         const parsed = moderationListResponse(res);
         setReports(parsed.items);
         setNextCursor(parsed.nextCursor);

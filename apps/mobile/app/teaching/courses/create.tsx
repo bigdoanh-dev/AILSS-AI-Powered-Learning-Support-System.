@@ -12,56 +12,13 @@ import {
 } from "react-native";
 import { router, type Href } from "expo-router";
 import * as Crypto from "expo-crypto";
+import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { ApiError } from "../../../src/api";
 import { runtime } from "../../../src/runtime";
 import { Page, Button, ScreenHeader, Icon, BottomNavBar, styles, tokens } from "../../../src/ui";
 import { ScalePressable } from "../../../src/motion";
 import { RevenueQuote } from "../../../src/RevenueQuote";
-
-interface CategoryOption {
-  id: string;
-  name: string;
-  subtitle: string;
-  icon: "book" | "grid" | "sparkles" | "award";
-  color: string;
-  badge: string;
-}
-
-const CATEGORIES: CategoryOption[] = [
-  {
-    id: "10000000-0000-4000-8000-000000000001",
-    name: "Lập trình Web & Kỹ thuật",
-    subtitle: "Frontend, Backend, Fullstack & Di động",
-    icon: "book",
-    color: "#0A7E85",
-    badge: "Phổ biến",
-  },
-  {
-    id: "10000000-0000-4000-8000-000000000002",
-    name: "Cơ sở dữ liệu & Hệ thống",
-    subtitle: "SQL, NoSQL, Hệ phân tán & Cloud",
-    icon: "grid",
-    color: "#0284C7",
-    badge: "Cốt lõi",
-  },
-  {
-    id: "10000000-0000-4000-8000-000000000003",
-    name: "Trí tuệ nhân tạo & AI/LLM",
-    subtitle: "Học sâu, Prompt Engineering & AI Agent",
-    icon: "sparkles",
-    color: "#8B5CF6",
-    badge: "Xu hướng",
-  },
-  {
-    id: "10000000-0000-4000-8000-000000000004",
-    name: "Kỹ năng & Ngoại ngữ",
-    subtitle: "Kỹ năng mềm, Tiếng Anh chuyên ngành",
-    icon: "award",
-    color: "#D97706",
-    badge: "Thực hành",
-  },
-];
 
 const PRICE_PRESETS = [
   { label: "199.000 ₫", value: "199000" },
@@ -87,8 +44,7 @@ export default function CreateCourse() {
   // Form State
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState(CATEGORIES[0].id);
-  const [showCustomCat, setShowCustomCat] = useState(false);
+  const [categoryName, setCategoryName] = useState("");
   const [priceType, setPriceType] = useState<"FREE" | "PAID">("FREE");
   const [price, setPrice] = useState("0");
   const [currency, setCurrency] = useState("VND");
@@ -103,13 +59,10 @@ export default function CreateCourse() {
   const [message, setMessage] = useState("");
   const [idempotencyKey, setIdempotencyKey] = useState(() => Crypto.randomUUID());
 
-  const selectedCategory = CATEGORIES.find((c) => c.id === categoryId) ?? {
-    id: categoryId,
-    name: "Danh mục tùy chỉnh",
-    subtitle: "Mã định danh riêng",
+  const selectedCategory = {
+    name: categoryName.trim() || "Chưa nhập danh mục",
     icon: "book" as const,
     color: tokens.color.brand,
-    badge: "Tùy biến",
   };
 
   const handlePickCover = async () => {
@@ -132,7 +85,13 @@ export default function CreateCourse() {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setCoverUri(result.assets[0].uri);
+        const context = ImageManipulator.manipulate(result.assets[0].uri);
+        context.resize({ width: 960 });
+        const image = await context.renderAsync();
+        const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.65, base64: true });
+        const dataUrl = `data:image/jpeg;base64,${saved.base64}`;
+        if (!saved.base64 || dataUrl.length > 350000) throw new Error("Ảnh quá lớn");
+        setCoverUri(dataUrl);
       }
     } catch {
       Alert.alert("Lỗi", "Không thể chọn ảnh từ thiết bị. Vui lòng thử lại.");
@@ -150,6 +109,10 @@ export default function CreateCourse() {
       setError("Vui lòng nhập tên khóa học.");
       return;
     }
+    if (categoryName.trim().length < 2) {
+      setError("Danh mục cần từ 2 đến 80 ký tự.");
+      return;
+    }
     setBusy(true);
     setError("");
     setMessage("");
@@ -158,9 +121,11 @@ export default function CreateCourse() {
       await session.request("/api/v1/courses", {
         method: "POST",
         body: {
+          description: description.trim(),
+          coverDataUrl: coverUri,
           title: title.trim(),
           slug,
-          categoryId: categoryId.trim() || CATEGORIES[0].id,
+          categoryName: categoryName.trim(),
           priceType: priceType || "FREE",
           price: priceType === "FREE" ? "0" : price.trim() || "0",
           currency: currency.trim() || "VND",
@@ -175,7 +140,7 @@ export default function CreateCourse() {
     } finally {
       setBusy(false);
     }
-  }, [title, categoryId, priceType, price, currency, session, idempotencyKey]);
+  }, [title, description, coverUri, categoryName, priceType, price, currency, session, idempotencyKey]);
 
   const handleResetForm = () => {
     setTitle("");
@@ -333,7 +298,7 @@ export default function CreateCourse() {
                   <Image source={{ uri: coverUri }} style={cs.coverImagePreview} resizeMode="cover" />
                   <View style={cs.coverBadgeOverlay}>
                     <Icon name="checkCircle" size={14} color="#FFFFFF" />
-                    <Text style={cs.coverBadgeText}>Đã tải ảnh bìa thành công</Text>
+                    <Text style={cs.coverBadgeText}>Ảnh đã chọn · lưu khi tạo khóa</Text>
                   </View>
                 </View>
                 <View style={cs.coverActionRow}>
@@ -445,84 +410,19 @@ export default function CreateCourse() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={cs.sectionTitle}>Danh mục đào tạo</Text>
-                <Text style={cs.sectionSubtitle}>
-                  Chọn chuyên ngành phù hợp để hiển thị trong bộ lọc tìm kiếm
-                </Text>
+                <Text style={cs.sectionSubtitle}>Tự nhập chuyên ngành hoặc lĩnh vực của khóa học</Text>
               </View>
             </View>
 
-            <View style={cs.categoryGrid}>
-              {CATEGORIES.map((cat) => {
-                const active = categoryId === cat.id;
-                return (
-                  <ScalePressable
-                    key={cat.id}
-                    style={[cs.categoryCard, active && [cs.categoryCardActive, { borderColor: cat.color }]]}
-                    onPress={() => setCategoryId(cat.id)}
-                  >
-                    <View style={cs.categoryCardTop}>
-                      <View
-                        style={[
-                          cs.categoryIconWrap,
-                          { backgroundColor: active ? `${cat.color}20` : tokens.color.surfaceSubtle },
-                        ]}
-                      >
-                        <Icon name={cat.icon} size={18} color={active ? cat.color : tokens.color.ink} />
-                      </View>
-                      <View style={cs.categoryBadgePill}>
-                        <Text style={cs.categoryBadgeText}>{cat.badge}</Text>
-                      </View>
-                    </View>
-
-                    <Text
-                      style={[cs.categoryCardName, active && { color: cat.color, fontWeight: "700" }]}
-                      numberOfLines={1}
-                    >
-                      {cat.name}
-                    </Text>
-                    <Text style={cs.categoryCardSub} numberOfLines={2}>
-                      {cat.subtitle}
-                    </Text>
-
-                    {active ? (
-                      <View style={[cs.categoryCheckmark, { backgroundColor: cat.color }]}>
-                        <Icon name="check" size={10} color="#FFFFFF" />
-                      </View>
-                    ) : null}
-                  </ScalePressable>
-                );
-              })}
-            </View>
-
-            {/* Custom Category UUID Expand */}
-            <Pressable style={cs.customCatToggle} onPress={() => setShowCustomCat((prev) => !prev)}>
-              <Icon name={showCustomCat ? "chevronLeft" : "settings"} size={14} color={tokens.color.muted} />
-              <Text style={cs.customCatToggleText}>
-                {showCustomCat ? "Ẩn tùy chỉnh mã danh mục" : "Tùy chỉnh mã danh mục nâng cao (UUID)"}
-              </Text>
-            </Pressable>
-
-            {showCustomCat ? (
-              <View style={cs.customCatContainer}>
-                <Text style={cs.fieldLabel}>Mã danh mục (UUID)</Text>
-                <TextInput
-                  accessibilityLabel="Mã danh mục"
-                  style={[styles.input, cs.textInput]}
-                  value={categoryId}
-                  onChangeText={setCategoryId}
-                  placeholder="10000000-0000-4000-8000-000000000001"
-                />
-              </View>
-            ) : (
-              // Hidden accessible input to preserve accessibility test expectations
-              <TextInput
-                accessibilityLabel="Mã danh mục"
-                style={{ height: 0, opacity: 0 }}
-                value={categoryId}
-                onChangeText={setCategoryId}
-                editable={false}
-              />
-            )}
+            <TextInput
+              accessibilityLabel="Danh mục đào tạo"
+              style={[styles.input, cs.textInput]}
+              value={categoryName}
+              onChangeText={setCategoryName}
+              maxLength={80}
+              placeholder="Ví dụ: Thiết kế đồ họa, Kế toán, Lập trình Python"
+            />
+            <Text style={styles.small}>Nhập từ 2 đến 80 ký tự. Danh mục sẽ dùng để lọc và tìm khóa học.</Text>
           </View>
 
           {/* Section 4: Thiết lập học phí & Doanh thu (Pricing) */}

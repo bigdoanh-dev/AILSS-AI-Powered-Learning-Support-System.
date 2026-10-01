@@ -46,7 +46,9 @@ export function createSessionAdapter({
           ...(key ? { "Idempotency-Key": key } : {}),
         },
         ...(body ? { body: JSON.stringify(body) } : {}),
-        signal: AbortSignal.timeout(route === "/assistant/chat" ? 60000 : 15000),
+        signal: AbortSignal.timeout(
+          route === "/assistant/chat" ? 60000 : route === "/auth/password-reset/request" ? 50000 : 15000,
+        ),
         redirect: "error",
         cache: "no-store",
       });

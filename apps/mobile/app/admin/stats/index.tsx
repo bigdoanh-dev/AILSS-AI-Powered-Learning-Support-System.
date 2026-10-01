@@ -43,7 +43,7 @@ export default function AdminStatsDashboard() {
       setData(null);
       setError(cause instanceof ApiError ? cause.message : "Không thể tải thống kê tài khoản.");
     }
-  }, [session, snapshot.user?.role]);
+  }, [session, snapshot.user?.role, snapshot.user?.userId]);
   useEffect(() => {
     void load();
   }, [load]);
