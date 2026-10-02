@@ -96,12 +96,45 @@ Mobile tự lấy Web Client ID đang dùng cho bản web từ Gateway tại
    development client bằng lệnh `ios` hoặc `android` bên dưới. Chỉ tải lại Metro sẽ
    không thêm được thư viện native hay URL scheme.
 
-**Thử nghiệm nhanh trên thiết bị khi chưa cấu hình Google Cloud:**
-Màn hình đăng nhập di động tích hợp sẵn các nút **"Đăng nhập nhanh thử nghiệm trên thiết bị"**
-(Học viên, Giảng viên, Admin). Khi bấm vào, ứng dụng tự động xác thực trực tiếp qua Gateway mà
-không phụ thuộc vào Client ID iOS hay SHA-1 Android, cho phép kiểm thử toàn bộ chức năng ứng
-dụng trên thiết bị thật ngay lập tức. Nếu nhấn nút Google khi chưa cấu hình, ứng dụng sẽ hiện
-thông báo chẩn đoán và cho phép chọn tiếp tục bằng tài khoản thử nghiệm.
+**Khi Google chưa khả dụng:** màn hình kiểm tra mô-đun native và cấu hình iOS trước khi
+cho phép bấm nút Google. Expo Go hoặc bản AILSS chưa có Google Sign-In sẽ hiện hướng dẫn
+và vô hiệu hóa nút này; đăng nhập bằng email/mật khẩu vẫn hoạt động. Lỗi Google không
+chuyển sang đăng nhập tài khoản demo.
+
+### Sửa lỗi thiếu Google Sign-In trên iPhone thật
+
+1. Google Cloud Console → Google Auth Platform → Clients → Create client → **iOS**.
+   Dùng Bundle ID `dev.ailss.mobile`, trong cùng project với Web client đang dùng.
+2. Trong `apps/mobile/.env.local`, giữ cấu hình API hiện tại và thêm:
+
+   ```dotenv
+   EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=<IOS_CLIENT_ID>.apps.googleusercontent.com
+   ```
+
+   Đây phải là **iOS Client ID**, không lấy Web Client ID thay thế. Không đưa Client Secret vào app.
+
+3. Cần Xcode `26.4+` theo yêu cầu Expo SDK 57. Kết nối iPhone với Mac, tin cậy máy tính và
+   bật Developer Mode trên iPhone. Trong Xcode, mở `apps/mobile/ios/AILSS.xcworkspace`,
+   chọn target AILSS → Signing & Capabilities → chọn Apple Development Team của bạn.
+4. Từ gốc repo, cập nhật native config mà không xóa thư mục native, rồi build/cài lên iPhone:
+
+   ```bash
+   pnpm --filter @ailss/mobile exec expo prebuild --platform ios --no-install
+   pnpm --filter @ailss/mobile ios:device
+   ```
+
+5. Các lần sau, chạy Metro cho development client:
+
+   ```bash
+   pnpm --filter @ailss/mobile start:development
+   ```
+
+   Mở **app AILSS đã cài riêng**, không mở bằng Expo Go. Nếu đang dùng bản AILSS cũ,
+   cần cài lại binary mới; restart Metro hoặc sửa `.env` không thêm native module vào bản cũ.
+
+Không cần đưa Web Client ID vào Expo: Gateway cung cấp ID qua `/api/v1/auth/social/config`.
+Việc build/cài chưa xác nhận đăng nhập thành công; cần thử chọn tài khoản Google trên điện thoại
+và kiểm tra app vào đúng workspace theo vai trò.
 
 Chọn một trong hai cách sau.
 
@@ -122,7 +155,7 @@ Lệnh này build và mở development client trên simulator/emulator đang ch�
 ### Khởi động Metro cho development client đã cài
 
 ```bash
-pnpm --filter @ailss/mobile start
+pnpm --filter @ailss/mobile start:development
 ```
 
 Mở ứng dụng AILSS development client trên thiết bị và kết nối tới Metro theo hướng dẫn hiển thị trong terminal. Điện thoại thật và máy tính cần truy cập được nhau để tải JavaScript bundle. Nếu vừa sửa cấu hình native, cài lại development client bằng lệnh `ios` hoặc `android` ở trên.

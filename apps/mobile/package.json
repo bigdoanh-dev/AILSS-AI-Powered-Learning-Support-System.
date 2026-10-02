@@ -41,6 +41,7 @@
     "start:development": "expo start --dev-client",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "ios:device": "expo run:ios --device",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:phase41": "node scripts/phase41-lint.mjs",

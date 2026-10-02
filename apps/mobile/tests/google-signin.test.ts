@@ -29,6 +29,7 @@ vi.mock("@react-native-google-signin/google-signin", googleSdkMock);
 
 import {
   getGoogleIdToken,
+  googleSignInAvailability,
   isGoogleCloudConfigMissingError,
   isGoogleNativeModuleMissingError,
 } from "../src/google-signin";
@@ -67,6 +68,29 @@ describe("native Google sign-in", () => {
       code: "MISSING_IOS_CLIENT_ID",
     });
     expect(native.configure).not.toHaveBeenCalled();
+  });
+
+  it("disables Google before interaction when the binary has no native module", () => {
+    native.getModule.mockReturnValue(null);
+    expect(googleSignInAvailability("ios-client")).toMatchObject({
+      available: false,
+      code: "GOOGLE_NATIVE_MODULE_MISSING",
+    });
+    expect(native.configure).not.toHaveBeenCalled();
+    expect(native.signIn).not.toHaveBeenCalled();
+  });
+
+  it("requires separate iOS configuration even when the Google native module is present", () => {
+    Platform.OS = "ios";
+    expect(googleSignInAvailability("   ")).toMatchObject({
+      available: false,
+      code: "MISSING_IOS_CLIENT_ID",
+    });
+    expect(googleSignInAvailability("ios-client")).toEqual({ available: true });
+  });
+
+  it("does not require an iOS client for an Android native binary", () => {
+    expect(googleSignInAvailability("")).toEqual({ available: true });
   });
 
   it("returns an ID token and configures the Web audience", async () => {

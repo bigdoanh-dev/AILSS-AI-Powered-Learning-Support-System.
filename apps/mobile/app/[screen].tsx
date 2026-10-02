@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useSyncExternalStore } from "react";
-import { Text, TextInput, View, Image, Pressable, Platform, Alert } from "react-native";
+import { Text, TextInput, View, Image, Pressable } from "react-native";
 import { router, useLocalSearchParams, useGlobalSearchParams, usePathname, type Href } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { ApiError, record } from "../src/api";
@@ -8,6 +8,7 @@ import { destinations } from "../src/navigation";
 import { items } from "../src/domain";
 import {
   getGoogleIdToken,
+  googleSignInAvailability,
   isGoogleCloudConfigMissingError,
   isGoogleNativeModuleMissingError,
 } from "../src/google-signin";
@@ -62,6 +63,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() ?? "";
+  const googleAvailability = googleSignInAvailability(googleIosClientId);
 
   const path =
     screen === "courses"
@@ -180,39 +182,8 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
     }
   }
 
-  async function handleQuickLogin(userEmail: string, userPass: string) {
-    setEmail(userEmail);
-    setPassword(userPass);
-    setBusy(true);
-    setError("");
-    try {
-      await session.login(userEmail, userPass);
-      const user = session.snapshot.user;
-      if (session.snapshot.state !== "AUTHENTICATED" || !user) {
-        throw new Error(session.snapshot.error ?? "Đăng nhập không thành công.");
-      }
-      const target = user.role === "ADMIN" ? "/admin" : user.role === "LECTURER" ? "/teaching" : "/";
-      goToResult("login-success", {
-        role: user.role,
-        name: user.displayName,
-        email: user.emailMasked,
-        target,
-      });
-    } catch (cause) {
-      setError(
-        cause instanceof ApiError
-          ? cause.message
-          : cause instanceof Error
-            ? cause.message
-            : "Đăng nhập không thành công. Hãy thử lại.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function handleGoogleLogin() {
-    if (busy) return;
+    if (busy || !googleSignInAvailability(googleIosClientId).available) return;
     setBusy(true);
     setError("");
     try {
@@ -237,33 +208,11 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
       });
     } catch (cause) {
       if (isGoogleNativeModuleMissingError(cause)) {
-        setError(
-          "Bản ứng dụng hiện tại chưa hỗ trợ đăng nhập Google. Hãy cài bản AILSS development build mới có Google Sign-In; Expo Go không hỗ trợ tính năng này.",
-        );
+        setError("Google chưa khả dụng trong bản app này. Vui lòng đăng nhập bằng email.");
         return;
       }
       if (isGoogleCloudConfigMissingError(cause)) {
-        Alert.alert(
-          "Chưa liên kết Google Cloud trên thiết bị",
-          Platform.OS === "ios"
-            ? "iOS cần Client ID riêng trong Google Cloud Console (EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID).\n\nBạn có muốn đăng nhập nhanh bằng tài khoản thử nghiệm để kiểm tra ngay trên thiết bị này không?"
-            : "Android cần đăng ký package dev.ailss.mobile và SHA-1 trong Google Cloud Console.\n\nBạn có muốn đăng nhập nhanh bằng tài khoản thử nghiệm để kiểm tra ngay trên thiết bị này không?",
-          [
-            {
-              text: "Học viên (Demo)",
-              onPress: () => void handleQuickLogin("student@ailss.internal", "AilssDemo!2026"),
-            },
-            {
-              text: "Giảng viên (Demo)",
-              onPress: () => void handleQuickLogin("lecturer@ailss.internal", "AilssDemo!2026"),
-            },
-            {
-              text: "Admin (Demo)",
-              onPress: () => void handleQuickLogin("admin@ailss.internal", "AilssAdmin!2026"),
-            },
-            { text: "Hủy", style: "cancel" },
-          ],
-        );
+        setError("Đăng nhập Google chưa được thiết lập cho thiết bị này. Vui lòng đăng nhập bằng email.");
         return;
       }
       setError(
@@ -541,9 +490,14 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                   icon={<Icon name="logoGoogle" size={20} color="#4285F4" />}
                   variant="outline"
                   size="lg"
-                  disabled={busy}
+                  disabled={busy || !googleAvailability.available}
                   onPress={() => void handleGoogleLogin()}
                 />
+                {!googleAvailability.available && (
+                  <Text testID="mobile-google-unavailable" style={[styles.small, { textAlign: "center" }]}>
+                    {googleAvailability.message}
+                  </Text>
+                )}
               </View>
             )}
           </View>

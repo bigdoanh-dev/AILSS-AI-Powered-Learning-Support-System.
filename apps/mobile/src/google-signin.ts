@@ -1,5 +1,30 @@
 import { Platform, TurboModuleRegistry } from "react-native";
 
+export type GoogleSignInAvailability =
+  | { available: true }
+  | { available: false; code: "GOOGLE_NATIVE_MODULE_MISSING" | "MISSING_IOS_CLIENT_ID"; message: string };
+
+export function googleSignInAvailability(iosClientId: string): GoogleSignInAvailability {
+  // Never import the enforcing SDK just to decide whether to show its button.
+  if (!TurboModuleRegistry.get("RNGoogleSignin")) {
+    return {
+      available: false,
+      code: "GOOGLE_NATIVE_MODULE_MISSING",
+      message:
+        "Google chưa khả dụng trong bản app này. Hãy mở bản AILSS đã cài có hỗ trợ Google, hoặc đăng nhập bằng email.",
+    };
+  }
+  if (Platform.OS === "ios" && !iosClientId.trim()) {
+    return {
+      available: false,
+      code: "MISSING_IOS_CLIENT_ID",
+      message:
+        "Đăng nhập Google chưa được thiết lập cho bản iPhone này. Bạn vẫn có thể đăng nhập bằng email.",
+    };
+  }
+  return { available: true };
+}
+
 export function isGoogleNativeModuleMissingError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const err = error as Record<string, unknown>;
@@ -29,22 +54,16 @@ export function isGoogleCloudConfigMissingError(error: unknown): boolean {
 }
 
 export async function getGoogleIdToken(webClientId: string, iosClientId: string): Promise<string | null> {
-  // The SDK enforces its native module during import. Expo Go and older builds
-  // must stop here so the login screen's error handler remains usable.
-  if (!TurboModuleRegistry.get("RNGoogleSignin")) {
+  const availability = googleSignInAvailability(iosClientId);
+  if (!availability.available) {
     throw Object.assign(
       new Error(
-        "Bản ứng dụng hiện tại chưa hỗ trợ đăng nhập Google. Tính năng này không chạy trong Expo Go; hãy cài bản AILSS development build mới có Google Sign-In.",
+        availability.code === "GOOGLE_NATIVE_MODULE_MISSING"
+          ? "Google Sign-In cần bản AILSS development build; Expo Go không có mô-đun này."
+          : "MISSING_IOS_CLIENT_ID: Chưa cấu hình EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID cho bản iPhone.",
       ),
-      { code: "GOOGLE_NATIVE_MODULE_MISSING" },
+      { code: availability.code },
     );
-  }
-  if (Platform.OS === "ios" && !iosClientId.trim()) {
-    const err = new Error(
-      "MISSING_IOS_CLIENT_ID: Chưa cấu hình EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID trong file môi trường để đăng nhập Google trên iOS.",
-    );
-    (err as unknown as { code: string }).code = "MISSING_IOS_CLIENT_ID";
-    throw err;
   }
 
   const { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } =
