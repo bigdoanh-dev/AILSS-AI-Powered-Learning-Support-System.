@@ -168,12 +168,14 @@ for (const item of definitions) {
     { offeringType: "SELF_PACED", title: item.title, price: "0", currency: "VND" },
   );
   await command(item.slug + ":offering-publish", "lecturer", `/offerings/${offering.offeringId}/publish`);
-  const order = await command(item.slug + ":order", "student", "/orders", {
-    offeringId: offering.offeringId,
-  });
-  await command(item.slug + ":payment", "student", `/orders/${order.orderId}/simulate-payment`, {
-    outcome: "SUCCESS",
-  });
+  if (process.env.AILSS_DEMO_ENROLL_STUDENT === "true") {
+    const order = await command(item.slug + ":order", "student", "/orders", {
+      offeringId: offering.offeringId,
+    });
+    await command(item.slug + ":payment", "student", `/orders/${order.orderId}/simulate-payment`, {
+      outcome: "SUCCESS",
+    });
+  }
   console.log(`Đã tạo khóa ${item.title}: ${item.items.length} bài giảng`);
 }
 console.log(

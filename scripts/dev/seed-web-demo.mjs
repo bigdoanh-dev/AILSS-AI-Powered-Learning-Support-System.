@@ -156,20 +156,22 @@ for (const item of courses) {
     },
   );
   await command(item.slug + ":offering-publish", "lecturer", `/offerings/${offering.offeringId}/publish`);
-  const order = await command(item.slug + ":order", "student", "/orders", {
-    offeringId: offering.offeringId,
-  });
-  await command(item.slug + ":payment", "student", `/orders/${order.orderId}/simulate-payment`, {
-    outcome: "SUCCESS",
-  });
-  let state;
-  for (let attempt = 0; attempt < 60; attempt++) {
-    state = await api("student", `/orders/${order.orderId}`);
-    if (state.state === "ENTITLED") break;
-    await new Promise((r) => setTimeout(r, 1000));
+  if (process.env.AILSS_DEMO_ENROLL_STUDENT === "true") {
+    const order = await command(item.slug + ":order", "student", "/orders", {
+      offeringId: offering.offeringId,
+    });
+    await command(item.slug + ":payment", "student", `/orders/${order.orderId}/simulate-payment`, {
+      outcome: "SUCCESS",
+    });
+    let state;
+    for (let attempt = 0; attempt < 60; attempt++) {
+      state = await api("student", `/orders/${order.orderId}`);
+      if (state.state === "ENTITLED") break;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    if (state.state !== "ENTITLED")
+      throw Error(`Demo enrollment has not completed: ${state.state}. Check the learning worker and rerun.`);
   }
-  if (state.state !== "ENTITLED")
-    throw Error(`Demo enrollment has not completed: ${state.state}. Check the learning worker and rerun.`);
   const quiz = await command(item.slug + ":quiz", "lecturer", "/quizzes", {
     title: "Ôn tập: " + item.title,
     targetType: "COURSE",
@@ -212,7 +214,8 @@ for (const item of courses) {
       location: "Phòng học minh họa AILSS",
     });
     await command(item.slug + ":schedule", "lecturer", `/classes/${group.classId}/schedule/publish`);
-    await command(item.slug + ":join", "student", "/classes/join", { code: group.joinCode });
+    if (process.env.AILSS_DEMO_ENROLL_STUDENT === "true")
+      await command(item.slug + ":join", "student", "/classes/join", { code: group.joinCode });
     await command(item.slug + ":announcement", "lecturer", `/classes/${group.classId}/announcements`, {
       title: "Chuẩn bị cho buổi thực hành",
       body: "Đọc tài liệu bài giảng, xem video tóm tắt và chuẩn bị câu hỏi trước buổi học. Đây là lớp minh họa để trải nghiệm AILSS.",

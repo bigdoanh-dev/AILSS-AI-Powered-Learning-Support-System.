@@ -551,7 +551,14 @@ export class LearningCommerceRepository {
           state: "ACTIVE",
         });
     }
-    return [...result.values()].sort((a, b) => b.enrolledAt.localeCompare(a.enrolledAt));
+    // Discovery must use current authority, not a stale enrollment projection.
+    const candidates = [...result.values()];
+    const entitlements = await Promise.all(
+      candidates.map((item) => this.entitlement(studentId, item.courseId)),
+    );
+    return candidates
+      .filter((_, index) => entitlements[index]?.state === "ACTIVE")
+      .sort((a, b) => b.enrolledAt.localeCompare(a.enrolledAt));
   }
   async roster(courseId: string) {
     const result = new Map<

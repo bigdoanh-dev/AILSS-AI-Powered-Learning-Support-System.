@@ -154,25 +154,27 @@ for (const [i, item] of [
     currency: "VND",
   });
   await command(role + ":offer-publish", role, `/offerings/${o.offeringId}/publish`);
-  const order = await command(role + ":order", "student", "/orders", { offeringId: o.offeringId });
-  await command(role + ":pay", "student", `/orders/${order.orderId}/simulate-payment`, {
-    outcome: "SUCCESS",
-  });
-  for (let n = 0; n < 30; n++) {
-    if ((await api("student", `/orders/${order.orderId}`)).state === "ENTITLED") break;
-    await new Promise((r) => setTimeout(r, 1000));
+  if (process.env.AILSS_DEMO_ENROLL_STUDENT === "true") {
+    const order = await command(role + ":order", "student", "/orders", { offeringId: o.offeringId });
+    await command(role + ":pay", "student", `/orders/${order.orderId}/simulate-payment`, {
+      outcome: "SUCCESS",
+    });
+    for (let n = 0; n < 30; n++) {
+      if ((await api("student", `/orders/${order.orderId}`)).state === "ENTITLED") break;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    await api(
+      "student",
+      `/lessons/${l.lessonId}/completion`,
+      "PUT",
+      { completed: true },
+      "complete-" + l.lessonId,
+    );
+    await command(role + ":review", "student", `/courses/${c.courseId}/reviews`, {
+      rating: 5,
+      body: "[Dữ liệu mẫu] Lộ trình rõ ràng, phù hợp để bắt đầu và tự thực hành. Đây là phản hồi minh họa giao diện.",
+    });
   }
-  await api(
-    "student",
-    `/lessons/${l.lessonId}/completion`,
-    "PUT",
-    { completed: true },
-    "complete-" + l.lessonId,
-  );
-  await command(role + ":review", "student", `/courses/${c.courseId}/reviews`, {
-    rating: 5,
-    body: "[Dữ liệu mẫu] Lộ trình rõ ràng, phù hợp để bắt đầu và tự thực hành. Đây là phản hồi minh họa giao diện.",
-  });
   console.log("Đã tạo giảng viên và khóa học: " + item.name);
 }
 await writeFile(new URL("../../tmp/instructor-media.json", import.meta.url), JSON.stringify(media));
