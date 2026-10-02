@@ -105,6 +105,20 @@ Sau đó chạy `pnpm env:dev-async` để tạo lại Gateway với port mappin
 
 ## 4. Chạy app
 
+### Test giao diện và trải nghiệm bằng Expo Go
+
+Sau khi Gateway và cấu hình mobile local sẵn sàng, chạy từ gốc repo:
+
+```bash
+pnpm --filter @ailss/mobile start
+```
+
+Lệnh `start` mặc định mở Metro ở chế độ Expo Go. Đặt iPhone và Mac cùng mạng,
+quét mã QR bằng camera iPhone rồi mở trong Expo Go. Dùng tài khoản email/mật khẩu
+để kiểm thử giao diện theo vai trò. Google Sign-In native và SQLite mã hóa cần
+development build; cấu hình Google đã lưu vẫn dùng được khi build lại.
+Cảnh báo SQLCipher trong Expo Go cho biết bộ nhớ offline mã hóa chưa khả dụng.
+
 ### Đăng nhập Google trên mobile
 
 Ứng dụng dùng Google Sign-In native để lấy **ID token**, sau đó gửi token tới
