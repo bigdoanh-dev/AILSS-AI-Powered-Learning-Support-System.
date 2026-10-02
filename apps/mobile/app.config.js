@@ -62,6 +62,10 @@ module.exports = ({ config }) => {
   const environment = process.env.EXPO_PUBLIC_AILSS_ENV;
   const origin = (process.env.EXPO_PUBLIC_AILSS_API_BASE_URL || "").trim();
   const googleIosClientId = (process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "").trim();
+  const appleTeamId = (process.env.AILSS_IOS_APPLE_TEAM_ID || "").trim();
+  if (appleTeamId && !/^[A-Z0-9]{10}$/.test(appleTeamId)) {
+    throw Error("FATAL_CONFIGURATION_ERROR: Invalid Apple development team ID");
+  }
   if (!["development", "research", "production"].includes(environment)) {
     throw Error("FATAL_CONFIGURATION_ERROR: Set EXPO_PUBLIC_AILSS_ENV explicitly");
   }
@@ -112,6 +116,7 @@ module.exports = ({ config }) => {
   ];
   config.ios = {
     ...config.ios,
+    ...(appleTeamId ? { appleTeamId } : {}),
     infoPlist: {
       ...config.ios?.infoPlist,
       NSAppTransportSecurity: { NSAllowsArbitraryLoads: localHttp },

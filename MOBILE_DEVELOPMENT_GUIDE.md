@@ -17,6 +17,37 @@ pnpm install --frozen-lockfile
 - **iOS:** macOS, Xcode `26.4+` và iOS Simulator runtime.
 - **Android:** Android Studio, Android SDK API 36, Java và một emulator đã tạo; có thể dùng điện thoại Android với USB debugging.
 
+Expo SDK 57 yêu cầu Xcode `26.4+`; Xcode `26.4.1` yêu cầu macOS Tahoe `26.2+`.
+Nếu Mac còn ở macOS `15.6` và Xcode `26.3`, cần nâng cấp macOS rồi cài Xcode tương thích
+trước khi dùng cấu hình iOS được hỗ trợ. Xem [yêu cầu Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/)
+và [bảng tương thích Xcode của Apple](https://developer.apple.com/xcode/system-requirements).
+Sao lưu công việc và tự sắp xếp thời điểm nâng cấp/khởi động lại máy.
+
+### Apple Account miễn phí để thử trên iPhone của bạn
+
+Không cần mua Apple Developer Program khi build và cài trực tiếp bằng Xcode trên iPhone cá nhân:
+
+1. Xcode → Settings → Apple Accounts → Add Apple Account, tự đăng nhập Apple Account hiện có.
+2. Kết nối iPhone bằng cáp, mở khóa và chọn “Tin cậy máy tính này” khi được hỏi.
+3. Bật Developer Mode trên iPhone nếu Xcode yêu cầu.
+4. Trong target AILSS → Signing & Capabilities, bật Automatically manage signing và
+   chọn **Personal Team** của tài khoản vừa đăng nhập.
+
+Để giữ Team khi tạo lại dự án iOS, đặt `AILSS_IOS_APPLE_TEAM_ID=<Team ID gồm 10 ký tự>`
+trong `apps/mobile/.env.local`. Giá trị này là Team ID của Apple, không phải Google Client ID.
+
+Phản chiếu iPhone lên Mac không thay thế kết nối thiết bị với Xcode. Nếu iPhone
+hiện `unavailable`, tạm dừng phản chiếu, cắm cáp có truyền dữ liệu, mở khóa
+iPhone và xác nhận “Tin cậy”. Kiểm tra lại trong Xcode → Window → Devices and
+Simulators; chỉ tiếp tục cài khi Xcode nhận thiết bị. Không cần xóa cấu hình
+Google hoặc đăng nhập lại Apple Account để sửa lỗi kết nối này.
+
+Provisioning profile miễn phí hết hạn sau **7 ngày**, cần build/cài lại app.
+TestFlight/App Store và quy trình EAS Build cho iPhone thật cần Apple Developer Program.
+Không gửi mật khẩu Apple Account hoặc mã xác minh vào chat.
+Tham khảo [Personal Team của Apple](https://developer.apple.com/help/account/basics/about-your-developer-account)
+và [EAS Build cho thiết bị iOS](https://docs.expo.dev/tutorial/eas/ios-development-build-for-devices/).
+
 ## 2. Khởi động API Gateway và backend
 
 Mobile gọi API qua Gateway, vì vậy cần bật backend trước. Nếu đây là lần đầu chạy repo:
@@ -91,7 +122,7 @@ Mobile tự lấy Web Client ID đang dùng cho bản web từ Gateway tại
 3. Riêng iOS, điền `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` vào `apps/mobile/.env.local`
    (xem `apps/mobile/.env.example`). Đây là Client ID công khai; không đưa Client Secret
    vào ứng dụng. Android không cần biến Client ID riêng trong mobile.
-4. Với iOS, chạy `pnpm --filter @ailss/mobile exec expo prebuild --platform ios` sau khi
+4. Với iOS, chạy `pnpm --filter @ailss/mobile exec expo prebuild --platform ios --no-clean` sau khi
    đặt Client ID để cập nhật URL scheme trong dự án native đang có. Build và cài lại
    development client bằng lệnh `ios` hoặc `android` bên dưới. Chỉ tải lại Metro sẽ
    không thêm được thư viện native hay URL scheme.
@@ -119,7 +150,7 @@ chuyển sang đăng nhập tài khoản demo.
 4. Từ gốc repo, cập nhật native config mà không xóa thư mục native, rồi build/cài lên iPhone:
 
    ```bash
-   pnpm --filter @ailss/mobile exec expo prebuild --platform ios --no-install
+   pnpm --filter @ailss/mobile exec expo prebuild --platform ios --no-clean --no-install
    pnpm --filter @ailss/mobile ios:device
    ```
 
