@@ -53,6 +53,7 @@ export interface TargetFacts {
   ownerLecturerId: string;
   version: number;
   courseState?: "DRAFT" | "IN_REVIEW" | "PUBLISHED" | "HIDDEN";
+  linkedCourseId?: string;
 }
 
 export class AssessmentDependencyError extends Error {
@@ -129,6 +130,7 @@ export class AssessmentClients {
       targetId: value.data.classId,
       ownerLecturerId: value.data.ownerLecturerId,
       version: value.data.version,
+      ...(value.data.linkedCourseId ? { linkedCourseId: value.data.linkedCourseId } : {}),
     };
   }
 
@@ -192,6 +194,7 @@ export class AssessmentClients {
       targetId: value.data.classId,
       ownerLecturerId: value.data.ownerLecturerId,
       version: value.data.version,
+      ...(value.data.linkedCourseId ? { linkedCourseId: value.data.linkedCourseId } : {}),
     };
   }
 

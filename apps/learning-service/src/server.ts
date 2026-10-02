@@ -387,6 +387,7 @@ await startService(manifest, {
       config.SERVICE_TOKEN_KID,
       config.INTERNAL_HTTP_TIMEOUT_MS,
     );
+    const masteryIngestionRepository = new MasteryIngestionRepository(context.cassandra);
     app.use(adaptiveRuntimeRouter(adaptiveRepository, verifier("learning.adaptive.student"), planContext));
     app.use(
       lecturerMasteryRouter(
@@ -396,20 +397,28 @@ await startService(manifest, {
           await authorizeCourseMastery(actor, courseId, studentId, commerceRepository);
         },
         commerceRepository,
+        masteryIngestionRepository,
+        config.PLATFORM_TENANT_ID,
       ),
     );
+    const verifyAdaptiveAi =
+      (purpose: "learning.adaptive.ai.read" | "learning.adaptive.ai.write") => (token: string) =>
+        verifyServiceToken(token, aiServiceKey, {
+          issuer: config.SERVICE_TOKEN_ISSUER,
+          audience: "learning-service",
+          purpose,
+          kid: config.AI_SERVICE_TOKEN_KID,
+        });
     app.use(
       adaptiveInternalRouter(
         adaptiveRepository,
-        (token) =>
-          verifyServiceToken(token, aiServiceKey, {
-            issuer: config.SERVICE_TOKEN_ISSUER,
-            audience: "learning-service",
-            purpose: "learning.adaptive.ai.read",
-            kid: config.AI_SERVICE_TOKEN_KID,
-          }),
+        {
+          read: verifyAdaptiveAi("learning.adaptive.ai.read"),
+          write: verifyAdaptiveAi("learning.adaptive.ai.write"),
+        },
         async (studentId, courseId) =>
           (await commerceRepository.entitlement(studentId, courseId))?.state === "ACTIVE",
+        planContext,
       ),
     );
     app.use(

@@ -635,6 +635,16 @@ export class AssistantOrchestrator {
       await execute("get_recommended_learning_path", { courseId });
     }
 
+    if (
+      allowedTools.includes("generate_study_plan") &&
+      courseId &&
+      (lower.includes("tạo kế hoạch") ||
+        lower.includes("generate study plan") ||
+        lower.includes("lập kế hoạch"))
+    ) {
+      await execute("generate_study_plan", { courseId, availableHoursPerWeek: 7 });
+    }
+
     // In advisor mode, a later answer about time or experience still searches the
     // most recent subject named by this user in this conversation.
     const currentTopic = extractCatalogSearchTokens(prompt);

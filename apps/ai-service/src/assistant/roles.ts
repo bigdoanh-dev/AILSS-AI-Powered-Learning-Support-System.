@@ -20,6 +20,8 @@ export const ROLE_ALLOWED_TOOLS: Record<AssistantRole, readonly string[]> = {
     "get_recommended_learning_path",
     "get_prerequisite_gaps",
     "record_recommendation_feedback",
+    "generate_study_plan",
+    "update_study_plan_item",
   ],
   LECTURER: ["search_courses", "get_course_details", "compare_courses", "explain_concept"],
   ADMIN: [],

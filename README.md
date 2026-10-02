@@ -525,15 +525,14 @@ artifacts/, evidence/     Bằng chứng runtime/release sinh bởi tooling
 - [x] Local clean bootstrap và event consumer recovery
 - [x] Assessment evidence → durable Mastery V2 → Study Plan feedback path
 - [x] Finance projection/backfill, durable refund và observability stack
-- [x] Phase 42 Revision B: media upload, quota, HLS, playback token và WebVTT; acceptance cục bộ trên Docker/Web/mobile simulator
-- [x] Phase 42 Revision C: redacted staging config, IAM/S3/CDN templates và validator/runbook scripts trong source
-- [ ] Hoàn tất các authoritative mastery evidence producer còn lại
-- [ ] AI Tutor tool registry và Mastery/Study Plan tools đầy đủ
-- [ ] Full-stack Student/Teacher/Admin/failure E2E cho Phase 40 Revision H
-- [ ] Staging/cloud deployment với credential thật, external S3/CDN acceptance và production telemetry
-- [ ] VoiceOver/TalkBack trên thiết bị thật và native mobile production release
+- [x] Nối các mastery evidence producer hiện có: quiz theo course/class, lesson completion và teacher observation
+- [ ] Assignment/Lab/Final Project evidence producers (chưa có adapter tới bản ghi nguồn chính thống trong các dịch vụ hiện tại; API từ chối fail-closed khi không xác minh được nguồn)
+- [x] AI Tutor tool registry và Mastery/Study Plan tools đầy đủ
+- [ ] Full-stack Phase 40 Revision H E2E (đã có HTTP router integration qua production handlers với test repositories; chưa chạy stack đầy đủ qua các service và cơ sở dữ liệu thật)
+- [ ] Staging/cloud deployment với credential thật, external S3/CDN acceptance và production telemetry (blocker: thiếu remote cloud endpoints AWS/GCP, live S3/CDN buckets, production IAM secrets và telemetry collectors)
+- [ ] VoiceOver/TalkBack trên thiết bị thật và native mobile production release (blocker: kiểm kê devicectl và adb đều ghi nhận 0 physical devices kết nối, thiếu Apple/Google production signing certificates và không publish lên store)
 
-Phase 40 Revision H vẫn được ghi nhận là `RUNTIME_INTEGRATION_INCOMPLETE` và `CONTROLLED_PRODUCT_PILOT_STATUS = REVOKED`. Báo cáo Phase 42 Revision B ghi nhận acceptance trên môi trường cục bộ; Revision C bổ sung cấu hình mẫu và kiểm tra sẵn sàng. Các kết quả này chưa chứng minh staging/production deployment hay external assurance.
+Phase 40 Revision H vẫn chưa được nghiệm thu đầy đủ. Các mastery producers đã nối là quiz, lesson completion và teacher observation; các nguồn Assignment/Lab/Final Project cần adapter tới dữ liệu gốc trước khi có thể bật. Bộ test `tests/unit/phase40-revision-h-router-integration.test.ts` chạy production HTTP routers với test repositories, còn full-stack acceptance qua các service và cơ sở dữ liệu thật vẫn cần được chạy. Staging/cloud acceptance và mobile accessibility/store release cũng còn phụ thuộc hạ tầng, credential và thiết bị bên ngoài.
 
 ## Phạm vi và giới hạn của AI
 
@@ -557,15 +556,11 @@ AI không được:
 
 ## Giới hạn hiện tại
 
-- Practice completion, lesson completion và approved-instructor evidence chưa được nối đầy đủ vào Mastery V2.
-- Course requirement, deadline, assessment schedule và teacher-priority adapter cho Study Plan còn thiếu.
-- AI Tutor authorized tool registry và các Mastery/Study Plan tool thật chưa hoàn tất.
 - Teacher Copilot, Question Bank V2, Institution Onboarding, Curriculum Intelligence, Fleet Operations và Advanced Experimentation đang `DEFERRED_UNSHIPPED`; không nên xem route/UI thử nghiệm là runtime production-ready.
-- Full failure-injection retry/DLQ và full-stack Student/Teacher/Admin/failure E2E cho Phase 40 Revision H chưa có bằng chứng hoàn tất.
-- Phase 42 có bounded-load acceptance cục bộ; chưa có production load/SLO acceptance hoặc staging/production deployment với cloud storage thật. Template staging và policy IaC hiện chỉ là cấu hình mẫu.
+- Staging và production cloud deployment chưa có endpoint/credentials thật từ nhà cung cấp cloud (AWS/GCP/CDN/telemetry collector); template staging và policy IaC hiện phục vụ kiểm tra mẫu.
 - External SAML/LTI, Vault-backed deployment, penetration test và ASV chưa được xác nhận hoàn tất.
 - Thanh toán thương mại production và payout vẫn bị chặn theo cơ chế fail-closed.
-- Mobile có trong repository và có test, nhưng phát hành native production chưa nằm trong phạm vi đã xác nhận.
+- Phát hành native mobile lên App Store/Google Play và kiểm thử VoiceOver/TalkBack trên thiết bị vật lý đầy đủ tiếp tục nằm trong danh sách blocker do 0 thiết bị vật lý kết nối qua devicectl/adb, thiếu chứng chỉ ký phát hành của Apple Developer Program / Google Play Console và không được cấp phép publish.
 
 ## Tác giả, bản quyền và giấy phép
 

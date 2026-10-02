@@ -64,6 +64,26 @@ export const getRecommendedLearningPathSchema = z.object({
   courseId: z.string().uuid(),
 });
 
+export const generateStudyPlanSchema = z.object({
+  courseId: z.string().uuid(),
+  availableHoursPerWeek: z.number().int().min(1).max(80).default(7),
+});
+
+export const updateStudyPlanItemSchema = z
+  .object({
+    courseId: z.string().uuid(),
+    itemId: z.string().uuid(),
+    status: z.enum(["ACCEPTED", "SKIPPED", "RESCHEDULED", "COMPLETED", "REPLACED"]),
+    scheduledDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.status === "RESCHEDULED" && !v.scheduledDate)
+      ctx.addIssue({ code: "custom", message: "scheduledDate is required when rescheduling" });
+  });
+
 export const getPrerequisiteGapsSchema = z.object({
   courseId: z.string().uuid(),
   targetConceptId: z.string().optional(),
@@ -232,7 +252,7 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
       },
       required: ["courseId"],
     },
-    allowedRoles: ["STUDENT", "LECTURER", "ADMIN"],
+    allowedRoles: ["STUDENT"],
     tenantScope: "ACTOR_TENANT",
     courseScope: "ENTITLED_COURSE",
     outputSchema: z.array(z.object({ courseId: z.string().uuid(), masteryScore: z.number() }).passthrough()),
@@ -250,13 +270,57 @@ export const ASSISTANT_TOOLS: Record<string, AssistantToolDefinition> = {
       },
       required: ["courseId"],
     },
-    allowedRoles: ["STUDENT", "LECTURER", "ADMIN"],
+    allowedRoles: ["STUDENT"],
     tenantScope: "ACTOR_TENANT",
     courseScope: "ENTITLED_COURSE",
     outputSchema: z
       .object({ planId: z.string().uuid(), courseId: z.string().uuid(), items: z.array(z.unknown()) })
       .passthrough()
       .nullable(),
+    timeoutBehavior: "RETURN_TEMPORARILY_UNAVAILABLE",
+  },
+  generate_study_plan: {
+    name: "generate_study_plan",
+    description:
+      "Generate or recalculate an authoritative adaptive study plan for the student in an entitled course based on mastery records.",
+    schema: generateStudyPlanSchema,
+    parameters: {
+      type: "object",
+      properties: {
+        courseId: { type: "string", description: "Course UUID" },
+        availableHoursPerWeek: { type: "number", description: "Available study hours per week (1-80)" },
+      },
+      required: ["courseId"],
+    },
+    allowedRoles: ["STUDENT"],
+    tenantScope: "ACTOR_TENANT",
+    courseScope: "ENTITLED_COURSE",
+    outputSchema: z
+      .object({ planId: z.string().uuid(), courseId: z.string().uuid(), items: z.array(z.unknown()) })
+      .passthrough(),
+    timeoutBehavior: "RETURN_TEMPORARILY_UNAVAILABLE",
+  },
+  update_study_plan_item: {
+    name: "update_study_plan_item",
+    description: "Update the status or scheduled date of an item in the student's authoritative study plan.",
+    schema: updateStudyPlanItemSchema,
+    parameters: {
+      type: "object",
+      properties: {
+        courseId: { type: "string", description: "Course UUID" },
+        itemId: { type: "string", description: "Study plan item UUID" },
+        status: { type: "string", enum: ["ACCEPTED", "SKIPPED", "RESCHEDULED", "COMPLETED", "REPLACED"] },
+        scheduledDate: {
+          type: "string",
+          description: "Target date in YYYY-MM-DD format (required when status is RESCHEDULED)",
+        },
+      },
+      required: ["courseId", "itemId", "status"],
+    },
+    allowedRoles: ["STUDENT"],
+    tenantScope: "ACTOR_TENANT",
+    courseScope: "ENTITLED_COURSE",
+    outputSchema: z.object({ itemId: z.string().uuid(), status: z.string() }).passthrough(),
     timeoutBehavior: "RETURN_TEMPORARILY_UNAVAILABLE",
   },
   get_prerequisite_gaps: {

@@ -48,13 +48,21 @@ export interface AssistantDomainClient {
   hasActiveAssessmentAttempt(studentId: string): Promise<boolean>;
   getStudentMastery?(studentId: string, courseId: string): Promise<unknown>;
   getRecommendedLearningPath?(studentId: string, courseId: string): Promise<unknown>;
+  generateStudyPlan?(studentId: string, courseId: string, availableHoursPerWeek: number): Promise<unknown>;
+  updateStudyPlanItem?(
+    studentId: string,
+    courseId: string,
+    itemId: string,
+    status: string,
+    scheduledDate?: string,
+  ): Promise<unknown>;
   getPrerequisiteGaps?(studentId: string, courseId: string, targetConceptId?: string): Promise<unknown>;
   recordRecommendationFeedback?(feedback: {
     studentId: string;
     recommendationId: string;
     courseId: string;
     feedbackType: string;
-    comment?: string | undefined;
+    comment?: string;
   }): Promise<unknown>;
   getCourseVersionDiff?(courseId: string, fromVersion: number, toVersion: number): Promise<unknown>;
   identifyHighFrictionLessons?(courseId: string): Promise<unknown>;
@@ -208,6 +216,31 @@ export class ToolRunner {
           return { toolCallId, name: toolName, result: path };
         }
 
+        case "generate_study_plan": {
+          const courseId = String(args.courseId);
+          const availableHours =
+            typeof args.availableHoursPerWeek === "number" ? args.availableHoursPerWeek : 7;
+          if (!this.domainClient.generateStudyPlan) throw new Error("STUDY_PLAN_TOOL_NOT_CONFIGURED");
+          const plan = await this.domainClient.generateStudyPlan(user.userId, courseId, availableHours);
+          return { toolCallId, name: toolName, result: plan };
+        }
+
+        case "update_study_plan_item": {
+          const courseId = String(args.courseId);
+          const itemId = String(args.itemId);
+          const status = String(args.status);
+          const scheduledDate = typeof args.scheduledDate === "string" ? args.scheduledDate : undefined;
+          if (!this.domainClient.updateStudyPlanItem) throw new Error("STUDY_PLAN_TOOL_NOT_CONFIGURED");
+          const updated = await this.domainClient.updateStudyPlanItem(
+            user.userId,
+            courseId,
+            itemId,
+            status,
+            scheduledDate,
+          );
+          return { toolCallId, name: toolName, result: updated };
+        }
+
         case "get_prerequisite_gaps": {
           const courseId = String(args.courseId);
           const targetConceptId = typeof args.targetConceptId === "string" ? args.targetConceptId : undefined;
@@ -223,7 +256,7 @@ export class ToolRunner {
             recommendationId: String(args.recommendationId),
             courseId: String(args.courseId),
             feedbackType: String(args.feedbackType),
-            comment: typeof args.comment === "string" ? args.comment : undefined,
+            ...(typeof args.comment === "string" ? { comment: args.comment } : {}),
           };
           const recorded = this.domainClient.recordRecommendationFeedback
             ? await this.domainClient.recordRecommendationFeedback(feedback)

@@ -417,27 +417,87 @@ export class HttpAssistantDomainClient implements AssistantDomainClient {
     return body.data ?? null;
   }
 
-  public generateQuizDraft(topic: string, difficulty: string, questionCount: number): Promise<unknown> {
-    return Promise.resolve({
-      topic,
-      difficulty,
-      suggestedQuestions: Array.from({ length: questionCount }, (_, idx) => ({
-        id: `q${String(idx + 1)}`,
-        prompt: `Sample conceptual question ${String(idx + 1)} regarding ${topic}`,
-        cognitiveLevel: idx % 2 === 0 ? "UNDERSTANDING" : "APPLICATION",
-      })),
-    });
+  public async generateStudyPlan(
+    studentId: string,
+    courseId: string,
+    availableHoursPerWeek: number,
+  ): Promise<unknown> {
+    return this.mutateAdaptive(
+      `/internal/v1/students/${encodeURIComponent(studentId)}/study-plan/generate`,
+      "POST",
+      { courseId, availableHoursPerWeek },
+    );
   }
 
-  public diagnoseCohortGaps(courseId: string, quizId?: string): Promise<unknown> {
-    return Promise.resolve({
-      courseId,
-      ...(quizId ? { quizId } : {}),
-      summary: "Cohort performance analysis",
-      weakestCognitiveLevel: "APPLICATION",
-      cohortAverageScore: 72.4,
-      topicsNeedingIntervention: ["Complex Query Analysis", "Distributed Transactions"],
+  public async updateStudyPlanItem(
+    studentId: string,
+    courseId: string,
+    itemId: string,
+    status: string,
+    scheduledDate?: string,
+  ): Promise<unknown> {
+    return this.mutateAdaptive(
+      `/internal/v1/students/${encodeURIComponent(studentId)}/study-plan/items/${encodeURIComponent(itemId)}`,
+      "PATCH",
+      { courseId, status, scheduledDate },
+    );
+  }
+
+  private async mutateAdaptive(path: string, method: "POST" | "PATCH", body: unknown): Promise<unknown> {
+    const token = await this.mintServiceToken("learning-service", "learning.adaptive.ai.write");
+    const response = await fetch(new URL(path, this.options.learningUrl), {
+      method,
+      headers: {
+        authorization: `Service ${token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(this.options.deadlineMs ?? 5000),
     });
+    if (!response.ok) {
+      const err = (await response.json().catch(() => ({}))) as { error?: { code?: string } };
+      const code = err.error?.code;
+      throw new Error(
+        code ??
+          (response.status === 401 || response.status === 403
+            ? "ADAPTIVE_TOOL_FORBIDDEN"
+            : "ADAPTIVE_TOOL_UNAVAILABLE"),
+      );
+    }
+    const resBody = (await response.json()) as { data?: unknown };
+    return resBody.data ?? null;
+  }
+
+  public async getPrerequisiteGaps(
+    studentId: string,
+    courseId: string,
+    targetConceptId?: string,
+  ): Promise<unknown> {
+    const mastery = (await this.getStudentMastery(studentId, courseId)) as Array<{
+      conceptId: string;
+      masteryScore: number;
+      masteryState: string;
+    }> | null;
+    if (!Array.isArray(mastery)) return [];
+    return mastery
+      .filter(
+        (m) =>
+          (!targetConceptId || m.conceptId === targetConceptId) &&
+          (m.masteryState === "DEVELOPING" || m.masteryState === "INTRODUCED" || m.masteryScore < 75),
+      )
+      .map((m) => ({
+        conceptId: m.conceptId,
+        currentScore: m.masteryScore,
+        state: m.masteryState,
+      }));
+  }
+
+  public generateQuizDraft(_topic: string, _difficulty: string, _questionCount: number): Promise<unknown> {
+    throw new Error("AUTHORING_SERVICE_UNAVAILABLE");
+  }
+
+  public diagnoseCohortGaps(_courseId: string, _quizId?: string): Promise<unknown> {
+    throw new Error("COHORT_DIAGNOSTICS_UNAVAILABLE");
   }
 
   public async hasActiveAssessmentAttempt(studentId: string): Promise<boolean> {

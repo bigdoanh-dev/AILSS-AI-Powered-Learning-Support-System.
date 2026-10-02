@@ -876,22 +876,36 @@ export class AssessmentService {
       command.receipt.submittedEventId = eventId;
       await this.checkpoint(scope, hash, input.idempotencyKey, command);
     }
+    let targetCourseId: string;
+    if (masteryQuiz.targetType === "COURSE") {
+      targetCourseId = masteryQuiz.targetId;
+    } else {
+      const targetFacts = await this.target(
+        masteryQuiz.targetType,
+        masteryQuiz.targetId,
+        input.actor.correlationId,
+      );
+      if (!targetFacts.linkedCourseId) {
+        throw new AppError(
+          "CLASS_COURSE_LINK_NOT_FOUND",
+          422,
+          `Class target ${masteryQuiz.targetId} has no associated linkedCourseId for mastery evidence`,
+        );
+      }
+      targetCourseId = targetFacts.linkedCourseId;
+    }
     await this.repository.prepareSubmittedEvent({
       eventId,
       result,
       occurredAt: now,
       correlationId: input.actor.correlationId,
-      ...(masteryQuiz.targetType === "COURSE"
-        ? {
-            mastery: {
-              tenantId: this.platformTenantId,
-              courseId: masteryQuiz.targetId,
-              learningOutcomeId: `quiz:${masteryQuiz.quizId}`,
-              conceptId: `quiz:${masteryQuiz.quizId}`,
-              sourceType: "QUIZ" as const,
-            },
-          }
-        : {}),
+      mastery: {
+        tenantId: this.platformTenantId,
+        courseId: targetCourseId,
+        learningOutcomeId: `quiz:${masteryQuiz.quizId}`,
+        conceptId: `quiz:${masteryQuiz.quizId}`,
+        sourceType: "QUIZ" as const,
+      },
     });
     await this.repository.writeResultItems(attempt.attemptId, graded.items);
     await this.repository.createResult(result);
@@ -1106,6 +1120,21 @@ export class AssessmentService {
         `Score cannot exceed maximum score of ${currentResult.maxScore}`,
       );
 
+    let targetCourseId: string;
+    if (quiz.targetType === "COURSE") {
+      targetCourseId = quiz.targetId;
+    } else {
+      const targetFacts = await this.target(quiz.targetType, quiz.targetId, input.actor.correlationId);
+      if (!targetFacts.linkedCourseId) {
+        throw new AppError(
+          "CLASS_COURSE_LINK_NOT_FOUND",
+          422,
+          `Class target ${quiz.targetId} has no associated linkedCourseId for mastery evidence`,
+        );
+      }
+      targetCourseId = targetFacts.linkedCourseId;
+    }
+
     const nextVersion = currentResult.resultVersion + 1;
     const now = new Date();
     const updated = await this.repository.recordManualGrade({
@@ -1137,29 +1166,21 @@ export class AssessmentService {
       "graded-event",
       `${input.attemptId}:${String(nextVersion)}`,
     );
-    try {
-      await this.repository.prepareGradedEvent({
-        eventId,
-        result: canonical,
-        occurredAt: now,
-        correlationId: input.actor.correlationId,
-        actorId: input.actor.userId,
-        ...(quiz.targetType === "COURSE"
-          ? {
-              mastery: {
-                tenantId: this.platformTenantId,
-                courseId: quiz.targetId,
-                learningOutcomeId: `quiz:${quiz.quizId}`,
-                conceptId: `quiz:${quiz.quizId}`,
-                sourceType: "MANUAL_ASSESSMENT" as const,
-              },
-            }
-          : {}),
-      });
-      await this.repository.readySubmittedEvent(eventId, now);
-    } catch {
-      /* outbox event preparation is resilient */
-    }
+    await this.repository.prepareGradedEvent({
+      eventId,
+      result: canonical,
+      occurredAt: now,
+      correlationId: input.actor.correlationId,
+      actorId: input.actor.userId,
+      mastery: {
+        tenantId: this.platformTenantId,
+        courseId: targetCourseId,
+        learningOutcomeId: `quiz:${quiz.quizId}`,
+        conceptId: `quiz:${quiz.quizId}`,
+        sourceType: "MANUAL_ASSESSMENT" as const,
+      },
+    });
+    await this.repository.readySubmittedEvent(eventId, now);
 
     return {
       attemptId: canonical.attemptId,
