@@ -366,8 +366,8 @@ export default function Purchase() {
                       }
                     }}
                     alt="Mã VietQR thanh toán tự động 24/7"
-                    width="220"
-                    height="220"
+                    width="270"
+                    height="270"
                   />
                   <div className="sepay-timer-pill">
                     <span className="pulse-dot-blue" />
@@ -463,20 +463,11 @@ export default function Purchase() {
                         </button>
                       </div>
                     </div>
-                    <div className="bank-copy-row">
-                      <span className="bank-copy-label">Nội dung chuyển khoản</span>
-                      <div className="bank-copy-value-wrap">
-                        <strong
-                          className="bank-copy-value"
-                          style={{
-                            background: "#fef3c7",
-                            color: "#92400e",
-                            padding: "2px 6px",
-                            borderRadius: 6,
-                          }}
-                        >
-                          {paymentContent}
-                        </strong>
+                    <div className="bank-copy-row bank-copy-memo-row">
+                      <div className="bank-copy-memo-header">
+                        <span className="bank-copy-label">
+                          <strong>Nội dung chuyển khoản</strong> (chính xác)
+                        </span>
                         <button
                           type="button"
                           className={`copy-btn-mini ${copiedField === "content" ? "copied" : ""}`}
@@ -485,6 +476,12 @@ export default function Purchase() {
                           {copiedField === "content" ? "✓ Đã chép" : "Sao chép"}
                         </button>
                       </div>
+                      <div className="bank-copy-memo-box">
+                        <strong className="bank-copy-memo-code">{paymentContent}</strong>
+                      </div>
+                      <small className="bank-copy-memo-hint">
+                        ⚠️ Vui lòng giữ nguyên nội dung chuyển khoản để hệ thống tự động kích hoạt ngay lập tức.
+                      </small>
                     </div>
                   </div>
 
@@ -665,7 +662,7 @@ export default function Purchase() {
             <dl className="profile-facts" style={{ margin: "16px 0" }}>
               <dt>Mã đơn</dt>
               <dd>
-                <code>{order.orderId}</code>
+                <code className="order-id-code">{order.orderId}</code>
               </dd>
               <dt>Gói học</dt>
               <dd>{order.offeringType === "SELF_PACED" ? "Tự học AI" : "Live Cohort"}</dd>

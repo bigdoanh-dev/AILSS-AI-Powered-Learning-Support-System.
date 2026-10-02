@@ -53,9 +53,14 @@ const fields = {
 const createSchema = z
   .object(fields)
   .strict()
+  .refine((value) => value.priceType !== "FREE" || isZeroCoursePrice(value.price), {
+    path: ["price"],
+    message: "Free courses must have price 0",
+  })
   .refine((value) => !!value.categoryName || !!value.categoryId, "Category is required")
   .transform((value) => ({
     ...value,
+    price: value.priceType === "FREE" ? "0" : value.price,
     categoryId: value.categoryName
       ? categoryIdForName(value.categoryName)
       : z.string().uuid().parse(value.categoryId),
@@ -73,10 +78,23 @@ const patchSchema = z
     currency: fields.currency.optional(),
   })
   .strict()
+  .refine(
+    (value) => value.priceType !== "FREE" || value.price === undefined || isZeroCoursePrice(value.price),
+    {
+      path: ["price"],
+      message: "Free courses must have price 0",
+    },
+  )
   .refine((value) => Object.keys(value).length > 0, "PATCH body must not be empty")
-  .transform((value) =>
-    value.categoryName ? { ...value, categoryId: categoryIdForName(value.categoryName) } : value,
-  );
+  .transform((value) => ({
+    ...value,
+    ...(value.priceType === "FREE" ? { price: "0" } : {}),
+    ...(value.categoryName ? { categoryId: categoryIdForName(value.categoryName) } : {}),
+  }));
+
+export function isZeroCoursePrice(price: string): boolean {
+  return /^0(?:\.0+)?$/u.test(price);
+}
 
 export type CourseWriteRequest = z.infer<typeof createSchema>;
 export type CoursePatchRequest = z.infer<typeof patchSchema>;

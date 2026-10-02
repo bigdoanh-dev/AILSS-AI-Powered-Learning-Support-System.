@@ -49,7 +49,7 @@ export default function CourseEdit() {
         setCategoryName(name);
         setOriginalCategoryName(name);
         setPriceType(c.priceType === "PAID" ? "PAID" : "FREE");
-        setPrice(c.price ?? "");
+        setPrice(c.priceType === "PAID" ? (c.price ?? "") : "0");
         setCurrency(c.currency ?? "VND");
       })
       .catch((e: unknown) => {
@@ -69,7 +69,8 @@ export default function CourseEdit() {
       if (description !== (course.description ?? "")) body.description = description;
       if (categoryName.trim() !== originalCategoryName) body.categoryName = categoryName.trim();
       if (priceType !== (course.priceType ?? "")) body.priceType = priceType;
-      if (price !== (course.price ?? "")) body.price = price;
+      const effectivePrice = priceType === "FREE" ? "0" : price.trim();
+      if (effectivePrice !== (course.price ?? "")) body.price = effectivePrice;
       if (currency !== (course.currency ?? "")) body.currency = currency;
 
       if (Object.keys(body).length === 0) {

@@ -61,7 +61,7 @@ describe("Personal progress from authoritative data", () => {
     expect(screen.getByText("3 / 8 bài hoàn thành")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Tìm khóa học"), { target: { value: "not owned" } });
     expect(screen.getByText("Không có khóa học phù hợp.")).toBeTruthy();
-    expect(screen.queryByText("Owned course")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Owned course" })).toBeNull();
   });
   it("does not replace a progress failure with invented scores", async () => {
     setup([{ courseId: profile.userId, title: "Owned course" }], true);

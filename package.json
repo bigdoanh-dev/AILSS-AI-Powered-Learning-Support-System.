@@ -110,6 +110,7 @@
     "validate:config:mobile": "pnpm --filter @ailss/mobile validate:config",
     "seed:web-demo": "node scripts/dev/seed-web-demo.mjs",
     "seed:community": "node scripts/dev/seed-course-community.mjs",
+    "seed:lecturer-demo": "node scripts/dev/seed-linked-demo.mjs",
     "import:owned-courses": "node scripts/dev/import-owned-courses.mjs",
     "test:gemini": "tsx scripts/dev/check-gemini-quiz.ts --live"
   },

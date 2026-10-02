@@ -302,6 +302,8 @@ rule("PUT", "/class-sessions/:id/attendance/:id", {
 });
 rule("POST", "/quizzes", { body: quiz, command: true });
 rule("GET", "/quizzes/:id");
+rule("GET", "/courses/:id/students/:id/mastery");
+rule("GET", "/courses/:id/mastery-summary");
 rule("PATCH", "/quizzes/:id", {
   body: partialNonempty(
     quiz.omit({ targetType: true, targetId: true }).extend({ closesAt: dt.nullable().optional() }),

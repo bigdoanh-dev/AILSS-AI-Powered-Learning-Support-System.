@@ -13,11 +13,17 @@ export function RevenueQuote({
   initialCurrency = "VND",
   initialPaid = true,
   commissionBasisPoints,
+  price: controlledPrice,
+  currency: controlledCurrency,
+  paid: controlledPaid,
 }: {
   initialPrice?: string;
   initialCurrency?: string;
   initialPaid?: boolean;
   commissionBasisPoints?: number;
+  price?: string;
+  currency?: string;
+  paid?: boolean;
 }) {
   const [price, setPrice] = useState(initialPrice);
   const [currency, setCurrency] = useState(initialCurrency);
@@ -55,11 +61,15 @@ export function RevenueQuote({
       form.removeEventListener("change", update);
     };
   }, []);
-  const scale = currency === "VND" ? 1n : 100n;
-  const parts = /^(0|[1-9]\d*)(?:\.(\d{1,2}))?$/.exec(price);
-  const valid = !paid || (!!parts && /^[A-Z]{3}$/.test(currency) && (scale !== 1n || !parts[2]));
+  const currentPrice = (controlledPrice ?? price).trim();
+  const currentCurrency = (controlledCurrency ?? currency).trim().toUpperCase();
+  const currentPaid = controlledPaid ?? paid;
+  const scale = currentCurrency === "VND" ? 1n : 100n;
+  const parts = /^(0|[1-9]\d*)(?:\.(\d{1,2}))?$/.exec(currentPrice);
+  const valid =
+    !currentPaid || (!!parts && /^[A-Z]{3}$/.test(currentCurrency) && (scale !== 1n || !parts[2]));
   const amount =
-    valid && paid && parts
+    valid && currentPaid && parts
       ? BigInt(parts[1]!) * scale + (scale === 100n ? BigInt((parts[2] ?? "").padEnd(2, "0") || "0") : 0n)
       : 0n;
   const rate = commissionBasisPoints ?? liveRate;
@@ -79,16 +89,16 @@ export function RevenueQuote({
         <dl>
           <div>
             <dt>Giá học viên trả</dt>
-            <dd>{format(amount, currency, scale)}</dd>
+            <dd>{format(amount, currentCurrency, scale)}</dd>
           </div>
           <div>
             <dt>Phí nền tảng ({percent(rate)})</dt>
-            <dd>−{format(fee, currency, scale)}</dd>
+            <dd>−{format(fee, currentCurrency, scale)}</dd>
           </div>
           <div>
             <dt>Giảng viên nhận ({percent(10_000 - rate)})</dt>
             <dd>
-              <strong>{format(amount - fee, currency, scale)}</strong>
+              <strong>{format(amount - fee, currentCurrency, scale)}</strong>
             </dd>
           </div>
         </dl>

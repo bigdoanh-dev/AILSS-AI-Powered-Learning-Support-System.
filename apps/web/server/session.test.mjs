@@ -45,6 +45,8 @@ function fixture(options = {}) {
       return Response.json({ error: { code: "IDENTITY_SERVICE_UNAVAILABLE" } }, { status: 503 });
     if (url.pathname.endsWith("/login")) return Response.json({ data: tokens() });
     if (url.pathname.endsWith("/logout")) return Response.json({ data: { loggedOut: true } });
+    if (options.rosterError && url.pathname.endsWith("/roster"))
+      return Response.json({ error: { code: "COURSE_ROSTER_FORBIDDEN" } }, { status: options.rosterError });
     if (
       (mode === "expired" || mode === "refresh-outage") &&
       init.headers.Authorization === "Bearer access-secret"
@@ -87,6 +89,22 @@ function fixture(options = {}) {
   }
   return { request, calls, count: () => refreshes, mode: (v) => (mode = v) };
 }
+test("roster failure is preserved rather than inventing students", async () => {
+  for (const status of [403, 404, 503]) {
+    const f = fixture({ verified: true, rosterError: status });
+    f.mode("lecturer");
+    const login = await f.request("login", "POST", {});
+    const result = await f.request(
+      "lecturer/courses/11111111-1111-4111-8111-111111111111/roster",
+      "GET",
+      undefined,
+      login.cookie,
+    );
+    assert.equal(result.status, status);
+    assert.equal(result.data.data, undefined);
+    assert.doesNotMatch(result.raw, /sv-2026|student.edu.vn/);
+  }
+});
 test("login profile is canonical, HttpOnly and no credentials in browser payload", async () => {
   const f = fixture();
   const r = await f.request("login", "POST", { email: "test@example.com", password: "test" });

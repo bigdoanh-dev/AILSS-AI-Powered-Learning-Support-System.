@@ -12,6 +12,7 @@ const userPage = z
     status: z.enum(["ACTIVE", "SUSPENDED"]),
     limit: z.coerce.number().int().min(1).max(100).optional(),
     cursor: z.string().min(16).max(16384).optional(),
+    q: z.string().trim().min(1).max(320).optional(),
   })
   .strict();
 const statusChange = z

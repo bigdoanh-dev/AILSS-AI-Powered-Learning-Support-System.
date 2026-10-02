@@ -27,6 +27,7 @@ import {
 } from "../../src/classroom";
 import { formatCurrentMonth, formatDisplayMonth } from "../../src/notifications";
 import { ApiError } from "../../src/api";
+import { loadAssignedQuizzes, type AssignedQuiz } from "../../src/assigned-quizzes";
 import {
   Page,
   Button,
@@ -41,6 +42,85 @@ import {
 import { ScalePressable, FadeSlideIn } from "../../src/motion";
 
 type ActiveTab = "classes" | "schedule" | "attendance";
+
+function formatDeadline(isoDate?: string) {
+  if (!isoDate) return "Không có hạn nộp";
+  try {
+    const d = new Date(isoDate);
+    const now = new Date();
+    const isToday =
+      d.getDate() === now.getDate() &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    const isTomorrow =
+      d.getDate() === tomorrow.getDate() &&
+      d.getMonth() === tomorrow.getMonth() &&
+      d.getFullYear() === tomorrow.getFullYear();
+    const timeStr = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    if (isToday) return `Hôm nay, ${timeStr}`;
+    if (isTomorrow) return `Ngày mai, ${timeStr}`;
+    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+  } catch {
+    return isoDate;
+  }
+}
+
+function formatDueLabel(isoDate?: string) {
+  if (!isoDate) return "sắp tới";
+  try {
+    const d = new Date(isoDate);
+    const now = new Date();
+    if (
+      d.getDate() === now.getDate() &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
+    ) {
+      return "hôm nay";
+    }
+    return "sắp tới";
+  } catch {
+    return "sắp tới";
+  }
+}
+
+function getClassVisualTheme(title: string) {
+  if (/dữ liệu|database|sql|cassandra/i.test(title)) {
+    return {
+      gradientBg: "#0C4A6E",
+      accent: "#38BDF8",
+      subAccent: "#0284C7",
+      icon: "database" as const,
+      category: "Cơ sở dữ liệu",
+    };
+  }
+  if (/trí tuệ|\bai\b|máy học|llm|copilot/i.test(title)) {
+    return {
+      gradientBg: "#2E1065",
+      accent: "#C084FC",
+      subAccent: "#7C3AED",
+      icon: "sparkles" as const,
+      category: "Trí tuệ nhân tạo",
+    };
+  }
+  if (/web|react|frontend|javascript|typescript|lập trình/i.test(title)) {
+    return {
+      gradientBg: "#0F172A",
+      accent: "#60A5FA",
+      subAccent: "#2563EB",
+      icon: "academic" as const,
+      category: "Lập trình Web & AI",
+    };
+  }
+  return {
+    gradientBg: "#064E3B",
+    accent: "#34D399",
+    subAccent: "#059669",
+    icon: "book" as const,
+    category: "Lớp học chính khoá",
+  };
+}
 
 export default function StudentClassesScreen() {
   const { tab } = useLocalSearchParams<{ tab?: string }>();
@@ -59,6 +139,9 @@ export default function StudentClassesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showJoinForm, setShowJoinForm] = useState(false);
+  const [classQuizzes, setClassQuizzes] = useState<AssignedQuiz[]>([]);
+  const [quizzesLoading, setQuizzesLoading] = useState(false);
   const [joinCode, setJoinCode] = useState("");
   const [joinBusy, setJoinBusy] = useState(false);
   const [joinMessage, setJoinMessage] = useState("");
@@ -81,6 +164,7 @@ export default function StudentClassesScreen() {
       setJoinCode("");
       setJoinKey(Crypto.randomUUID());
       setJoinMessage("Đã tham gia lớp học.");
+      setShowJoinForm(false);
       const classes = await session.request("/api/v1/me/classes");
       setClassesList(studentClasses(classes));
     } catch (cause) {
@@ -101,8 +185,22 @@ export default function StudentClassesScreen() {
     try {
       setError(null);
       if (activeTab === "classes") {
+        setQuizzesLoading(true);
         const data = await session.request("/api/v1/me/classes");
-        setClassesList(studentClasses(data));
+        const parsedClasses = studentClasses(data);
+        setClassesList(parsedClasses);
+
+        // Fetch assigned quizzes for these classes
+        try {
+          const controller = new AbortController();
+          const allAssigned = await loadAssignedQuizzes((path, opts) => session.request(path, opts), controller.signal);
+          const classOnlyQuizzes = allAssigned.filter((q) => q.targetType === "CLASS");
+          setClassQuizzes(classOnlyQuizzes);
+        } catch {
+          // Non-critical if quizzes fail to load
+        } finally {
+          setQuizzesLoading(false);
+        }
       } else if (activeTab === "schedule") {
         const range = getDateRangeForSchedule(new Date(), 30);
         const data = await session.request(`/api/v1/me/schedule?from=${range.from}&to=${range.to}`);
@@ -317,29 +415,210 @@ export default function StudentClassesScreen() {
         {/* Tab Content: Classes */}
         {!loading && !error && activeTab === "classes" && (
           <View style={localStyles.list}>
-            <View style={[styles.card, { gap: 10 }]}>
-              <Text style={styles.text}>Tham gia lớp bằng mã</Text>
-              <TextInput
-                style={styles.input}
-                value={joinCode}
-                onChangeText={setJoinCode}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                maxLength={32}
-                placeholder="Nhập mã giảng viên cung cấp"
-                accessibilityLabel="Mã tham gia lớp"
-              />
-              <Button
-                label={joinBusy ? "Đang tham gia…" : "Tham gia lớp"}
-                disabled={joinBusy}
-                onPress={() => void joinClass()}
-              />
-              {joinMessage ? (
-                <Text accessibilityRole="alert" style={styles.small}>
-                  {joinMessage}
-                </Text>
-              ) : null}
+            {/* 1. Sắp đến hạn / Việc cần phải làm - CHỈ BÀI TẬP THUỘC LỚP HỌC */}
+            <View style={localStyles.todoCard}>
+              <View style={localStyles.todoHeader}>
+                <View style={localStyles.todoHeaderLeft}>
+                  <View style={localStyles.todoIconWrap}>
+                    <Icon name="quiz" size={20} color="#0284C7" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={localStyles.todoTitle}>Sắp đến hạn</Text>
+                    <Text style={localStyles.todoSubtitle}>
+                      Việc cần làm và bài tập được giao trong các lớp học bạn đang tham gia.
+                    </Text>
+                  </View>
+                </View>
+                <ScalePressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Xem tất cả việc cần làm"
+                  style={localStyles.todoViewAllBtn}
+                  onPress={() => router.push("/assessments")}
+                >
+                  <Text style={localStyles.todoViewAllText}>Xem tất cả</Text>
+                  <Icon name="chevronRight" size={12} color="#0284C7" />
+                </ScalePressable>
+              </View>
+
+              {quizzesLoading ? (
+                <View style={localStyles.todoLoadingRow}>
+                  <ActivityIndicator size="small" color="#0284C7" />
+                  <Text style={localStyles.todoLoadingText}>Đang kiểm tra bài tập lớp học…</Text>
+                </View>
+              ) : classQuizzes.length > 0 ? (
+                <View style={localStyles.todoList}>
+                  {classQuizzes.slice(0, 4).map((quiz) => {
+                    const deadlineText = formatDeadline(quiz.closesAt);
+                    const isUrgent =
+                      Boolean(quiz.closesAt) &&
+                      new Date(quiz.closesAt!).getTime() - Date.now() < 24 * 3600 * 1000 &&
+                      new Date(quiz.closesAt!).getTime() > Date.now();
+
+                    return (
+                      <ScalePressable
+                        key={quiz.quizId}
+                        style={[localStyles.todoItem, isUrgent && localStyles.todoItemUrgent]}
+                        onPress={() => router.push(`/assessments/${quiz.quizId}` as Href)}
+                      >
+                        <View style={localStyles.todoItemMain}>
+                          <View
+                            style={[
+                              localStyles.todoDocIcon,
+                              isUrgent ? { backgroundColor: "#FEE2E2" } : { backgroundColor: "#EFF6FF" },
+                            ]}
+                          >
+                            <Icon
+                              name="quiz"
+                              size={16}
+                              color={isUrgent ? "#DC2626" : "#2563EB"}
+                            />
+                          </View>
+                          <View style={{ flex: 1, gap: 2 }}>
+                            <Text numberOfLines={1} style={localStyles.todoQuizTitle}>
+                              {quiz.title}
+                            </Text>
+                            <View style={localStyles.todoMetaRow}>
+                              <Text style={localStyles.todoMetaLabel}>Lớp:</Text>
+                              <Text numberOfLines={1} style={localStyles.todoMetaClass}>
+                                {quiz.targetName || "Lớp học trực tuyến"}
+                              </Text>
+                              {quiz.questionCount ? (
+                                <>
+                                  <Text style={localStyles.todoMetaDot}>•</Text>
+                                  <Text style={localStyles.todoMetaCount}>{quiz.questionCount} câu</Text>
+                                </>
+                              ) : null}
+                            </View>
+                          </View>
+                        </View>
+
+                        <View style={localStyles.todoItemRight}>
+                          <View style={{ alignItems: "flex-end" }}>
+                            <Text style={localStyles.todoDueCaption}>Hạn nộp</Text>
+                            <Text
+                              style={[
+                                localStyles.todoDueDate,
+                                isUrgent && localStyles.todoDueDateUrgent,
+                              ]}
+                            >
+                              {deadlineText}
+                            </Text>
+                          </View>
+                          <View style={localStyles.todoActionBtn}>
+                            <Text style={localStyles.todoActionBtnText}>Làm bài</Text>
+                            <Icon name="chevronRight" size={11} color="#0284C7" />
+                          </View>
+                        </View>
+                      </ScalePressable>
+                    );
+                  })}
+                </View>
+              ) : (
+                <View style={localStyles.todoEmptyBox}>
+                  <View style={localStyles.todoEmptyIconWrap}>
+                    <Icon name="checkCircle" size={22} color="#10B981" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={localStyles.todoEmptyTitle}>Không có bài tập nào cần nộp</Text>
+                    <Text style={localStyles.todoEmptySub}>
+                      Hiện không có bài kiểm tra hoặc bài tập nào sắp đến hạn trong các lớp học của bạn.
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
+
+            {/* 2. Danh sách lớp header with "+ Thêm lớp học" toggle button */}
+            <View style={localStyles.classesSectionHeader}>
+              <View>
+                <Text style={localStyles.classesSectionEyebrow}>DANH SÁCH LỚP</Text>
+                <Text style={localStyles.classesSectionTitle}>Lớp học của tôi</Text>
+              </View>
+              <ScalePressable
+                accessibilityRole="button"
+                accessibilityLabel={showJoinForm ? "Ẩn khung tham gia" : "Thêm lớp học"}
+                style={[
+                  localStyles.joinToggleBtn,
+                  showJoinForm && localStyles.joinToggleBtnActive,
+                ]}
+                onPress={() => setShowJoinForm((v) => !v)}
+              >
+                <Icon
+                  name={showJoinForm ? "checkCircle" : "add"}
+                  size={14}
+                  color={showJoinForm ? "#0284C7" : "#FFFFFF"}
+                />
+                <Text
+                  style={[
+                    localStyles.joinToggleBtnText,
+                    showJoinForm && localStyles.joinToggleBtnTextActive,
+                  ]}
+                >
+                  {showJoinForm ? "Ẩn khung" : "+ Thêm lớp"}
+                </Text>
+              </ScalePressable>
+            </View>
+
+            {/* 3. Khung Tham gia lớp bằng mã (collapsible or shown when no classes) */}
+            {(showJoinForm || classesList.length === 0) && (
+              <View style={localStyles.joinBoxCard}>
+                <View style={localStyles.joinBoxHeader}>
+                  <View style={localStyles.joinBoxIcon}>
+                    <Icon name="class" size={18} color="#0284C7" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={localStyles.joinBoxTitle}>Tham gia lớp học mới</Text>
+                    <Text style={localStyles.joinBoxSub}>
+                      Nhập mã tham gia do giảng viên cung cấp (từ 6 - 32 ký tự) để tự động ghi danh vào lớp học.
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={localStyles.joinInputRow}>
+                  <TextInput
+                    style={localStyles.joinTextInput}
+                    value={joinCode}
+                    onChangeText={setJoinCode}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    maxLength={32}
+                    placeholder="VD: AILSS-REACT-2026"
+                    placeholderTextColor="#94A3B8"
+                    accessibilityLabel="Mã tham gia lớp"
+                  />
+                  <ScalePressable
+                    style={[localStyles.joinSubmitBtn, joinBusy && { opacity: 0.7 }]}
+                    disabled={joinBusy}
+                    onPress={() => void joinClass()}
+                  >
+                    {joinBusy ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <>
+                        <Text style={localStyles.joinSubmitBtnText}>Vào lớp</Text>
+                        <Icon name="chevronRight" size={12} color="#FFFFFF" />
+                      </>
+                    )}
+                  </ScalePressable>
+                </View>
+                {joinMessage ? (
+                  <Text
+                    accessibilityRole="alert"
+                    style={[
+                      styles.small,
+                      {
+                        color: joinMessage.includes("Đã tham gia") ? "#16A34A" : tokens.color.danger,
+                        marginTop: 4,
+                      },
+                    ]}
+                  >
+                    {joinMessage}
+                  </Text>
+                ) : null}
+              </View>
+            )}
+
+            {/* 4. Danh sách Class Cards */}
             {classesList.length === 0 ? (
               <EmptyState
                 icon="calendar"
@@ -352,94 +631,174 @@ export default function StudentClassesScreen() {
               classesList.map((item) => {
                 const isLive = item.classKind === "LIVE_COHORT";
                 const isPrivate = item.classKind === "PRIVATE";
-                const kindLabel = isLive
-                  ? "Lớp trực tiếp LIVE"
-                  : isPrivate
-                    ? "Lớp riêng kèm 1-1"
-                    : "Lớp học trực tuyến";
+                const theme = getClassVisualTheme(item.name);
                 const hasSchedule = item.scheduleState === "PUBLISHED";
+                const classPendingQuizzes = classQuizzes.filter((q) => q.targetId === item.classId);
+                const firstDueQuiz = classPendingQuizzes[0];
 
                 return (
-                  <ScalePressable
-                    key={item.classId}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Xem lớp ${item.name}`}
-                    style={localStyles.classCard}
-                    onPress={() => router.push(`/classes/${item.classId}`)}
-                  >
-                    <View style={localStyles.classCardTopRow}>
-                      <View
-                        style={[
-                          localStyles.classKindBadge,
-                          isLive
-                            ? localStyles.kindBadgeLive
-                            : isPrivate
-                              ? localStyles.kindBadgePrivate
-                              : localStyles.kindBadgeStandard,
-                        ]}
-                      >
-                        <Icon
-                          name={isLive ? "sparkles" : isPrivate ? "user" : "class"}
-                          size={12}
-                          color={isLive ? "#0D9488" : isPrivate ? "#7C3AED" : "#2563EB"}
-                        />
-                        <Text
+                  <View key={item.classId} style={localStyles.richClassCard}>
+                    {/* Top Artwork Media Header */}
+                    <View
+                      style={[
+                        localStyles.classArtworkBanner,
+                        { backgroundColor: theme.gradientBg },
+                      ]}
+                    >
+                      <View style={localStyles.artworkDecorCircle} />
+                      <View style={localStyles.artworkDecorCircleSmall} />
+
+                      <View style={localStyles.artworkContentRow}>
+                        <View style={localStyles.artworkIconPill}>
+                          <Icon name="class" size={13} color="#FFFFFF" />
+                          <Text style={localStyles.artworkPillText}>Lớp học</Text>
+                        </View>
+                        <View
                           style={[
-                            localStyles.classKindText,
-                            {
-                              color: isLive ? "#0D9488" : isPrivate ? "#7C3AED" : "#2563EB",
-                            },
+                            localStyles.scheduleStateBadge,
+                            hasSchedule ? localStyles.scheduleBadgeActive : localStyles.scheduleBadgePending,
                           ]}
                         >
-                          {kindLabel}
+                          <Icon
+                            name={hasSchedule ? "check" : "clock"}
+                            size={11}
+                            color={hasSchedule ? "#16A34A" : "#D97706"}
+                          />
+                          <Text
+                            style={[
+                              localStyles.scheduleStateText,
+                              { color: hasSchedule ? "#16A34A" : "#D97706" },
+                            ]}
+                          >
+                            {hasSchedule ? "ĐÃ CÓ LỊCH" : "CHỜ LỊCH"}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View style={localStyles.artworkTitleOverlay}>
+                        <View style={localStyles.artworkCategoryTag}>
+                          <Text style={localStyles.artworkCategoryText}>{theme.category}</Text>
+                        </View>
+                        <Text numberOfLines={1} style={localStyles.artworkHeroTitle}>
+                          {item.name}
                         </Text>
                       </View>
-                      <View
-                        style={[
-                          localStyles.scheduleStateBadge,
-                          hasSchedule ? localStyles.scheduleBadgeActive : localStyles.scheduleBadgePending,
-                        ]}
-                      >
-                        <Icon
-                          name={hasSchedule ? "check" : "clock"}
-                          size={11}
-                          color={hasSchedule ? "#16A34A" : "#D97706"}
-                        />
-                        <Text
+                    </View>
+
+                    {/* Card Body */}
+                    <View style={localStyles.classCardBody}>
+                      <View style={localStyles.classHeadingRow}>
+                        <Text style={localStyles.classCategoryChip}>Lớp theo lịch</Text>
+                        <View
                           style={[
-                            localStyles.scheduleStateText,
-                            { color: hasSchedule ? "#16A34A" : "#D97706" },
+                            localStyles.classKindBadge,
+                            isLive
+                              ? localStyles.kindBadgeLive
+                              : isPrivate
+                                ? localStyles.kindBadgePrivate
+                                : localStyles.kindBadgeStandard,
                           ]}
                         >
-                          {hasSchedule ? "ĐÃ CÓ LỊCH" : "CHỜ LỊCH HỌC"}
-                        </Text>
+                          <Icon
+                            name={isLive ? "sparkles" : isPrivate ? "user" : "class"}
+                            size={11}
+                            color={isLive ? "#0D9488" : isPrivate ? "#7C3AED" : "#2563EB"}
+                          />
+                          <Text
+                            style={[
+                              localStyles.classKindText,
+                              { color: isLive ? "#0D9488" : isPrivate ? "#7C3AED" : "#2563EB" },
+                            ]}
+                          >
+                            {isLive ? "LIVE" : isPrivate ? "Kèm 1-1" : "Trực tuyến"}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <Text style={localStyles.richCardTitle}>{item.name}</Text>
+
+                      {/* Meta Row: Lịch học trực tiếp • Có điểm danh • Sĩ số */}
+                      <View style={localStyles.richClassMetaRow}>
+                        <View style={localStyles.classMetaItem}>
+                          <Icon name="calendar" size={13} color="#0284C7" />
+                          <Text style={localStyles.classMetaText}>Lịch học trực tiếp</Text>
+                        </View>
+                        <Text style={localStyles.classMetaDot}>•</Text>
+                        <View style={localStyles.classMetaItem}>
+                          <Icon name="attendance" size={13} color="#10B981" />
+                          <Text style={localStyles.classMetaText}>Có điểm danh</Text>
+                        </View>
+                        {item.maxMembers ? (
+                          <>
+                            <Text style={localStyles.classMetaDot}>•</Text>
+                            <View style={localStyles.classMetaItem}>
+                              <Icon name="people" size={13} color={tokens.color.muted} />
+                              <Text style={localStyles.classMetaText}>Tối đa {item.maxMembers} bạn</Text>
+                            </View>
+                          </>
+                        ) : null}
+                      </View>
+
+                      {/* Due Assignment Snippet or Benefits Checklist */}
+                      {firstDueQuiz ? (
+                        <ScalePressable
+                          style={localStyles.classDueSnippetBox}
+                          onPress={() => router.push(`/assessments/${firstDueQuiz.quizId}` as Href)}
+                        >
+                          <View style={localStyles.dueSnippetHeader}>
+                            <Icon name="alert" size={12} color="#DC2626" />
+                            <Text style={localStyles.dueSnippetLabel}>
+                              Đến hạn {formatDueLabel(firstDueQuiz.closesAt)}
+                            </Text>
+                          </View>
+                          <Text numberOfLines={1} style={localStyles.dueSnippetTitle}>
+                            {firstDueQuiz.title}
+                          </Text>
+                        </ScalePressable>
+                      ) : (
+                        <View style={localStyles.classBenefitsBox}>
+                          <View style={localStyles.benefitItem}>
+                            <Icon name="check" size={12} color="#10B981" />
+                            <Text style={localStyles.benefitText}>Thảo luận cùng giảng viên</Text>
+                          </View>
+                          <View style={localStyles.benefitItem}>
+                            <Icon name="check" size={12} color="#10B981" />
+                            <Text style={localStyles.benefitText}>Bài tập & tài liệu lớp học</Text>
+                          </View>
+                          <View style={localStyles.benefitItem}>
+                            <Icon name="check" size={12} color="#10B981" />
+                            <Text style={localStyles.benefitText}>Theo dõi chuyên cần & tiến độ</Text>
+                          </View>
+                        </View>
+                      )}
+
+                      <View style={localStyles.classCardDivider} />
+
+                      {/* Dual Action Buttons (Xem lịch & Vào lớp học) */}
+                      <View style={localStyles.richClassCardActions}>
+                        <ScalePressable
+                          accessibilityRole="button"
+                          accessibilityLabel="Xem lịch học"
+                          style={localStyles.classActionSecondaryBtn}
+                          onPress={() => setActiveTab("schedule")}
+                        >
+                          <Icon name="calendar" size={14} color="#334155" />
+                          <Text style={localStyles.classActionSecondaryText}>Xem lịch</Text>
+                        </ScalePressable>
+
+                        <ScalePressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Vào lớp học ${item.name}`}
+                          style={localStyles.classActionPrimaryBtn}
+                          onPress={() => router.push(`/classes/${item.classId}`)}
+                        >
+                          <Icon name="class" size={14} color="#FFFFFF" />
+                          <Text style={localStyles.classActionPrimaryText}>Vào lớp học</Text>
+                          <Icon name="chevronRight" size={12} color="#FFFFFF" />
+                        </ScalePressable>
                       </View>
                     </View>
-
-                    <Text style={localStyles.cardTitle}>{item.name}</Text>
-
-                    <View style={localStyles.classMetaRow}>
-                      <View style={localStyles.classMetaItem}>
-                        <Icon name="people" size={13} color={tokens.color.muted} />
-                        <Text style={localStyles.classMetaText}>
-                          {item.maxMembers ? `Tối đa ${item.maxMembers} thành viên` : "Lớp tiêu chuẩn"}
-                        </Text>
-                      </View>
-                      <Text style={localStyles.classMetaDot}>•</Text>
-                      <View style={localStyles.classMetaItem}>
-                        <Icon name="calendar" size={13} color={tokens.color.muted} />
-                        <Text style={localStyles.classMetaText}>Học trực tuyến</Text>
-                      </View>
-                    </View>
-
-                    <View style={localStyles.classCardFooter}>
-                      <Text style={localStyles.classActionHelper}>Nhấn để xem lịch & tài liệu</Text>
-                      <View style={localStyles.enterClassPill}>
-                        <Text style={localStyles.enterClassText}>Vào lớp</Text>
-                        <Icon name="chevronRight" size={13} color="#FFFFFF" />
-                      </View>
-                    </View>
-                  </ScalePressable>
+                  </View>
                 );
               })
             )}
@@ -1371,5 +1730,482 @@ const localStyles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     color: "#64748B",
+  },
+  // --- New Web-Aligned Classes Tab Styles ---
+  todoCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginBottom: 16,
+    ...tokens.shadow.subtle,
+  },
+  todoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  todoHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+    marginRight: 8,
+  },
+  todoIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#E0F2FE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  todoTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: tokens.color.ink,
+  },
+  todoSubtitle: {
+    fontSize: 11.5,
+    color: tokens.color.muted,
+    marginTop: 2,
+  },
+  todoViewAllBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: "#F0F9FF",
+  },
+  todoViewAllText: {
+    fontSize: 11.5,
+    fontWeight: "700",
+    color: "#0284C7",
+  },
+  todoLoadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 12,
+    justifyContent: "center",
+  },
+  todoLoadingText: {
+    fontSize: 12,
+    color: tokens.color.muted,
+  },
+  todoList: {
+    gap: 8,
+  },
+  todoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  todoItemUrgent: {
+    backgroundColor: "#FFF5F5",
+    borderColor: "#FECACA",
+  },
+  todoItemMain: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+    marginRight: 10,
+  },
+  todoDocIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  todoQuizTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: tokens.color.ink,
+  },
+  todoMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  todoMetaLabel: {
+    fontSize: 11,
+    color: tokens.color.muted,
+  },
+  todoMetaClass: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#0284C7",
+    maxWidth: 120,
+  },
+  todoMetaDot: {
+    fontSize: 10,
+    color: tokens.color.borderStrong,
+  },
+  todoMetaCount: {
+    fontSize: 11,
+    color: tokens.color.muted,
+  },
+  todoItemRight: {
+    alignItems: "flex-end",
+    gap: 4,
+  },
+  todoDueCaption: {
+    fontSize: 10,
+    color: tokens.color.muted,
+    textTransform: "uppercase",
+  },
+  todoDueDate: {
+    fontSize: 11.5,
+    fontWeight: "700",
+    color: tokens.color.inkSecondary,
+  },
+  todoDueDateUrgent: {
+    color: "#DC2626",
+    fontWeight: "800",
+  },
+  todoActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: "#E0F2FE",
+  },
+  todoActionBtnText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#0284C7",
+  },
+  todoEmptyBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#F0FDF4",
+    borderWidth: 1,
+    borderColor: "#DCFCE7",
+  },
+  todoEmptyIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    backgroundColor: "#DCFCE7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  todoEmptyTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#166534",
+  },
+  todoEmptySub: {
+    fontSize: 11.5,
+    color: "#15803D",
+    marginTop: 2,
+  },
+  classesSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+    marginTop: 4,
+  },
+  classesSectionEyebrow: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    color: "#64748B",
+  },
+  classesSectionTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: tokens.color.ink,
+  },
+  joinToggleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: tokens.color.brand,
+  },
+  joinToggleBtnActive: {
+    backgroundColor: "#F1F5F9",
+  },
+  joinToggleBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  joinToggleBtnTextActive: {
+    color: "#0284C7",
+  },
+  joinBoxCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginBottom: 16,
+    ...tokens.shadow.subtle,
+  },
+  joinBoxHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginBottom: 12,
+  },
+  joinBoxIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "#E0F2FE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  joinBoxTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: tokens.color.ink,
+  },
+  joinBoxSub: {
+    fontSize: 11.5,
+    color: tokens.color.muted,
+    marginTop: 2,
+  },
+  joinInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  joinTextInput: {
+    flex: 1,
+    height: 40,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    fontSize: 13,
+    fontWeight: "600",
+    color: tokens.color.ink,
+    backgroundColor: "#F8FAFC",
+  },
+  joinSubmitBtn: {
+    height: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingHorizontal: 14,
+    backgroundColor: tokens.color.brand,
+    borderRadius: 10,
+  },
+  joinSubmitBtnText: {
+    color: "#FFFFFF",
+    fontSize: 12.5,
+    fontWeight: "700",
+  },
+  richClassCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginBottom: 16,
+    ...tokens.shadow.card,
+  },
+  classArtworkBanner: {
+    height: 110,
+    padding: 12,
+    justifyContent: "space-between",
+    position: "relative",
+    overflow: "hidden",
+  },
+  artworkDecorCircle: {
+    position: "absolute",
+    right: -20,
+    top: -20,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+  },
+  artworkDecorCircleSmall: {
+    position: "absolute",
+    right: 50,
+    bottom: -30,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+  },
+  artworkContentRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    zIndex: 2,
+  },
+  artworkIconPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  artworkPillText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  artworkTitleOverlay: {
+    zIndex: 2,
+    gap: 3,
+  },
+  artworkCategoryTag: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  artworkCategoryText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    letterSpacing: 0.3,
+  },
+  artworkHeroTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  classCardBody: {
+    padding: 14,
+    gap: 8,
+  },
+  classHeadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  classCategoryChip: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#64748B",
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  richCardTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: tokens.color.ink,
+    lineHeight: 22,
+  },
+  richClassMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
+    marginVertical: 2,
+  },
+  classDueSnippetBox: {
+    backgroundColor: "#FEF2F2",
+    borderRadius: 10,
+    padding: 9,
+    borderWidth: 1,
+    borderColor: "#FEE2E2",
+    gap: 2,
+    marginVertical: 2,
+  },
+  dueSnippetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  dueSnippetLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#DC2626",
+    textTransform: "uppercase",
+  },
+  dueSnippetTitle: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: "#991B1B",
+  },
+  classBenefitsBox: {
+    gap: 4,
+    marginVertical: 2,
+  },
+  benefitItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  benefitText: {
+    fontSize: 12,
+    color: "#475569",
+    fontWeight: "500",
+  },
+  classCardDivider: {
+    height: 1,
+    backgroundColor: "#F1F5F9",
+    marginVertical: 4,
+  },
+  richClassCardActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 2,
+  },
+  classActionSecondaryBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  classActionSecondaryText: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: "#334155",
+  },
+  classActionPrimaryBtn: {
+    flex: 1.3,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: tokens.color.brand,
+  },
+  classActionPrimaryText: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 });

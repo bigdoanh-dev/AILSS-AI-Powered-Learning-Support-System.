@@ -54,6 +54,7 @@ import {
 } from "./finance/index.js";
 import { AdaptiveRuntimeRepository } from "./adaptive/runtime-repository.js";
 import { adaptiveRuntimeRouter } from "./adaptive/runtime-router.js";
+import { lecturerMasteryRouter, authorizeCourseMastery } from "./adaptive/lecturer-mastery-router.js";
 import { MasteryIngestionRepository } from "./adaptive/mastery-ingestion-repository.js";
 import { MasteryRecalculationConsumer } from "./adaptive/mastery-consumer.js";
 import { adaptiveInternalRouter } from "./adaptive/internal-router.js";
@@ -387,6 +388,16 @@ await startService(manifest, {
       config.INTERNAL_HTTP_TIMEOUT_MS,
     );
     app.use(adaptiveRuntimeRouter(adaptiveRepository, verifier("learning.adaptive.student"), planContext));
+    app.use(
+      lecturerMasteryRouter(
+        adaptiveRepository,
+        verifier("learning.adaptive.lecturer"),
+        async (actor, courseId, studentId) => {
+          await authorizeCourseMastery(actor, courseId, studentId, commerceRepository);
+        },
+        commerceRepository,
+      ),
+    );
     app.use(
       adaptiveInternalRouter(
         adaptiveRepository,

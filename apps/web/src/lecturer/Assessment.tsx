@@ -74,9 +74,7 @@ export function Assessments() {
   const [params, setParams] = useSearchParams(),
     courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses"),
     classes = useLecturer<ClassItem[] | { classes: ClassItem[] }>("/me/owned-classes");
-  const [activeTab, setActiveTab] = useState<"assessments" | "gradebook">(
-    params.get("tab") === "grades" ? "gradebook" : "assessments",
-  );
+  const activeTab = params.get("tab") === "grades" ? "gradebook" : "assessments";
   const [target, setTarget] = useState(
       params.get("course")
         ? `COURSE/${params.get("course")}`
@@ -127,7 +125,6 @@ export function Assessments() {
             aria-selected={activeTab === "assessments"}
             className={`filter-pill-button ${activeTab === "assessments" ? "active" : ""}`}
             onClick={() => {
-              setActiveTab("assessments");
               setParams((p) => {
                 p.delete("tab");
                 return p;
@@ -142,7 +139,6 @@ export function Assessments() {
             aria-selected={activeTab === "gradebook"}
             className={`filter-pill-button ${activeTab === "gradebook" ? "active" : ""}`}
             onClick={() => {
-              setActiveTab("gradebook");
               setParams((p) => {
                 p.set("tab", "grades");
                 return p;

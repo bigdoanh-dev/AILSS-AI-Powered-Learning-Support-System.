@@ -13,7 +13,15 @@ export async function adaptiveLearningProxyFactory(
   config: AppConfig,
 ): Promise<
   Record<
-    "mastery" | "courseMastery" | "outcome" | "generate" | "current" | "updateItem" | "itemAction",
+    | "mastery"
+    | "courseMastery"
+    | "lecturerMastery"
+    | "lecturerMasterySummary"
+    | "outcome"
+    | "generate"
+    | "current"
+    | "updateItem"
+    | "itemAction",
     RequestHandler
   >
 > {
@@ -24,7 +32,11 @@ export async function adaptiveLearningProxyFactory(
     loadPrivateKey(config.ACTOR_CONTEXT_PRIVATE_KEY_PATH),
   ]);
   const handler =
-    (method: "GET" | "POST" | "PATCH", path: (request: Request) => string): RequestHandler =>
+    (
+      method: "GET" | "POST" | "PATCH",
+      path: (request: Request) => string,
+      purpose = "learning.adaptive.student",
+    ): RequestHandler =>
     async (req, res, next) => {
       try {
         const context = currentRequestContext();
@@ -41,7 +53,7 @@ export async function adaptiveLearningProxyFactory(
           config.ACTOR_CONTEXT_KID,
           config.ACTOR_CONTEXT_ISSUER,
           "learning-service",
-          "learning.adaptive.student",
+          purpose,
           {
             userId: access.userId,
             roles: [...access.roles],
@@ -85,6 +97,17 @@ export async function adaptiveLearningProxyFactory(
   return {
     mastery: handler("GET", () => "/api/v1/mastery/me"),
     courseMastery: handler("GET", (request) => `/api/v1/mastery/courses/${enc(request.params.courseId)}`),
+    lecturerMastery: handler(
+      "GET",
+      (request) =>
+        `/api/v1/courses/${enc(request.params.courseId)}/students/${enc(request.params.studentId)}/mastery`,
+      "learning.adaptive.lecturer",
+    ),
+    lecturerMasterySummary: handler(
+      "GET",
+      (request) => `/api/v1/courses/${enc(request.params.courseId)}/mastery-summary`,
+      "learning.adaptive.lecturer",
+    ),
     outcome: handler("GET", (request) => `/api/v1/mastery/outcomes/${enc(request.params.outcomeId)}`),
     generate: handler("POST", () => "/api/v1/study-plan/generate"),
     current: handler("GET", () => "/api/v1/study-plan/current"),

@@ -166,10 +166,11 @@ function validationError(code: string, message: string, error: unknown): AppErro
   );
 }
 
-function searchDto(row: AdminProjectionRow) {
+function searchDto(row: AdminProjectionRow & { emailMasked?: string }) {
   return {
     userId: row.userId,
     displayName: row.displayName,
+    ...(row.emailMasked ? { emailMasked: row.emailMasked } : {}),
     role: row.role,
     status: row.status,
     lecturerVerified: row.lecturerVerified,

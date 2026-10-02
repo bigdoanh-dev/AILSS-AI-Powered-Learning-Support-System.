@@ -308,16 +308,8 @@ export const styles = StyleSheet.create({
 type NavScrollListener = (visible: boolean) => void;
 const navScrollListeners = new Set<NavScrollListener>();
 
-export function notifyNavScroll(offsetY: number, deltaY: number) {
-  // If near the top or scrolling up even slightly: reveal navigation bar immediately!
-  if (offsetY <= 40 || deltaY < -2) {
-    navScrollListeners.forEach((fn) => fn(true));
-    return;
-  }
-  // Only hide when user is deliberately and continuously scrolling down
-  if (deltaY > 12) {
-    navScrollListeners.forEach((fn) => fn(false));
-  }
+export function notifyNavScroll(_offsetY: number, _deltaY: number) {
+  // Navigation bar is fixed permanently; no scroll auto-hide/slide animation
 }
 
 export function Page({
@@ -1462,7 +1454,6 @@ export function BottomNavBar({
 
   const [nativeGlass, setNativeGlass] = React.useState(false);
   const [rowWidth, setRowWidth] = React.useState(0);
-  const navTranslateY = React.useRef(new Animated.Value(0)).current;
   const reduceMotion = useReducedMotionPreference();
   const indicatorX = React.useRef(new Animated.Value(0)).current;
   const previousIndex = React.useRef<number | null>(null);
@@ -1485,31 +1476,6 @@ export function BottomNavBar({
     }
   }, []);
 
-  // Always restore navigation bar to visible whenever navigating to a new route
-  React.useEffect(() => {
-    Animated.timing(navTranslateY, {
-      toValue: 0,
-      duration: 130,
-      useNativeDriver: true,
-    }).start();
-  }, [currentRoute, navTranslateY]);
-
-  // Listen to scroll direction to auto-hide or auto-show BottomNavBar
-  React.useEffect(() => {
-    if (reduceMotion !== false) return;
-    const listener: NavScrollListener = (visible) => {
-      Animated.timing(navTranslateY, {
-        toValue: visible ? 0 : 88,
-        duration: 130,
-        useNativeDriver: true,
-      }).start();
-    };
-    navScrollListeners.add(listener);
-    return () => {
-      navScrollListeners.delete(listener);
-    };
-  }, [navTranslateY, reduceMotion]);
-
   React.useEffect(() => {
     if (tabWidth <= 0 || activeIndex < 0) return;
     const nextX = activeIndex * tabWidth;
@@ -1528,15 +1494,7 @@ export function BottomNavBar({
   }, [activeIndex, indicatorX, reduceMotion, tabWidth]);
 
   return (
-    <Animated.View
-      pointerEvents="box-none"
-      style={[
-        bottomNavStyles.dock,
-        {
-          transform: [{ translateY: navTranslateY }],
-        },
-      ]}
-    >
+    <View pointerEvents="box-none" style={bottomNavStyles.dock}>
       <View style={bottomNavStyles.shellShadow}>
         <View style={bottomNavStyles.shell}>
           {nativeGlass ? (
@@ -1611,7 +1569,7 @@ export function BottomNavBar({
           </View>
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 }
 

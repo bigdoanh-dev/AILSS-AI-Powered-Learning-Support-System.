@@ -7,6 +7,11 @@ const command = { "idempotency-key": "logical-command-1" };
 
 test("Lecturer allowlist accepts documented reads and commands", () => {
   assert.equal(
+    lecturerOperation(`/web-session/lecturer/courses/${id}/students/${id}/mastery`, "GET", undefined, {})
+      .path,
+    `/courses/${id}/students/${id}/mastery`,
+  );
+  assert.equal(
     lecturerOperation("/web-session/lecturer/me/owned-courses", "GET", undefined, {}).path,
     "/me/owned-courses",
   );
@@ -184,4 +189,14 @@ test("manual grades persist only a validated score and result version", () => {
 test("quiz deadline can be persisted or cleared without browser storage", () => {
   const path = `/web-session/lecturer/quizzes/${id}`;
   assert.equal(lecturerOperation(path, "PATCH", { closesAt: null }, command).path, `/quizzes/${id}`);
+});
+
+test("lecturer course mastery summary is read-only", () => {
+  assert.equal(
+    lecturerOperation(`/web-session/lecturer/courses/${id}/mastery-summary`, "GET", undefined, {}).path,
+    `/courses/${id}/mastery-summary`,
+  );
+  assert.throws(() =>
+    lecturerOperation(`/web-session/lecturer/courses/${id}/mastery-summary`, "POST", undefined, {}),
+  );
 });

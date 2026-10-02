@@ -148,7 +148,13 @@ export default function AttendanceScreen() {
         </View>
 
         <Text style={styles.small}>
-          Nguồn: {item.source} · Hiện diện: {item.presenceState}
+          {item.source === "ONLINE_PRESENCE"
+            ? `Tự động từ kết nối realtime · ${item.presenceState === "ONLINE" ? "đang online" : "đã rời phòng"}`
+            : item.source === "MANUAL_OFFLINE"
+              ? "Thủ công · giảng viên xác nhận"
+              : classSessionItem?.mode === "ONLINE"
+                ? "Chưa có kết nối realtime · có thể xác nhận thủ công"
+                : "Thủ công · chờ giảng viên xác nhận"}
           {item.connectedDurationSeconds > 0
             ? ` · ${Math.round(item.connectedDurationSeconds / 60)} phút`
             : ""}
@@ -157,12 +163,12 @@ export default function AttendanceScreen() {
         <View style={at.actionButtons}>
           <Pressable
             accessibilityRole="button"
-            disabled={isBusy || item.attendanceStatus === "PRESENT"}
+            disabled={isBusy || item.attendanceStatus === "PRESENT" || item.source === "ONLINE_PRESENCE"}
             onPress={() => handleMarkAttendance(item.studentId, "PRESENT", item.attendanceVersion)}
             style={[
               at.btnStatus,
               at.btnPresent,
-              (isBusy || item.attendanceStatus === "PRESENT") && at.btnDisabled,
+              (isBusy || item.attendanceStatus === "PRESENT" || item.source === "ONLINE_PRESENCE") && at.btnDisabled,
             ]}
           >
             <Text style={at.btnText}>✓ Có mặt</Text>
@@ -170,12 +176,12 @@ export default function AttendanceScreen() {
 
           <Pressable
             accessibilityRole="button"
-            disabled={isBusy || item.attendanceStatus === "ABSENT"}
+            disabled={isBusy || item.attendanceStatus === "ABSENT" || item.source === "ONLINE_PRESENCE"}
             onPress={() => handleMarkAttendance(item.studentId, "ABSENT", item.attendanceVersion)}
             style={[
               at.btnStatus,
               at.btnAbsent,
-              (isBusy || item.attendanceStatus === "ABSENT") && at.btnDisabled,
+              (isBusy || item.attendanceStatus === "ABSENT" || item.source === "ONLINE_PRESENCE") && at.btnDisabled,
             ]}
           >
             <Text style={at.btnText}>✕ Vắng</Text>
@@ -183,12 +189,12 @@ export default function AttendanceScreen() {
 
           <Pressable
             accessibilityRole="button"
-            disabled={isBusy || item.attendanceStatus === "EXCUSED"}
+            disabled={isBusy || item.attendanceStatus === "EXCUSED" || item.source === "ONLINE_PRESENCE"}
             onPress={() => handleMarkAttendance(item.studentId, "EXCUSED", item.attendanceVersion)}
             style={[
               at.btnStatus,
               at.btnExcused,
-              (isBusy || item.attendanceStatus === "EXCUSED") && at.btnDisabled,
+              (isBusy || item.attendanceStatus === "EXCUSED" || item.source === "ONLINE_PRESENCE") && at.btnDisabled,
             ]}
           >
             <Text style={at.btnText}>⏳ Có phép</Text>
@@ -235,6 +241,17 @@ export default function AttendanceScreen() {
             </Text>
             <Text style={at.statLbl}>Có phép</Text>
           </View>
+        </View>
+      )}
+
+      {roster && roster.length > 0 && (
+        <View style={at.sourceLegend}>
+          <Text style={at.sourceLegendTitle}>Cách ghi nhận</Text>
+          <Text style={at.sourceLegendText}>
+            {classSessionItem?.mode === "ONLINE"
+              ? `Tự động realtime: ${roster.filter((r) => r.source === "ONLINE_PRESENCE").length} · Thủ công: ${roster.filter((r) => r.source !== "ONLINE_PRESENCE").length}`
+              : "Buổi trực tiếp: giảng viên tích Có mặt, Vắng hoặc Có phép cho từng học viên."}
+          </Text>
         </View>
       )}
 
@@ -404,6 +421,25 @@ const at = StyleSheet.create({
     color: "#64748B",
     fontWeight: "600",
     marginTop: 2,
+  },
+  sourceLegend: {
+    backgroundColor: "#F0F9FF",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+    padding: 12,
+    marginBottom: 10,
+    gap: 4,
+  },
+  sourceLegendTitle: {
+    color: "#075985",
+    fontWeight: "800",
+    fontSize: 13,
+  },
+  sourceLegendText: {
+    color: "#334155",
+    fontSize: 12,
+    lineHeight: 18,
   },
   quickAllBtn: {
     backgroundColor: "#E0F2FE",

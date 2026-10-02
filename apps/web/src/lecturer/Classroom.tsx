@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { lecturerError, lecturerRequest, month, range, useLecturer } from "./api";
 import { CatalogCourseSelect } from "./ui";
 import { Field, State } from "./ui";
@@ -18,6 +18,7 @@ type C = {
 };
 type S = {
   sessionId: string;
+  classId?: string;
   title: string;
   startAt: string;
   endAt: string;
@@ -25,6 +26,9 @@ type S = {
   status: string;
   recordVersion: number;
   timezone?: string;
+  location?: string;
+  meetingProvider?: string;
+  meetingUrl?: string;
 };
 type A = {
   studentId: string;
@@ -55,6 +59,7 @@ export function Classes() {
   const q = useLecturer<C[] | { classes: C[] }>("/me/owned-classes");
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<string>("ALL");
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const classesList = arr(q.data);
   const filtered = classesList.filter((c) => {
@@ -76,9 +81,9 @@ export function Classes() {
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <Link className="button" to="/app/teaching/classes/new">
+          <button className="button" type="button" onClick={() => setShowCreateModal(true)}>
             + Mở lớp học mới
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -175,9 +180,9 @@ export function Classes() {
                   >
                     Xóa bộ lọc
                   </button>
-                  <Link className="button" to="/app/teaching/classes/new">
+                  <button className="button" type="button" onClick={() => setShowCreateModal(true)}>
                     + Mở lớp học mới
-                  </Link>
+                  </button>
                 </div>
               </div>
             );
@@ -290,6 +295,143 @@ export function Classes() {
           );
         }}
       </State>
+      <ClassCreateModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={() => {
+          q.retry();
+        }}
+      />
+    </div>
+  );
+}
+
+export function ClassCreateModal({
+  isOpen,
+  onClose,
+  onCreated,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreated?: (data: C & { joinCode?: string }) => void;
+}) {
+  const nav = useNavigate();
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  if (!isOpen) return null;
+
+  async function create(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    setMsg("");
+    const f = new FormData(e.currentTarget);
+    try {
+      const r = await lecturerRequest<C>("/classes", "POST", {
+        name: String(f.get("name")),
+        classKind: String(f.get("classKind")),
+        ...(f.get("linkedCourseId") ? { linkedCourseId: String(f.get("linkedCourseId")) } : {}),
+        maxMembers: Number(f.get("maxMembers")),
+      });
+      setBusy(false);
+      onClose();
+      if (onCreated) {
+        onCreated(r.data as C & { joinCode?: string });
+      } else if (r.data?.classId) {
+        nav(`/app/teaching/classes/${r.data.classId}`, {
+          state: { joinCode: (r.data as C & { joinCode?: string }).joinCode },
+        });
+      }
+    } catch (x) {
+      setMsg(lecturerError(x));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div
+      className="admin-modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="class-create-modal-title"
+    >
+      <div className="admin-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640 }}>
+        <div className="admin-modal-header">
+          <div>
+            <p className="eyebrow" style={{ margin: 0, color: "var(--blue, #0284c7)" }}>
+              LỚP HỌC · THIẾT LẬP MỚI
+            </p>
+            <h2 id="class-create-modal-title" style={{ margin: "4px 0 0" }}>
+              Tạo Lớp Học Mới
+            </h2>
+            <p className="subtext" style={{ margin: "4px 0 0" }}>
+              Thiết lập lớp học phần, loại hình đào tạo và sĩ số tối đa.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="admin-modal-close-btn"
+            onClick={onClose}
+            aria-label="Đóng"
+          >
+            ✕
+          </button>
+        </div>
+
+        {msg && (
+          <div
+            className="dashboard-banner-notice"
+            role="alert"
+            style={{
+              background: "rgba(239, 68, 68, 0.1)",
+              borderColor: "var(--coral, #ef4444)",
+              color: "var(--coral, #ef4444)",
+              marginBottom: 16,
+            }}
+          >
+            <span>✕</span>
+            <span>{msg}</span>
+          </div>
+        )}
+
+        <form className="form-panel form-grid" onSubmit={(e) => void create(e)}>
+          <Field
+            label="Tên lớp"
+            name="name"
+            placeholder="Ví dụ: Cơ sở dữ liệu Nâng cao - Nhóm 01 (Khai giảng T9)"
+            required
+          />
+          <label>
+            Loại hình đào tạo
+            <select name="classKind" defaultValue="INSTITUTIONAL">
+              <option value="INSTITUTIONAL">Lớp trường học / tổ chức (tham gia bằng mã)</option>
+              <option value="LIVE_COHORT">Lớp theo khóa / thanh toán</option>
+              <option value="PRIVATE">Lớp riêng</option>
+            </select>
+          </label>
+          <CatalogCourseSelect name="linkedCourseId" label="Liên kết khóa học" />
+          <p className="subtext" style={{ marginTop: -8, marginBottom: 8 }}>
+            Tùy chọn. Có thể tạo lớp độc lập với khóa học; nếu liên kết, chọn khóa học đã xuất bản.
+          </p>
+          <Field
+            label="Số học viên tối đa"
+            name="maxMembers"
+            type="number"
+            defaultValue={100}
+            min={1}
+            required
+          />
+          <div style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "flex-end", marginTop: 16 }}>
+            <button type="button" className="button button-subtle" onClick={onClose} disabled={busy}>
+              Hủy &amp; Quay lại
+            </button>
+            <button className="button" disabled={busy}>
+              {busy ? "Đang tạo lớp…" : "+ Tạo lớp học"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
@@ -959,18 +1101,101 @@ export function Schedule() {
   );
 }
 export function SessionDetail() {
-  const { sessionId = "" } = useParams(),
-    q = useLecturer<S>(`/class-sessions/${sessionId}`);
+  const { sessionId = "" } = useParams();
+  const q = useLecturer<S>(`/class-sessions/${sessionId}`);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({ title: "", startAt: "", endAt: "", timezone: "Asia/Ho_Chi_Minh", location: "", meetingProvider: "", meetingUrl: "" });
+
+  useEffect(() => {
+    const value = q.data;
+    if (!value) return;
+    const inputDate = (iso: string) => {
+      const date = new Date(iso);
+      const pad = (n: number) => String(n).padStart(2, "0");
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+    setForm({
+      title: value.title,
+      startAt: inputDate(value.startAt),
+      endAt: inputDate(value.endAt),
+      timezone: value.timezone || "Asia/Ho_Chi_Minh",
+      location: value.location || "",
+      meetingProvider: value.meetingProvider || "",
+      meetingUrl: value.meetingUrl || "",
+    });
+  }, [q.data]);
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    if (!q.data?.classId) return;
+    setSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      const start = new Date(form.startAt);
+      const end = new Date(form.endAt);
+      if (!form.title.trim() || !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start)
+        throw new Error("Tiêu đề và khoảng thời gian buổi học chưa hợp lệ.");
+      await lecturerRequest(`/classes/${q.data.classId}/sessions/${sessionId}`, "PATCH", {
+        title: form.title.trim(),
+        startAt: start.toISOString(),
+        endAt: end.toISOString(),
+        timezone: form.timezone.trim() || "Asia/Ho_Chi_Minh",
+        ...(q.data.mode === "ONLINE"
+          ? { meetingProvider: form.meetingProvider.trim(), meetingUrl: form.meetingUrl.trim() }
+          : { location: form.location.trim() }),
+      });
+      setEditing(false);
+      setMessage("Đã lưu thay đổi buổi học.");
+      q.retry();
+    } catch (value) {
+      setError(value instanceof Error ? value.message : lecturerError(value));
+    } finally {
+      setSaving(false);
+    }
+  }
   return (
     <State q={q}>
       {(x) => (
         <>
+          <Breadcrumbs items={[{ label: "Lớp học", to: "/app/teaching/classes" }, { label: "Chi tiết buổi học" }]} />
           <p className="eyebrow">{x.status}</p>
           <h1>{x.title}</h1>
-          <p>
-            {new Date(x.startAt).toLocaleString("vi-VN")} — {new Date(x.endAt).toLocaleString("vi-VN")}
-          </p>
-          <Link className="button" to={`/app/teaching/sessions/${sessionId}/attendance`}>
+          <p>{new Date(x.startAt).toLocaleString("vi-VN")} — {new Date(x.endAt).toLocaleString("vi-VN")}</p>
+          {x.status === "DRAFT" && !editing && (
+            <button className="button secondary" type="button" onClick={() => { setMessage(""); setError(""); setEditing(true); }}>
+              Chỉnh sửa buổi học
+            </button>
+          )}
+          {editing && x.status === "DRAFT" && (
+            <form className="form-grid" onSubmit={(event) => void save(event)} style={{ margin: "1rem 0" }}>
+              <label>Tiêu đề<input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} required /></label>
+              <label>Bắt đầu<input type="datetime-local" value={form.startAt} onChange={(event) => setForm({ ...form, startAt: event.target.value })} required /></label>
+              <label>Kết thúc<input type="datetime-local" value={form.endAt} onChange={(event) => setForm({ ...form, endAt: event.target.value })} required /></label>
+              <label>Múi giờ<input value={form.timezone} onChange={(event) => setForm({ ...form, timezone: event.target.value })} required /></label>
+              {x.mode === "ONLINE" ? (
+                <>
+                  <label>Nhà cung cấp phòng họp<input value={form.meetingProvider} onChange={(event) => setForm({ ...form, meetingProvider: event.target.value })} required /></label>
+                  <label>URL phòng họp<input type="url" value={form.meetingUrl} onChange={(event) => setForm({ ...form, meetingUrl: event.target.value })} required /></label>
+                </>
+              ) : (
+                <label>Địa điểm<input value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} required /></label>
+              )}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="button" type="submit" disabled={saving}>{saving ? "Đang lưu…" : "Lưu thay đổi"}</button>
+                <button className="button secondary" type="button" onClick={() => setEditing(false)} disabled={saving}>Hủy</button>
+              </div>
+            </form>
+          )}
+          {message && <p role="status">{message}</p>}
+          {error && <p role="alert" className="error">{error}</p>}
+          <Link
+            className="button"
+            to={`/app/teaching/sessions/${sessionId}/attendance${x.classId ? `?class=${x.classId}` : ""}`}
+          >
             Điểm danh
           </Link>
         </>
@@ -980,7 +1205,18 @@ export function SessionDetail() {
 }
 export function Attendance() {
   const { sessionId = "" } = useParams();
+  const [params] = useSearchParams();
   const query = useLecturer<A[] | { attendance: A[] }>(`/class-sessions/${sessionId}/attendance`);
+  const sessionQuery = useLecturer<S>(!params.get("class") && sessionId ? `/class-sessions/${sessionId}` : null);
+  const classId = params.get("class") || sessionQuery.data?.classId || "";
+  const membersQuery = useLecturer<Member[] | { members: Member[] }>(classId ? `/classes/${classId}/members` : null);
+
+  const nameMap = new Map<string, string>();
+  const membersList = (Array.isArray(membersQuery.data) ? membersQuery.data : membersQuery.data?.members) || [];
+  for (const m of membersList) {
+    if (m.displayName) nameMap.set(m.studentId, m.displayName);
+  }
+
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
@@ -1005,10 +1241,32 @@ export function Attendance() {
   }
   return (
     <>
-      <h1>Điểm danh buổi học</h1>
+      <Breadcrumbs
+        items={[
+          { label: "Lớp học", to: "/app/teaching/classes" },
+          ...(classId ? [{ label: "Chi tiết lớp", to: `/app/teaching/classes/${classId}` }] : []),
+          { label: "Buổi học", to: `/app/teaching/sessions/${sessionId}` },
+          { label: "Điểm danh" },
+        ]}
+      />
+      <div className="section-header" style={{ marginTop: "1rem" }}>
+        <div>
+          <h1>Điểm danh buổi học</h1>
+          <p className="description">
+            {sessionQuery.data?.mode === "ONLINE"
+              ? "Học viên online được ghi nhận tự động khi kết nối; giảng viên có thể xác nhận thủ công khi chưa có bằng chứng realtime."
+              : "Học viên học trực tiếp được giảng viên xác nhận thủ công theo danh sách có mặt/vắng."
+            }
+          </p>
+        </div>
+      </div>
       <label>
-        Tìm mã học viên
-        <input value={search} onChange={(e) => setSearch(e.target.value)} />
+        Tìm học viên (tên hoặc ID)
+        <input
+          placeholder="Nhập tên hoặc mã ID học viên..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </label>
       {message && <p role="status">{message}</p>}
       <State q={query}>
@@ -1020,15 +1278,29 @@ export function Attendance() {
                   <tr>
                     <th>Học viên</th>
                     <th>Trạng thái</th>
+                    <th>Nguồn ghi nhận</th>
                     <th>Cập nhật</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows
-                    .filter((r) => r.studentId.includes(search))
+                    .filter((r) => {
+                      const name = nameMap.get(r.studentId) || "";
+                      return (
+                        r.studentId.toLowerCase().includes(search.toLowerCase()) ||
+                        name.toLowerCase().includes(search.toLowerCase())
+                      );
+                    })
                     .map((row) => (
                       <tr key={row.studentId}>
-                        <td>{row.studentId}</td>
+                        <td>
+                          <strong>{nameMap.get(row.studentId) || row.studentId}</strong>
+                          {nameMap.has(row.studentId) && (
+                            <small style={{ display: "block", color: "var(--muted)", fontSize: "11px" }}>
+                              {row.studentId}
+                            </small>
+                          )}
+                        </td>
                         <td>
                           {row.attendanceStatus === "PRESENT"
                             ? "Có mặt"
@@ -1036,13 +1308,20 @@ export function Attendance() {
                               ? "Có phép"
                               : row.attendanceStatus === "ABSENT"
                                 ? "Vắng"
-                                : "Chưa ghi nhận"}
+                              : "Chưa ghi nhận"}
+                        </td>
+                        <td>
+                          {row.source === "ONLINE_PRESENCE"
+                            ? `Tự động · ${row.presenceState === "ONLINE" ? "đang kết nối" : "đã rời phòng"}`
+                            : row.source === "MANUAL_OFFLINE"
+                              ? "Thủ công · giảng viên"
+                              : "Chưa có dữ liệu"}
                         </td>
                         <td>
                           <select
-                            aria-label={`Điểm danh ${row.studentId}`}
-                            value={row.attendanceStatus}
-                            disabled={busy}
+                            aria-label={`Điểm danh ${nameMap.get(row.studentId) || row.studentId}`}
+                            value={row.attendanceStatus === "NOT_RECORDED" ? "UNMARKED" : row.attendanceStatus}
+                            disabled={busy || row.source === "ONLINE_PRESENCE"}
                             onChange={(e) => void update(row, e.target.value)}
                           >
                             <option value="UNMARKED" disabled>

@@ -7,6 +7,7 @@ import { lecturerRequest } from "../src/lecturer/api";
 vi.mock("../src/lecturer/api", () => ({
   lecturerRequest: vi.fn(),
   lecturerError: () => "Lỗi API",
+  useLecturer: () => ({ data: { items: [] } }),
 }));
 
 afterEach(() => {

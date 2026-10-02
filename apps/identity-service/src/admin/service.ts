@@ -104,7 +104,7 @@ export interface IdentityAdminStore {
 }
 
 export interface AdminSearchResult {
-  readonly items: readonly AdminProjectionRow[];
+  readonly items: readonly (AdminProjectionRow & { emailMasked?: string })[];
   readonly nextCursor: string | null;
   readonly hasMore: boolean;
 }
@@ -156,32 +156,41 @@ export class IdentityAdminService {
         }
       }
       const perShardPositions = { ...(cursor?.perShardPositions ?? {}) };
-      const pages = await Promise.all(
-        Array.from({ length: ADMIN_SHARD_COUNT }, (_, shard) =>
-          this.store.listShard({
-            role: query.role,
-            status: query.status,
-            shard,
-            limit: query.limit + 1,
+      const items: (AdminProjectionRow & { emailMasked?: string })[] = [];
+      const seen = new Set<string>();
+      const needle = query.q?.trim().toLocaleLowerCase("vi");
+      let hasMore = false;
+      // Read only role/status partitions. Bound work per request; a cursor continues
+      // the scan when a sparse search needs more than ten rounds.
+      for (let round = 0; round < (needle ? 10 : 1); round++) {
+        const pageSize = needle ? 100 : query.limit + 1;
+        const pages = await Promise.all(Array.from({ length: ADMIN_SHARD_COUNT }, (_, shard) =>
+          this.store.listShard({ role: query.role, status: query.status, shard, limit: pageSize,
             ...(perShardPositions[String(shard)] ? { position: perShardPositions[String(shard)] } : {}),
           }),
-        ),
-      );
-      const candidates = pages.flat().sort(compareProjection);
-      const items = candidates.slice(0, query.limit);
-      for (const item of items) {
-        perShardPositions[String(item.shard)] = {
-          updatedAt: item.updatedAt.toISOString(),
-          userId: item.userId,
-        };
+        ));
+        const candidates = pages.flat().sort(compareProjection);
+        let examined = 0;
+        for (const row of candidates) {
+          if (items.length === query.limit) break;
+          examined++;
+          perShardPositions[String(row.shard)] = { updatedAt: row.updatedAt.toISOString(), userId: row.userId };
+          const user = await this.store.getUser(row.userId);
+          // Stale projections must never show a different role or account status.
+          if (!user || user.role !== query.role || user.status !== query.status || seen.has(user.userId)) continue;
+          seen.add(user.userId);
+          if (needle && ![user.displayName, user.userId, user.normalizedEmail, user.emailMasked].some((value) => value.toLocaleLowerCase("vi").includes(needle))) continue;
+          items.push({ userId: user.userId, role: user.role, status: user.status, shard: row.shard, updatedAt: row.updatedAt, displayName: user.displayName, lecturerVerified: user.lecturerVerified, profileVersion: user.profileVersion, emailMasked: user.emailMasked });
+        }
+        hasMore = examined < candidates.length || pages.some((page) => page.length === pageSize);
+        if (!hasMore || items.length === query.limit) break;
       }
-      const hasMore = candidates.length > items.length;
       const nextCursor = hasMore
         ? encodeAdminCursor(this.cursorSecret, {
             v: 1,
             role: query.role,
             status: query.status,
-            filtersHash: adminFiltersHash(query.role, query.status),
+            filtersHash: adminFiltersHash(query.role, query.status, query.q),
             direction: "forward",
             issuedAt: Math.floor(this.now().getTime() / 1_000),
             perShardPositions,

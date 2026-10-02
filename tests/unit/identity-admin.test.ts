@@ -94,6 +94,30 @@ describe("P7.8 Identity Admin", () => {
     expect(fixture.store.shardReads).toBe(32);
   });
 
+  it("finds Google accounts by canonical email without password credentials, beyond the first list page", async () => {
+    const fixture = adminFixture();
+    const target = fixture.store.requireUser(fixture.targetId);
+    fixture.store.users.set(target.userId, { ...target, normalizedEmail: "google.student@example.test", emailMasked: "g***@example.test" });
+    fixture.store.credentials.delete(target.normalizedEmail);
+    for (let index = 0; index < 110; index++) {
+      const user = { ...createUser("STUDENT", "ACTIVE", `Other ${index}`, `other${index}@example.test`), updatedAt: new Date(now.getTime() + index) };
+      fixture.store.users.set(user.userId, user);
+      fixture.store.projections.set(projectionKey(user), user);
+    }
+    const page = await fixture.service.search(fixture.actor, { role: "STUDENT", status: "ACTIVE", limit: 1, q: "google.student@example.test" });
+    expect(page.items.map((item) => item.userId)).toEqual([target.userId]);
+    expect(page.items[0]?.emailMasked).toBe("g***@example.test");
+    expect(page.items[0]).not.toHaveProperty("normalizedEmail");
+    if (page.nextCursor) expect(() => decodeAdminCursor(secret, page.nextCursor!, { role: "STUDENT", status: "ACTIVE", q: "other" }, Math.floor(now.getTime() / 1000))).toThrow();
+  });
+
+  it("omits stale projections with a different canonical status", async () => {
+    const fixture = adminFixture();
+    fixture.store.users.set(fixture.targetId, { ...fixture.store.requireUser(fixture.targetId), status: "SUSPENDED" });
+    const page = await fixture.service.search(fixture.actor, { role: "STUDENT", status: "ACTIVE", limit: 25 });
+    expect(page.items.some((item) => item.userId === fixture.targetId)).toBe(false);
+  });
+
   it("requires canonical ADMIN instead of trusting a non-Admin token role", async () => {
     const fixture = adminFixture();
     fixture.store.users.set(fixture.actor.userId, {

@@ -1,4 +1,4 @@
-import { loadAssignedQuizzes } from "../src/assigned-quizzes";
+import { loadAssignedQuizzes, type AssignedQuiz } from "../src/assigned-quizzes";
 import { useSyncExternalStore, useState, useEffect, useRef } from "react";
 import {
   Text,
@@ -33,7 +33,6 @@ import { getFeaturesForRole, type FeatureItem } from "../src/features";
 export { getFeaturesForRole, type FeatureItem };
 import { getSystemSettings, updateSystemSettings, subscribeSystemSettings } from "../src/settings";
 import { loadCourseCategories, loadConfiguredCoursePreview } from "../src/catalog-preview";
-import { quizSummaries } from "../src/assessment";
 import { ApiError } from "../src/api";
 import { LANGUAGES, getTranslation } from "../src/i18n";
 
@@ -48,7 +47,8 @@ export default function Home() {
   const [enrolledList, setEnrolledList] = useState<Course[]>([]);
   const [homeError, setHomeError] = useState("");
   const [homeRevision, setHomeRevision] = useState(0);
-  const [homeQuizzes, setHomeQuizzes] = useState<ReturnType<typeof quizSummaries>>([]);
+  const [homeQuizzes, setHomeQuizzes] = useState<AssignedQuiz[]>([]);
+  const [quizLoadState, setQuizLoadState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [classList, setClassList] = useState<StudentClass[]>([]);
   const [showAllModal, setShowAllModal] = useState(false);
   const [showLangModal, setShowLangModal] = useState(false);
@@ -201,14 +201,21 @@ export default function Home() {
   useEffect(() => {
     const abort = new AbortController();
     setHomeQuizzes([]);
+    setQuizLoadState("idle");
     if (snapshot.state === "AUTHENTICATED" && snapshot.user?.role === "STUDENT") {
+      setQuizLoadState("loading");
       void loadAssignedQuizzes((path, options) => session.request(path, options), abort.signal)
         .then((quizzes) => {
-          if (!abort.signal.aborted) setHomeQuizzes(quizzes);
+          if (!abort.signal.aborted) {
+            setHomeQuizzes(quizzes);
+            setQuizLoadState("ready");
+          }
         })
         .catch((cause: unknown) => {
-          if (!abort.signal.aborted)
+          if (!abort.signal.aborted) {
+            setQuizLoadState("error");
             setHomeError(cause instanceof ApiError ? cause.message : "Không tải được đề đã giao.");
+          }
         });
     }
     return () => abort.abort();
@@ -228,6 +235,7 @@ export default function Home() {
       (feature.id === "learn" ||
         feature.id === "grades" ||
         feature.id === "ai_quiz" ||
+        feature.id === "assignments" ||
         feature.id === "schedule")
     ) {
       router.push("/login" as Href);
@@ -260,21 +268,6 @@ export default function Home() {
           notifyNavScroll(currentY, deltaY);
         }}
       >
-        {homeError ? (
-          <View style={styles.card}>
-            <Text accessibilityRole="alert" style={styles.error}>
-              {homeError}
-            </Text>
-            <Button
-              label="Thử tải lại"
-              onPress={() => {
-                setHomeError("");
-                setHomeRevision((v) => v + 1);
-              }}
-            />
-          </View>
-        ) : null}
-
         {/* Top Deep Navy/Teal Banner */}
         <FadeSlideIn delay={0} duration={400} fromY={-12}>
           <View style={hStyles.topBanner}>
@@ -301,7 +294,7 @@ export default function Home() {
                     <Icon name="user" size={20} color="#FFFFFF" />
                   )}
                 </View>
-                <View style={{ gap: 2 }}>
+                <View style={{ gap: 2, flexShrink: 1 }}>
                   <Text style={hStyles.greetingSub}>{t("header.greeting")}</Text>
                   <Text style={hStyles.greetingName} numberOfLines={largeText ? 2 : 1}>
                     {snapshot.state === "AUTHENTICATED"
@@ -311,7 +304,7 @@ export default function Home() {
                 </View>
               </ScalePressable>
 
-              {/* Right Side: Language Switcher and Auth Buttons or Bell Notification */}
+              {/* Right Side: Language Switcher and (if Authenticated) Bell Notification */}
               <View style={[hStyles.headerActions, largeText && hStyles.headerActionsLarge]}>
                 <ScalePressable
                   style={hStyles.langButton}
@@ -324,30 +317,7 @@ export default function Home() {
                   <Text style={hStyles.langText}>{currentLang.code.toUpperCase()}</Text>
                 </ScalePressable>
 
-                {snapshot.state !== "AUTHENTICATED" ? (
-                  <>
-                    <ScalePressable
-                      testID="student-login-entry"
-                      style={hStyles.loginPillBtn}
-                      scaleTo={0.92}
-                      onPress={() => router.push("/login" as Href)}
-                      accessibilityRole="button"
-                      accessibilityLabel={t("action.login")}
-                    >
-                      <Icon name="user" size={13} color="#FFFFFF" />
-                      <Text style={hStyles.loginPillText}>{t("action.login")}</Text>
-                    </ScalePressable>
-                    <ScalePressable
-                      style={hStyles.registerPillBtn}
-                      scaleTo={0.92}
-                      onPress={() => router.push("/register" as Href)}
-                      accessibilityRole="button"
-                      accessibilityLabel={t("action.register")}
-                    >
-                      <Text style={hStyles.registerPillText}>{t("action.register")}</Text>
-                    </ScalePressable>
-                  </>
-                ) : (
+                {snapshot.state === "AUTHENTICATED" && (
                   <ScalePressable
                     style={hStyles.bellButton}
                     scaleTo={0.88}
@@ -386,7 +356,7 @@ export default function Home() {
               </View>
               <View style={hStyles.guestHeroActions}>
                 <ScalePressable
-                  testID="student-login-entry-primary"
+                  testID="student-login-entry"
                   style={hStyles.guestBtnPrimary}
                   scaleTo={0.95}
                   onPress={() => router.push("/login" as Href)}
@@ -397,6 +367,7 @@ export default function Home() {
                   <Text style={hStyles.guestBtnPrimaryText}>{t("hero.login_now")}</Text>
                 </ScalePressable>
                 <ScalePressable
+                  testID="student-register-entry"
                   style={hStyles.guestBtnSecondary}
                   scaleTo={0.95}
                   onPress={() => router.push("/register" as Href)}
@@ -586,6 +557,24 @@ export default function Home() {
           )}
         </FadeSlideIn>
 
+        {/* Global Home Error Notice */}
+        {homeError ? (
+          <FadeSlideIn delay={90} duration={350}>
+            <View style={[styles.card, { marginHorizontal: 16, marginTop: 14, marginBottom: 4 }]}>
+              <Text accessibilityRole="alert" style={styles.error}>
+                {homeError}
+              </Text>
+              <Button
+                label="Thử tải lại"
+                onPress={() => {
+                  setHomeError("");
+                  setHomeRevision((v) => v + 1);
+                }}
+              />
+            </View>
+          </FadeSlideIn>
+        ) : null}
+
         {/* Role-tailored Academic / Business Indicators Strip */}
         {snapshot.state === "AUTHENTICATED" && (
           <FadeSlideIn delay={110} duration={450}>
@@ -723,8 +712,8 @@ export default function Home() {
           </FadeSlideIn>
         )}
 
-        {/* Section: Chức năng AILSS — chỉ hiển thị khi đã đăng nhập */}
-        {snapshot.state === "AUTHENTICATED" && (
+        {/* Section: Chức năng AILSS */}
+        {features.length > 0 && (
           <FadeSlideIn delay={140} duration={450}>
             <View style={hStyles.sectionContainer}>
               <View style={hStyles.sectionHeader}>
@@ -765,184 +754,252 @@ export default function Home() {
           </FadeSlideIn>
         )}
 
-        {/* Role-Specific Work Sections */}
-        {snapshot.state === "AUTHENTICATED" && (
-          <>
-            {/* STUDENT SECTION 1: Lớp học của tôi */}
-            <FadeSlideIn delay={160} duration={450}>
-              <View style={hStyles.sectionContainer}>
-                <View style={hStyles.sectionHeader}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <Text style={hStyles.sectionTitle}>Lớp học của tôi</Text>
-                    <Badge label="CHÍNH KHÓA" variant="primary" />
+        {/* Role-Specific Work Sections (Chỉ hiển thị bài tập/kiểm tra khi đã đăng nhập) */}
+        {snapshot.state === "AUTHENTICATED" &&
+          snapshot.user?.role !== "LECTURER" &&
+          snapshot.user?.role !== "ADMIN" && (
+            <>
+              {/* STUDENT SECTION 1: Lớp học của tôi */}
+              <FadeSlideIn delay={160} duration={450}>
+                <View style={hStyles.sectionContainer}>
+                  <View style={hStyles.sectionHeader}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <Text style={hStyles.sectionTitle}>Lớp học của tôi</Text>
+                      <Badge label="CHÍNH KHÓA" variant="primary" />
+                    </View>
+                    <ScalePressable scaleTo={0.92} onPress={() => router.push("/classes" as Href)}>
+                      <Text style={hStyles.sectionLink}>Tất cả lớp &gt;</Text>
+                    </ScalePressable>
                   </View>
-                  <ScalePressable scaleTo={0.92} onPress={() => router.push("/classes" as Href)}>
-                    <Text style={hStyles.sectionLink}>Tất cả lớp &gt;</Text>
-                  </ScalePressable>
-                </View>
 
-                <View style={{ gap: 10 }}>
-                  {classList.slice(0, 2).map((c) => (
-                    <ScalePressable
-                      key={c.classId}
-                      style={hStyles.compactCard}
-                      scaleTo={0.97}
-                      onPress={() => router.push(`/classes/${c.classId}` as Href)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Lớp học ${c.name}`}
-                    >
-                      <View style={hStyles.cardBadgeRow}>
-                        <Badge
-                          label={c.classKind === "LIVE_COHORT" ? "LỚP TRỰC TUYẾN" : "LỚP HỌC"}
-                          variant="neutral"
-                        />
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                          <View
-                            style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }}
-                          />
-                          <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>Đang học</Text>
-                        </View>
-                      </View>
-                      <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                        {c.name}
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginTop: 4,
-                          gap: 8,
-                        }}
+                  <View style={{ gap: 10 }}>
+                    {classList.slice(0, 2).map((c) => (
+                      <ScalePressable
+                        key={c.classId}
+                        style={hStyles.compactCard}
+                        scaleTo={0.97}
+                        onPress={() => router.push(`/classes/${c.classId}` as Href)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Lớp học ${c.name}`}
                       >
-                        <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                          Mở chi tiết lớp để xem giảng viên phụ trách
-                        </Text>
-                        <View style={hStyles.actionMiniBtn}>
-                          <Text style={hStyles.actionMiniBtnText}>Vào lớp</Text>
-                          <Icon name="chevronRight" size={12} color="#FFFFFF" />
+                        <View style={hStyles.cardBadgeRow}>
+                          <Badge
+                            label={c.classKind === "LIVE_COHORT" ? "LỚP TRỰC TUYẾN" : "LỚP HỌC"}
+                            variant="neutral"
+                          />
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                            <View
+                              style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }}
+                            />
+                            <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>
+                              Đang học
+                            </Text>
+                          </View>
                         </View>
-                      </View>
-                    </ScalePressable>
-                  ))}
-                  {classList.length === 0 && (
-                    <Text style={styles.small}>Lớp được ghi danh sẽ xuất hiện ở đây.</Text>
-                  )}
-                </View>
-              </View>
-            </FadeSlideIn>
-
-            {/* STUDENT SECTION 3: Bài kiểm tra & Đề thi AI */}
-            <FadeSlideIn delay={200} duration={450}>
-              <View style={hStyles.sectionContainer}>
-                <View style={hStyles.sectionHeader}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <Text style={hStyles.sectionTitle}>Bài kiểm tra &amp; Đề thi AI</Text>
+                        <Text style={hStyles.compactCardTitle} numberOfLines={1}>
+                          {c.name}
+                        </Text>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginTop: 4,
+                            gap: 8,
+                          }}
+                        >
+                          <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
+                            Mở chi tiết lớp để xem giảng viên phụ trách
+                          </Text>
+                          <View style={hStyles.actionMiniBtn}>
+                            <Text style={hStyles.actionMiniBtnText}>Vào lớp</Text>
+                            <Icon name="chevronRight" size={12} color="#FFFFFF" />
+                          </View>
+                        </View>
+                      </ScalePressable>
+                    ))}
+                    {classList.length === 0 && (
+                      <Text style={styles.small}>Lớp được ghi danh sẽ xuất hiện ở đây.</Text>
+                    )}
                   </View>
-                  <ScalePressable scaleTo={0.92} onPress={() => router.push("/assessments" as Href)}>
-                    <Text style={hStyles.sectionLink}>Tất cả đề thi &gt;</Text>
-                  </ScalePressable>
                 </View>
+              </FadeSlideIn>
 
-                <View style={{ gap: 10 }}>
-                  {!homeError && !homeQuizzes.length ? (
-                    <Text style={styles.small}>Chưa có bài kiểm tra đã phát hành cho bạn.</Text>
-                  ) : null}
-                  {homeQuizzes.map((quiz) => (
-                    <ScalePressable
-                      key={quiz.quizId}
-                      style={hStyles.compactCard}
-                      onPress={() => router.push(`/assessments/${quiz.quizId}` as Href)}
-                      accessibilityRole="button"
-                      accessibilityLabel={quiz.title}
-                    >
-                      <Text style={hStyles.compactCardTitle}>{quiz.title}</Text>
-                      <Text style={styles.small}>
-                        {quiz.questionCount} câu hỏi · Xem chi tiết và trạng thái làm bài
-                      </Text>
+              {/* Assigned assessments from the authenticated student's backend data. */}
+              <FadeSlideIn delay={200} duration={450}>
+                <View style={hStyles.sectionContainer}>
+                  <View style={hStyles.sectionHeader}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <Text style={hStyles.sectionTitle}>Bài kiểm tra được giao</Text>
+                      {quizLoadState === "ready" && (
+                        <View style={[hStyles.pendingHeaderDot, { backgroundColor: "#D97706" }]}>
+                          <Text style={hStyles.pendingHeaderDotText}>{homeQuizzes.length}</Text>
+                        </View>
+                      )}
+                    </View>
+                    <ScalePressable scaleTo={0.92} onPress={() => router.push("/assessments" as Href)}>
+                      <Text style={hStyles.sectionLink}>Tất cả đề thi &gt;</Text>
                     </ScalePressable>
-                  ))}
+                  </View>
+
+                  <View style={{ gap: 8 }}>
+                    {homeQuizzes.slice(0, 2).map((quiz) => {
+                      const quizId = quiz.quizId;
+                      const title = quiz.title;
+                      const count = quiz.questionCount;
+
+                      return (
+                        <ScalePressable
+                          key={quizId}
+                          style={hStyles.compactRowCard}
+                          scaleTo={0.98}
+                          onPress={() => router.push(`/assessments/${quizId}` as Href)}
+                          accessibilityRole="button"
+                          accessibilityLabel={title}
+                        >
+                          <View style={[hStyles.rowIconBox, { backgroundColor: "#FEF3C7" }]}>
+                            <Icon name="sparkles" size={16} color="#D97706" />
+                          </View>
+                          <View style={{ flex: 1, gap: 2 }}>
+                            <Text style={hStyles.rowCardTitle} numberOfLines={1}>
+                              {title}
+                            </Text>
+                            {quiz.targetName && (
+                              <Text style={hStyles.rowCardSub} numberOfLines={1}>
+                                {quiz.targetName}
+                              </Text>
+                            )}
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                              <View style={hStyles.adaptiveMiniBadge}>
+                                <Text style={hStyles.adaptiveMiniText}>Bài kiểm tra</Text>
+                              </View>
+                              <Text style={{ fontSize: 10, color: "#94A3B8" }}>•</Text>
+                              <Text style={hStyles.rowCardSub}>{count} câu hỏi</Text>
+                            </View>
+                          </View>
+                          <View style={[hStyles.rowActionBtn, { backgroundColor: "#FFFBEB" }]}>
+                            <Text style={[hStyles.rowActionText, { color: "#D97706" }]}>Xem đề</Text>
+                            <Icon name="chevronRight" size={12} color="#D97706" />
+                          </View>
+                        </ScalePressable>
+                      );
+                    })}
+                    {quizLoadState === "loading" && <Text style={styles.small}>Đang tải đề được giao…</Text>}
+                    {quizLoadState === "ready" && homeQuizzes.length === 0 && (
+                      <Text style={styles.small}>
+                        Chưa có bài kiểm tra được giao. Đề do giảng viên xuất bản sẽ hiển thị ở đây.
+                      </Text>
+                    )}
+                  </View>
                 </View>
-              </View>
-            </FadeSlideIn>
-          </>
-        )}
+              </FadeSlideIn>
+            </>
+          )}
 
         {/* ============================================================
             GUEST LANDING PAGE — chỉ hiển thị khi chưa đăng nhập
             ============================================================ */}
         {snapshot.state !== "AUTHENTICATED" && (
           <>
-            {/* Feature Preview Cards */}
-            <FadeSlideIn delay={170} duration={450}>
+            {/* Quick Stats Banner for Guests */}
+            <FadeSlideIn delay={160} duration={450}>
+              <View style={guestStyles.statsStrip}>
+                <View style={guestStyles.statItem}>
+                  <Text style={guestStyles.statValue}>100%</Text>
+                  <Text style={guestStyles.statLabel}>AI Tương tác</Text>
+                </View>
+                <View style={guestStyles.statDivider} />
+                <View style={guestStyles.statItem}>
+                  <Text style={guestStyles.statValue}>40+ Giờ</Text>
+                  <Text style={guestStyles.statLabel}>Bài giảng chuẩn</Text>
+                </View>
+                <View style={guestStyles.statDivider} />
+                <View style={guestStyles.statItem}>
+                  <Text style={guestStyles.statValue}>24/7</Text>
+                  <Text style={guestStyles.statLabel}>Trợ lý AI Copilot</Text>
+                </View>
+              </View>
+            </FadeSlideIn>
+
+            {/* Guest Platform Introduction / Highlights */}
+            <FadeSlideIn delay={190} duration={450}>
               <View style={hStyles.sectionContainer}>
                 <View style={hStyles.sectionHeader}>
-                  <Text style={hStyles.sectionTitle}>Tính năng nổi bật</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Text style={hStyles.sectionTitle}>Trải nghiệm AILSS Copilot</Text>
+                    <Badge label="NỔI BẬT" variant="ai" icon="sparkles" />
+                  </View>
                 </View>
+
                 <View style={{ gap: 10 }}>
-                  {[
-                    {
-                      icon: "sparkles" as const,
-                      color: "#7C3AED",
-                      bg: "#EDE9FE",
-                      title: "Đề thi AI thích ứng",
-                      desc: "AI tự động điều chỉnh độ khó theo năng lực, phân tích điểm yếu và cá nhân hóa lộ trình ôn tập.",
-                      cta: "Thử ngay",
-                    },
-                    {
-                      icon: "academic" as const,
-                      color: "#0284C7",
-                      bg: "#E0F2FE",
-                      title: "Lớp học trực tuyến Live",
-                      desc: "Tham gia buổi học trực tiếp với giảng viên, hỏi đáp thời gian thực và xem lại bài giảng bất cứ lúc nào.",
-                      cta: "Xem lớp học",
-                    },
-                    {
-                      icon: "award" as const,
-                      color: "#D97706",
-                      bg: "#FEF3C7",
-                      title: "Theo dõi tiến độ học tập",
-                      desc: "Theo dõi mục tiêu, nội dung học tập và các hạn được hệ thống cung cấp.",
-                      cta: "Tìm hiểu",
-                    },
-                    {
-                      icon: "book" as const,
-                      color: "#059669",
-                      bg: "#D1FAE5",
-                      title: "Thư viện khóa học phong phú",
-                      desc: "Video bài giảng chất lượng cao, tài liệu PDF, bài tập thực hành và cộng đồng học viên sôi động.",
-                      cta: "Khám phá",
-                    },
-                  ].map((f, idx) => (
-                    <StaggerPop key={f.title} index={idx} baseDelay={180} staggerStep={40} style={{}}>
-                      <ScalePressable
-                        style={guestStyles.featureCard}
-                        scaleTo={0.97}
-                        onPress={() => router.push("/login" as Href)}
-                        accessibilityRole="button"
-                        accessibilityLabel={f.title}
-                      >
-                        <View style={[guestStyles.featureCardIcon, { backgroundColor: f.bg }]}>
-                          <Icon name={f.icon} size={22} color={f.color} />
-                        </View>
-                        <View style={{ flex: 1, gap: 3 }}>
-                          <Text style={guestStyles.featureCardTitle}>{f.title}</Text>
-                          <Text style={guestStyles.featureCardDesc} numberOfLines={2}>
-                            {f.desc}
-                          </Text>
-                        </View>
-                        <View style={[guestStyles.featureCardCta, { backgroundColor: f.bg }]}>
-                          <Text style={[guestStyles.featureCardCtaText, { color: f.color }]}>{f.cta}</Text>
-                        </View>
-                      </ScalePressable>
-                    </StaggerPop>
-                  ))}
+                  <ScalePressable
+                    style={guestStyles.featureCard}
+                    scaleTo={0.97}
+                    onPress={() => router.push("/courses" as Href)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Khám phá các khóa học công nghệ"
+                  >
+                    <View style={[guestStyles.featureCardIcon, { backgroundColor: "#E0F2FE" }]}>
+                      <Icon name="book" size={22} color="#0284C7" />
+                    </View>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text style={guestStyles.featureCardTitle}>Thư viện khóa học chuyên sâu</Text>
+                      <Text style={guestStyles.featureCardDesc}>
+                        Lập trình Web, CSDL nâng cao, Trí tuệ nhân tạo và LLMs thực chiến.
+                      </Text>
+                    </View>
+                    <View style={[guestStyles.featureCardCta, { backgroundColor: "#F0F9FF" }]}>
+                      <Text style={[guestStyles.featureCardCtaText, { color: "#0284C7" }]}>Xem ngay</Text>
+                    </View>
+                  </ScalePressable>
+
+                  <ScalePressable
+                    style={guestStyles.featureCard}
+                    scaleTo={0.97}
+                    onPress={() => router.push("/login" as Href)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Luyện thi trắc nghiệm AI"
+                  >
+                    <View style={[guestStyles.featureCardIcon, { backgroundColor: "#FEF3C7" }]}>
+                      <Icon name="sparkles" size={22} color="#D97706" />
+                    </View>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text style={guestStyles.featureCardTitle}>Luyện đề thi Thích ứng AI</Text>
+                      <Text style={guestStyles.featureCardDesc}>
+                        Hệ thống tự động điều chỉnh độ khó theo năng lực và phân tích điểm yếu ngay lập tức.
+                      </Text>
+                    </View>
+                    <View style={[guestStyles.featureCardCta, { backgroundColor: "#FFFBEB" }]}>
+                      <Text style={[guestStyles.featureCardCtaText, { color: "#D97706" }]}>Khám phá</Text>
+                    </View>
+                  </ScalePressable>
+
+                  <ScalePressable
+                    style={guestStyles.featureCard}
+                    scaleTo={0.97}
+                    onPress={() => router.push("/login" as Href)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Lớp học trực tiếp tương tác"
+                  >
+                    <View style={[guestStyles.featureCardIcon, { backgroundColor: "#EDE9FE" }]}>
+                      <Icon name="class" size={22} color="#7C3AED" />
+                    </View>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text style={guestStyles.featureCardTitle}>Lớp học LIVE &amp; Điểm danh tự động</Text>
+                      <Text style={guestStyles.featureCardDesc}>
+                        Tương tác trực tiếp cùng giảng viên, hỏi đáp tài liệu và theo dõi điểm chuyên cần.
+                      </Text>
+                    </View>
+                    <View style={[guestStyles.featureCardCta, { backgroundColor: "#F5F3FF" }]}>
+                      <Text style={[guestStyles.featureCardCtaText, { color: "#7C3AED" }]}>Tìm hiểu</Text>
+                    </View>
+                  </ScalePressable>
                 </View>
               </View>
             </FadeSlideIn>
 
             {/* CTA Banner — đăng ký miễn phí */}
-            <FadeSlideIn delay={210} duration={450}>
+            <FadeSlideIn delay={220} duration={450}>
               <View style={guestStyles.ctaBanner}>
                 <FloatingElement distance={4} duration={1800}>
                   <View style={guestStyles.ctaBannerIcon}>
@@ -952,7 +1009,7 @@ export default function Home() {
                 <View style={{ flex: 1, gap: 4 }}>
                   <Text style={guestStyles.ctaBannerTitle}>Tham gia miễn phí hôm nay</Text>
                   <Text style={guestStyles.ctaBannerSub}>
-                    Tạo tài khoản trong 30 giây. Không cần thẻ tín dụng.
+                    Tạo tài khoản trong 30 giây. Đăng nhập để lưu tiến độ và làm bài kiểm tra.
                   </Text>
                 </View>
                 <ScalePressable
@@ -1585,40 +1642,6 @@ const hStyles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#062E3F",
   },
-  loginPillBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 18,
-    backgroundColor: "#0284C7",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.4)",
-    shadowColor: "#0284C7",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  loginPillText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  registerPillBtn: {
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.18)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.35)",
-  },
-  registerPillText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "700",
-  },
   guestHeroCard: {
     marginTop: -26,
     marginHorizontal: 16,
@@ -2086,6 +2109,70 @@ const hStyles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "700",
+  },
+  // Compact succinct rows for assignments and assessments
+  compactRowCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    gap: 10,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  rowIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  rowCardTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  rowCardSub: {
+    fontSize: 11,
+    color: "#64748B",
+    fontWeight: "500",
+  },
+  rowCardDue: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  rowActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    flexShrink: 0,
+  },
+  rowActionText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  adaptiveMiniBadge: {
+    backgroundColor: "#FEF3C7",
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  adaptiveMiniText: {
+    fontSize: 9.5,
+    fontWeight: "800",
+    color: "#B45309",
+    letterSpacing: 0.3,
   },
 });
 

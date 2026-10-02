@@ -6,6 +6,7 @@ import { runtime } from "../../src/runtime";
 import { Button, Icon, Page, tokens, styles } from "../../src/ui";
 import { useStudentLearning } from "../../src/use-student-learning";
 import { StudentNav } from "../../src/StudentNav";
+import { StudentLearningRadar } from "../../src/LearningRadarPanel";
 
 const stateMeta: Record<MasteryState, { label: string; ink: string; wash: string }> = {
   NOT_OBSERVED: { label: "Chưa ghi nhận", ink: "#64748B", wash: "#F1F5F9" },
@@ -143,6 +144,7 @@ export default function MasteryScreen() {
               </Text>
             ) : null}
 
+            <StudentLearningRadar courses={data.courses} live={auth.state === "AUTHENTICATED"} />
             <Text style={local.sectionHeading}>Theo khóa học</Text>
             {data.courses.map(({ course, mastery, masteryError, masterySource, masterySyncedAt }) => {
               const mastered = mastery?.filter(isStrong).length ?? 0;

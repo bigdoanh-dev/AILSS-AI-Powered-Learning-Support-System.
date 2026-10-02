@@ -91,3 +91,34 @@ export function useAssignedQuizzes() {
     },
   };
 }
+
+export function useClassAssignedQuizzes() {
+  const classes = useStudent<ClassItem[]>("/me/classes");
+  const targets = (classes.data ?? []).map((c) => ({
+    type: "CLASS" as const,
+    id: c.classId,
+    title: c.name,
+  }));
+  const query = useStudentBatch<Quiz[]>(
+    classes.data
+      ? targets.map((target) => `/targets/${target.type}/${target.id}/quizzes`)
+      : null,
+  );
+  const data = query.data?.flatMap((quizzes, index) =>
+    quizzes.map((quiz) => ({
+      ...quiz,
+      targetType: targets[index].type,
+      targetId: targets[index].id,
+      targetTitle: targets[index].title,
+    })),
+  );
+  return {
+    data,
+    pending: classes.pending || query.pending,
+    error: classes.error || query.error,
+    retry: () => {
+      classes.retry();
+      query.retry();
+    },
+  };
+}

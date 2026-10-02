@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Text, View, Pressable, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import { Text, View, Pressable, FlatList, StyleSheet, ActivityIndicator, TextInput } from "react-native";
 import { router, type Href } from "expo-router";
 import { useSyncExternalStore } from "react";
 import { ApiError } from "../../../src/api";
@@ -15,6 +15,10 @@ import { Page, Button, Icon, styles, tokens } from "../../../src/ui";
 export default function AdminUsersListScreen() {
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
+
+  const [search, setSearch] = useState("");
+  const [querySearch, setQuerySearch] = useState("");
+  useEffect(() => { const timer = setTimeout(() => setQuerySearch(search.trim()), 350); return () => clearTimeout(timer); }, [search]);
 
   const [role, setRole] = useState<AdminRole>("STUDENT");
   const [status, setStatus] = useState<AdminUserStatus>("ACTIVE");
@@ -37,6 +41,7 @@ export default function AdminUsersListScreen() {
           role,
           status,
           limit: "25",
+          ...(querySearch ? { q: querySearch } : {}),
           ...(targetCursor ? { cursor: targetCursor } : {}),
         });
         const res = await session.request(`/api/v1/admin/users?${queryParams.toString()}`, {
@@ -56,7 +61,7 @@ export default function AdminUsersListScreen() {
         setRefreshing(false);
       }
     },
-    [session, snapshot.user?.role, role, status],
+    [session, snapshot.user?.role, role, status, querySearch],
   );
 
   useEffect(() => {
@@ -131,6 +136,7 @@ export default function AdminUsersListScreen() {
 
   return (
     <Page scroll={false}>
+      <TextInput style={styles.input} accessibilityLabel="Tìm tài khoản" placeholder="Tên, email Google hoặc mã tài khoản" value={search} onChangeText={setSearch} />
       <Text style={styles.title}>Tra cứu người dùng</Text>
       <Text style={styles.small}>Lọc theo vai trò và trạng thái chính thức trên hệ thống</Text>
 

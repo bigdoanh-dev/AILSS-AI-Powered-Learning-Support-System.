@@ -16,6 +16,7 @@ const searchSchema = z
     status: z.enum(ACCOUNT_STATUSES),
     limit: z.coerce.number().int().min(1).max(100).default(50),
     cursor: z.string().min(16).max(16_384).optional(),
+    q: z.string().trim().min(1).max(320).optional(),
   })
   .strict();
 
@@ -32,6 +33,7 @@ export interface AdminSearchQuery {
   readonly status: AccountStatus;
   readonly limit: number;
   readonly cursor?: string;
+  readonly q?: string;
 }
 
 export interface AdminProjectionRow {
@@ -104,6 +106,7 @@ export function parseAdminSearchQuery(value: unknown): AdminSearchQuery {
     status: parsed.status,
     limit: parsed.limit,
     ...(parsed.cursor ? { cursor: parsed.cursor } : {}),
+    ...(parsed.q ? { q: parsed.q.toLocaleLowerCase("vi") } : {}),
   };
 }
 
@@ -120,8 +123,8 @@ export function identitySearchShard(userId: string): number {
   return (createHash("sha256").update(userId, "utf8").digest()[0] ?? 0) % ADMIN_SHARD_COUNT;
 }
 
-export function adminFiltersHash(role: AdminRole, status: AccountStatus): string {
-  return createHash("sha256").update(JSON.stringify({ role, status }), "utf8").digest("hex");
+export function adminFiltersHash(role: AdminRole, status: AccountStatus, q?: string): string {
+  return createHash("sha256").update(JSON.stringify({ role, status, ...(q ? { q: q.trim().toLocaleLowerCase("vi") } : {}) }), "utf8").digest("hex");
 }
 
 export function encodeAdminCursor(secret: string, payload: AdminCursorPayload): string {
@@ -133,7 +136,7 @@ export function encodeAdminCursor(secret: string, payload: AdminCursorPayload): 
 export function decodeAdminCursor(
   secret: string,
   cursor: string,
-  expected: { role: AdminRole; status: AccountStatus },
+  expected: { role: AdminRole; status: AccountStatus; q?: string },
   nowSeconds = Math.floor(Date.now() / 1_000),
 ): AdminCursorPayload {
   const [body, signature, extra] = cursor.split(".");
@@ -174,7 +177,7 @@ export function decodeAdminCursor(
   if (
     payload.role !== expected.role ||
     payload.status !== expected.status ||
-    payload.filtersHash !== adminFiltersHash(expected.role, expected.status) ||
+    payload.filtersHash !== adminFiltersHash(expected.role, expected.status, expected.q) ||
     payload.issuedAt > nowSeconds ||
     nowSeconds - payload.issuedAt > ADMIN_CURSOR_TTL_SECONDS
   ) {

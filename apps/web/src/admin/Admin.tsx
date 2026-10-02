@@ -1,11 +1,21 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, Navigate, Outlet, useParams, useSearchParams } from "react-router-dom";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
 import { sessionRequest, useSession } from "../auth/session";
 import { adminError, adminRequest } from "./api";
 import { useAdminData } from "./useAdminData";
 import { request, errorMessage, priceLabel, type Course, type Catalog } from "../lib/api";
 import { useCourseCategories } from "../lib/course-categories";
 import { Icon } from "../components/Icon";
+import { money } from "../components/RevenuePanels";
 
 export { default as RevenueDashboard } from "./RevenueDashboard";
 export { default as StatsDashboard } from "./StatsDashboard";
@@ -32,223 +42,93 @@ export function AdminGuard() {
   return profile?.role === "ADMIN" ? <Outlet /> : <Navigate to="/app" replace />;
 }
 
+type AdminStatsOverview = {
+  totalAccounts?: number;
+  students: number;
+  lecturers: number;
+  admins: number;
+  suspended: number;
+  aiSessions?: number | null;
+  completionRate?: string | null;
+  avgScore?: string | null;
+  totalLearningHours?: string | null;
+};
+
+type AdminMonitoringOverview = {
+  sampledAt: string;
+  prometheus: { available: boolean; url: string };
+  grafana: { available: boolean; url: string };
+  metrics: { requestRate: number | null; errorPercent: number | null; p95Ms: number | null };
+  services: { job: string; instance: string; up: boolean; lastScrape: string; error: string }[];
+  alerts: { name: string; severity: string; state: string; summary: string }[] | null;
+  history: { time: string; requestRate: number | null }[];
+};
+
+type AdminRevenueOverview = {
+  dataSource?: string;
+  grossMinor: string;
+  refundMinor: string;
+  netMinor: string;
+  orderCount: number;
+  refundCount: number;
+  dailyRevenue: { day: string; grossMinor?: string; netMinor?: string; orders?: number }[];
+};
+
 export function AdminHome() {
   const { profile } = useSession();
-  const stats = useAdminData<{ students: number; lecturers: number; admins: number; suspended: number }>(
-    "/dashboard/stats",
-  );
-  return (
-    <>
-      <div className="dashboard-heading">
-        <div>
-          <p className="eyebrow">BẢNG ĐIỀU KHIỂN QUẢN TRỊ</p>
-          <h1>Chào {profile?.displayName}, cùng quản lý AILSS.</h1>
-          <p className="lead">Quản lý thành viên, xác minh giảng viên và chăm sóc cộng đồng học tập.</p>
-        </div>
-        <Link className="button" to="/app/admin/users?role=LECTURER">
-          Xác minh giảng viên
-        </Link>
-      </div>
+  const statsState = useAdminData<AdminStatsOverview>("/dashboard/stats", { intervalMs: 30_000 });
+  const monState = useAdminData<AdminMonitoringOverview>("/monitoring", { intervalMs: 30_000 });
+  const revState = useAdminData<AdminRevenueOverview>("/dashboard/revenue?range=7d", { intervalMs: 30_000 });
 
-      <div className="workspace-kpi-grid">
-        {[
-          { label: "Học viên đang hoạt động", value: stats.data?.students },
-          { label: "Giảng viên đang hoạt động", value: stats.data?.lecturers },
-          { label: "Quản trị viên đang hoạt động", value: stats.data?.admins },
-          { label: "Tài khoản tạm khóa", value: stats.data?.suspended },
-        ].map((x) => (
-          <div className="kpi-card" key={x.label}>
-            <div className="kpi-value">{x.value ?? "—"}</div>
-            <div className="kpi-label">{x.label}</div>
+  const st = statsState.data;
+  const mon = monState.data;
+  const rev = revState.data;
+  const refresh = () => { statsState.refresh(); monState.refresh(); revState.refresh(); };
+  const pending = statsState.loading || monState.loading || revState.loading;
+  return <>
+    <div className="dashboard-heading"><div><p className="eyebrow">BẢNG ĐIỀU KHIỂN QUẢN TRỊ VIÊN</p><h1>Chào {profile?.displayName}, cùng quản lý AILSS.</h1><p className="lead">Số liệu từ tài khoản, giao dịch và dịch vụ đang vận hành.</p></div><button className="button" onClick={refresh} disabled={pending}>{pending ? "Đang tải…" : "Làm mới dữ liệu"}</button></div>
+    <div className="workspace-quick-actions" role="toolbar" aria-label="Thao tác quản trị nhanh">
+      {[["users", "Tra cứu tài khoản"], ["courses", "Duyệt khóa học"], ["moderation", "Trung tâm kiểm duyệt"], ["revenue", "Doanh thu & SePay"], ["stats", "Thống kê học tập"], ["monitoring", "Prometheus & Grafana"], ["logs", "Nhật ký"], ["settings", "Cài đặt"]].map(([path, label]) => <Link key={path} className="quick-action-chip" to={`/app/admin/${path}`}>{label}</Link>)}
+    </div>
+    <div className="admin-overview-dashboard">
+      <section className="admin-overview-panel" aria-label="Giám sát Prometheus và Grafana">
+        <div className="admin-panel-header"><h2>Prometheus &amp; Grafana</h2><Link className="button button-subtle" to="/app/admin/monitoring">Xem giám sát</Link></div>
+        {monState.error && <p role="alert">{monState.error}</p>}
+        {mon ? <><p role="status">Prometheus: {mon.prometheus.available ? "Đã kết nối" : "Không kết nối được"} · Grafana: {mon.grafana.available ? "Đã kết nối" : "Không kết nối được"}</p>
+          <div className="workspace-kpi-grid">
+            <Card title="Dịch vụ đang hoạt động" value={`${mon.services.filter((item) => item.up).length}/${mon.services.length}`} note="Trạng thái từ lần thu thập gần nhất" />
+            <Card title="Yêu cầu / giây" value={mon.metrics.requestRate?.toFixed(2) ?? "—"} note="Lưu lượng thực tế" />
+            <Card title="Tỷ lệ lỗi 5xx" value={mon.metrics.errorPercent == null ? "—" : `${mon.metrics.errorPercent.toFixed(2)}%`} note="Lỗi từ các dịch vụ" />
+            <Card title="Độ trễ p95" value={mon.metrics.p95Ms == null ? "—" : `${mon.metrics.p95Ms.toFixed(1)} ms`} note="Số liệu Prometheus" />
           </div>
-        ))}
-      </div>
-      {stats.error && <p role="alert">{stats.error}</p>}
-      <div className="workspace-quick-actions" role="toolbar" aria-label="Thao tác quản trị nhanh">
-        <Link className="quick-action-chip" to="/app/admin/revenue">
-          <span className="chip-icon" aria-hidden="true">
-            <Icon name="card" size={16} />
-          </span>
-          <span>Doanh thu & SePay</span>
-        </Link>
-        <Link className="quick-action-chip" to="/app/admin/stats">
-          <span className="chip-icon" aria-hidden="true">
-            <Icon name="chart" size={16} />
-          </span>
-          <span>Thống kê học tập</span>
-        </Link>
-        <Link className="quick-action-chip" to="/app/admin/monitoring">
-          Prometheus &amp; Grafana
-        </Link>
-        <Link className="quick-action-chip" to="/app/admin/logs">
-          <span className="chip-icon" aria-hidden="true">
-            <Icon name="receipt" size={16} />
-          </span>
-          <span>Nhật ký Logs</span>
-        </Link>
-        <Link className="quick-action-chip" to="/app/admin/users">
-          <span className="chip-icon" aria-hidden="true">
-            <Icon name="users" size={16} />
-          </span>
-          <span>Tra cứu tài khoản</span>
-        </Link>
-        <Link className="quick-action-chip" to="/app/admin/users?role=LECTURER">
-          <span className="chip-icon" aria-hidden="true">
-            <Icon name="graduation" size={16} />
-          </span>
-          <span>Xác minh giảng viên</span>
-        </Link>
-        <Link className="quick-action-chip" to="/app/admin/courses">
-          <span className="chip-icon" aria-hidden="true">
-            <Icon name="book" size={16} />
-          </span>
-          <span>Duyệt khóa học</span>
-        </Link>
-        <Link className="quick-action-chip" to="/app/admin/moderation">
-          <span className="chip-icon" aria-hidden="true">
-            <Icon name="shield" size={16} />
-          </span>
-          <span>Trung tâm kiểm duyệt</span>
-        </Link>
-        <Link className="quick-action-chip" to="/app/admin/settings">
-          <span className="chip-icon" aria-hidden="true">
-            <Icon name="settings" size={16} />
-          </span>
-          <span>Cài đặt hệ thống</span>
-        </Link>
-      </div>
-
-      <div className="admin-overview">
-        <section className="admin-welcome">
-          <div>
-            <div className="admin-welcome-top">
-              <span className="admin-symbol" aria-hidden="true">
-                <Icon name="shield" size={32} />
-              </span>
-              <span className="kpi-tag accent">Hệ thống điều hành</span>
-            </div>
-            <h2>Một không gian học tập được chăm sóc.</h2>
-            <p>
-              Theo dõi và giải quyết kịp thời các báo cáo vi phạm, hồ sơ giảng viên chờ duyệt và đảm bảo môi
-              trường học tập trực tuyến an toàn, tin cậy.
-            </p>
-          </div>
-          <Link className="button" to="/app/admin/moderation">
-            <Icon name="shield" size={16} /> Trung tâm kiểm duyệt nội dung →
-          </Link>
-        </section>
-        <div className="workspace-cards">
-          <Card
-            title="Doanh thu & SePay"
-            icon={<Icon name="card" size={20} />}
-            badge="Tài chính"
-            actionText="Xem báo cáo doanh thu →"
-            to="/app/admin/revenue"
-          >
-            Báo cáo dòng tiền, đối soát thanh toán tự động SePay Webhook và khóa học có doanh thu cao nhất.
-          </Card>
-          <Card
-            title="Thống kê học tập & AI"
-            icon={<Icon name="chart" size={20} />}
-            badge="Dữ liệu"
-            actionText="Xem phân tích năng lực →"
-            to="/app/admin/stats"
-          >
-            Thống kê tài khoản và các chỉ số học tập đã được tổng hợp từ hệ thống.
-          </Card>
-          <Card
-            title="Nhật ký & Kiểm toán"
-            icon={<Icon name="receipt" size={20} />}
-            badge="Audit Trail"
-            actionText="Tra cứu nhật ký an ninh →"
-            to="/app/admin/logs"
-          >
-            Theo dõi chi tiết sự kiện xác thực, đối soát giao dịch SePay, kiểm duyệt và tác vụ quản trị.
-          </Card>
-          <Card
-            title="Quản lý thành viên"
-            icon={<Icon name="users" size={20} />}
-            badge="Học viên & GV"
-            actionText="Tra cứu tài khoản →"
-            to="/app/admin/users"
-          >
-            Tra cứu thông tin, phân quyền, kiểm tra lịch sử và quản lý trạng thái tài khoản.
-          </Card>
-          <Card
-            title="Xác minh giảng viên"
-            icon={<Icon name="graduation" size={20} />}
-            badge="Cần duyệt"
-            actionText="Thẩm định hồ sơ →"
-            to="/app/admin/users?role=LECTURER"
-          >
-            Thẩm định hồ sơ, bằng cấp chuyên môn của giảng viên đăng ký trực tiếp.
-          </Card>
-          <Card
-            title="Kiểm định khóa học"
-            icon={<Icon name="book" size={20} />}
-            badge="Nội dung"
-            actionText="Kiểm tra giáo trình →"
-            to="/app/admin/courses"
-          >
-            Duyệt xuất bản, kiểm tra bài giảng và bảo vệ chất lượng đào tạo trên hệ thống.
-          </Card>
-          <Card
-            title="Hồ sơ chuyển vai trò"
-            icon={<Icon name="assignment" size={20} />}
-            badge="Đơn thăng hạng"
-            actionText="Xét duyệt yêu cầu →"
-            to="/app/admin/lecturer-applications"
-          >
-            Xử lý nguyện vọng trở thành giảng viên từ tài khoản học viên hiện có.
-          </Card>
-          <Card
-            title="Cài đặt hệ thống"
-            icon={<Icon name="settings" size={20} />}
-            badge="Bảo mật"
-            actionText="Tùy chỉnh hệ thống →"
-            to="/app/admin/settings"
-          >
-            Chính sách bảo mật phiên làm việc (Cold Start), cảnh báo giao dịch và dọn dẹp bộ nhớ đệm cache.
-          </Card>
-        </div>
-      </div>
-    </>
-  );
+          {mon.history.length > 0 && <div style={{ width: "100%", height: 180 }}><ResponsiveContainer><AreaChart data={mon.history}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="time" tickFormatter={(value: string) => new Date(value).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} /><YAxis /><Tooltip /><Area dataKey="requestRate" stroke="#0284c7" fill="#e0f2fe" /></AreaChart></ResponsiveContainer></div>}
+        </> : <p>{monState.loading ? "Đang tải số liệu giám sát…" : "Chưa có số liệu giám sát."}</p>}
+      </section>
+      <section className="admin-overview-panel" aria-label="Doanh thu thực tế">
+        <div className="admin-panel-header"><h2>Doanh thu &amp; đối soát</h2><Link className="button button-subtle" to="/app/admin/revenue">Xem doanh thu</Link></div>
+        {revState.error && <p role="alert">{revState.error}</p>}
+        {rev ? <div className="workspace-kpi-grid">
+          <Card title="Doanh thu thực tế" value={money(rev.netMinor)} note="Sau hoàn tiền · 7 ngày gần nhất" />
+          <Card title="Đơn hoàn tất" value={String(rev.orderCount)} note="Đơn hàng đã được hệ thống đối soát" />
+          <Card title="Hoàn tiền" value={money(rev.refundMinor)} note={`${rev.refundCount} lượt hoàn tiền`} />
+        </div> : <p>{revState.loading ? "Đang tải giao dịch…" : "Chưa có số liệu doanh thu."}</p>}
+      </section>
+      <section className="admin-overview-panel" aria-label="Quy mô tài khoản">
+        <h2>Tài khoản trên hệ thống</h2>
+        {statsState.error && <p role="alert">{statsState.error}</p>}
+        {st ? <div className="workspace-kpi-grid">
+          <Card title="Học viên" value={String(st.students)} note="Tài khoản được lưu trên backend" />
+          <Card title="Giảng viên" value={String(st.lecturers)} note="Tài khoản được lưu trên backend" />
+          <Card title="Quản trị viên" value={String(st.admins)} note="Tài khoản được lưu trên backend" />
+          <Card title="Tạm khóa" value={String(st.suspended)} note="Trạng thái tài khoản hiện tại" />
+        </div> : <p>{statsState.loading ? "Đang tải tài khoản…" : "Chưa có số liệu tài khoản."}</p>}
+      </section>
+    </div>
+  </>;
 }
-function Card({
-  title,
-  to,
-  icon,
-  badge,
-  actionText = "Xem chi tiết →",
-  children,
-}: {
-  title: string;
-  to: string;
-  icon?: ReactNode;
-  badge?: string;
-  actionText?: string;
-  children: ReactNode;
-}) {
-  return (
-    <article className="governance-card">
-      <div>
-        <div className="card-top">
-          {icon && (
-            <span className="card-icon" aria-hidden="true">
-              {icon}
-            </span>
-          )}
-          {badge && <span className="kpi-tag accent">{badge}</span>}
-        </div>
-        <h2>{title}</h2>
-        <p>{children}</p>
-      </div>
-      <Link className="card-action-btn" to={to}>
-        {actionText}
-      </Link>
-    </article>
-  );
+
+function Card({ title, value, note }: { title: string; value: string; note: string }) {
+  return <article className="kpi-card"><div className="kpi-label">{title}</div><div className="kpi-value">{value}</div><p className="kpi-subtext">{note}</p></article>;
 }
 
 export function Users() {
@@ -261,6 +141,8 @@ export function Users() {
   const [pending, setPending] = useState(true),
     [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
+  const [querySearch, setQuerySearch] = useState("");
+  const loadRevision = useRef(0);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [toast, setToast] = useState<string | null>(null);
 
@@ -273,23 +155,30 @@ export function Users() {
   const [quickMsg, setQuickMsg] = useState("");
 
   async function load() {
+    const revision = ++loadRevision.current;
     setPending(true);
     setMessage("");
     try {
-      const q = new URLSearchParams({ role, status, limit: "25", ...(cursor ? { cursor } : {}) });
+      const q = new URLSearchParams({ role, status, limit: "25", ...(cursor ? { cursor } : {}), ...(querySearch ? { q: querySearch } : {}) });
       const r = await adminRequest<User[]>("/users?" + q);
+      if (revision !== loadRevision.current) return;
       setItems(r.data);
       setNext(r.meta?.pagination?.nextCursor || null);
     } catch (e) {
-      setMessage(adminError(e));
+      if (revision === loadRevision.current) setMessage(adminError(e));
     } finally {
-      setPending(false);
+      if (revision === loadRevision.current) setPending(false);
     }
   }
 
   useEffect(() => {
     void load();
-  }, [role, status, cursor]);
+  }, [role, status, cursor, querySearch]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => { setCursor(""); setQuerySearch(search.trim()); }, 350);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -332,15 +221,7 @@ export function Users() {
     }
   };
 
-  const filteredItems = items.filter((u) => {
-    const q = search.toLowerCase().trim();
-    if (!q) return true;
-    return (
-      u.displayName.toLowerCase().includes(q) ||
-      u.userId.toLowerCase().includes(q) ||
-      (u.emailMasked && u.emailMasked.toLowerCase().includes(q))
-    );
-  });
+  const filteredItems = items;
 
   return (
     <>
@@ -492,7 +373,7 @@ export function Users() {
                     </td>
                     <td>
                       <span className="muted" style={{ fontSize: "13px" }}>
-                        {u.emailMasked || `${u.displayName.toLowerCase().replace(/\s+/g, "")}@ailss.edu.vn`}
+                        {u.emailMasked || "Chưa có email"}
                       </span>
                     </td>
                     <td>

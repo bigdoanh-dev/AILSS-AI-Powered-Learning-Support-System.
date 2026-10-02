@@ -130,6 +130,70 @@ const identity = {
 };
 
 describe("P7.11 Learning authoring", () => {
+  it("rejects nonzero prices on explicitly free creates/patches and normalizes zero", () => {
+    expect(() => parseCreateCourse({ ...request, priceType: "FREE" })).toThrow();
+    expect(() => parsePatchCourse({ priceType: "FREE", price: "1000000" })).toThrow();
+    expect(parseCreateCourse({ ...request, priceType: "FREE", price: "0.00" }).price).toBe("0");
+    expect(parsePatchCourse({ priceType: "FREE" })).toEqual({ priceType: "FREE", price: "0" });
+  });
+
+  it("clears a paid price when switched to free, including idempotent replay", async () => {
+    const store = new MemoryStore(),
+      service = new LearningAuthoringService(store, identity, "secret");
+    const created = await service.create({
+      actor,
+      request: parseCreateCourse(request),
+      idempotencyKey: "pricing-create",
+      requestId,
+    });
+    const change = {
+      actor,
+      courseId: created.course.courseId,
+      request: parsePatchCourse({ priceType: "FREE" }),
+      idempotencyKey: "pricing-free",
+      requestId,
+    };
+    const updated = await service.update(change);
+    expect(updated.course).toMatchObject({ priceType: "FREE", price: "0" });
+    expect((await service.update(change)).course).toEqual(updated.course);
+    const paid = await service.update({
+      ...change,
+      request: parsePatchCourse({ priceType: "PAID", price: "1000000" }),
+      idempotencyKey: "pricing-paid",
+    });
+    expect(paid.course).toMatchObject({ priceType: "PAID", price: "1000000" });
+  });
+
+  it("rejects price-only updates of free courses and repairs legacy prices on metadata edits", async () => {
+    const store = new MemoryStore(),
+      service = new LearningAuthoringService(store, identity, "secret");
+    const created = await service.create({
+      actor,
+      request: parseCreateCourse({ ...request, priceType: "FREE", price: "0" }),
+      idempotencyKey: "free-create",
+      requestId,
+    });
+    await expect(
+      service.update({
+        actor,
+        courseId: created.course.courseId,
+        request: parsePatchCourse({ price: "1000000" }),
+        idempotencyKey: "free-price-only",
+        requestId,
+      }),
+    ).rejects.toMatchObject({ code: "FREE_COURSE_PRICE_MUST_BE_ZERO", status: 400 });
+    const original = store.courses.get(created.course.courseId)!;
+    expect(original.price).toBe("0");
+    store.courses.set(original.courseId, { ...original, price: "1000000" });
+    const fixed = await service.update({
+      actor,
+      courseId: original.courseId,
+      request: parsePatchCourse({ title: "Legacy free course" }),
+      idempotencyKey: "free-repair",
+      requestId,
+    });
+    expect(fixed.course).toMatchObject({ priceType: "FREE", price: "0", title: "Legacy free course" });
+  });
   it("normalizes strict create DTO without binary floating point", () => {
     const value = parseCreateCourse(request);
     expect(value.slug).toBe("co-so-du-lieu-nang-cao");

@@ -385,6 +385,8 @@ app.get("/api/v1/courses/:courseId/roster", learningCommerce.roster);
 app.get("/api/v1/courses/:courseId/progress", learningProgress.read);
 app.get("/api/v1/mastery/me", adaptiveLearning.mastery);
 app.get("/api/v1/mastery/courses/:courseId", adaptiveLearning.courseMastery);
+app.get("/api/v1/courses/:courseId/students/:studentId/mastery", adaptiveLearning.lecturerMastery);
+app.get("/api/v1/courses/:courseId/mastery-summary", adaptiveLearning.lecturerMasterySummary);
 app.get("/api/v1/mastery/outcomes/:outcomeId", adaptiveLearning.outcome);
 app.post(
   "/api/v1/study-plan/generate",

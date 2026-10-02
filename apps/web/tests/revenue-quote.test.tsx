@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { RevenueQuote } from "../src/lecturer/RevenueQuote";
+import { CoursePricingFields } from "../src/lecturer/CoursePricingFields";
 
 vi.mock("../src/lecturer/api", () => ({
   lecturerRequest: vi.fn(async () => ({ data: { basisPoints: 2200 } })),
@@ -9,6 +10,46 @@ vi.mock("../src/lecturer/api", () => ({
 afterEach(cleanup);
 
 describe("ước tính doanh thu khi nhập học phí", () => {
+  it("updates from controlled modal props even without named form inputs", () => {
+    const { rerender } = render(
+      <RevenueQuote price="1000000" currency="VND" paid commissionBasisPoints={1500} />,
+    );
+    expect(screen.getByText("1.000.000 VND")).toBeTruthy();
+    expect(screen.getByText("−150.000 VND")).toBeTruthy();
+    expect(screen.getByText("850.000 VND")).toBeTruthy();
+    rerender(<RevenueQuote price="2000000" currency="VND" paid commissionBasisPoints={1500} />);
+    expect(screen.getByText("1.700.000 VND")).toBeTruthy();
+    rerender(<RevenueQuote price="2000000" currency="VND" paid={false} commissionBasisPoints={1500} />);
+    expect(screen.getAllByText("0 VND")).toHaveLength(2);
+    expect(screen.queryByText("1.700.000 VND")).toBeNull();
+  });
+
+  it("locks a free course price and submits zero after changing from paid to free", async () => {
+    render(
+      <form>
+        <CoursePricingFields initialPriceType="PAID" initialPrice="1000000" />
+      </form>,
+    );
+    expect(await screen.findByText("780.000 VND")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Hình thức học phí"), { target: { value: "FREE" } });
+    const price = screen.getByLabelText("Giá niêm yết") as HTMLInputElement;
+    expect(price.readOnly).toBe(true);
+    expect(price.value).toBe("0");
+    expect(new FormData(document.querySelector("form")!).get("price")).toBe("0");
+    fireEvent.change(screen.getByLabelText("Hình thức học phí"), { target: { value: "PAID" } });
+    expect(price.readOnly).toBe(false);
+    fireEvent.change(price, { target: { value: "2000000" } });
+    expect(screen.getByText("1.560.000 VND")).toBeTruthy();
+  });
+
+  it("does not display a stale positive price from legacy free course metadata", () => {
+    render(
+      <form>
+        <CoursePricingFields initialPriceType="FREE" initialPrice="1000000" />
+      </form>,
+    );
+    expect((screen.getByLabelText("Giá niêm yết") as HTMLInputElement).value).toBe("0");
+  });
   it("loads the admin-adjusted commission rate", async () => {
     render(
       <form>

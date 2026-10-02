@@ -16,11 +16,61 @@ import Discussion from "./Discussion";
 import { ScheduleTime, StateChip } from "../components/product";
 import { Icon } from "../components/Icon";
 import { CourseArtwork } from "../components/CourseArtwork";
+import { useClassAssignedQuizzes } from "./overview";
+
+function formatDeadline(isoDate?: string) {
+  if (!isoDate) return "Không có hạn nộp";
+  try {
+    const d = new Date(isoDate);
+    const now = new Date();
+    const isToday =
+      d.getDate() === now.getDate() &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    const isTomorrow =
+      d.getDate() === tomorrow.getDate() &&
+      d.getMonth() === tomorrow.getMonth() &&
+      d.getFullYear() === tomorrow.getFullYear();
+    const timeStr = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false });
+    if (isToday) return `Hôm nay, ${timeStr}`;
+    if (isTomorrow) return `Ngày mai, ${timeStr}`;
+    return dateLabel(isoDate);
+  } catch {
+    return dateLabel(isoDate);
+  }
+}
+
+function formatDueLabel(isoDate?: string) {
+  if (!isoDate) return "sắp tới";
+  try {
+    const d = new Date(isoDate);
+    const now = new Date();
+    if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+      return "hôm nay";
+    }
+    return "sắp tới";
+  } catch {
+    return "sắp tới";
+  }
+}
+
 export function Classes() {
   const query = useStudent<ClassItem[]>("/me/classes"),
     [code, setCode] = useState(""),
+    [showJoinForm, setShowJoinForm] = useState(false),
     navigate = useNavigate();
+  const classQuizzesQuery = useClassAssignedQuizzes();
   const command = useCommand();
+
+  const classQuizzes = classQuizzesQuery.data ?? [];
+  const sortedClassQuizzes = [...classQuizzes].sort((a, b) => {
+    if (!a.closesAt) return 1;
+    if (!b.closesAt) return -1;
+    return new Date(a.closesAt).getTime() - new Date(b.closesAt).getTime();
+  });
+
   if (command.outcome === "failure")
     return (
       <OperationResult
@@ -38,94 +88,238 @@ export function Classes() {
     );
   return (
     <>
-      <Heading title="Lớp học của tôi">Theo dõi lịch học và kết nối với lớp của bạn.</Heading>
-      <section className="study-card">
-        <h2>Tham gia lớp học mới</h2>
-        <p className="muted" style={{ marginBottom: "12px" }}>
-          Nhập mã tham gia do giảng viên cung cấp (từ 6 - 32 ký tự) để tự động ghi danh vào lớp học.
-        </p>
-        <form
-          className="study-search"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const joined = await command.run<{ classId: string }>("/classes/join", "POST", {
-              code: code.trim().toUpperCase(),
-            });
-            if (joined) {
-              setCode("");
-              query.retry();
-              navigate("/app/result", {
-                state: {
-                  success: true,
-                  title: "Tham gia lớp thành công",
-                  message: "Bạn đã được thêm vào lớp. Lịch học và thông báo đã sẵn sàng.",
-                  to: "/app/classes/" + joined.classId,
-                  label: "Vào lớp học",
-                },
-              });
-            }
-          }}
-        >
-          <label>
-            Mã tham gia
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="VD: AILSS-REACT-2026"
-              required
-              minLength={6}
-              maxLength={32}
-              autoComplete="off"
-            />
-          </label>
-          <button className="button" disabled={command.busy}>
-            Tham gia lớp →
-          </button>
-        </form>
-        <Status command={command} />
+      <Heading title="Lớp học của tôi">Theo dõi lịch học, bài tập trên lớp và kết nối với giảng viên.</Heading>
+
+      {/* Sắp đến hạn / Việc cần phải làm - CHỈ BÀI TẬP THUỘC LỚP HỌC */}
+      <section className="class-todo-card animate-fade-in" aria-label="Bài tập lớp học sắp đến hạn">
+        <div className="class-todo-header">
+          <div className="class-todo-header-left">
+            <div className="class-todo-icon-wrap">
+              <Icon name="quiz" size={22} />
+            </div>
+            <div>
+              <h2>Sắp đến hạn</h2>
+              <p className="subtext">
+                Việc cần làm và bài tập được giao trực tiếp trong các lớp học bạn đang tham gia.
+              </p>
+            </div>
+          </div>
+          <Link to="/app/assessments" className="class-todo-view-all-link" title="Xem tất cả bài tập">
+            <span>Xem việc cần làm</span>
+            <Icon name="chevronRight" size={14} />
+          </Link>
+        </div>
+
+        {classQuizzesQuery.pending ? (
+          <div className="class-todo-loading" role="status">
+            <Icon name="refresh" size={18} className="spin-animation" />
+            <span>Đang kiểm tra danh sách bài tập lớp học…</span>
+          </div>
+        ) : sortedClassQuizzes.length > 0 ? (
+          <div className="class-todo-list">
+            {sortedClassQuizzes.slice(0, 5).map((q) => {
+              const deadlineText = formatDeadline(q.closesAt);
+              const isUrgent =
+                q.closesAt &&
+                new Date(q.closesAt).getTime() - Date.now() < 24 * 3600 * 1000 &&
+                new Date(q.closesAt).getTime() > Date.now();
+              return (
+                <div key={q.quizId} className={`class-todo-item ${isUrgent ? "is-urgent" : ""}`}>
+                  <div className="class-todo-item-main">
+                    <div className="class-todo-doc-icon" aria-hidden="true">
+                      <Icon name="quiz" size={20} />
+                    </div>
+                    <div className="class-todo-info">
+                      <Link to={`/app/assessments/${q.quizId}`} className="class-todo-title">
+                        {q.title}
+                      </Link>
+                      <div className="class-todo-meta">
+                        <span className="class-todo-label">Lớp học:</span>
+                        <Link to={`/app/classes/${q.targetId}`} className="class-todo-class-link">
+                          {q.targetTitle}
+                        </Link>
+                        {q.questionCount ? (
+                          <>
+                            <span className="class-todo-dot">•</span>
+                            <span className="class-todo-count">{q.questionCount} câu hỏi</span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="class-todo-item-right">
+                    <div className="class-todo-due-col">
+                      <span className="class-todo-due-caption">Hạn nộp</span>
+                      <span className={`class-todo-due-date ${isUrgent ? "urgent-text" : ""}`}>
+                        {deadlineText}
+                      </span>
+                    </div>
+                    <Link
+                      to={`/app/assessments/${q.quizId}`}
+                      className="button button-small class-todo-action-btn"
+                    >
+                      Làm bài →
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="class-todo-empty">
+            <div className="class-todo-empty-icon">
+              <Icon name="checkCircle" size={26} />
+            </div>
+            <div>
+              <strong>Không có bài tập nào cần nộp</strong>
+              <p>Hiện không có bài kiểm tra hoặc bài tập nào sắp đến hạn trong các lớp học của bạn.</p>
+            </div>
+          </div>
+        )}
       </section>
+
+      {/* Class Section Header with "+ Thêm lớp học" button */}
+      <div className="class-hub-header">
+        <div>
+          <p className="eyebrow">DANH SÁCH LỚP</p>
+          <h2>Lớp học</h2>
+        </div>
+        <button
+          type="button"
+          className="button button-small class-join-toggle-btn"
+          onClick={() => setShowJoinForm((v) => !v)}
+        >
+          <Icon name={showJoinForm ? "checkCircle" : "plus"} size={14} />
+          <span>{showJoinForm ? "Ẩn khung tham gia" : "+ Thêm lớp học"}</span>
+        </button>
+      </div>
+
+      {/* Join Class Form (Accessible or expanded via + Thêm lớp học) */}
+      {(showJoinForm || !query.data?.length) && (
+        <section className="study-card class-join-card animate-fade-in">
+          <div className="class-join-header">
+            <div className="class-join-icon">
+              <Icon name="class" size={20} />
+            </div>
+            <div>
+              <h3>Tham gia lớp học mới</h3>
+              <p className="muted" style={{ margin: "2px 0 0", fontSize: "13px" }}>
+                Nhập mã tham gia do giảng viên cung cấp (từ 6 - 32 ký tự) để tự động ghi danh vào lớp học.
+              </p>
+            </div>
+          </div>
+          <form
+            className="study-search"
+            style={{ marginTop: "14px" }}
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const joined = await command.run<{ classId: string }>("/classes/join", "POST", {
+                code: code.trim().toUpperCase(),
+              });
+              if (joined) {
+                setCode("");
+                query.retry();
+                navigate("/app/result", {
+                  state: {
+                    success: true,
+                    title: "Tham gia lớp thành công",
+                    message: "Bạn đã được thêm vào lớp. Lịch học và thông báo đã sẵn sàng.",
+                    to: "/app/classes/" + joined.classId,
+                    label: "Vào lớp học",
+                  },
+                });
+              }
+            }}
+          >
+            <label>
+              Mã tham gia
+              <input
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="VD: AILSS-REACT-2026"
+                required
+                minLength={6}
+                maxLength={32}
+                autoComplete="off"
+              />
+            </label>
+            <button className="button" disabled={command.busy}>
+              Tham gia lớp →
+            </button>
+          </form>
+          <Status command={command} />
+        </section>
+      )}
+
+      {/* Classes Grid */}
       <State query={query}>
         {query.data?.length ? (
           <div className="study-grid">
-            {query.data.map((c) => (
-              <article
-                className="study-card study-card-rich learning-card class-learning-card"
-                key={c.classId}
-              >
-                <div className="learning-card-media">
-                  <CourseArtwork title={c.name} />
-                  <span className="learning-card-type">
-                    <Icon name="class" size={14} /> Lớp học
-                  </span>
-                </div>
-                <div className="learning-card-content">
-                  <div className="learning-card-heading-row">
-                    <span className="course-category-chip">Lớp theo lịch</span>
-                    <StateChip state={c.state} />
+            {query.data.map((c) => {
+              const classPendingQuizzes = classQuizzes.filter((q) => q.targetId === c.classId);
+              const firstDueQuiz = classPendingQuizzes[0];
+              return (
+                <article
+                  className="study-card study-card-rich learning-card class-learning-card"
+                  key={c.classId}
+                >
+                  <div className="learning-card-media">
+                    <CourseArtwork title={c.name} />
+                    <span className="learning-card-type">
+                      <Icon name="class" size={14} /> Lớp học
+                    </span>
                   </div>
-                  <h2>{c.name}</h2>
-                  <p className="learning-card-meta">
-                    <Icon name="calendar" size={14} /> Lịch học trực tiếp
-                    <span>•</span>
-                    <Icon name="attendance" size={14} /> Có điểm danh
-                  </p>
-                  <ul className="course-benefits" aria-label="Tiện ích lớp học">
-                    <li>✓ Thảo luận cùng giảng viên</li>
-                    <li>✓ Bài tập &amp; tài liệu lớp</li>
-                    <li>✓ Theo dõi chuyên cần</li>
-                  </ul>
-                  <div className="course-card-divider" />
-                  <div className="course-card-actions">
-                    <Link className="learning-card-button secondary" to="/app/schedule">
-                      <Icon name="calendar" size={15} /> Xem lịch
-                    </Link>
-                    <Link className="learning-card-button primary" to={"/app/classes/" + c.classId}>
-                      <Icon name="class" size={15} /> Vào lớp học
-                    </Link>
+                  <div className="learning-card-content">
+                    <div className="learning-card-heading-row">
+                      <span className="course-category-chip">Lớp theo lịch</span>
+                      <StateChip state={c.state} />
+                    </div>
+                    <h2>{c.name}</h2>
+                    <p className="learning-card-meta">
+                      <Icon name="calendar" size={14} /> Lịch học trực tiếp
+                      <span>•</span>
+                      <Icon name="attendance" size={14} /> Có điểm danh
+                    </p>
+
+                    {/* Due Assignment Snippet (if class has active tasks) */}
+                    {firstDueQuiz ? (
+                      <div className="class-card-due-snippet">
+                        <div className="due-snippet-header">
+                          <Icon name="alert" size={13} />
+                          <span className="due-snippet-label">
+                            Đến hạn {formatDueLabel(firstDueQuiz.closesAt)}
+                          </span>
+                        </div>
+                        <Link
+                          to={`/app/assessments/${firstDueQuiz.quizId}`}
+                          className="due-snippet-title"
+                          title={firstDueQuiz.title}
+                        >
+                          {firstDueQuiz.title}
+                        </Link>
+                      </div>
+                    ) : (
+                      <ul className="course-benefits" aria-label="Tiện ích lớp học">
+                        <li>✓ Thảo luận cùng giảng viên</li>
+                        <li>✓ Bài tập &amp; tài liệu lớp</li>
+                        <li>✓ Theo dõi chuyên cần</li>
+                      </ul>
+                    )}
+
+                    <div className="course-card-divider" />
+                    <div className="course-card-actions">
+                      <Link className="learning-card-button secondary" to="/app/schedule">
+                        <Icon name="calendar" size={15} /> Xem lịch
+                      </Link>
+                      <Link className="learning-card-button primary" to={"/app/classes/" + c.classId}>
+                        <Icon name="class" size={15} /> Vào lớp học
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         ) : (
           <Empty>Bạn chưa có lớp học. Nhập mã được giảng viên cung cấp để tham gia.</Empty>

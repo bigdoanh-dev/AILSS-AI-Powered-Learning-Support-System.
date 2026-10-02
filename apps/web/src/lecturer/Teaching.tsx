@@ -1,6 +1,6 @@
 import { readCourseCover } from "../lib/course-cover";
 import { useCourseCategories } from "../lib/course-categories";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { lecturerError, lecturerRequest, useLecturer } from "./api";
 import { CourseArtwork } from "../components/CourseArtwork";
@@ -10,6 +10,10 @@ import { Icon, type IconName } from "../components/Icon";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import { MediaUpload } from "./MediaUpload";
 import { RevenueQuote } from "./RevenueQuote";
+import { CoursePricingFields } from "./CoursePricingFields";
+import { ClassCreateModal } from "./Classroom";
+import { monthNow, rangeForMonth } from "../student/api";
+
 type Course = {
   courseId: string;
   coverDataUrl?: string | null;
@@ -47,185 +51,31 @@ type Offering = {
 };
 const values = (f: FormData) => Object.fromEntries(f.entries());
 
-export function TeachingHome() {
-  const courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses");
-  const classes = useLecturer<
-    { classId: string; name: string }[] | { classes: { classId: string; name: string }[] }
-  >("/me/owned-classes");
-  const offerings = useLecturer<Offering[] | { items: Offering[] }>("/me/owned-offerings");
-  const courseList = Array.isArray(courses.data) ? courses.data : courses.data?.items;
-  const classList = Array.isArray(classes.data) ? classes.data : classes.data?.classes;
-  const offeringList = Array.isArray(offerings.data) ? offerings.data : offerings.data?.items;
-  return (
-    <div className="teaching-home-container animate-fade-in">
-      <div className="dashboard-heading">
-        <div>
-          <p className="eyebrow">GIẢNG VIÊN · TỔNG QUAN HOẠT ĐỘNG</p>
-          <h1>Tổng quan giảng dạy</h1>
-          <p className="lead">Khóa học, lớp học và đợt mở đăng ký do bạn phụ trách.</p>
-        </div>
-        <div className="dashboard-header-actions">
-          <Link className="button" to="/app/teaching/courses/new">
-            + Tạo khóa học
-          </Link>
-        </div>
-      </div>
-
-      <div className="workspace-kpi-grid">
-        {[
-          { label: "Khóa học của tôi", value: courseList?.length, icon: "📚", sub: "Chương trình biên soạn" },
-          { label: "Lớp phụ trách", value: classList?.length, icon: "👥", sub: "Lớp học trực tiếp" },
-          { label: "Đợt mở đăng ký", value: offeringList?.length, icon: "🏷️", sub: "Gói học tự do & lớp" },
-        ].map((x) => (
-          <div className="kpi-card teaching-kpi-card" key={x.label}>
-            <div className="kpi-header">
-              <span className="kpi-icon">{x.icon}</span>
-              <span className="kpi-tag accent">Hoạt động</span>
-            </div>
-            <div className="kpi-value">{x.value ?? "0"}</div>
-            <div className="kpi-label">{x.label}</div>
-            <p className="kpi-subtext">{x.sub}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="workspace-quick-actions">
-        {[
-          ["/app/teaching/classes/new", "Tạo lớp học", "plus"],
-          ["/app/teaching/schedule", "Lịch dạy", "calendar"],
-          ["/app/teaching/grades", "Bảng điểm", "trophy"],
-          ["/app/teaching/reports", "Báo cáo", "fileText"],
-          ["/app/teaching/revenue", "Doanh thu", "dollar"],
-          ["/app/teaching/ai", "AI Studio", "sparkles"],
-        ].map(([url, label, iconName]) => (
-          <Link className="quick-action-chip teaching-action-chip" to={url} key={url}>
-            <Icon name={iconName as IconName} size={15} />
-            <span>{label}</span>
-          </Link>
-        ))}
-      </div>
-
-      <State q={courses}>
-        {() => (
-          <section className="dashboard-section-card animate-fade-in" style={{ marginTop: "24px" }}>
-            <div className="section-card-header">
-              <div>
-                <h2>Khóa học của tôi</h2>
-                <p className="subtext">Danh sách các khóa học bạn đang giảng dạy và quản lý nội dung.</p>
-              </div>
-              <Link className="button button-subtle button-small" to="/app/teaching/courses/new">
-                + Thêm khóa học
-              </Link>
-            </div>
-            {courseList?.length ? (
-              <div className="teaching-home-grid">
-                {courseList.map((c, i) => (
-                  <article
-                    className="teaching-home-card"
-                    key={c.courseId}
-                    style={{ animationDelay: `${i * 50}ms` }}
-                  >
-                    <div className="teaching-home-card-top">
-                      <div className="teaching-home-card-icon">
-                        <Icon name="book" size={20} />
-                      </div>
-                      <span className="badge">{c.priceType === "FREE" ? "Miễn phí" : "Khóa học"}</span>
-                    </div>
-                    <h3 className="teaching-home-card-title">
-                      <Link to={`/app/teaching/courses/${c.courseId}`}>{c.title}</Link>
-                    </h3>
-                    <div className="teaching-home-card-actions">
-                      <Link className="button button-small" to={`/app/teaching/courses/${c.courseId}`}>
-                        <span>Quản lý khóa học</span>
-                        <Icon name="chevronRight" size={14} />
-                      </Link>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p>Bạn chưa tạo khóa học nào.</p>
-            )}
-          </section>
-        )}
-      </State>
-
-      <State q={classes}>
-        {() => (
-          <section className="dashboard-section-card animate-fade-in" style={{ marginTop: "24px" }}>
-            <div className="section-card-header">
-              <div>
-                <h2>Lớp phụ trách</h2>
-                <p className="subtext">Lớp học và lịch trình các buổi học tương tác trực tiếp.</p>
-              </div>
-              <Link className="button button-subtle button-small" to="/app/teaching/classes/new">
-                + Thêm lớp học
-              </Link>
-            </div>
-            {classList?.length ? (
-              <div className="teaching-home-grid">
-                {classList.map((c, i) => (
-                  <article
-                    className="teaching-home-card"
-                    key={c.classId}
-                    style={{ animationDelay: `${i * 50}ms` }}
-                  >
-                    <div className="teaching-home-card-top">
-                      <div
-                        className="teaching-home-card-icon"
-                        style={{ background: "rgba(16, 185, 129, 0.12)", color: "#10b981" }}
-                      >
-                        <Icon name="users" size={20} />
-                      </div>
-                      <span className="green-badge-pill">● Đang diễn ra</span>
-                    </div>
-                    <h3 className="teaching-home-card-title">
-                      <Link to={`/app/teaching/classes/${c.classId}`}>{c.name}</Link>
-                    </h3>
-                    <div className="teaching-home-card-actions">
-                      <Link
-                        className="button button-small button-subtle"
-                        to={`/app/teaching/classes/${c.classId}`}
-                      >
-                        <span>Chi tiết lớp học</span>
-                        <Icon name="chevronRight" size={14} />
-                      </Link>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p>Bạn chưa tạo lớp học nào.</p>
-            )}
-          </section>
-        )}
-      </State>
-      {!!offerings.error && <State q={offerings}>{() => null}</State>}
-    </div>
-  );
-}
-
-export function TeachingCourses() {
-  const categories = useCourseCategories();
-  const [selectedCat, setSelectedCat] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "PUBLISHED" | "DRAFT" | "HIDDEN">("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const [showCreateInline, setShowCreateInline] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newSlug, setNewSlug] = useState("");
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [newPriceType, setNewPriceType] = useState<"FREE" | "PAID">("FREE");
-  const [newPrice, setNewPrice] = useState("0");
-  const [newCurrency, setNewCurrency] = useState("VND");
+export function CourseCreateModal({
+  isOpen,
+  onClose,
+  onCreated,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreated?: (course: Course) => void;
+}) {
+  const nav = useNavigate();
+  const categoryOptions = useCourseCategories();
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
+  const [categoryName, setCategoryName] = useState("");
+  const [priceType, setPriceType] = useState<"FREE" | "PAID">("FREE");
+  const [price, setPrice] = useState("0");
+  const [currency, setCurrency] = useState("VND");
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
-  const [createLoading, setCreateLoading] = useState(false);
-  const [createMsg, setCreateMsg] = useState<string | null>(null);
-  const [createError, setCreateError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses");
-  const coursesList = Array.isArray(courses.data) ? courses.data : courses.data?.items || [];
+  if (!isOpen) return null;
 
   const slugifyTitle = (text: string) => {
     return text
@@ -240,48 +90,1289 @@ export function TeachingCourses() {
   const handleCoverFile = (file: File) => {
     void readCourseCover(file)
       .then(setCoverPreview)
-      .catch((error: Error) => setCreateError(error.message));
+      .catch((err: Error) => setError(err.message));
   };
 
-  const handleCreateCourse = async (e: FormEvent) => {
+  const handleTitleChange = (val: string) => {
+    setTitle(val);
+    if (!slug || slug === slugifyTitle(title)) {
+      setSlug(slugifyTitle(val));
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) {
-      setCreateError("Vui lòng nhập tên khóa học.");
+    if (!title.trim()) {
+      setError("Vui lòng nhập tên khóa học.");
       return;
     }
-    const slug = newSlug.trim() || slugifyTitle(newTitle);
-    setCreateLoading(true);
-    setCreateError(null);
-    setCreateMsg(null);
+    const finalSlug = slug.trim() || slugifyTitle(title);
+    setLoading(true);
+    setError(null);
+    setMsg(null);
     try {
       const payload = {
         coverDataUrl: coverPreview,
-        title: newTitle.trim(),
-        slug,
-        categoryName: newCategoryName.trim(),
-        priceType: newPriceType,
-        price: newPriceType === "PAID" ? newPrice : "0",
-        currency: newCurrency,
+        title: title.trim(),
+        slug: finalSlug,
+        description: description.trim() || undefined,
+        categoryName: categoryName.trim() || "Công nghệ thông tin",
+        priceType,
+        price: priceType === "PAID" ? price : "0",
+        currency,
       };
-      await lecturerRequest<Course>("/courses", "POST", payload);
-
-      setCreateMsg("✓ Khóa học đã được tạo thành công!");
-      courses.retry();
+      const res = await lecturerRequest<Course>("/courses", "POST", payload);
+      setMsg("✓ Khởi tạo bản nháp khóa học thành công!");
+      setLoading(false);
       setTimeout(() => {
-        setNewTitle("");
-        setNewSlug("");
-        setCoverPreview(null);
-        setNewPriceType("FREE");
-        setNewPrice("0");
-        setCreateLoading(false);
-        setShowCreateInline(false);
-        setCreateMsg(null);
-      }, 1400);
+        onClose();
+        if (onCreated) {
+          onCreated(res.data);
+        } else if (res.data?.courseId) {
+          nav(`/app/teaching/courses/${res.data.courseId}`);
+        }
+      }, 500);
     } catch (err) {
-      setCreateError(lecturerError(err));
-      setCreateLoading(false);
+      setError(lecturerError(err));
+      setLoading(false);
     }
   };
+
+  return (
+    <div
+      className="admin-modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="course-create-modal-title"
+    >
+      <div
+        className="admin-modal-card large"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: 760, maxHeight: "92vh" }}
+      >
+        <div className="admin-modal-header">
+          <div>
+            <p className="eyebrow" style={{ margin: 0, color: "var(--blue, #0284c7)" }}>
+              COURSE AUTHORING · BIÊN SOẠN MỚI
+            </p>
+            <h2 id="course-create-modal-title" style={{ margin: "4px 0 0" }}>
+              Tạo Khóa Học Mới
+            </h2>
+            <p className="subtext" style={{ margin: "4px 0 0" }}>
+              Thiết lập thông tin khóa học, chủ đề đào tạo, hình thức học phí và tải lên ảnh bìa nhận diện.
+            </p>
+          </div>
+          <button type="button" className="admin-modal-close-btn" onClick={onClose} aria-label="Đóng">
+            ✕
+          </button>
+        </div>
+
+        {msg && (
+          <div className="dashboard-banner-notice" role="status" style={{ marginBottom: 16 }}>
+            <span>✓</span>
+            <span>{msg}</span>
+          </div>
+        )}
+        {error && (
+          <div
+            style={{
+              padding: "10px 14px",
+              borderRadius: 8,
+              backgroundColor: "rgba(220, 38, 38, 0.1)",
+              color: "#dc2626",
+              fontSize: 13,
+              fontWeight: 500,
+              marginBottom: 16,
+            }}
+          >
+            ⚠️ {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="form-panel form-grid">
+          <label>
+            Tên khóa học <span style={{ color: "#dc2626" }}>*</span>
+            <input
+              type="text"
+              required
+              placeholder="VD: Lập trình Python ứng dụng AI & LLM nâng cao..."
+              value={title}
+              onChange={(e) => handleTitleChange(e.target.value)}
+            />
+          </label>
+          <label>
+            Đường dẫn tĩnh (Slug) <span style={{ color: "#dc2626" }}>*</span>
+            <input
+              type="text"
+              required
+              placeholder="vd: lap-trinh-python-ai-llm"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+            />
+          </label>
+          <label style={{ gridColumn: "1 / -1" }}>
+            Mô tả tóm tắt khóa học
+            <textarea
+              rows={2}
+              maxLength={2000}
+              placeholder="Mô tả mục tiêu, kiến thức trọng tâm và kỹ năng đầu ra của khóa học..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </label>
+          <label>
+            Chủ đề đào tạo <span style={{ color: "#dc2626" }}>*</span>
+            <input
+              required
+              minLength={2}
+              maxLength={80}
+              placeholder="Ví dụ: Trí tuệ nhân tạo, Cơ sở dữ liệu..."
+              value={categoryName}
+              onChange={(e) => setCategoryName(e.target.value)}
+              list="course-modal-category-suggestions"
+            />
+            <datalist id="course-modal-category-suggestions">
+              {categoryOptions.map((cat) => (
+                <option key={cat.id} value={cat.name} />
+              ))}
+            </datalist>
+          </label>
+          <label>
+            Hình thức đào tạo
+            <select
+              value={priceType}
+              onChange={(e) => {
+                const pt = e.target.value as "FREE" | "PAID";
+                setPriceType(pt);
+                if (pt === "FREE") setPrice("0");
+              }}
+            >
+              <option value="FREE">Miễn phí (Cộng đồng)</option>
+              <option value="PAID">Có học phí (Thương mại)</option>
+            </select>
+          </label>
+
+          {priceType === "PAID" && (
+            <>
+              <label>
+                Học phí (VND)
+                <input
+                  type="number"
+                  min={1000}
+                  step={1000}
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="VD: 390000"
+                  required
+                />
+              </label>
+              <label>
+                Tiền tệ
+                <input type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} required />
+              </label>
+            </>
+          )}
+
+          {/* Cover image upload box */}
+          <div style={{ gridColumn: "1 / -1" }}>
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--ink)",
+                display: "block",
+                marginBottom: 6,
+              }}
+            >
+              Hình ảnh bìa đại diện khóa học (Cover Image)
+            </span>
+            <div
+              className={`inline-cover-dropzone ${isDragOver ? "dragover" : ""}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+                const f = e.dataTransfer.files?.[0];
+                if (f) handleCoverFile(f);
+              }}
+              onClick={() => {
+                const el = document.getElementById("course-modal-cover-input") as HTMLInputElement;
+                el?.click();
+              }}
+            >
+              <input
+                id="course-modal-cover-input"
+                type="file"
+                accept="image/png, image/jpeg, image/webp"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleCoverFile(f);
+                }}
+              />
+              {coverPreview ? (
+                <div className="inline-cover-preview-wrapper" onClick={(e) => e.stopPropagation()}>
+                  <img src={coverPreview} alt="Xem trước ảnh bìa" className="inline-cover-preview-img" />
+                  <span className="inline-cover-badge">✓ Đã tải ảnh bìa</span>
+                  <div className="inline-cover-overlay-actions">
+                    <button
+                      type="button"
+                      className="button button-subtle button-small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const el = document.getElementById("course-modal-cover-input") as HTMLInputElement;
+                        el?.click();
+                      }}
+                      style={{ fontSize: 11, padding: "4px 8px" }}
+                    >
+                      <Icon name="upload" size={12} />
+                      <span>Đổi ảnh</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="button button-subtle button-small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCoverPreview(null);
+                      }}
+                      style={{ fontSize: 11, padding: "4px 8px", color: "#dc2626" }}
+                    >
+                      <Icon name="trash" size={12} />
+                      <span>Xóa</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "50%",
+                      background: "rgba(2, 132, 199, 0.1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 8,
+                      color: "var(--blue)",
+                    }}
+                  >
+                    <Icon name="image" size={24} />
+                  </div>
+                  <p style={{ fontWeight: 600, fontSize: 13, margin: "0 0 4px", color: "var(--ink)" }}>
+                    Kéo thả ảnh bìa hoặc nhấp để chọn tệp
+                  </p>
+                  <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                    PNG, JPG, WEBP (khuyến nghị tỉ lệ 16:9)
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div style={{ gridColumn: "1 / -1" }}>
+            <RevenueQuote price={price} currency={currency} paid={priceType === "PAID"} />
+          </div>
+
+          <div
+            style={{
+              gridColumn: "1 / -1",
+              display: "flex",
+              gap: 12,
+              justifyContent: "flex-end",
+              marginTop: 12,
+            }}
+          >
+            <button type="button" className="button button-subtle" onClick={onClose} disabled={loading}>
+              Hủy bỏ
+            </button>
+            <button type="submit" className="button" disabled={loading}>
+              {loading ? "Đang tạo bản nháp…" : "+ Khởi tạo khóa học"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function formatCoursePrice(c: Course) {
+  if (c.priceType === "FREE" || Number(c.price || 0) === 0) return "Miễn phí";
+  try {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: c.currency || "VND",
+      maximumFractionDigits: 0,
+    }).format(Number(c.price));
+  } catch {
+    return `${c.price} ${c.currency || "VND"}`;
+  }
+}
+
+interface HomeSession {
+  sessionId: string;
+  classId: string;
+  className: string;
+  title: string;
+  startAt: string;
+  endAt: string;
+  mode: string;
+  location?: string;
+  meetingUrl?: string;
+  meetingProvider?: string;
+  status?: string;
+}
+
+export function TeachingHome() {
+  const courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses");
+  const classes = useLecturer<
+    | {
+        classId: string;
+        name: string;
+        scheduleState?: string;
+        state?: string;
+        maxMembers?: number;
+        classKind?: string;
+      }[]
+    | {
+        classes: {
+          classId: string;
+          name: string;
+          scheduleState?: string;
+          state?: string;
+          maxMembers?: number;
+          classKind?: string;
+        }[];
+      }
+  >("/me/owned-classes");
+  const offerings = useLecturer<Offering[] | { items: Offering[] }>("/me/owned-offerings");
+
+  const courseList = Array.isArray(courses.data) ? courses.data : courses.data?.items || [];
+  const classList = Array.isArray(classes.data) ? classes.data : classes.data?.classes || [];
+  const offeringList = Array.isArray(offerings.data) ? offerings.data : offerings.data?.items || [];
+
+  const [showCourseModal, setShowCourseModal] = useState(false);
+  const [showClassModal, setShowClassModal] = useState(false);
+
+  const [activeLeadTab, setActiveLeadTab] = useState<"courses" | "classes">("courses");
+  const [coursePage, setCoursePage] = useState(1);
+  const [classPage, setClassPage] = useState(1);
+  const pageSize = 3;
+
+  const publishedCoursesCount = useMemo(
+    () => courseList.filter((c) => c.state === "PUBLISHED" || c.state === "ACTIVE").length,
+    [courseList],
+  );
+  const draftCoursesCount = useMemo(() => courseList.filter((c) => c.state === "DRAFT").length, [courseList]);
+  const publishedSchedulesCount = useMemo(
+    () => classList.filter((cl: any) => cl.scheduleState === "PUBLISHED").length,
+    [classList],
+  );
+  const activeClassesCount = useMemo(
+    () => classList.filter((cl: any) => cl.state === "ACTIVE" || !cl.state).length,
+    [classList],
+  );
+  const openOfferingsCount = useMemo(
+    () =>
+      offeringList.filter((o) => o.state === "OPEN" || o.state === "PUBLISHED" || o.state === "ACTIVE")
+        .length,
+    [offeringList],
+  );
+
+  const totalCoursePages = Math.max(1, Math.ceil(courseList.length / pageSize));
+  const paginatedCourses = courseList.slice((coursePage - 1) * pageSize, coursePage * pageSize);
+
+  const totalClassPages = Math.max(1, Math.ceil(classList.length / pageSize));
+  const paginatedClasses = classList.slice((classPage - 1) * pageSize, classPage * pageSize);
+
+  // Real Sessions in current month
+  const [sessions, setSessions] = useState<HomeSession[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!classList.length) {
+      setSessions([]);
+      return;
+    }
+    const controller = new AbortController();
+    setSessionsLoading(true);
+
+    const curMonth = monthNow();
+    const { from, to } = rangeForMonth(curMonth);
+    const targetClasses = classList.slice(0, 10);
+
+    Promise.allSettled(
+      targetClasses.map((c) =>
+        lecturerRequest<HomeSession[] | { sessions?: HomeSession[]; data?: HomeSession[] }>(
+          `/classes/${c.classId}/sessions?from=${from}&to=${to}`,
+          "GET",
+          undefined,
+          {},
+          controller.signal,
+        ).then((res) => {
+          const raw = res.data;
+          const items = Array.isArray(raw) ? raw : (raw as any)?.sessions || (raw as any)?.data || [];
+          return items.map((item: any) => ({
+            ...item,
+            classId: c.classId,
+            className: c.name,
+          }));
+        }),
+      ),
+    )
+      .then((results) => {
+        if (controller.signal.aborted) return;
+        const all: HomeSession[] = [];
+        for (const r of results) {
+          if (r.status === "fulfilled") {
+            all.push(...r.value);
+          }
+        }
+        all.sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt));
+        setSessions(all);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setSessionsLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [classList]);
+
+  const currentMonthLabel = useMemo(() => {
+    const d = new Date();
+    return `Tháng ${d.getMonth() + 1}/${d.getFullYear()}`;
+  }, []);
+
+  function formatSessionTime(startAt: string, endAt: string) {
+    try {
+      const s = new Date(startAt);
+      const e = new Date(endAt);
+      const timeStr = `${s.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} - ${e.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
+      const dateStr = s.toLocaleDateString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit" });
+      return `${timeStr} • ${dateStr}`;
+    } catch {
+      return startAt;
+    }
+  }
+
+  return (
+    <div className="teaching-home-container animate-fade-in">
+      {/* Top Banner: Teaching Center */}
+      <div className="lecturer-copilot-banner">
+        <div className="copilot-banner-title">
+          <span className="pro-icon-box blue lg" aria-hidden="true">
+            <Icon name="graduation" size={22} />
+          </span>
+          <div>
+            <p className="eyebrow" style={{ margin: 0, color: "var(--blue, #0284c7)" }}>
+              TRUNG TÂM ĐIỀU HÀNH GIẢNG DẠY · AILSS LECTURER
+            </p>
+            <h1 style={{ margin: "4px 0 2px", fontSize: "1.45rem", color: "var(--ink)" }}>
+              Tổng Quan Giảng Dạy &amp; Điều Hành Lớp Học Phần
+            </h1>
+            <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)" }}>
+              Quản lý khóa học trực tuyến, theo dõi lịch giảng dạy, điểm danh sinh viên và đối soát kết quả
+              đào tạo.
+            </p>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="button"
+            onClick={() => setShowCourseModal(true)}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
+            <Icon name="plus" size={15} />
+            <span>Soạn khóa học</span>
+          </button>
+          <button
+            type="button"
+            className="button button-subtle"
+            onClick={() => setShowClassModal(true)}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
+            <Icon name="users" size={15} />
+            <span>Mở lớp học</span>
+          </button>
+          <Link className="button button-subtle" to="/app/teaching/reports">
+            Báo cáo sư phạm
+          </Link>
+          <Link className="button button-subtle" to="/app/teaching/revenue">
+            Doanh thu
+          </Link>
+        </div>
+      </div>
+
+      {/* 1. Real KPI Cards */}
+      <section aria-label="Chỉ số hiệu suất sư phạm trọng yếu">
+        <div className="workspace-kpi-grid">
+          <div className="kpi-card">
+            <div className="kpi-header">
+              <span className="pro-icon-box blue" aria-hidden="true">
+                <Icon name="book" size={18} />
+              </span>
+              <span className="kpi-tag accent">{courseList.length} khóa học</span>
+            </div>
+            <div className="kpi-value">{publishedCoursesCount} khóa</div>
+            <div className="kpi-label">Khóa học đã xuất bản</div>
+            <p className="kpi-subtext">
+              {draftCoursesCount > 0
+                ? `${draftCoursesCount} khóa đang soạn bản nháp`
+                : "Tất cả khóa học đều đang hoạt động"}
+            </p>
+          </div>
+
+          <div className="kpi-card">
+            <div className="kpi-header">
+              <span className="pro-icon-box green" aria-hidden="true">
+                <Icon name="graduation" size={18} />
+              </span>
+              <span className="kpi-tag accent">{classList.length} lớp phụ trách</span>
+            </div>
+            <div className="kpi-value">{publishedSchedulesCount} lớp</div>
+            <div className="kpi-label">Lớp đã xuất bản thời khóa biểu</div>
+            <p className="kpi-subtext">{activeClassesCount} lớp đang hoạt động đào tạo</p>
+          </div>
+
+          <div className="kpi-card">
+            <div className="kpi-header">
+              <span className="pro-icon-box purple" aria-hidden="true">
+                <Icon name="calendar" size={18} />
+              </span>
+              <span className="kpi-tag accent">{currentMonthLabel}</span>
+            </div>
+            <div className="kpi-value">{sessionsLoading ? "..." : `${sessions.length} ca dạy`}</div>
+            <div className="kpi-label">Ca dạy trong tháng hiện tại</div>
+            <p className="kpi-subtext">Lịch đào tạo trực tiếp &amp; trực tuyến</p>
+          </div>
+
+          <div className="kpi-card">
+            <div className="kpi-header">
+              <span className="pro-icon-box amber" aria-hidden="true">
+                <Icon name="target" size={18} />
+              </span>
+              <span className="kpi-tag accent">{offeringList.length} đợt mở</span>
+            </div>
+            <div className="kpi-value">{openOfferingsCount} đợt</div>
+            <div className="kpi-label">Đợt mở đăng ký tuyển sinh</div>
+            <p className="kpi-subtext">Quản lý tiếp nhận học viên &amp; đối soát học phí</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Action Toolbar */}
+      <div className="workspace-quick-actions" role="toolbar" aria-label="Thao tác giảng dạy nhanh">
+        <Link className="quick-action-chip" to="/app/teaching/schedule">
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="calendar" size={16} />
+          </span>
+          <span>Lịch giảng dạy</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/teaching/attendance">
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="checkCircle" size={16} />
+          </span>
+          <span>Điểm danh học viên</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/teaching/grades">
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="trophy" size={16} />
+          </span>
+          <span>Bảng điểm học viên</span>
+        </Link>
+        <button
+          type="button"
+          className="quick-action-chip"
+          onClick={() => setShowCourseModal(true)}
+          style={{ background: "transparent", border: "none", cursor: "pointer", font: "inherit" }}
+        >
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="plus" size={16} />
+          </span>
+          <span>Soạn khóa học mới</span>
+        </button>
+        <button
+          type="button"
+          className="quick-action-chip"
+          onClick={() => setShowClassModal(true)}
+          style={{ background: "transparent", border: "none", cursor: "pointer", font: "inherit" }}
+        >
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="users" size={16} />
+          </span>
+          <span>Mở lớp học mới</span>
+        </button>
+        <Link className="quick-action-chip" to="/app/teaching/assessments">
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="quiz" size={16} />
+          </span>
+          <span>Ngân hàng đề thi &amp; Quiz</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/teaching/offerings">
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="target" size={16} />
+          </span>
+          <span>Đợt mở đăng ký</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/teaching/revenue">
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="card" size={16} />
+          </span>
+          <span>Doanh thu &amp; Đối soát</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/teaching/reports">
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="chart" size={16} />
+          </span>
+          <span>Báo cáo &amp; Thống kê</span>
+        </Link>
+        <Link className="quick-action-chip" to="/app/teaching/ai">
+          <span className="chip-icon" aria-hidden="true">
+            <Icon name="sparkles" size={16} />
+          </span>
+          <span>AI Studio</span>
+        </Link>
+      </div>
+
+      {/* Real Schedule Section */}
+      <section className="dashboard-section-card animate-fade-in" style={{ marginTop: 24 }}>
+        <div className="section-card-header">
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span className="kpi-tag accent">
+                <Icon name="clock" size={12} style={{ marginRight: 4 }} />
+                {currentMonthLabel}
+              </span>
+              <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>
+                {sessions.length} ca dạy được ghi nhận
+              </span>
+            </div>
+            <h2 style={{ margin: 0, fontSize: "1.15rem", display: "flex", alignItems: "center", gap: 8 }}>
+              <span className="pro-icon-box blue sm">
+                <Icon name="calendar" size={14} />
+              </span>
+              <span>Lịch Giảng Dạy &amp; Ca Dạy Thực Tế</span>
+            </h2>
+            <p className="subtext">
+              Các buổi học phần sắp tới theo thời khóa biểu đã xuất bản của các lớp học do bạn trực tiếp giảng
+              dạy.
+            </p>
+          </div>
+          <Link className="button button-small" to="/app/teaching/schedule">
+            Xem toàn bộ lịch dạy →
+          </Link>
+        </div>
+
+        {sessionsLoading ? (
+          <div style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>
+            Đang tải lịch giảng dạy...
+          </div>
+        ) : sessions.length === 0 ? (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "32px 16px",
+              background: "var(--surface)",
+              border: "1px solid var(--line)",
+              borderRadius: 12,
+              marginTop: 16,
+            }}
+          >
+            <p style={{ margin: "0 0 12px", color: "var(--muted)", fontSize: 13 }}>
+              Chưa có buổi học nào được lên lịch cho các lớp học phần trong tháng này.
+            </p>
+            <Link className="button button-small" to="/app/teaching/schedule">
+              Lên lịch giảng dạy ngay
+            </Link>
+          </div>
+        ) : (
+          <div className="teaching-schedule-grid" style={{ marginTop: 16 }}>
+            {sessions.slice(0, 4).map((session) => {
+              const isPast = Date.parse(session.endAt) < Date.now();
+              const isToday = new Date(session.startAt).toDateString() === new Date().toDateString();
+              return (
+                <div className="teaching-schedule-card" key={session.sessionId}>
+                  <div className="teaching-schedule-header">
+                    <span className="kpi-tag accent">
+                      {formatSessionTime(session.startAt, session.endAt)}
+                    </span>
+                    <span className={`schedule-status-badge ${isToday ? "live" : "upcoming"}`}>
+                      {isToday ? "● Hôm nay" : isPast ? "Đã diễn ra" : "Sắp tới"}
+                    </span>
+                  </div>
+                  <h3 className="teaching-schedule-title">{session.title}</h3>
+                  <p className="teaching-schedule-info">
+                    <span>
+                      Lớp: <strong>{session.className}</strong>
+                    </span>
+                    <span>•</span>
+                    <span>
+                      {session.mode === "ONLINE"
+                        ? `Trực tuyến: ${session.meetingProvider || "Google Meet"}`
+                        : `Phòng: ${session.location || "Trực tiếp"}`}
+                    </span>
+                  </p>
+                  <div className="teaching-schedule-actions">
+                    <Link
+                      className="button button-small"
+                      to={`/app/teaching/attendance?class=${session.classId}`}
+                    >
+                      ✓ Điểm danh ngay
+                    </Link>
+                    <Link
+                      className="button button-subtle button-small"
+                      to={`/app/teaching/classes/${session.classId}`}
+                    >
+                      Mở lớp học →
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Leading Courses & Classes with Image Artworks, Descriptions and Rich Metrics */}
+      <section className="dashboard-section-card animate-fade-in" style={{ marginTop: 24 }}>
+        <div className="section-card-header" style={{ alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+              <button
+                type="button"
+                className={`filter-pill-button ${activeLeadTab === "courses" ? "active" : ""}`}
+                onClick={() => setActiveLeadTab("courses")}
+                style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <Icon name="book" size={14} />
+                <span>Khóa học phụ trách ({courseList.length})</span>
+              </button>
+              <button
+                type="button"
+                className={`filter-pill-button ${activeLeadTab === "classes" ? "active" : ""}`}
+                onClick={() => setActiveLeadTab("classes")}
+                style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <Icon name="users" size={14} />
+                <span>Lớp học phần ({classList.length})</span>
+              </button>
+            </div>
+            <p className="subtext" style={{ margin: 0 }}>
+              {activeLeadTab === "courses"
+                ? "Chương trình đào tạo trọng điểm: hình ảnh bài giảng, đề cương chi tiết và nội dung xuất bản."
+                : "Các lớp học phần trực tiếp có sĩ số sinh viên và thời khóa biểu giảng dạy tích cực."}
+            </p>
+          </div>
+
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            {activeLeadTab === "courses" ? (
+              <>
+                <button
+                  type="button"
+                  className="button button-small"
+                  onClick={() => setShowCourseModal(true)}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                >
+                  <Icon name="plus" size={13} />
+                  <span>Soạn khóa học mới</span>
+                </button>
+                <Link className="button button-subtle button-small" to="/app/teaching/courses">
+                  Xem tất cả ({courseList.length}) →
+                </Link>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="button button-small"
+                  onClick={() => setShowClassModal(true)}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                >
+                  <Icon name="plus" size={13} />
+                  <span>Mở lớp học mới</span>
+                </button>
+                <Link className="button button-subtle button-small" to="/app/teaching/classes">
+                  Xem tất cả ({classList.length}) →
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+
+        {activeLeadTab === "courses" ? (
+          <div>
+            {courseList.length === 0 ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "36px 16px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
+                  borderRadius: 12,
+                  marginTop: 16,
+                }}
+              >
+                <p style={{ margin: "0 0 12px", color: "var(--muted)", fontSize: 13 }}>
+                  Bạn chưa tạo khóa học nào. Hãy khởi tạo khóa học đầu tiên để bắt đầu xây dựng bài giảng!
+                </p>
+                <button
+                  type="button"
+                  className="button button-small"
+                  onClick={() => setShowCourseModal(true)}
+                >
+                  + Soạn khóa học mới
+                </button>
+              </div>
+            ) : (
+              <div className="workspace-cards" style={{ marginTop: 16 }}>
+                {paginatedCourses.map((c, i) => {
+                  const isPublished = c.state === "PUBLISHED" || c.state === "ACTIVE";
+                  return (
+                    <article
+                      className="teaching-home-rich-card"
+                      key={c.courseId}
+                      style={{ animationDelay: `${i * 40}ms` }}
+                    >
+                      <div style={{ position: "relative" }}>
+                        <CourseArtwork
+                          imageUrl={c.coverDataUrl ?? undefined}
+                          title={c.title}
+                          categoryId={c.categoryId}
+                          courseId={c.courseId}
+                        />
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            left: 10,
+                            display: "flex",
+                            gap: 6,
+                            zIndex: 2,
+                          }}
+                        >
+                          <span
+                            className="badge"
+                            style={{
+                              background: "rgba(2, 132, 199, 0.92)",
+                              color: "#ffffff",
+                              backdropFilter: "blur(4px)",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Khóa {(coursePage - 1) * pageSize + i + 1}
+                          </span>
+                        </div>
+                        <div style={{ position: "absolute", top: 10, right: 10, zIndex: 2 }}>
+                          <span
+                            className="badge"
+                            style={{
+                              background: "rgba(15, 23, 42, 0.75)",
+                              color: "#ffffff",
+                              backdropFilter: "blur(4px)",
+                            }}
+                          >
+                            {formatCoursePrice(c)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="teaching-home-rich-card-body">
+                        <div className="teaching-home-rich-card-meta">
+                          <StateChip
+                            state={c.state === "HIDDEN" ? "HIDDEN" : isPublished ? "PUBLISHED" : "DRAFT"}
+                          />
+                          <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                            Mã: <code>{c.slug}</code>
+                          </span>
+                        </div>
+
+                        <h3 className="teaching-home-rich-card-title">
+                          <Link to={`/app/teaching/courses/${c.courseId}`}>{c.title}</Link>
+                        </h3>
+
+                        <p className="teaching-home-rich-card-desc">
+                          {c.description || "Chương trình đào tạo chuyên sâu kết hợp lý thuyết và thực hành."}
+                        </p>
+
+                        <div className="teaching-home-rich-card-actions">
+                          <Link
+                            className="button button-small"
+                            to={`/app/teaching/courses/${c.courseId}`}
+                            style={{
+                              justifyContent: "center",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              fontWeight: 600,
+                            }}
+                          >
+                            <Icon name="assignment" size={14} />
+                            <span>Soạn bài giảng</span>
+                          </Link>
+                          <Link
+                            className="button button-subtle button-small"
+                            to={`/app/teaching/courses/${c.courseId}/roster`}
+                            title="Danh sách học viên"
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                          >
+                            <Icon name="users" size={13} />
+                            <span>Học viên</span>
+                          </Link>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+
+            {totalCoursePages > 1 && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: 20,
+                  paddingTop: 16,
+                  borderTop: "1px solid var(--line, #e2e8f0)",
+                  fontSize: 13,
+                  color: "var(--muted)",
+                  flexWrap: "wrap",
+                  gap: 12,
+                }}
+              >
+                <div>
+                  Hiển thị{" "}
+                  <strong>
+                    {(coursePage - 1) * pageSize + 1} - {Math.min(coursePage * pageSize, courseList.length)}
+                  </strong>{" "}
+                  trong tổng số <strong>{courseList.length}</strong> khóa học
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button
+                    type="button"
+                    className="button button-subtle button-small"
+                    onClick={() => setCoursePage((p) => Math.max(1, p - 1))}
+                    disabled={coursePage === 1}
+                  >
+                    ‹ Trang trước
+                  </button>
+                  <span style={{ fontWeight: 600, color: "var(--ink)" }}>
+                    Trang {coursePage} / {totalCoursePages}
+                  </span>
+                  <button
+                    type="button"
+                    className="button button-subtle button-small"
+                    onClick={() => setCoursePage((p) => Math.min(totalCoursePages, p + 1))}
+                    disabled={coursePage === totalCoursePages}
+                  >
+                    Trang sau ›
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            {classList.length === 0 ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "36px 16px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
+                  borderRadius: 12,
+                  marginTop: 16,
+                }}
+              >
+                <p style={{ margin: "0 0 12px", color: "var(--muted)", fontSize: 13 }}>
+                  Bạn chưa có lớp học phần nào. Hãy mở lớp học mới để xếp lịch giảng dạy và tiếp nhận học
+                  viên!
+                </p>
+                <button type="button" className="button button-small" onClick={() => setShowClassModal(true)}>
+                  + Mở lớp học mới
+                </button>
+              </div>
+            ) : (
+              <div className="workspace-cards" style={{ marginTop: 16 }}>
+                {paginatedClasses.map((cl: any, i) => (
+                  <article
+                    className="teaching-home-rich-card"
+                    key={cl.classId}
+                    style={{ animationDelay: `${i * 40}ms` }}
+                  >
+                    <div
+                      style={{
+                        padding: "16px 16px 12px",
+                        background:
+                          "linear-gradient(135deg, rgba(2, 132, 199, 0.07) 0%, rgba(124, 58, 237, 0.07) 100%)",
+                        borderBottom: "1px solid var(--line)",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span className="pro-icon-box green sm">
+                            <Icon name="users" size={13} />
+                          </span>
+                          <span
+                            className="badge"
+                            style={{
+                              background: "rgba(16, 185, 129, 0.12)",
+                              color: "#059669",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Lớp {(classPage - 1) * pageSize + i + 1}
+                          </span>
+                        </div>
+                        <span className="green-badge-pill">
+                          {cl.scheduleState === "PUBLISHED" ? "● Đã xuất bản TKB" : "Bản nháp TKB"}
+                        </span>
+                      </div>
+                      <h3 style={{ margin: "10px 0 0", fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>
+                        <Link
+                          to={`/app/teaching/classes/${cl.classId}`}
+                          style={{ color: "inherit", textDecoration: "none" }}
+                        >
+                          {cl.name}
+                        </Link>
+                      </h3>
+                    </div>
+
+                    <div className="teaching-home-rich-card-body">
+                      <div style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 12 }}>
+                        Hình thức:{" "}
+                        <strong>
+                          {cl.classKind === "LIVE_COHORT"
+                            ? "Khóa trực tuyến (Cohort)"
+                            : "Lớp học phần trực tiếp"}
+                        </strong>
+                        {cl.maxMembers ? ` • Tối đa: ${cl.maxMembers} SV` : ""}
+                      </div>
+
+                      <div className="teaching-home-rich-card-actions">
+                        <Link
+                          className="button button-small"
+                          to={`/app/teaching/attendance?class=${cl.classId}`}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 6,
+                          }}
+                        >
+                          <Icon name="check" size={14} />
+                          <span>Điểm danh</span>
+                        </Link>
+                        <Link
+                          className="button button-subtle button-small"
+                          to={`/app/teaching/classes/${cl.classId}`}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                        >
+                          <span>Chi tiết lớp</span>
+                          <Icon name="chevronRight" size={13} />
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+
+            {totalClassPages > 1 && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: 20,
+                  paddingTop: 16,
+                  borderTop: "1px solid var(--line, #e2e8f0)",
+                  fontSize: 13,
+                  color: "var(--muted)",
+                  flexWrap: "wrap",
+                  gap: 12,
+                }}
+              >
+                <div>
+                  Hiển thị{" "}
+                  <strong>
+                    {(classPage - 1) * pageSize + 1} - {Math.min(classPage * pageSize, classList.length)}
+                  </strong>{" "}
+                  trong tổng số <strong>{classList.length}</strong> lớp học
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button
+                    type="button"
+                    className="button button-subtle button-small"
+                    onClick={() => setClassPage((p) => Math.max(1, p - 1))}
+                    disabled={classPage === 1}
+                  >
+                    ‹ Trang trước
+                  </button>
+                  <span style={{ fontWeight: 600, color: "var(--ink)" }}>
+                    Trang {classPage} / {totalClassPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="button button-subtle button-small"
+                    onClick={() => setClassPage((p) => Math.min(totalClassPages, p + 1))}
+                    disabled={classPage === totalClassPages}
+                  >
+                    Trang sau ›
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* Quick Navigation to Teaching Modules */}
+      <section className="dashboard-section-card animate-fade-in" style={{ marginTop: 24 }}>
+        <div className="section-card-header">
+          <div>
+            <h2 style={{ margin: 0, fontSize: "1.15rem", display: "flex", alignItems: "center", gap: 8 }}>
+              <span className="pro-icon-box blue sm">
+                <Icon name="layers" size={14} />
+              </span>
+              <span>Công Cụ Điều Hành &amp; Quản Lý Học Vụ</span>
+            </h2>
+            <p className="subtext">
+              Truy cập nhanh các phân hệ nghiệp vụ phục vụ công tác giảng dạy, chấm bài và đối soát học phần.
+            </p>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: 16,
+            marginTop: 14,
+          }}
+        >
+          <div
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--line)",
+              borderRadius: 12,
+              padding: 18,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span className="pro-icon-box green sm">
+                <Icon name="trophy" size={14} />
+              </span>
+              <h3 style={{ margin: 0, fontSize: 15, color: "var(--ink)" }}>Sổ Điểm &amp; Chấm Bài</h3>
+            </div>
+            <p style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.45, marginBottom: 14 }}>
+              Theo dõi kết quả làm bài trắc nghiệm, bài tập thực hành, chấm điểm tự luận và phản hồi nhận xét
+              trực tiếp cho sinh viên.
+            </p>
+            <Link
+              className="button button-small"
+              to="/app/teaching/grades"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <span>Vào sổ điểm học viên</span>
+              <Icon name="chevronRight" size={13} />
+            </Link>
+          </div>
+
+          <div
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--line)",
+              borderRadius: 12,
+              padding: 18,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span className="pro-icon-box purple sm">
+                <Icon name="quiz" size={14} />
+              </span>
+              <h3 style={{ margin: 0, fontSize: 15, color: "var(--ink)" }}>Ngân Hàng Đề Thi &amp; Quiz</h3>
+            </div>
+            <p style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.45, marginBottom: 14 }}>
+              Soạn thảo câu hỏi trắc nghiệm, cấu hình thời gian làm bài, giới hạn số lần nộp và xuất bản đề
+              kiểm tra cho từng lớp học phần.
+            </p>
+            <Link
+              className="button button-small"
+              to="/app/teaching/assessments"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <span>Quản lý đề kiểm tra</span>
+              <Icon name="chevronRight" size={13} />
+            </Link>
+          </div>
+
+          <div
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--line)",
+              borderRadius: 12,
+              padding: 18,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span className="pro-icon-box blue sm">
+                <Icon name="chart" size={14} />
+              </span>
+              <h3 style={{ margin: 0, fontSize: 15, color: "var(--ink)" }}>Báo Cáo Sư Phạm &amp; Đối Soát</h3>
+            </div>
+            <p style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.45, marginBottom: 14 }}>
+              Phân tích tổng hợp tỷ lệ chuyên cần, phổ điểm học phần theo khoảng điểm và xuất dữ liệu báo cáo
+              giảng dạy định dạng CSV.
+            </p>
+            <Link
+              className="button button-small"
+              to="/app/teaching/reports"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <span>Xem báo cáo chi tiết</span>
+              <Icon name="chevronRight" size={13} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Creation modals */}
+      <CourseCreateModal
+        isOpen={showCourseModal}
+        onClose={() => setShowCourseModal(false)}
+        onCreated={() => {
+          courses.retry();
+        }}
+      />
+      <ClassCreateModal
+        isOpen={showClassModal}
+        onClose={() => setShowClassModal(false)}
+        onCreated={() => {
+          classes.retry();
+        }}
+      />
+    </div>
+  );
+}
+
+export function TeachingCourses() {
+  const nav = useNavigate();
+  const categories = useCourseCategories();
+  const [selectedCat, setSelectedCat] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "PUBLISHED" | "DRAFT" | "HIDDEN">("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses");
+  const coursesList = Array.isArray(courses.data) ? courses.data : courses.data?.items || [];
 
   const filteredCourses = coursesList.filter((c) => {
     if (selectedCat !== "all" && c.categoryId !== selectedCat) return false;
@@ -317,11 +1408,7 @@ export function TeachingCourses() {
           <button
             type="button"
             className="curriculum-create-btn"
-            onClick={() => {
-              setShowCreateInline((v) => !v);
-              setCreateError(null);
-              setCreateMsg(null);
-            }}
+            onClick={() => setShowCreateModal(true)}
             style={{
               textDecoration: "none",
               border: "none",
@@ -329,13 +1416,12 @@ export function TeachingCourses() {
               display: "inline-flex",
               alignItems: "center",
               gap: 8,
-              background: showCreateInline ? "var(--muted, #64748b)" : undefined,
             }}
           >
             <span className="create-btn-icon" aria-hidden="true">
-              <Icon name={showCreateInline ? "close" : "plus"} size={16} />
+              <Icon name="plus" size={16} />
             </span>
-            <span>{showCreateInline ? "Đóng khung tạo" : "Soạn khóa học mới"}</span>
+            <span>Soạn khóa học mới</span>
           </button>
         </div>
       </div>
@@ -366,362 +1452,6 @@ export function TeachingCourses() {
           </div>
         </div>
       </div>
-
-      {/* Inline Course Authoring Panel */}
-      {showCreateInline && (
-        <section className="inline-course-create-card" aria-label="Tạo khóa học mới">
-          <div className="inline-create-header">
-            <div>
-              <h2 className="inline-create-title">
-                <Icon name="plus" size={18} style={{ color: "var(--blue)" }} />
-                <span>Tạo Khóa Học Mới &amp; Tải Lên Ảnh Bìa</span>
-              </h2>
-              <p className="inline-create-desc">
-                Nhập thông tin cơ bản, chọn ảnh bìa nhận diện và khởi tạo bản nháp khóa học ngay trên trang
-                này.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="button button-subtle button-small"
-              onClick={() => setShowCreateInline(false)}
-              aria-label="Đóng"
-              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
-            >
-              <Icon name="close" size={14} />
-              <span>Đóng</span>
-            </button>
-          </div>
-
-          <form onSubmit={handleCreateCourse} className="inline-create-form">
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {createMsg && (
-                <div className="dashboard-banner-notice" role="status" style={{ margin: 0 }}>
-                  <span>✓</span>
-                  <span>{createMsg}</span>
-                </div>
-              )}
-              {createError && (
-                <div
-                  style={{
-                    padding: "10px 14px",
-                    borderRadius: 8,
-                    backgroundColor: "rgba(220, 38, 38, 0.1)",
-                    color: "#dc2626",
-                    fontSize: 13,
-                    fontWeight: 500,
-                  }}
-                >
-                  ⚠️ {createError}
-                </div>
-              )}
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14 }}>
-                <label
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "var(--ink)",
-                  }}
-                >
-                  <span>
-                    Tên khóa học <span style={{ color: "#dc2626" }}>*</span>
-                  </span>
-                  <input
-                    type="text"
-                    required
-                    placeholder="VD: Lập trình Python ứng dụng AI &amp; LLM nâng cao..."
-                    value={newTitle}
-                    onChange={(e) => {
-                      const t = e.target.value;
-                      setNewTitle(t);
-                      if (!newSlug || newSlug === slugifyTitle(newTitle)) {
-                        setNewSlug(slugifyTitle(t));
-                      }
-                    }}
-                    style={{
-                      padding: "9px 12px",
-                      borderRadius: 8,
-                      border: "1px solid var(--line, #cbd5e1)",
-                      fontSize: 14,
-                      backgroundColor: "var(--surface, #ffffff)",
-                      color: "var(--ink, #0f172a)",
-                    }}
-                  />
-                </label>
-
-                <label
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "var(--ink)",
-                  }}
-                >
-                  <span>
-                    Đường dẫn (Slug URL) <span style={{ color: "#dc2626" }}>*</span>
-                  </span>
-                  <input
-                    type="text"
-                    required
-                    placeholder="VD: lap-trinh-python-ung-dung-ai"
-                    value={newSlug}
-                    onChange={(e) => setNewSlug(e.target.value)}
-                    style={{
-                      padding: "9px 12px",
-                      borderRadius: 8,
-                      border: "1px solid var(--line, #cbd5e1)",
-                      fontSize: 14,
-                      backgroundColor: "var(--surface, #ffffff)",
-                      color: "var(--ink, #0f172a)",
-                    }}
-                  />
-                </label>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <label
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 6,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "var(--ink)",
-                    }}
-                  >
-                    <span>Chủ đề / Chuyên ngành</span>
-                    <input
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                      required
-                      minLength={2}
-                      maxLength={80}
-                      placeholder="Nhập danh mục đào tạo"
-                    />
-                  </label>
-
-                  <label
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 6,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "var(--ink)",
-                    }}
-                  >
-                    <span>Hình thức</span>
-                    <select
-                      value={newPriceType}
-                      onChange={(e) => setNewPriceType(e.target.value as "FREE" | "PAID")}
-                      style={{
-                        padding: "9px 12px",
-                        borderRadius: 8,
-                        border: "1px solid var(--line, #cbd5e1)",
-                        fontSize: 14,
-                        backgroundColor: "var(--surface, #ffffff)",
-                        color: "var(--ink, #0f172a)",
-                      }}
-                    >
-                      <option value="FREE">Miễn phí (FREE)</option>
-                      <option value="PAID">Có học phí (PAID)</option>
-                    </select>
-                  </label>
-                </div>
-
-                {newPriceType === "PAID" && (
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
-                    <label
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 6,
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "var(--ink)",
-                      }}
-                    >
-                      <span>Học phí</span>
-                      <input
-                        type="text"
-                        value={newPrice}
-                        onChange={(e) => setNewPrice(e.target.value)}
-                        placeholder="590000"
-                        style={{
-                          padding: "9px 12px",
-                          borderRadius: 8,
-                          border: "1px solid var(--line, #cbd5e1)",
-                          fontSize: 14,
-                          backgroundColor: "var(--surface, #ffffff)",
-                          color: "var(--ink, #0f172a)",
-                        }}
-                      />
-                    </label>
-                    <label
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 6,
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "var(--ink)",
-                      }}
-                    >
-                      <span>Tiền tệ</span>
-                      <input
-                        type="text"
-                        value={newCurrency}
-                        onChange={(e) => setNewCurrency(e.target.value)}
-                        style={{
-                          padding: "9px 12px",
-                          borderRadius: 8,
-                          border: "1px solid var(--line, #cbd5e1)",
-                          fontSize: 14,
-                          backgroundColor: "var(--surface, #ffffff)",
-                          color: "var(--ink, #0f172a)",
-                        }}
-                      />
-                    </label>
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-                <button
-                  type="submit"
-                  className="button"
-                  disabled={createLoading}
-                  style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px" }}
-                >
-                  <Icon name="plus" size={16} />
-                  <span>{createLoading ? "Đang tạo bản nháp..." : "Tạo bản nháp khóa học"}</span>
-                </button>
-                <button
-                  type="button"
-                  className="button button-subtle"
-                  onClick={() => setShowCreateInline(false)}
-                >
-                  Hủy
-                </button>
-              </div>
-            </div>
-
-            {/* Cover image uploader */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
-                Hình ảnh bìa khóa học (Cover Image)
-              </span>
-              <div
-                className={`inline-cover-dropzone ${isDragOver ? "dragover" : ""}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setIsDragOver(true);
-                }}
-                onDragLeave={() => setIsDragOver(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setIsDragOver(false);
-                  const f = e.dataTransfer.files?.[0];
-                  if (f) handleCoverFile(f);
-                }}
-                onClick={() => {
-                  const input = document.getElementById("course-cover-input") as HTMLInputElement;
-                  input?.click();
-                }}
-              >
-                <input
-                  id="course-cover-input"
-                  type="file"
-                  accept="image/png, image/jpeg, image/webp"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleCoverFile(f);
-                  }}
-                />
-
-                {coverPreview ? (
-                  <div className="inline-cover-preview-wrapper" onClick={(e) => e.stopPropagation()}>
-                    <img src={coverPreview} alt="Xem trước ảnh bìa" className="inline-cover-preview-img" />
-                    <span className="inline-cover-badge">✓ Đã tải ảnh bìa</span>
-                    <div className="inline-cover-overlay-actions">
-                      <button
-                        type="button"
-                        className="button button-subtle button-small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const input = document.getElementById("course-cover-input") as HTMLInputElement;
-                          input?.click();
-                        }}
-                        style={{ fontSize: 11, padding: "4px 8px" }}
-                      >
-                        <Icon name="upload" size={12} />
-                        <span>Đổi ảnh</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="button button-subtle button-small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCoverPreview(null);
-                        }}
-                        style={{ fontSize: 11, padding: "4px 8px", color: "#dc2626" }}
-                      >
-                        <Icon name="trash" size={12} />
-                        <span>Xóa</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: "50%",
-                        background: "rgba(2, 132, 199, 0.1)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 10,
-                        color: "var(--blue)",
-                      }}
-                    >
-                      <Icon name="image" size={24} />
-                    </div>
-                    <p style={{ fontWeight: 600, fontSize: 13, margin: "0 0 4px", color: "var(--ink)" }}>
-                      Tải lên ảnh bìa đại diện
-                    </p>
-                    <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
-                      Kéo thả ảnh vào đây hoặc nhấp để chọn tệp
-                    </p>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        color: "var(--muted)",
-                        marginTop: 8,
-                        padding: "2px 8px",
-                        background: "var(--card-subtle, #f1f5f9)",
-                        borderRadius: 4,
-                      }}
-                    >
-                      PNG, JPG, WEBP (khuyến nghị 16:9)
-                    </span>
-                  </>
-                )}
-              </div>
-              <p style={{ fontSize: 12, color: "var(--muted)", margin: "4px 0 0" }}>
-                Ảnh bìa sẽ được hiển thị trên danh thiếp khóa học và đồng bộ trên giao diện học viên.
-              </p>
-            </div>
-          </form>
-        </section>
-      )}
 
       {/* Integrated Search & Filters Toolbar */}
       <div className="curriculum-toolbar-card">
@@ -935,7 +1665,7 @@ export function TeachingCourses() {
                   type="button"
                   className="button"
                   onClick={() => {
-                    setShowCreateInline(true);
+                    setShowCreateModal(true);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                 >
@@ -1017,6 +1747,18 @@ export function TeachingCourses() {
           </ul>
         </div>
       </div>
+
+      {/* Course Creation Modal */}
+      <CourseCreateModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={(newCourse) => {
+          courses.retry();
+          if (newCourse?.courseId) {
+            nav(`/app/teaching/courses/${newCourse.courseId}`);
+          }
+        }}
+      />
     </div>
   );
 }
@@ -1063,15 +1805,7 @@ export function CourseCreate() {
             placeholder="Ví dụ: Thiết kế đồ họa"
           />
         </label>
-        <label>
-          Hình thức
-          <select name="priceType">
-            <option value="FREE">Miễn phí</option>
-            <option value="PAID">Có học phí</option>
-          </select>
-        </label>
-        <Field label="Giá" name="price" defaultValue="0" required />
-        <Field label="Tiền tệ" name="currency" defaultValue="VND" required />
+        <CoursePricingFields />
 
         {/* Cover image upload */}
         <label style={{ gridColumn: "1 / -1" }}>
@@ -1104,7 +1838,6 @@ export function CourseCreate() {
           )}
         </label>
 
-        <RevenueQuote initialPaid={false} />
         <button className="button">Tạo bản nháp</button>
         <p role="status">{msg}</p>
       </form>
@@ -1966,31 +2699,12 @@ export function CourseDetail() {
                         placeholder="Nhập danh mục đào tạo"
                       />
                     </label>
-
-                    <label>
-                      Hình thức học phí
-                      <select name="priceType" defaultValue={c.priceType}>
-                        <option value="FREE">Miễn phí</option>
-                        <option value="PAID">Có học phí</option>
-                      </select>
-                    </label>
                   </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                      gap: "1.25rem",
-                      marginTop: "1rem",
-                    }}
-                  >
-                    <Field label="Giá niêm yết" name="price" defaultValue={c.price} required />
-                    <Field label="Đơn vị tiền tệ" name="currency" defaultValue={c.currency} required />
-                  </div>
-                  <RevenueQuote
+                  <CoursePricingFields
+                    key={`${c.courseId}:${c.priceType}:${c.price}:${c.currency}`}
+                    initialPriceType={c.priceType}
                     initialPrice={c.price}
                     initialCurrency={c.currency}
-                    initialPaid={c.priceType === "PAID"}
                   />
 
                   <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end" }}>
@@ -2070,62 +2784,189 @@ export function LessonDetail() {
     q = useLecturer<Lesson>(`/lessons/${lessonId}`),
     [msg, setMsg] = useState("");
   return (
-    <>
-      <p className="eyebrow">LESSON</p>
+    <div className="lesson-studio-container">
       <State q={q}>
         {(x) => (
           <>
-            <h1>{x.title}</h1>
-            <MediaUpload
-              key={lessonId}
-              courseId={x.courseId}
-              lessonId={lessonId}
-              preview={x.preview}
-              mediaAssetId={x.mediaAssetId}
-            />
-            <form
-              className="form-panel form-grid"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const v = values(new FormData(e.currentTarget));
-                try {
-                  await lecturerRequest(`/lessons/${lessonId}`, "PATCH", {
-                    title: v.title,
-                    sectionTitle: v.sectionTitle,
-                    position: { sectionOrder: Number(v.sectionOrder), lessonOrder: Number(v.lessonOrder) },
-                    preview: v.preview === "on",
-                  });
-                  setMsg("Đã lưu bài học.");
-                  q.retry();
-                } catch (y) {
-                  setMsg(lecturerError(y));
-                }
-              }}
-            >
-              <Field label="Tiêu đề" name="title" defaultValue={x.title} />
-              <Field label="Chương" name="sectionTitle" defaultValue={x.sectionTitle} />
-              <Field
-                label="Thứ tự chương"
-                name="sectionOrder"
-                type="number"
-                defaultValue={x.position?.sectionOrder || 1}
-              />
-              <Field
-                label="Thứ tự bài"
-                name="lessonOrder"
-                type="number"
-                defaultValue={x.position?.lessonOrder || 1}
-              />
-              <label>
-                <input name="preview" type="checkbox" defaultChecked={x.preview} /> Xem trước
-              </label>
-              <button className="button">Lưu</button>
-            </form>
+            <div className="lesson-hero-header">
+              <div className="lesson-hero-nav">
+                <Link className="lesson-breadcrumb" to={`/app/teaching/courses/${x.courseId}`}>
+                  <Icon name="chevronLeft" size={14} /> Quay lại danh mục bài học khóa học
+                </Link>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span className={`badge ${x.state === "PUBLISHED" ? "success" : "warning"}`}>
+                    {x.state === "PUBLISHED" ? "ĐÃ XUẤT BẢN" : "BẢN SOẠN THẢO"}
+                  </span>
+                  {x.preview ? (
+                    <span className="green-badge-pill">
+                      <Icon name="eye" size={13} /> Học viên được xem trước
+                    </span>
+                  ) : (
+                    <span className="kpi-tag">Nội dung có khóa</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="lesson-hero-title-area">
+                <p className="eyebrow" style={{ color: "#0284c7", fontWeight: 700, margin: 0 }}>
+                  AILSS LESSON STUDIO &bull; SOẠN THẢO BÀI GIẢNG
+                </p>
+                <div className="lesson-hero-title-row">
+                  <h1 className="lesson-hero-title">{x.title}</h1>
+                </div>
+                <div className="lesson-meta-chips">
+                  <span className="lesson-meta-chip">
+                    📁 Chương: <strong>{x.sectionTitle || "Chưa phân chương"}</strong>
+                  </span>
+                  <span className="lesson-meta-chip">
+                    🔢 Vị trí: Chương #{x.position?.sectionOrder || 1} &bull; Bài #
+                    {x.position?.lessonOrder || 1}
+                  </span>
+                  <span className="lesson-meta-chip">
+                    🆔 ID: <code>{lessonId}</code>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="lesson-studio-grid">
+              {/* Left Column: Video Media Upload & Cloud Processing */}
+              <div>
+                <MediaUpload
+                  key={lessonId}
+                  courseId={x.courseId}
+                  lessonId={lessonId}
+                  preview={x.preview}
+                  mediaAssetId={x.mediaAssetId}
+                />
+              </div>
+
+              {/* Right Column: Lesson Metadata & Configuration */}
+              <div className="lesson-card">
+                <div className="lesson-card-header">
+                  <div className="lesson-card-header-main">
+                    <div
+                      className="lesson-icon-circle"
+                      style={{ background: "rgba(124, 58, 237, 0.1)", color: "#7c3aed" }}
+                    >
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="lesson-card-title">Cấu hình bài học</h2>
+                      <p className="lesson-card-subtitle">
+                        Tên bài giảng, định danh phân chương và thứ tự hiển thị.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <form
+                  className="form-panel form-grid"
+                  style={{ background: "transparent", border: "none", padding: 0, margin: 0 }}
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const v = values(new FormData(e.currentTarget));
+                    try {
+                      await lecturerRequest(`/lessons/${lessonId}`, "PATCH", {
+                        title: v.title,
+                        sectionTitle: v.sectionTitle,
+                        position: {
+                          sectionOrder: Number(v.sectionOrder),
+                          lessonOrder: Number(v.lessonOrder),
+                        },
+                        preview: v.preview === "on",
+                      });
+                      setMsg("Đã lưu bài học.");
+                      q.retry();
+                    } catch (y) {
+                      setMsg(lecturerError(y));
+                    }
+                  }}
+                >
+                  <Field label="Tiêu đề" name="title" defaultValue={x.title} required />
+                  <Field label="Chương" name="sectionTitle" defaultValue={x.sectionTitle} required />
+
+                  <div className="lesson-form-row">
+                    <Field
+                      label="Thứ tự chương"
+                      name="sectionOrder"
+                      type="number"
+                      defaultValue={x.position?.sectionOrder || 1}
+                      required
+                    />
+                    <Field
+                      label="Thứ tự bài"
+                      name="lessonOrder"
+                      type="number"
+                      defaultValue={x.position?.lessonOrder || 1}
+                      required
+                    />
+                  </div>
+
+                  <label className="preview-toggle-card">
+                    <input name="preview" type="checkbox" defaultChecked={x.preview} />
+                    <div className="preview-toggle-text">
+                      <span className="preview-toggle-label">Xem trước (Học thử miễn phí)</span>
+                      <span className="preview-toggle-sub">
+                        Cho phép học viên chưa mua khóa học có thể xem trước nội dung bài học này
+                      </span>
+                    </div>
+                  </label>
+
+                  <div className="lesson-save-bar">
+                    <span style={{ fontSize: 13, color: "var(--muted, #64748b)" }}>
+                      Cập nhật sẽ áp dụng ngay vào cây học liệu khóa học.
+                    </span>
+                    <button
+                      className="button"
+                      style={{
+                        minWidth: 140,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      Lưu bài học
+                    </button>
+                  </div>
+                </form>
+
+                {msg ? (
+                  <div className="dashboard-banner-notice" role="status" style={{ margin: 0 }}>
+                    <span>{msg}</span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           </>
         )}
       </State>
-      <p role="status">{msg}</p>
-    </>
+    </div>
   );
 }
 interface CourseRosterMember {

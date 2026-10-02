@@ -21,7 +21,7 @@ export function phase41RouteAvailable(pathname: string, role?: string): boolean 
 export function getFeaturesForRole(role?: string): FeatureItem[] {
   if (role === "LECTURER" || role === "ADMIN") return [];
 
-  // Student and guest destinations; indicators come from assigned work.
+  // Student and guest destinations: 8 balanced quick features
   return [
     {
       id: "classes",
@@ -38,6 +38,14 @@ export function getFeaturesForRole(role?: string): FeatureItem[] {
       bgColor: "#EDE9FE",
       iconColor: "#7C3AED",
       path: "/courses",
+    },
+    {
+      id: "assignments",
+      label: "Bài tập",
+      icon: "assignment",
+      bgColor: "#FEE2E2",
+      iconColor: "#DC2626",
+      path: "/classes?tab=assignments",
     },
     {
       id: "assessments",

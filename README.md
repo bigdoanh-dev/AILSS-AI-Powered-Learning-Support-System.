@@ -1,5 +1,7 @@
 # AILSS — AI-Powered Learning Support System
 
+Bộ dữ liệu học viên và hai giảng viên demo, liên kết lớp/lịch/bảng điểm: [Linked demo guide](LINKED_DEMO_GUIDE.md).
+
 Hướng dẫn thử đăng ký/thanh toán từ đầu và xử lý quyền học được seed sẵn: [Local demo checkout](LOCAL_DEMO_CHECKOUT_GUIDE.md).
 
 [![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -109,6 +111,7 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 - Danh sách bài kiểm tra trên mobile chỉ lấy Quiz đã publish của khóa học/lớp mà học viên có quyền truy cập.
 - Comment, reply một cấp, review, report và notification với cursor opaque.
 - Study Plan, mastery projection và AI Tutor đã có đường runtime từ assessment evidence; các nguồn evidence khác và full-stack acceptance chưa hoàn tất.
+- Biểu đồ radar năng lực theo từng bài học/bài kiểm tra: Web tại Tiến độ, mobile tại Năng lực học tập. Điểm lấy từ mastery đã ghi nhận; chưa có bằng chứng hiển thị “Chưa đánh giá”, không gán điểm 0. Có chọn khóa học, nhóm nội dung và xem số bằng chứng/độ tin cậy.
 
 ### 3. Lecturer Teaching
 
@@ -118,6 +121,7 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 - Quản lý Class thuộc sở hữu, roster, lịch, session, announcement và attendance thủ công.
 - Tạo lớp trường học/tổ chức, chia sẻ mã tham gia, tải ảnh/ảnh bìa, xem hồ sơ học viên, cảnh báo và xóa thành viên theo điều kiện backend; xuất roster khóa học ra CSV.
 - Tạo Quiz với bốn loại câu hỏi và xem kết quả theo contract.
+- Radar giảng viên mặc định hiển thị tổng quan năng lực khóa học (Web/mobile), hoặc khóa học đã chọn tại Bảng điểm trên Web; không cần chọn học viên. Mỗi trục là điểm trung bình của những học viên đã có bằng chứng ở bài học/bài kiểm tra đó, kèm số người được đánh giá. Chưa có bằng chứng không gán điểm 0. Xem riêng từng học viên là tùy chọn chi tiết. API chỉ cho chủ khóa học xem, chỉ tổng hợp học viên có entitlement đang ACTIVE và không trả danh tính trong dữ liệu tổng hợp.
 - Upload tài liệu, chạy extraction/generation, review AI draft và import thành Assessment Quiz `DRAFT`. AI không tự approve hoặc publish.
 
 ### 4. Admin Governance

@@ -197,159 +197,298 @@ export function MediaUpload({
     }
   }
   return (
-    <section className="form-panel" aria-label="Video bài giảng riêng tư">
-      <h2>Video bài giảng riêng tư</h2>
-      <p>
+    <section className="form-panel lesson-card" aria-label="Video bài giảng riêng tư">
+      <div className="lesson-card-header">
+        <div className="lesson-card-header-main">
+          <div className="lesson-icon-circle">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+              <line x1="7" y1="2" x2="7" y2="22"></line>
+              <line x1="17" y1="2" x2="17" y2="22"></line>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <line x1="2" y1="7" x2="7" y2="7"></line>
+              <line x1="2" y1="17" x2="7" y2="17"></line>
+              <line x1="17" y1="17" x2="22" y2="17"></line>
+              <line x1="17" y1="7" x2="22" y2="7"></line>
+            </svg>
+          </div>
+          <div>
+            <h2 className="lesson-card-title">Video bài giảng riêng tư</h2>
+            <p className="lesson-card-subtitle">
+              Tải lên kho lưu trữ đám mây bảo mật & mã hóa HLS đa chất lượng (Adaptive Bitrate).
+            </p>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span className="kpi-tag accent">HLS Encrypted</span>
+          <span className="green-badge-pill">Kho riêng tư</span>
+        </div>
+      </div>
+
+      <p style={{ fontSize: 13, color: "var(--muted, #64748b)", margin: 0, lineHeight: 1.6 }}>
         Video tải trực tiếp lên kho riêng tư. Sau khi mở lại trình duyệt, chọn lại đúng tệp để tiếp tục các
         phần còn thiếu trong phiên còn hiệu lực.
       </p>
+
       {pending ? (
-        <p role="status">
-          Có phiên tải lên chưa hoàn tất cho {pending.name}. Chọn lại chính tệp đó để tiếp tục.
-        </p>
-      ) : null}
-      {pending ? (
-        <button
-          className="button secondary"
-          disabled={busy}
-          onClick={async () => {
-            try {
-              await lecturerRequest(`/media-assets/${pending.id}/cancel`, "POST", {});
-              localStorage.removeItem(pendingKey(ownerId, courseId, lessonId));
-              setPending(null);
-              attempt.current = null;
-              setAsset(null);
-              setMessage("Đã hủy phiên tải lên cũ.");
-            } catch (error) {
-              setMessage(lecturerError(error));
-            }
-          }}
-        >
-          Hủy phiên tải lên cũ
-        </button>
-      ) : null}
-      {preview ? (
-        <p role="status">Tắt “Xem trước” để dùng video có bảo vệ. Trailer công khai là luồng riêng.</p>
-      ) : (
-        <>
-          <label>
-            Chọn video MP4 hoặc WebM{" "}
-            <input
-              type="file"
-              accept="video/mp4,video/webm"
-              disabled={busy}
-              onChange={(event) => {
-                setFile(event.target.files?.[0] ?? null);
-                attempt.current = null;
-                setDone(0);
-                setTotal(0);
-              }}
-            />
-          </label>
-          {file ? (
-            <p>
-              {file.name} · {(file.size / 1024 ** 2).toFixed(1)} MiB
-            </p>
-          ) : null}
-          <button className="button" disabled={!file || busy} onClick={() => void upload()}>
-            {busy ? "Đang tải…" : "Tải video / thử lại phần còn thiếu"}
-          </button>
-          {total > 0 ? (
-            <>
-              <progress aria-label="Tiến độ tải video" max={total} value={done} />
-              <p role="status">
-                {done}/{total} phần đã tải
-              </p>
-            </>
-          ) : null}
-        </>
-      )}
-      {asset ? (
-        <>
-          <p role="status">
-            {statuses[asset.status] ?? asset.status} · {asset.originalFilename}
+        <div style={{ background: "#FEF3C7", border: "1px solid #FCD34D", borderRadius: 12, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <p role="status" style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#92400E" }}>
+            Có phiên tải lên chưa hoàn tất cho {pending.name}. Chọn lại chính tệp đó để tiếp tục.
           </p>
-          {asset.failureCode ? <p role="alert">{asset.failureCode}</p> : null}
-          {asset.status === "READY" ? (
+          <div>
             <button
               className="button secondary"
+              disabled={busy}
               onClick={async () => {
                 try {
-                  await lecturerRequest(`/media-assets/${asset.mediaAssetId}/attach`, "POST", {});
-                  setMessage("Đã gắn video Sẵn sàng vào bài học.");
+                  await lecturerRequest(`/media-assets/${pending.id}/cancel`, "POST", {});
+                  localStorage.removeItem(pendingKey(ownerId, courseId, lessonId));
+                  setPending(null);
+                  attempt.current = null;
+                  setAsset(null);
+                  setMessage("Đã hủy phiên tải lên cũ.");
                 } catch (error) {
                   setMessage(lecturerError(error));
                 }
               }}
             >
-              Gắn video đã xử lý vào bài học
+              Hủy phiên tải lên cũ
             </button>
-          ) : null}
-          {asset.status === "READY" ? (
-            <div>
-              <p>Phụ đề WebVTT cho video này</p>
+          </div>
+        </div>
+      ) : null}
+
+      {preview ? (
+        <div style={{ background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: 12, padding: "12px 16px" }}>
+          <p role="status" style={{ margin: 0, fontSize: 13, color: "#475569" }}>
+            Tắt “Xem trước” để dùng video có bảo vệ. Trailer công khai là luồng riêng.
+          </p>
+        </div>
+      ) : (
+        <div className="media-upload-panel">
+          <div className="media-upload-dropzone">
+            <div className="media-dropzone-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <div className="media-dropzone-title">Chọn tệp video từ thiết bị của bạn</div>
+            <div className="media-dropzone-hint">
+              Hỗ trợ định dạng MP4 hoặc WebM, tối đa 2GB. Quá trình tải lên hỗ trợ tạm dừng và tiếp tục mượt mà.
+            </div>
+            <label style={{ cursor: "pointer", marginTop: 6, display: "inline-block" }}>
+              Chọn video MP4 hoặc WebM{" "}
               <input
-                aria-label="Chọn tệp phụ đề WebVTT"
                 type="file"
-                accept=".vtt,text/vtt"
-                onChange={(event) => setCaptionFile(event.target.files?.[0] ?? null)}
+                accept="video/mp4,video/webm"
+                disabled={busy}
+                onChange={(event) => {
+                  setFile(event.target.files?.[0] ?? null);
+                  attempt.current = null;
+                  setDone(0);
+                  setTotal(0);
+                }}
               />
-              <label>
-                Ngôn ngữ{" "}
-                <input
-                  aria-label="Ngôn ngữ phụ đề"
-                  value={captionLanguage}
-                  maxLength={35}
-                  onChange={(event) => setCaptionLanguage(event.target.value)}
+            </label>
+          </div>
+
+          {file ? (
+            <div className="media-selected-file-card">
+              <div className="media-selected-file-info">
+                <span style={{ fontSize: 20 }}>🎬</span>
+                <span className="media-selected-file-name">{file.name}</span>
+                <span className="media-selected-file-size">{(file.size / 1024 ** 2).toFixed(1)} MiB</span>
+              </div>
+              <span style={{ fontSize: 12, color: "#0284c7", fontWeight: 700 }}>Đã chọn</span>
+            </div>
+          ) : null}
+
+          {file ? (
+            <p style={{ display: "none" }}>
+              {file.name} · {(file.size / 1024 ** 2).toFixed(1)} MiB
+            </p>
+          ) : null}
+
+          <div>
+            <button className="button" disabled={!file || busy} onClick={() => void upload()} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              {busy ? "Đang tải…" : "Tải video / thử lại phần còn thiếu"}
+            </button>
+          </div>
+
+          {total > 0 ? (
+            <div className="media-progress-box">
+              <div className="media-progress-header">
+                <span>Tiến độ tải dữ liệu theo phân mảnh</span>
+                <span style={{ color: "#0284c7", fontWeight: 700 }}>
+                  {total > 0 ? Math.round((done / total) * 100) : 0}%
+                </span>
+              </div>
+              <div className="media-progress-bar-wrap">
+                <div
+                  className="media-progress-bar-fill"
+                  style={{ width: `${total > 0 ? Math.round((done / total) * 100) : 0}%` }}
                 />
-              </label>
-              <label>
-                Tên phụ đề{" "}
-                <input
-                  aria-label="Tên phụ đề"
-                  value={captionLabel}
-                  maxLength={80}
-                  onChange={(event) => setCaptionLabel(event.target.value)}
-                />
-              </label>
+              </div>
+              <progress aria-label="Tiến độ tải video" max={total} value={done} style={{ display: "none" }} />
+              <p role="status" style={{ margin: 0, fontSize: 12.5, color: "#64748b" }}>
+                {done}/{total} phần đã tải
+              </p>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {asset ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 8 }}>
+          <div
+            className={`media-asset-badge-card ${
+              asset.status === "READY"
+                ? "media-asset-badge-ready"
+                : asset.status === "PROCESSING" || asset.status === "VERIFYING"
+                  ? "media-asset-badge-processing"
+                  : ""
+            }`}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 22 }}>
+                {asset.status === "READY" ? "✅" : asset.status === "FAILED" ? "❌" : "⏳"}
+              </span>
+              <div>
+                <p role="status" style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
+                  {statuses[asset.status] ?? asset.status} · {asset.originalFilename}
+                </p>
+                <small style={{ color: "#64748b", fontSize: 12 }}>
+                  Mã tài nguyên HLS: <code>{asset.mediaAssetId}</code>
+                </small>
+              </div>
+            </div>
+
+            {asset.status === "READY" ? (
               <button
                 className="button secondary"
-                disabled={!captionFile || captionBusy}
                 onClick={async () => {
-                  if (!captionFile || captionBusy) return;
-                  if (captionFile.size > 262144 || captionFile.size === 0) {
-                    setMessage("Phụ đề phải là WebVTT và không quá 256 KiB.");
-                    return;
-                  }
-                  setCaptionBusy(true);
                   try {
-                    await lecturerRequest(`/media-assets/${asset.mediaAssetId}/captions`, "POST", {
-                      language: captionLanguage.trim(),
-                      label: captionLabel.trim(),
-                      kind: "SUBTITLES",
-                      contentType: "text/vtt",
-                      content: await captionFile.text(),
-                    });
-                    const refreshed = await lecturerRequest<Asset>(`/media-assets/${asset.mediaAssetId}`);
-                    setAsset(refreshed.data);
-                    setMessage("Đã thêm phụ đề cho video.");
+                    await lecturerRequest(`/media-assets/${asset.mediaAssetId}/attach`, "POST", {});
+                    setMessage("Đã gắn video Sẵn sàng vào bài học.");
                   } catch (error) {
                     setMessage(lecturerError(error));
-                  } finally {
-                    setCaptionBusy(false);
                   }
                 }}
               >
-                {captionBusy ? "Đang lưu phụ đề…" : "Thêm phụ đề"}
+                Gắn video đã xử lý vào bài học
               </button>
+            ) : null}
+          </div>
+
+          {asset.failureCode ? (
+            <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 10, padding: "10px 14px" }}>
+              <p role="alert" style={{ margin: 0, color: "#991B1B", fontSize: 13, fontWeight: 600 }}>
+                {asset.failureCode}
+              </p>
+            </div>
+          ) : null}
+
+          {asset.status === "READY" ? (
+            <div className="media-captions-box">
+              <div className="media-captions-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Phụ đề WebVTT cho video này</span>
+              </div>
+              <p style={{ margin: 0, fontSize: 12.5, color: "#64748b" }}>
+                Thêm tệp phụ đề song ngữ hoặc tiếng Việt giúp học viên dễ dàng theo dõi bài học và tìm kiếm nội dung theo lời thoại.
+              </p>
+
+              <div>
+                <input
+                  aria-label="Chọn tệp phụ đề WebVTT"
+                  type="file"
+                  accept=".vtt,text/vtt"
+                  onChange={(event) => setCaptionFile(event.target.files?.[0] ?? null)}
+                />
+              </div>
+
+              <div className="media-captions-grid">
+                <label>
+                  Ngôn ngữ{" "}
+                  <input
+                    aria-label="Ngôn ngữ phụ đề"
+                    value={captionLanguage}
+                    maxLength={35}
+                    onChange={(event) => setCaptionLanguage(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Tên phụ đề{" "}
+                  <input
+                    aria-label="Tên phụ đề"
+                    value={captionLabel}
+                    maxLength={80}
+                    onChange={(event) => setCaptionLabel(event.target.value)}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  className="button secondary"
+                  disabled={!captionFile || captionBusy}
+                  onClick={async () => {
+                    if (!captionFile || captionBusy) return;
+                    if (captionFile.size > 262144 || captionFile.size === 0) {
+                      setMessage("Phụ đề phải là WebVTT và không quá 256 KiB.");
+                      return;
+                    }
+                    setCaptionBusy(true);
+                    try {
+                      await lecturerRequest(`/media-assets/${asset.mediaAssetId}/captions`, "POST", {
+                        language: captionLanguage.trim(),
+                        label: captionLabel.trim(),
+                        kind: "SUBTITLES",
+                        contentType: "text/vtt",
+                        content: await captionFile.text(),
+                      });
+                      const refreshed = await lecturerRequest<Asset>(`/media-assets/${asset.mediaAssetId}`);
+                      setAsset(refreshed.data);
+                      setMessage("Đã thêm phụ đề cho video.");
+                    } catch (error) {
+                      setMessage(lecturerError(error));
+                    } finally {
+                      setCaptionBusy(false);
+                    }
+                  }}
+                >
+                  {captionBusy ? "Đang lưu phụ đề…" : "Thêm phụ đề"}
+                </button>
+              </div>
+
               {asset.captionTracks?.length ? (
-                <p role="status">{asset.captionTracks.map((track) => track.label).join(", ")}</p>
+                <div style={{ background: "#F1F5F9", padding: "8px 12px", borderRadius: 8 }}>
+                  <p role="status" style={{ margin: 0, fontSize: 12.5, fontWeight: 600, color: "#334155" }}>
+                    Danh sách phụ đề: {asset.captionTracks.map((track) => track.label).join(", ")}
+                  </p>
+                </div>
               ) : null}
             </div>
           ) : null}
-        </>
+        </div>
       ) : null}
-      <p role="status">{message}</p>
+
+      {message ? (
+        <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 10, padding: "10px 14px", marginTop: 4 }}>
+          <p role="status" style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#0369A1" }}>
+            {message}
+          </p>
+        </div>
+      ) : null}
     </section>
   );
 }

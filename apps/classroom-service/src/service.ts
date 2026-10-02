@@ -149,8 +149,10 @@ export class ClassroomService {
       throw new AppError("CLASS_OWNER_REQUIRED", 403, "Class owner authorization is required");
     if (klass.state !== "ACTIVE" || klass.scheduleState !== "PUBLISHED")
       throw conflict("CLASS_SCHEDULE_NOT_AVAILABLE", "Published Class schedule is not available");
-    if (session.mode !== "OFFLINE")
-      throw conflict("MANUAL_ATTENDANCE_OFFLINE_ONLY", "Manual attendance requires an OFFLINE session");
+    // Online sessions can still be corrected manually when realtime presence did
+    // not produce a trusted row (for example a learner joined by phone but the
+    // websocket was interrupted). A trusted ONLINE_PRESENCE row remains
+    // immutable and is handled below so the automatic evidence is preserved.
     if (!["SCHEDULED", "COMPLETED"].includes(session.status))
       throw conflict("MANUAL_ATTENDANCE_SESSION_INELIGIBLE", "Session is not eligible for manual attendance");
     if (Date.now() < session.startAt.getTime())
@@ -277,7 +279,7 @@ export class ClassroomService {
         sessionId: session.sessionId,
         classId: session.classId,
         title: session.title,
-        mode: "OFFLINE" as const,
+        mode: session.mode,
         attendanceStatus: current.attendanceStatus,
         ...(current.manualNote ? { manualNote: current.manualNote } : {}),
         connectedDurationSeconds: current.connectedDurationSeconds,
@@ -1853,6 +1855,7 @@ export class ClassroomService {
       await this.repo.checkpoint(scope, hash, input.key, cmd.operationId, {
         ...cmd.receipt,
         target: { ...target },
+        oldUpdatedAt: klass.updatedAt.toISOString(),
       });
     }
     for (const id of target.sessionIds) {
@@ -1895,6 +1898,21 @@ export class ClassroomService {
       lastEndAt: new Date(target.lastEndAt),
       publishedAt: occurredAt,
     });
+    // Publishing changes the canonical updated_at. Move the lecturer projection
+    // too, so a later join-code reset does not leave the pre-publish row behind.
+    // Keep the old timestamp in the command receipt for interrupted retries.
+    const published = await this.repo.getClass(klass.classId);
+    if (
+      !published ||
+      published.scheduleState !== "PUBLISHED" ||
+      published.scheduleVersion !== target.scheduleVersion
+    )
+      throw unavailable();
+    await this.repo.deleteLecturer({
+      ...klass,
+      updatedAt: new Date(cmd.receipt.oldUpdatedAt ?? klass.updatedAt),
+    });
+    await this.repo.insertLecturer(published);
     const data = {
       classId: klass.classId,
       scheduleState: "PUBLISHED",
@@ -2129,7 +2147,7 @@ function sameManualHistory(current: AttendanceHistoryRow, intended: AttendanceHi
     current.sessionId === intended.sessionId &&
     current.classId === intended.classId &&
     current.startAt.getTime() === intended.startAt.getTime() &&
-    current.mode === "OFFLINE" &&
+    current.mode === intended.mode &&
     current.attendanceStatus === intended.attendanceStatus &&
     current.manualNote === intended.manualNote &&
     current.connectedDurationSeconds === intended.connectedDurationSeconds &&

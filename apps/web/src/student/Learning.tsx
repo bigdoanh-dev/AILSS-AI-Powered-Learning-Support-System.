@@ -491,8 +491,16 @@ export function StudentHome() {
         </Link>
       </div>
       <State query={courses}>
-        <section className="dashboard-section-card">
-          <h2>{first ? "Tiếp tục học" : "Bắt đầu hành trình học tập"}</h2>
+        <section className="dashboard-section-card continue-learning-section">
+          <div className="section-card-header">
+            <div>
+              <p className="eyebrow">TIẾN ĐỘ ĐÀO TẠO</p>
+              <h2>{first ? "Tiếp tục học" : "Bắt đầu hành trình học tập"}</h2>
+            </div>
+            {courses.data?.length ? (
+              <span className="kpi-tag accent">{courses.data.length} khóa đang theo học</span>
+            ) : null}
+          </div>
           {first ? (
             <CourseCards items={courses.data ?? []} />
           ) : (
@@ -655,20 +663,33 @@ export function Learn() {
     </>
   );
 }
-function OwnedCourseCard({ course }: { course: LearningCourse }) {
+function OwnedCourseCard({ course, index = 0 }: { course: LearningCourse; index?: number }) {
   const progress = useStudent<Progress>(`/courses/${course.courseId}/progress`);
+  const isCompleted = progress.data && progress.data.percent >= 100;
   return (
-    <article className="learning-card">
+    <article
+      className={`learning-card owned-learning-card ${isCompleted ? "is-completed" : ""}`}
+      style={{ animationDelay: `${index * 80}ms` }}
+    >
       <div className="learning-card-media">
         <CourseArtwork title={course.title} />
         <span className="learning-card-type">{course.priceType === "FREE" ? "Miễn phí" : "Đã đăng ký"}</span>
+        {isCompleted && (
+          <span className="learning-card-completed-badge">
+            <Icon name="checkCircle" size={13} />
+            <span>Đã hoàn thành</span>
+          </span>
+        )}
       </div>
       <div className="learning-card-content">
-        <h3>{course.title}</h3>
+        <h3 title={course.title}>{course.title}</h3>
         <State query={progress}>{progress.data && <ProgressView value={progress.data} />}</State>
-        <Link className="learning-card-button primary" to={`/app/learn/${course.courseId}`}>
-          Tiếp tục học →
-        </Link>
+        <div className="learning-card-action-bar">
+          <Link className="learning-card-button primary continue-learning-btn" to={`/app/learn/${course.courseId}`}>
+            <span>Tiếp tục học</span>
+            <span className="continue-btn-arrow" aria-hidden="true">→</span>
+          </Link>
+        </div>
       </div>
     </article>
   );
@@ -676,8 +697,8 @@ function OwnedCourseCard({ course }: { course: LearningCourse }) {
 function CourseCards({ items }: { items: LearningCourse[] }) {
   return (
     <div className="learning-grid">
-      {items.map((course) => (
-        <OwnedCourseCard key={course.courseId} course={course} />
+      {items.map((course, idx) => (
+        <OwnedCourseCard key={course.courseId} course={course} index={idx} />
       ))}
     </div>
   );

@@ -368,12 +368,20 @@ export class ClassroomRepository {
       [uuid(id)],
       LQ,
     );
-    return (await this.resolveClasses(rows)).filter((value) => value.state === "ACTIVE");
+    return (await this.resolveClasses(rows)).filter(
+      (value) => value.state === "ACTIVE" && value.ownerLecturerId === id,
+    );
   }
   private async resolveClasses(rows: readonly types.Row[]) {
     const out: ClassroomClass[] = [];
+    const seen = new Set<string>();
     for (const r of rows) {
-      const v = await this.getClass(String(r.class_id));
+      const classId = String(r.class_id);
+      // Projections keyed by updated_at/joined_at can retain an older row after
+      // a partial write. Resolve each canonical class once for both role lists.
+      if (seen.has(classId)) continue;
+      seen.add(classId);
+      const v = await this.getClass(classId);
       if (v) out.push(v);
     }
     return out;

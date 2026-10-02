@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { lecturerError } from "./api";
+import { LecturerLearningRadar } from "./LearningRadarPanel";
+import { lecturerError, useLecturer } from "./api";
 import {
   aggregateReport,
   loadTeachingReport,
@@ -20,6 +21,10 @@ const brackets = ["Dưới 5", "5–<6,5", "6,5–<8", "8–<9", "9–10"];
 const number = (value: number | null, suffix = "") => (value === null ? "—" : `${value.toFixed(1)}${suffix}`);
 
 export function LecturerReportsDashboard() {
+  const courses = useLecturer<{ items: { courseId: string; title: string; state?: string }[] }>("/me/owned-courses");
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const courseItems = courses.data?.items?.filter((item) => item.state !== "ARCHIVED") ?? [];
+  const activeCourse = courseItems.some((item) => item.courseId === selectedCourse) ? selectedCourse : courseItems[0]?.courseId;
   const [selectedClass, setSelectedClass] = useState("ALL");
   const [days, setDays] = useState<RangeDays>(30);
   const [revision, setRevision] = useState(0);
@@ -146,6 +151,16 @@ export function LecturerReportsDashboard() {
           </span>
         )}
       </div>
+
+      <section className="form-panel" aria-label="Năng lực theo khóa học">
+        <label htmlFor="report-course">Khóa học xem năng lực</label>
+        <select id="report-course" value={activeCourse ?? ""} onChange={(event) => setSelectedCourse(event.target.value)} disabled={!courseItems.length}>
+          {!courseItems.length && <option value="">Chưa có khóa học</option>}
+          {courseItems.map((item) => <option key={item.courseId} value={item.courseId}>{item.title}</option>)}
+        </select>
+        {!!courses.error && <p role="alert">{lecturerError(courses.error)}</p>}
+        {activeCourse && <LecturerLearningRadar key={activeCourse} courseId={activeCourse} />}
+      </section>
 
       {pending && (
         <div className="dashboard-section-card" role="status">

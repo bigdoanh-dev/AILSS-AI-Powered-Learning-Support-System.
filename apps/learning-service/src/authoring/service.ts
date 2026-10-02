@@ -7,6 +7,7 @@ import {
   courseDto,
   keyHash,
   newCommandIds,
+  isZeroCoursePrice,
   type AuthoringCourse,
   type CoursePatchRequest,
   type CourseWriteRequest,
@@ -155,7 +156,11 @@ export class LearningAuthoringService {
       throw new AppError("COURSE_OWNER_REQUIRED", 403, "Course owner authorization is required");
     if (current.state !== "DRAFT")
       throw conflict("COURSE_NOT_EDITABLE", "Only DRAFT course metadata can be updated");
-    if (!record.receipt.oldCourse && isNoOp(current, input.request)) {
+    const free = (input.request.priceType ?? current.priceType) === "FREE";
+    if (free && input.request.price !== undefined && !isZeroCoursePrice(input.request.price))
+      throw new AppError("FREE_COURSE_PRICE_MUST_BE_ZERO", 400, "Free courses must have price 0");
+    const request = free ? { ...input.request, price: "0" } : input.request;
+    if (!record.receipt.oldCourse && isNoOp(current, request)) {
       const dto = courseDto(current);
       await this.repository.complete(scope, hashed, input.idempotencyKey, record.operationId, {
         fingerprint,
@@ -175,12 +180,12 @@ export class LearningAuthoringService {
       );
     }
     const alreadyCommitted =
-      current.recordVersion === old.recordVersion + 1 && matchesPatch(current, input.request);
-    const won = alreadyCommitted ? false : await this.repository.update(old, input.request, now);
+      current.recordVersion === old.recordVersion + 1 && matchesPatch(current, request);
+    const won = alreadyCommitted ? false : await this.repository.update(old, request, now);
     const updated = alreadyCommitted ? current : await this.repository.get(input.courseId);
     if (
       !won &&
-      (!updated || !matchesPatch(updated, input.request) || updated.recordVersion !== old.recordVersion + 1)
+      (!updated || !matchesPatch(updated, request) || updated.recordVersion !== old.recordVersion + 1)
     )
       throw conflict("VERSION_CONFLICT", "Course was updated concurrently");
     if (!updated) throw unavailable();
