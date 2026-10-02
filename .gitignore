@@ -13,20 +13,7 @@ coverage/
 *.temp
 
 # Project reports, prompts, evidence, and manually generated output
-docs/
-!docs/
-docs/*
-!docs/STABILIZATION_AUDIT.md
-!docs/REVIEW_REMEDIATION.md
-!docs/architecture-sequences.md
-!docs/product-roadmap.md
-!docs/PHASE_40_REVISION_F_IMPLEMENTATION.md
-!docs/PHASE_40_REVISION_G_PROGRESS.md
-!docs/PHASE_40_REVISION_H_PROGRESS.md
-!docs/PHASE_40_REVISION_I_PROGRESS.md
-!docs/PHASE_40_REVISION_J_PROGRESS.md
-!docs/PHASE_40_REVISION_L_PROGRESS.md
-!docs/PHASE_40_REVISION_M_RELEASE.md
+/docs/
 /evidence/
 /logs/
 /screenshots/
