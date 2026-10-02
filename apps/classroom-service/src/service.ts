@@ -147,16 +147,9 @@ export class ClassroomService {
     if (!klass) throw unavailable();
     if (klass.ownerLecturerId !== input.actor.userId)
       throw new AppError("CLASS_OWNER_REQUIRED", 403, "Class owner authorization is required");
-    if (klass.state !== "ACTIVE" || klass.scheduleState !== "PUBLISHED")
-      throw conflict("CLASS_SCHEDULE_NOT_AVAILABLE", "Published Class schedule is not available");
-    // Online sessions can still be corrected manually when realtime presence did
-    // not produce a trusted row (for example a learner joined by phone but the
-    // websocket was interrupted). A trusted ONLINE_PRESENCE row remains
-    // immutable and is handled below so the automatic evidence is preserved.
-    if (!["SCHEDULED", "COMPLETED"].includes(session.status))
+    if (klass.state !== "ACTIVE") throw conflict("CLASS_SCHEDULE_NOT_AVAILABLE", "Class is not active");
+    if (!["DRAFT", "SCHEDULED", "COMPLETED"].includes(session.status))
       throw conflict("MANUAL_ATTENDANCE_SESSION_INELIGIBLE", "Session is not eligible for manual attendance");
-    if (Date.now() < session.startAt.getTime())
-      throw conflict("MANUAL_ATTENDANCE_TOO_EARLY", "Future sessions cannot be marked attended");
     const membership = await this.repo.membership(klass.classId, input.studentId);
     if (!membership || membership.state !== "ACTIVE")
       throw notFound("STUDENT_MEMBERSHIP_NOT_FOUND", "Student is not available for this Class");
@@ -202,13 +195,6 @@ export class ClassroomService {
       };
 
     let current = await this.repo.attendance(session.sessionId, input.studentId);
-    if (current?.source === "ONLINE_PRESENCE")
-      throw conflict(
-        "ATTENDANCE_SOURCE_CONFLICT",
-        "Trusted online presence evidence cannot be changed by manual attendance",
-      );
-    if (current && current.source !== "MANUAL_OFFLINE")
-      throw conflict("ATTENDANCE_SOURCE_CONFLICT", "Attendance source is not manually correctable");
     if (
       !command.receipt.target &&
       current?.attendanceStatus === input.request.attendanceStatus &&
@@ -389,13 +375,14 @@ export class ClassroomService {
     if (!session) throw notFound("SESSION_NOT_FOUND", "Session not found");
     const klass = await this.repo.getClass(session.classId);
     if (!klass) throw unavailable();
-    if (klass.state !== "ACTIVE" || klass.scheduleState !== "PUBLISHED")
+    if (klass.state !== "ACTIVE") throw notFound("CLASS_SCHEDULE_NOT_AVAILABLE", "Class is not active");
+    if (klass.scheduleState !== "PUBLISHED" && enforceWindow)
       throw notFound("CLASS_SCHEDULE_NOT_AVAILABLE", "Published Class schedule is not available");
     if (
       (enforceWindow && (session.mode !== "ONLINE" || session.status !== "SCHEDULED")) ||
-      (!enforceWindow && ["DRAFT", "CANCELLED"].includes(session.status))
+      (!enforceWindow && session.status === "CANCELLED")
     )
-      throw new AppError("PRESENCE_NOT_ELIGIBLE", 409, "Session is not eligible for online presence");
+      throw new AppError("PRESENCE_NOT_ELIGIBLE", 409, "Session is not eligible for attendance");
     if (enforceWindow && !inMeetingWindow(session.startAt, session.endAt, new Date()))
       throw new AppError("PRESENCE_WINDOW_CLOSED", 409, "Session presence window is closed");
     if (actorKind === "LECTURER") {
@@ -1649,17 +1636,12 @@ export class ClassroomService {
   }) {
     await this.lecturer(input.actor, input.requestId);
     const klass = await this.owned(input.classId, input.actor.userId);
-    this.requireDraftSchedule(klass);
+    if (klass.state !== "ACTIVE") throw conflict("CLASS_NOT_ACTIVE", "Class must be ACTIVE");
     const session = await this.repo.getSession(input.sessionId);
     if (!session || session.classId !== klass.classId)
       throw notFound("SESSION_NOT_FOUND", "Session not found");
-    if (session.status !== "DRAFT") {
-      if (input.request.status === "CANCELLED")
-        throw conflict(
-          "SCHEDULED_CANCEL_DEFERRED",
-          "SCHEDULED cancellation requires P7.16 schedule reconciliation",
-        );
-      throw conflict("SESSION_NOT_EDITABLE", "Only DRAFT sessions may be changed");
+    if (!["DRAFT", "SCHEDULED"].includes(session.status)) {
+      throw conflict("SESSION_NOT_EDITABLE", "Only DRAFT or SCHEDULED sessions may be changed");
     }
     const now = new Date(),
       scope = `CLS-12:${input.actor.userId}:${input.classId}:${input.sessionId}`,
@@ -1699,7 +1681,12 @@ export class ClassroomService {
           throw conflict("SESSION_VERSION_CONFLICT", "Session was changed concurrently");
       }
       const current = (await this.repo.getSession(session.sessionId)) ?? next;
-      await this.repo.updateSessionProjectionStatus(current);
+      if (session.status === "SCHEDULED") {
+        await this.repo.deleteSessionProjections(session);
+        await this.repo.insertSessionProjections(current);
+      } else {
+        await this.repo.updateSessionProjectionStatus(current);
+      }
       const data = sessionDto(current);
       await this.repo.complete(scope, hash, input.key, cmd.operationId, { ...cmd.receipt, resource: data });
       return { data, replayed: false, noOp: false };

@@ -18,7 +18,10 @@ export default function AdminUsersListScreen() {
 
   const [search, setSearch] = useState("");
   const [querySearch, setQuerySearch] = useState("");
-  useEffect(() => { const timer = setTimeout(() => setQuerySearch(search.trim()), 350); return () => clearTimeout(timer); }, [search]);
+  useEffect(() => {
+    const timer = setTimeout(() => setQuerySearch(search.trim()), 350);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const [role, setRole] = useState<AdminRole>("STUDENT");
   const [status, setStatus] = useState<AdminUserStatus>("ACTIVE");
@@ -141,7 +144,13 @@ export default function AdminUsersListScreen() {
 
   return (
     <Page scroll={false}>
-      <TextInput style={styles.input} accessibilityLabel="Tìm tài khoản" placeholder="Tên, email Google hoặc mã tài khoản" value={search} onChangeText={setSearch} />
+      <TextInput
+        style={styles.input}
+        accessibilityLabel="Tìm tài khoản"
+        placeholder="Tên, email Google hoặc mã tài khoản"
+        value={search}
+        onChangeText={setSearch}
+      />
       <Text style={styles.title}>Tra cứu người dùng</Text>
       <Text style={styles.small}>Lọc theo vai trò và trạng thái chính thức trên hệ thống</Text>
 

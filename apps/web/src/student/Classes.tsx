@@ -47,7 +47,11 @@ function formatDueLabel(isoDate?: string) {
   try {
     const d = new Date(isoDate);
     const now = new Date();
-    if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+    if (
+      d.getDate() === now.getDate() &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
+    ) {
       return "hôm nay";
     }
     return "sắp tới";
@@ -88,7 +92,9 @@ export function Classes() {
     );
   return (
     <>
-      <Heading title="Lớp học của tôi">Theo dõi lịch học, bài tập trên lớp và kết nối với giảng viên.</Heading>
+      <Heading title="Lớp học của tôi">
+        Theo dõi lịch học, bài tập trên lớp và kết nối với giảng viên.
+      </Heading>
 
       {/* Sắp đến hạn / Việc cần phải làm - CHỈ BÀI TẬP THUỘC LỚP HỌC */}
       <section className="class-todo-card animate-fade-in" aria-label="Bài tập lớp học sắp đến hạn">

@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { record, string } from "../../../../src/api";
 import { useMobileQuery } from "../../../../src/queries";
 import { Page, ScreenHeader, Button, Icon, tokens, styles } from "../../../../src/ui";
-import { ScalePressable, FadeSlideIn } from "../../../../src/motion";
+import { FadeSlideIn } from "../../../../src/motion";
 
 function roster(value: unknown) {
   const items = Array.isArray(value) ? value : record(value).items;
@@ -33,13 +33,14 @@ export default function CourseRoster() {
     if (!search.trim()) return query.data;
     const s = search.toLocaleLowerCase("vi").trim();
     return query.data.filter((r) =>
-      [r.studentId, r.name, r.email].some((v) =>
-        v.toLocaleLowerCase("vi").includes(s)
-      )
+      [r.studentId, r.name, r.email].some((v) => v.toLocaleLowerCase("vi").includes(s)),
     );
   }, [query.data, search]);
 
-  const activeEnrolled = query.data?.filter((i) => i.state === "ENROLLED" || i.state === "ACTIVE").length ?? (query.data?.length ?? 0);
+  const activeEnrolled =
+    query.data?.filter((i) => i.state === "ENROLLED" || i.state === "ACTIVE").length ??
+    query.data?.length ??
+    0;
 
   async function share() {
     const cell = (value: unknown) => `"${String(value).replaceAll('"', '""')}"`;
@@ -110,9 +111,7 @@ export default function CourseRoster() {
                 <Icon name="award" size={16} color="#2563EB" />
               </View>
               <View>
-                <Text style={[rs.statValue, { color: "#2563EB" }]}>
-                  {items.length}
-                </Text>
+                <Text style={[rs.statValue, { color: "#2563EB" }]}>{items.length}</Text>
                 <Text style={rs.statLabel}>Kết quả lọc</Text>
               </View>
             </View>
@@ -144,7 +143,7 @@ export default function CourseRoster() {
         </View>
       ) : null}
 
-      {(query.error || error) ? (
+      {query.error || error ? (
         <View style={rs.errorCard}>
           <Text style={styles.error}>{query.error || error}</Text>
           <Button label="Thử lại" size="sm" onPress={query.retry} />
@@ -184,9 +183,7 @@ export default function CourseRoster() {
               <View style={rs.studentMetaRow}>
                 <View style={rs.metaItem}>
                   <Icon name="calendar" size={12} color={tokens.color.muted} />
-                  <Text style={rs.metaText}>
-                    {r.enrolledAt ? r.enrolledAt.slice(0, 10) : "Mới ghi danh"}
-                  </Text>
+                  <Text style={rs.metaText}>{r.enrolledAt ? r.enrolledAt.slice(0, 10) : "Mới ghi danh"}</Text>
                 </View>
                 <View style={rs.metaItem}>
                   <Icon name="award" size={12} color={tokens.color.brand} />

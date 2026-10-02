@@ -193,7 +193,10 @@ export default function StudentClassesScreen() {
         // Fetch assigned quizzes for these classes
         try {
           const controller = new AbortController();
-          const allAssigned = await loadAssignedQuizzes((path, opts) => session.request(path, opts), controller.signal);
+          const allAssigned = await loadAssignedQuizzes(
+            (path, opts) => session.request(path, opts),
+            controller.signal,
+          );
           const classOnlyQuizzes = allAssigned.filter((q) => q.targetType === "CLASS");
           setClassQuizzes(classOnlyQuizzes);
         } catch {
@@ -467,11 +470,7 @@ export default function StudentClassesScreen() {
                               isUrgent ? { backgroundColor: "#FEE2E2" } : { backgroundColor: "#EFF6FF" },
                             ]}
                           >
-                            <Icon
-                              name="quiz"
-                              size={16}
-                              color={isUrgent ? "#DC2626" : "#2563EB"}
-                            />
+                            <Icon name="quiz" size={16} color={isUrgent ? "#DC2626" : "#2563EB"} />
                           </View>
                           <View style={{ flex: 1, gap: 2 }}>
                             <Text numberOfLines={1} style={localStyles.todoQuizTitle}>
@@ -496,10 +495,7 @@ export default function StudentClassesScreen() {
                           <View style={{ alignItems: "flex-end" }}>
                             <Text style={localStyles.todoDueCaption}>Hạn nộp</Text>
                             <Text
-                              style={[
-                                localStyles.todoDueDate,
-                                isUrgent && localStyles.todoDueDateUrgent,
-                              ]}
+                              style={[localStyles.todoDueDate, isUrgent && localStyles.todoDueDateUrgent]}
                             >
                               {deadlineText}
                             </Text>
@@ -537,10 +533,7 @@ export default function StudentClassesScreen() {
               <ScalePressable
                 accessibilityRole="button"
                 accessibilityLabel={showJoinForm ? "Ẩn khung tham gia" : "Thêm lớp học"}
-                style={[
-                  localStyles.joinToggleBtn,
-                  showJoinForm && localStyles.joinToggleBtnActive,
-                ]}
+                style={[localStyles.joinToggleBtn, showJoinForm && localStyles.joinToggleBtnActive]}
                 onPress={() => setShowJoinForm((v) => !v)}
               >
                 <Icon
@@ -549,10 +542,7 @@ export default function StudentClassesScreen() {
                   color={showJoinForm ? "#0284C7" : "#FFFFFF"}
                 />
                 <Text
-                  style={[
-                    localStyles.joinToggleBtnText,
-                    showJoinForm && localStyles.joinToggleBtnTextActive,
-                  ]}
+                  style={[localStyles.joinToggleBtnText, showJoinForm && localStyles.joinToggleBtnTextActive]}
                 >
                   {showJoinForm ? "Ẩn khung" : "+ Thêm lớp"}
                 </Text>
@@ -569,7 +559,8 @@ export default function StudentClassesScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={localStyles.joinBoxTitle}>Tham gia lớp học mới</Text>
                     <Text style={localStyles.joinBoxSub}>
-                      Nhập mã tham gia do giảng viên cung cấp (từ 6 - 32 ký tự) để tự động ghi danh vào lớp học.
+                      Nhập mã tham gia do giảng viên cung cấp (từ 6 - 32 ký tự) để tự động ghi danh vào lớp
+                      học.
                     </Text>
                   </View>
                 </View>
@@ -639,12 +630,7 @@ export default function StudentClassesScreen() {
                 return (
                   <View key={item.classId} style={localStyles.richClassCard}>
                     {/* Top Artwork Media Header */}
-                    <View
-                      style={[
-                        localStyles.classArtworkBanner,
-                        { backgroundColor: theme.gradientBg },
-                      ]}
-                    >
+                    <View style={[localStyles.classArtworkBanner, { backgroundColor: theme.gradientBg }]}>
                       <View style={localStyles.artworkDecorCircle} />
                       <View style={localStyles.artworkDecorCircleSmall} />
 

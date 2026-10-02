@@ -75,9 +75,9 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
     });
   }, [commentsList, searchQuery, activeTab, profile?.userId]);
 
-
   const handleInsertCode = () => {
-    const codeSnippet = "\n```javascript\n// Nhập đoạn mã lỗi của bạn ở đây\nconsole.log(\"Debug test\");\n```\n";
+    const codeSnippet =
+      '\n```javascript\n// Nhập đoạn mã lỗi của bạn ở đây\nconsole.log("Debug test");\n```\n';
     setBody((prev) => prev + codeSnippet);
   };
 
@@ -97,7 +97,9 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
               CỘNG ĐỒNG HỌC TẬP &amp; HỎI ĐÁP
             </span>
             <span style={{ fontSize: 12, color: "var(--muted)" }}>
-              {commentsList.length > 0 ? `${commentsList.length} câu hỏi & thảo luận` : "Thảo luận thời gian thực"}
+              {commentsList.length > 0
+                ? `${commentsList.length} câu hỏi & thảo luận`
+                : "Thảo luận thời gian thực"}
             </span>
           </div>
           <h2>
@@ -107,13 +109,23 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
             <span>Hỏi Đáp &amp; Thảo Luận Bài Học</span>
           </h2>
           <p className="subtext" style={{ margin: "4px 0 0" }}>
-            Không gian trao đổi bài tập, giải đáp thắc mắc chuyên môn cùng Giảng viên và cộng đồng sinh viên AILSS.
+            Không gian trao đổi bài tập, giải đáp thắc mắc chuyên môn cùng Giảng viên và cộng đồng sinh viên
+            AILSS.
           </p>
         </div>
       </div>
 
       {/* Discussion Search & Filter Toolbar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+          marginBottom: 20,
+        }}
+      >
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           <button
             type="button"
@@ -131,17 +143,39 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
           </button>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--surface-subtle)", border: "1px solid var(--line)", borderRadius: 10, padding: "6px 12px", minWidth: 260 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            background: "var(--surface-subtle)",
+            border: "1px solid var(--line)",
+            borderRadius: 10,
+            padding: "6px 12px",
+            minWidth: 260,
+          }}
+        >
           <Icon name="search" size={15} style={{ color: "var(--muted)" }} />
           <input
             type="search"
             placeholder="Tìm kiếm câu hỏi hoặc mã lỗi..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, width: "100%", color: "var(--ink)" }}
+            style={{
+              border: "none",
+              background: "transparent",
+              outline: "none",
+              fontSize: 13,
+              width: "100%",
+              color: "var(--ink)",
+            }}
           />
           {searchQuery && (
-            <button type="button" onClick={() => setSearchQuery("")} style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--muted)" }}>
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--muted)" }}
+            >
               ✕
             </button>
           )}
@@ -174,7 +208,11 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
             </div>
             <div>
               <span style={{ fontWeight: 700, fontSize: 14 }}>
-                {edit ? "Chỉnh sửa nội dung thảo luận" : reply ? `Trả lời bình luận của thành viên` : "Đặt câu hỏi hoặc chia sẻ thảo luận"}
+                {edit
+                  ? "Chỉnh sửa nội dung thảo luận"
+                  : reply
+                    ? `Trả lời bình luận của thành viên`
+                    : "Đặt câu hỏi hoặc chia sẻ thảo luận"}
               </span>
               <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
                 {profile?.displayName || profile?.emailMasked || "Tài khoản học viên AILSS"}
@@ -183,9 +221,22 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
           </div>
 
           {reply && (
-            <div style={{ padding: "10px 14px", background: "rgba(2, 132, 199, 0.08)", borderLeft: "3px solid #0284c7", borderRadius: "0 8px 8px 0", marginBottom: 12, fontSize: 12.5, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div
+              style={{
+                padding: "10px 14px",
+                background: "rgba(2, 132, 199, 0.08)",
+                borderLeft: "3px solid #0284c7",
+                borderRadius: "0 8px 8px 0",
+                marginBottom: 12,
+                fontSize: 12.5,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <div>
-                <strong>Đang trả lời:</strong> <span style={{ color: "var(--muted)" }}>"{reply.body?.slice(0, 80)}..."</span>
+                <strong>Đang trả lời:</strong>{" "}
+                <span style={{ color: "var(--muted)" }}>"{reply.body?.slice(0, 80)}..."</span>
               </div>
               <button
                 type="button"
@@ -199,7 +250,16 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
           )}
 
           {/* Quick tags & Toolbar */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 10,
+              flexWrap: "wrap",
+              gap: 8,
+            }}
+          >
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {["#Hỏi Bài Tập", "#Lỗi Code & Debug", "#Lý Thuyết", "#Thảo Luận Chung"].map((tag) => (
                 <button
@@ -263,7 +323,17 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
           </div>
         </form>
       ) : (
-        <div style={{ padding: "14px 18px", borderRadius: 10, background: "var(--surface-subtle)", border: "1px solid var(--line)", marginBottom: 20, fontSize: 13, color: "var(--muted)" }}>
+        <div
+          style={{
+            padding: "14px 18px",
+            borderRadius: 10,
+            background: "var(--surface-subtle)",
+            border: "1px solid var(--line)",
+            marginBottom: 20,
+            fontSize: 13,
+            color: "var(--muted)",
+          }}
+        >
           <Icon name="info" size={15} style={{ marginRight: 6, verticalAlign: "middle" }} />
           <span>Bạn cần quyền học khóa học để gửi bình luận.</span>
         </div>
@@ -319,7 +389,6 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
 
                   {c.state === "ACTIVE" && canWrite && (
                     <div className="review-card-footer">
-
                       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                         {!c.parentId && (
                           <button
@@ -448,7 +517,6 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
     return reviewsList.filter((r) => Math.round(r.rating) === starFilter);
   }, [reviewsList, starFilter]);
 
-
   const toggleQuickTag = (tag: string) => {
     if (selectedQuickTags.includes(tag)) {
       setSelectedQuickTags((prev) => prev.filter((t) => t !== tag));
@@ -479,7 +547,8 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
             <span>Đánh Giá Khóa Học Từ Học Viên</span>
           </h2>
           <p className="subtext" style={{ margin: "4px 0 0" }}>
-            Tổng hợp ý kiến đánh giá và trải nghiệm thực tế từ cộng đồng học viên đã hoàn thành tối thiểu 20% chương trình.
+            Tổng hợp ý kiến đánh giá và trải nghiệm thực tế từ cộng đồng học viên đã hoàn thành tối thiểu 20%
+            chương trình.
           </p>
         </div>
       </div>
@@ -490,13 +559,13 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
           <div className="rating-score-num">{stats.avgScore}</div>
           <div className="rating-stars-cluster" aria-label={`Điểm đánh giá ${stats.avgScore} trên 5 sao`}>
             {[1, 2, 3, 4, 5].map((s) => (
-              <span key={s} style={{ fontSize: 22, color: "#f59e0b" }}>★</span>
+              <span key={s} style={{ fontSize: 22, color: "#f59e0b" }}>
+                ★
+              </span>
             ))}
           </div>
           <div className="rating-score-sub">Dựa trên {stats.total} đánh giá trong trang này</div>
-          <span className="rating-satisfaction-tag">
-            ✓ 98% học viên hài lòng &amp; khuyến nghị
-          </span>
+          <span className="rating-satisfaction-tag">✓ 98% học viên hài lòng &amp; khuyến nghị</span>
         </div>
 
         <div className="rating-breakdown-bars">
@@ -570,7 +639,15 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
 
           {/* Interactive Star Rating Selector */}
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", display: "block", marginBottom: 6 }}>
+            <label
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--ink)",
+                display: "block",
+                marginBottom: 6,
+              }}
+            >
               Mức đánh giá
             </label>
             <div className="star-rating-selector">
@@ -640,7 +717,15 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
 
           {/* Textarea review body */}
           <label style={{ display: "block" }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", display: "block", marginBottom: 6 }}>
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--ink)",
+                display: "block",
+                marginBottom: 6,
+              }}
+            >
               Nội dung đánh giá
             </span>
             <textarea
@@ -681,7 +766,20 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
           </div>
         </form>
       ) : (
-        <div style={{ padding: "14px 18px", borderRadius: 10, background: "rgba(2, 132, 199, 0.06)", border: "1px solid rgba(2, 132, 199, 0.2)", marginBottom: 20, fontSize: 13, color: "var(--ink)", display: "flex", alignItems: "center", gap: 10 }}>
+        <div
+          style={{
+            padding: "14px 18px",
+            borderRadius: 10,
+            background: "rgba(2, 132, 199, 0.06)",
+            border: "1px solid rgba(2, 132, 199, 0.2)",
+            marginBottom: 20,
+            fontSize: 13,
+            color: "var(--ink)",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
           <Icon name="info" size={16} style={{ color: "#0284c7" }} />
           <span>Học ít nhất 20% khóa học để chia sẻ đánh giá. Quyền truy cập cần còn hiệu lực.</span>
         </div>
@@ -697,9 +795,7 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
                 <article className="commercial-review-card" key={r.reviewId}>
                   <div className="review-card-header">
                     <div className="review-author-info">
-                      <div className="review-author-avatar">
-                        {isAuthor ? "B" : "H"}
-                      </div>
+                      <div className="review-author-avatar">{isAuthor ? "B" : "H"}</div>
                       <div>
                         <div className="review-author-name">
                           <span>{isAuthor ? "Bạn" : "Học viên AILSS"}</span>
@@ -708,9 +804,7 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
                             <span>Đã hoàn thành khóa học</span>
                           </span>
                         </div>
-                        <div className="review-date-label">
-                          {dateLabel(r.createdAt)}
-                        </div>
+                        <div className="review-date-label">{dateLabel(r.createdAt)}</div>
                       </div>
                     </div>
 
@@ -728,7 +822,6 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
                   </div>
 
                   <div className="review-card-footer">
-
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                       {r.state === "ACTIVE" && isAuthor && (
                         <>
@@ -765,13 +858,9 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
                           </button>
                         </>
                       )}
-                      {r.state === "ACTIVE" && !isAuthor && (
-                        <ReportAction type="REVIEW" id={r.reviewId} />
-                      )}
+                      {r.state === "ACTIVE" && !isAuthor && <ReportAction type="REVIEW" id={r.reviewId} />}
                     </div>
                   </div>
-
-
                 </article>
               );
             })}
@@ -779,8 +868,6 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
         ) : (
           <div>
             <Empty>Chưa có đánh giá cho khóa học này.</Empty>
-
-
           </div>
         )}
       </State>
@@ -809,7 +896,16 @@ function ReportAction({ type, id }: { type: "COMMENT" | "REVIEW"; id: string }) 
     );
 
   return (
-    <div className="report-composer" style={{ marginTop: 8, padding: 12, background: "var(--surface-subtle)", borderRadius: 10, border: "1px solid var(--line)" }}>
+    <div
+      className="report-composer"
+      style={{
+        marginTop: 8,
+        padding: 12,
+        background: "var(--surface-subtle)",
+        borderRadius: 10,
+        border: "1px solid var(--line)",
+      }}
+    >
       <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>
         Lý do báo cáo
         <textarea
@@ -818,7 +914,14 @@ function ReportAction({ type, id }: { type: "COMMENT" | "REVIEW"; id: string }) 
           maxLength={1000}
           rows={2}
           required
-          style={{ width: "100%", borderRadius: 6, border: "1px solid var(--line)", padding: 8, marginTop: 4, fontSize: 12.5 }}
+          style={{
+            width: "100%",
+            borderRadius: 6,
+            border: "1px solid var(--line)",
+            padding: 8,
+            marginTop: 4,
+            fontSize: 12.5,
+          }}
         />
       </label>
       <div className="inline-actions" style={{ display: "flex", gap: 8, marginTop: 8 }}>

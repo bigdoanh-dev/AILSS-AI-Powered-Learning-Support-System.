@@ -39,14 +39,20 @@ export default function AttendanceScreen() {
         const sVal = await session.request(`/api/v1/class-sessions/${sessionId}`, { signal });
         const sess = sessionDetail(sVal);
         setClassSessionItem(sess);
+      } catch (e: unknown) {
+        if (!signal?.aborted) {
+          setError(e instanceof Error ? e.message : "Không thể tải thông tin buổi học.");
+          return;
+        }
+      }
 
+      try {
         const aVal = await session.request(`/api/v1/class-sessions/${sessionId}/attendance`, { signal });
         setRoster(attendanceRoster(aVal));
-      } catch {
+      } catch (e: unknown) {
         if (!signal?.aborted) {
-          setClassSessionItem(null);
-          setRoster(null);
-          setError("Không thể xác minh buổi học và danh sách điểm danh từ máy chủ.");
+          setRoster([]);
+          setError(e instanceof Error ? e.message : "Chưa có danh sách điểm danh từ máy chủ.");
         }
       }
     },
@@ -163,12 +169,12 @@ export default function AttendanceScreen() {
         <View style={at.actionButtons}>
           <Pressable
             accessibilityRole="button"
-            disabled={isBusy || item.attendanceStatus === "PRESENT" || item.source === "ONLINE_PRESENCE"}
+            disabled={isBusy || item.attendanceStatus === "PRESENT"}
             onPress={() => handleMarkAttendance(item.studentId, "PRESENT", item.attendanceVersion)}
             style={[
               at.btnStatus,
               at.btnPresent,
-              (isBusy || item.attendanceStatus === "PRESENT" || item.source === "ONLINE_PRESENCE") && at.btnDisabled,
+              (isBusy || item.attendanceStatus === "PRESENT") && at.btnDisabled,
             ]}
           >
             <Text style={at.btnText}>✓ Có mặt</Text>
@@ -176,12 +182,12 @@ export default function AttendanceScreen() {
 
           <Pressable
             accessibilityRole="button"
-            disabled={isBusy || item.attendanceStatus === "ABSENT" || item.source === "ONLINE_PRESENCE"}
+            disabled={isBusy || item.attendanceStatus === "ABSENT"}
             onPress={() => handleMarkAttendance(item.studentId, "ABSENT", item.attendanceVersion)}
             style={[
               at.btnStatus,
               at.btnAbsent,
-              (isBusy || item.attendanceStatus === "ABSENT" || item.source === "ONLINE_PRESENCE") && at.btnDisabled,
+              (isBusy || item.attendanceStatus === "ABSENT") && at.btnDisabled,
             ]}
           >
             <Text style={at.btnText}>✕ Vắng</Text>
@@ -189,12 +195,12 @@ export default function AttendanceScreen() {
 
           <Pressable
             accessibilityRole="button"
-            disabled={isBusy || item.attendanceStatus === "EXCUSED" || item.source === "ONLINE_PRESENCE"}
+            disabled={isBusy || item.attendanceStatus === "EXCUSED"}
             onPress={() => handleMarkAttendance(item.studentId, "EXCUSED", item.attendanceVersion)}
             style={[
               at.btnStatus,
               at.btnExcused,
-              (isBusy || item.attendanceStatus === "EXCUSED" || item.source === "ONLINE_PRESENCE") && at.btnDisabled,
+              (isBusy || item.attendanceStatus === "EXCUSED") && at.btnDisabled,
             ]}
           >
             <Text style={at.btnText}>⏳ Có phép</Text>
@@ -246,11 +252,15 @@ export default function AttendanceScreen() {
 
       {roster && roster.length > 0 && (
         <View style={at.sourceLegend}>
-          <Text style={at.sourceLegendTitle}>Cách ghi nhận</Text>
+          <Text style={at.sourceLegendTitle}>
+            {classSessionItem?.mode === "ONLINE"
+              ? "🌐 Chế độ điểm danh trực tuyến (Online)"
+              : "🏫 Chế độ điểm danh trực tiếp (Offline)"}
+          </Text>
           <Text style={at.sourceLegendText}>
             {classSessionItem?.mode === "ONLINE"
-              ? `Tự động realtime: ${roster.filter((r) => r.source === "ONLINE_PRESENCE").length} · Thủ công: ${roster.filter((r) => r.source !== "ONLINE_PRESENCE").length}`
-              : "Buổi trực tiếp: giảng viên tích Có mặt, Vắng hoặc Có phép cho từng học viên."}
+              ? `• Tự động: Hệ thống tự động ghi nhận khi học viên vào phòng (${roster.filter((r) => r.source === "ONLINE_PRESENCE").length} học viên).\n• Thủ công: Giảng viên có thể tích chọn Có mặt / Vắng / Có phép bên dưới để ghi đè hoặc bổ sung.`
+              : "• Điểm danh tại lớp: Giảng viên điểm danh thủ công theo danh sách bằng cách tích chọn Có mặt, Vắng hoặc Có phép cho từng học viên."}
           </Text>
         </View>
       )}

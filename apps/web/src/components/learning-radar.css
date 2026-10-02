@@ -154,7 +154,9 @@
   stroke: #ffffff;
   stroke-width: 2.5;
   filter: drop-shadow(0 2px 4px rgba(2, 132, 199, 0.4));
-  transition: r 0.2s ease, fill 0.2s ease;
+  transition:
+    r 0.2s ease,
+    fill 0.2s ease;
 }
 
 .learning-radar-unknown {

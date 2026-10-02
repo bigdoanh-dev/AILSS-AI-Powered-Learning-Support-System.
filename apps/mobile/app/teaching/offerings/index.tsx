@@ -14,8 +14,8 @@ export default function Offerings() {
     if (!query.data) return [];
     if (!search.trim()) return query.data;
     const s = search.toLowerCase().trim();
-    return query.data.filter((item) =>
-      item.title?.toLowerCase().includes(s) || item.state.toLowerCase().includes(s)
+    return query.data.filter(
+      (item) => item.title?.toLowerCase().includes(s) || item.state.toLowerCase().includes(s),
     );
   }, [query.data, search]);
 
@@ -137,10 +137,7 @@ export default function Offerings() {
             <View style={os.cardHeader}>
               <View style={[os.badge, isPublished ? os.badgePublished : os.badgeDraft]}>
                 <View
-                  style={[
-                    os.statusDot,
-                    { backgroundColor: isPublished ? tokens.color.success : "#D97706" },
-                  ]}
+                  style={[os.statusDot, { backgroundColor: isPublished ? tokens.color.success : "#D97706" }]}
                 />
                 <Text style={[os.badgeText, isPublished ? os.badgeTextPublished : os.badgeTextDraft]}>
                   {isPublished ? "ĐÃ MỞ BÁN" : "BẢN NHÁP"}
@@ -149,7 +146,9 @@ export default function Offerings() {
               <View style={os.pricePill}>
                 <Icon name="card" size={13} color="#0D9488" />
                 <Text style={os.pricePillText}>
-                  {item.price ? `${Number(item.price).toLocaleString("vi-VN")} ${item.currency ?? "VND"}` : "Miễn phí"}
+                  {item.price
+                    ? `${Number(item.price).toLocaleString("vi-VN")} ${item.currency ?? "VND"}`
+                    : "Miễn phí"}
                 </Text>
               </View>
             </View>

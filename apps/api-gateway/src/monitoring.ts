@@ -99,9 +99,7 @@ export async function monitoringSnapshot(
     json(promCandidates, "/api/v1/targets?state=active").then((raw) =>
       targetSchema.parse(raw).data.activeTargets.filter((target) => target.labels.job?.startsWith("ailss-")),
     ),
-    json(grafanaCandidates, "/api/health").then((raw) =>
-      z.object({ database: z.literal("ok") }).parse(raw),
-    ),
+    json(grafanaCandidates, "/api/health").then((raw) => z.object({ database: z.literal("ok") }).parse(raw)),
     query(rateQuery),
     query(`sum(rate(ailss_http_requests_total{job=~"ailss-.*",status=~"5.."}[5m])) or (0 * ${rateQuery})`),
     query(

@@ -686,9 +686,14 @@ function OwnedCourseCard({ course, index = 0 }: { course: LearningCourse; index?
         <h3 title={course.title}>{course.title}</h3>
         <State query={progress}>{progress.data && <ProgressView value={progress.data} />}</State>
         <div className="learning-card-action-bar">
-          <Link className="learning-card-button primary continue-learning-btn" to={`/app/learn/${course.courseId}`}>
+          <Link
+            className="learning-card-button primary continue-learning-btn"
+            to={`/app/learn/${course.courseId}`}
+          >
             <span>Tiếp tục học</span>
-            <span className="continue-btn-arrow" aria-hidden="true">→</span>
+            <span className="continue-btn-arrow" aria-hidden="true">
+              →
+            </span>
           </Link>
         </div>
       </div>
@@ -713,7 +718,9 @@ export function CourseLearning() {
   const course = useStudent<LearningCourse>("/me/courses/" + courseId),
     lessons = useStudent<Lesson[]>("/courses/" + courseId + "/lessons"),
     progress = useStudent<Progress>("/courses/" + courseId + "/progress"),
-    courseQuizzes = useStudent<Quiz[]>(courseTab === "exercises" ? "/targets/COURSE/" + courseId + "/quizzes" : null);
+    courseQuizzes = useStudent<Quiz[]>(
+      courseTab === "exercises" ? "/targets/COURSE/" + courseId + "/quizzes" : null,
+    );
   const command = useCommand();
   return (
     <>
@@ -890,9 +897,7 @@ export function CourseLearning() {
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <h2>Bài Tập &amp; Kiểm Tra Đánh Giá Của Khóa Học</h2>
                     {courseQuizzes.data && (
-                      <span className="amber-badge-pill">
-                        ● {courseQuizzes.data.length} đề bài
-                      </span>
+                      <span className="amber-badge-pill">● {courseQuizzes.data.length} đề bài</span>
                     )}
                   </div>
                   <Link to={"/app/assessments?course=" + courseId} className="button small">
@@ -906,15 +911,16 @@ export function CourseLearning() {
                       {courseQuizzes.data.map((q) => (
                         <div key={q.quizId} className="home-activity-card">
                           <div className="home-activity-card-top">
-                            <span className="badge">
-                              {q.state === "PUBLISHED" ? "ĐANG MỞ" : q.state}
-                            </span>
+                            <span className="badge">{q.state === "PUBLISHED" ? "ĐANG MỞ" : q.state}</span>
                             <span className="amber-badge-pill">● {q.questionCount} câu hỏi</span>
                           </div>
                           <h3 className="home-activity-card-title">{q.title}</h3>
                           <div className="home-activity-card-meta">
                             <span>
-                              ⏱️ {q.durationSeconds ? `${Math.round(q.durationSeconds / 60)} phút` : "Không giới hạn"}
+                              ⏱️{" "}
+                              {q.durationSeconds
+                                ? `${Math.round(q.durationSeconds / 60)} phút`
+                                : "Không giới hạn"}
                             </span>
                             <Link to={`/app/assessments/${q.quizId}`} className="button small">
                               Vào làm bài →

@@ -711,7 +711,7 @@ export class ClassroomRepository {
   }
   async updateSession(old: ClassSession, next: ClassSession) {
     const r = await this.db.execute(
-      `UPDATE session_by_id SET title=?,start_at=?,end_at=?,timezone=?,mode=?,meeting_provider=?,meeting_url=?,location=?,record_version=?,updated_at=? WHERE session_id=? IF class_id=? AND status='DRAFT' AND record_version=?`,
+      `UPDATE session_by_id SET title=?,start_at=?,end_at=?,timezone=?,mode=?,meeting_provider=?,meeting_url=?,location=?,record_version=?,updated_at=? WHERE session_id=? IF class_id=? AND status=? AND record_version=?`,
       [
         next.title,
         next.startAt,
@@ -725,6 +725,7 @@ export class ClassroomRepository {
         next.updatedAt,
         uuid(next.sessionId),
         uuid(next.classId),
+        old.status,
         long(old.recordVersion),
       ],
       LQ,
@@ -734,12 +735,13 @@ export class ClassroomRepository {
   }
   async cancelSession(old: ClassSession, next: ClassSession) {
     const r = await this.db.execute(
-      `UPDATE session_by_id SET status='CANCELLED',record_version=?,updated_at=? WHERE session_id=? IF class_id=? AND status='DRAFT' AND record_version=?`,
+      `UPDATE session_by_id SET status='CANCELLED',record_version=?,updated_at=? WHERE session_id=? IF class_id=? AND status=? AND record_version=?`,
       [
         long(next.recordVersion),
         next.updatedAt,
         uuid(old.sessionId),
         uuid(old.classId),
+        old.status,
         long(old.recordVersion),
       ],
       LQ,

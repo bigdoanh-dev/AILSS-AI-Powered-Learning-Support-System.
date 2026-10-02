@@ -25,7 +25,15 @@ export default function SessionDetailScreen() {
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ title: "", startAt: "", endAt: "", timezone: "Asia/Ho_Chi_Minh", location: "", meetingProvider: "", meetingUrl: "" });
+  const [form, setForm] = useState({
+    title: "",
+    startAt: "",
+    endAt: "",
+    timezone: "Asia/Ho_Chi_Minh",
+    location: "",
+    meetingProvider: "",
+    meetingUrl: "",
+  });
 
   const fetchDetail = useCallback(
     async (signal?: AbortSignal) => {
@@ -75,7 +83,12 @@ export default function SessionDetailScreen() {
     try {
       const start = new Date(form.startAt);
       const end = new Date(form.endAt);
-      if (!form.title.trim() || !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start)
+      if (
+        !form.title.trim() ||
+        !Number.isFinite(start.getTime()) ||
+        !Number.isFinite(end.getTime()) ||
+        end <= start
+      )
         throw new Error("Tiêu đề và khoảng thời gian chưa hợp lệ.");
       await session.request(`/api/v1/classes/${classId}/sessions/${sessionId}`, {
         method: "PATCH",
@@ -309,31 +322,78 @@ export default function SessionDetailScreen() {
               </View>
             </View>
 
-            {item.status === "DRAFT" && (
+            {item.status !== "CANCELLED" && (
               <View style={sdt.editCard}>
                 <View style={sdt.editHeader}>
                   <Text style={sdt.editTitle}>Chỉnh sửa buổi học</Text>
                   <Button
-                    label={editing ? "Đóng" : "Mở form"}
+                    label={editing ? "Đóng form" : "Chỉnh sửa"}
                     variant="outline"
                     onPress={() => setEditing((value) => !value)}
                   />
                 </View>
                 {editing && (
                   <View style={sdt.editFields}>
-                    <TextInput accessibilityLabel="Tiêu đề buổi học" style={sdt.input} value={form.title} onChangeText={(value) => setForm({ ...form, title: value })} placeholder="Tiêu đề" />
-                    <TextInput accessibilityLabel="Thời gian bắt đầu" style={sdt.input} value={form.startAt} onChangeText={(value) => setForm({ ...form, startAt: value })} placeholder="2026-10-01T15:00" />
-                    <TextInput accessibilityLabel="Thời gian kết thúc" style={sdt.input} value={form.endAt} onChangeText={(value) => setForm({ ...form, endAt: value })} placeholder="2026-10-01T17:00" />
-                    <TextInput accessibilityLabel="Múi giờ" style={sdt.input} value={form.timezone} onChangeText={(value) => setForm({ ...form, timezone: value })} placeholder="Asia/Ho_Chi_Minh" />
+                    <TextInput
+                      accessibilityLabel="Tiêu đề buổi học"
+                      style={sdt.input}
+                      value={form.title}
+                      onChangeText={(value) => setForm({ ...form, title: value })}
+                      placeholder="Tiêu đề"
+                    />
+                    <TextInput
+                      accessibilityLabel="Thời gian bắt đầu"
+                      style={sdt.input}
+                      value={form.startAt}
+                      onChangeText={(value) => setForm({ ...form, startAt: value })}
+                      placeholder="2026-10-01T15:00"
+                    />
+                    <TextInput
+                      accessibilityLabel="Thời gian kết thúc"
+                      style={sdt.input}
+                      value={form.endAt}
+                      onChangeText={(value) => setForm({ ...form, endAt: value })}
+                      placeholder="2026-10-01T17:00"
+                    />
+                    <TextInput
+                      accessibilityLabel="Múi giờ"
+                      style={sdt.input}
+                      value={form.timezone}
+                      onChangeText={(value) => setForm({ ...form, timezone: value })}
+                      placeholder="Asia/Ho_Chi_Minh"
+                    />
                     {item.mode === "ONLINE" ? (
                       <>
-                        <TextInput accessibilityLabel="Nhà cung cấp phòng họp" style={sdt.input} value={form.meetingProvider} onChangeText={(value) => setForm({ ...form, meetingProvider: value })} placeholder="Nhà cung cấp phòng họp" />
-                        <TextInput accessibilityLabel="URL phòng họp" style={sdt.input} value={form.meetingUrl} onChangeText={(value) => setForm({ ...form, meetingUrl: value })} placeholder="https://..." autoCapitalize="none" />
+                        <TextInput
+                          accessibilityLabel="Nhà cung cấp phòng họp"
+                          style={sdt.input}
+                          value={form.meetingProvider}
+                          onChangeText={(value) => setForm({ ...form, meetingProvider: value })}
+                          placeholder="Nhà cung cấp phòng họp"
+                        />
+                        <TextInput
+                          accessibilityLabel="URL phòng họp"
+                          style={sdt.input}
+                          value={form.meetingUrl}
+                          onChangeText={(value) => setForm({ ...form, meetingUrl: value })}
+                          placeholder="https://..."
+                          autoCapitalize="none"
+                        />
                       </>
                     ) : (
-                      <TextInput accessibilityLabel="Địa điểm" style={sdt.input} value={form.location} onChangeText={(value) => setForm({ ...form, location: value })} placeholder="Địa điểm" />
+                      <TextInput
+                        accessibilityLabel="Địa điểm"
+                        style={sdt.input}
+                        value={form.location}
+                        onChangeText={(value) => setForm({ ...form, location: value })}
+                        placeholder="Địa điểm"
+                      />
                     )}
-                    <Button label={busy ? "Đang lưu…" : "Lưu thay đổi"} variant="primary" onPress={() => void handleSave()} />
+                    <Button
+                      label={busy ? "Đang lưu…" : "Lưu thay đổi"}
+                      variant="primary"
+                      onPress={() => void handleSave()}
+                    />
                   </View>
                 )}
               </View>

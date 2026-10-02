@@ -17,7 +17,12 @@ import { Button, Page, ScreenHeader, Icon, styles, tokens } from "../../../src/u
 function coursePage(value: unknown) {
   const items = Array.isArray(value) ? value : record(value).items;
   if (!Array.isArray(items)) throw new ApiError("invalid");
-  return items.map((value) => { const item = record(value); return { courseId: string(item.courseId), title: string(item.title), state: item.state }; }).filter((item) => item.state !== "ARCHIVED");
+  return items
+    .map((value) => {
+      const item = record(value);
+      return { courseId: string(item.courseId), title: string(item.title), state: item.state };
+    })
+    .filter((item) => item.state !== "ARCHIVED");
 }
 
 type RangeDays = 30 | 90 | 365;
@@ -30,9 +35,14 @@ const format = (value: number | null, suffix = "") => (value === null ? "—" : 
 export default function LecturerTeachingReportScreen() {
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
-  const courses = useMobileQuery(snapshot.user?.role === "LECTURER" ? "/api/v1/me/owned-courses" : null, coursePage);
+  const courses = useMobileQuery(
+    snapshot.user?.role === "LECTURER" ? "/api/v1/me/owned-courses" : null,
+    coursePage,
+  );
   const [selectedCourse, setSelectedCourse] = useState("");
-  const activeCourse = courses.data?.some((item) => item.courseId === selectedCourse) ? selectedCourse : courses.data?.[0]?.courseId;
+  const activeCourse = courses.data?.some((item) => item.courseId === selectedCourse)
+    ? selectedCourse
+    : courses.data?.[0]?.courseId;
   const [days, setDays] = useState<RangeDays>(30);
   const [selectedClass, setSelectedClass] = useState("ALL");
   const [revision, setRevision] = useState(0);
@@ -101,7 +111,14 @@ export default function LecturerTeachingReportScreen() {
         <View style={rp.card}>
           <Text style={styles.title}>Năng lực theo khóa học</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {courses.data?.map((item) => <Button key={item.courseId} label={item.title} variant={activeCourse === item.courseId ? "primary" : "outline"} onPress={() => setSelectedCourse(item.courseId)} />)}
+            {courses.data?.map((item) => (
+              <Button
+                key={item.courseId}
+                label={item.title}
+                variant={activeCourse === item.courseId ? "primary" : "outline"}
+                onPress={() => setSelectedCourse(item.courseId)}
+              />
+            ))}
           </ScrollView>
           {courses.error && <Text style={styles.error}>{courses.error}</Text>}
           {activeCourse && <LecturerLearningRadar key={activeCourse} courseId={activeCourse} />}

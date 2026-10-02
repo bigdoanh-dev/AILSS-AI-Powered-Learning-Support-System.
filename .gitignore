@@ -79,3 +79,11 @@ artifacts/runtime-audit/*.json
 artifacts/load-evidence/*-local-*.json
 artifacts/release-evidence/release-source-tracking-audit.json
 artifacts/release-evidence/release-source-content-manifest.json
+
+# Mobile build artifacts
+*.apk
+*.aab
+*.ipa
+release-builds/dist/
+release-builds/android/*.apk
+release-builds/ios/*.ipa

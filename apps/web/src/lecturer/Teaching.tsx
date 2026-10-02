@@ -6,7 +6,7 @@ import { lecturerError, lecturerRequest, useLecturer } from "./api";
 import { CourseArtwork } from "../components/CourseArtwork";
 import { CatalogCourseSelect, Field, State } from "./ui";
 import { Breadcrumbs, EmptyState, StateChip, stateLabel, useUnsavedChanges } from "../components/product";
-import { Icon, type IconName } from "../components/Icon";
+import { Icon } from "../components/Icon";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import { MediaUpload } from "./MediaUpload";
 import { RevenueQuote } from "./RevenueQuote";
@@ -470,11 +470,11 @@ export function TeachingHome() {
   );
   const draftCoursesCount = useMemo(() => courseList.filter((c) => c.state === "DRAFT").length, [courseList]);
   const publishedSchedulesCount = useMemo(
-    () => classList.filter((cl: any) => cl.scheduleState === "PUBLISHED").length,
+    () => classList.filter((cl) => cl.scheduleState === "PUBLISHED").length,
     [classList],
   );
   const activeClassesCount = useMemo(
-    () => classList.filter((cl: any) => cl.state === "ACTIVE" || !cl.state).length,
+    () => classList.filter((cl) => cl.state === "ACTIVE" || !cl.state).length,
     [classList],
   );
   const openOfferingsCount = useMemo(
@@ -516,8 +516,8 @@ export function TeachingHome() {
           controller.signal,
         ).then((res) => {
           const raw = res.data;
-          const items = Array.isArray(raw) ? raw : (raw as any)?.sessions || (raw as any)?.data || [];
-          return items.map((item: any) => ({
+          const items: HomeSession[] = Array.isArray(raw) ? raw : raw?.sessions || raw?.data || [];
+          return items.map((item) => ({
             ...item,
             classId: c.classId,
             className: c.name,
@@ -1101,7 +1101,7 @@ export function TeachingHome() {
               </div>
             ) : (
               <div className="workspace-cards" style={{ marginTop: 16 }}>
-                {paginatedClasses.map((cl: any, i) => (
+                {paginatedClasses.map((cl, i) => (
                   <article
                     className="teaching-home-rich-card"
                     key={cl.classId}

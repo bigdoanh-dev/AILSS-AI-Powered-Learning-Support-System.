@@ -164,20 +164,30 @@ export class IdentityAdminService {
       // the scan when a sparse search needs more than ten rounds.
       for (let round = 0; round < (needle ? 10 : 1); round++) {
         const pageSize = needle ? 100 : query.limit + 1;
-        const pages = await Promise.all(Array.from({ length: ADMIN_SHARD_COUNT }, (_, shard) =>
-          this.store.listShard({ role: query.role, status: query.status, shard, limit: pageSize,
-            ...(perShardPositions[String(shard)] ? { position: perShardPositions[String(shard)] } : {}),
-          }),
-        ));
+        const pages = await Promise.all(
+          Array.from({ length: ADMIN_SHARD_COUNT }, (_, shard) =>
+            this.store.listShard({
+              role: query.role,
+              status: query.status,
+              shard,
+              limit: pageSize,
+              ...(perShardPositions[String(shard)] ? { position: perShardPositions[String(shard)] } : {}),
+            }),
+          ),
+        );
         const candidates = pages.flat().sort(compareProjection);
         let examined = 0;
         for (const row of candidates) {
           if (items.length === query.limit) break;
           examined++;
-          perShardPositions[String(row.shard)] = { updatedAt: row.updatedAt.toISOString(), userId: row.userId };
+          perShardPositions[String(row.shard)] = {
+            updatedAt: row.updatedAt.toISOString(),
+            userId: row.userId,
+          };
           const user = await this.store.getUser(row.userId);
           // Stale projections must never show a different role or account status.
-          if (!user || user.role !== query.role || user.status !== query.status || seen.has(user.userId)) continue;
+          if (!user || user.role !== query.role || user.status !== query.status || seen.has(user.userId))
+            continue;
           seen.add(user.userId);
           const providers = user.providers ?? [];
           const isGoogle = providers.some((p) => p.toUpperCase() === "GOOGLE");
@@ -194,7 +204,8 @@ export class IdentityAdminService {
             user.emailMasked,
             ...providerAliases,
           ];
-          if (needle && !searchableValues.some((value) => value.toLocaleLowerCase("vi").includes(needle))) continue;
+          if (needle && !searchableValues.some((value) => value.toLocaleLowerCase("vi").includes(needle)))
+            continue;
           items.push({
             userId: user.userId,
             role: user.role,

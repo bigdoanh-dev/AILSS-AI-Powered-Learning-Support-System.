@@ -201,7 +201,16 @@ export function MediaUpload({
       <div className="lesson-card-header">
         <div className="lesson-card-header-main">
           <div className="lesson-icon-circle">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
               <line x1="7" y1="2" x2="7" y2="22"></line>
               <line x1="17" y1="2" x2="17" y2="22"></line>
@@ -231,7 +240,17 @@ export function MediaUpload({
       </p>
 
       {pending ? (
-        <div style={{ background: "#FEF3C7", border: "1px solid #FCD34D", borderRadius: 12, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+        <div
+          style={{
+            background: "#FEF3C7",
+            border: "1px solid #FCD34D",
+            borderRadius: 12,
+            padding: "12px 16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
           <p role="status" style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#92400E" }}>
             Có phiên tải lên chưa hoàn tất cho {pending.name}. Chọn lại chính tệp đó để tiếp tục.
           </p>
@@ -259,7 +278,14 @@ export function MediaUpload({
       ) : null}
 
       {preview ? (
-        <div style={{ background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: 12, padding: "12px 16px" }}>
+        <div
+          style={{
+            background: "#F1F5F9",
+            border: "1px solid #CBD5E1",
+            borderRadius: 12,
+            padding: "12px 16px",
+          }}
+        >
           <p role="status" style={{ margin: 0, fontSize: 13, color: "#475569" }}>
             Tắt “Xem trước” để dùng video có bảo vệ. Trailer công khai là luồng riêng.
           </p>
@@ -268,7 +294,16 @@ export function MediaUpload({
         <div className="media-upload-panel">
           <div className="media-upload-dropzone">
             <div className="media-dropzone-icon">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="26"
+                height="26"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -276,7 +311,8 @@ export function MediaUpload({
             </div>
             <div className="media-dropzone-title">Chọn tệp video từ thiết bị của bạn</div>
             <div className="media-dropzone-hint">
-              Hỗ trợ định dạng MP4 hoặc WebM, tối đa 2GB. Quá trình tải lên hỗ trợ tạm dừng và tiếp tục mượt mà.
+              Hỗ trợ định dạng MP4 hoặc WebM, tối đa 2GB. Quá trình tải lên hỗ trợ tạm dừng và tiếp tục mượt
+              mà.
             </div>
             <label style={{ cursor: "pointer", marginTop: 6, display: "inline-block" }}>
               Chọn video MP4 hoặc WebM{" "}
@@ -312,8 +348,22 @@ export function MediaUpload({
           ) : null}
 
           <div>
-            <button className="button" disabled={!file || busy} onClick={() => void upload()} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <button
+              className="button"
+              disabled={!file || busy}
+              onClick={() => void upload()}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -388,7 +438,14 @@ export function MediaUpload({
           </div>
 
           {asset.failureCode ? (
-            <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 10, padding: "10px 14px" }}>
+            <div
+              style={{
+                background: "#FEF2F2",
+                border: "1px solid #FCA5A5",
+                borderRadius: 10,
+                padding: "10px 14px",
+              }}
+            >
               <p role="alert" style={{ margin: 0, color: "#991B1B", fontSize: 13, fontWeight: 600 }}>
                 {asset.failureCode}
               </p>
@@ -398,13 +455,23 @@ export function MediaUpload({
           {asset.status === "READY" ? (
             <div className="media-captions-box">
               <div className="media-captions-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
                 <span>Phụ đề WebVTT cho video này</span>
               </div>
               <p style={{ margin: 0, fontSize: 12.5, color: "#64748b" }}>
-                Thêm tệp phụ đề song ngữ hoặc tiếng Việt giúp học viên dễ dàng theo dõi bài học và tìm kiếm nội dung theo lời thoại.
+                Thêm tệp phụ đề song ngữ hoặc tiếng Việt giúp học viên dễ dàng theo dõi bài học và tìm kiếm
+                nội dung theo lời thoại.
               </p>
 
               <div>
@@ -483,7 +550,15 @@ export function MediaUpload({
       ) : null}
 
       {message ? (
-        <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 10, padding: "10px 14px", marginTop: 4 }}>
+        <div
+          style={{
+            background: "#F0F9FF",
+            border: "1px solid #BAE6FD",
+            borderRadius: 10,
+            padding: "10px 14px",
+            marginTop: 4,
+          }}
+        >
           <p role="status" style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#0369A1" }}>
             {message}
           </p>

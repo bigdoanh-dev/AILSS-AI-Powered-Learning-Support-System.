@@ -480,7 +480,8 @@ export default function Purchase() {
                         <strong className="bank-copy-memo-code">{paymentContent}</strong>
                       </div>
                       <small className="bank-copy-memo-hint">
-                        ⚠️ Vui lòng giữ nguyên nội dung chuyển khoản để hệ thống tự động kích hoạt ngay lập tức.
+                        ⚠️ Vui lòng giữ nguyên nội dung chuyển khoản để hệ thống tự động kích hoạt ngay lập
+                        tức.
                       </small>
                     </div>
                   </div>

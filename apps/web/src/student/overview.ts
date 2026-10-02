@@ -100,9 +100,7 @@ export function useClassAssignedQuizzes() {
     title: c.name,
   }));
   const query = useStudentBatch<Quiz[]>(
-    classes.data
-      ? targets.map((target) => `/targets/${target.type}/${target.id}/quizzes`)
-      : null,
+    classes.data ? targets.map((target) => `/targets/${target.type}/${target.id}/quizzes`) : null,
   );
   const data = query.data?.flatMap((quizzes, index) =>
     quizzes.map((quiz) => ({

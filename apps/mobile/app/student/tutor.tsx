@@ -202,14 +202,10 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
         );
       } catch (reason) {
         if (controller.current === abort) {
-          setMessages([]);
-          setConversationId(undefined);
           setDraft(message);
           pendingPrompt.current = "";
           const detail = reason instanceof ApiError ? reason.message : "Không thể kết nối với Gia sư AI.";
-          setError(
-            `${detail} Không thể xác nhận máy chủ đã xử lý câu hỏi hay chưa. Gửi lại sẽ bắt đầu cuộc trò chuyện mới.`,
-          );
+          setError(`${detail} Vui lòng kiểm tra lại kết nối hoặc thử gửi lại câu hỏi.`);
         }
       } finally {
         if (controller.current === abort) {

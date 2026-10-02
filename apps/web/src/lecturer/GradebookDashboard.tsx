@@ -87,7 +87,17 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
       <div className="gradebook-table-header">
         <div>
           <h2 className="gradebook-table-title">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#0284c7" }}>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: "#0284c7" }}
+            >
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
               <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -101,7 +111,16 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
           </p>
         </div>
         <div style={{ minWidth: 200 }}>
-          <label style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", display: "flex", flexDirection: "column", gap: 6 }}>
+          <label
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#1e293b",
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+            }}
+          >
             Tháng nộp bài
             <input
               type="month"
@@ -118,7 +137,14 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
       </div>
 
       {message && (
-        <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 10, padding: "10px 14px" }}>
+        <div
+          style={{
+            background: "#F0F9FF",
+            border: "1px solid #BAE6FD",
+            borderRadius: 10,
+            padding: "10px 14px",
+          }}
+        >
           <p role="status" style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#0369A1" }}>
             {message}
           </p>
@@ -151,7 +177,16 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
                       </td>
                       <td>
                         {row.gradingStatus === "PENDING_MANUAL_GRADING" ? (
-                          <span style={{ background: "#FEF3C7", color: "#B45309", padding: "3px 8px", borderRadius: 6, fontSize: 12, fontWeight: 700 }}>
+                          <span
+                            style={{
+                              background: "#FEF3C7",
+                              color: "#B45309",
+                              padding: "3px 8px",
+                              borderRadius: 6,
+                              fontSize: 12,
+                              fontWeight: 700,
+                            }}
+                          >
                             Chờ chấm
                           </span>
                         ) : (
@@ -197,7 +232,10 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
       </State>
 
       {editing && (
-        <section className="form-panel" style={{ marginTop: 12, background: "#f8fafc", borderRadius: 14, border: "1.5px solid #cbd5e1" }}>
+        <section
+          className="form-panel"
+          style={{ marginTop: 12, background: "#f8fafc", borderRadius: 14, border: "1.5px solid #cbd5e1" }}
+        >
           <h2>Chấm bài của {editing.studentId}</h2>
           <label>
             Điểm
@@ -212,7 +250,12 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
           </label>
           <label>
             Nhận xét
-            <textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} maxLength={4000} rows={3} />
+            <textarea
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              maxLength={4000}
+              rows={3}
+            />
           </label>
           <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
             <button className="button" disabled={busy} onClick={() => void save()}>
@@ -248,7 +291,8 @@ export default function GradebookDashboard({
             <span className="kpi-tag accent">AI Master Radar</span>
           </div>
           <p className="gradebook-hero-desc">
-            Kết quả bài kiểm tra của khóa học và lớp do bạn phụ trách. Theo dõi phân bố năng lực học tập và chấm điểm tự luận/thực hành.
+            Kết quả bài kiểm tra của khóa học và lớp do bạn phụ trách. Theo dõi phân bố năng lực học tập và
+            chấm điểm tự luận/thực hành.
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -263,7 +307,16 @@ export default function GradebookDashboard({
             }}
             style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
               <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -290,7 +343,14 @@ export default function GradebookDashboard({
         !classes.error &&
         !courseList.length &&
         !classList.length && (
-          <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 12, padding: "14px 18px" }}>
+          <div
+            style={{
+              background: "#FEF2F2",
+              border: "1px solid #FCA5A5",
+              borderRadius: 12,
+              padding: "14px 18px",
+            }}
+          >
             <p style={{ margin: 0, color: "#991B1B", fontSize: 13.5, fontWeight: 600 }}>
               Bạn chưa có khóa học hoặc lớp học để xem điểm.
             </p>
@@ -301,7 +361,17 @@ export default function GradebookDashboard({
         <div className="gradebook-selector-grid">
           <div className="gradebook-filter-field">
             <label>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#0284c7" }}>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ color: "#0284c7" }}
+              >
                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
               </svg>
@@ -335,7 +405,17 @@ export default function GradebookDashboard({
                 {(items) =>
                   items.length ? (
                     <label>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#7c3aed" }}>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{ color: "#7c3aed" }}
+                      >
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                       </svg>
                       Bài kiểm tra

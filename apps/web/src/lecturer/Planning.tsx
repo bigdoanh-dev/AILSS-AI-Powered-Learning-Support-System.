@@ -7,7 +7,12 @@ import { monthNow, rangeForMonth } from "../student/api";
 import { Icon } from "../components/Icon";
 
 type Class = { classId: string; name: string };
-type Session = Omit<CalendarSession, "href"> & { classId?: string; className?: string; mode?: string; location?: string };
+type Session = Omit<CalendarSession, "href"> & {
+  classId?: string;
+  className?: string;
+  mode?: string;
+  location?: string;
+};
 
 const classesOf = (v: Class[] | { classes: Class[] }) => (Array.isArray(v) ? v : v.classes || []);
 
@@ -58,10 +63,7 @@ function TeachingPlanning({ attendance }: { attendance: boolean }) {
     setSessionsPending(true);
     setSessionsError(null);
 
-    const targetClasses =
-      selected === "ALL"
-        ? classes
-        : classes.filter((c) => c.classId === selected);
+    const targetClasses = selected === "ALL" ? classes : classes.filter((c) => c.classId === selected);
 
     const queriesToRun = attendance
       ? [new URLSearchParams(rangeForMonth(month)).toString()]
@@ -77,7 +79,9 @@ function TeachingPlanning({ attendance }: { attendance: boolean }) {
           abort.signal,
         ).then((res) => {
           const rawData = res.data;
-          const items: Session[] = Array.isArray(rawData) ? rawData : (rawData as { sessions?: Session[] })?.sessions || [];
+          const items: Session[] = Array.isArray(rawData)
+            ? rawData
+            : (rawData as { sessions?: Session[] })?.sessions || [];
           return items.map((item) => ({
             ...item,
             classId: c.classId,
@@ -150,7 +154,9 @@ function TeachingPlanning({ attendance }: { attendance: boolean }) {
     <>
       <div className="dashboard-heading" style={{ marginBottom: "1.25rem" }}>
         <div>
-          <p className="eyebrow">{attendance ? "ĐIỂM DANH LỚP HỌC · GIẢNG DẠY" : "LỊCH GIẢNG DẠY · THỜI KHÓA BIỂU"}</p>
+          <p className="eyebrow">
+            {attendance ? "ĐIỂM DANH LỚP HỌC · GIẢNG DẠY" : "LỊCH GIẢNG DẠY · THỜI KHÓA BIỂU"}
+          </p>
           <h1>{attendance ? "Điểm danh lớp học." : "Lịch dạy."}</h1>
           <p className="lead">
             {attendance

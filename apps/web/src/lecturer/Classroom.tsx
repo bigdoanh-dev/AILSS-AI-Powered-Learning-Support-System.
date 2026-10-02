@@ -369,12 +369,7 @@ export function ClassCreateModal({
               Thiết lập lớp học phần, loại hình đào tạo và sĩ số tối đa.
             </p>
           </div>
-          <button
-            type="button"
-            className="admin-modal-close-btn"
-            onClick={onClose}
-            aria-label="Đóng"
-          >
+          <button type="button" className="admin-modal-close-btn" onClick={onClose} aria-label="Đóng">
             ✕
           </button>
         </div>
@@ -422,7 +417,15 @@ export function ClassCreateModal({
             min={1}
             required
           />
-          <div style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "flex-end", marginTop: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "center",
+              justifyContent: "flex-end",
+              marginTop: 16,
+            }}
+          >
             <button type="button" className="button button-subtle" onClick={onClose} disabled={busy}>
               Hủy &amp; Quay lại
             </button>
@@ -1107,7 +1110,15 @@ export function SessionDetail() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [form, setForm] = useState({ title: "", startAt: "", endAt: "", timezone: "Asia/Ho_Chi_Minh", location: "", meetingProvider: "", meetingUrl: "" });
+  const [form, setForm] = useState({
+    title: "",
+    startAt: "",
+    endAt: "",
+    timezone: "Asia/Ho_Chi_Minh",
+    location: "",
+    meetingProvider: "",
+    meetingUrl: "",
+  });
 
   useEffect(() => {
     const value = q.data;
@@ -1137,7 +1148,12 @@ export function SessionDetail() {
     try {
       const start = new Date(form.startAt);
       const end = new Date(form.endAt);
-      if (!form.title.trim() || !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start)
+      if (
+        !form.title.trim() ||
+        !Number.isFinite(start.getTime()) ||
+        !Number.isFinite(end.getTime()) ||
+        end <= start
+      )
         throw new Error("Tiêu đề và khoảng thời gian buổi học chưa hợp lệ.");
       await lecturerRequest(`/classes/${q.data.classId}/sessions/${sessionId}`, "PATCH", {
         title: form.title.trim(),
@@ -1161,37 +1177,114 @@ export function SessionDetail() {
     <State q={q}>
       {(x) => (
         <>
-          <Breadcrumbs items={[{ label: "Lớp học", to: "/app/teaching/classes" }, { label: "Chi tiết buổi học" }]} />
+          <Breadcrumbs
+            items={[{ label: "Lớp học", to: "/app/teaching/classes" }, { label: "Chi tiết buổi học" }]}
+          />
           <p className="eyebrow">{x.status}</p>
           <h1>{x.title}</h1>
-          <p>{new Date(x.startAt).toLocaleString("vi-VN")} — {new Date(x.endAt).toLocaleString("vi-VN")}</p>
-          {x.status === "DRAFT" && !editing && (
-            <button className="button secondary" type="button" onClick={() => { setMessage(""); setError(""); setEditing(true); }}>
+          <p>
+            {new Date(x.startAt).toLocaleString("vi-VN")} — {new Date(x.endAt).toLocaleString("vi-VN")}
+          </p>
+          {x.status !== "CANCELLED" && !editing && (
+            <button
+              className="button secondary"
+              type="button"
+              onClick={() => {
+                setMessage("");
+                setError("");
+                setEditing(true);
+              }}
+            >
               Chỉnh sửa buổi học
             </button>
           )}
-          {editing && x.status === "DRAFT" && (
+          {editing && x.status !== "CANCELLED" && (
             <form className="form-grid" onSubmit={(event) => void save(event)} style={{ margin: "1rem 0" }}>
-              <label>Tiêu đề<input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} required /></label>
-              <label>Bắt đầu<input type="datetime-local" value={form.startAt} onChange={(event) => setForm({ ...form, startAt: event.target.value })} required /></label>
-              <label>Kết thúc<input type="datetime-local" value={form.endAt} onChange={(event) => setForm({ ...form, endAt: event.target.value })} required /></label>
-              <label>Múi giờ<input value={form.timezone} onChange={(event) => setForm({ ...form, timezone: event.target.value })} required /></label>
+              <label>
+                Tiêu đề
+                <input
+                  value={form.title}
+                  onChange={(event) => setForm({ ...form, title: event.target.value })}
+                  required
+                />
+              </label>
+              <label>
+                Bắt đầu
+                <input
+                  type="datetime-local"
+                  value={form.startAt}
+                  onChange={(event) => setForm({ ...form, startAt: event.target.value })}
+                  required
+                />
+              </label>
+              <label>
+                Kết thúc
+                <input
+                  type="datetime-local"
+                  value={form.endAt}
+                  onChange={(event) => setForm({ ...form, endAt: event.target.value })}
+                  required
+                />
+              </label>
+              <label>
+                Múi giờ
+                <input
+                  value={form.timezone}
+                  onChange={(event) => setForm({ ...form, timezone: event.target.value })}
+                  required
+                />
+              </label>
               {x.mode === "ONLINE" ? (
                 <>
-                  <label>Nhà cung cấp phòng họp<input value={form.meetingProvider} onChange={(event) => setForm({ ...form, meetingProvider: event.target.value })} required /></label>
-                  <label>URL phòng họp<input type="url" value={form.meetingUrl} onChange={(event) => setForm({ ...form, meetingUrl: event.target.value })} required /></label>
+                  <label>
+                    Nhà cung cấp phòng họp
+                    <input
+                      value={form.meetingProvider}
+                      onChange={(event) => setForm({ ...form, meetingProvider: event.target.value })}
+                      required
+                    />
+                  </label>
+                  <label>
+                    URL phòng họp
+                    <input
+                      type="url"
+                      value={form.meetingUrl}
+                      onChange={(event) => setForm({ ...form, meetingUrl: event.target.value })}
+                      required
+                    />
+                  </label>
                 </>
               ) : (
-                <label>Địa điểm<input value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} required /></label>
+                <label>
+                  Địa điểm
+                  <input
+                    value={form.location}
+                    onChange={(event) => setForm({ ...form, location: event.target.value })}
+                    required
+                  />
+                </label>
               )}
               <div style={{ display: "flex", gap: 8 }}>
-                <button className="button" type="submit" disabled={saving}>{saving ? "Đang lưu…" : "Lưu thay đổi"}</button>
-                <button className="button secondary" type="button" onClick={() => setEditing(false)} disabled={saving}>Hủy</button>
+                <button className="button" type="submit" disabled={saving}>
+                  {saving ? "Đang lưu…" : "Lưu thay đổi"}
+                </button>
+                <button
+                  className="button secondary"
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  disabled={saving}
+                >
+                  Hủy
+                </button>
               </div>
             </form>
           )}
           {message && <p role="status">{message}</p>}
-          {error && <p role="alert" className="error">{error}</p>}
+          {error && (
+            <p role="alert" className="error">
+              {error}
+            </p>
+          )}
           <Link
             className="button"
             to={`/app/teaching/sessions/${sessionId}/attendance${x.classId ? `?class=${x.classId}` : ""}`}
@@ -1207,12 +1300,17 @@ export function Attendance() {
   const { sessionId = "" } = useParams();
   const [params] = useSearchParams();
   const query = useLecturer<A[] | { attendance: A[] }>(`/class-sessions/${sessionId}/attendance`);
-  const sessionQuery = useLecturer<S>(!params.get("class") && sessionId ? `/class-sessions/${sessionId}` : null);
+  const sessionQuery = useLecturer<S>(
+    !params.get("class") && sessionId ? `/class-sessions/${sessionId}` : null,
+  );
   const classId = params.get("class") || sessionQuery.data?.classId || "";
-  const membersQuery = useLecturer<Member[] | { members: Member[] }>(classId ? `/classes/${classId}/members` : null);
+  const membersQuery = useLecturer<Member[] | { members: Member[] }>(
+    classId ? `/classes/${classId}/members` : null,
+  );
 
   const nameMap = new Map<string, string>();
-  const membersList = (Array.isArray(membersQuery.data) ? membersQuery.data : membersQuery.data?.members) || [];
+  const membersList =
+    (Array.isArray(membersQuery.data) ? membersQuery.data : membersQuery.data?.members) || [];
   for (const m of membersList) {
     if (m.displayName) nameMap.set(m.studentId, m.displayName);
   }
@@ -1252,12 +1350,26 @@ export function Attendance() {
       <div className="section-header" style={{ marginTop: "1rem" }}>
         <div>
           <h1>Điểm danh buổi học</h1>
-          <p className="description">
-            {sessionQuery.data?.mode === "ONLINE"
-              ? "Học viên online được ghi nhận tự động khi kết nối; giảng viên có thể xác nhận thủ công khi chưa có bằng chứng realtime."
-              : "Học viên học trực tiếp được giảng viên xác nhận thủ công theo danh sách có mặt/vắng."
-            }
-          </p>
+          <div
+            style={{
+              marginTop: "0.5rem",
+              padding: "0.75rem 1rem",
+              borderRadius: 8,
+              background: "var(--surface-muted, #f8fafc)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <strong>
+              {sessionQuery.data?.mode === "ONLINE"
+                ? "🌐 Buổi học trực tuyến (Online)"
+                : "🏫 Buổi học trực tiếp (Offline)"}
+            </strong>
+            <p style={{ margin: "0.25rem 0 0", fontSize: "0.9rem", color: "var(--muted)" }}>
+              {sessionQuery.data?.mode === "ONLINE"
+                ? "Điểm danh tự động & thủ công: Hệ thống tự động ghi nhận khi học viên tham gia phòng học trực tuyến. Giảng viên có thể điểm danh hoặc ghi đè thủ công (Có mặt / Vắng / Có phép) bất cứ lúc nào."
+                : "Điểm danh trực tiếp tại lớp: Giảng viên điểm danh thủ công theo danh sách bằng cách tích chọn Có mặt, Vắng, hoặc Có phép cho từng học viên."}
+            </p>
+          </div>
         </div>
       </div>
       <label>
@@ -1279,7 +1391,7 @@ export function Attendance() {
                     <th>Học viên</th>
                     <th>Trạng thái</th>
                     <th>Nguồn ghi nhận</th>
-                    <th>Cập nhật</th>
+                    <th>Cập nhật thủ công</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1308,11 +1420,11 @@ export function Attendance() {
                               ? "Có phép"
                               : row.attendanceStatus === "ABSENT"
                                 ? "Vắng"
-                              : "Chưa ghi nhận"}
+                                : "Chưa ghi nhận"}
                         </td>
                         <td>
                           {row.source === "ONLINE_PRESENCE"
-                            ? `Tự động · ${row.presenceState === "ONLINE" ? "đang kết nối" : "đã rời phòng"}`
+                            ? `Tự động (Realtime) · ${row.presenceState === "ONLINE" ? "đang kết nối" : "đã rời phòng"}`
                             : row.source === "MANUAL_OFFLINE"
                               ? "Thủ công · giảng viên"
                               : "Chưa có dữ liệu"}
@@ -1320,8 +1432,10 @@ export function Attendance() {
                         <td>
                           <select
                             aria-label={`Điểm danh ${nameMap.get(row.studentId) || row.studentId}`}
-                            value={row.attendanceStatus === "NOT_RECORDED" ? "UNMARKED" : row.attendanceStatus}
-                            disabled={busy || row.source === "ONLINE_PRESENCE"}
+                            value={
+                              row.attendanceStatus === "NOT_RECORDED" ? "UNMARKED" : row.attendanceStatus
+                            }
+                            disabled={busy}
                             onChange={(e) => void update(row, e.target.value)}
                           >
                             <option value="UNMARKED" disabled>

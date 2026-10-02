@@ -1,14 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, Navigate, Outlet, useParams, useSearchParams } from "react-router-dom";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
+import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { sessionRequest, useSession } from "../auth/session";
 import { adminError, adminRequest } from "./api";
 import { useAdminData } from "./useAdminData";
@@ -84,52 +76,157 @@ export function AdminHome() {
   const st = statsState.data;
   const mon = monState.data;
   const rev = revState.data;
-  const refresh = () => { statsState.refresh(); monState.refresh(); revState.refresh(); };
+  const refresh = () => {
+    statsState.refresh();
+    monState.refresh();
+    revState.refresh();
+  };
   const pending = statsState.loading || monState.loading || revState.loading;
-  return <>
-    <div className="dashboard-heading"><div><p className="eyebrow">BẢNG ĐIỀU KHIỂN QUẢN TRỊ VIÊN</p><h1>Chào {profile?.displayName}, cùng quản lý AILSS.</h1><p className="lead">Số liệu từ tài khoản, giao dịch và dịch vụ đang vận hành.</p></div><button className="button" onClick={refresh} disabled={pending}>{pending ? "Đang tải…" : "Làm mới dữ liệu"}</button></div>
-    <div className="workspace-quick-actions" role="toolbar" aria-label="Thao tác quản trị nhanh">
-      {[["users", "Tra cứu tài khoản"], ["courses", "Duyệt khóa học"], ["moderation", "Trung tâm kiểm duyệt"], ["revenue", "Doanh thu & SePay"], ["stats", "Thống kê học tập"], ["monitoring", "Prometheus & Grafana"], ["logs", "Nhật ký"], ["settings", "Cài đặt"]].map(([path, label]) => <Link key={path} className="quick-action-chip" to={`/app/admin/${path}`}>{label}</Link>)}
-    </div>
-    <div className="admin-overview-dashboard">
-      <section className="admin-overview-panel" aria-label="Giám sát Prometheus và Grafana">
-        <div className="admin-panel-header"><h2>Prometheus &amp; Grafana</h2><Link className="button button-subtle" to="/app/admin/monitoring">Xem giám sát</Link></div>
-        {monState.error && <p role="alert">{monState.error}</p>}
-        {mon ? <><p role="status">Prometheus: {mon.prometheus.available ? "Đã kết nối" : "Không kết nối được"} · Grafana: {mon.grafana.available ? "Đã kết nối" : "Không kết nối được"}</p>
-          <div className="workspace-kpi-grid">
-            <Card title="Dịch vụ đang hoạt động" value={`${mon.services.filter((item) => item.up).length}/${mon.services.length}`} note="Trạng thái từ lần thu thập gần nhất" />
-            <Card title="Yêu cầu / giây" value={mon.metrics.requestRate?.toFixed(2) ?? "—"} note="Lưu lượng thực tế" />
-            <Card title="Tỷ lệ lỗi 5xx" value={mon.metrics.errorPercent == null ? "—" : `${mon.metrics.errorPercent.toFixed(2)}%`} note="Lỗi từ các dịch vụ" />
-            <Card title="Độ trễ p95" value={mon.metrics.p95Ms == null ? "—" : `${mon.metrics.p95Ms.toFixed(1)} ms`} note="Số liệu Prometheus" />
+  return (
+    <>
+      <div className="dashboard-heading">
+        <div>
+          <p className="eyebrow">BẢNG ĐIỀU KHIỂN QUẢN TRỊ VIÊN</p>
+          <h1>Chào {profile?.displayName}, cùng quản lý AILSS.</h1>
+          <p className="lead">Số liệu từ tài khoản, giao dịch và dịch vụ đang vận hành.</p>
+        </div>
+        <button className="button" onClick={refresh} disabled={pending}>
+          {pending ? "Đang tải…" : "Làm mới dữ liệu"}
+        </button>
+      </div>
+      <div className="workspace-quick-actions" role="toolbar" aria-label="Thao tác quản trị nhanh">
+        {[
+          ["users", "Tra cứu tài khoản"],
+          ["courses", "Duyệt khóa học"],
+          ["moderation", "Trung tâm kiểm duyệt"],
+          ["revenue", "Doanh thu & SePay"],
+          ["stats", "Thống kê học tập"],
+          ["monitoring", "Prometheus & Grafana"],
+          ["logs", "Nhật ký"],
+          ["settings", "Cài đặt"],
+        ].map(([path, label]) => (
+          <Link key={path} className="quick-action-chip" to={`/app/admin/${path}`}>
+            {label}
+          </Link>
+        ))}
+      </div>
+      <div className="admin-overview-dashboard">
+        <section className="admin-overview-panel" aria-label="Giám sát Prometheus và Grafana">
+          <div className="admin-panel-header">
+            <h2>Prometheus &amp; Grafana</h2>
+            <Link className="button button-subtle" to="/app/admin/monitoring">
+              Xem giám sát
+            </Link>
           </div>
-          {mon.history.length > 0 && <div style={{ width: "100%", height: 180 }}><ResponsiveContainer><AreaChart data={mon.history}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="time" tickFormatter={(value: string) => new Date(value).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} /><YAxis /><Tooltip /><Area dataKey="requestRate" stroke="#0284c7" fill="#e0f2fe" /></AreaChart></ResponsiveContainer></div>}
-        </> : <p>{monState.loading ? "Đang tải số liệu giám sát…" : "Chưa có số liệu giám sát."}</p>}
-      </section>
-      <section className="admin-overview-panel" aria-label="Doanh thu thực tế">
-        <div className="admin-panel-header"><h2>Doanh thu &amp; đối soát</h2><Link className="button button-subtle" to="/app/admin/revenue">Xem doanh thu</Link></div>
-        {revState.error && <p role="alert">{revState.error}</p>}
-        {rev ? <div className="workspace-kpi-grid">
-          <Card title="Doanh thu thực tế" value={money(rev.netMinor)} note="Sau hoàn tiền · 7 ngày gần nhất" />
-          <Card title="Đơn hoàn tất" value={String(rev.orderCount)} note="Đơn hàng đã được hệ thống đối soát" />
-          <Card title="Hoàn tiền" value={money(rev.refundMinor)} note={`${rev.refundCount} lượt hoàn tiền`} />
-        </div> : <p>{revState.loading ? "Đang tải giao dịch…" : "Chưa có số liệu doanh thu."}</p>}
-      </section>
-      <section className="admin-overview-panel" aria-label="Quy mô tài khoản">
-        <h2>Tài khoản trên hệ thống</h2>
-        {statsState.error && <p role="alert">{statsState.error}</p>}
-        {st ? <div className="workspace-kpi-grid">
-          <Card title="Học viên" value={String(st.students)} note="Tài khoản được lưu trên backend" />
-          <Card title="Giảng viên" value={String(st.lecturers)} note="Tài khoản được lưu trên backend" />
-          <Card title="Quản trị viên" value={String(st.admins)} note="Tài khoản được lưu trên backend" />
-          <Card title="Tạm khóa" value={String(st.suspended)} note="Trạng thái tài khoản hiện tại" />
-        </div> : <p>{statsState.loading ? "Đang tải tài khoản…" : "Chưa có số liệu tài khoản."}</p>}
-      </section>
-    </div>
-  </>;
+          {monState.error && <p role="alert">{monState.error}</p>}
+          {mon ? (
+            <>
+              <p role="status">
+                Prometheus: {mon.prometheus.available ? "Đã kết nối" : "Không kết nối được"} · Grafana:{" "}
+                {mon.grafana.available ? "Đã kết nối" : "Không kết nối được"}
+              </p>
+              <div className="workspace-kpi-grid">
+                <Card
+                  title="Dịch vụ đang hoạt động"
+                  value={`${mon.services.filter((item) => item.up).length}/${mon.services.length}`}
+                  note="Trạng thái từ lần thu thập gần nhất"
+                />
+                <Card
+                  title="Yêu cầu / giây"
+                  value={mon.metrics.requestRate?.toFixed(2) ?? "—"}
+                  note="Lưu lượng thực tế"
+                />
+                <Card
+                  title="Tỷ lệ lỗi 5xx"
+                  value={mon.metrics.errorPercent == null ? "—" : `${mon.metrics.errorPercent.toFixed(2)}%`}
+                  note="Lỗi từ các dịch vụ"
+                />
+                <Card
+                  title="Độ trễ p95"
+                  value={mon.metrics.p95Ms == null ? "—" : `${mon.metrics.p95Ms.toFixed(1)} ms`}
+                  note="Số liệu Prometheus"
+                />
+              </div>
+              {mon.history.length > 0 && (
+                <div style={{ width: "100%", height: 180 }}>
+                  <ResponsiveContainer>
+                    <AreaChart data={mon.history}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="time"
+                        tickFormatter={(value: string) =>
+                          new Date(value).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+                        }
+                      />
+                      <YAxis />
+                      <Tooltip />
+                      <Area dataKey="requestRate" stroke="#0284c7" fill="#e0f2fe" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </>
+          ) : (
+            <p>{monState.loading ? "Đang tải số liệu giám sát…" : "Chưa có số liệu giám sát."}</p>
+          )}
+        </section>
+        <section className="admin-overview-panel" aria-label="Doanh thu thực tế">
+          <div className="admin-panel-header">
+            <h2>Doanh thu &amp; đối soát</h2>
+            <Link className="button button-subtle" to="/app/admin/revenue">
+              Xem doanh thu
+            </Link>
+          </div>
+          {revState.error && <p role="alert">{revState.error}</p>}
+          {rev ? (
+            <div className="workspace-kpi-grid">
+              <Card
+                title="Doanh thu thực tế"
+                value={money(rev.netMinor)}
+                note="Sau hoàn tiền · 7 ngày gần nhất"
+              />
+              <Card
+                title="Đơn hoàn tất"
+                value={String(rev.orderCount)}
+                note="Đơn hàng đã được hệ thống đối soát"
+              />
+              <Card
+                title="Hoàn tiền"
+                value={money(rev.refundMinor)}
+                note={`${rev.refundCount} lượt hoàn tiền`}
+              />
+            </div>
+          ) : (
+            <p>{revState.loading ? "Đang tải giao dịch…" : "Chưa có số liệu doanh thu."}</p>
+          )}
+        </section>
+        <section className="admin-overview-panel" aria-label="Quy mô tài khoản">
+          <h2>Tài khoản trên hệ thống</h2>
+          {statsState.error && <p role="alert">{statsState.error}</p>}
+          {st ? (
+            <div className="workspace-kpi-grid">
+              <Card title="Học viên" value={String(st.students)} note="Tài khoản được lưu trên backend" />
+              <Card title="Giảng viên" value={String(st.lecturers)} note="Tài khoản được lưu trên backend" />
+              <Card title="Quản trị viên" value={String(st.admins)} note="Tài khoản được lưu trên backend" />
+              <Card title="Tạm khóa" value={String(st.suspended)} note="Trạng thái tài khoản hiện tại" />
+            </div>
+          ) : (
+            <p>{statsState.loading ? "Đang tải tài khoản…" : "Chưa có số liệu tài khoản."}</p>
+          )}
+        </section>
+      </div>
+    </>
+  );
 }
 
 function Card({ title, value, note }: { title: string; value: string; note: string }) {
-  return <article className="kpi-card"><div className="kpi-label">{title}</div><div className="kpi-value">{value}</div><p className="kpi-subtext">{note}</p></article>;
+  return (
+    <article className="kpi-card">
+      <div className="kpi-label">{title}</div>
+      <div className="kpi-value">{value}</div>
+      <p className="kpi-subtext">{note}</p>
+    </article>
+  );
 }
 
 export function Users() {
@@ -160,7 +257,13 @@ export function Users() {
     setPending(true);
     setMessage("");
     try {
-      const q = new URLSearchParams({ role, status, limit: "25", ...(cursor ? { cursor } : {}), ...(querySearch ? { q: querySearch } : {}) });
+      const q = new URLSearchParams({
+        role,
+        status,
+        limit: "25",
+        ...(cursor ? { cursor } : {}),
+        ...(querySearch ? { q: querySearch } : {}),
+      });
       const r = await adminRequest<User[]>("/users?" + q);
       if (revision !== loadRevision.current) return;
       setItems(r.data);
@@ -177,7 +280,10 @@ export function Users() {
   }, [role, status, cursor, querySearch]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => { setCursor(""); setQuerySearch(search.trim()); }, 350);
+    const timer = window.setTimeout(() => {
+      setCursor("");
+      setQuerySearch(search.trim());
+    }, 350);
     return () => window.clearTimeout(timer);
   }, [search]);
 

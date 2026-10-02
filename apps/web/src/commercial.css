@@ -12523,7 +12523,8 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
 }
 .bank-copy-memo-code {
   display: block;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 1.05rem;
   font-weight: 800;
   color: #92400e;
@@ -17339,7 +17340,8 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
 }
 
 @keyframes completedPulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -17969,7 +17971,9 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .admin-overview-panel:hover {
@@ -18238,7 +18242,9 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .student-chart-card:hover {
@@ -18421,7 +18427,9 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
   border-radius: 3px;
   background: var(--line, #e2e8f0);
   cursor: pointer;
-  transition: transform 0.15s ease, filter 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
 }
 
 .heatmap-cell:hover {
@@ -18899,7 +18907,9 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
   background: var(--surface-soft, rgba(0, 0, 0, 0.03));
   border: 1px solid var(--line, #e2e8f0);
   color: var(--ink, #1e293b);
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
 }
 
 .pro-icon-box.sm {
@@ -18959,7 +18969,10 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
   display: flex;
   flex-direction: column;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.2s ease;
 }
 
 .teaching-home-rich-card:hover {
@@ -19265,7 +19278,9 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
   color: #cbd5e1;
   font-size: 26px;
   line-height: 1;
-  transition: transform 0.12s ease, color 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    color 0.12s ease;
   border-radius: 6px;
 }
 
@@ -19322,7 +19337,9 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
   line-height: 1.5;
   background: var(--surface);
   color: var(--ink);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
   min-height: 90px;
   resize: vertical;
 }
@@ -19359,7 +19376,9 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
   border: 1px solid var(--line, #e2e8f0);
   border-radius: 12px;
   padding: 18px 20px;
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .commercial-review-card:hover {
@@ -19550,7 +19569,14 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
 }
 
 .lesson-hero-header {
-  background: linear-gradient(135deg, rgba(2, 132, 199, 0.06) 0%, rgba(99, 102, 241, 0.04) 50%, rgba(255, 255, 255, 0) 100%), var(--surface, #ffffff);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(2, 132, 199, 0.06) 0%,
+      rgba(99, 102, 241, 0.04) 50%,
+      rgba(255, 255, 255, 0) 100%
+    ),
+    var(--surface, #ffffff);
   border: 1px solid var(--line, #e2e8f0);
   border-radius: 18px;
   padding: 26px 32px;
@@ -19962,7 +19988,14 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
 }
 
 .gradebook-hero-header {
-  background: linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, rgba(99, 102, 241, 0.05) 50%, rgba(255, 255, 255, 0) 100%), var(--surface, #ffffff);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(2, 132, 199, 0.08) 0%,
+      rgba(99, 102, 241, 0.05) 50%,
+      rgba(255, 255, 255, 0) 100%
+    ),
+    var(--surface, #ffffff);
   border: 1px solid var(--line, #e2e8f0);
   border-radius: 20px;
   padding: 28px 32px;

@@ -125,7 +125,9 @@ export function identitySearchShard(userId: string): number {
 }
 
 export function adminFiltersHash(role: AdminRole, status: AccountStatus, q?: string): string {
-  return createHash("sha256").update(JSON.stringify({ role, status, ...(q ? { q: q.trim().toLocaleLowerCase("vi") } : {}) }), "utf8").digest("hex");
+  return createHash("sha256")
+    .update(JSON.stringify({ role, status, ...(q ? { q: q.trim().toLocaleLowerCase("vi") } : {}) }), "utf8")
+    .digest("hex");
 }
 
 export function encodeAdminCursor(secret: string, payload: AdminCursorPayload): string {
