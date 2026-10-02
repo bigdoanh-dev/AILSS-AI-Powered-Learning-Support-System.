@@ -85,6 +85,20 @@ export class ClassroomService {
   }
 
   private async repairStalePresence(session: ClassSession, row: AttendanceRow): Promise<AttendanceRow> {
+    if (session.mode === "ONLINE" && row.source === "MANUAL_OFFLINE") {
+      const checkpoint = await this.repo.presenceCheckpoint(session.sessionId, row.studentId);
+      if (!checkpoint) return row;
+      return {
+        ...row,
+        presenceState:
+          Date.now() - checkpoint.updatedAt.getTime() > 45_000 ? "OFFLINE" : checkpoint.presenceState,
+        firstJoinedAt: checkpoint.firstJoinedAt,
+        lastJoinedAt: checkpoint.lastJoinedAt,
+        lastLeftAt: checkpoint.lastLeftAt,
+        lastSeenAt: checkpoint.lastSeenAt,
+        connectedDurationSeconds: checkpoint.accumulatedDurationSeconds,
+      };
+    }
     if (row.source !== "ONLINE_PRESENCE" || row.presenceState !== "ONLINE") return row;
     const checkpoint = await this.repo.presenceCheckpoint(session.sessionId, row.studentId),
       staleAt = checkpoint?.updatedAt ?? row.lastSeenAt ?? row.updatedAt;
@@ -197,7 +211,8 @@ export class ClassroomService {
     let current = await this.repo.attendance(session.sessionId, input.studentId);
     if (
       !command.receipt.target &&
-      current?.attendanceStatus === input.request.attendanceStatus &&
+      current?.source === "MANUAL_OFFLINE" &&
+      current.attendanceStatus === input.request.attendanceStatus &&
       current.manualNote === input.request.note
     ) {
       const data = manualAttendanceDto(current);
@@ -220,6 +235,11 @@ export class ClassroomService {
         expectedVersion: current?.attendanceVersion ?? 0,
         attendanceVersion: (current?.attendanceVersion ?? 0) + 1,
         connectedDurationSeconds: current?.connectedDurationSeconds ?? 0,
+        presenceState: current?.presenceState ?? "OFFLINE",
+        firstJoinedAt: current?.firstJoinedAt?.toISOString(),
+        lastJoinedAt: current?.lastJoinedAt?.toISOString(),
+        lastLeftAt: current?.lastLeftAt?.toISOString(),
+        lastSeenAt: current?.lastSeenAt?.toISOString(),
         updatedAt: occurredAt.toISOString(),
       };
       await this.repo.checkpoint(scope, hash, input.key, command.operationId, {
@@ -243,7 +263,7 @@ export class ClassroomService {
       correlationId: command.receipt.correlationId ?? command.operationId,
       actor: { type: "USER", id: input.actor.userId },
       data: {
-        action: target.expectedVersion === 0 ? "OFFLINE_ATTENDANCE_RECORDED" : "OFFLINE_ATTENDANCE_CORRECTED",
+        action: target.expectedVersion === 0 ? "MANUAL_ATTENDANCE_RECORDED" : "MANUAL_ATTENDANCE_CORRECTED",
         actorType: "USER",
         actorId: input.actor.userId,
         targetType: "CLASS_ATTENDANCE",
@@ -269,6 +289,9 @@ export class ClassroomService {
         attendanceStatus: current.attendanceStatus,
         ...(current.manualNote ? { manualNote: current.manualNote } : {}),
         connectedDurationSeconds: current.connectedDurationSeconds,
+        ...(current.firstJoinedAt ? { firstJoinedAt: current.firstJoinedAt } : {}),
+        ...(current.lastJoinedAt ? { lastJoinedAt: current.lastJoinedAt } : {}),
+        ...(current.lastLeftAt ? { lastLeftAt: current.lastLeftAt } : {}),
         attendanceVersion: current.attendanceVersion,
       };
     await this.repo.writeAttendanceHistory(history);
@@ -298,8 +321,7 @@ export class ClassroomService {
     if (current && sameManualAttendance(current, intended)) return current;
     if (
       (expectedVersion === 0 && current) ||
-      (expectedVersion > 0 &&
-        (!current || current.attendanceVersion !== expectedVersion || current.source !== "MANUAL_OFFLINE"))
+      (expectedVersion > 0 && (!current || current.attendanceVersion !== expectedVersion))
     )
       throw conflict("ATTENDANCE_VERSION_CONFLICT", "Attendance changed concurrently");
     for (let tryNumber = 0; tryNumber < 2; tryNumber += 1) {
@@ -312,8 +334,7 @@ export class ClassroomService {
       if (readBack && sameManualAttendance(readBack, intended)) return readBack;
       if (
         tryNumber === 0 &&
-        ((expectedVersion === 0 && !readBack) ||
-          (readBack?.attendanceVersion === expectedVersion && readBack.source === "MANUAL_OFFLINE"))
+        ((expectedVersion === 0 && !readBack) || readBack?.attendanceVersion === expectedVersion)
       ) {
         current = readBack;
         continue;
@@ -464,6 +485,8 @@ export class ClassroomService {
           timezone: session.timezone,
           scheduleVersion: klass.scheduleVersion,
         });
+    if (!segments.length)
+      throw conflict("CLASS_SCHEDULE_NOT_AVAILABLE", "Class has no upcoming scheduled sessions");
     const prepared: ScheduleReservation = existing ?? {
       reservationId,
       operationId: input.operationId,
@@ -493,14 +516,54 @@ export class ClassroomService {
       if (guard.predecessorReservationId && guard.predecessorReservationId !== reservationId)
         await this.expirePredecessorUnderGuard(guard.predecessorReservationId, now);
       const days = [...new Set(stableSegments.map((s) => s.scheduleDay))];
+      const currentSessions = await this.currentStudentSessions(input.studentId);
+      if (
+        stableSegments.some((proposed) =>
+          currentSessions.some(
+            (session) =>
+              session.classId !== input.classId &&
+              sessionsOverlap(proposed.startAt, proposed.endAt, session.startAt, session.endAt),
+          ),
+        )
+      ) {
+        await this.cleanupSegments(stableSegments);
+        await this.repo.transitionReservation(prepared, "RELEASED", now, { reason: "SCHEDULE_CONFLICT" });
+        throw conflict("SCHEDULE_CONFLICT", "Student schedule conflicts with an existing class");
+      }
       for (const day of days) {
         const existingRows = await this.repo.daySchedule(input.studentId, day);
+        // A confirmed purchase may still be activating its membership. Resolve
+        // its canonical session instead of trusting the original reservation time.
+        for (const row of existingRows) {
+          if (
+            row.state !== "CONFIRMED" ||
+            row.reservationId === reservationId ||
+            row.classId === input.classId
+          )
+            continue;
+          const membership = await this.repo.membership(row.classId, input.studentId);
+          if (!membership || membership.state === "REMOVED") continue;
+          const session = await this.repo.getSession(row.sessionId);
+          if (!session) throw unavailable();
+          if (session.status === "CANCELLED") continue;
+          if (
+            stableSegments.some((proposed) =>
+              sessionsOverlap(proposed.startAt, proposed.endAt, session.startAt, session.endAt),
+            )
+          ) {
+            await this.cleanupSegments(stableSegments);
+            await this.repo.transitionReservation(prepared, "RELEASED", now, { reason: "SCHEDULE_CONFLICT" });
+            throw conflict("SCHEDULE_CONFLICT", "Student schedule conflicts with a confirmed purchase");
+          }
+        }
         for (const proposed of stableSegments.filter((s) => s.scheduleDay === day))
           if (
             existingRows.some(
               (row) =>
                 row.reservationId !== reservationId &&
-                (row.state === "CONFIRMED" || (!!row.expiresAt && row.expiresAt > now)) &&
+                row.state === "HELD" &&
+                !!row.expiresAt &&
+                row.expiresAt > now &&
                 sessionsOverlap(proposed.startAt, proposed.endAt, row.startAt, row.endAt),
             )
           ) {
@@ -743,13 +806,10 @@ export class ClassroomService {
       (last - first) / 86400000 + 1 > 31
     )
       throw new AppError("INVALID_SCHEDULE_RANGE", 400, "Schedule range must be 1 to 31 UTC days");
-    const unique = new Map<string, Awaited<ReturnType<ClassroomRepository["daySchedule"]>>[number]>();
-    for (let t = first; t <= last; t += 86400000) {
-      const day = new Date(t).toISOString().slice(0, 10);
-      for (const row of await this.repo.daySchedule(actor.userId, day))
-        if (row.state === "CONFIRMED") unique.set(`${row.reservationId}:${row.sessionId}`, row);
-    }
-    return [...unique.values()]
+    // Published sessions are authoritative. Reservation projections retain the
+    // original slot and must not show cancelled sessions or old times after an edit.
+    return (await this.currentStudentSessions(actor.userId))
+      .filter((session) => session.endAt.getTime() > first && session.startAt.getTime() < last + 86400000)
       .sort((a, b) => a.startAt.getTime() - b.startAt.getTime() || a.sessionId.localeCompare(b.sessionId))
       .map((v) => ({
         sessionId: v.sessionId,
@@ -762,6 +822,52 @@ export class ClassroomService {
         timezone: v.timezone,
         scheduleVersion: v.scheduleVersion,
       }));
+  }
+
+  private async currentStudentSessions(studentId: string) {
+    const sessions: (ClassSession & { className: string })[] = [];
+    for (const klass of await this.repo.listStudent(studentId)) {
+      if (klass.state !== "ACTIVE" || klass.scheduleState !== "PUBLISHED") continue;
+      for (const id of await this.repo.listClassSessionIds(klass.classId, MAX_SESSIONS_PER_CLASS + 1)) {
+        const session = await this.repo.getSession(id);
+        if (!session) throw unavailable();
+        if (
+          session.classId === klass.classId &&
+          session.scheduleVersion === klass.scheduleVersion &&
+          ["SCHEDULED", "COMPLETED"].includes(session.status)
+        )
+          sessions.push({ ...session, className: klass.name });
+      }
+    }
+    return sessions;
+  }
+
+  private async refreshPublishedManifest(klass: ClassroomClass) {
+    if (klass.scheduleState !== "PUBLISHED") return;
+    const sessions: ClassSession[] = [];
+    for (const id of await this.repo.listClassSessionIds(klass.classId, MAX_SESSIONS_PER_CLASS + 1)) {
+      const session = await this.repo.getSession(id);
+      if (!session) throw unavailable();
+      if (session.status === "SCHEDULED" && session.scheduleVersion === klass.scheduleVersion)
+        sessions.push(session);
+    }
+    sessions.sort(
+      (a, b) => a.startAt.getTime() - b.startAt.getTime() || a.sessionId.localeCompare(b.sessionId),
+    );
+    await this.repo.writeManifest({
+      classId: klass.classId,
+      scheduleVersion: klass.scheduleVersion,
+      sessionCount: sessions.length,
+      checksum: createHash("sha256")
+        .update(sessions.map((s) => s.sessionId).join(","))
+        .digest("hex"),
+      firstStartAt: sessions[0]?.startAt ?? klass.createdAt,
+      lastEndAt: sessions.reduce(
+        (last, s) => (s.endAt > last ? s.endAt : last),
+        sessions[0]?.endAt ?? klass.createdAt,
+      ),
+      publishedAt: new Date(),
+    });
   }
 
   async expireDueReservations(now = new Date()) {
@@ -1640,9 +1746,6 @@ export class ClassroomService {
     const session = await this.repo.getSession(input.sessionId);
     if (!session || session.classId !== klass.classId)
       throw notFound("SESSION_NOT_FOUND", "Session not found");
-    if (!["DRAFT", "SCHEDULED"].includes(session.status)) {
-      throw conflict("SESSION_NOT_EDITABLE", "Only DRAFT or SCHEDULED sessions may be changed");
-    }
     const now = new Date(),
       scope = `CLS-12:${input.actor.userId}:${input.classId}:${input.sessionId}`,
       hash = keyHash(this.secret, input.key),
@@ -1667,14 +1770,26 @@ export class ClassroomService {
     const cmd = await this.requiredCommand(scope, hash, input.key, fp);
     if (cmd.status === "COMPLETE" && cmd.receipt.resource)
       return { data: cmd.receipt.resource, replayed: true };
+    if (
+      !["DRAFT", "SCHEDULED"].includes(session.status) &&
+      !(session.status === "CANCELLED" && input.request.status === "CANCELLED" && cmd.receipt.target)
+    )
+      throw conflict("SESSION_NOT_EDITABLE", "Only DRAFT or SCHEDULED sessions may be changed");
     const occurredAt = new Date(cmd.receipt.occurredAt);
     if (input.request.status === "CANCELLED") {
       const next: ClassSession = {
         ...session,
         status: "CANCELLED",
-        recordVersion: session.recordVersion + 1,
+        recordVersion: cmd.receipt.target
+          ? Number(cmd.receipt.target.recordVersion)
+          : session.recordVersion + 1,
         updatedAt: occurredAt,
       };
+      if (!cmd.receipt.target)
+        await this.repo.checkpoint(scope, hash, input.key, cmd.operationId, {
+          ...cmd.receipt,
+          target: serializeSessionTarget(next),
+        });
       if (!(await this.repo.cancelSession(session, next))) {
         const recovered = await this.repo.getSession(session.sessionId);
         if (recovered?.status !== "CANCELLED" || recovered.recordVersion !== next.recordVersion)
@@ -1688,6 +1803,7 @@ export class ClassroomService {
         await this.repo.updateSessionProjectionStatus(current);
       }
       const data = sessionDto(current);
+      await this.refreshPublishedManifest(klass);
       await this.repo.complete(scope, hash, input.key, cmd.operationId, { ...cmd.receipt, resource: data });
       return { data, replayed: false, noOp: false };
     }
@@ -1714,6 +1830,41 @@ export class ClassroomService {
     }
     if (!cmd.receipt.target) {
       await this.requireNoOverlap(klass.classId, next.startAt, next.endAt, session.sessionId);
+      if (
+        session.status === "SCHEDULED" &&
+        (session.startAt.getTime() !== next.startAt.getTime() ||
+          session.endAt.getTime() !== next.endAt.getTime())
+      ) {
+        for (const member of await this.repo.roster(klass.classId)) {
+          if (member.state !== "ACTIVE") continue;
+          const enrolledSessions = await this.currentStudentSessions(member.studentId);
+          if (
+            enrolledSessions.some(
+              (other) =>
+                other.sessionId !== session.sessionId &&
+                sessionsOverlap(next.startAt, next.endAt, other.startAt, other.endAt),
+            )
+          )
+            throw conflict("SCHEDULE_CONFLICT", "The updated session conflicts with a student's other class");
+          for (const day of utcDatesTouched(next.startAt, next.endAt)) {
+            const holds = await this.repo.daySchedule(member.studentId, day);
+            if (
+              holds.some(
+                (row) =>
+                  row.state === "HELD" &&
+                  !!row.expiresAt &&
+                  row.expiresAt > now &&
+                  row.classId !== klass.classId &&
+                  sessionsOverlap(next.startAt, next.endAt, row.startAt, row.endAt),
+              )
+            )
+              throw conflict(
+                "SCHEDULE_CONFLICT",
+                "The updated session conflicts with a pending registration",
+              );
+          }
+        }
+      }
       const oldDates = new Set(utcDatesTouched(session.startAt, session.endAt));
       for (const day of utcDatesTouched(next.startAt, next.endAt)) {
         if (oldDates.has(day)) continue;
@@ -1734,6 +1885,7 @@ export class ClassroomService {
     const current = (await this.repo.getSession(session.sessionId)) ?? next;
     await this.repo.deleteSessionProjections(session);
     await this.repo.insertSessionProjections(current);
+    await this.refreshPublishedManifest(klass);
     const data = sessionDto(current);
     await this.repo.complete(scope, hash, input.key, cmd.operationId, { ...cmd.receipt, resource: data });
     return { data, replayed: false, noOp: false };
@@ -1753,7 +1905,12 @@ export class ClassroomService {
       for (const row of await this.repo.listDatePartition(classId, day)) {
         if (seen.has(row.sessionId)) continue;
         const session = await this.repo.getSession(row.sessionId);
-        if (session) seen.set(row.sessionId, session);
+        if (
+          session &&
+          session.classId === classId &&
+          utcDatesTouched(session.startAt, session.endAt).some((date) => date >= from && date <= to)
+        )
+          seen.set(row.sessionId, session);
       }
     return [...seen.values()]
       .sort((a, b) => a.startAt.getTime() - b.startAt.getTime() || a.sessionId.localeCompare(b.sessionId))
@@ -1768,7 +1925,10 @@ export class ClassroomService {
     else if ((await this.repo.membership(klass.classId, actor.userId))?.state !== "ACTIVE")
       throw new AppError("CLASS_ACCESS_REQUIRED", 403, "Class membership is required");
     const dto = sessionDto(session);
-    if (session.meetingUrl && inMeetingWindow(session.startAt, session.endAt, new Date()))
+    if (
+      session.meetingUrl &&
+      (actor.userId === klass.ownerLecturerId || inMeetingWindow(session.startAt, session.endAt, new Date()))
+    )
       return { ...dto, meetingUrl: session.meetingUrl };
     return dto;
   }
@@ -2100,6 +2260,11 @@ interface ManualAttendanceTarget {
   expectedVersion: number;
   attendanceVersion: number;
   connectedDurationSeconds: number;
+  presenceState?: "ONLINE" | "OFFLINE";
+  firstJoinedAt?: string | undefined;
+  lastJoinedAt?: string | undefined;
+  lastLeftAt?: string | undefined;
+  lastSeenAt?: string | undefined;
   updatedAt: string;
 }
 function manualTargetRow(target: ManualAttendanceTarget): AttendanceRow {
@@ -2110,7 +2275,11 @@ function manualTargetRow(target: ManualAttendanceTarget): AttendanceRow {
     source: "MANUAL_OFFLINE",
     ...(target.manualNote ? { manualNote: target.manualNote } : {}),
     connectedDurationSeconds: target.connectedDurationSeconds,
-    presenceState: "OFFLINE",
+    presenceState: target.presenceState ?? "OFFLINE",
+    ...(target.firstJoinedAt ? { firstJoinedAt: new Date(target.firstJoinedAt) } : {}),
+    ...(target.lastJoinedAt ? { lastJoinedAt: new Date(target.lastJoinedAt) } : {}),
+    ...(target.lastLeftAt ? { lastLeftAt: new Date(target.lastLeftAt) } : {}),
+    ...(target.lastSeenAt ? { lastSeenAt: new Date(target.lastSeenAt) } : {}),
     attendanceVersion: target.attendanceVersion,
     updatedAt: new Date(target.updatedAt),
   };
@@ -2122,7 +2291,7 @@ function sameManualAttendance(current: AttendanceRow, intended: AttendanceRow) {
     current.attendanceStatus === intended.attendanceStatus &&
     current.source === "MANUAL_OFFLINE" &&
     current.manualNote === intended.manualNote &&
-    current.presenceState === "OFFLINE" &&
+    current.presenceState === intended.presenceState &&
     current.connectedDurationSeconds === intended.connectedDurationSeconds &&
     current.attendanceVersion === intended.attendanceVersion &&
     current.updatedAt.getTime() === intended.updatedAt.getTime()

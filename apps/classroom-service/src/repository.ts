@@ -548,7 +548,7 @@ export class ClassroomRepository {
       return r[0]?.["[applied]"] === true;
     }
     const r = await this.db.execute(
-      `UPDATE attendance_by_session SET attendance_status=?,source=?,first_joined_at=?,last_joined_at=?,last_left_at=?,last_seen_at=?,connected_duration_seconds=?,presence_state=?,attendance_version=?,updated_at=? WHERE session_id=? AND student_id=? IF attendance_version=?`,
+      `UPDATE attendance_by_session SET attendance_status=?,source=?,first_joined_at=?,last_joined_at=?,last_left_at=?,last_seen_at=?,connected_duration_seconds=?,presence_state=?,attendance_version=?,updated_at=? WHERE session_id=? AND student_id=? IF attendance_version=? AND source='ONLINE_PRESENCE'`,
       [...common, uuid(row.sessionId), uuid(row.studentId), long(row.attendanceVersion - 1)],
       LQ,
       LS,
@@ -556,7 +556,7 @@ export class ClassroomRepository {
     if (r[0]?.["[applied]"] === true) return true;
     const current = (
       await this.db.execute(
-        `SELECT attendance_version FROM attendance_by_session WHERE session_id=? AND student_id=?`,
+        `SELECT attendance_version,source FROM attendance_by_session WHERE session_id=? AND student_id=?`,
         [uuid(row.sessionId), uuid(row.studentId)],
         LQ,
       )
@@ -571,10 +571,11 @@ export class ClassroomRepository {
       return inserted[0]?.["[applied]"] === true;
     }
     const currentVersion = num(current.attendance_version);
+    if (attendanceSource(current.source) === "MANUAL_OFFLINE") return false;
     if (currentVersion === row.attendanceVersion) return true;
     if (currentVersion > row.attendanceVersion) return false;
     const recovered = await this.db.execute(
-      `UPDATE attendance_by_session SET attendance_status=?,source=?,first_joined_at=?,last_joined_at=?,last_left_at=?,last_seen_at=?,connected_duration_seconds=?,presence_state=?,attendance_version=?,updated_at=? WHERE session_id=? AND student_id=? IF attendance_version=?`,
+      `UPDATE attendance_by_session SET attendance_status=?,source=?,first_joined_at=?,last_joined_at=?,last_left_at=?,last_seen_at=?,connected_duration_seconds=?,presence_state=?,attendance_version=?,updated_at=? WHERE session_id=? AND student_id=? IF attendance_version=? AND source='ONLINE_PRESENCE'`,
       [...common, uuid(row.sessionId), uuid(row.studentId), long(currentVersion)],
       LQ,
       LS,
@@ -600,7 +601,7 @@ export class ClassroomRepository {
       return rows[0]?.["[applied]"] === true;
     }
     const rows = await this.db.execute(
-      `UPDATE attendance_by_session SET attendance_status=?,source='MANUAL_OFFLINE',manual_note=?,attendance_version=?,updated_at=? WHERE session_id=? AND student_id=? IF attendance_version=? AND source='MANUAL_OFFLINE'`,
+      `UPDATE attendance_by_session SET attendance_status=?,source='MANUAL_OFFLINE',manual_note=?,attendance_version=?,updated_at=? WHERE session_id=? AND student_id=? IF attendance_version=? AND source=?`,
       [
         next.attendanceStatus,
         next.manualNote ?? null,
@@ -609,6 +610,7 @@ export class ClassroomRepository {
         uuid(next.sessionId),
         uuid(next.studentId),
         long(expected.attendanceVersion),
+        expected.source,
       ],
       LQ,
       LS,

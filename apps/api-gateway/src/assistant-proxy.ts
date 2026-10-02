@@ -25,7 +25,11 @@ export async function assistantProxyFactory(c: AppConfig): Promise<{
   ]);
 
   const handler =
-    (method: "GET" | "POST", path: (r: Request) => string): RequestHandler =>
+    (
+      method: "GET" | "POST",
+      path: (r: Request) => string,
+      timeoutMs = c.INTERNAL_HTTP_TIMEOUT_MS,
+    ): RequestHandler =>
     async (req, res, next) => {
       try {
         const ctx = currentRequestContext();
@@ -61,7 +65,7 @@ export async function assistantProxyFactory(c: AppConfig): Promise<{
           },
         );
 
-        const upstream = await fetch(new URL(path(req), c.AI_SERVICE_URL), {
+        const init: RequestInit & { timeoutMs: number } = {
           method,
           headers: {
             "x-actor-context": trusted,
@@ -70,8 +74,10 @@ export async function assistantProxyFactory(c: AppConfig): Promise<{
           },
           ...(method === "POST" ? { body: JSON.stringify(req.body) } : {}),
           // The AI service needs time to finish persistence after its provider deadline.
-          signal: AbortSignal.timeout(c.AI_PROVIDER_TIMEOUT_MS + 10_000),
-        });
+          signal: AbortSignal.timeout(timeoutMs),
+          timeoutMs,
+        };
+        const upstream = await fetch(new URL(path(req), c.AI_SERVICE_URL), init);
 
         const type = upstream.headers.get("content-type");
         if (type) res.type(type);
@@ -87,7 +93,7 @@ export async function assistantProxyFactory(c: AppConfig): Promise<{
 
   return {
     adminStatus: handler("GET", () => "/api/v1/assistant/admin-status"),
-    chat: handler("POST", () => "/api/v1/assistant/chat"),
+    chat: handler("POST", () => "/api/v1/assistant/chat", c.AI_PROVIDER_TIMEOUT_MS + 10_000),
     conversationsList: handler("GET", () => "/api/v1/assistant/conversations"),
     conversationDetail: handler(
       "GET",

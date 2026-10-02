@@ -1,0 +1,40 @@
+name: mobile-apk
+on:
+  workflow_dispatch:
+    inputs:
+      api_origin:
+        description: Gateway origin reachable from the test device
+        required: true
+        type: string
+      environment:
+        description: Application environment
+        required: true
+        default: development
+        type: choice
+        options: [development, research, production]
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      EXPO_PUBLIC_AILSS_ENV: ${{ inputs.environment }}
+      EXPO_PUBLIC_AILSS_API_BASE_URL: ${{ inputs.api_origin }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.19.0, run_install: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24.20.0, cache: pnpm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: android-actions/setup-android@v3
+      - run: pnpm install --frozen-lockfile
+      - run: node release-builds/build-native.mjs android
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AILSS-preview-apk
+          path: release-builds/android/AILSS-preview.apk
+          if-no-files-found: error
+          retention-days: 14

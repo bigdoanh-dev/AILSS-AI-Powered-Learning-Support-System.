@@ -8,8 +8,8 @@ echo "🚀 TIẾN HÀNH XUẤT TẤT CẢ GÓI CÀI ĐẶT VÀ BUNDLE CHO AILSS 
 echo "=========================================================="
 
 "${DIR}/export-bundle.sh"
-"${DIR}/build-apk.sh" || true
-"${DIR}/build-ipa.sh" || true
+"${DIR}/build-apk.sh"
+"${DIR}/build-ipa.sh"
 
 echo ""
 echo "=========================================================="

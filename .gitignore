@@ -89,3 +89,4 @@ artifacts/release-evidence/release-source-content-manifest.json
 release-builds/dist/
 release-builds/android/*.apk
 release-builds/ios/*.ipa
+release-builds/ios/*.xcarchive/

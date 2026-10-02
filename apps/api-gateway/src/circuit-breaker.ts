@@ -979,7 +979,10 @@ export function installGatewayFetchInterceptor(
 /**
  * Gateway-wide middleware that routes requests through the upstream service's circuit breaker.
  */
-export function gatewayCircuitBreakerMiddleware(registry: CircuitBreakerRegistry): RequestHandler {
+export function gatewayCircuitBreakerMiddleware(
+  registry: CircuitBreakerRegistry,
+  assistantChatTimeoutMs = 40_000,
+): RequestHandler {
   return (request, response, next): void => {
     const existingTracker = requestBreakerStorage.getStore();
     const tracker = existingTracker ?? new RequestBreakerTracker();
@@ -991,11 +994,15 @@ export function gatewayCircuitBreakerMiddleware(registry: CircuitBreakerRegistry
         return;
       }
       const breaker = registry.get(service);
+      const path = request.path.replace(/\/+$/u, "");
       const timeoutMs =
-        request.method === "POST" &&
-        request.path.replace(/\/+$/u, "") === "/api/v1/auth/password-reset/request"
-          ? PASSWORD_RESET_REQUEST_TIMEOUT_MS
-          : undefined;
+        request.method !== "POST"
+          ? undefined
+          : path === "/api/v1/auth/password-reset/request"
+            ? PASSWORD_RESET_REQUEST_TIMEOUT_MS
+            : path === "/api/v1/assistant/chat"
+              ? assistantChatTimeoutMs
+              : undefined;
       breaker.middleware(timeoutMs)(request, response, next);
     };
 

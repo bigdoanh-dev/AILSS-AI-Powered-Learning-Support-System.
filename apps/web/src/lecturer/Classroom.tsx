@@ -1185,7 +1185,7 @@ export function SessionDetail() {
           <p>
             {new Date(x.startAt).toLocaleString("vi-VN")} — {new Date(x.endAt).toLocaleString("vi-VN")}
           </p>
-          {x.status !== "CANCELLED" && !editing && (
+          {["DRAFT", "SCHEDULED"].includes(x.status) && !editing && (
             <button
               className="button secondary"
               type="button"
@@ -1198,7 +1198,7 @@ export function SessionDetail() {
               Chỉnh sửa buổi học
             </button>
           )}
-          {editing && x.status !== "CANCELLED" && (
+          {editing && ["DRAFT", "SCHEDULED"].includes(x.status) && (
             <form className="form-grid" onSubmit={(event) => void save(event)} style={{ margin: "1rem 0" }}>
               <label>
                 Tiêu đề
@@ -1300,9 +1300,7 @@ export function Attendance() {
   const { sessionId = "" } = useParams();
   const [params] = useSearchParams();
   const query = useLecturer<A[] | { attendance: A[] }>(`/class-sessions/${sessionId}/attendance`);
-  const sessionQuery = useLecturer<S>(
-    !params.get("class") && sessionId ? `/class-sessions/${sessionId}` : null,
-  );
+  const sessionQuery = useLecturer<S>(sessionId ? `/class-sessions/${sessionId}` : null);
   const classId = params.get("class") || sessionQuery.data?.classId || "";
   const membersQuery = useLecturer<Member[] | { members: Member[] }>(
     classId ? `/classes/${classId}/members` : null,

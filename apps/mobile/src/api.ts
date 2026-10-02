@@ -20,11 +20,13 @@ export class ApiError extends Error {
     public code?: string,
   ) {
     super(
-      code === "SOCIAL_PROVIDER_UNAVAILABLE"
-        ? "Dịch vụ xác thực Google/Apple tạm thời không kết nối được. Vui lòng thử lại sau."
-        : code === "ATTEMPT_LIMIT_REACHED"
-          ? "Bạn đã dùng hết số lần làm bài cho phép."
-          : (API_ERROR_MESSAGES[kind] ?? "Không thể hoàn tất yêu cầu."),
+      code === "AI_PROVIDER_CONFIGURATION_ERROR"
+        ? "Gia sư AI chưa sẵn sàng. Vui lòng báo quản trị viên kiểm tra cấu hình dịch vụ."
+        : code === "SOCIAL_PROVIDER_UNAVAILABLE"
+          ? "Dịch vụ xác thực Google/Apple tạm thời không kết nối được. Vui lòng thử lại sau."
+          : code === "ATTEMPT_LIMIT_REACHED"
+            ? "Bạn đã dùng hết số lần làm bài cho phép."
+            : (API_ERROR_MESSAGES[kind] ?? "Không thể hoàn tất yêu cầu."),
     );
   }
 }

@@ -27,6 +27,8 @@ export function errorMessage(error: unknown): string {
     return "Bạn đang ngoại tuyến. Kết nối lại rồi thử lại.";
   if (error instanceof ApiError) {
     const messages: Record<string, string> = {
+      AI_PROVIDER_CONFIGURATION_ERROR:
+        "Gia sư AI chưa sẵn sàng. Vui lòng báo quản trị viên kiểm tra cấu hình dịch vụ.",
       LOGIN_NOT_ALLOWED: "Tài khoản không được phép đăng nhập. Liên hệ quản trị viên.",
       INVALID_REAUTHENTICATION: "Mật khẩu hiện tại không đúng. Vui lòng kiểm tra lại.",
       ACCOUNT_DISABLED: "Tài khoản đã bị vô hiệu hóa. Liên hệ quản trị viên.",

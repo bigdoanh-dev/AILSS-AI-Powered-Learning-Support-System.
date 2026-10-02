@@ -47,7 +47,9 @@ async function requestProvider(endpoint: string, init: RequestInit): Promise<Res
     }
 
     throw new AppError(
-      `AI_PROVIDER_HTTP_${String(response.status)}`,
+      [401, 403].includes(response.status)
+        ? "AI_PROVIDER_CONFIGURATION_ERROR"
+        : `AI_PROVIDER_HTTP_${String(response.status)}`,
       503,
       "The assistant service is temporarily unavailable",
       response.status === 429 || response.status >= 500,
@@ -268,6 +270,13 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
   }
 
   public async generate(request: LlmCompletionRequest): Promise<LlmCompletionResponse> {
+    if (!this.options.apiKey.trim() || ["<INJECTED>", "synthetic-api-key"].includes(this.options.apiKey))
+      throw new AppError(
+        "AI_PROVIDER_CONFIGURATION_ERROR",
+        503,
+        "The assistant provider is not configured",
+        false,
+      );
     const isGoogle =
       new URL(this.options.endpoint).hostname === "generativelanguage.googleapis.com" &&
       this.options.endpoint.endsWith(":generateContent");
@@ -289,7 +298,12 @@ export class HttpAssistantLlmProvider implements AssistantLlmProvider {
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: request.systemPrompt }] },
+          systemInstruction: {
+            parts: [
+              { text: request.systemPrompt },
+              ...request.messages.filter((m) => m.role === "system").map((m) => ({ text: m.content })),
+            ],
+          },
           contents,
           generationConfig: {
             ...(isGemini3

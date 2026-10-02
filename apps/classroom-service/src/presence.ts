@@ -93,13 +93,18 @@ export class ClassroomPresence {
       return;
     }
     connection.state = await this.openStudent(connection, authorized.session);
+    const attendance = await this.repo.attendance(ticket.sessionId, ticket.sub);
     ws.send(
       JSON.stringify({
         type: "presence.connected",
-        data: { sessionId: ticket.sessionId, presenceState: "ONLINE", attendanceStatus: "PRESENT" },
+        data: {
+          sessionId: ticket.sessionId,
+          presenceState: "ONLINE",
+          attendanceStatus: attendance?.attendanceStatus ?? "PRESENT",
+        },
       }),
     );
-    this.broadcastDelta(connection.state);
+    await this.broadcastDelta(connection.state);
   }
 
   private async openStudent(connection: Connection, session: ClassSession): Promise<LocalStudentState> {
@@ -186,7 +191,7 @@ export class ClassroomPresence {
     }
     if (connection.ws.readyState === 1 && reason === "TIMEOUT")
       connection.ws.close(1000, "heartbeat timeout");
-    this.broadcastDelta(state);
+    await this.broadcastDelta(state);
   }
 
   private async persist(state: LocalStudentState, final: boolean): Promise<boolean> {
@@ -257,12 +262,17 @@ export class ClassroomPresence {
       updatedAt: now,
     };
     const projected = await this.repo.writeAttendance(row);
+    let effective = row;
     if (!projected) {
       const current = (await this.repo.attendanceBySession(state.sessionId)).find(
         (v) => v.studentId === state.studentId,
       );
-      if (!current || current.attendanceVersion < row.attendanceVersion)
+      if (
+        !current ||
+        (current.source !== "MANUAL_OFFLINE" && current.attendanceVersion < row.attendanceVersion)
+      )
         throw new Error("ATTENDANCE_PROJECTION_CONFLICT");
+      effective = current;
     }
     await this.repo.writeAttendanceHistory({
       studentId: state.studentId,
@@ -272,12 +282,13 @@ export class ClassroomPresence {
       classId: state.session.classId,
       title: state.session.title,
       mode: state.session.mode,
-      attendanceStatus: "PRESENT",
+      attendanceStatus: effective.attendanceStatus,
+      ...(effective.manualNote ? { manualNote: effective.manualNote } : {}),
       ...(state.firstJoinedAt ? { firstJoinedAt: state.firstJoinedAt } : {}),
       ...(state.lastJoinedAt ? { lastJoinedAt: state.lastJoinedAt } : {}),
       ...(state.lastLeftAt ? { lastLeftAt: state.lastLeftAt } : {}),
-      connectedDurationSeconds: accumulated,
-      attendanceVersion: next.checkpointVersion,
+      connectedDurationSeconds: effective.connectedDurationSeconds,
+      attendanceVersion: effective.attendanceVersion,
     });
     return true;
   }
@@ -306,7 +317,7 @@ export class ClassroomPresence {
     };
   }
 
-  private broadcastDelta(state: LocalStudentState) {
+  private async broadcastDelta(state: LocalStudentState) {
     const row: AttendanceRow = {
       sessionId: state.sessionId,
       studentId: state.studentId,
@@ -322,9 +333,24 @@ export class ClassroomPresence {
       updatedAt: new Date(),
     };
     const observers = this.lecturers.get(state.sessionId);
+    const canonical = await this.repo.attendance(state.sessionId, state.studentId);
     for (const observer of observers ?? [])
       if (observer.ws.readyState === 1)
-        observer.ws.send(JSON.stringify({ type: "roster.delta", data: attendanceDto(row) }));
+        observer.ws.send(
+          JSON.stringify({
+            type: "roster.delta",
+            data: attendanceDto(
+              canonical
+                ? {
+                    ...row,
+                    attendanceStatus: canonical.attendanceStatus,
+                    source: canonical.source,
+                    attendanceVersion: canonical.attendanceVersion,
+                  }
+                : row,
+            ),
+          }),
+        );
   }
 
   private sendSessionClosed(sessionId: string) {

@@ -203,7 +203,7 @@ app.use(express.json({ limit: config.HTTP_BODY_LIMIT }));
 app.use(globalLimiter.middleware(Number(process.env.RATE_LIMIT_GLOBAL_PER_MINUTE ?? 1_200)));
 const circuitBreakers = createGatewayCircuitBreakers(config, logger);
 const uninstallFetchInterceptor = installGatewayFetchInterceptor(circuitBreakers, config);
-app.use(gatewayCircuitBreakerMiddleware(circuitBreakers));
+app.use(gatewayCircuitBreakerMiddleware(circuitBreakers, config.AI_PROVIDER_TIMEOUT_MS + 10_000));
 app.post(
   "/api/v1/auth/register",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_WRITE_PER_MINUTE ?? 60)),

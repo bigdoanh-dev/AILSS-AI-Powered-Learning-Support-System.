@@ -13,6 +13,63 @@ const request = {
 describe("assistant LLM provider failure handling", () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  it.each([401, 403])(
+    "reports provider HTTP %s as configuration failure without leaking its response",
+    async (status) => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("private key detail", { status })));
+      const provider = new HttpAssistantLlmProvider({
+        endpoint: "https://provider.example.invalid/v1/chat/completions",
+        apiKey: "test-key",
+        model: "test-model",
+      });
+      await expect(provider.generate(request)).rejects.toMatchObject({
+        code: "AI_PROVIDER_CONFIGURATION_ERROR",
+        status: 503,
+        retryable: false,
+      });
+    },
+  );
+
+  it("does not call the provider with an empty key", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    const provider = new HttpAssistantLlmProvider({
+      endpoint: "https://provider.example.invalid/v1/chat/completions",
+      apiKey: "",
+      model: "test-model",
+    });
+    await expect(provider.generate(request)).rejects.toMatchObject({
+      code: "AI_PROVIDER_CONFIGURATION_ERROR",
+    });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("includes authoritative course and progress evidence in Gemini system instructions", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({ candidates: [{ content: { parts: [{ text: "Grounded answer" }] } }] }),
+      );
+    vi.stubGlobal("fetch", fetch);
+    const provider = new HttpAssistantLlmProvider({
+      endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
+      apiKey: "test-key",
+      model: "gemini-3.8-flash",
+    });
+    await provider.generate({
+      ...request,
+      messages: [...request.messages, { role: "system", content: "Verified progress: 2 of 6 lessons." }],
+    });
+    const init = fetch.mock.calls[0]?.[1] as RequestInit;
+    if (typeof init.body !== "string") throw new Error("Expected JSON request body");
+    expect(JSON.parse(init.body) as unknown).toMatchObject({
+      systemInstruction: {
+        parts: [{ text: request.systemPrompt }, { text: "Verified progress: 2 of 6 lessons." }],
+      },
+      contents: [{ role: "user", parts: [{ text: "Explain quorum consistency." }] }],
+    });
+  });
+
   it.each([
     [
       "Google Gemini",
