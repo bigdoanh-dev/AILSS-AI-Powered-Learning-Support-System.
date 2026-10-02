@@ -39,6 +39,8 @@ ERRATA_*.md
 AILSS_P12_*.md
 BAO_CAO_*.md
 LECTURER_*_DECISION.md
+*SEPAY*.md
+*sepay*.md
 
 # Local credentials and real cryptographic material
 /secrets/
