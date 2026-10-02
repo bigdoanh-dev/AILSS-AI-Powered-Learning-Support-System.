@@ -414,20 +414,21 @@ const ds = StyleSheet.create({
     color: tokens.color.brand,
   },
   stepperList: {
-    gap: 12,
+    gap: 14,
   },
   stepRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 10,
+    gap: 12,
   },
   stepDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 2,
+    marginTop: 1,
+    ...tokens.shadow.subtle,
   },
   stepDotSuccess: {
     backgroundColor: tokens.color.success,

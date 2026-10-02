@@ -34,6 +34,7 @@ type User = {
   profileVersion: number;
   createdAt?: string;
   updatedAt: string;
+  providers?: string[];
 };
 
 export function AdminGuard() {
@@ -272,7 +273,7 @@ export function Users() {
           </span>
           <input
             type="search"
-            placeholder="Tìm kiếm theo họ tên, ID hoặc email..."
+            placeholder="Tìm kiếm theo họ tên, ID, email hoặc phương thức (google, gg)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Tìm kiếm người dùng trong danh sách"
@@ -327,7 +328,7 @@ export function Users() {
             <thead>
               <tr>
                 <th scope="col">Người dùng</th>
-                <th scope="col">Email</th>
+                <th scope="col">Email &amp; Phương thức</th>
                 <th scope="col">Vai trò</th>
                 <th scope="col">Trạng thái</th>
                 <th scope="col">Xác minh GV</th>
@@ -372,9 +373,22 @@ export function Users() {
                       </div>
                     </td>
                     <td>
-                      <span className="muted" style={{ fontSize: "13px" }}>
-                        {u.emailMasked || "Chưa có email"}
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <span className="muted" style={{ fontSize: "13px" }}>
+                          {u.emailMasked || "Chưa có email"}
+                        </span>
+                        <div>
+                          {u.providers && u.providers.some((p) => p.toUpperCase() === "GOOGLE") ? (
+                            <span className="admin-badge sso-google" title="Đăng nhập qua Google SSO">
+                              🌐 Google SSO
+                            </span>
+                          ) : (
+                            <span className="admin-badge sso-password" title="Đăng nhập tài khoản mật khẩu">
+                              🔑 Mật khẩu
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td>
                       <span className={`admin-badge role-${roleClass}`}>
@@ -444,6 +458,11 @@ export function Users() {
                     {u.role === "LECTURER" ? "Giảng viên" : u.role === "ADMIN" ? "Quản trị" : "Sinh viên"} ·{" "}
                     {u.status === "ACTIVE" ? "Hoạt động" : "Tạm khóa"}
                   </span>
+                  {u.providers && u.providers.some((p) => p.toUpperCase() === "GOOGLE") && (
+                    <span className="admin-badge sso-google" style={{ marginLeft: "auto" }}>
+                      🌐 Google SSO
+                    </span>
+                  )}
                 </div>
                 <h2>{u.displayName}</h2>
                 <div className="user-id-code" style={{ marginBottom: "12px" }}>
@@ -659,6 +678,14 @@ export function UserDetail() {
             <dl className="profile-facts">
               <dt>Email</dt>
               <dd>{user.emailMasked}</dd>
+              <dt>Phương thức đăng nhập</dt>
+              <dd>
+                {user.providers && user.providers.some((p) => p.toUpperCase() === "GOOGLE") ? (
+                  <span className="admin-badge sso-google">🌐 Google SSO (OAuth 2.0)</span>
+                ) : (
+                  <span className="admin-badge sso-password">🔑 Email &amp; Mật khẩu</span>
+                )}
+              </dd>
               <dt>Vai trò</dt>
               <dd>{{ STUDENT: "Học viên", LECTURER: "Giảng viên", ADMIN: "Quản trị viên" }[user.role]}</dd>
               <dt>Trạng thái</dt>

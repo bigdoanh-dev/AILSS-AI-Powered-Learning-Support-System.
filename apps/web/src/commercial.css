@@ -9077,6 +9077,18 @@ a.home-activity-card:hover .home-activity-card-meta > span:last-child {
   border: 1px solid rgba(5, 150, 105, 0.25);
 }
 
+.admin-badge.sso-google {
+  background: rgba(234, 67, 53, 0.1);
+  color: #ea4335;
+  border: 1px solid rgba(234, 67, 53, 0.25);
+}
+
+.admin-badge.sso-password {
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
+  border: 1px solid rgba(100, 116, 139, 0.25);
+}
+
 /* Modal Backdrop & Container */
 .admin-modal-backdrop {
   position: fixed;

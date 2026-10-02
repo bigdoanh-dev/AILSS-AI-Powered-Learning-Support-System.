@@ -77,6 +77,17 @@ export class IdentityAdminRepository {
     );
     const row = rows[0];
     if (!row) return undefined;
+    let providers: string[] = [];
+    try {
+      const extRows = await this.client.execute(
+        `SELECT provider FROM external_identities_by_user WHERE user_id=?`,
+        [uuid(userId)],
+        LOCAL_QUORUM,
+      );
+      providers = extRows.map((r) => text(r, "provider"));
+    } catch {
+      providers = [];
+    }
     return {
       ...projection(row, -1),
       emailMasked: text(row, "email_masked"),
@@ -85,6 +96,7 @@ export class IdentityAdminRepository {
       credentialVersion: numberValue(row, "credential_version"),
       securityOperationId: nullableUuid(row, "security_operation_id"),
       createdAt: date(row, "created_at"),
+      providers,
     };
   }
 

@@ -151,7 +151,14 @@ export function Assessments() {
       </div>
 
       {activeTab === "gradebook" ? (
-        <GradebookDashboard />
+        <GradebookDashboard
+          onManageAssessments={() => {
+            setParams((p) => {
+              p.delete("tab");
+              return p;
+            });
+          }}
+        />
       ) : (
         <>
           <p className="eyebrow">ĐÁNH GIÁ</p>

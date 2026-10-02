@@ -12,6 +12,7 @@ import {
   type Lesson,
   type Progress,
   type Notices,
+  type Quiz,
 } from "./api";
 import { Heading, State, Empty, ProgressView, Status } from "./ui";
 import Discussion from "./Discussion";
@@ -711,7 +712,8 @@ export function CourseLearning() {
   const [courseTab, setCourseTab] = useState<"lessons" | "exercises">("lessons");
   const course = useStudent<LearningCourse>("/me/courses/" + courseId),
     lessons = useStudent<Lesson[]>("/courses/" + courseId + "/lessons"),
-    progress = useStudent<Progress>("/courses/" + courseId + "/progress");
+    progress = useStudent<Progress>("/courses/" + courseId + "/progress"),
+    courseQuizzes = useStudent<Quiz[]>(courseTab === "exercises" ? "/targets/COURSE/" + courseId + "/quizzes" : null);
   const command = useCommand();
   return (
     <>
@@ -886,59 +888,45 @@ export function CourseLearning() {
               <section className="dashboard-section-card" style={{ marginTop: "16px" }}>
                 <div className="section-card-header">
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <h2>Bài Tập & Kiểm Tra Đánh Giá Của Khóa Học</h2>
-                    <span className="amber-badge-pill">● 2 đề chưa hoàn thành</span>
+                    <h2>Bài Tập &amp; Kiểm Tra Đánh Giá Của Khóa Học</h2>
+                    {courseQuizzes.data && (
+                      <span className="amber-badge-pill">
+                        ● {courseQuizzes.data.length} đề bài
+                      </span>
+                    )}
                   </div>
                   <Link to={"/app/assessments?course=" + courseId} className="button small">
                     Tất cả bài kiểm tra →
                   </Link>
                 </div>
 
-                <div className="home-card-list">
-                  <div className="home-activity-card">
-                    <div className="home-activity-card-top">
-                      <span className="badge">ÔN TẬP CHUYÊN ĐỀ</span>
-                      <span className="red-badge-pill">● Chưa làm</span>
+                <State query={courseQuizzes}>
+                  {courseQuizzes.data && courseQuizzes.data.length > 0 ? (
+                    <div className="home-card-list">
+                      {courseQuizzes.data.map((q) => (
+                        <div key={q.quizId} className="home-activity-card">
+                          <div className="home-activity-card-top">
+                            <span className="badge">
+                              {q.state === "PUBLISHED" ? "ĐANG MỞ" : q.state}
+                            </span>
+                            <span className="amber-badge-pill">● {q.questionCount} câu hỏi</span>
+                          </div>
+                          <h3 className="home-activity-card-title">{q.title}</h3>
+                          <div className="home-activity-card-meta">
+                            <span>
+                              ⏱️ {q.durationSeconds ? `${Math.round(q.durationSeconds / 60)} phút` : "Không giới hạn"}
+                            </span>
+                            <Link to={`/app/assessments/${q.quizId}`} className="button small">
+                              Vào làm bài →
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <h3 className="home-activity-card-title">
-                      Trắc nghiệm ôn tập Chương 1: Kiến trúc & Mô hình quan hệ
-                    </h3>
-                    <div className="home-activity-card-meta">
-                      <span>⏱️ 15 phút • 10 câu hỏi trắc nghiệm</span>
-                      <Link to={"/app/assessments?course=" + courseId} className="button small">
-                        Vào thi →
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div className="home-activity-card">
-                    <div className="home-activity-card-top">
-                      <span className="badge">BÀI THỰC HÀNH</span>
-                      <span className="red-badge-pill">● Chưa nộp</span>
-                    </div>
-                    <h3 className="home-activity-card-title">
-                      Bài tập thực hành: Thiết kế lược đồ CSDL chuẩn hóa 3NF
-                    </h3>
-                    <div className="home-activity-card-meta">
-                      <span style={{ color: "#dc2626", fontWeight: 600 }}>⏰ Hạn nộp: 23:59 Chủ Nhật</span>
-                      <Link to={"/app/assessments?course=" + courseId} className="button small">
-                        Nộp bài tập →
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div className="home-activity-card">
-                    <div className="home-activity-card-top">
-                      <span className="badge">AI ADAPTIVE EXAM</span>
-                      <span className="green-badge-pill">✓ Đạt: 9.2 / 10</span>
-                    </div>
-                    <h3 className="home-activity-card-title">Đề thi đánh giá năng lực thích ứng AI AILSS</h3>
-                    <div className="home-activity-card-meta">
-                      <span>⏱️ 30 phút • 25 câu hỏi thích ứng Bloom</span>
-                      <span style={{ color: "#16a34a", fontWeight: 600 }}>Đã hoàn thành</span>
-                    </div>
-                  </div>
-                </div>
+                  ) : (
+                    <Empty>Khóa học hiện chưa có bài tập hoặc bài kiểm tra nào.</Empty>
+                  )}
+                </State>
               </section>
             )}
           </>

@@ -179,8 +179,34 @@ export class IdentityAdminService {
           // Stale projections must never show a different role or account status.
           if (!user || user.role !== query.role || user.status !== query.status || seen.has(user.userId)) continue;
           seen.add(user.userId);
-          if (needle && ![user.displayName, user.userId, user.normalizedEmail, user.emailMasked].some((value) => value.toLocaleLowerCase("vi").includes(needle))) continue;
-          items.push({ userId: user.userId, role: user.role, status: user.status, shard: row.shard, updatedAt: row.updatedAt, displayName: user.displayName, lecturerVerified: user.lecturerVerified, profileVersion: user.profileVersion, emailMasked: user.emailMasked });
+          const providers = user.providers ?? [];
+          const isGoogle = providers.some((p) => p.toUpperCase() === "GOOGLE");
+          const isApple = providers.some((p) => p.toUpperCase() === "APPLE");
+          const providerAliases = [
+            ...providers,
+            ...(isGoogle ? ["google", "gg", "sso", "gmail"] : []),
+            ...(isApple ? ["apple", "icloud"] : []),
+          ];
+          const searchableValues = [
+            user.displayName,
+            user.userId,
+            user.normalizedEmail,
+            user.emailMasked,
+            ...providerAliases,
+          ];
+          if (needle && !searchableValues.some((value) => value.toLocaleLowerCase("vi").includes(needle))) continue;
+          items.push({
+            userId: user.userId,
+            role: user.role,
+            status: user.status,
+            shard: row.shard,
+            updatedAt: row.updatedAt,
+            displayName: user.displayName,
+            lecturerVerified: user.lecturerVerified,
+            profileVersion: user.profileVersion,
+            emailMasked: user.emailMasked,
+            providers: user.providers ?? [],
+          });
         }
         hasMore = examined < candidates.length || pages.some((page) => page.length === pageSize);
         if (!hasMore || items.length === query.limit) break;

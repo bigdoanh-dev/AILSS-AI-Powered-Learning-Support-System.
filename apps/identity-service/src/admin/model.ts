@@ -45,6 +45,7 @@ export interface AdminProjectionRow {
   readonly profileVersion: number;
   readonly updatedAt: Date;
   readonly shard: number;
+  readonly providers?: readonly string[];
 }
 
 export interface AdminUser extends AdminProjectionRow {

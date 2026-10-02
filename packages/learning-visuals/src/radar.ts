@@ -70,7 +70,7 @@ export function radarAxes(contents: RadarContent[], records: RadarEvidence[]): R
   const names = new Map(contents.map((item) => [item.id, item.label]));
   const evidence = new Map(records.map((item) => [item.conceptId, item]));
   for (const item of records) {
-    if (!names.has(item.conceptId)) names.set(item.conceptId, `Nội dung đã ghi nhận ${names.size + 1}`);
+    if (!names.has(item.conceptId)) names.set(item.conceptId, `Nội dung đã ghi nhận ${String(names.size + 1)}`);
   }
   return [...names].map(([id, label]) => {
     const item = evidence.get(id);
@@ -80,7 +80,7 @@ export function radarAxes(contents: RadarContent[], records: RadarEvidence[]): R
       label,
       score: observed ? Math.round(item.masteryScore * 10) / 10 : null,
       evidenceCount: observed ? item.evidenceCount : 0,
-      confidence: observed && Number.isFinite(item.confidenceScore) ? item.confidenceScore! : null,
+      confidence: observed && typeof item.confidenceScore === "number" ? item.confidenceScore : null,
       ...(item?.assessedStudentCount === undefined
         ? {}
         : { assessedStudentCount: item.assessedStudentCount }),

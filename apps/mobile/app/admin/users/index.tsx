@@ -127,6 +127,11 @@ export default function AdminUsersListScreen() {
                 <Text style={us.badgeText}>{item.lecturerVerified ? "Đã xác minh" : "Chưa xác minh"}</Text>
               </View>
             )}
+            {item.providers?.some((p) => p.toUpperCase() === "GOOGLE") && (
+              <View style={[us.badge, { backgroundColor: "#fee2e2" }]}>
+                <Text style={[us.badgeText, { color: "#dc2626" }]}>🌐 Google</Text>
+              </View>
+            )}
           </View>
         </View>
         <Text style={us.arrow}>→</Text>

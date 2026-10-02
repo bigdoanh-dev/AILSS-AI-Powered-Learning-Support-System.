@@ -13,6 +13,7 @@ export interface AdminUser {
   profileVersion: number;
   createdAt?: string;
   updatedAt: string;
+  providers?: string[];
 }
 
 export interface AdminUserListResponse {
@@ -108,6 +109,7 @@ export function adminUser(value: unknown): AdminUser {
     profileVersion: typeof data.profileVersion === "number" ? data.profileVersion : 1,
     createdAt: typeof data.createdAt === "string" ? data.createdAt : undefined,
     updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : new Date().toISOString(),
+    providers: Array.isArray(data.providers) ? data.providers.map(String) : [],
   };
 }
 

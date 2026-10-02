@@ -721,6 +721,217 @@ async function main() {
     }
   }
 
+  // 9. Tạo Bài kiểm tra cấp KHÓA HỌC (targetType: "COURSE") để kích hoạt Mastery & Radar
+  if (webCourse?.courseId) {
+    console.log(`\n🎯 6. Tạo bài kiểm tra trực thuộc Khóa học (ID: ${webCourse.courseId}) để sinh dữ liệu Radar...`);
+
+    // Ensure students enroll course
+    for (const st of students) {
+      try {
+        await api(st.token, `/courses/${webCourse.courseId}/enrollments`, "POST", undefined, `enr-${st.userId}-${webCourse.courseId}`);
+      } catch {
+        /* already enrolled or paid */
+      }
+    }
+
+    const existingCourseQuizzes = await api(lecturerToken, `/targets/COURSE/${webCourse.courseId}/quizzes`);
+    const cQList = existingCourseQuizzes.data || existingCourseQuizzes || [];
+
+    const courseQuizzesDef = [
+      {
+        title: "Đánh giá năng lực: HTML5, CSS3 & Bố cục Responsive",
+        questions: [
+          {
+            prompt: "Thuộc tính CSS nào cho phép thiết lập bố cục lưới hai chiều mạnh mẽ trên giao diện web hiện đại?",
+            questionType: "SINGLE_CHOICE",
+            options: ["display: grid", "display: flex", "display: block", "display: table"],
+            correctAnswer: "display: grid",
+            points: "2.5",
+          },
+          {
+            prompt: "Thẻ semantic '<article>' đại diện cho một thành phần nội dung độc lập, có thể tái sử dụng.",
+            questionType: "TRUE_FALSE",
+            correctAnswer: true,
+            points: "2.5",
+          },
+          {
+            prompt: "Để tối ưu giao diện trên thiết bị di động, thẻ meta viewport với nội dung 'width=device-width, initial-scale=1.0' là bắt buộc.",
+            questionType: "TRUE_FALSE",
+            correctAnswer: true,
+            points: "2.5",
+          },
+          {
+            prompt: "Đơn vị đo lường tương đối nào trong CSS tính theo kích thước font của phần tử gốc (root)?",
+            questionType: "SINGLE_CHOICE",
+            options: ["rem", "em", "px", "%"],
+            correctAnswer: "rem",
+            points: "2.5",
+          },
+        ],
+      },
+      {
+        title: "Kiểm tra kỹ năng: Lập trình JavaScript Hiện Đại ES6+ & Bất đồng bộ",
+        questions: [
+          {
+            prompt: "Phương thức nào của Promise cho phép chờ tất cả các Promise hoàn thành hoặc một trong số chúng thất bại?",
+            questionType: "SINGLE_CHOICE",
+            options: ["Promise.all()", "Promise.race()", "Promise.any()", "Promise.allSettled()"],
+            correctAnswer: "Promise.all()",
+            points: "2.5",
+          },
+          {
+            prompt: "Arrow Function trong JavaScript không có 'this' riêng mà kế thừa 'this' từ phạm vi bao quanh (lexical this).",
+            questionType: "TRUE_FALSE",
+            correctAnswer: true,
+            points: "2.5",
+          },
+          {
+            prompt: "Cú pháp Destructuring trong ES6 cho phép giải nén các giá trị từ mảng hoặc thuộc tính của đối tượng vào các biến riêng biệt.",
+            questionType: "TRUE_FALSE",
+            correctAnswer: true,
+            points: "2.5",
+          },
+          {
+            prompt: "Toán tử Spread (...) được dùng để mở rộng một mảng hoặc đối tượng vào một mảng/đối tượng mới.",
+            questionType: "TRUE_FALSE",
+            correctAnswer: true,
+            points: "2.5",
+          },
+        ],
+      },
+      {
+        title: "Thực hành thiết kế: RESTful API & Tích hợp Microservices",
+        questions: [
+          {
+            prompt: "Mã trạng thái HTTP nào biểu thị một tài nguyên mới vừa được tạo thành công trên máy chủ?",
+            questionType: "SINGLE_CHOICE",
+            options: ["201 Created", "200 OK", "204 No Content", "202 Accepted"],
+            correctAnswer: "201 Created",
+            points: "2.5",
+          },
+          {
+            prompt: "Phương thức HTTP Idempotent có đặc điểm là gọi nhiều lần với cùng dữ liệu sẽ tạo ra cùng kết quả trên server.",
+            questionType: "TRUE_FALSE",
+            correctAnswer: true,
+            points: "2.5",
+          },
+          {
+            prompt: "Header HTTP nào thường được dùng để gửi token JWT trong các request có xác thực?",
+            questionType: "SINGLE_CHOICE",
+            options: ["Authorization: Bearer <token>", "Authentication: Token <token>", "X-Token: <token>", "Cookie: token=<token>"],
+            correctAnswer: "Authorization: Bearer <token>",
+            points: "2.5",
+          },
+          {
+            prompt: "API Gateway đóng vai trò làm điểm tiếp nhận duy nhất, định tuyến và kiểm soát truy cập cho các microservices.",
+            questionType: "TRUE_FALSE",
+            correctAnswer: true,
+            points: "2.5",
+          },
+        ],
+      },
+      {
+        title: "Kiến trúc nâng cao: Tối ưu CSDL & Hiệu năng Hệ thống Web",
+        questions: [
+          {
+            prompt: "Mục đích chính của việc tạo Index (chỉ mục) trong cơ sở dữ liệu là gì?",
+            questionType: "SINGLE_CHOICE",
+            options: [
+              "Tăng tốc độ truy vấn tìm kiếm dữ liệu",
+              "Giảm dung lượng lưu trữ trên đĩa",
+              "Bảo mật dữ liệu bảng",
+              "Tự động sao lưu dữ liệu định kỳ",
+            ],
+            correctAnswer: "Tăng tốc độ truy vấn tìm kiếm dữ liệu",
+            points: "2.5",
+          },
+          {
+            prompt: "Mô hình chuẩn hóa dữ liệu 3NF giúp giảm thiểu sự trùng lặp và dị thường khi thêm, sửa, xóa dữ liệu.",
+            questionType: "TRUE_FALSE",
+            correctAnswer: true,
+            points: "2.5",
+          },
+          {
+            prompt: "Kỹ thuật Caching (bộ nhớ đệm) trên RAM giúp giảm tải đáng kể cho Database trong các ứng dụng có lượng đọc cao.",
+            questionType: "TRUE_FALSE",
+            correctAnswer: true,
+            points: "2.5",
+          },
+          {
+            prompt: "Connection Pooling giúp tái sử dụng các kết nối cơ sở dữ liệu thay vì khởi tạo kết nối mới cho mỗi request.",
+            questionType: "TRUE_FALSE",
+            correctAnswer: true,
+            points: "2.5",
+          },
+        ],
+      },
+    ];
+
+    for (const qDef of courseQuizzesDef) {
+      let qObj = cQList.find((item) => item.title.includes(qDef.title.slice(0, 20)));
+      if (!qObj) {
+        qObj = await api(lecturerToken, "/quizzes", "POST", {
+          title: qDef.title,
+          targetType: "COURSE",
+          targetId: webCourse.courseId,
+          durationSeconds: 1800,
+          attemptLimit: 3,
+          questions: qDef.questions,
+        }, `quiz-crs-${randomUUID()}`);
+        await api(lecturerToken, `/quizzes/${qObj.quizId}/publish`, "POST", {}, `pub-crs-${randomUUID()}`);
+        console.log(`   + Đã tạo và xuất bản Quiz khóa học: "${qObj.title}" (ID: ${qObj.quizId})`);
+      } else {
+        console.log(`   + Quiz khóa học sẵn có: "${qObj.title}"`);
+      }
+
+      // Submit attempts for students
+      const qDetail = await api(lecturerToken, `/quizzes/${qObj.quizId}`);
+      const questions = qDetail.questions || [];
+
+      let done = new Set();
+      try {
+        const res = await api(lecturerToken, `/quizzes/${qObj.quizId}/results?month=2026-10`);
+        done = new Set(((res.data || res)?.items || []).map((i) => i.studentId));
+      } catch {}
+
+      for (const [stIdx, st] of students.slice(0, 4).entries()) {
+        if (done.has(st.userId)) continue;
+        try {
+          const attempt = await api(st.token, `/quizzes/${qObj.quizId}/attempts`, "POST", {}, `att-crs-${qObj.quizId}-${st.userId}`);
+          const attemptId = attempt.attempt?.attemptId || attempt.attemptId;
+
+          const answers = questions.map((q, qIdx) => {
+            if (stIdx === 2 && qIdx === 1) {
+              return q.questionType === "TRUE_FALSE" ? { questionId: q.questionId, value: false } : { questionId: q.questionId, selectedOptionId: "Sai" };
+            }
+            if (q.questionType === "TRUE_FALSE") {
+              const defQ = qDef.questions[qIdx];
+              return { questionId: q.questionId, value: defQ ? defQ.correctAnswer : true };
+            }
+            const defQ = qDef.questions[qIdx];
+            return { questionId: q.questionId, selectedOptionId: defQ ? defQ.correctAnswer : q.options?.[0] };
+          });
+
+          await api(st.token, `/attempts/${attemptId}/submit`, "POST", {
+            clientSubmittedAt: new Date().toISOString(),
+            answers,
+          }, `sub-crs-${attemptId}`);
+
+          console.log(`     -> Học viên [${st.name}] đã nộp bài quiz khóa học: ${qObj.title}`);
+
+          const score = stIdx === 2 ? "7.5" : "10";
+          const feedback = stIdx === 2 ? "Nắm kiến thức khá tốt, chú ý ôn lại câu 2." : "Bài làm rất xuất sắc!";
+          await api(lecturerToken, `/quizzes/${qObj.quizId}/grades/${attemptId}`, "POST", {
+            score,
+            feedback,
+          }, `grade-crs-${attemptId}`);
+        } catch (err) {
+          console.warn(`     ! Lỗi nộp quiz khóa học cho ${st.name}:`, err.message);
+        }
+      }
+    }
+  }
+
   console.log("\n✨ HOÀN TẤT NẠP DỮ LIỆU DEMO GIẢNG VIÊN THÀNH CÔNG!");
   console.log("--------------------------------------------------------------------------");
   console.log("Đăng nhập tài khoản: lecturer.demo@ailss.local / AilssLecturer!2026");

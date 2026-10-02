@@ -173,6 +173,7 @@ export function AppShell() {
             { to: "/app/teaching/revenue", label: "Doanh thu", icon: "card" },
             { to: "/app/teaching/assessments", label: t("tab.assessments", "Bài kiểm tra"), icon: "quiz" },
             { to: "/app/teaching/grades", label: t("tab.grades", "Bảng điểm"), icon: "trophy" },
+            { to: "/app/teaching/reports", label: t("tab.reports", "Báo cáo"), icon: "chart" },
             { to: "/app/teaching/ai", label: t("tab.aiStudio", "Trợ lý AI"), icon: "sparkles" },
           ]
         : [

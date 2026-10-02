@@ -166,7 +166,7 @@ function validationError(code: string, message: string, error: unknown): AppErro
   );
 }
 
-function searchDto(row: AdminProjectionRow & { emailMasked?: string }) {
+function searchDto(row: AdminProjectionRow & { emailMasked?: string; providers?: readonly string[] }) {
   return {
     userId: row.userId,
     displayName: row.displayName,
@@ -176,6 +176,7 @@ function searchDto(row: AdminProjectionRow & { emailMasked?: string }) {
     lecturerVerified: row.lecturerVerified,
     profileVersion: row.profileVersion,
     updatedAt: row.updatedAt.toISOString(),
+    providers: row.providers ?? [],
   };
 }
 
@@ -190,6 +191,7 @@ function detailDto(user: AdminUser) {
     profileVersion: user.profileVersion,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
+    providers: user.providers ?? [],
   };
 }
 

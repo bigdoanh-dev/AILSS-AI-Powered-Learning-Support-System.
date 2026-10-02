@@ -140,21 +140,6 @@ export default function CourseDetail() {
           Đang tải…
         </Text>
       )}
-
-      {course?.state === "DRAFT" ? (
-        <Button
-          label="Gửi khóa học để duyệt"
-          onPress={() => {
-            void command.run(`/api/v1/courses/${courseId}/submit-review`, {}).then((ok) => {
-              if (ok) handleRetry();
-            });
-          }}
-        />
-      ) : null}
-      <Button
-        label="Học viên khóa học"
-        onPress={() => router.push(`/teaching/courses/${courseId}/roster` as Href)}
-      />
       {course && (
         <FadeSlideIn duration={320}>
           {/* Hero Overview Card */}
@@ -246,6 +231,30 @@ export default function CourseDetail() {
             </View>
           </View>
 
+          {/* Primary Management Actions */}
+          <View style={ds.primaryActionsRow}>
+            {course.state === "DRAFT" && (
+              <ScalePressable
+                style={[ds.primaryActionBtn, ds.submitReviewBtn]}
+                onPress={() => {
+                  void command.run(`/api/v1/courses/${courseId}/submit-review`, {}).then((ok) => {
+                    if (ok) handleRetry();
+                  });
+                }}
+              >
+                <Icon name="sparkles" size={16} color="#FFFFFF" />
+                <Text style={ds.primaryActionBtnText}>Gửi xét duyệt khóa học</Text>
+              </ScalePressable>
+            )}
+            <ScalePressable
+              style={[ds.primaryActionBtn, ds.rosterBtn, course.state !== "DRAFT" && { flex: 1 }]}
+              onPress={() => router.push(`/teaching/courses/${courseId}/roster` as Href)}
+            >
+              <Icon name="people" size={16} color="#FFFFFF" />
+              <Text style={ds.primaryActionBtnText}>Danh sách học viên</Text>
+            </ScalePressable>
+          </View>
+
           {/* Quick Studio Actions */}
           <View style={ds.quickActionsRow}>
             <ScalePressable
@@ -260,7 +269,7 @@ export default function CourseDetail() {
               onPress={() => router.push(`/teaching/courses/${courseId}/edit` as Href)}
             >
               <Icon name="pencil" size={15} color={tokens.color.ink} />
-              <Text style={ds.actionButtonText}>Sửa khóa học</Text>
+              <Text style={ds.actionButtonText}>Chỉnh sửa</Text>
             </ScalePressable>
             <ScalePressable
               style={ds.actionButton}
@@ -535,6 +544,32 @@ const ds = StyleSheet.create({
   },
   kpiValue: { fontSize: 16, fontWeight: "800", color: tokens.color.ink },
   kpiLabel: { fontSize: 11, color: tokens.color.muted, fontWeight: "500" },
+  primaryActionsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 10,
+  },
+  primaryActionBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    ...tokens.shadow.subtle,
+  },
+  submitReviewBtn: {
+    backgroundColor: "#0D9488",
+  },
+  rosterBtn: {
+    backgroundColor: tokens.color.brand,
+  },
+  primaryActionBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
   quickActionsRow: {
     flexDirection: "row",
     gap: 8,

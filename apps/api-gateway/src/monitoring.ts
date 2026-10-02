@@ -54,18 +54,41 @@ export async function monitoringSnapshot(
   >,
   fetcher: typeof fetch = fetch,
 ) {
-  async function json(origin: string, path: string) {
-    const response = await fetcher(new URL(path, origin), {
-      signal: AbortSignal.timeout(config.INTERNAL_HTTP_TIMEOUT_MS),
-      redirect: "error",
-    });
-    if (!response.ok) throw new Error("MONITORING_UPSTREAM_UNAVAILABLE");
-    return response.json();
+  const promCandidates = [
+    config.PROMETHEUS_SERVICE_URL,
+    "http://prometheus:9090",
+    "http://127.0.0.1:9090",
+    "http://localhost:9090",
+  ];
+  const grafanaCandidates = [
+    config.GRAFANA_SERVICE_URL,
+    "http://grafana:3000",
+    "http://127.0.0.1:3001",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+  ];
+
+  async function json(origins: string[], path: string) {
+    const unique = [...new Set(origins)];
+    let lastError: unknown;
+    for (const origin of unique) {
+      try {
+        const response = await fetcher(new URL(path, origin), {
+          signal: AbortSignal.timeout(Math.min(config.INTERNAL_HTTP_TIMEOUT_MS, 4000)),
+          redirect: "error",
+        });
+        if (response.ok) return await response.json();
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error("MONITORING_UPSTREAM_UNAVAILABLE");
   }
+
   const query = async (expression: string) => {
     const body = vector.parse(
       await json(
-        config.PROMETHEUS_SERVICE_URL,
+        promCandidates,
         `/api/v1/query?${new URLSearchParams({ query: expression, timeout: "3s" }).toString()}`,
       ),
     );
@@ -73,10 +96,10 @@ export async function monitoringSnapshot(
   };
   const now = Math.floor(Date.now() / 1000);
   const results = await Promise.allSettled([
-    json(config.PROMETHEUS_SERVICE_URL, "/api/v1/targets?state=active").then((raw) =>
+    json(promCandidates, "/api/v1/targets?state=active").then((raw) =>
       targetSchema.parse(raw).data.activeTargets.filter((target) => target.labels.job?.startsWith("ailss-")),
     ),
-    json(config.GRAFANA_SERVICE_URL, "/api/health").then((raw) =>
+    json(grafanaCandidates, "/api/health").then((raw) =>
       z.object({ database: z.literal("ok") }).parse(raw),
     ),
     query(rateQuery),
@@ -84,7 +107,7 @@ export async function monitoringSnapshot(
     query(
       'histogram_quantile(0.95, sum(rate(ailss_http_duration_seconds_bucket{job=~"ailss-.*"}[5m])) by (le))',
     ),
-    json(config.PROMETHEUS_SERVICE_URL, "/api/v1/alerts").then((raw) =>
+    json(promCandidates, "/api/v1/alerts").then((raw) =>
       alertSchema
         .parse(raw)
         .data.alerts.filter(
@@ -92,7 +115,7 @@ export async function monitoringSnapshot(
         ),
     ),
     json(
-      config.PROMETHEUS_SERVICE_URL,
+      promCandidates,
       `/api/v1/query_range?${new URLSearchParams({ query: rateQuery, start: String(now - 3600), end: String(now), step: "60", timeout: "3s" }).toString()}`,
     ).then((raw) => historySchema.parse(raw).data.result[0]?.values ?? []),
   ]);

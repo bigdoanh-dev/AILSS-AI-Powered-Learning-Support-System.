@@ -227,7 +227,11 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
     </div>
   );
 }
-export default function GradebookDashboard() {
+export default function GradebookDashboard({
+  onManageAssessments,
+}: {
+  onManageAssessments?: () => void;
+} = {}) {
   const courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses");
   const classes = useLecturer<Class[] | { classes: Class[] }>("/me/owned-classes");
   const [target, setTarget] = useState("");
@@ -247,8 +251,18 @@ export default function GradebookDashboard() {
             Kết quả bài kiểm tra của khóa học và lớp do bạn phụ trách. Theo dõi phân bố năng lực học tập và chấm điểm tự luận/thực hành.
           </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Link className="button secondary" to="/app/teaching/assessments" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <Link
+            className="button secondary"
+            to="/app/teaching/assessments"
+            onClick={(e) => {
+              if (onManageAssessments) {
+                e.preventDefault();
+                onManageAssessments();
+              }
+            }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
@@ -257,6 +271,13 @@ export default function GradebookDashboard() {
               <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
             Quản lý bài kiểm tra
+          </Link>
+          <Link
+            className="button button-subtle"
+            to="/app/teaching/reports"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
+            📊 Báo cáo &amp; Biểu đồ Radar →
           </Link>
         </div>
       </div>
