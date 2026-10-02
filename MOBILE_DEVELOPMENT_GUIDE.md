@@ -32,6 +32,10 @@ Không cần mua Apple Developer Program khi build và cài trực tiếp bằng
 3. Bật Developer Mode trên iPhone nếu Xcode yêu cầu.
 4. Trong target AILSS → Signing & Capabilities, bật Automatically manage signing và
    chọn **Personal Team** của tài khoản vừa đăng nhập.
+5. Nếu cài thành công nhưng iPhone chặn mở app do nhà phát triển chưa được tin cậy,
+   tự xác nhận trong Cài đặt → Cài đặt chung → VPN & Quản lý thiết bị → Ứng dụng
+   nhà phát triển → Apple Account đã dùng để ký AILSS → Tin cậy/Xác minh.
+   Đây là bước riêng, cần thực hiện ngoài việc bật Developer Mode.
 
 Để giữ Team khi tạo lại dự án iOS, đặt `AILSS_IOS_APPLE_TEAM_ID=<Team ID gồm 10 ký tự>`
 trong `apps/mobile/.env.local`. Giá trị này là Team ID của Apple, không phải Google Client ID.
