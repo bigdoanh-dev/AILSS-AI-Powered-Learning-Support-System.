@@ -53,6 +53,8 @@ infrastructure/cassandra/data/
 # Keep internal reports and release documentation local
 AILSS_P13_*.md
 BAO_CAO_*
+/CI_CD_AUDIT_2026-09-28.md
+/LOCAL_DEMO_CHECKOUT_GUIDE.md
 
 # Generated runtime artifacts — do NOT commit
 .audit-runtime/

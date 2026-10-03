@@ -2,8 +2,6 @@
 
 Bộ dữ liệu học viên và hai giảng viên demo, liên kết lớp/lịch/bảng điểm: [Linked demo guide](LINKED_DEMO_GUIDE.md).
 
-Hướng dẫn thử đăng ký/thanh toán từ đầu và xử lý quyền học được seed sẵn: [Local demo checkout](LOCAL_DEMO_CHECKOUT_GUIDE.md).
-
 [![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=111827)](https://react.dev/)
