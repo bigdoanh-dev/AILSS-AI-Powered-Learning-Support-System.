@@ -268,6 +268,21 @@ export default function Home() {
           notifyNavScroll(currentY, deltaY);
         }}
       >
+        {homeError ? (
+          <View style={styles.card}>
+            <Text accessibilityRole="alert" style={styles.error}>
+              {homeError}
+            </Text>
+            <Button
+              label="Thử tải lại"
+              onPress={() => {
+                setHomeError("");
+                setHomeRevision((v) => v + 1);
+              }}
+            />
+          </View>
+        ) : null}
+
         {/* Top Deep Navy/Teal Banner */}
         <FadeSlideIn delay={0} duration={400} fromY={-12}>
           <View style={hStyles.topBanner}>
@@ -770,58 +785,7 @@ export default function Home() {
                     <ScalePressable scaleTo={0.92} onPress={() => router.push("/classes" as Href)}>
                       <Text style={hStyles.sectionLink}>Tất cả lớp &gt;</Text>
                     </ScalePressable>
-                  </View>
-
-                  <View style={{ gap: 10 }}>
-                    {classList.slice(0, 2).map((c) => (
-                      <ScalePressable
-                        key={c.classId}
-                        style={hStyles.compactCard}
-                        scaleTo={0.97}
-                        onPress={() => router.push(`/classes/${c.classId}` as Href)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Lớp học ${c.name}`}
-                      >
-                        <View style={hStyles.cardBadgeRow}>
-                          <Badge
-                            label={c.classKind === "LIVE_COHORT" ? "LỚP TRỰC TUYẾN" : "LỚP HỌC"}
-                            variant="neutral"
-                          />
-                          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                            <View
-                              style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }}
-                            />
-                            <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>
-                              Đang học
-                            </Text>
-                          </View>
-                        </View>
-                        <Text style={hStyles.compactCardTitle} numberOfLines={1}>
-                          {c.name}
-                        </Text>
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginTop: 4,
-                            gap: 8,
-                          }}
-                        >
-                          <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                            Mở chi tiết lớp để xem giảng viên phụ trách
-                          </Text>
-                          <View style={hStyles.actionMiniBtn}>
-                            <Text style={hStyles.actionMiniBtnText}>Vào lớp</Text>
-                            <Icon name="chevronRight" size={12} color="#FFFFFF" />
-                          </View>
-                        </View>
-                      </ScalePressable>
-                    ))}
-                    {classList.length === 0 && (
-                      <Text style={styles.small}>Lớp được ghi danh sẽ xuất hiện ở đây.</Text>
-                    )}
-                  </View>
+                  ))}
                 </View>
               </FadeSlideIn>
 
