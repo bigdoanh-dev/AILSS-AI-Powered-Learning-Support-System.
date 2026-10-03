@@ -448,6 +448,7 @@ pnpm validate:production-config
 pnpm scan:secrets
 pnpm build
 pnpm format:check
+pnpm acceptance:phase40:revision-h
 
 pnpm typecheck:web
 pnpm lint:web
@@ -528,11 +529,11 @@ artifacts/, evidence/     Bằng chứng runtime/release sinh bởi tooling
 - [x] Nối các mastery evidence producer hiện có: quiz theo course/class, lesson completion và teacher observation
 - [ ] Assignment/Lab/Final Project evidence producers (chưa có adapter tới bản ghi nguồn chính thống trong các dịch vụ hiện tại; API từ chối fail-closed khi không xác minh được nguồn)
 - [x] AI Tutor tool registry và Mastery/Study Plan tools đầy đủ
-- [ ] Full-stack Phase 40 Revision H E2E (đã có HTTP router integration qua production handlers với test repositories; chưa chạy stack đầy đủ qua các service và cơ sở dữ liệu thật)
+- [x] Full-stack Phase 40 Revision H E2E trên stack local thật: Student/Teacher/Admin, tạo và nộp assessment, mastery → Study Plan, Gia sư AI grounded, từ chối sai role và chặn Study Plan khi thiếu mastery
 - [ ] Staging/cloud deployment với credential thật, external S3/CDN acceptance và production telemetry (blocker: thiếu remote cloud endpoints AWS/GCP, live S3/CDN buckets, production IAM secrets và telemetry collectors)
-- [ ] VoiceOver/TalkBack trên thiết bị thật và native mobile production release (blocker: kiểm kê devicectl và adb đều ghi nhận 0 physical devices kết nối, thiếu Apple/Google production signing certificates và không publish lên store)
+- [ ] VoiceOver/TalkBack trên thiết bị thật và native mobile production release (iPhone XS đã ghép đôi; bản Development đã build và cài, nhưng iOS chặn mở cho đến khi người dùng tin cậy profile nhà phát triển trong Cài đặt. Chưa có thiết bị Android và chứng chỉ ký phát hành App Store/Google Play.)
 
-Phase 40 Revision H vẫn chưa được nghiệm thu đầy đủ. Các mastery producers đã nối là quiz, lesson completion và teacher observation; các nguồn Assignment/Lab/Final Project cần adapter tới dữ liệu gốc trước khi có thể bật. Bộ test `tests/unit/phase40-revision-h-router-integration.test.ts` chạy production HTTP routers với test repositories, còn full-stack acceptance qua các service và cơ sở dữ liệu thật vẫn cần được chạy. Staging/cloud acceptance và mobile accessibility/store release cũng còn phụ thuộc hạ tầng, credential và thiết bị bên ngoài.
+Phase 40 Revision H chưa được nghiệm thu toàn bộ vì Assignment/Lab/Final Project chưa có adapter tới bản ghi nguồn chính thống và staging/cloud cùng mobile accessibility/store release còn phụ thuộc hạ tầng, credential và thiết bị bên ngoài. `pnpm acceptance:phase40:revision-h` đã qua trên service thật local và Cassandra: kiểm tra entitlement, tạo/nộp assessment, mastery evidence của assessment đó, Study Plan bền vững, trích dẫn học liệu Gia sư AI, role boundary Student/Teacher/Admin và từ chối yêu cầu thiếu mastery. `AILSS_PROFILE=demo pnpm smoke` cũng qua 12 runtime, correlation ID, identity giả, RBAC Cassandra, ACL/delivery RabbitMQ và MinIO round-trip. Test ghi evidence cục bộ trong `artifacts/release-evidence/`; thư mục này không được commit/push.
 
 ## Phạm vi và giới hạn của AI
 
@@ -557,10 +558,10 @@ AI không được:
 ## Giới hạn hiện tại
 
 - Teacher Copilot, Question Bank V2, Institution Onboarding, Curriculum Intelligence, Fleet Operations và Advanced Experimentation đang `DEFERRED_UNSHIPPED`; không nên xem route/UI thử nghiệm là runtime production-ready.
-- Staging và production cloud deployment chưa có endpoint/credentials thật từ nhà cung cấp cloud (AWS/GCP/CDN/telemetry collector); template staging và policy IaC hiện phục vụ kiểm tra mẫu.
+- Staging và production cloud deployment chưa có endpoint/credentials thật từ nhà cung cấp cloud (AWS/GCP/CDN/telemetry collector); template staging và policy IaC hiện phục vụ kiểm tra mẫu. Lần kiểm tra local ngày 03/10/2026, Prometheus và Grafana đều trả health thành công, 7/7 service được Prometheus scrape ở trạng thái UP; đây không phải bằng chứng telemetry production.
 - External SAML/LTI, Vault-backed deployment, penetration test và ASV chưa được xác nhận hoàn tất.
 - Thanh toán thương mại production và payout vẫn bị chặn theo cơ chế fail-closed.
-- Phát hành native mobile lên App Store/Google Play và kiểm thử VoiceOver/TalkBack trên thiết bị vật lý đầy đủ tiếp tục nằm trong danh sách blocker do 0 thiết bị vật lý kết nối qua devicectl/adb, thiếu chứng chỉ ký phát hành của Apple Developer Program / Google Play Console và không được cấp phép publish.
+- Phát hành native mobile lên App Store/Google Play và kiểm thử VoiceOver/TalkBack trên thiết bị vật lý đầy đủ tiếp tục nằm trong danh sách blocker. iPhone XS đã ghép đôi và nhận bản Development, nhưng thiết bị báo profile nhà phát triển chưa được tin cậy; vào **Cài đặt → Cài đặt chung → VPN & Quản lý thiết bị → Ứng dụng nhà phát triển** và tin cậy Team `KJ37MM6VQ3`, sau đó mở AILSS để tiếp tục. Đây chỉ là ký Development, không thay thế chứng chỉ/profile phân phối App Store; Android TalkBack cần thiết bị Android riêng.
 
 ## Tác giả, bản quyền và giấy phép
 

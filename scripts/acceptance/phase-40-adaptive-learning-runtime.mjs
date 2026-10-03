@@ -3,6 +3,11 @@ import { randomUUID } from "node:crypto";
 
 const gateway = new URL(process.env.AILSS_GATEWAY_URL || "http://127.0.0.1:8080");
 if (!["127.0.0.1", "localhost"].includes(gateway.hostname)) throw new Error("LOCAL_ACCEPTANCE_ONLY");
+const revision = (process.argv[2] ?? "L").toUpperCase();
+if (revision !== "H" && revision !== "L")
+  throw new Error("USAGE: phase-40-adaptive-learning-runtime.mjs [H|L]");
+const revisionSlug = revision.toLowerCase();
+const idempotencyPrefix = `revision-${revisionSlug}`;
 const accounts = {
   student: {
     email: "student.demo@ailss.local",
@@ -12,11 +17,12 @@ const accounts = {
     email: "lecturer.demo@ailss.local",
     password: process.env.AILSS_DEMO_LECTURER_PASSWORD || "AilssLecturer!2026",
   },
+  admin: {
+    email: "admin.demo@ailss.local",
+    password: process.env.AILSS_DEMO_ADMIN_PASSWORD || "AilssAdmin!2026",
+  },
 };
-const demo = JSON.parse(await readFile("tmp/web-demo/latest.json", "utf8"));
-const course = demo.courses.find((item) => item.title.includes("Cassandra"));
-if (!course) throw new Error("CASSANDRA_DEMO_COURSE_REQUIRED");
-const evidenceDirectory = "artifacts/release-evidence/revision-l";
+const evidenceDirectory = `artifacts/release-evidence/revision-${revisionSlug}`;
 const journalPath = `${evidenceDirectory}/seed-journal.json`;
 await mkdir(evidenceDirectory, { recursive: true });
 let journal = {};
@@ -29,16 +35,69 @@ try {
 const sessions = {
   student: await api(undefined, "/auth/login", "POST", accounts.student),
   lecturer: await api(undefined, "/auth/login", "POST", accounts.lecturer),
+  admin: await api(undefined, "/auth/login", "POST", accounts.admin),
 };
 const student = await api("student", "/me");
 const lecturer = await api("lecturer", "/me");
-if (student.role !== "STUDENT" || lecturer.role !== "LECTURER" || !lecturer.lecturerVerified)
+const admin = await api("admin", "/me");
+if (
+  student.role !== "STUDENT" ||
+  lecturer.role !== "LECTURER" ||
+  !lecturer.lecturerVerified ||
+  admin.role !== "ADMIN"
+)
   throw new Error("SEEDED_ACTORS_NOT_AUTHORIZED");
+
+let course;
+try {
+  const demo = JSON.parse(await readFile("tmp/web-demo/latest.json", "utf8"));
+  course = demo.courses.find((item) => item.title.includes("Cassandra"));
+} catch (error) {
+  if (error.code !== "ENOENT") throw error;
+}
+if (!course) {
+  // The local demo journal is disposable. Resolve the canonical course and its lessons from
+  // the authenticated Learning API so a cleaned workspace can still run this acceptance.
+  const ownedCourses = await api("lecturer", "/me/owned-courses");
+  const canonicalCourse = ownedCourses.find(
+    (item) => item.slug === "demo-cassandra" && item.state === "PUBLISHED",
+  );
+  if (!canonicalCourse) throw new Error("CASSANDRA_DEMO_COURSE_REQUIRED");
+  const lessons = await api("lecturer", `/courses/${canonicalCourse.courseId}/lessons`);
+  const materialLesson = lessons.find((item) => item.title === "Bài tập và nội dung đọc");
+  if (!materialLesson) throw new Error("CASSANDRA_DEMO_MATERIAL_LESSON_REQUIRED");
+  course = {
+    title: canonicalCourse.title,
+    courseId: canonicalCourse.courseId,
+    lessonIds: [
+      ...lessons.filter((item) => item.lessonId !== materialLesson.lessonId).map((item) => item.lessonId),
+      materialLesson.lessonId,
+    ],
+  };
+}
+
+const roleBoundaryFailures = [
+  await expectApiFailure("lecturer", `/mastery/courses/${course.courseId}`, 403, "STUDENT_REQUIRED"),
+  await expectApiFailure("admin", `/mastery/courses/${course.courseId}`, 403, "STUDENT_REQUIRED"),
+  await expectApiFailure("student", `/courses/${course.courseId}/mastery-summary`, 403, "LECTURER_REQUIRED"),
+  await expectApiFailure("admin", `/courses/${course.courseId}/mastery-summary`, 403, "LECTURER_REQUIRED"),
+  await expectApiFailure("student", "/study-plan/generate", 409, "MASTERY_EVIDENCE_REQUIRED", {
+    courseId: randomUUID(),
+    availableHoursPerWeek: 7,
+  }),
+];
 
 let quizId = journal.quizId;
 if (quizId) {
   try {
-    await api("lecturer", `/quizzes/${quizId}`);
+    const existingQuiz = await api("lecturer", `/quizzes/${quizId}`);
+    if (
+      existingQuiz.state !== "PUBLISHED" ||
+      !existingQuiz.closesAt ||
+      Date.parse(existingQuiz.closesAt) <= Date.now()
+    ) {
+      quizId = undefined;
+    }
   } catch {
     quizId = undefined;
   }
@@ -51,7 +110,7 @@ if (!quizId) {
     "/quizzes",
     "POST",
     {
-      title: "Revision L — Cassandra authoritative assessment",
+      title: `Revision ${revision} — Cassandra authoritative assessment`,
       targetType: "COURSE",
       targetId: course.courseId,
       opensAt,
@@ -67,10 +126,16 @@ if (!quizId) {
         },
       ],
     },
-    `revision-l-create-${randomUUID()}`,
+    `${idempotencyPrefix}-create-${randomUUID()}`,
   );
   quizId = quiz.quizId;
-  await api("lecturer", `/quizzes/${quizId}/publish`, "POST", {}, `revision-l-publish-${randomUUID()}`);
+  await api(
+    "lecturer",
+    `/quizzes/${quizId}/publish`,
+    "POST",
+    {},
+    `${idempotencyPrefix}-publish-${randomUUID()}`,
+  );
   journal = {
     quizId,
     courseId: course.courseId,
@@ -88,19 +153,20 @@ if (!scheduledQuiz?.closesAt || Date.parse(scheduledQuiz.closesAt) <= Date.now()
   throw new Error("FUTURE_QUIZ_NOT_VISIBLE");
 
 let mastery = await api("student", `/mastery/courses/${course.courseId}`);
+let quizMasteryObserved = mastery.some((item) => item.learningOutcomeId === `quiz:${quizId}`);
 let plan;
 try {
   plan = await api("student", `/study-plan/current?courseId=${course.courseId}`);
 } catch {
   plan = undefined;
 }
-if (!mastery.length || !plan?.items?.length) {
+if (!quizMasteryObserved) {
   const attempt = await api(
     "student",
     `/quizzes/${quizId}/attempts`,
     "POST",
     {},
-    `revision-l-attempt-${randomUUID()}`,
+    `${idempotencyPrefix}-attempt-${randomUUID()}`,
   );
   const question = attempt.questions?.[0];
   if (!question?.questionId) throw new Error("QUIZ_QUESTION_NOT_VISIBLE");
@@ -112,21 +178,22 @@ if (!mastery.length || !plan?.items?.length) {
       answers: [{ questionId: question.questionId, value: false }],
       clientSubmittedAt: new Date().toISOString(),
     },
-    `revision-l-submit-${randomUUID()}`,
+    `${idempotencyPrefix}-submit-${randomUUID()}`,
   );
 }
 
 for (let index = 0; index < 60; index++) {
   mastery = await api("student", `/mastery/courses/${course.courseId}`);
+  quizMasteryObserved = mastery.some((item) => item.learningOutcomeId === `quiz:${quizId}`);
   try {
     plan = await api("student", `/study-plan/current?courseId=${course.courseId}`);
   } catch {
     plan = undefined;
   }
-  if (mastery.length && plan?.items?.length) break;
+  if (quizMasteryObserved && plan?.items?.length) break;
   await new Promise((resolve) => setTimeout(resolve, 500));
 }
-if (!mastery?.length || !plan?.items?.length) throw new Error("MASTERY_STUDY_PLAN_FEEDBACK_TIMEOUT");
+if (!quizMasteryObserved || !plan?.items?.length) throw new Error("MASTERY_STUDY_PLAN_FEEDBACK_TIMEOUT");
 plan = await api("student", "/study-plan/generate", "POST", {
   courseId: course.courseId,
   availableHoursPerWeek: 7,
@@ -171,12 +238,14 @@ const evidence = {
   assertions: {
     activeEntitlement: true,
     futurePublishedAssessment: true,
-    masteryEvidenceObserved: true,
+    masteryEvidenceObserved: quizMasteryObserved,
     durableStudyPlanObserved: true,
     courseRequirementObserved: true,
     assessmentScheduleObserved: true,
     materialToolInvoked: true,
     groundedCitationObserved: true,
+    studentTeacherAdminRoleBoundariesObserved: roleBoundaryFailures.slice(0, 4).every(Boolean),
+    missingMasteryRejected: roleBoundaryFailures[4] === true,
   },
   provenance: {
     requirement: {
@@ -229,4 +298,23 @@ async function api(role, path, method = "GET", body, key) {
   if (!response.ok)
     throw new Error(`${method} ${path}: ${response.status} ${value.error?.code ?? "UNKNOWN"}`);
   return value.data;
+}
+
+async function expectApiFailure(role, path, expectedStatus, expectedCode, body) {
+  const response = await fetch(new URL(`/api/v1${path}`, gateway), {
+    method: body ? "POST" : "GET",
+    headers: {
+      accept: "application/json",
+      authorization: `Bearer ${sessions[role].accessToken}`,
+      ...(body ? { "content-type": "application/json" } : {}),
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+    signal: AbortSignal.timeout(30_000),
+  });
+  const value = await response.json();
+  if (response.status !== expectedStatus || value.error?.code !== expectedCode)
+    throw new Error(
+      `${role} ${path}: expected ${expectedStatus} ${expectedCode}, got ${response.status} ${value.error?.code ?? "UNKNOWN"}`,
+    );
+  return true;
 }
