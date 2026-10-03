@@ -305,10 +305,16 @@ export const styles = StyleSheet.create({
   },
 });
 
-export function notifyNavScroll(_offsetY?: number, _deltaY?: number) {
-  // Navigation bar is fixed permanently; no scroll auto-hide/slide animation
-  void _offsetY;
-  void _deltaY;
+type NavScrollListener = (visible: boolean) => void;
+
+const navScrollListeners = new Set<NavScrollListener>();
+let navVisible = true;
+
+export function notifyNavScroll(offsetY = 0, deltaY = 0) {
+  const nextVisible = offsetY <= 24 || (deltaY < -2 && offsetY > 24);
+  if (nextVisible === navVisible) return;
+  navVisible = nextVisible;
+  navScrollListeners.forEach((listener) => listener(nextVisible));
 }
 
 export function Page({

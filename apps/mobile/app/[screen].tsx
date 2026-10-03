@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useSyncExternalStore } from "react";
-import { Text, TextInput, View, Image, Pressable, Platform, Alert } from "react-native";
+import { Text, TextInput, View, Image, Pressable } from "react-native";
 import { router, useLocalSearchParams, useGlobalSearchParams, usePathname, type Href } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { ApiError, record } from "../src/api";

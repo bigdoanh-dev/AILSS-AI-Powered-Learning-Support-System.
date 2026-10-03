@@ -6,7 +6,7 @@ import { lecturerError, lecturerRequest, useLecturer } from "./api";
 import { CourseArtwork } from "../components/CourseArtwork";
 import { CatalogCourseSelect, Field, State } from "./ui";
 import { Breadcrumbs, EmptyState, StateChip, stateLabel, useUnsavedChanges } from "../components/product";
-import { Icon, type IconName } from "../components/Icon";
+import { Icon } from "../components/Icon";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import { MediaUpload } from "./MediaUpload";
 import { RevenueQuote } from "./RevenueQuote";
