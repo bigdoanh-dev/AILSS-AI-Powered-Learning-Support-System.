@@ -4,7 +4,7 @@ on:
 
 concurrency:
   group: ailss-research-self-hosted
-  queue: max
+  cancel-in-progress: false
 
 permissions:
   contents: read
