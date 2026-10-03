@@ -11,7 +11,7 @@ const compose = (...args) =>
     { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
   );
 function succeeds(user, password, statement) {
-  compose("-u", user, "-p", password, "-e", statement);
+  compose("-u", user, `--password=${password}`, "-e", statement);
 }
 function denied(user, password, statement, label) {
   try {
