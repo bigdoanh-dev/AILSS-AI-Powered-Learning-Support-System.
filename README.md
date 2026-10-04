@@ -1,197 +1,223 @@
-# AILSS – AI-Powered Learning Support System
+# AILSS — AI-Powered Learning Support System
 
-[![Node.js](https://img.shields.io/badge/Node.js-v24.x-green.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![Cassandra](https://img.shields.io/badge/Cassandra-v5.x-106dae.svg)](https://cassandra.apache.org/)
-[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-AMQP-ff6600.svg)](https://www.rabbitmq.com/)
-[![MinIO](https://img.shields.io/badge/MinIO-S3_Compatible-c72c48.svg)](https://min.io/)
-[![License](https://img.shields.io/badge/License-All_Rights_Reserved-red.svg)](#quyền-sở-hữu-mã-nguồn)
+> **Nhánh mã nguồn:** [dev](https://github.com/bigdoanh-dev/AILSS-AI-Powered-Learning-Support-System./tree/dev). README trên `main` được đồng bộ từ `dev`; việc đồng bộ tài liệu không đưa mã nguồn ứng dụng sang `main`. Hãy dùng nhánh `dev` để cài đặt, chạy và kiểm thử dự án.
 
-**AILSS (AI-Powered Learning Support System)** là nền tảng hỗ trợ học tập trực tuyến được xây dựng theo kiến trúc **Microservices**, hướng đến việc quản lý khóa học, lớp học, tiến độ học tập, bài kiểm tra, tương tác người dùng và hỗ trợ giảng viên tạo nội dung bằng AI.
+Bộ dữ liệu học viên và hai giảng viên demo, liên kết lớp/lịch/bảng điểm: [Linked demo guide](LINKED_DEMO_GUIDE.md).
 
-Backend của hệ thống được phát triển bằng **TypeScript / Node.js**, sử dụng **Apache Cassandra** làm cơ sở dữ liệu phân tán, **RabbitMQ** cho xử lý bất đồng bộ và **MinIO** để lưu trữ tài liệu, tệp và dữ liệu AI ngoài Cassandra.
+[![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=111827)](https://react.dev/)
+[![Cassandra](https://img.shields.io/badge/Cassandra-5.0-1287b1?logo=apachecassandra&logoColor=white)](https://cassandra.apache.org/)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-4.1-ff6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![CI dev](https://github.com/bigdoanh-dev/AILSS-AI-Powered-Learning-Support-System./actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/bigdoanh-dev/AILSS-AI-Powered-Learning-Support-System./actions/workflows/ci.yml?query=branch%3Adev)
 
-> **Triết lý thiết kế:** AILSS được xây dựng theo hướng *Contract-First*, *Service Ownership*, *Query-Driven Cassandra* và *Event-Driven Processing*.
+AILSS là nền tảng học tập đa nền tảng theo kiến trúc microservices, contract-first và event-driven. Hệ thống quản lý danh tính, khóa học, lớp học, tiến độ, đánh giá, tương tác, thông báo, thương mại và các quy trình AI có con người kiểm soát.
+
+> Web responsive là bề mặt pilot chính. Repository có ứng dụng Expo/React Native cho Student, Lecturer và Admin; player media đã được kiểm chứng trên iOS Simulator và Android Emulator. Native production release và kiểm tra hỗ trợ tiếp cận trên thiết bị thật chưa được xác nhận.
+
+> **Triết lý thiết kế:** Contract-First, Service Ownership, Query-Driven Cassandra, Event-Driven Processing và Human-in-the-loop AI.
 
 ---
 
-## 📋 Mục Lục
+## 📋 Mục lục
 
-- [Mục tiêu dự án](#mục-tiêu-dự-án)
+- [Tổng quan và mục tiêu](#tổng-quan-và-mục-tiêu)
+- [Trạng thái hiện tại](#trạng-thái-hiện-tại)
 - [Tính năng chính](#tính-năng-chính)
-  - [1. Authentication & Account Management](#1-authentication--account-management)
-  - [2. Course Marketplace](#2-course-marketplace)
-  - [3. Course Offering](#3-course-offering)
-  - [4. Classroom Management](#4-classroom-management)
-  - [5. Enrollment & Entitlement](#5-enrollment--entitlement)
-  - [6. Learning Progress](#6-learning-progress)
-  - [7. Assessment & Quiz](#7-assessment--quiz)
-  - [8. Comments & Replies](#8-comments--replies)
-  - [9. Course Reviews & Rating](#9-course-reviews--rating)
-  - [10. Reporting & Moderation](#10-reporting--moderation)
-  - [11. Secure Document Upload](#11-secure-document-upload)
-  - [12. Document Extraction Worker](#12-document-extraction-worker)
-  - [13. AI Quiz Generation](#13-ai-quiz-generation)
+  - [1. Guest, Authentication và Account](#1-guest-authentication-và-account)
+  - [2. Student Learning](#2-student-learning)
+  - [3. Lecturer Teaching](#3-lecturer-teaching)
+  - [4. Admin Governance](#4-admin-governance)
+    - [Admin Control Center](#admin-control-center)
+  - [5. Course và Offering](#5-course-và-offering)
+  - [6. Classroom và Attendance](#6-classroom-và-attendance)
+  - [7. Assessment và Quiz](#7-assessment-và-quiz)
+  - [8. Interaction và Notification](#8-interaction-và-notification)
+  - [9. Document và AI Quiz Generation](#9-document-và-ai-quiz-generation)
+  - [10. Media và phát video](#10-media-và-phát-video)
 - [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
   - [Sơ đồ tổng quan](#sơ-đồ-tổng-quan)
-  - [Nguyên tắc Service Ownership](#nguyên-tắc-service-ownership)
+  - [Service Ownership](#service-ownership)
 - [Công nghệ sử dụng](#công-nghệ-sử-dụng)
-- [Thiết kế & Nguyên tắc vận hành](#thiết-kế--nguyên-tắc-vận-hành)
+- [Thiết kế và nguyên tắc vận hành](#thiết-kế-và-nguyên-tắc-vận-hành)
   - [Cassandra Design](#cassandra-design)
-  - [Event-Driven Architecture](#event-driven-architecture)
-  - [Idempotency & Recovery](#idempotency--recovery)
-  - [Security & Authorization](#security--authorization)
-- [Hướng dẫn cài đặt & Chạy dự án](#hướng-dẫn-cài-đặt--chạy-dự-án)
+  - [Event-Driven và Recovery](#event-driven-và-recovery)
+  - [Security và Privacy](#security-và-privacy)
+  - [Web UX, Accessibility và Motion](#web-ux-accessibility-và-motion)
+- [Cài đặt và chạy dự án](#cài-đặt-và-chạy-dự-án)
   - [Yêu cầu môi trường](#yêu-cầu-môi-trường)
-  - [Khởi tạo dự án](#khởi-tạo-dự-án)
-  - [Các môi trường chạy (Development Profiles)](#các-môi-trường-chạy-development-profiles)
-  - [Kiểm thử & Verification](#kiểm-thử--verification)
-- [Cấu trúc Repository](#cấu-trúc-repository)
-- [Quy tắc phát triển (Development Rules)](#quy-tắc-phát-triển-development-rules)
-- [Trạng thái phát triển & Roadmap](#trạng-thái-phát-triển--roadmap)
-- [Phạm vi & Giới hạn của AI](#phạm-vi--giới-hạn-của-ai)
-- [Quyền sở hữu & Tác giả](#quyền-sở-hữu--tác-giả)
+  - [Chạy nhanh](#chạy-nhanh)
+  - [Cấu hình tích hợp local](#cấu-hình-tích-hợp-local)
+  - [Chạy mobile và điện thoại thật](#chạy-mobile-và-điện-thoại-thật)
+  - [Development profiles](#development-profiles)
+  - [Kiểm tra chất lượng](#kiểm-tra-chất-lượng)
+- [Cấu trúc repository](#cấu-trúc-repository)
+- [Quy tắc phát triển](#quy-tắc-phát-triển)
+- [Trạng thái phát triển](#trạng-thái-phát-triển)
+- [Phạm vi và giới hạn của AI](#phạm-vi-và-giới-hạn-của-ai)
+- [Giới hạn hiện tại](#giới-hạn-hiện-tại)
+- [Tác giả, bản quyền và giấy phép](#tác-giả-bản-quyền-và-giấy-phép)
 
 ---
 
-## Mục tiêu dự án
+## Tổng quan và mục tiêu
 
-AILSS được xây dựng nhằm nghiên cứu và triển khai một hệ thống học tập hiện đại có khả năng:
+AILSS được xây dựng để nghiên cứu và triển khai một hệ thống học tập phân tán có thể:
 
-- Quản lý tài khoản Student, Lecturer và Admin.
-- Xây dựng và phân phối khóa học trực tuyến.
-- Quản lý lớp học riêng và lớp học theo lịch.
-- Theo dõi tiến độ học tập của sinh viên.
-- Tổ chức Quiz, Attempt và chấm điểm tự động.
-- Hỗ trợ bình luận, đánh giá và kiểm duyệt nội dung.
-- Xử lý tài liệu phục vụ AI.
-- Sinh bản nháp câu hỏi Quiz bằng AI để giảng viên kiểm duyệt.
-- Xử lý các tác vụ bất đồng bộ thông qua RabbitMQ.
-- Hỗ trợ Web và Mobile trong các giai đoạn tiếp theo.
-- Nghiên cứu khả năng vận hành Cassandra trong kiến trúc Microservices.
+- quản lý vòng đời tài khoản Student, Lecturer và Admin;
+- hỗ trợ tenant/institution, external authentication và identity federation;
+- xây dựng, duyệt và phân phối Course qua Offering;
+- quản lý Class, lịch học, session và attendance;
+- theo dõi Lesson completion và Learning progress;
+- tổ chức Quiz, Attempt, chấm điểm objective và trả kết quả an toàn;
+- hỗ trợ Comment, Review, Report, Moderation và Notification;
+- xử lý tài liệu riêng tư và sinh AI draft có Lecturer review;
+- cung cấp Study Plan, Mastery V2 và AI Tutor theo feature flag của tenant;
+- theo dõi doanh thu, payment projection, refund bền vững và product analytics;
+- vận hành nhất quán trên Cassandra, RabbitMQ và MinIO;
+- cung cấp trải nghiệm Web responsive và mobile, có accessibility/reduced-motion controls.
 
----
+## Trạng thái hiện tại
+
+- 4 actor: `GUEST`, `STUDENT`, `LECTURER`, `ADMIN`.
+- Phiên bản trong `package.json`: `6.1.4`; baseline release candidate hiện có là `v6.2.0-rc.7`, chưa phải bản phát hành 6.2 ổn định.
+- 6 business services: Identity, Learning, Classroom, Assessment, Interaction và AI; API Gateway là public entry point. Media Delivery và Media Worker là hai runtime riêng cho luồng video.
+- API, Query ID và Event Type được quản lý trong các registry tại `contracts/`.
+- Cassandra 5 lưu dữ liệu theo domain, RabbitMQ xử lý sự kiện bất đồng bộ và MinIO lưu tài liệu cùng media ở chế độ private.
+- Redis không được sử dụng.
+- Web có workspace theo vai trò; mobile dùng Expo Router và SecureStore cho dữ liệu phiên nhạy cảm, kèm player HLS native đã kiểm chứng trên simulator/emulator.
+- Phase 42 Revision B đạt `OPEN_REVISION_B_LOCAL_PLATFORM_COMPLETE`; Revision C đang mở để chuẩn bị cấu hình và hạ tầng staging/production. Template, policy và validator hiện có chưa phải bằng chứng đã triển khai môi trường thật.
+- Các acceptance gate còn thiếu của Phase 40 Revision H vẫn mở; controlled product pilot đang `REVOKED` cho đến khi được nghiệm thu lại.
 
 ## Tính năng chính
 
-### 1. Authentication & Account Management
-- Đăng ký, đăng nhập tài khoản.
-- Quản lý JWT Access Token & Refresh Token, Logout.
-- Xem thông tin cá nhân, cập nhật hồ sơ, đổi mật khẩu.
-- Phân quyền người dùng (`STUDENT`, `LECTURER`, `ADMIN`).
-- Quy trình xác minh tài khoản Lecturer.
-- Admin quản lý trạng thái tài khoản.
-- **Current-password reauthentication** cho các thao tác quản trị nhạy cảm.
-- Identity của người dùng được xử lý ở tầng ứng dụng và hoàn toàn tách biệt với Cassandra authentication.
+### 1. Guest, Authentication và Account
 
-### 2. Course Marketplace
-- **Student:** Xem danh sách, tìm kiếm, xem chi tiết và tham gia khóa học phù hợp.
-- **Lecturer:** Tạo, chỉnh sửa Course, quản lý Lesson, Publish Course và quản lý phiên bản nội dung.
-- **Content Versioning:** Mô hình nội dung có version đảm bảo dữ liệu học tập đã phát hành không bị thay đổi ngoài ý muốn.
+- Trang giới thiệu, khám phá khóa học, AI learning, trợ giúp, liên hệ và pháp lý.
+- Đăng ký tạo tài khoản `STUDENT / ACTIVE`; không có role picker để tự tạo Lecturer.
+- Đăng nhập, refresh, logout, hồ sơ và đổi mật khẩu; Web dùng cookie phiên HttpOnly cùng origin, mobile dùng bearer token và SecureStore.
+- Google login trên Web/mobile dùng cấu hình Gateway và Identity; native cần client theo nền tảng và bản build có Google Sign-In.
+- Quên mật khẩu qua email SMTP: nhập email, xác nhận OTP, đặt mật khẩu mới; OTP dùng một lần và hết hạn sau 15 phút.
+- Dữ liệu cá nhân lấy từ backend theo tài khoản hiện tại. Tài khoản mới hiển thị trạng thái trống khi chưa có dữ liệu; không tự gán điểm, chuỗi học, khóa học hay doanh thu mẫu.
+- External authentication/federation có runtime repository, tenant policy và các migration riêng; rollout vẫn phụ thuộc cấu hình và acceptance theo môi trường.
+- Student muốn trở thành Lecturer phải nộp đơn, được Admin phê duyệt, đăng nhập lại, rồi được Admin xác minh riêng.
 
-### 3. Course Offering
-Course và việc cung cấp khóa học được tách thành hai khái niệm độc lập.
-- Hỗ trợ mô hình: `SELF_PACED` và `LIVE_COHORT`.
-- Course có thể được tái sử dụng cho nhiều Offering khác nhau.
-- **Lifecycle cơ bản:**
-  ```text
-  DRAFT ──► PUBLISHED ──► CLOSED
-  ```
+### 2. Student Learning
 
-### 4. Classroom Management
-Hỗ trợ lớp học riêng với các loại: `LIVE_COHORT`, `PRIVATE`, `INSTITUTIONAL`.
-- Tạo Class, tham gia Class bằng mã (Code).
-- Quản lý thành viên, liên kết Class với Course.
-- Quản lý lịch học và Class Session (kiểm tra xung đột lịch).
-- Attendance (Presence online & Attendance offline/manual).
-- *Classroom Service là domain owner duy nhất của dữ liệu lớp học.*
+- Khám phá khóa học, đăng ký miễn phí hoặc tạo Order cho Offering trả phí bằng VietQR/SePay và chuyển khoản ngân hàng theo cấu hình backend.
+- Entitlement bất đồng bộ, bài học, hoàn thành bài và tiến độ.
+- Tham gia Class, xem lịch, session, announcement và attendance của chính mình.
+- Quiz/Attempt có thao tác bắt đầu và nộp bài rõ ràng; đáp án đúng không lộ trước policy.
+- Danh sách bài kiểm tra trên mobile chỉ lấy Quiz đã publish của khóa học/lớp mà học viên có quyền truy cập.
+- Comment, reply một cấp, review, report và notification với cursor opaque.
+- Study Plan, mastery projection và AI Tutor đã có đường runtime từ assessment evidence; các nguồn evidence khác và full-stack acceptance chưa hoàn tất.
+- Biểu đồ radar năng lực theo từng bài học/bài kiểm tra: Web tại Tiến độ, mobile tại Năng lực học tập. Điểm lấy từ mastery đã ghi nhận; chưa có bằng chứng hiển thị “Chưa đánh giá”, không gán điểm 0. Có chọn khóa học, nhóm nội dung và xem số bằng chứng/độ tin cậy.
 
-### 5. Enrollment & Entitlement
-Quyền truy cập Course được quản lý bằng mô hình Enrollment / Entitlement.
-- Đăng ký khóa học & Purchase simulation.
-- Kiểm tra quyền học Course & quyền truy cập nội dung.
-- Đồng bộ projection khi trạng thái thay đổi.
-- *Lưu ý:* Payment hiện tại chỉ được mô phỏng phục vụ mục đích nghiên cứu và phát triển.
+### 3. Lecturer Teaching
 
-### 6. Learning Progress
-AILSS theo dõi tiến độ học tập dựa trên Lesson đã hoàn thành.
-- Đánh dấu Lesson hoàn thành (hoặc hủy hoàn thành nếu contract cho phép).
-- Tính số Lesson đã hoàn thành / Tổng số Lesson hiện hành ──► Tính % tiến độ.
-- Tiến độ được tính dựa trên phiên bản nội dung Course hiện hành.
-- **Công thức tính:**
-  ```text
-  Progress (%) = (Completed Lessons / Published Lessons) * 100
-  ```
-- *Hệ thống sử dụng số lượng hoàn thành và tổng số Lesson làm dữ liệu canonical thay vì phụ thuộc vào phép so sánh floating-point.*
+- Soạn Course/Lesson và gửi Course cho Admin duyệt; Lecturer không tự publish Course.
+- Tự nhập danh mục đào tạo, mô tả khóa học và tải ảnh bìa; dữ liệu được lưu phía backend và dùng chung cho Web/mobile.
+- Tạo và publish Offering cho Course phù hợp.
+- Quản lý Class thuộc sở hữu, roster, lịch, session, announcement và attendance thủ công.
+- Tạo lớp trường học/tổ chức, chia sẻ mã tham gia, tải ảnh/ảnh bìa, xem hồ sơ học viên, cảnh báo và xóa thành viên theo điều kiện backend; xuất roster khóa học ra CSV.
+- Tạo Quiz với bốn loại câu hỏi và xem kết quả theo contract.
+- Radar giảng viên mặc định hiển thị tổng quan năng lực khóa học (Web/mobile), hoặc khóa học đã chọn tại Bảng điểm trên Web; không cần chọn học viên. Mỗi trục là điểm trung bình của những học viên đã có bằng chứng ở bài học/bài kiểm tra đó, kèm số người được đánh giá. Chưa có bằng chứng không gán điểm 0. Xem riêng từng học viên là tùy chọn chi tiết. API chỉ cho chủ khóa học xem, chỉ tổng hợp học viên có entitlement đang ACTIVE và không trả danh tính trong dữ liệu tổng hợp.
+- Upload tài liệu, chạy extraction/generation, review AI draft và import thành Assessment Quiz `DRAFT`. AI không tự approve hoặc publish.
 
-### 7. Assessment & Quiz
-- **Quản lý Quiz:** Tạo, chỉnh sửa, versioning, publish Quiz theo Course/Class.
-- **Thực hiện Quiz:** Bắt đầu Attempt, Resume Attempt, Submit Attempt. Chấm điểm objective server-side.
-- **Loại câu hỏi:** `SINGLE_CHOICE`, `MULTIPLE_CHOICE`, `TRUE_FALSE`, `SHORT_ANSWER`.
-- **Attempt Lifecycle:**
-  ```text
-  CREATED ──► IN_PROGRESS ──► SUBMITTED
-                   │
-                   └──► EXPIRED
-  ```
-- Correct answer không được gửi cho Student trước khi policy cho phép.
+### 4. Admin Governance
 
-### 8. Comments & Replies
-Interaction Service hỗ trợ:
-- Bình luận Course, Class, Reply Comment, Chỉnh sửa, Soft delete Comment.
-- Comment pagination & Private target authorization.
-- **Cấu trúc 1 cấp:**
-  ```text
-  Comment
-     └── Reply (Không hỗ trợ recursive tree không giới hạn)
-  ```
-- Comment bị xóa vẫn giữ canonical identity để không làm hỏng các Reply đã tồn tại.
+- Tra cứu user, xem chi tiết, đổi trạng thái tài khoản với current-password reauthentication.
+- Xử lý đơn và xác minh Lecturer.
+- Publish/archive Course bằng UUID trực tiếp.
+- Xử lý report và moderation theo version/idempotency.
+- Dashboard thống kê, doanh thu, audit log và export; observability stack có Prometheus, Alertmanager và Grafana.
+- Hướng dẫn quản trị local hoạt động với `AI_ADMIN_SUPPORT_MODE=local-guide`, không cần API key AI. Chế độ này hướng dẫn thao tác và không tự thực hiện hành động quản trị.
+- Không có vai trò `MODERATOR` riêng và chưa có Admin Course review queue.
 
-### 9. Course Reviews & Rating
-- Student đủ điều kiện (có entitlement hợp lệ, Course đang publish, đạt progress tối thiểu) có thể đánh giá.
-- Rating từ 1 đến 5 sao, hỗ trợ Create, Update, Delete.
-- Rating summary được duy trì qua `reviewCount` và `ratingSum` (Average = `ratingSum / reviewCount`).
-- *Hệ thống không sử dụng Cassandra Counter cho aggregate này.*
+#### Admin Control Center
 
-### 10. Reporting & Moderation
-- Người dùng có thể Report Comment/Review.
-- Admin xử lý Report queue (HIDE, RESTORE, DISMISS, WARN) với yêu cầu password reauthentication.
-- **Report Lifecycle:** `OPEN ──► RESOLVED`
-- **Moderation Status Flow:**
-  ```text
-  ACTIVE ──► HIDDEN_BY_MODERATOR ──► ACTIVE
-  ```
-- Nội dung đã bị tác giả xóa không được Moderator restore.
+Trang Tổng quan tại `/app/admin` tập hợp các khối quản trị và liên kết tới các trang chuyên biệt:
 
----
+| Khối                                  | Nội dung                                                                                                                                                                                               |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| KPI tổng quan                         | 8 thẻ: tổng người dùng, Student/Lecturer ACTIVE, tổng khóa học, tỷ lệ hoàn thành, phiên học hôm nay, doanh thu tháng và cảnh báo                                                                       |
+| Tăng trưởng nền tảng                  | Area chart, chọn chỉ số và bộ lọc `7 ngày / 30 ngày / 90 ngày / 1 năm`; đăng ký mới và lượt gọi API AI từ Prometheus                                                                                   |
+| System Health / Operations            | API Gateway, Identity, Learning, AI, Media, Database và Queue; trạng thái `Healthy / Warning / Critical / Unknown`, uptime, p95, lỗi 5xx, request volume, AI jobs lỗi, media queue và dung lượng media |
+| Prometheus & Grafana                  | Giữ khối giám sát riêng với trạng thái kết nối, số target hoạt động, yêu cầu/giây, lỗi 5xx, p95, biểu đồ lưu lượng giờ gần nhất và nút mở trang giám sát                                               |
+| AI Operations                         | Lượt gọi API AI trong ngày/kỳ, độ trễ trung bình, lỗi 5xx và biểu đồ API hội thoại/tạo quiz; ghi rõ các chỉ số chưa được tổng hợp                                                                      |
+| User & Academic Risk                  | Các thẻ sinh viên có nguy cơ, không hoạt động hơn 7 ngày, khóa học hoàn thành thấp và giảng viên cần rà soát; hiển thị chưa có dữ liệu khi chưa có nguồn tổng hợp                                      |
+| Tài chính / Marketplace               | Doanh số, phí nền tảng, phiếu chi trả đang chờ chuyển, biểu đồ doanh thu và khóa học bán chạy; yêu cầu hoàn tiền/thanh toán lỗi chưa được tổng hợp                                                     |
+| Cảnh báo, hoạt động và thao tác nhanh | Cảnh báo Prometheus cùng nhóm dịch vụ Warning/Critical, audit log và liên kết tới Users, Lecturer, Reports, Courses, Settings, AI và đối soát tài chính                                                |
 
-### AI Features
+Các nguồn dữ liệu được tải độc lập và tự làm mới; một nguồn lỗi không làm mất dữ liệu của các khối khác. Chỉ tài khoản `ADMIN` được truy cập API vận hành; backend chỉ nhận các khoảng thời gian định sẵn, không nhận URL hoặc PromQL tùy ý.
 
-### 11. Secure Document Upload
-- Lecturer tải tài liệu phục vụ AI (`.pdf`, `.docx`, `.txt`), giới hạn 25 MiB.
-- *Binary file KHÔNG lưu trong Cassandra.*
-- **Luồng Upload:**
-  ```text
-  Lecturer ──► AI Service ──► Upload Intent ──► Presigned URL ──► Private MinIO
-  ```
-- AI Service chỉ lưu metadata: Document ID, Checksum, File size, Content type, Object reference, Extraction state.
+**Phân biệt số liệu đã có và chưa có:**
 
-### 12. Document Extraction Worker
-Xử lý tài liệu bất đồng bộ qua RabbitMQ:
+- Student/Lecturer ACTIVE là trạng thái tài khoản, không phải số người học đăng nhập thường xuyên. Lượt gọi API AI là ước tính từ counter, không phải số người dùng duy nhất; lịch sử phụ thuộc thời gian lưu trữ của Prometheus.
+- Doanh thu lấy từ projection thanh toán/hoàn tiền có thẩm quyền, hiện tối đa 30 ngày. Doanh thu tháng chỉ hiển thị khi dữ liệu phủ từ ngày đầu tháng, theo kỳ UTC; khoản chi trả pending chỉ cộng phiếu `PENDING_TRANSFER`.
+- Tổng khóa học, completion, phiên học, active users theo ngày, ghi danh và rủi ro học tập chưa có nguồn tổng hợp toàn nền tảng. Token usage, AI cost, safety, RAG và phân tách AI theo tính năng/role cũng chưa có nguồn tổng hợp. Các chỉ số này hiển thị `—` hoặc trạng thái trống, không tự gán số 0 hay số mẫu.
+- Donut trạng thái dịch vụ không phải biểu đồ rủi ro sinh viên. `Create Admin` đang vô hiệu hóa vì backend chưa có quy trình tạo Admin từ dashboard; `AI Configuration` mở trang Settings hiện có.
+
+### 5. Course và Offering
+
+- Course và Offering là hai aggregate riêng; một Course có thể có nhiều Offering.
+- Offering hỗ trợ `SELF_PACED` và `LIVE_COHORT` với lifecycle `DRAFT → PUBLISHED → CLOSED`.
+- Course publication thuộc quyền Admin; Offering authoring/publishing tuân theo owner và trạng thái Course.
+- Free enrollment giữ legacy default-Offering behavior; paid access dùng giá và Order do backend trả về.
+- Checkout Web/mobile chỉ mô phỏng khi backend trả `paymentMode=simulation`. Luồng SePay kiểm tra trạng thái Order và cấp quyền theo giao dịch được backend xác minh qua webhook; nút kiểm tra thanh toán không tự đánh dấu đã trả tiền.
+- MoMo, thẻ quốc tế và VNPAY chưa có tích hợp thanh toán thực tế trong checkout hiện tại.
+- Entitlement hội tụ qua at-least-once event delivery, idempotency và reconciliation.
+- Finance runtime có projection/backfill, durable refund và recovery cho SePay; thanh toán thương mại production vẫn fail-closed.
+
+### 6. Classroom và Attendance
+
+- Class hỗ trợ `LIVE_COHORT`, `PRIVATE` và `INSTITUTIONAL`.
+- Student tham gia bằng canonical join code và chỉ xem tài nguyên được phép.
+- Lecturer quản lý roster, schedule, session, meeting rule và announcement của Class thuộc sở hữu.
+- Roster có tên, email che bớt và ngày đăng ký tài khoản. Nhãn/màu học viên mới áp dụng trong 21 ngày từ ngày đăng ký tài khoản, không tính từ ngày vào lớp.
+- Cảnh báo và xóa thành viên tuân theo quyền sở hữu cùng ràng buộc lịch/quyền học. Chỉ xóa lớp có lịch còn `DRAFT`, không liên kết khóa học, không có thành viên đang hoạt động và không có session.
+- Ảnh lớp và ảnh bìa được lưu để hiển thị trên cả Web và mobile.
+- Attendance online được bảo vệ bởi presence rule; attendance offline/manual dùng version và idempotency.
+
+### 7. Assessment và Quiz
+
+- Quiz có `DRAFT`, version, bốn loại câu hỏi và thao tác publish riêng.
+- Hạn đóng bài (`closesAt`) được lưu tại backend; không có luồng bài luận/dự án độc lập ngoài contract Quiz hiện tại.
+- Xem Quiz detail không tự tạo Attempt; Student phải gọi start/resume rõ ràng.
+- Attempt submit idempotent và chấm điểm phía server.
+- Correct answer không xuất hiện trong Student projection trước policy cho phép.
+
+### 8. Interaction và Notification
+
+- Comment Course/Class, reply một cấp, edit theo version và soft delete.
+- Review yêu cầu eligibility và hỗ trợ create/update/delete.
+- Report queue và moderation dùng current-password reauthentication, `If-Match` và `Idempotency-Key`.
+- Notification phân trang theo tháng, cursor và locator opaque; không có fake global unread total.
+- Web/mobile giữ metadata và cursor phân trang của backend cho review, comment, hàng đợi quản trị và AI job.
+
+### 9. Document và AI Quiz Generation
+
 ```text
-Upload Complete ──► RabbitMQ ──► Document Worker ──► Validate File ──► Extract Text ──► Private MinIO
+Upload intent → Direct private upload → Confirm → Extraction
+→ AI generation → AI_DRAFT → Lecturer review
+→ Human approval → Assessment Quiz DRAFT → Optional publish
 ```
-- **Security Check:** SHA-256, File size, MIME/magic bytes, PDF parsing limits, DOCX ZIP traversal, Decompression limits, Malformed docs, Unsafe active content.
-- Extracted text được lưu ở private object storage (MinIO) thay vì Cassandra.
 
-### 13. AI Quiz Generation
-Workflow tạo bản nháp Quiz bằng AI:
-```text
-Lecturer ──► Uploaded Doc ──► Document Extraction ──► AI Quiz Generation Job
-  ──► AI Worker ──► Provider ──► Output Validation ──► AI Draft
-  ──► Lecturer Review ──► Approval ──► Assessment Draft Import
-```
-- **Quy tắc cứng:** AI chỉ được phép tạo *Draft*. AI không được tự động publish Quiz, thay đổi Course/Assessment hoặc bỏ qua duyệt của Lecturer.
+- Binary tài liệu không lưu trong Cassandra.
+- Mobile chọn PDF, DOCX hoặc TXT tối đa 25 MiB, tính SHA-256, tải lên bằng private upload intent và theo dõi extraction/generation trước khi review draft.
+- Document Worker kiểm tra checksum, kích thước, MIME/magic bytes và giới hạn giải nén/parser.
+- AI output được validate theo schema trước khi tạo draft.
+- `QUIZ_GENERATION` không dùng trạng thái `COMPLETED`; AI không tự approve hoặc publish.
+
+### 10. Media và phát video
+
+- Lecturer tải media lên private object storage; hệ thống áp dụng quota, xác thực nguồn và tách quyền cho API, worker và delivery.
+- Web hỗ trợ multipart upload và thử lại phần còn thiếu. Sau khi mở lại trình duyệt, Lecturer chọn lại đúng tệp để tiếp tục phiên còn hiệu lực; các phần đã được storage xác nhận không phải tải lại.
+- Media Worker kiểm tra đầu vào và tạo HLS ở các mức 360p, 480p và 720p; job, output journal và phục hồi được theo dõi bền vững.
+- Student phát nội dung theo quyền ghi danh qua playback token giới hạn theo asset; video trailer được mở công khai theo policy của Course.
+- Phụ đề WebVTT, poster và các segment HLS được phân phối qua Media Delivery từ MinIO private; thay video đã xuất bản dùng chuyển đổi nguyên tử.
+- Revision B có acceptance cục bộ cho upload, quota, transcode, playback, phụ đề, cô lập tenant và tải giới hạn. Kết quả cục bộ không xác nhận cloud staging hay production.
 
 ---
 
@@ -200,297 +226,395 @@ Lecturer ──► Uploaded Doc ──► Document Extraction ──► AI Quiz 
 ### Sơ đồ tổng quan
 
 ```text
-                         ┌──────────────────┐
-                         │      Client      │
-                         │   Web / Mobile   │
-                         └────────┬─────────┘
-                                  │
-                                  ▼
-                         ┌──────────────────┐
-                         │     Gateway      │
-                         └────────┬─────────┘
-                                  │
-          ┌───────────────────────┼────────────────────────┐
-          │                       │                        │
-          ▼                       ▼                        ▼
- ┌────────────────┐      ┌────────────────┐      ┌────────────────┐
- │    Identity    │      │    Learning    │      │   Classroom    │
- │    Service     │      │    Service     │      │    Service     │
- └────────────────┘      └────────────────┘      └────────────────┘
-          │                       │                        │
-          ├───────────────────────┼────────────────────────┤
-          ▼                       ▼                        ▼
- ┌────────────────┐      ┌────────────────┐      ┌────────────────┐
- │   Assessment   │      │  Interaction   │      │       AI       │
- │    Service     │      │    Service     │      │    Service     │
- └────────────────┘      └────────────────┘      └────────────────┘
-                                  │
-                                  ▼
-                         ┌──────────────────┐
-                         │    RabbitMQ      │
-                         └────────┬─────────┘
-                                  │
-                 ┌────────────────┼─────────────────┐
-                 ▼                ▼                 ▼
-          Background Worker   AI Worker      Document Worker
+Browser → React Web → same-origin adapter ─┐  cookie HttpOnly
+                                             ├→ API Gateway :8080
+Expo app → API client + SecureStore ──────┘  bearer/refresh
+                                                │
+                         auth • rate limit • security headers
+                         Actor Context • routing • metrics
+                                                │
+       ┌───────────────────────┼───────────────────────┐
+       ▼                       ▼                       ▼
+Identity :8101            Learning :8102            Classroom :8103
+users/session/tenant      course/commerce/mastery   class/schedule/presence
+       ▼                       ▼                       ▼
+Assessment :8104          Interaction :8105         AI :8106
+quiz/attempt/grading      comment/review/moderation document/quiz/assistant
+                         Media Delivery :8211
+                         private HLS/poster/captions
+       └───────────────────────┴───────────────────────┘
+              Internal HTTP • Service JWS • signed Actor Context
+                                                │
+       ┌───────────────────────┼───────────────────────┐
+       ▼                       ▼                       ▼
+Cassandra 5              RabbitMQ 4.1              Private MinIO
+keyspace per service     exchange/retry/DLQ        document/media objects
+                               │
+          ┌───────────────┼───────────────┐
+          ▼               ▼               ▼
+    Domain relays    Async workers    Reconciliation worker
+    outbox+confirm   AI/Document/     repair interrupted work
+                     Notification/Audit/Media
+
+All runtimes → structured logs + Prometheus metrics → Alertmanager / Grafana
 ```
 
-### Nguyên tắc Service Ownership
+Kiến trúc có ba đường giao tiếp chính:
 
-Mỗi service sở hữu độc quyền dữ liệu Cassandra của chính nó:
+| Đường giao tiếp           | Cơ chế                                                                                | Bảo đảm                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Client → Gateway          | HTTPS/JSON; Web dùng cookie HttpOnly cùng origin, mobile dùng token trong SecureStore | Rate limit theo nhóm route, security headers, request context và public contract |
+| Gateway/service → service | Internal HTTP, Ed25519 Service JWS và signed Actor Context                            | Xác thực service, truyền actor/tenant/purpose; không đọc chéo keyspace           |
+| Service → worker/service  | RabbitMQ event envelope qua transactional outbox                                      | Publisher confirm, manual ACK, bounded retry, DLQ, idempotency và reconciliation |
 
-| Service | Keyspace Sở Hữu |
-|---|---|
-| Identity Service | `identity_keyspace` |
-| Learning Service | `learning_keyspace` |
-| Classroom Service | `classroom_keyspace` |
-| Assessment Service | `assessment_keyspace` |
-| Interaction Service | `interaction_keyspace` |
-| AI Service | `ai_keyspace` |
+Luồng ghi quan trọng không dựa vào distributed transaction. Service ghi canonical state và outbox trong domain của mình; relay claim event bằng lease/fence, publish có confirm, sau đó consumer hội tụ projection bằng operation/event ID ổn định. Mastery consumer là một ví dụ: nhận assessment event, lưu evidence bền vững, tính lại Mastery V2 và sinh Study Plan retry-safe. Delivery là at-least-once, không tuyên bố distributed exactly-once.
 
-⛔ **Cấm:** Một service không được phép trực tiếp `SELECT` vào keyspace của service khác.  
-✅ **Đúng:** Truy vấn thông qua Registered Internal API bảo vệ bằng Service JWS (Ed25519).
+Media jobs được lưu và quét từ Cassandra; worker xử lý file rồi ghi rendition vào MinIO private. Gateway proxy playback tới Media Delivery, nơi xác thực token trước khi trả HLS, poster hoặc phụ đề.
 
----
+### Service Ownership
+
+Repository có **16 application package**: 2 client, 1 gateway, 6 business service, 6 worker và 1 Media Delivery runtime. Cassandra, RabbitMQ, MinIO, Prometheus, Alertmanager và Grafana là dependency hạ tầng, không được tính là business service.
+
+| Nhóm             | Package/runtime                |      Cổng local | Trách nhiệm chính                                                                                                                | Dữ liệu sở hữu/phụ thuộc                                |
+| ---------------- | ------------------------------ | --------------: | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Client           | `@ailss/web`                   |   `5173`/`5177` | React Web cho Guest, Student, Lecturer, Admin; same-origin server adapter chuyển cookie session sang public API                  | Không sở hữu business data; browser không persist token |
+| Client           | `@ailss/mobile`                | Expo dev server | Expo/React Native cho Student, Lecturer, Admin; public API client, SecureStore và offline progress sync                          | SecureStore trên thiết bị; canonical data vẫn ở backend |
+| Edge             | `@ailss/api-gateway`           |          `8080` | Public entry point, auth boundary, rate limit, security headers, route proxy, Actor Context và metrics                           | Không sở hữu business data                              |
+| Business service | `@ailss/identity-service`      |          `8101` | Account, credential, session, profile/avatar, tenant, lecturer onboarding, social login, SAML/LTI federation và admin identity   | `identity_keyspace`, private avatar objects             |
+| Business service | `@ailss/learning-service`      |          `8102` | Course, Lesson, Offering, enrollment/entitlement, progress, commerce/SePay, finance, Mastery V2, Study Plan và product analytics | `learning_keyspace`                                     |
+| Business service | `@ailss/classroom-service`     |          `8103` | Class, roster, join code, schedule, session, announcement, WebSocket presence và attendance                                      | `classroom_keyspace`                                    |
+| Business service | `@ailss/assessment-service`    |          `8104` | Quiz/question authoring, publish, attempt, submission, objective/manual grading và result projection                             | `assessment_keyspace`                                   |
+| Business service | `@ailss/interaction-service`   |          `8105` | Comment/reply, review/rating, report và moderation queue                                                                         | `interaction_keyspace`                                  |
+| Business service | `@ailss/ai-service`            |          `8106` | Upload intent, document/extraction state, AI quiz job/draft/approval và AI Assistant conversation/tool orchestration             | `ai_keyspace`, private MinIO objects                    |
+| Media delivery   | `@ailss/media-delivery`        |          `8211` | Xác thực playback token và phân phối HLS, poster, WebVTT từ storage private                                                      | MinIO với quyền đọc riêng; không sở hữu business data   |
+| Worker           | `@ailss/ai-worker`             |          `8201` | Nhận quiz-generation event, gọi AI provider, validate `objective-v1`, ghi kết quả/draft xác định                                 | AI-owned repository, private MinIO, RabbitMQ            |
+| Worker           | `@ailss/document-worker`       |          `8202` | Tải object riêng tư, kiểm tra checksum/MIME/magic bytes, trích xuất nội dung có giới hạn                                         | AI-owned repository, private MinIO, RabbitMQ            |
+| Worker           | `@ailss/media-worker`          |          `8210` | Poll media jobs, kiểm tra nguồn, tạo HLS bằng FFmpeg và phục hồi/dọn output gián đoạn                                            | `learning_keyspace`, quota ledger, private MinIO        |
+| Worker           | `@ailss/notification-worker`   |          `8203` | Chuyển domain event thành notification projection theo user/tháng                                                                | `notification_keyspace`, RabbitMQ                       |
+| Worker           | `@ailss/audit-worker`          |          `8204` | Ghi audit event tách khỏi synchronous request path                                                                               | `audit_support_keyspace`, RabbitMQ                      |
+| Worker           | `@ailss/reconciliation-worker` |          `8205` | Quét và repair operation/projection bị gián đoạn; hội tụ entitlement và các eventual workflow                                    | Không tạo business authority mới                        |
+
+Runtime role không được tạo/sửa schema và không được đọc trực tiếp keyspace của service khác. Cross-domain read phải đi qua registered internal API hoặc projection có authority rõ ràng. Binary tài liệu và provider artifact nằm trong private MinIO thay vì Cassandra; Redis không thuộc kiến trúc.
+
+Các luồng tham chiếu chi tiết cho registration/outbox, SePay/entitlement, AI quiz generation và failure recovery nằm trong [architecture-sequences.md](./docs/architecture/architecture-sequences.md); bản đồ workflow thực tế nằm trong [SYSTEM_WORKFLOWS.md](./docs/architecture/SYSTEM_WORKFLOWS.md).
 
 ## Công nghệ sử dụng
 
-- **Backend:** Node.js 24, TypeScript, Express 5, pnpm
-- **Database:** Apache Cassandra 5.x (DataStax Node.js Cassandra Driver)
-- **Message Broker:** RabbitMQ (AMQP 0-9-1, Retry Queue, Dead Letter Queue, Publisher Confirm, Manual ACK)
-- **Object Storage:** MinIO (Private Bucket, Presigned Upload, SHA-256 verification)
-- **Security:** JWT (Ed25519), Service JWS, Signed Actor Context, Argon2id, TLS, Cassandra RBAC, RabbitMQ ACL
-- **Infrastructure:** Docker, Docker Compose (Multi-profile local environment)
-- **Testing:** Unit, Integration, Contract Validation, Runtime Acceptance, Smoke, Security/RBAC Test
+| Thành phần          | Công nghệ                                      |
+| ------------------- | ---------------------------------------------- |
+| Runtime             | Node.js 24, TypeScript 5.9, pnpm 11            |
+| Web                 | React 19, React Router 7, Vite 7, Three.js     |
+| Mobile              | Expo 57, React Native 0.86, Expo Router        |
+| Media               | FFmpeg, adaptive HLS, WebVTT                   |
+| HTTP                | Express 5                                      |
+| Database            | Apache Cassandra 5.0.9                         |
+| Messaging           | RabbitMQ 4.1                                   |
+| Object storage      | MinIO S3-compatible                            |
+| Observability       | Prometheus, Alertmanager, Grafana, Pino        |
+| Test/QA             | Vitest, Node test runner, Playwright, axe-core |
+| Local orchestration | Docker Compose                                 |
 
----
-
-## Thiết kế & Nguyên tắc vận hành
+## Thiết kế và nguyên tắc vận hành
 
 ### Cassandra Design
-- **Query-driven Design:** Mỗi access pattern có một bảng hoặc projection phù hợp.
-- **Không sử dụng:** `JOIN`, `Foreign Key`, Cross-keyspace query, Runtime schema creation.
-- Cấm dùng `ALLOW FILTERING` cho business query quan trọng.
-- Redis được sử dụng làm shared cache.
-- Canonical row luôn là nguồn dữ liệu đáng tin cậy nhất.
 
-### Event-Driven Architecture
-- Sử dụng **RabbitMQ** cho async tasks (extraction, quiz gen, progress events, assessment submission, review/moderation events).
-- Hệ thống áp dụng **Durable Outbox Pattern**:
-  ```text
-  PREPARED ──► READY ──► PUBLISHING ──► PUBLISHED
-  ```
-- **Delivery Guarantee:** At-least-once delivery (không tuyên bố distributed exactly-once delivery).
+- Thiết kế theo access pattern và Query ID; không dùng JOIN/foreign key.
+- Không dùng `ALLOW FILTERING` để né thiết kế business query.
+- Không tạo schema ở runtime và không cross-keyspace query bằng application role.
+- Canonical row là authority; projection có thể được repair/reconcile.
+- Redis=false: hệ thống không phụ thuộc shared Redis cache.
 
-### Idempotency & Recovery
-- Mutation quan trọng yêu cầu header `Idempotency-Key: <UUID>`:
-  - *Same Key + Same Request* ──► Trả về kết quả ban đầu (Original Result).
-  - *Same Key + Different Request* ──► Báo lỗi `409 IDEMPOTENCY_CONFLICT`.
-- Sử dụng Stable operation ID, Version, Cassandra LWT, Read-back recovery & Projection reconciliation.
+### Event-Driven và Recovery
 
-### Security & Authorization
-- **Public Client:** Bearer JWT
-- **Internal Service:** Ed25519 Service JWS & Signed Actor Context
-- **Cassandra Security:** Mỗi service có role riêng (`svc_learning`, `svc_identity`...). Không có quyền thực hiện DDL (`CREATE KEYSPACE`, `ALTER TABLE`, `DROP TABLE`) ở runtime.
-- **Secret Management:** Mọi secrets/keys được inject từ môi trường (Environment variables), cấm commit vào Git.
+- RabbitMQ dùng durable exchange/queue, publisher confirm, manual ACK, retry và DLQ.
+- Outbox duy trì stable event/operation identity.
+- Consumer xử lý duplicate/redelivery và tự reconnect/re-register sau broker restart.
+- Delivery guarantee là at-least-once kết hợp idempotency/reconciliation.
+
+### Security và Privacy
+
+- Browser dùng same-origin adapter và cookie phiên HttpOnly; không lưu access/refresh token phía client.
+- Internal call dùng Ed25519 Service JWS và signed Actor Context.
+- Password dùng Argon2id; thao tác Admin nhạy cảm yêu cầu current-password reauthentication theo operation.
+- Cursor/locator là opaque; private answer, AI provider payload và object secret không đi vào public projection.
+- Media gốc và rendition ở MinIO private; API, worker và delivery dùng credential riêng, playback token giới hạn theo asset và thời hạn.
+- Secrets/keys được inject từ môi trường và không được commit.
+
+### Web UX, Accessibility và Motion
+
+- React Web hỗ trợ Guest, Student, Lecturer và Admin workspace.
+- Responsive tại 375, 768, 1440 và 1920px; desktop là phạm vi chạy chính hiện tại.
+- Keyboard/focus, dialog, labels, aria feedback và axe checks có browser regression.
+- Public Home có Three.js lazy-load; authenticated workspace không chạy scene 3D liên tục.
+- Route/scroll/workspace animation tôn trọng `prefers-reduced-motion` và không scroll-jacking.
+- Expo app có các luồng Student, Lecturer và Admin cho account, course, class, assessment, notification, teaching và governance; release native production chưa được tuyên bố.
 
 ---
 
-## Hướng dẫn cài đặt & Chạy dự án
+## Cài đặt và chạy dự án
 
 ### Yêu cầu môi trường
-- Node.js `24+`
-- pnpm `11+`
-- Docker Engine & Docker Compose v2
-- OpenSSL
-- RAM: Tối thiểu 8 GB
+
+- Node.js `>=24 <27`; Node 24 là runtime chuẩn của build/release.
+- pnpm `>=11 <12`.
+- Docker Desktop với Compose v2.
+- Khoảng 12 GiB RAM khả dụng để chạy đầy đủ Cassandra và các service.
+- Các cổng chính trống: `8080`, `5173`/`5177`, `9042`, `5672`, `15672`, `9000`, `9001`.
+
+### Chạy nhanh
 
 ```bash
-node --version
-pnpm --version
-docker --version
-docker compose version
-```
-
-### Khởi tạo dự án
-
-```bash
-# 1. Clone repository
-git clone <repository-url>
-cd AILSS-AI-Powered-Learning-Support-System
-
-# 2. Cài đặt dependencies
-corepack enable
+git clone --branch dev https://github.com/bigdoanh-dev/AILSS-AI-Powered-Learning-Support-System..git ailss
+cd ailss
+npm install --global pnpm@11.19.0
 pnpm install --frozen-lockfile
-
-# 3. Tạo development keys
+test -f .env || cp .env.example .env
+test -f .env.local || touch .env.local
 pnpm keys:dev
-
-# 4. Khởi tạo môi trường dev
-node scripts/dev/bootstrap-dev-env.mjs
-
-# 5. Kiểm tra tiền điều kiện
-pnpm preflight
-```
-
-### Các môi trường chạy (Development Profiles)
-
-```bash
-# Chạy core backend cơ bản
-pnpm env:dev-core
-
-# Chạy full async stack (RabbitMQ, MinIO, Workers, Services)
 pnpm env:dev-async
-
-# Chạy Cassandra multi-node (nghiên cứu & kiểm thử phân tán)
-pnpm env:research
-
-# Chạy topology demo đầy đủ
-pnpm env:demo
-
-# Dừng môi trường
-pnpm env:down
+pnpm dev:web
 ```
 
-### Kiểm thử & Verification
+> **Lưu ý cấu hình môi trường (`.env`):**
+> Chỉ sao chép file mẫu khi `.env` chưa tồn tại (`test -f .env || cp .env.example .env`).
+>
+> - Chạy `cp .env.example .env` khi `.env` đã tồn tại sẽ thay cấu hình đã điền bằng giá trị mẫu, bao gồm các biến Google/SePay để trống.
+> - **Khắc phục:** Cấu hình riêng của máy nên đặt trong `.env.local`; file này được nạp sau `.env` và không bị ghi đè khi sao chép mẫu hoặc kéo code mới.
+
+Mở địa chỉ Vite hiển thị trong terminal, mặc định `http://127.0.0.1:5173`.
+
+`env:dev-async` khởi tạo Cassandra roles/migrations, RabbitMQ topology, MinIO, Gateway, business services, workers và observability. Hướng dẫn chi tiết cho Web nằm tại [WEB_DEVELOPMENT_GUIDE.md](./WEB_DEVELOPMENT_GUIDE.md).
+
+Nếu đã khởi tạo video bằng `node scripts/dev/initialize-media.mjs`, các lệnh `env:dev-async` và `env:demo` tự nạp `.env.media` cùng `docker-compose.media.yml` để giữ upload/HLS hoạt động sau khi khởi động lại. `.env.local` được nạp cuối để giữ cấu hình riêng của máy. Môi trường `dev-core` và `research` không tự bật media.
+
+### Cấu hình tích hợp local
+
+Giữ Google, SMTP và SePay trong `.env.local` ở **gốc repo**; các lệnh `pnpm env:*` nạp file này sau `.env` qua Docker Compose. Sau khi sửa biến môi trường, chạy lại `pnpm env:dev-async` để cập nhật container; chỉ `docker compose restart` không nạp giá trị mới.
+
+- **Google:** Gateway dùng `GOOGLE_WEB_CLIENT_ID`; Identity dùng `GOOGLE_CLIENT_IDS`. Đăng ký đúng origin Web đang mở trong Google Cloud, kể cả khác biệt giữa `localhost` và `127.0.0.1`. Client Secret không được đưa vào frontend.
+- **SMTP:** điền `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` và `SMTP_FROM` theo nhà cung cấp; Gmail dùng mật khẩu ứng dụng cho `SMTP_PASS`. Thư OTP dùng nội dung văn bản; kiểm tra đúng hộp thư nhận và thư rác khi thử luồng.
+- **SePay:** điền `SEPAY_ACCOUNT_NUMBER`, `SEPAY_ACCOUNT_NAME`, `SEPAY_BANK`, `SEPAY_WEBHOOK_API_KEY` và đặt `PAYMENT_MODE=sepay` để dùng giao dịch thật. API key cấu hình trong SePay phải khớp backend. URL nhận `/api/v1/payments/sepay/webhook` cần HTTPS public để SePay gọi được; local cần tunnel đang hoạt động. Không dùng `127.0.0.1` làm URL nhận webhook trên SePay.
+- **Quản trị và giám sát local:** cấu hình như dưới đây; Prometheus/Grafana giao tiếp giữa container qua địa chỉ nội bộ, còn nút mở trên Web dùng URL public của máy phát triển.
+
+```dotenv
+AI_ADMIN_SUPPORT_MODE=local-guide
+PROMETHEUS_PUBLIC_URL=http://127.0.0.1:9090
+GRAFANA_PUBLIC_URL=http://127.0.0.1:3001
+```
+
+Tên biến cấu hình nằm trong [.env.example](./.env.example); hướng dẫn Google origin, giám sát và chuyển các tích hợp lên VPS nằm tại [LOCAL_TO_VPS_CONFIGURATION.md](./LOCAL_TO_VPS_CONFIGURATION.md). Các trợ lý học viên/giảng viên và tạo đề vẫn cần cấu hình nhà cung cấp AI hợp lệ. Alertmanager local không gửi cảnh báo ra ngoài; kênh nhận thật cấu hình khi triển khai VPS.
+
+### Chạy mobile và điện thoại thật
+
+Tạo cấu hình riêng cho Expo mà không ghi đè file đã điền. Đặt địa chỉ API trong file theo bảng bên dưới trước khi khởi động app:
 
 ```bash
-pnpm typecheck          # Kiểm tra TypeScript
-pnpm lint               # Kiểm tra linter
-pnpm test               # Chạy Unit & Integration tests
-pnpm validate:contracts # Validate OpenAPI & Schema contracts
-pnpm validate:compose   # Validate Docker Compose configurations
-pnpm format:check       # Kiểm tra code formatting
-pnpm build              # Build dự án
-pnpm scan:secrets       # Quét secrets lộ trong code
-pnpm verify:rabbitmq    # Kiểm tra kết nối RabbitMQ
+test -f apps/mobile/.env.local || cp apps/mobile/.env.example apps/mobile/.env.local
+pnpm --filter @ailss/mobile start
+```
 
-# Chạy Smoke Test
+| Nơi chạy app     | `EXPO_PUBLIC_AILSS_API_BASE_URL`     |
+| ---------------- | ------------------------------------ |
+| iOS Simulator    | `http://127.0.0.1:8080`              |
+| Android Emulator | `http://10.0.2.2:8080`               |
+| Điện thoại thật  | `http://<IP-LAN-của-máy-tính>:18080` |
+
+Với điện thoại thật, đặt `AILSS_MOBILE_GATEWAY_BIND_ADDRESS=<IP-LAN-của-máy-tính>` trong `.env.local` gốc rồi chạy lại `pnpm env:dev-async`. Điện thoại cần truy cập được `http://<IP-LAN-của-máy-tính>:18080/health/ready` và có đường mạng tới máy tính. `127.0.0.1` trên điện thoại trỏ vào điện thoại. URL object storage cho upload cũng cần truy cập được từ thiết bị; cấu hình chi tiết trong [MOBILE_DEVELOPMENT_GUIDE.md](./MOBILE_DEVELOPMENT_GUIDE.md).
+
+Expo Go không chứa native module `RNGoogleSignin` hoặc SQLCipher. Để kiểm tra Google Sign-In native và lưu trữ offline mã hóa, build/cài development client với công cụ iOS/Android tương ứng:
+
+```bash
+pnpm --filter @ailss/mobile ios
+# hoặc trên Android:
+pnpm --filter @ailss/mobile android
+
+# Những lần chạy Metro tiếp theo cho development client:
+pnpm --filter @ailss/mobile start:development
+```
+
+Google native cần client iOS/Android, URL scheme hoặc SHA-1 đúng khóa ký theo hướng dẫn mobile. Sau khi đổi native module/plugin hoặc cấu hình Google native, cần build/cài lại app; reload Metro không bổ sung module vào binary đã cài.
+
+**Chỉ khi muốn xóa toàn bộ dữ liệu local và bootstrap lại**, dùng:
+
+```bash
+AILSS_CONFIRM_RESET=YES pnpm env:reset
+pnpm env:dev-async
+```
+
+Lệnh reset xóa Cassandra/RabbitMQ/MinIO volumes local. Không chạy khi cần giữ dữ liệu phát triển.
+
+### Development profiles
+
+| Lệnh                 | Mục đích                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| `pnpm env:dev-core`  | Cassandra, Gateway, Identity và observability                                            |
+| `pnpm env:dev-async` | Môi trường đầy đủ, gồm business services, RabbitMQ/MinIO/workers và observability        |
+| `pnpm env:research`  | Môi trường thí nghiệm resilience                                                         |
+| `pnpm env:demo`      | Demo HTTPS local                                                                         |
+| `pnpm env:down`      | Dừng môi trường và giữ volume                                                            |
+| `pnpm env:reset`     | Xóa môi trường/volume khi đã đặt biến xác nhận                                           |
+| Media overlay        | `docker-compose.media.yml`; cần policy kích thước/thời lượng và credential storage riêng |
+
+Media là overlay tùy chọn. Khi `dev-async` đã sẵn sàng, khởi tạo bucket private, các principal storage riêng và migration media bằng:
+
+```bash
+node scripts/dev/initialize-media.mjs
+pnpm env:dev-async
+```
+
+Initializer lưu credential vào `.env.media` bị Git bỏ qua; policy local mặc định là 1 GiB và 4 giờ, không phải mặc định production. Khi file này đã tồn tại, helper môi trường tự giữ media overlay cho `dev-async`/`demo`; không cần khởi tạo lại sau mỗi lần restart.
+
+Nếu cần chạy Docker Compose trực tiếp, giữ thứ tự nạp `.env`, `.env.media`, rồi `.env.local` để cấu hình riêng của máy được ưu tiên:
+
+```bash
+docker compose --env-file .env --env-file .env.media --env-file .env.local \
+  -f docker-compose.yml -f docker-compose.async.yml \
+  -f docker-compose.media.yml -f docker-compose.observability.yml \
+  --profile dev-async up -d api-gateway learning-service media-delivery media-worker
+```
+
+### Kiểm tra chất lượng
+
+```bash
+pnpm typecheck
+pnpm lint:no-regression
+pnpm audit:source-tracking
+pnpm test
+pnpm validate:contracts
+pnpm validate:migration-bootstrap
+pnpm validate:compose
+pnpm validate:production-config
+pnpm scan:secrets
+pnpm build
+pnpm format:check
+pnpm acceptance:phase40:revision-h
+
+pnpm typecheck:web
+pnpm lint:web
+pnpm test:web
+pnpm build:web
+
+pnpm --filter @ailss/mobile typecheck
+pnpm --filter @ailss/mobile lint:phase41
+pnpm --filter @ailss/mobile test
+pnpm --filter @ailss/mobile validate:config
+pnpm --filter @ailss/mobile build:development
+```
+
+`pnpm test:all` chạy các bộ test backend, Web và mobile. CI trong [ci.yml](./.github/workflows/ci.yml) gồm `static-gates`, `web-gates`, `mobile-gates` và `dev-core-smoke`. Lint backend dùng baseline `lint:no-regression` để chặn lỗi mới; `validate:production-config` kiểm tra cấu hình mẫu, không xác nhận đã triển khai production. `build:development` của mobile là export bundle iOS/Android, không tạo bản native có thể cài.
+
+Kiểm tra kết nối dịch vụ sau khi môi trường tương ứng đã khởi động:
+
+```bash
 AILSS_PROFILE=dev-core pnpm smoke
-# hoặc
+# Hoặc khi đã khởi động dev-async:
 AILSS_PROFILE=dev-async pnpm smoke
 ```
 
----
+`pnpm verify:clean-cassandra-bootstrap` kiểm tra migration bằng container/volume Cassandra tạm riêng, tự dọn sau khi chạy và không reset volume phát triển hiện có.
 
-## Cấu trúc Repository
+Acceptance thực phải chạy khi profile `dev-async` đã sẵn sàng. Ví dụ:
 
-```text
-AILSS/
-├── apps/
-│   ├── gateway/
-│   ├── identity-service/
-│   ├── learning-service/
-│   ├── classroom-service/
-│   ├── assessment-service/
-│   ├── interaction-service/
-│   ├── ai-service/
-│   └── workers/
-├── packages/
-│   ├── config/
-│   ├── security/
-│   ├── http/
-│   ├── cassandra/
-│   ├── rabbitmq/
-│   ├── outbox/
-│   └── shared/
-├── contracts/
-│   ├── openapi/
-│   ├── schemas/
-│   ├── api-registry.json
-│   ├── query-registry.json
-│   └── event-registry.json
-├── database/
-│   ├── migrations/
-│   ├── roles/
-│   ├── grants/
-│   └── seed/
-├── infrastructure/
-├── scripts/
-├── tests/
-├── docker-compose.yml
-├── package.json
-├── pnpm-workspace.yaml
-├── pnpm-lock.yaml
-├── tsconfig.json
-├── .env.example
-├── .gitignore
-└── README.md
+```bash
+pnpm acceptance:p7.17   # Offering/commerce/entitlement
+pnpm acceptance:p10.1   # Secure document extraction
+pnpm acceptance:p10.2   # AI quiz generation
+pnpm acceptance:p10.3   # Human approval/import
+pnpm acceptance:p11     # Notification
 ```
 
----
-
-## Quy tắc phát triển (Development Rules)
-
-1. Không thêm business service ngoài kiến trúc đã phê duyệt nếu chưa có ADR.
-2. Không truy cập Cassandra keyspace của service khác.
-3. Không sử dụng `ALLOW FILTERING` để né thiết kế access pattern.
-4. Không tạo schema ở runtime.
-5. Không hard-code credentials/secrets; Không log JWT, password hay secret.
-6. Mutation quan trọng bắt buộc phải xử lý Idempotency.
-7. Projection không được coi là canonical authority.
-8. RabbitMQ consumer phải xử lý duplicate/redelivery.
-9. AI output phải được validate trước khi lưu thành Draft; Quiz do AI sinh ra phải qua Lecturer review.
-
----
-
-## Trạng thái phát triển & Roadmap
-
-### Trạng thái tính năng
-
-- [x] Identity / Security
-- [x] Learning / Course / Classroom
-- [x] Assessment
-- [x] Learning Progress
-- [x] Interaction (Comments / Reviews / Moderation)
-- [x] Secure AI Document Processing
-- [🚧] AI Quiz Generation
-- [⏳] AI Human Approval / Assessment Integration
-- [⏳] Notification Service
-- [⏳] Web Application
-- [⏳] Mobile Application
-- [⏳] Production Readiness
-
-### Roadmap tổng quan
+## Cấu trúc repository
 
 ```text
-Backend Foundations
-       │
-       ▼
-Identity / Learning / Classroom
-       │
-       ▼
-Assessment
-       │
-       ▼
-Interaction
-       │
-       ▼
-AI Document Processing
-       │
-       ▼
-AI Quiz Generation ──► Human AI Approval
-       │
-       ▼
-Notification ──► Web App ──► Mobile App ──► Production Readiness
+apps/                    Gateway, services, workers, React Web và Expo mobile
+contracts/               OpenAPI, API/query/event registries và schemas
+database/migrations/     Cassandra migrations theo profile
+packages/                Thư viện runtime dùng chung
+ops/                     Prometheus, Alertmanager, Grafana và Vault policy
+scripts/                 Bootstrap, CI, acceptance, operations và research tooling
+tests/                   Unit, contract, security, load và smoke tests
+docs/                    ADR, hướng dẫn, audit và báo cáo theo phase
+artifacts/, evidence/     Bằng chứng runtime/release sinh bởi tooling
 ```
 
----
+## Quy tắc phát triển
 
-## Phạm vi & Giới hạn của AI
+1. Không thêm business service, API ID, Query ID hoặc Event Type ngoài contract/ADR được phê duyệt.
+2. Không truy cập Cassandra keyspace của service khác và không tạo schema ở runtime.
+3. Không dùng `ALLOW FILTERING` để né thiết kế access pattern.
+4. Không hard-code hoặc log credential, JWT, password, private key và presigned secret.
+5. Mutation quan trọng phải có idempotency; update versioned phải giữ optimistic concurrency.
+6. Projection không được thay thế canonical authority.
+7. RabbitMQ consumer phải an toàn trước duplicate/redelivery và tự phục hồi kết nối.
+8. AI output phải được validate và Lecturer review trước khi import; publish luôn là thao tác riêng.
+9. Web không persist token, answer draft, AI reviewed draft, notification locator hay Admin proof.
+10. Code thay đổi phải qua typecheck, lint, test, contract validation và secret scan phù hợp.
+11. Feature chỉ được tuyên bố pilot-ready khi có API, repository bền vững, authorization và acceptance evidence tương ứng.
+12. Grades, credentials, authorization, security parameters và payment không được đưa vào experimentation scope.
 
-**AILSS áp dụng nguyên tắc:** *AI hỗ trợ con người, không thay thế quyền quyết định của Giảng viên (Lecturer).*
+## Trạng thái phát triển
 
-- ✅ **Có thể:** Phân tích tài liệu, sinh câu hỏi, tạo bản nháp (Draft) Quiz, hỗ trợ tạo nội dung học tập.
-- ❌ **Tuyệt đối KHÔNG:** Tự động publish Quiz, tự thay đổi điểm số Student, bỏ qua approval của Lecturer, tự mở quyền truy cập Course/Class, đọc dữ liệu cross-service ngoài contract, truy cập secret/infrastructure credential.
+- [x] Identity, session security và Lecturer onboarding
+- [x] Learning, Course, Lesson, Offering và entitlement
+- [x] Classroom, schedule, session và attendance
+- [x] Assessment, Attempt, result và AI draft import
+- [x] Interaction, moderation và Notification
+- [x] Secure Document processing và AI Quiz Generation
+- [x] Web Guest/Student/Lecturer/Admin responsive
+- [x] Expo mobile app cho các luồng Student/Lecturer/Admin cốt lõi
+- [x] Local clean bootstrap và event consumer recovery
+- [x] Assessment evidence → durable Mastery V2 → Study Plan feedback path
+- [x] Finance projection/backfill, durable refund và observability stack
+- [x] Nối các mastery evidence producer hiện có: quiz theo course/class, lesson completion và teacher observation
+- [ ] Assignment/Lab/Final Project evidence producers (chưa có adapter tới bản ghi nguồn chính thống trong các dịch vụ hiện tại; API từ chối fail-closed khi không xác minh được nguồn)
+- [x] AI Tutor tool registry và Mastery/Study Plan tools đầy đủ
+- [x] Full-stack Phase 40 Revision H E2E trên stack local thật: Student/Teacher/Admin, tạo và nộp assessment, mastery → Study Plan, Gia sư AI grounded, từ chối sai role và chặn Study Plan khi thiếu mastery
+- [ ] Staging/cloud deployment với credential thật, external S3/CDN acceptance và production telemetry (blocker: thiếu remote cloud endpoints AWS/GCP, live S3/CDN buckets, production IAM secrets và telemetry collectors)
+- [ ] VoiceOver/TalkBack trên thiết bị thật và native mobile production release (iPhone XS đã ghép đôi; bản Development đã build và cài, nhưng iOS chặn mở cho đến khi người dùng tin cậy profile nhà phát triển trong Cài đặt. Chưa có thiết bị Android và chứng chỉ ký phát hành App Store/Google Play.)
 
----
+Phase 40 Revision H chưa được nghiệm thu toàn bộ vì Assignment/Lab/Final Project chưa có adapter tới bản ghi nguồn chính thống và staging/cloud cùng mobile accessibility/store release còn phụ thuộc hạ tầng, credential và thiết bị bên ngoài. `pnpm acceptance:phase40:revision-h` đã qua trên service thật local và Cassandra: kiểm tra entitlement, tạo/nộp assessment, mastery evidence của assessment đó, Study Plan bền vững, trích dẫn học liệu Gia sư AI, role boundary Student/Teacher/Admin và từ chối yêu cầu thiếu mastery. `AILSS_PROFILE=demo pnpm smoke` cũng qua 12 runtime, correlation ID, identity giả, RBAC Cassandra, ACL/delivery RabbitMQ và MinIO round-trip. Test ghi evidence cục bộ trong `artifacts/release-evidence/`; thư mục này không được commit/push.
 
-## Quyền sở hữu & Tác giả
+## Phạm vi và giới hạn của AI
 
-**Copyright © 2026 Nguyễn Viết Doanh. All Rights Reserved.**
+**Nguyên tắc:** AI hỗ trợ giảng viên và không thay thế quyền quyết định của giảng viên.
 
-Mã nguồn của dự án AILSS thuộc quyền sở hữu của tác giả. Không được phép sao chép, sử dụng, chỉnh sửa, phân phối hoặc sử dụng mã nguồn cho mục đích thương mại khi chưa có sự cho phép bằng văn bản của tác giả.
+AI có thể:
 
-- **Tác giả:** Nguyễn Viết Doanh
-- **Mục đích:** Dự án được phát triển phục vụ học tập, nghiên cứu và xây dựng hệ thống phần mềm phân tán sử dụng Cassandra, RabbitMQ, Microservices và AI.
+- trích xuất nội dung từ tài liệu riêng tư;
+- sinh câu hỏi theo schema được kiểm soát;
+- tạo `AI_DRAFT` để Lecturer review và chỉnh sửa;
+- import draft đã được con người approve thành Assessment Quiz `DRAFT`.
+
+AI không được:
+
+- tự publish Quiz hoặc Course;
+- tự sửa điểm Student;
+- bỏ qua Lecturer review/approval;
+- tự cấp quyền Course/Class;
+- đọc cross-service data ngoài contract;
+- truy cập hoặc đưa credential/private payload vào output công khai.
+
+## Giới hạn hiện tại
+
+- Teacher Copilot, Question Bank V2, Institution Onboarding, Curriculum Intelligence, Fleet Operations và Advanced Experimentation đang `DEFERRED_UNSHIPPED`; không nên xem route/UI thử nghiệm là runtime production-ready.
+- Staging và production cloud deployment chưa có endpoint/credentials thật từ nhà cung cấp cloud (AWS/GCP/CDN/telemetry collector); template staging và policy IaC hiện phục vụ kiểm tra mẫu. Lần kiểm tra local ngày 03/10/2026, Prometheus và Grafana đều trả health thành công, 7/7 service được Prometheus scrape ở trạng thái UP; đây không phải bằng chứng telemetry production.
+- External SAML/LTI, Vault-backed deployment, penetration test và ASV chưa được xác nhận hoàn tất.
+- Thanh toán thương mại production và payout vẫn bị chặn theo cơ chế fail-closed.
+- Phát hành native mobile lên App Store/Google Play và kiểm thử VoiceOver/TalkBack trên thiết bị vật lý đầy đủ tiếp tục nằm trong danh sách blocker. iPhone XS đã ghép đôi và nhận bản Development, nhưng thiết bị báo profile nhà phát triển chưa được tin cậy; vào **Cài đặt → Cài đặt chung → VPN & Quản lý thiết bị → Ứng dụng nhà phát triển** và tin cậy Team `KJ37MM6VQ3`, sau đó mở AILSS để tiếp tục. Đây chỉ là ký Development, không thay thế chứng chỉ/profile phân phối App Store; Android TalkBack cần thiết bị Android riêng.
+
+## Tác giả, bản quyền và giấy phép
+
+- **Dự án:** AILSS — AI-Powered Learning Support System
+- **Tác giả chính:** Nguyễn Viết Doanh
+- **Năm:** 2026
+- **Mục đích:** Học tập, nghiên cứu và phát triển hệ thống phần mềm phân tán ứng dụng Cassandra, RabbitMQ, Microservices và AI.
+
+Copyright © 2026 AILSS contributors.
+
+Dự án được phát hành theo **MIT License**. Giấy phép cho phép sử dụng, sao chép, chỉnh sửa, hợp nhất, xuất bản, phân phối, cấp phép lại và bán bản sao phần mềm với điều kiện giữ nguyên thông báo bản quyền và nội dung giấy phép.
+
+Phần mềm được cung cấp **“AS IS”**, không kèm bảo đảm dưới bất kỳ hình thức nào. Nội dung pháp lý đầy đủ nằm trong [LICENSE](./LICENSE).
+
+Các thư viện, container image, font và media của bên thứ ba tiếp tục tuân theo giấy phép riêng của từng nhà cung cấp. Xem [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) và attribution trong `apps/web/public/assets/media/`.
+
+> README chỉ tóm tắt giấy phép để người đọc dễ hiểu; khi có khác biệt, file `LICENSE` là nội dung pháp lý có hiệu lực cho repository.
