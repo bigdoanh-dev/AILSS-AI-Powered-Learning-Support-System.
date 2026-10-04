@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { useUiText } from "../lib/i18n";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { lecturerRequest, useLecturer } from "./api";
@@ -25,6 +27,8 @@ export function TeachingAttendance() {
 }
 
 function TeachingPlanning({ attendance }: { attendance: boolean }) {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const q = useLecturer<Class[] | { classes: Class[] }>("/me/owned-classes");
   const [params, setParams] = useSearchParams();
   const classes = q.data ? classesOf(q.data) : [];
@@ -155,13 +159,15 @@ function TeachingPlanning({ attendance }: { attendance: boolean }) {
       <div className="dashboard-heading" style={{ marginBottom: "1.25rem" }}>
         <div>
           <p className="eyebrow">
-            {attendance ? "ĐIỂM DANH LỚP HỌC · GIẢNG DẠY" : "LỊCH GIẢNG DẠY · THỜI KHÓA BIỂU"}
+            {attendance ? uiText("ĐIỂM DANH LỚP HỌC · GIẢNG DẠY") : uiText("LỊCH GIẢNG DẠY · THỜI KHÓA BIỂU")}
           </p>
-          <h1>{attendance ? "Điểm danh lớp học." : "Lịch dạy."}</h1>
+          <h1>{attendance ? uiText("Điểm danh lớp học.") : uiText("Lịch dạy.")}</h1>
           <p className="lead">
             {attendance
-              ? "Chọn lớp và buổi học để theo dõi, cập nhật trạng thái có mặt của học viên."
-              : "Xem tổng hợp lịch giảng dạy tất cả các lớp phụ trách theo danh sách, tuần hoặc tháng."}
+              ? uiText("Chọn lớp và buổi học để theo dõi, cập nhật trạng thái có mặt của học viên.")
+              : uiText(
+                  "Xem tổng hợp lịch giảng dạy tất cả các lớp phụ trách theo danh sách, tuần hoặc tháng.",
+                )}
           </p>
         </div>
       </div>
@@ -174,16 +180,19 @@ function TeachingPlanning({ attendance }: { attendance: boolean }) {
               <div className="admin-governance-toolbar" style={{ marginBottom: "1.5rem" }}>
                 <label className="admin-filter-label">
                   <span className="admin-filter-title">
-                    <Icon name="layers" size={15} /> Lớp phụ trách
+                    <Icon name="layers" size={15} /> {uiText(" Lớp phụ trách")}
                   </span>
                   <div className="admin-select-wrapper" style={{ minWidth: "240px" }}>
                     <select
                       value={selected}
                       onChange={(e) => update("class", e.target.value)}
                       className="admin-governance-select"
-                      aria-label="Chọn lớp hoặc tất cả lớp học"
+                      aria-label={uiText("Chọn lớp hoặc tất cả lớp học")}
                     >
-                      <option value="ALL">Tất cả lớp phụ trách ({classes.length})</option>
+                      <option value="ALL">
+                        {uiText("Tất cả lớp phụ trách (")}
+                        {classes.length})
+                      </option>
                       {classes.map((c) => (
                         <option value={c.classId} key={c.classId}>
                           {c.name}
@@ -196,7 +205,7 @@ function TeachingPlanning({ attendance }: { attendance: boolean }) {
                 {attendance && (
                   <label className="admin-filter-label">
                     <span className="admin-filter-title">
-                      <Icon name="calendar" size={15} /> Tháng (UTC)
+                      <Icon name="calendar" size={15} /> {uiText(" Tháng (UTC)")}
                     </span>
                     <div className="admin-select-wrapper" style={{ minWidth: "150px" }}>
                       <input
@@ -216,52 +225,58 @@ function TeachingPlanning({ attendance }: { attendance: boolean }) {
                 <div className="admin-search-wrapper">
                   <input
                     type="search"
-                    placeholder="Tìm theo tên buổi học, lớp học..."
+                    placeholder={uiText("Tìm theo tên buổi học, lớp học...")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="admin-search-input"
-                    aria-label="Tìm kiếm buổi học"
+                    aria-label={uiText("Tìm kiếm buổi học")}
                   />
                 </div>
 
                 <div className="admin-toolbar-actions">
-                  <span className="kpi-tag accent">{filteredSessions.length} buổi học</span>
+                  <span className="kpi-tag accent">
+                    {filteredSessions.length} {uiText(" buổi học")}
+                  </span>
                   {selected !== "ALL" ? (
                     <Link
                       className="button button-subtle"
                       to={`/app/teaching/classes/${selected}/schedule`}
-                      title="Quản lý chi tiết thời khóa biểu lớp này"
+                      title={uiText("Quản lý chi tiết thời khóa biểu lớp này")}
                     >
                       <Icon name="settings" size={14} />
-                      <span>Quản lý buổi học</span>
+                      <span>{uiText("Quản lý buổi học")}</span>
                     </Link>
                   ) : (
                     <Link
                       className="button button-subtle"
                       to="/app/teaching/classes"
-                      title="Mở danh sách tất cả lớp học"
+                      title={uiText("Mở danh sách tất cả lớp học")}
                     >
                       <Icon name="class" size={14} />
-                      <span>Quản lý các lớp</span>
+                      <span>{uiText("Quản lý các lớp")}</span>
                     </Link>
                   )}
                   <Link
                     className="button secondary"
                     to={`/app/teaching/${attendance ? "schedule" : "attendance"}${selected !== "ALL" ? `?class=${selected}` : ""}`}
-                    title={attendance ? "Mở lịch dạy dạng tuần/tháng" : "Mở danh sách điểm danh theo lớp"}
+                    title={
+                      attendance
+                        ? uiText("Mở lịch dạy dạng tuần/tháng")
+                        : uiText("Mở danh sách điểm danh theo lớp")
+                    }
                   >
                     <Icon name={attendance ? "calendar" : "check"} size={14} />
-                    <span>{attendance ? "Xem lịch dạy" : "Xem điểm danh"}</span>
+                    <span>{attendance ? uiText("Xem lịch dạy") : uiText("Xem điểm danh")}</span>
                   </Link>
                   <button
                     type="button"
                     className="button secondary admin-reload-btn"
                     onClick={() => setReloadKey((k) => k + 1)}
                     disabled={sessionsPending}
-                    title="Tải lại lịch dạy"
+                    title={uiText("Tải lại lịch dạy")}
                   >
                     <Icon name="refresh" size={14} />
-                    <span>Tải lại</span>
+                    <span>{uiText("Tải lại")}</span>
                   </button>
                 </div>
               </div>
@@ -271,14 +286,17 @@ function TeachingPlanning({ attendance }: { attendance: boolean }) {
                   attendance ? (
                     <div className="attendance-scroll">
                       <table className="attendance-table">
-                        <caption>Các buổi học tháng {month}</caption>
+                        <caption>
+                          {uiText("Các buổi học tháng ")}
+                          {month}
+                        </caption>
                         <thead>
                           <tr>
                             <th>STT</th>
-                            {selected === "ALL" && <th>Lớp phụ trách</th>}
-                            <th>Buổi học</th>
-                            <th>Thời gian (giờ Việt Nam)</th>
-                            <th>Điểm danh</th>
+                            {selected === "ALL" && <th>{uiText("Lớp phụ trách")}</th>}
+                            <th>{uiText("Buổi học")}</th>
+                            <th>{uiText("Thời gian (giờ Việt Nam)")}</th>
+                            <th>{uiText("Điểm danh")}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -292,10 +310,10 @@ function TeachingPlanning({ attendance }: { attendance: boolean }) {
                               )}
                               <th scope="row">
                                 {x.title}
-                                {x.status === "CANCELLED" && <small> · Đã hủy</small>}
+                                {x.status === "CANCELLED" && <small> {uiText(" · Đã hủy")}</small>}
                               </th>
                               <td>
-                                {new Date(x.startAt).toLocaleString("vi-VN", {
+                                {new Date(x.startAt).toLocaleString(uiLocale, {
                                   timeZone: "Asia/Ho_Chi_Minh",
                                 })}
                               </td>
@@ -304,14 +322,14 @@ function TeachingPlanning({ attendance }: { attendance: boolean }) {
                                   className="button secondary button-small"
                                   to={`/app/teaching/sessions/${x.sessionId}/attendance?class=${x.classId || (selected !== "ALL" ? selected : "")}&month=${month}`}
                                 >
-                                  Xem bảng điểm danh
+                                  {uiText("Xem bảng điểm danh")}
                                 </Link>
                               </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
-                      {!v.length && <p>Chưa có buổi học nào phù hợp trong tháng này.</p>}
+                      {!v.length && <p>{uiText("Chưa có buổi học nào phù hợp trong tháng này.")}</p>}
                     </div>
                   ) : (
                     <ScheduleCalendar
@@ -328,7 +346,8 @@ function TeachingPlanning({ attendance }: { attendance: boolean }) {
             </>
           ) : (
             <p>
-              Bạn chưa có lớp phụ trách. <Link to="/app/teaching/classes">Mở trang lớp học</Link>
+              {uiText("Bạn chưa có lớp phụ trách. ")}
+              <Link to="/app/teaching/classes">{uiText("Mở trang lớp học")}</Link>
             </p>
           )
         }

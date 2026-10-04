@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useState } from "react";
 import { useStudent, type LearningCourse, type Lesson, type Quiz } from "./api";
 import { State } from "./ui";
@@ -40,22 +41,24 @@ function CourseRadar({ courseId }: { courseId: string }) {
 }
 
 export function StudentLearningRadar({ courses }: { courses: LearningCourse[] }) {
+  const uiText = useUiText();
   const [selected, setSelected] = useState("");
   const courseId = courses.some((course) => course.courseId === selected)
     ? selected
     : (courses[0]?.courseId ?? "");
   return (
-    <section className="learning-radar-panel" aria-label="Bản đồ năng lực học tập">
-      <h2>Bản đồ năng lực học tập</h2>
+    <section className="learning-radar-panel" aria-label={uiText("Bản đồ năng lực học tập")}>
+      <h2>{uiText("Bản đồ năng lực học tập")}</h2>
       <p>
-        Mỗi trục là một bài học hoặc bài kiểm tra. Điểm thể hiện mức độ làm chủ từ bằng chứng học tập đã ghi
-        nhận.
+        {uiText(
+          "Mỗi trục là một bài học hoặc bài kiểm tra. Điểm thể hiện mức độ làm chủ từ bằng chứng học tập đã ghi nhận.",
+        )}
       </p>
       {courses.length ? (
         <>
           <div className="learning-radar-controls">
             <label>
-              Khóa học xem năng lực
+              {uiText("Khóa học xem năng lực")}
               <select value={courseId} onChange={(event) => setSelected(event.target.value)}>
                 {courses.map((course) => (
                   <option key={course.courseId} value={course.courseId}>
@@ -68,7 +71,7 @@ export function StudentLearningRadar({ courses }: { courses: LearningCourse[] })
           <CourseRadar key={courseId} courseId={courseId} />
         </>
       ) : (
-        <p>Đăng ký khóa học và bắt đầu học để theo dõi năng lực của bạn.</p>
+        <p>{uiText("Đăng ký khóa học và bắt đầu học để theo dõi năng lực của bạn.")}</p>
       )}
     </section>
   );

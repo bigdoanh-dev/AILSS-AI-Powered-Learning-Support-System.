@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import { Image, Text, View, StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { router, type Href } from "expo-router";
@@ -23,6 +24,7 @@ interface ClassCardMeta {
 }
 
 export default function OwnedClassesList() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [items, setItems] = useState<OwnedClass[] | null>(null);
@@ -65,9 +67,9 @@ export default function OwnedClassesList() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <ScreenHeader title="Lớp phụ trách" onBack={() => router.replace("/")} />
-        <Text style={styles.error}>Chức năng này chỉ dành cho Giảng viên.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <ScreenHeader title={uiText("Lớp phụ trách")} onBack={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Chức năng này chỉ dành cho Giảng viên.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -91,14 +93,17 @@ export default function OwnedClassesList() {
     <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
       <Page>
         <ScreenHeader
-          title="Lớp phụ trách"
-          subtitle={`${displayClasses.length} lớp học đang giảng dạy`}
+          title={uiText("Lớp phụ trách")}
+          subtitle={uiText("{0} lớp học đang giảng dạy", [displayClasses.length])}
           onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching"))}
         />
-        <Button label="+ Tạo lớp học" onPress={() => router.push("/teaching/classes/create" as Href)} />
+        <Button
+          label={uiText("+ Tạo lớp học")}
+          onPress={() => router.push("/teaching/classes/create" as Href)}
+        />
         {error ? (
           <Text accessibilityRole="alert" style={styles.error}>
-            {error}
+            {uiText(error)}
           </Text>
         ) : null}
 
@@ -111,22 +116,22 @@ export default function OwnedClassesList() {
           <View style={cs.statsStrip}>
             <View style={cs.statItem}>
               <Text style={cs.statNum}>{displayClasses.reduce((sum, item) => sum + item.capacity, 0)}</Text>
-              <Text style={cs.statLabel}>Tổng sức chứa</Text>
+              <Text style={cs.statLabel}>{uiText("Tổng sức chứa")}</Text>
             </View>
             <View style={cs.statDivider} />
             <View style={cs.statItem}>
               <Text style={[cs.statNum, { color: "#0284C7" }]}>{displayClasses.length}</Text>
-              <Text style={cs.statLabel}>Lớp phụ trách</Text>
+              <Text style={cs.statLabel}>{uiText("Lớp phụ trách")}</Text>
             </View>
             <View style={cs.statDivider} />
             <View style={cs.statItem}>
               <Text style={[cs.statNum, { color: "#16A34A" }]}>—</Text>
-              <Text style={cs.statLabel}>Chuyên cần</Text>
+              <Text style={cs.statLabel}>{uiText("Chuyên cần")}</Text>
             </View>
             <View style={cs.statDivider} />
             <View style={cs.statItem}>
               <Text style={[cs.statNum, { color: "#DC2626" }]}>0</Text>
-              <Text style={cs.statLabel}>Chờ chấm</Text>
+              <Text style={cs.statLabel}>{uiText("Chờ chấm")}</Text>
             </View>
           </View>
 
@@ -142,7 +147,8 @@ export default function OwnedClassesList() {
               onPress={() => setTab("ALL")}
             >
               <Text style={[cs.tabText, tab === "ALL" && cs.tabTextActive]}>
-                Tất cả ({displayClasses.length})
+                {uiText("Tất cả (")}
+                {displayClasses.length})
               </Text>
             </ScalePressable>
             <ScalePressable
@@ -151,7 +157,8 @@ export default function OwnedClassesList() {
               onPress={() => setTab("ACTIVE")}
             >
               <Text style={[cs.tabText, tab === "ACTIVE" && cs.tabTextActive]}>
-                Đang giảng dạy ({displayClasses.length})
+                {uiText("Đang giảng dạy (")}
+                {displayClasses.length})
               </Text>
             </ScalePressable>
             <ScalePressable
@@ -159,7 +166,9 @@ export default function OwnedClassesList() {
               style={[cs.tabBtn, tab === "COMPLETED" && cs.tabBtnActive]}
               onPress={() => setTab("COMPLETED")}
             >
-              <Text style={[cs.tabText, tab === "COMPLETED" && cs.tabTextActive]}>Đã kết thúc (0)</Text>
+              <Text style={[cs.tabText, tab === "COMPLETED" && cs.tabTextActive]}>
+                {uiText("Đã kết thúc (0)")}
+              </Text>
             </ScalePressable>
           </ScrollView>
 
@@ -182,7 +191,7 @@ export default function OwnedClassesList() {
                   </View>
                   <View style={cs.activeDotRow}>
                     <View style={cs.activeDot} />
-                    <Text style={cs.activeText}>Đang dạy</Text>
+                    <Text style={cs.activeText}>{uiText("Đang dạy")}</Text>
                   </View>
                 </View>
 
@@ -206,13 +215,14 @@ export default function OwnedClassesList() {
                   <View style={cs.metricBadge}>
                     <Icon name="people" size={14} color="#475569" />
                     <Text style={cs.metricBadgeText}>
-                      Tối đa <Text style={{ fontWeight: "800" }}>{item.capacity}</Text> SV
+                      {uiText("Tối đa ")}
+                      <Text style={{ fontWeight: "800" }}>{item.capacity}</Text> SV
                     </Text>
                   </View>
                   <View style={cs.metricBadge}>
                     <Icon name="calendar" size={14} color="#475569" />
                     <Text style={cs.metricBadgeText}>
-                      {item.completedSessions}/{item.totalSessions} buổi
+                      {item.completedSessions}/{item.totalSessions} {uiText(" buổi")}
                     </Text>
                   </View>
                   <View style={[cs.metricBadge, { backgroundColor: "#DCFCE7" }]}>
@@ -230,19 +240,19 @@ export default function OwnedClassesList() {
                       scaleTo={0.93}
                       style={[cs.toolBtn, cs.toolBtnHighlight]}
                       onPress={() => router.push(`/teaching/classes/${item.classId}/sessions` as Href)}
-                      accessibilityLabel="Điểm danh lớp"
+                      accessibilityLabel={uiText("Điểm danh lớp")}
                     >
                       <Icon name="checkCircle" size={15} color="#0891B2" />
-                      <Text style={[cs.toolBtnText, { color: "#0891B2" }]}>Điểm danh SV</Text>
+                      <Text style={[cs.toolBtnText, { color: "#0891B2" }]}>{uiText("Điểm danh SV")}</Text>
                     </ScalePressable>
 
                     <ScalePressable
                       scaleTo={0.93}
                       style={[cs.toolBtn, cs.toolBtnPrimary]}
                       onPress={() => router.push(`/teaching/classes/${item.classId}` as Href)}
-                      accessibilityLabel="Quản lý lớp"
+                      accessibilityLabel={uiText("Quản lý lớp")}
                     >
-                      <Text style={cs.toolBtnPrimaryText}>Vào lớp dạy →</Text>
+                      <Text style={cs.toolBtnPrimaryText}>{uiText("Vào lớp dạy →")}</Text>
                     </ScalePressable>
                   </View>
 
@@ -251,21 +261,22 @@ export default function OwnedClassesList() {
                       scaleTo={0.93}
                       style={cs.toolBtn}
                       onPress={() => router.push(`/teaching/classes/${item.classId}/announcements` as Href)}
-                      accessibilityLabel="Thông báo lớp"
+                      accessibilityLabel={uiText("Thông báo lớp")}
                     >
                       <Icon name="bell" size={15} color="#7C3AED" />
-                      <Text style={cs.toolBtnText}>Thông báo</Text>
+                      <Text style={cs.toolBtnText}>{uiText("Thông báo")}</Text>
                     </ScalePressable>
 
                     <ScalePressable
                       scaleTo={0.93}
                       style={cs.toolBtn}
                       onPress={() => router.push("/teaching/assessments" as Href)}
-                      accessibilityLabel="Chấm bài tập"
+                      accessibilityLabel={uiText("Chấm bài tập")}
                     >
                       <Icon name="award" size={15} color="#DC2626" />
                       <Text style={cs.toolBtnText}>
-                        Chấm bài {item.pendingGrades > 0 ? `(${item.pendingGrades})` : ""}
+                        {uiText("Chấm bài ")}
+                        {item.pendingGrades > 0 ? `(${item.pendingGrades})` : ""}
                       </Text>
                     </ScalePressable>
                   </View>

@@ -1,7 +1,9 @@
+import { useUiText } from "../lib/i18n";
 import { useEffect, useRef } from "react";
 import type { NotFoundSceneController } from "../lib/notFound3dScene";
 
 export function NotFound3DScene() {
+  const uiText = useUiText();
   const host = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<NotFoundSceneController | null>(null);
 
@@ -65,8 +67,8 @@ export function NotFound3DScene() {
       className="notfound-scene-container"
       tabIndex={0}
       role="region"
-      aria-label="Mô hình 3D 404 tương tác"
-      aria-description="Kéo chuột để xoay 3D hoặc nhấp để tạo sóng xung lượng."
+      aria-label={uiText("Mô hình 3D 404 tương tác")}
+      aria-description={uiText("Kéo chuột để xoay 3D hoặc nhấp để tạo sóng xung lượng.")}
     >
       <div ref={host} className="notfound-webgl-layer" aria-hidden="true" />
       <div className="notfound-ambient-backdrop" aria-hidden="true" />

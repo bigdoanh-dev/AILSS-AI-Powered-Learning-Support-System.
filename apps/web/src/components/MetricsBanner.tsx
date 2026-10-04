@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { useUiText } from "../lib/i18n";
 import { useEffect, useRef, useState } from "react";
 
 interface MetricItem {
@@ -49,6 +51,8 @@ const metrics: MetricItem[] = [
 ];
 
 export function MetricsBanner() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const containerRef = useRef<HTMLDivElement>(null);
   const [activated, setActivated] = useState(false);
   const [counts, setCounts] = useState<number[]>(metrics.map(() => 0));
@@ -114,14 +118,18 @@ export function MetricsBanner() {
   }, [activated]);
 
   return (
-    <section className="metrics-banner-section" ref={containerRef} aria-label="Thống kê ấn tượng của AILSS">
+    <section
+      className="metrics-banner-section"
+      ref={containerRef}
+      aria-label={uiText("Thống kê ấn tượng của AILSS")}
+    >
       <div className="container">
         <div className="metrics-grid">
           {metrics.map((metric, idx) => {
             const displayValue =
               metric.decimals !== undefined
                 ? counts[idx].toFixed(metric.decimals)
-                : Math.round(counts[idx]).toLocaleString("vi-VN");
+                : Math.round(counts[idx]).toLocaleString(uiLocale);
 
             return (
               <div className="metric-card" key={metric.id}>
@@ -135,8 +143,8 @@ export function MetricsBanner() {
                     {metric.suffix}
                   </span>
                 </div>
-                <strong className="metric-label">{metric.label}</strong>
-                <p className="metric-desc">{metric.description}</p>
+                <strong className="metric-label">{uiText(metric.label)}</strong>
+                <p className="metric-desc">{uiText(metric.description)}</p>
               </div>
             );
           })}

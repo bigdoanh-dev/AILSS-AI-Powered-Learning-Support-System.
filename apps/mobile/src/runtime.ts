@@ -7,13 +7,28 @@ import {
   persistColdStartLoginPreference,
   restoreColdStartLoginPreference,
   REQUIRE_LOGIN_ON_COLD_START_KEY,
+  LANGUAGE_PREFERENCE_KEY,
+  persistLanguagePreference,
+  restoreLanguagePreference,
 } from "./settings";
+import type { SupportedLanguage } from "./i18n";
 
 const preferenceOptions = { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY };
 
-export function restoreMobilePreferences(): Promise<void> {
-  return restoreColdStartLoginPreference({
-    read: () => SecureStore.getItemAsync(REQUIRE_LOGIN_ON_COLD_START_KEY, preferenceOptions),
+export async function restoreMobilePreferences(): Promise<void> {
+  await Promise.all([
+    restoreColdStartLoginPreference({
+      read: () => SecureStore.getItemAsync(REQUIRE_LOGIN_ON_COLD_START_KEY, preferenceOptions),
+    }),
+    restoreLanguagePreference({
+      read: () => SecureStore.getItemAsync(LANGUAGE_PREFERENCE_KEY, preferenceOptions),
+    }),
+  ]);
+}
+
+export function setAppLanguage(value: SupportedLanguage): Promise<void> {
+  return persistLanguagePreference(value, {
+    write: (stored) => SecureStore.setItemAsync(LANGUAGE_PREFERENCE_KEY, stored, preferenceOptions),
   });
 }
 

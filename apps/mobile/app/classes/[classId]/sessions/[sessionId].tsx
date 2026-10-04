@@ -1,3 +1,4 @@
+import { useLanguage, useUiText } from "../../../../src/use-language";
 import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
 import {
   Text,
@@ -27,6 +28,8 @@ import { Page, Button, styles, tokens } from "../../../../src/ui";
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default function SessionDetailScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { classId, sessionId } = useLocalSearchParams<{ classId: string; sessionId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -97,20 +100,23 @@ export default function SessionDetailScreen() {
   const handleOpenMeeting = (url: string) => {
     const validated = safeMeetingUrl(url);
     if (!validated) {
-      Alert.alert("Đường dẫn không an toàn", "Liên kết phòng họp không hợp lệ hoặc không an toàn để mở.");
+      Alert.alert(
+        uiText("Đường dẫn không an toàn"),
+        uiText("Liên kết phòng họp không hợp lệ hoặc không an toàn để mở."),
+      );
       return;
     }
 
     Alert.alert(
-      "Mở phòng học trực tuyến",
-      "Bạn sắp rời ứng dụng AILSS để chuyển tới nền tảng phòng học bên ngoài. Bạn có muốn tiếp tục?",
+      uiText("Mở phòng học trực tuyến"),
+      uiText("Bạn sắp rời ứng dụng AILSS để chuyển tới nền tảng phòng học bên ngoài. Bạn có muốn tiếp tục?"),
       [
-        { text: "Hủy", style: "cancel" },
+        { text: uiText("Hủy"), style: "cancel" },
         {
-          text: "Mở liên kết",
+          text: uiText("Mở liên kết"),
           onPress: () => {
             void Linking.openURL(validated).catch(() => {
-              Alert.alert("Lỗi", "Không thể mở ứng dụng họp trực tuyến trên thiết bị này.");
+              Alert.alert(uiText("Lỗi"), uiText("Không thể mở ứng dụng họp trực tuyến trên thiết bị này."));
             });
           },
         },
@@ -121,10 +127,10 @@ export default function SessionDetailScreen() {
   if (!isValidClassId || !isValidSessionId) {
     return (
       <Page>
-        <Text style={styles.small}>LỖI ĐỊNH DẠNG</Text>
-        <Text style={styles.title}>Đường dẫn không hợp lệ</Text>
-        <Text style={styles.text}>Mã định danh buổi học hoặc lớp học không đúng chuẩn.</Text>
-        <Button label="Quay lại lớp học" onPress={() => router.push(`/classes/${classId}`)} />
+        <Text style={styles.small}>{uiText("LỖI ĐỊNH DẠNG")}</Text>
+        <Text style={styles.title}>{uiText("Đường dẫn không hợp lệ")}</Text>
+        <Text style={styles.text}>{uiText("Mã định danh buổi học hoặc lớp học không đúng chuẩn.")}</Text>
+        <Button label={uiText("Quay lại lớp học")} onPress={() => router.push(`/classes/${classId}`)} />
       </Page>
     );
   }
@@ -132,11 +138,11 @@ export default function SessionDetailScreen() {
   if (snapshot.state !== "AUTHENTICATED") {
     return (
       <Page>
-        <Text style={styles.small}>CHI TIẾT BUỔI HỌC</Text>
-        <Text style={styles.title}>Yêu cầu đăng nhập</Text>
-        <Text style={styles.text}>Vui lòng đăng nhập để xem thông tin chi tiết buổi học.</Text>
-        <Button label="Đăng nhập" onPress={() => router.push("/login")} />
-        <Button label="Quay lại" onPress={() => router.push(`/classes/${classId}`)} />
+        <Text style={styles.small}>{uiText("CHI TIẾT BUỔI HỌC")}</Text>
+        <Text style={styles.title}>{uiText("Yêu cầu đăng nhập")}</Text>
+        <Text style={styles.text}>{uiText("Vui lòng đăng nhập để xem thông tin chi tiết buổi học.")}</Text>
+        <Button label={uiText("Đăng nhập")} onPress={() => router.push("/login")} />
+        <Button label={uiText("Quay lại")} onPress={() => router.push(`/classes/${classId}`)} />
       </Page>
     );
   }
@@ -178,7 +184,7 @@ export default function SessionDetailScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={tokens.color.brand} />
       }
     >
-      <Text style={styles.small}>THÔNG TIN BUỔI HỌC</Text>
+      <Text style={styles.small}>{uiText("THÔNG TIN BUỔI HỌC")}</Text>
       <Text style={styles.title}>{sessionInfo?.title ?? "Đang tải…"}</Text>
 
       {/* Badges */}
@@ -191,7 +197,7 @@ export default function SessionDetailScreen() {
                 isOnline ? localStyles.badgeTextOnline : localStyles.badgeTextOffline,
               ]}
             >
-              {isOnline ? "TRỰC TUYẾN" : "TRỰC TIẾP"}
+              {isOnline ? uiText("TRỰC TUYẾN") : uiText("TRỰC TIẾP")}
             </Text>
           </View>
           <View style={[localStyles.badge, localStyles.badgeStatus]}>
@@ -204,7 +210,7 @@ export default function SessionDetailScreen() {
       {loading && !refreshing && (
         <View style={localStyles.center}>
           <ActivityIndicator size="large" color={tokens.color.brand} />
-          <Text style={[styles.text, { marginTop: 12 }]}>Đang tải chi tiết buổi học…</Text>
+          <Text style={[styles.text, { marginTop: 12 }]}>{uiText("Đang tải chi tiết buổi học…")}</Text>
         </View>
       )}
 
@@ -212,57 +218,62 @@ export default function SessionDetailScreen() {
       {error && !loading && (
         <View style={localStyles.errorCard}>
           <Text accessibilityRole="alert" style={styles.error}>
-            {error}
+            {uiText(error)}
           </Text>
-          <Button label="Thử lại" onPress={() => void fetchSessionDetails()} />
+          <Button label={uiText("Thử lại")} onPress={() => void fetchSessionDetails()} />
         </View>
       )}
 
       {/* Session Details Card */}
       {!loading && !error && sessionInfo && start && end && (
         <View style={localStyles.card}>
-          <Text style={localStyles.cardHeader}>Thời gian & Địa điểm</Text>
+          <Text style={localStyles.cardHeader}>{uiText("Thời gian & Địa điểm")}</Text>
 
           <View style={localStyles.infoRow}>
-            <Text style={localStyles.infoLabel}>Ngày học:</Text>
-            <Text style={localStyles.infoValue}>{formatDate(start, sessionInfo.timezone)}</Text>
+            <Text style={localStyles.infoLabel}>{uiText("Ngày học:")}</Text>
+            <Text style={localStyles.infoValue}>{formatDate(start, sessionInfo.timezone, uiLocale)}</Text>
           </View>
 
           <View style={localStyles.infoRow}>
-            <Text style={localStyles.infoLabel}>Khung giờ:</Text>
-            <Text style={localStyles.infoValue}>{formatTimeRange(start, end, sessionInfo.timezone)}</Text>
+            <Text style={localStyles.infoLabel}>{uiText("Khung giờ:")}</Text>
+            <Text style={localStyles.infoValue}>
+              {formatTimeRange(start, end, sessionInfo.timezone, uiLocale)}
+            </Text>
           </View>
 
           <View style={localStyles.infoRow}>
-            <Text style={localStyles.infoLabel}>Múi giờ:</Text>
+            <Text style={localStyles.infoLabel}>{uiText("Múi giờ:")}</Text>
             <Text style={localStyles.infoValue}>{sessionInfo.timezone}</Text>
           </View>
 
           {isOnline ? (
             <View style={localStyles.infoBlock}>
-              <Text style={localStyles.infoLabel}>Hình thức trực tuyến:</Text>
+              <Text style={localStyles.infoLabel}>{uiText("Hình thức trực tuyến:")}</Text>
               <Text style={localStyles.infoValue}>
-                Nền tảng: {sessionInfo.meetingProvider || "Phòng học trực tuyến"}
+                {uiText("Nền tảng: ")}
+                {sessionInfo.meetingProvider || "Phòng học trực tuyến"}
               </Text>
 
               {sessionInfo.meetingUrl ? (
                 <View style={{ marginTop: 14 }}>
                   <Button
-                    label="Tham gia phòng học trực tuyến"
+                    label={uiText("Tham gia phòng học trực tuyến")}
                     onPress={() => handleOpenMeeting(sessionInfo.meetingUrl!)}
                   />
                 </View>
               ) : (
                 <View style={localStyles.noticeBox}>
                   <Text style={localStyles.noticeText}>
-                    Đường dẫn phòng học sẽ được hệ thống hiển thị khi đến khung giờ diễn ra buổi học.
+                    {uiText(
+                      "Đường dẫn phòng học sẽ được hệ thống hiển thị khi đến khung giờ diễn ra buổi học.",
+                    )}
                   </Text>
                 </View>
               )}
             </View>
           ) : (
             <View style={localStyles.infoBlock}>
-              <Text style={localStyles.infoLabel}>Địa điểm lớp học trực tiếp:</Text>
+              <Text style={localStyles.infoLabel}>{uiText("Địa điểm lớp học trực tiếp:")}</Text>
               <Text style={[localStyles.infoValue, { fontWeight: "700" }]}>
                 {sessionInfo.location || "Chưa cập nhật địa điểm cụ thể"}
               </Text>
@@ -274,10 +285,10 @@ export default function SessionDetailScreen() {
       {/* Attendance Record Card */}
       {!loading && !error && sessionInfo && (
         <View style={localStyles.card}>
-          <Text style={localStyles.cardHeader}>Trạng thái điểm danh</Text>
+          <Text style={localStyles.cardHeader}>{uiText("Trạng thái điểm danh")}</Text>
 
           <View style={localStyles.attendanceRow}>
-            <Text style={localStyles.infoLabel}>Kết quả ghi nhận:</Text>
+            <Text style={localStyles.infoLabel}>{uiText("Kết quả ghi nhận:")}</Text>
             <View style={[localStyles.badge, attendanceBadgeStyle]}>
               <Text style={[localStyles.badgeText, attendanceTextStyle]}>{attendanceLabel}</Text>
             </View>
@@ -285,21 +296,23 @@ export default function SessionDetailScreen() {
 
           {attendanceInfo && attendanceInfo.connectedDurationSeconds > 0 && (
             <View style={localStyles.infoRow}>
-              <Text style={localStyles.infoLabel}>Thời gian tham gia:</Text>
+              <Text style={localStyles.infoLabel}>{uiText("Thời gian tham gia:")}</Text>
               <Text style={localStyles.infoValue}>
-                {Math.round(attendanceInfo.connectedDurationSeconds / 60)} phút
+                {Math.round(attendanceInfo.connectedDurationSeconds / 60)} {uiText(" phút")}
               </Text>
             </View>
           )}
 
           <Text style={localStyles.attendanceNote}>
-            Dữ liệu điểm danh được đồng bộ tự động từ hệ thống hoặc do giảng viên phụ trách xác nhận.
+            {uiText(
+              "Dữ liệu điểm danh được đồng bộ tự động từ hệ thống hoặc do giảng viên phụ trách xác nhận.",
+            )}
           </Text>
         </View>
       )}
 
       <View style={{ marginTop: 24 }}>
-        <Button label="Quay lại chi tiết lớp" onPress={() => router.push(`/classes/${classId}`)} />
+        <Button label={uiText("Quay lại chi tiết lớp")} onPress={() => router.push(`/classes/${classId}`)} />
       </View>
     </ScrollView>
   );

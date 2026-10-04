@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Text, View } from "react-native";
 import { router } from "expo-router";
@@ -30,6 +31,7 @@ function accountStats(value: unknown): AccountStats {
 }
 
 export default function AdminStatsDashboard() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [data, setData] = useState<AccountStats | null>(null);
@@ -50,32 +52,47 @@ export default function AdminStatsDashboard() {
   if (snapshot.user?.role !== "ADMIN")
     return (
       <Page>
-        <Text style={styles.error}>Chỉ quản trị viên được xem thống kê.</Text>
+        <Text style={styles.error}>{uiText("Chỉ quản trị viên được xem thống kê.")}</Text>
       </Page>
     );
   return (
     <Page>
       <ScreenHeader
-        title="Thống kê tài khoản"
-        subtitle="Số liệu tài khoản hiện tại"
+        title={uiText("Thống kê tài khoản")}
+        subtitle={uiText("Số liệu tài khoản hiện tại")}
         onBack={() => router.replace("/admin")}
       />
       {error ? (
         <Text accessibilityRole="alert" style={styles.error}>
-          {error}
+          {uiText(error)}
         </Text>
       ) : null}
-      <Button label="Làm mới" onPress={() => void load()} />
+      <Button label={uiText("Làm mới")} onPress={() => void load()} />
       {data ? (
         <View style={{ backgroundColor: tokens.color.surface, borderRadius: 14, padding: 16, gap: 10 }}>
-          <Text style={styles.title}>Tổng tài khoản: {data.totalAccounts}</Text>
-          <Text style={styles.text}>Học viên đang hoạt động: {data.students}</Text>
-          <Text style={styles.text}>Giảng viên đang hoạt động: {data.lecturers}</Text>
-          <Text style={styles.text}>Quản trị viên đang hoạt động: {data.admins}</Text>
-          <Text style={styles.text}>Tài khoản tạm khóa: {data.suspended}</Text>
+          <Text style={styles.title}>
+            {uiText("Tổng tài khoản: ")}
+            {data.totalAccounts}
+          </Text>
+          <Text style={styles.text}>
+            {uiText("Học viên đang hoạt động: ")}
+            {data.students}
+          </Text>
+          <Text style={styles.text}>
+            {uiText("Giảng viên đang hoạt động: ")}
+            {data.lecturers}
+          </Text>
+          <Text style={styles.text}>
+            {uiText("Quản trị viên đang hoạt động: ")}
+            {data.admins}
+          </Text>
+          <Text style={styles.text}>
+            {uiText("Tài khoản tạm khóa: ")}
+            {data.suspended}
+          </Text>
         </View>
       ) : (
-        <Text style={styles.small}>Chưa có số liệu tài khoản.</Text>
+        <Text style={styles.small}>{uiText("Chưa có số liệu tài khoản.")}</Text>
       )}
     </Page>
   );

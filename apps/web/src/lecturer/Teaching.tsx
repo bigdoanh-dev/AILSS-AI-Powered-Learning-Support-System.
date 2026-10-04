@@ -1,3 +1,6 @@
+import { LocalizedFileInput } from "../components/LocalizedFileInput";
+import { useLanguage } from "../lib/i18n";
+import { useUiText } from "../lib/i18n";
 import { readCourseCover } from "../lib/course-cover";
 import { useCourseCategories } from "../lib/course-categories";
 import { useState, useEffect, useMemo, type FormEvent } from "react";
@@ -60,6 +63,7 @@ export function CourseCreateModal({
   onClose: () => void;
   onCreated?: (course: Course) => void;
 }) {
+  const uiText = useUiText();
   const nav = useNavigate();
   const categoryOptions = useCourseCategories();
   const [title, setTitle] = useState("");
@@ -154,16 +158,23 @@ export function CourseCreateModal({
         <div className="admin-modal-header">
           <div>
             <p className="eyebrow" style={{ margin: 0, color: "var(--blue, #0284c7)" }}>
-              COURSE AUTHORING · BIÊN SOẠN MỚI
+              {uiText("COURSE AUTHORING · BIÊN SOẠN MỚI")}
             </p>
             <h2 id="course-create-modal-title" style={{ margin: "4px 0 0" }}>
-              Tạo Khóa Học Mới
+              {uiText("Tạo Khóa Học Mới")}
             </h2>
             <p className="subtext" style={{ margin: "4px 0 0" }}>
-              Thiết lập thông tin khóa học, chủ đề đào tạo, hình thức học phí và tải lên ảnh bìa nhận diện.
+              {uiText(
+                "Thiết lập thông tin khóa học, chủ đề đào tạo, hình thức học phí và tải lên ảnh bìa nhận diện.",
+              )}
             </p>
           </div>
-          <button type="button" className="admin-modal-close-btn" onClick={onClose} aria-label="Đóng">
+          <button
+            type="button"
+            className="admin-modal-close-btn"
+            onClick={onClose}
+            aria-label={uiText("Đóng")}
+          >
             ✕
           </button>
         </div>
@@ -171,7 +182,7 @@ export function CourseCreateModal({
         {msg && (
           <div className="dashboard-banner-notice" role="status" style={{ marginBottom: 16 }}>
             <span>✓</span>
-            <span>{msg}</span>
+            <span>{uiText(msg)}</span>
           </div>
         )}
         {error && (
@@ -186,23 +197,25 @@ export function CourseCreateModal({
               marginBottom: 16,
             }}
           >
-            ⚠️ {error}
+            ⚠️ {uiText(error)}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="form-panel form-grid">
           <label>
-            Tên khóa học <span style={{ color: "#dc2626" }}>*</span>
+            {uiText("Tên khóa học ")}
+            <span style={{ color: "#dc2626" }}>*</span>
             <input
               type="text"
               required
-              placeholder="VD: Lập trình Python ứng dụng AI & LLM nâng cao..."
+              placeholder={uiText("VD: Lập trình Python ứng dụng AI & LLM nâng cao...")}
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
             />
           </label>
           <label>
-            Đường dẫn tĩnh (Slug) <span style={{ color: "#dc2626" }}>*</span>
+            {uiText("Đường dẫn tĩnh (Slug) ")}
+            <span style={{ color: "#dc2626" }}>*</span>
             <input
               type="text"
               required
@@ -212,22 +225,23 @@ export function CourseCreateModal({
             />
           </label>
           <label style={{ gridColumn: "1 / -1" }}>
-            Mô tả tóm tắt khóa học
+            {uiText("Mô tả tóm tắt khóa học")}
             <textarea
               rows={2}
               maxLength={2000}
-              placeholder="Mô tả mục tiêu, kiến thức trọng tâm và kỹ năng đầu ra của khóa học..."
+              placeholder={uiText("Mô tả mục tiêu, kiến thức trọng tâm và kỹ năng đầu ra của khóa học...")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </label>
           <label>
-            Chủ đề đào tạo <span style={{ color: "#dc2626" }}>*</span>
+            {uiText("Chủ đề đào tạo ")}
+            <span style={{ color: "#dc2626" }}>*</span>
             <input
               required
               minLength={2}
               maxLength={80}
-              placeholder="Ví dụ: Trí tuệ nhân tạo, Cơ sở dữ liệu..."
+              placeholder={uiText("Ví dụ: Trí tuệ nhân tạo, Cơ sở dữ liệu...")}
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
               list="course-modal-category-suggestions"
@@ -239,7 +253,7 @@ export function CourseCreateModal({
             </datalist>
           </label>
           <label>
-            Hình thức đào tạo
+            {uiText("Hình thức đào tạo")}
             <select
               value={priceType}
               onChange={(e) => {
@@ -248,15 +262,15 @@ export function CourseCreateModal({
                 if (pt === "FREE") setPrice("0");
               }}
             >
-              <option value="FREE">Miễn phí (Cộng đồng)</option>
-              <option value="PAID">Có học phí (Thương mại)</option>
+              <option value="FREE">{uiText("Miễn phí (Cộng đồng)")}</option>
+              <option value="PAID">{uiText("Có học phí (Thương mại)")}</option>
             </select>
           </label>
 
           {priceType === "PAID" && (
             <>
               <label>
-                Học phí (VND)
+                {uiText("Học phí (VND)")}
                 <input
                   type="number"
                   min={1000}
@@ -268,7 +282,7 @@ export function CourseCreateModal({
                 />
               </label>
               <label>
-                Tiền tệ
+                {uiText("Tiền tệ")}
                 <input type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} required />
               </label>
             </>
@@ -285,7 +299,7 @@ export function CourseCreateModal({
                 marginBottom: 6,
               }}
             >
-              Hình ảnh bìa đại diện khóa học (Cover Image)
+              {uiText("Hình ảnh bìa đại diện khóa học (Cover Image)")}
             </span>
             <div
               className={`inline-cover-dropzone ${isDragOver ? "dragover" : ""}`}
@@ -317,8 +331,12 @@ export function CourseCreateModal({
               />
               {coverPreview ? (
                 <div className="inline-cover-preview-wrapper" onClick={(e) => e.stopPropagation()}>
-                  <img src={coverPreview} alt="Xem trước ảnh bìa" className="inline-cover-preview-img" />
-                  <span className="inline-cover-badge">✓ Đã tải ảnh bìa</span>
+                  <img
+                    src={coverPreview}
+                    alt={uiText("Xem trước ảnh bìa")}
+                    className="inline-cover-preview-img"
+                  />
+                  <span className="inline-cover-badge">{uiText("✓ Đã tải ảnh bìa")}</span>
                   <div className="inline-cover-overlay-actions">
                     <button
                       type="button"
@@ -331,7 +349,7 @@ export function CourseCreateModal({
                       style={{ fontSize: 11, padding: "4px 8px" }}
                     >
                       <Icon name="upload" size={12} />
-                      <span>Đổi ảnh</span>
+                      <span>{uiText("Đổi ảnh")}</span>
                     </button>
                     <button
                       type="button"
@@ -343,7 +361,7 @@ export function CourseCreateModal({
                       style={{ fontSize: 11, padding: "4px 8px", color: "#dc2626" }}
                     >
                       <Icon name="trash" size={12} />
-                      <span>Xóa</span>
+                      <span>{uiText("Xóa")}</span>
                     </button>
                   </div>
                 </div>
@@ -365,10 +383,10 @@ export function CourseCreateModal({
                     <Icon name="image" size={24} />
                   </div>
                   <p style={{ fontWeight: 600, fontSize: 13, margin: "0 0 4px", color: "var(--ink)" }}>
-                    Kéo thả ảnh bìa hoặc nhấp để chọn tệp
+                    {uiText("Kéo thả ảnh bìa hoặc nhấp để chọn tệp")}
                   </p>
                   <span style={{ fontSize: 11, color: "var(--muted)" }}>
-                    PNG, JPG, WEBP (khuyến nghị tỉ lệ 16:9)
+                    {uiText("PNG, JPG, WEBP (khuyến nghị tỉ lệ 16:9)")}
                   </span>
                 </>
               )}
@@ -389,10 +407,10 @@ export function CourseCreateModal({
             }}
           >
             <button type="button" className="button button-subtle" onClick={onClose} disabled={loading}>
-              Hủy bỏ
+              {uiText("Hủy bỏ")}
             </button>
             <button type="submit" className="button" disabled={loading}>
-              {loading ? "Đang tạo bản nháp…" : "+ Khởi tạo khóa học"}
+              {loading ? uiText("Đang tạo bản nháp…") : uiText("+ Khởi tạo khóa học")}
             </button>
           </div>
         </form>
@@ -401,10 +419,10 @@ export function CourseCreateModal({
   );
 }
 
-function formatCoursePrice(c: Course) {
+function formatCoursePrice(c: Course, locale: string) {
   if (c.priceType === "FREE" || Number(c.price || 0) === 0) return "Miễn phí";
   try {
-    return new Intl.NumberFormat("vi-VN", {
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency: c.currency || "VND",
       maximumFractionDigits: 0,
@@ -429,6 +447,8 @@ interface HomeSession {
 }
 
 export function TeachingHome() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses");
   const classes = useLecturer<
     | {
@@ -552,8 +572,8 @@ export function TeachingHome() {
     try {
       const s = new Date(startAt);
       const e = new Date(endAt);
-      const timeStr = `${s.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} - ${e.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
-      const dateStr = s.toLocaleDateString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit" });
+      const timeStr = `${s.toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" })} - ${e.toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" })}`;
+      const dateStr = s.toLocaleDateString(uiLocale, { weekday: "short", day: "2-digit", month: "2-digit" });
       return `${timeStr} • ${dateStr}`;
     } catch {
       return startAt;
@@ -570,14 +590,15 @@ export function TeachingHome() {
           </span>
           <div>
             <p className="eyebrow" style={{ margin: 0, color: "var(--blue, #0284c7)" }}>
-              TRUNG TÂM ĐIỀU HÀNH GIẢNG DẠY · AILSS LECTURER
+              {uiText("TRUNG TÂM ĐIỀU HÀNH GIẢNG DẠY · AILSS LECTURER")}
             </p>
             <h1 style={{ margin: "4px 0 2px", fontSize: "1.45rem", color: "var(--ink)" }}>
-              Tổng Quan Giảng Dạy &amp; Điều Hành Lớp Học Phần
+              {uiText("Tổng Quan Giảng Dạy & Điều Hành Lớp Học Phần")}
             </h1>
             <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)" }}>
-              Quản lý khóa học trực tuyến, theo dõi lịch giảng dạy, điểm danh sinh viên và đối soát kết quả
-              đào tạo.
+              {uiText(
+                "Quản lý khóa học trực tuyến, theo dõi lịch giảng dạy, điểm danh sinh viên và đối soát kết quả đào tạo.",
+              )}
             </p>
           </div>
         </div>
@@ -589,7 +610,7 @@ export function TeachingHome() {
             style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
             <Icon name="plus" size={15} />
-            <span>Soạn khóa học</span>
+            <span>{uiText("Soạn khóa học")}</span>
           </button>
           <button
             type="button"
@@ -598,33 +619,37 @@ export function TeachingHome() {
             style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
             <Icon name="users" size={15} />
-            <span>Mở lớp học</span>
+            <span>{uiText("Mở lớp học")}</span>
           </button>
           <Link className="button button-subtle" to="/app/teaching/reports">
-            Báo cáo sư phạm
+            {uiText("Báo cáo sư phạm")}
           </Link>
           <Link className="button button-subtle" to="/app/teaching/revenue">
-            Doanh thu
+            {uiText("Doanh thu")}
           </Link>
         </div>
       </div>
 
       {/* 1. Real KPI Cards */}
-      <section aria-label="Chỉ số hiệu suất sư phạm trọng yếu">
+      <section aria-label={uiText("Chỉ số hiệu suất sư phạm trọng yếu")}>
         <div className="workspace-kpi-grid">
           <div className="kpi-card">
             <div className="kpi-header">
               <span className="pro-icon-box blue" aria-hidden="true">
                 <Icon name="book" size={18} />
               </span>
-              <span className="kpi-tag accent">{courseList.length} khóa học</span>
+              <span className="kpi-tag accent">
+                {courseList.length} {uiText(" khóa học")}
+              </span>
             </div>
-            <div className="kpi-value">{publishedCoursesCount} khóa</div>
-            <div className="kpi-label">Khóa học đã xuất bản</div>
+            <div className="kpi-value">
+              {publishedCoursesCount} {uiText(" khóa")}
+            </div>
+            <div className="kpi-label">{uiText("Khóa học đã xuất bản")}</div>
             <p className="kpi-subtext">
               {draftCoursesCount > 0
-                ? `${draftCoursesCount} khóa đang soạn bản nháp`
-                : "Tất cả khóa học đều đang hoạt động"}
+                ? uiText("{0} khóa đang soạn bản nháp", [draftCoursesCount])
+                : uiText("Tất cả khóa học đều đang hoạt động")}
             </p>
           </div>
 
@@ -633,11 +658,17 @@ export function TeachingHome() {
               <span className="pro-icon-box green" aria-hidden="true">
                 <Icon name="graduation" size={18} />
               </span>
-              <span className="kpi-tag accent">{classList.length} lớp phụ trách</span>
+              <span className="kpi-tag accent">
+                {classList.length} {uiText(" lớp phụ trách")}
+              </span>
             </div>
-            <div className="kpi-value">{publishedSchedulesCount} lớp</div>
-            <div className="kpi-label">Lớp đã xuất bản thời khóa biểu</div>
-            <p className="kpi-subtext">{activeClassesCount} lớp đang hoạt động đào tạo</p>
+            <div className="kpi-value">
+              {publishedSchedulesCount} {uiText(" lớp")}
+            </div>
+            <div className="kpi-label">{uiText("Lớp đã xuất bản thời khóa biểu")}</div>
+            <p className="kpi-subtext">
+              {activeClassesCount} {uiText(" lớp đang hoạt động đào tạo")}
+            </p>
           </div>
 
           <div className="kpi-card">
@@ -647,9 +678,11 @@ export function TeachingHome() {
               </span>
               <span className="kpi-tag accent">{currentMonthLabel}</span>
             </div>
-            <div className="kpi-value">{sessionsLoading ? "..." : `${sessions.length} ca dạy`}</div>
-            <div className="kpi-label">Ca dạy trong tháng hiện tại</div>
-            <p className="kpi-subtext">Lịch đào tạo trực tiếp &amp; trực tuyến</p>
+            <div className="kpi-value">
+              {sessionsLoading ? "..." : uiText("{0} ca dạy", [sessions.length])}
+            </div>
+            <div className="kpi-label">{uiText("Ca dạy trong tháng hiện tại")}</div>
+            <p className="kpi-subtext">{uiText("Lịch đào tạo trực tiếp & trực tuyến")}</p>
           </div>
 
           <div className="kpi-card">
@@ -657,34 +690,38 @@ export function TeachingHome() {
               <span className="pro-icon-box amber" aria-hidden="true">
                 <Icon name="target" size={18} />
               </span>
-              <span className="kpi-tag accent">{offeringList.length} đợt mở</span>
+              <span className="kpi-tag accent">
+                {offeringList.length} {uiText(" đợt mở")}
+              </span>
             </div>
-            <div className="kpi-value">{openOfferingsCount} đợt</div>
-            <div className="kpi-label">Đợt mở đăng ký tuyển sinh</div>
-            <p className="kpi-subtext">Quản lý tiếp nhận học viên &amp; đối soát học phí</p>
+            <div className="kpi-value">
+              {openOfferingsCount} {uiText(" đợt")}
+            </div>
+            <div className="kpi-label">{uiText("Đợt mở đăng ký tuyển sinh")}</div>
+            <p className="kpi-subtext">{uiText("Quản lý tiếp nhận học viên & đối soát học phí")}</p>
           </div>
         </div>
       </section>
 
       {/* Quick Action Toolbar */}
-      <div className="workspace-quick-actions" role="toolbar" aria-label="Thao tác giảng dạy nhanh">
+      <div className="workspace-quick-actions" role="toolbar" aria-label={uiText("Thao tác giảng dạy nhanh")}>
         <Link className="quick-action-chip" to="/app/teaching/schedule">
           <span className="chip-icon" aria-hidden="true">
             <Icon name="calendar" size={16} />
           </span>
-          <span>Lịch giảng dạy</span>
+          <span>{uiText("Lịch giảng dạy")}</span>
         </Link>
         <Link className="quick-action-chip" to="/app/teaching/attendance">
           <span className="chip-icon" aria-hidden="true">
             <Icon name="checkCircle" size={16} />
           </span>
-          <span>Điểm danh học viên</span>
+          <span>{uiText("Điểm danh học viên")}</span>
         </Link>
         <Link className="quick-action-chip" to="/app/teaching/grades">
           <span className="chip-icon" aria-hidden="true">
             <Icon name="trophy" size={16} />
           </span>
-          <span>Bảng điểm học viên</span>
+          <span>{uiText("Bảng điểm học viên")}</span>
         </Link>
         <button
           type="button"
@@ -695,7 +732,7 @@ export function TeachingHome() {
           <span className="chip-icon" aria-hidden="true">
             <Icon name="plus" size={16} />
           </span>
-          <span>Soạn khóa học mới</span>
+          <span>{uiText("Soạn khóa học mới")}</span>
         </button>
         <button
           type="button"
@@ -706,37 +743,37 @@ export function TeachingHome() {
           <span className="chip-icon" aria-hidden="true">
             <Icon name="users" size={16} />
           </span>
-          <span>Mở lớp học mới</span>
+          <span>{uiText("Mở lớp học mới")}</span>
         </button>
         <Link className="quick-action-chip" to="/app/teaching/assessments">
           <span className="chip-icon" aria-hidden="true">
             <Icon name="quiz" size={16} />
           </span>
-          <span>Ngân hàng đề thi &amp; Quiz</span>
+          <span>{uiText("Ngân hàng đề thi & Quiz")}</span>
         </Link>
         <Link className="quick-action-chip" to="/app/teaching/offerings">
           <span className="chip-icon" aria-hidden="true">
             <Icon name="target" size={16} />
           </span>
-          <span>Đợt mở đăng ký</span>
+          <span>{uiText("Đợt mở đăng ký")}</span>
         </Link>
         <Link className="quick-action-chip" to="/app/teaching/revenue">
           <span className="chip-icon" aria-hidden="true">
             <Icon name="card" size={16} />
           </span>
-          <span>Doanh thu &amp; Đối soát</span>
+          <span>{uiText("Doanh thu & Đối soát")}</span>
         </Link>
         <Link className="quick-action-chip" to="/app/teaching/reports">
           <span className="chip-icon" aria-hidden="true">
             <Icon name="chart" size={16} />
           </span>
-          <span>Báo cáo &amp; Thống kê</span>
+          <span>{uiText("Báo cáo & Thống kê")}</span>
         </Link>
         <Link className="quick-action-chip" to="/app/teaching/ai">
           <span className="chip-icon" aria-hidden="true">
             <Icon name="sparkles" size={16} />
           </span>
-          <span>AI Studio</span>
+          <span>{uiText("AI Studio")}</span>
         </Link>
       </div>
 
@@ -750,28 +787,29 @@ export function TeachingHome() {
                 {currentMonthLabel}
               </span>
               <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>
-                {sessions.length} ca dạy được ghi nhận
+                {sessions.length} {uiText(" ca dạy được ghi nhận")}
               </span>
             </div>
             <h2 style={{ margin: 0, fontSize: "1.15rem", display: "flex", alignItems: "center", gap: 8 }}>
               <span className="pro-icon-box blue sm">
                 <Icon name="calendar" size={14} />
               </span>
-              <span>Lịch Giảng Dạy &amp; Ca Dạy Thực Tế</span>
+              <span>{uiText("Lịch Giảng Dạy & Ca Dạy Thực Tế")}</span>
             </h2>
             <p className="subtext">
-              Các buổi học phần sắp tới theo thời khóa biểu đã xuất bản của các lớp học do bạn trực tiếp giảng
-              dạy.
+              {uiText(
+                "Các buổi học phần sắp tới theo thời khóa biểu đã xuất bản của các lớp học do bạn trực tiếp giảng dạy.",
+              )}
             </p>
           </div>
           <Link className="button button-small" to="/app/teaching/schedule">
-            Xem toàn bộ lịch dạy →
+            {uiText("Xem toàn bộ lịch dạy →")}
           </Link>
         </div>
 
         {sessionsLoading ? (
           <div style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>
-            Đang tải lịch giảng dạy...
+            {uiText("Đang tải lịch giảng dạy...")}
           </div>
         ) : sessions.length === 0 ? (
           <div
@@ -785,10 +823,10 @@ export function TeachingHome() {
             }}
           >
             <p style={{ margin: "0 0 12px", color: "var(--muted)", fontSize: 13 }}>
-              Chưa có buổi học nào được lên lịch cho các lớp học phần trong tháng này.
+              {uiText("Chưa có buổi học nào được lên lịch cho các lớp học phần trong tháng này.")}
             </p>
             <Link className="button button-small" to="/app/teaching/schedule">
-              Lên lịch giảng dạy ngay
+              {uiText("Lên lịch giảng dạy ngay")}
             </Link>
           </div>
         ) : (
@@ -803,19 +841,20 @@ export function TeachingHome() {
                       {formatSessionTime(session.startAt, session.endAt)}
                     </span>
                     <span className={`schedule-status-badge ${isToday ? "live" : "upcoming"}`}>
-                      {isToday ? "● Hôm nay" : isPast ? "Đã diễn ra" : "Sắp tới"}
+                      {isToday ? uiText("● Hôm nay") : isPast ? uiText("Đã diễn ra") : uiText("Sắp tới")}
                     </span>
                   </div>
                   <h3 className="teaching-schedule-title">{session.title}</h3>
                   <p className="teaching-schedule-info">
                     <span>
-                      Lớp: <strong>{session.className}</strong>
+                      {uiText("Lớp: ")}
+                      <strong>{session.className}</strong>
                     </span>
                     <span>•</span>
                     <span>
                       {session.mode === "ONLINE"
-                        ? `Trực tuyến: ${session.meetingProvider || "Google Meet"}`
-                        : `Phòng: ${session.location || "Trực tiếp"}`}
+                        ? uiText("Trực tuyến: {0}", [session.meetingProvider || "Google Meet"])
+                        : uiText("Phòng: {0}", [session.location || "Trực tiếp"])}
                     </span>
                   </p>
                   <div className="teaching-schedule-actions">
@@ -823,13 +862,13 @@ export function TeachingHome() {
                       className="button button-small"
                       to={`/app/teaching/attendance?class=${session.classId}`}
                     >
-                      ✓ Điểm danh ngay
+                      {uiText("✓ Điểm danh ngay")}
                     </Link>
                     <Link
                       className="button button-subtle button-small"
                       to={`/app/teaching/classes/${session.classId}`}
                     >
-                      Mở lớp học →
+                      {uiText("Mở lớp học →")}
                     </Link>
                   </div>
                 </div>
@@ -851,7 +890,10 @@ export function TeachingHome() {
                 style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6 }}
               >
                 <Icon name="book" size={14} />
-                <span>Khóa học phụ trách ({courseList.length})</span>
+                <span>
+                  {uiText("Khóa học phụ trách (")}
+                  {courseList.length})
+                </span>
               </button>
               <button
                 type="button"
@@ -860,13 +902,20 @@ export function TeachingHome() {
                 style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6 }}
               >
                 <Icon name="users" size={14} />
-                <span>Lớp học phần ({classList.length})</span>
+                <span>
+                  {uiText("Lớp học phần (")}
+                  {classList.length})
+                </span>
               </button>
             </div>
             <p className="subtext" style={{ margin: 0 }}>
               {activeLeadTab === "courses"
-                ? "Chương trình đào tạo trọng điểm: hình ảnh bài giảng, đề cương chi tiết và nội dung xuất bản."
-                : "Các lớp học phần trực tiếp có sĩ số sinh viên và thời khóa biểu giảng dạy tích cực."}
+                ? uiText(
+                    "Chương trình đào tạo trọng điểm: hình ảnh bài giảng, đề cương chi tiết và nội dung xuất bản.",
+                  )
+                : uiText(
+                    "Các lớp học phần trực tiếp có sĩ số sinh viên và thời khóa biểu giảng dạy tích cực.",
+                  )}
             </p>
           </div>
 
@@ -880,10 +929,11 @@ export function TeachingHome() {
                   style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                 >
                   <Icon name="plus" size={13} />
-                  <span>Soạn khóa học mới</span>
+                  <span>{uiText("Soạn khóa học mới")}</span>
                 </button>
                 <Link className="button button-subtle button-small" to="/app/teaching/courses">
-                  Xem tất cả ({courseList.length}) →
+                  {uiText("Xem tất cả (")}
+                  {courseList.length}) →
                 </Link>
               </>
             ) : (
@@ -895,10 +945,11 @@ export function TeachingHome() {
                   style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                 >
                   <Icon name="plus" size={13} />
-                  <span>Mở lớp học mới</span>
+                  <span>{uiText("Mở lớp học mới")}</span>
                 </button>
                 <Link className="button button-subtle button-small" to="/app/teaching/classes">
-                  Xem tất cả ({classList.length}) →
+                  {uiText("Xem tất cả (")}
+                  {classList.length}) →
                 </Link>
               </>
             )}
@@ -919,14 +970,16 @@ export function TeachingHome() {
                 }}
               >
                 <p style={{ margin: "0 0 12px", color: "var(--muted)", fontSize: 13 }}>
-                  Bạn chưa tạo khóa học nào. Hãy khởi tạo khóa học đầu tiên để bắt đầu xây dựng bài giảng!
+                  {uiText(
+                    "Bạn chưa tạo khóa học nào. Hãy khởi tạo khóa học đầu tiên để bắt đầu xây dựng bài giảng!",
+                  )}
                 </p>
                 <button
                   type="button"
                   className="button button-small"
                   onClick={() => setShowCourseModal(true)}
                 >
-                  + Soạn khóa học mới
+                  {uiText("+ Soạn khóa học mới")}
                 </button>
               </div>
             ) : (
@@ -965,7 +1018,8 @@ export function TeachingHome() {
                               fontWeight: 600,
                             }}
                           >
-                            Khóa {(coursePage - 1) * pageSize + i + 1}
+                            {uiText("Khóa ")}
+                            {(coursePage - 1) * pageSize + i + 1}
                           </span>
                         </div>
                         <div style={{ position: "absolute", top: 10, right: 10, zIndex: 2 }}>
@@ -977,7 +1031,7 @@ export function TeachingHome() {
                               backdropFilter: "blur(4px)",
                             }}
                           >
-                            {formatCoursePrice(c)}
+                            {uiText(formatCoursePrice(c, uiLocale))}
                           </span>
                         </div>
                       </div>
@@ -988,7 +1042,8 @@ export function TeachingHome() {
                             state={c.state === "HIDDEN" ? "HIDDEN" : isPublished ? "PUBLISHED" : "DRAFT"}
                           />
                           <span style={{ fontSize: 11, color: "var(--muted)" }}>
-                            Mã: <code>{c.slug}</code>
+                            {uiText("Mã: ")}
+                            <code>{c.slug}</code>
                           </span>
                         </div>
 
@@ -1013,16 +1068,16 @@ export function TeachingHome() {
                             }}
                           >
                             <Icon name="assignment" size={14} />
-                            <span>Soạn bài giảng</span>
+                            <span>{uiText("Soạn bài giảng")}</span>
                           </Link>
                           <Link
                             className="button button-subtle button-small"
                             to={`/app/teaching/courses/${c.courseId}/roster`}
-                            title="Danh sách học viên"
+                            title={uiText("Danh sách học viên")}
                             style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                           >
                             <Icon name="users" size={13} />
-                            <span>Học viên</span>
+                            <span>{uiText("Học viên")}</span>
                           </Link>
                         </div>
                       </div>
@@ -1048,11 +1103,12 @@ export function TeachingHome() {
                 }}
               >
                 <div>
-                  Hiển thị{" "}
+                  {uiText("Hiển thị")}{" "}
                   <strong>
                     {(coursePage - 1) * pageSize + 1} - {Math.min(coursePage * pageSize, courseList.length)}
                   </strong>{" "}
-                  trong tổng số <strong>{courseList.length}</strong> khóa học
+                  {uiText("trong tổng số ")}
+                  <strong>{courseList.length}</strong> {uiText(" khóa học")}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <button
@@ -1061,7 +1117,7 @@ export function TeachingHome() {
                     onClick={() => setCoursePage((p) => Math.max(1, p - 1))}
                     disabled={coursePage === 1}
                   >
-                    ‹ Trang trước
+                    {uiText("‹ Trang trước")}
                   </button>
                   <span style={{ fontWeight: 600, color: "var(--ink)" }}>
                     Trang {coursePage} / {totalCoursePages}
@@ -1092,11 +1148,12 @@ export function TeachingHome() {
                 }}
               >
                 <p style={{ margin: "0 0 12px", color: "var(--muted)", fontSize: 13 }}>
-                  Bạn chưa có lớp học phần nào. Hãy mở lớp học mới để xếp lịch giảng dạy và tiếp nhận học
-                  viên!
+                  {uiText(
+                    "Bạn chưa có lớp học phần nào. Hãy mở lớp học mới để xếp lịch giảng dạy và tiếp nhận học viên!",
+                  )}
                 </p>
                 <button type="button" className="button button-small" onClick={() => setShowClassModal(true)}>
-                  + Mở lớp học mới
+                  {uiText("+ Mở lớp học mới")}
                 </button>
               </div>
             ) : (
@@ -1128,11 +1185,14 @@ export function TeachingHome() {
                               fontWeight: 600,
                             }}
                           >
-                            Lớp {(classPage - 1) * pageSize + i + 1}
+                            {uiText("Lớp ")}
+                            {(classPage - 1) * pageSize + i + 1}
                           </span>
                         </div>
                         <span className="green-badge-pill">
-                          {cl.scheduleState === "PUBLISHED" ? "● Đã xuất bản TKB" : "Bản nháp TKB"}
+                          {cl.scheduleState === "PUBLISHED"
+                            ? uiText("● Đã xuất bản TKB")
+                            : uiText("Bản nháp TKB")}
                         </span>
                       </div>
                       <h3 style={{ margin: "10px 0 0", fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>
@@ -1147,13 +1207,13 @@ export function TeachingHome() {
 
                     <div className="teaching-home-rich-card-body">
                       <div style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 12 }}>
-                        Hình thức:{" "}
+                        {uiText("Hình thức:")}{" "}
                         <strong>
                           {cl.classKind === "LIVE_COHORT"
-                            ? "Khóa trực tuyến (Cohort)"
-                            : "Lớp học phần trực tiếp"}
+                            ? uiText("Khóa trực tuyến (Cohort)")
+                            : uiText("Lớp học phần trực tiếp")}
                         </strong>
-                        {cl.maxMembers ? ` • Tối đa: ${cl.maxMembers} SV` : ""}
+                        {cl.maxMembers ? uiText(" • Tối đa: {0} SV", [cl.maxMembers]) : ""}
                       </div>
 
                       <div className="teaching-home-rich-card-actions">
@@ -1168,14 +1228,14 @@ export function TeachingHome() {
                           }}
                         >
                           <Icon name="check" size={14} />
-                          <span>Điểm danh</span>
+                          <span>{uiText("Điểm danh")}</span>
                         </Link>
                         <Link
                           className="button button-subtle button-small"
                           to={`/app/teaching/classes/${cl.classId}`}
                           style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                         >
-                          <span>Chi tiết lớp</span>
+                          <span>{uiText("Chi tiết lớp")}</span>
                           <Icon name="chevronRight" size={13} />
                         </Link>
                       </div>
@@ -1201,11 +1261,12 @@ export function TeachingHome() {
                 }}
               >
                 <div>
-                  Hiển thị{" "}
+                  {uiText("Hiển thị")}{" "}
                   <strong>
                     {(classPage - 1) * pageSize + 1} - {Math.min(classPage * pageSize, classList.length)}
                   </strong>{" "}
-                  trong tổng số <strong>{classList.length}</strong> lớp học
+                  {uiText("trong tổng số ")}
+                  <strong>{classList.length}</strong> {uiText(" lớp học")}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <button
@@ -1214,7 +1275,7 @@ export function TeachingHome() {
                     onClick={() => setClassPage((p) => Math.max(1, p - 1))}
                     disabled={classPage === 1}
                   >
-                    ‹ Trang trước
+                    {uiText("‹ Trang trước")}
                   </button>
                   <span style={{ fontWeight: 600, color: "var(--ink)" }}>
                     Trang {classPage} / {totalClassPages}
@@ -1242,10 +1303,12 @@ export function TeachingHome() {
               <span className="pro-icon-box blue sm">
                 <Icon name="layers" size={14} />
               </span>
-              <span>Công Cụ Điều Hành &amp; Quản Lý Học Vụ</span>
+              <span>{uiText("Công Cụ Điều Hành & Quản Lý Học Vụ")}</span>
             </h2>
             <p className="subtext">
-              Truy cập nhanh các phân hệ nghiệp vụ phục vụ công tác giảng dạy, chấm bài và đối soát học phần.
+              {uiText(
+                "Truy cập nhanh các phân hệ nghiệp vụ phục vụ công tác giảng dạy, chấm bài và đối soát học phần.",
+              )}
             </p>
           </div>
         </div>
@@ -1270,18 +1333,19 @@ export function TeachingHome() {
               <span className="pro-icon-box green sm">
                 <Icon name="trophy" size={14} />
               </span>
-              <h3 style={{ margin: 0, fontSize: 15, color: "var(--ink)" }}>Sổ Điểm &amp; Chấm Bài</h3>
+              <h3 style={{ margin: 0, fontSize: 15, color: "var(--ink)" }}>{uiText("Sổ Điểm & Chấm Bài")}</h3>
             </div>
             <p style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.45, marginBottom: 14 }}>
-              Theo dõi kết quả làm bài trắc nghiệm, bài tập thực hành, chấm điểm tự luận và phản hồi nhận xét
-              trực tiếp cho sinh viên.
+              {uiText(
+                "Theo dõi kết quả làm bài trắc nghiệm, bài tập thực hành, chấm điểm tự luận và phản hồi nhận xét trực tiếp cho sinh viên.",
+              )}
             </p>
             <Link
               className="button button-small"
               to="/app/teaching/grades"
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
-              <span>Vào sổ điểm học viên</span>
+              <span>{uiText("Vào sổ điểm học viên")}</span>
               <Icon name="chevronRight" size={13} />
             </Link>
           </div>
@@ -1298,18 +1362,21 @@ export function TeachingHome() {
               <span className="pro-icon-box purple sm">
                 <Icon name="quiz" size={14} />
               </span>
-              <h3 style={{ margin: 0, fontSize: 15, color: "var(--ink)" }}>Ngân Hàng Đề Thi &amp; Quiz</h3>
+              <h3 style={{ margin: 0, fontSize: 15, color: "var(--ink)" }}>
+                {uiText("Ngân Hàng Đề Thi & Quiz")}
+              </h3>
             </div>
             <p style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.45, marginBottom: 14 }}>
-              Soạn thảo câu hỏi trắc nghiệm, cấu hình thời gian làm bài, giới hạn số lần nộp và xuất bản đề
-              kiểm tra cho từng lớp học phần.
+              {uiText(
+                "Soạn thảo câu hỏi trắc nghiệm, cấu hình thời gian làm bài, giới hạn số lần nộp và xuất bản đề kiểm tra cho từng lớp học phần.",
+              )}
             </p>
             <Link
               className="button button-small"
               to="/app/teaching/assessments"
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
-              <span>Quản lý đề kiểm tra</span>
+              <span>{uiText("Quản lý đề kiểm tra")}</span>
               <Icon name="chevronRight" size={13} />
             </Link>
           </div>
@@ -1326,18 +1393,21 @@ export function TeachingHome() {
               <span className="pro-icon-box blue sm">
                 <Icon name="chart" size={14} />
               </span>
-              <h3 style={{ margin: 0, fontSize: 15, color: "var(--ink)" }}>Báo Cáo Sư Phạm &amp; Đối Soát</h3>
+              <h3 style={{ margin: 0, fontSize: 15, color: "var(--ink)" }}>
+                {uiText("Báo Cáo Sư Phạm & Đối Soát")}
+              </h3>
             </div>
             <p style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.45, marginBottom: 14 }}>
-              Phân tích tổng hợp tỷ lệ chuyên cần, phổ điểm học phần theo khoảng điểm và xuất dữ liệu báo cáo
-              giảng dạy định dạng CSV.
+              {uiText(
+                "Phân tích tổng hợp tỷ lệ chuyên cần, phổ điểm học phần theo khoảng điểm và xuất dữ liệu báo cáo giảng dạy định dạng CSV.",
+              )}
             </p>
             <Link
               className="button button-small"
               to="/app/teaching/reports"
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
-              <span>Xem báo cáo chi tiết</span>
+              <span>{uiText("Xem báo cáo chi tiết")}</span>
               <Icon name="chevronRight" size={13} />
             </Link>
           </div>
@@ -1364,6 +1434,7 @@ export function TeachingHome() {
 }
 
 export function TeachingCourses() {
+  const uiText = useUiText();
   const nav = useNavigate();
   const categories = useCourseCategories();
   const [selectedCat, setSelectedCat] = useState<string>("all");
@@ -1396,12 +1467,13 @@ export function TeachingCourses() {
             <span aria-hidden="true">
               <Icon name="book" size={15} />
             </span>
-            <span>STUDIO BIÊN SOẠN &amp; ĐÀO TẠO</span>
+            <span>{uiText("STUDIO BIÊN SOẠN & ĐÀO TẠO")}</span>
           </div>
-          <h1 className="curriculum-studio-title">Danh Mục Khóa Học &amp; Giáo Trình Giảng Dạy</h1>
+          <h1 className="curriculum-studio-title">{uiText("Danh Mục Khóa Học & Giáo Trình Giảng Dạy")}</h1>
           <p className="curriculum-studio-desc">
-            Không gian chuyên sâu quản lý đề cương bài giảng, học liệu số và điều hành học viên theo từng
-            chuyên ngành đào tạo.
+            {uiText(
+              "Không gian chuyên sâu quản lý đề cương bài giảng, học liệu số và điều hành học viên theo từng chuyên ngành đào tạo.",
+            )}
           </p>
         </div>
         <div className="curriculum-studio-actions">
@@ -1421,7 +1493,7 @@ export function TeachingCourses() {
             <span className="create-btn-icon" aria-hidden="true">
               <Icon name="plus" size={16} />
             </span>
-            <span>Soạn khóa học mới</span>
+            <span>{uiText("Soạn khóa học mới")}</span>
           </button>
         </div>
       </div>
@@ -1430,25 +1502,25 @@ export function TeachingCourses() {
         <div className="curriculum-stat-item">
           <div className="curriculum-stat-content">
             <div className="curriculum-stat-value">
-              {courses.pending || courses.error ? "—" : coursesList.length} khóa
+              {courses.pending || courses.error ? "—" : coursesList.length} {uiText(" khóa")}
             </div>
-            <div className="curriculum-stat-label">Khóa học phụ trách</div>
+            <div className="curriculum-stat-label">{uiText("Khóa học phụ trách")}</div>
             <div className="curriculum-stat-sub">
-              {coursesList.filter((c) => c.state === "PUBLISHED").length} đã xuất bản ·{" "}
-              {coursesList.filter((c) => c.state === "DRAFT").length} bản nháp
+              {coursesList.filter((c) => c.state === "PUBLISHED").length} {uiText(" đã xuất bản ·")}{" "}
+              {coursesList.filter((c) => c.state === "DRAFT").length} {uiText(" bản nháp")}
             </div>
           </div>
         </div>
         <div className="curriculum-stat-item">
           <div className="curriculum-stat-content">
-            <div className="curriculum-stat-label">Học liệu và học viên</div>
-            <div className="curriculum-stat-sub">Xem dữ liệu thực tế trong từng khóa học.</div>
+            <div className="curriculum-stat-label">{uiText("Học liệu và học viên")}</div>
+            <div className="curriculum-stat-sub">{uiText("Xem dữ liệu thực tế trong từng khóa học.")}</div>
           </div>
         </div>
         <div className="curriculum-stat-item">
           <div className="curriculum-stat-content">
-            <Link to="/app/teaching/revenue">Xem báo cáo doanh thu</Link>
-            <div className="curriculum-stat-sub">Doanh thu từ các giao dịch thanh toán.</div>
+            <Link to="/app/teaching/revenue">{uiText("Xem báo cáo doanh thu")}</Link>
+            <div className="curriculum-stat-sub">{uiText("Doanh thu từ các giao dịch thanh toán.")}</div>
           </div>
         </div>
       </div>
@@ -1462,63 +1534,65 @@ export function TeachingCourses() {
             </span>
             <input
               type="search"
-              placeholder="Tìm kiếm theo tên khóa học hoặc mã slug..."
+              placeholder={uiText("Tìm kiếm theo tên khóa học hoặc mã slug...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Tìm kiếm khóa học"
+              aria-label={uiText("Tìm kiếm khóa học")}
             />
             {searchQuery && (
               <button
                 type="button"
                 className="curriculum-clear-btn"
                 onClick={() => setSearchQuery("")}
-                aria-label="Xóa tìm kiếm"
+                aria-label={uiText("Xóa tìm kiếm")}
               >
                 ✕
               </button>
             )}
           </div>
 
-          <div className="curriculum-status-filters" role="group" aria-label="Bộ lọc trạng thái">
+          <div className="curriculum-status-filters" role="group" aria-label={uiText("Bộ lọc trạng thái")}>
             <button
               type="button"
               className={`curriculum-status-chip ${statusFilter === "ALL" ? "active" : ""}`}
               onClick={() => setStatusFilter("ALL")}
             >
-              Tất cả ({coursesList.length})
+              {uiText("Tất cả (")}
+              {coursesList.length})
             </button>
             <button
               type="button"
               className={`curriculum-status-chip ${statusFilter === "PUBLISHED" ? "active" : ""}`}
               onClick={() => setStatusFilter("PUBLISHED")}
             >
-              ● Đã xuất bản
+              {uiText("● Đã xuất bản")}
             </button>
             <button
               type="button"
               className={`curriculum-status-chip ${statusFilter === "DRAFT" ? "active" : ""}`}
               onClick={() => setStatusFilter("DRAFT")}
             >
-              ○ Bản nháp
+              {uiText("○ Bản nháp")}
             </button>
             <button
               type="button"
               className={`curriculum-status-chip ${statusFilter === "HIDDEN" ? "active" : ""}`}
               onClick={() => setStatusFilter("HIDDEN")}
             >
-              Không công khai
+              {uiText("Không công khai")}
             </button>
           </div>
         </div>
 
         {/* Category Pills */}
-        <div className="curriculum-category-row" role="tablist" aria-label="Lọc theo danh mục">
+        <div className="curriculum-category-row" role="tablist" aria-label={uiText("Lọc theo danh mục")}>
           <button
             type="button"
             className={`curriculum-cat-pill ${selectedCat === "all" ? "active" : ""}`}
             onClick={() => setSelectedCat("all")}
           >
-            Tất cả chuyên ngành ({coursesList.length})
+            {uiText("Tất cả chuyên ngành (")}
+            {coursesList.length})
           </button>
           {categories.map((cat) => (
             <button
@@ -1553,26 +1627,27 @@ export function TeachingCourses() {
                         state={c.state === "HIDDEN" ? "HIDDEN" : isPublished ? "PUBLISHED" : "DRAFT"}
                       />
                       <span className="kpi-tag accent" style={{ fontSize: 11 }}>
-                        Xem đánh giá trong khóa học
+                        {uiText("Xem đánh giá trong khóa học")}
                       </span>
                     </div>
                     <h3 className="teaching-course-title">{c.title}</h3>
                     <p className="teaching-course-desc">
-                      Mã khóa: <code>{c.slug}</code> • Học phần lý thuyết &amp; thực hành nâng cao.
+                      {uiText("Mã khóa: ")}
+                      <code>{c.slug}</code> {uiText(" • Học phần lý thuyết & thực hành nâng cao.")}
                     </p>
 
                     <div className="teaching-course-metrics">
                       <span className="teaching-course-metric-item">
                         <Icon name="book" size={13} style={{ color: "var(--blue)" }} />
-                        <span>Xem học liệu</span>
+                        <span>{uiText("Xem học liệu")}</span>
                       </span>
                       <span className="teaching-course-metric-item">
                         <Icon name="users" size={13} style={{ color: "var(--teal)" }} />
-                        <span>Xem học viên</span>
+                        <span>{uiText("Xem học viên")}</span>
                       </span>
                       <span className="teaching-course-metric-item">
                         <Icon name="clock" size={13} style={{ color: "var(--amber)" }} />
-                        <span>Xem thời lượng</span>
+                        <span>{uiText("Xem thời lượng")}</span>
                       </span>
                     </div>
 
@@ -1595,13 +1670,13 @@ export function TeachingCourses() {
                         }}
                       >
                         <Icon name="assignment" size={14} style={{ color: "#ffffff" }} />
-                        <span style={{ color: "#ffffff" }}>Soạn bài giảng</span>
+                        <span style={{ color: "#ffffff" }}>{uiText("Soạn bài giảng")}</span>
                       </Link>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, width: "100%" }}>
                         <Link
                           className="button button-subtle button-small"
                           to={`/app/teaching/courses/${c.courseId}/roster`}
-                          title="Danh sách học viên"
+                          title={uiText("Danh sách học viên")}
                           style={{
                             textAlign: "center",
                             justifyContent: "center",
@@ -1614,12 +1689,12 @@ export function TeachingCourses() {
                           }}
                         >
                           <Icon name="users" size={13} />
-                          <span>Học viên</span>
+                          <span>{uiText("Học viên")}</span>
                         </Link>
                         <Link
                           className="button button-subtle button-small"
                           to={`/app/teaching/courses/${c.courseId}?tab=settings`}
-                          title="Cài đặt khóa học"
+                          title={uiText("Cài đặt khóa học")}
                           style={{
                             textAlign: "center",
                             justifyContent: "center",
@@ -1632,7 +1707,7 @@ export function TeachingCourses() {
                           }}
                         >
                           <Icon name="settings" size={13} />
-                          <span>Cài đặt</span>
+                          <span>{uiText("Cài đặt")}</span>
                         </Link>
                       </div>
                     </div>
@@ -1645,9 +1720,11 @@ export function TeachingCourses() {
               <span className="empty-hub-icon" aria-hidden="true" style={{ color: "var(--muted, #64748b)" }}>
                 <Icon name="book" size={32} />
               </span>
-              <h3>Không tìm thấy khóa học nào phù hợp</h3>
+              <h3>{uiText("Không tìm thấy khóa học nào phù hợp")}</h3>
               <p>
-                Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm của bạn, hoặc tạo mới khóa học giáo trình ngay.
+                {uiText(
+                  "Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm của bạn, hoặc tạo mới khóa học giáo trình ngay.",
+                )}
               </p>
               <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
                 <button
@@ -1659,7 +1736,7 @@ export function TeachingCourses() {
                     setSearchQuery("");
                   }}
                 >
-                  Xóa bộ lọc
+                  {uiText("Xóa bộ lọc")}
                 </button>
                 <button
                   type="button"
@@ -1669,7 +1746,7 @@ export function TeachingCourses() {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                 >
-                  + Soạn khóa học mới
+                  {uiText("+ Soạn khóa học mới")}
                 </button>
               </div>
             </div>
@@ -1685,13 +1762,14 @@ export function TeachingCourses() {
               <Icon name="sparkles" size={22} />
             </span>
             <div>
-              <h3>Trợ Lý Biên Soạn AI (AILSS Co-pilot)</h3>
+              <h3>{uiText("Trợ Lý Biên Soạn AI (AILSS Co-pilot)")}</h3>
               <span className="kpi-tag accent">Bloom Taxonomy v2</span>
             </div>
           </div>
           <p>
-            Tăng tốc độ soạn giáo án bằng cách tự động sinh khung đề cương 6 cấp độ nhận thức Bloom, đề xuất
-            bài tập trắc nghiệm và kịch bản thực hành đa phương tiện.
+            {uiText(
+              "Tăng tốc độ soạn giáo án bằng cách tự động sinh khung đề cương 6 cấp độ nhận thức Bloom, đề xuất bài tập trắc nghiệm và kịch bản thực hành đa phương tiện.",
+            )}
           </p>
           <div style={{ marginTop: "auto", paddingTop: 10 }}>
             <Link
@@ -1699,7 +1777,7 @@ export function TeachingCourses() {
               to="/app/teaching/ai-studio"
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
-              <span>Mở AI Studio Trợ Giảng</span>
+              <span>{uiText("Mở AI Studio Trợ Giảng")}</span>
               <Icon name="chevronRight" size={14} />
             </Link>
           </div>
@@ -1711,38 +1789,39 @@ export function TeachingCourses() {
               <Icon name="assignment" size={22} />
             </span>
             <div>
-              <h3>Tiêu Chuẩn Xuất Bản Khóa Học AILSS</h3>
-              <span className="kpi-tag">Quy chuẩn đào tạo</span>
+              <h3>{uiText("Tiêu Chuẩn Xuất Bản Khóa Học AILSS")}</h3>
+              <span className="kpi-tag">{uiText("Quy chuẩn đào tạo")}</span>
             </div>
           </div>
           <p>
-            Để đảm bảo trải nghiệm học tập tốt nhất, mỗi khóa học cần đáp ứng các tiêu chí sau trước khi công
-            khai:
+            {uiText(
+              "Để đảm bảo trải nghiệm học tập tốt nhất, mỗi khóa học cần đáp ứng các tiêu chí sau trước khi công khai:",
+            )}
           </p>
           <ul className="checklist-items">
             <li className="checklist-item">
               <span className="check-icon" aria-hidden="true">
                 <Icon name="checkCircle" size={16} />
               </span>
-              <span>Đề cương chi tiết có tối thiểu 5 bài học và mục tiêu rõ ràng</span>
+              <span>{uiText("Đề cương chi tiết có tối thiểu 5 bài học và mục tiêu rõ ràng")}</span>
             </li>
             <li className="checklist-item">
               <span className="check-icon" aria-hidden="true">
                 <Icon name="checkCircle" size={16} />
               </span>
-              <span>Video bài giảng chất lượng cao HD với phụ đề / tóm tắt</span>
+              <span>{uiText("Video bài giảng chất lượng cao HD với phụ đề / tóm tắt")}</span>
             </li>
             <li className="checklist-item">
               <span className="check-icon" aria-hidden="true">
                 <Icon name="checkCircle" size={16} />
               </span>
-              <span>Có ít nhất 1 bài kiểm tra trắc nghiệm hoặc bài tập Lab thực hành</span>
+              <span>{uiText("Có ít nhất 1 bài kiểm tra trắc nghiệm hoặc bài tập Lab thực hành")}</span>
             </li>
             <li className="checklist-item">
               <span className="check-icon" aria-hidden="true">
                 <Icon name="checkCircle" size={16} />
               </span>
-              <span>Bộ tài liệu đính kèm và mã nguồn mẫu được kiểm thử hoạt động</span>
+              <span>{uiText("Bộ tài liệu đính kèm và mã nguồn mẫu được kiểm thử hoạt động")}</span>
             </li>
           </ul>
         </div>
@@ -1763,6 +1842,7 @@ export function TeachingCourses() {
   );
 }
 export function CourseCreate() {
+  const uiText = useUiText();
   const nav = useNavigate(),
     [msg, setMsg] = useState(""),
     [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -1787,30 +1867,30 @@ export function CourseCreate() {
   return (
     <>
       <p className="eyebrow">COURSE AUTHORING</p>
-      <h1>Tạo khóa học.</h1>
+      <h1>{uiText("Tạo khóa học.")}</h1>
       <form className="form-panel form-grid" onSubmit={(e) => void submit(e)}>
-        <Field label="Tên khóa học" name="title" required />
+        <Field label={uiText("Tên khóa học")} name="title" required />
         <label>
-          Mô tả
+          {uiText("Mô tả")}
           <textarea name="description" maxLength={2000} />
         </label>
-        <Field label="Đường dẫn khóa học" name="slug" required />
+        <Field label={uiText("Đường dẫn khóa học")} name="slug" required />
         <label>
-          Chủ đề
+          {uiText("Chủ đề")}
           <input
             name="categoryName"
             required
             minLength={2}
             maxLength={80}
-            placeholder="Ví dụ: Thiết kế đồ họa"
+            placeholder={uiText("Ví dụ: Thiết kế đồ họa")}
           />
         </label>
         <CoursePricingFields />
 
         {/* Cover image upload */}
         <label style={{ gridColumn: "1 / -1" }}>
-          Hình ảnh bìa khóa học
-          <input
+          {uiText("Hình ảnh bìa khóa học")}
+          <LocalizedFileInput
             type="file"
             accept="image/png, image/jpeg, image/webp"
             onChange={(e) => {
@@ -1831,20 +1911,21 @@ export function CourseCreate() {
             >
               <img
                 src={coverPreview}
-                alt="Xem trước bìa"
+                alt={uiText("Xem trước bìa")}
                 style={{ width: "100%", height: 160, objectFit: "cover", display: "block" }}
               />
             </div>
           )}
         </label>
 
-        <button className="button">Tạo bản nháp</button>
-        <p role="status">{msg}</p>
+        <button className="button">{uiText("Tạo bản nháp")}</button>
+        <p role="status">{uiText(msg)}</p>
       </form>
     </>
   );
 }
 export function CourseDetail() {
+  const uiText = useUiText();
   const categoryOptions = useCourseCategories();
   const [searchParams] = useSearchParams();
   const { courseId: id = "" } = useParams(),
@@ -1951,7 +2032,11 @@ export function CourseDetail() {
         {(c) => (
           <>
             <Breadcrumbs
-              items={[{ label: "Giảng dạy", to: "/app/teaching" }, { label: "Khóa học" }, { label: c.title }]}
+              items={[
+                { label: uiText("Giảng dạy"), to: "/app/teaching" },
+                { label: uiText("Khóa học") },
+                { label: c.title },
+              ]}
             />
 
             {/* Studio Hero Card */}
@@ -1960,14 +2045,15 @@ export function CourseDetail() {
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
                   <StateChip state={c.state} />
                   <span className="kpi-tag">
-                    {c.priceType === "FREE" ? "Miễn phí" : `${c.price} ${c.currency}`}
+                    {c.priceType === "FREE" ? uiText("Miễn phí") : `${c.price} ${c.currency}`}
                   </span>
                   <span className="badge">{c.slug}</span>
                 </div>
                 <h1 style={{ margin: "0.25rem 0" }}>{c.title}</h1>
                 <p className="lead" style={{ margin: 0 }}>
-                  Quản trị chương trình đào tạo, biên soạn bài giảng đa phương tiện và phát hành gói tuyển
-                  sinh.
+                  {uiText(
+                    "Quản trị chương trình đào tạo, biên soạn bài giảng đa phương tiện và phát hành gói tuyển sinh.",
+                  )}
                 </p>
               </div>
               <div
@@ -1975,17 +2061,18 @@ export function CourseDetail() {
                 style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
               >
                 <Link className="button" to={`/app/teaching/discussion/COURSE/${id}`}>
-                  ⭐ Đánh giá & Thảo luận ({reviewCount})
+                  {uiText("⭐ Đánh giá & Thảo luận (")}
+                  {reviewCount})
                 </Link>
                 <Link className="button button-subtle" to={`/app/teaching/courses/${id}/roster`}>
-                  👥 Học viên
+                  {uiText("👥 Học viên")}
                 </Link>
                 {c.state === "DRAFT" && (
                   <button
                     className="button button-subtle"
                     onClick={() => void command(`/courses/${id}/submit-review`)}
                   >
-                    <Icon name="zap" size={15} /> Nộp duyệt
+                    <Icon name="zap" size={15} /> {uiText(" Nộp duyệt")}
                   </button>
                 )}
               </div>
@@ -2002,10 +2089,12 @@ export function CourseDetail() {
                   <span className="kpi-icon" aria-hidden="true">
                     <Icon name="book" size={20} />
                   </span>
-                  <span className="kpi-tag accent">Giáo trình</span>
+                  <span className="kpi-tag accent">{uiText("Giáo trình")}</span>
                 </div>
-                <div className="kpi-value">{lessons.pending ? "…" : `${lessonList.length} bài`}</div>
-                <div className="kpi-label">Bài học & video</div>
+                <div className="kpi-value">
+                  {lessons.pending ? "…" : uiText("{0} bài", [lessonList.length])}
+                </div>
+                <div className="kpi-label">{uiText("Bài học & video")}</div>
               </div>
               <div
                 className="kpi-card"
@@ -2016,20 +2105,24 @@ export function CourseDetail() {
                   <span className="kpi-icon" aria-hidden="true">
                     <Icon name="target" size={20} />
                   </span>
-                  <span className="kpi-tag">Tuyển sinh</span>
+                  <span className="kpi-tag">{uiText("Tuyển sinh")}</span>
                 </div>
-                <div className="kpi-value">{offerings.pending ? "…" : `${offeringList.length} đợt`}</div>
-                <div className="kpi-label">Đợt mở đăng ký</div>
+                <div className="kpi-value">
+                  {offerings.pending ? "…" : uiText("{0} đợt", [offeringList.length])}
+                </div>
+                <div className="kpi-label">{uiText("Đợt mở đăng ký")}</div>
               </div>
               <div className="kpi-card" onClick={() => setActiveTab("classes")} style={{ cursor: "pointer" }}>
                 <div className="kpi-header">
                   <span className="kpi-icon" aria-hidden="true">
                     <Icon name="users" size={20} />
                   </span>
-                  <span className="kpi-tag accent">Lớp học</span>
+                  <span className="kpi-tag accent">{uiText("Lớp học")}</span>
                 </div>
-                <div className="kpi-value">{classes.pending ? "…" : `${classList.length} lớp`}</div>
-                <div className="kpi-label">Lớp học trực tiếp</div>
+                <div className="kpi-value">
+                  {classes.pending ? "…" : uiText("{0} lớp", [classList.length])}
+                </div>
+                <div className="kpi-label">{uiText("Lớp học trực tiếp")}</div>
               </div>
               <div className="kpi-card">
                 <div className="kpi-header">
@@ -2038,8 +2131,10 @@ export function CourseDetail() {
                   </span>
                   <span className="kpi-tag accent">{ratingAvg} ★</span>
                 </div>
-                <div className="kpi-value">{reviewCount} lượt</div>
-                <div className="kpi-label">Đánh giá từ học viên</div>
+                <div className="kpi-value">
+                  {reviewCount} {uiText(" lượt")}
+                </div>
+                <div className="kpi-label">{uiText("Đánh giá từ học viên")}</div>
               </div>
             </div>
 
@@ -2051,7 +2146,8 @@ export function CourseDetail() {
                 aria-selected={activeTab === "curriculum"}
                 onClick={() => setActiveTab("curriculum")}
               >
-                <Icon name="book" size={15} /> Giáo trình & Bài học ({lessonList.length})
+                <Icon name="book" size={15} /> {uiText(" Giáo trình & Bài học (")}
+                {lessonList.length})
               </button>
               <button
                 className={`segmented-tab ${activeTab === "offerings" ? "active" : ""}`}
@@ -2059,7 +2155,8 @@ export function CourseDetail() {
                 aria-selected={activeTab === "offerings"}
                 onClick={() => setActiveTab("offerings")}
               >
-                <Icon name="target" size={15} /> Đợt tuyển sinh ({offeringList.length})
+                <Icon name="target" size={15} /> {uiText(" Đợt tuyển sinh (")}
+                {offeringList.length})
               </button>
               <button
                 className={`segmented-tab ${activeTab === "classes" ? "active" : ""}`}
@@ -2067,7 +2164,8 @@ export function CourseDetail() {
                 aria-selected={activeTab === "classes"}
                 onClick={() => setActiveTab("classes")}
               >
-                <Icon name="users" size={15} /> Lớp học liên kết ({classList.length})
+                <Icon name="users" size={15} /> {uiText(" Lớp học liên kết (")}
+                {classList.length})
               </button>
               <button
                 className={`segmented-tab ${activeTab === "releases" ? "active" : ""}`}
@@ -2075,7 +2173,8 @@ export function CourseDetail() {
                 aria-selected={activeTab === "releases"}
                 onClick={() => setActiveTab("releases")}
               >
-                <Icon name="tag" size={15} /> Bản phát hành ({releasesList.length})
+                <Icon name="tag" size={15} /> {uiText(" Bản phát hành (")}
+                {releasesList.length})
               </button>
               <button
                 className={`segmented-tab ${activeTab === "edit" ? "active" : ""}`}
@@ -2083,7 +2182,7 @@ export function CourseDetail() {
                 aria-selected={activeTab === "edit"}
                 onClick={() => setActiveTab("edit")}
               >
-                <Icon name="settings" size={15} /> Chỉnh sửa khóa học
+                <Icon name="settings" size={15} /> {uiText(" Chỉnh sửa khóa học")}
               </button>
               <button
                 className={`segmented-tab ${activeTab === "settings" ? "active" : ""}`}
@@ -2091,7 +2190,7 @@ export function CourseDetail() {
                 aria-selected={activeTab === "settings"}
                 onClick={() => setActiveTab("settings")}
               >
-                <Icon name="settings" size={15} /> Cài đặt
+                <Icon name="settings" size={15} /> {uiText(" Cài đặt")}
               </button>
             </div>
 
@@ -2100,17 +2199,17 @@ export function CourseDetail() {
               <section className="dashboard-section-card">
                 <div className="section-card-header">
                   <div>
-                    <h2>Danh Sách Bài Giảng Trong Khóa Học</h2>
+                    <h2>{uiText("Danh Sách Bài Giảng Trong Khóa Học")}</h2>
                     <p className="subtext">
-                      Quản lý cấu trúc bài giảng, video học liệu và cho phép xem thử (preview).
+                      {uiText("Quản lý cấu trúc bài giảng, video học liệu và cho phép xem thử (preview).")}
                     </p>
                   </div>
                   <div style={{ display: "flex", gap: "0.5rem" }}>
                     <Link className="button" to={`/app/teaching/courses/${id}/lessons`}>
-                      <Icon name="plus" size={15} /> Soạn bài học mới
+                      <Icon name="plus" size={15} /> {uiText(" Soạn bài học mới")}
                     </Link>
                     <Link className="button button-subtle" to={`/app/teaching/assessments?course=${id}`}>
-                      <Icon name="quiz" size={15} /> Bài kiểm tra AI
+                      <Icon name="quiz" size={15} /> {uiText(" Bài kiểm tra AI")}
                     </Link>
                   </div>
                 </div>
@@ -2134,16 +2233,20 @@ export function CourseDetail() {
                               }}
                             >
                               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                <span className="kpi-tag accent">Bài {String(idx + 1).padStart(2, "0")}</span>
+                                <span className="kpi-tag accent">
+                                  {uiText("Bài ")}
+                                  {String(idx + 1).padStart(2, "0")}
+                                </span>
                                 <span className="badge">{x.state}</span>
                                 {x.preview && (
                                   <span className="green-badge-pill">
-                                    <Icon name="eye" size={13} /> Xem trước
+                                    <Icon name="eye" size={13} /> {uiText(" Xem trước")}
                                   </span>
                                 )}
                               </div>
                               <small style={{ color: "var(--muted, #64748b)" }}>
-                                Chương: {x.sectionTitle}
+                                {uiText("Chương: ")}
+                                {x.sectionTitle}
                               </small>
                             </div>
                             <h3 style={{ margin: "0.25rem 0 0.5rem 0", fontSize: "1.1rem" }}>{x.title}</h3>
@@ -2152,7 +2255,7 @@ export function CourseDetail() {
                                 className="button button-subtle button-small"
                                 to={`/app/teaching/lessons/${x.lessonId}`}
                               >
-                                Sửa bài học →
+                                {uiText("Sửa bài học →")}
                               </Link>
                             </div>
                           </article>
@@ -2160,14 +2263,16 @@ export function CourseDetail() {
                       </div>
                     ) : (
                       <EmptyState
-                        title="Chưa có bài giảng nào"
+                        title={uiText("Chưa có bài giảng nào")}
                         action={
                           <Link className="button" to={`/app/teaching/courses/${id}/lessons`}>
-                            <Icon name="plus" size={15} /> Thêm bài học đầu tiên
+                            <Icon name="plus" size={15} /> {uiText(" Thêm bài học đầu tiên")}
                           </Link>
                         }
                       >
-                        Khóa học cần ít nhất một bài học để sẵn sàng mở tuyển sinh và nộp kiểm duyệt.
+                        {uiText(
+                          "Khóa học cần ít nhất một bài học để sẵn sàng mở tuyển sinh và nộp kiểm duyệt.",
+                        )}
                       </EmptyState>
                     )
                   }
@@ -2180,11 +2285,13 @@ export function CourseDetail() {
               <section className="dashboard-section-card">
                 <div className="section-card-header">
                   <div>
-                    <h2>Các Đợt Mở Bán & Tuyển Sinh</h2>
-                    <p className="subtext">Cấu hình giá bán, hình thức đào tạo và thời gian tuyển sinh.</p>
+                    <h2>{uiText("Các Đợt Mở Bán & Tuyển Sinh")}</h2>
+                    <p className="subtext">
+                      {uiText("Cấu hình giá bán, hình thức đào tạo và thời gian tuyển sinh.")}
+                    </p>
                   </div>
                   <Link className="button" to="/app/teaching/offerings">
-                    <Icon name="plus" size={15} /> Tạo đợt mở đăng ký
+                    <Icon name="plus" size={15} /> {uiText(" Tạo đợt mở đăng ký")}
                   </Link>
                 </div>
                 <State q={offerings}>
@@ -2207,19 +2314,20 @@ export function CourseDetail() {
                             >
                               <StateChip state={o.state} />
                               <span className="amount-highlight">
-                                {o.price ? `${o.price} ${o.currency}` : "Miễn phí"}
+                                {o.price ? `${o.price} ${o.currency}` : uiText("Miễn phí")}
                               </span>
                             </div>
                             <h3 style={{ margin: "0.25rem 0" }}>{o.title}</h3>
                             <p style={{ color: "var(--muted, #64748b)", fontSize: "0.875rem" }}>
-                              Hình thức: {stateLabel(o.offeringType)}
+                              {uiText("Hình thức: ")}
+                              {uiText(stateLabel(o.offeringType))}
                             </p>
                             <div style={{ marginTop: "0.75rem" }}>
                               <Link
                                 className="card-action-btn"
                                 to={`/app/teaching/offerings/${o.offeringId}`}
                               >
-                                Quản lý đợt tuyển sinh →
+                                {uiText("Quản lý đợt tuyển sinh →")}
                               </Link>
                             </div>
                           </article>
@@ -2227,14 +2335,16 @@ export function CourseDetail() {
                       </div>
                     ) : (
                       <EmptyState
-                        title="Chưa có đợt mở đăng ký"
+                        title={uiText("Chưa có đợt mở đăng ký")}
                         action={
                           <Link className="button" to="/app/teaching/offerings">
-                            <Icon name="plus" size={15} /> Tạo đợt mở đăng ký
+                            <Icon name="plus" size={15} /> {uiText(" Tạo đợt mở đăng ký")}
                           </Link>
                         }
                       >
-                        Khóa học chưa tự động mở quyền đăng ký. Hãy tạo đợt mở bán khi nội dung đủ điều kiện.
+                        {uiText(
+                          "Khóa học chưa tự động mở quyền đăng ký. Hãy tạo đợt mở bán khi nội dung đủ điều kiện.",
+                        )}
                       </EmptyState>
                     )
                   }
@@ -2247,11 +2357,11 @@ export function CourseDetail() {
               <section className="dashboard-section-card">
                 <div className="section-card-header">
                   <div>
-                    <h2>Lớp Học Trực Tuyến Liên Kết</h2>
-                    <p className="subtext">Các lớp học đang áp dụng giáo trình khóa học này.</p>
+                    <h2>{uiText("Lớp Học Trực Tuyến Liên Kết")}</h2>
+                    <p className="subtext">{uiText("Các lớp học đang áp dụng giáo trình khóa học này.")}</p>
                   </div>
                   <Link className="button" to="/app/teaching/classes">
-                    <Icon name="plus" size={15} /> Tạo lớp mới
+                    <Icon name="plus" size={15} /> {uiText(" Tạo lớp mới")}
                   </Link>
                 </div>
                 <State q={classes}>
@@ -2269,21 +2379,21 @@ export function CourseDetail() {
                               className="button button-subtle button-small"
                               to={`/app/teaching/classes/${x.classId}`}
                             >
-                              Vào không gian lớp →
+                              {uiText("Vào không gian lớp →")}
                             </Link>
                           </article>
                         ))}
                       </div>
                     ) : (
                       <EmptyState
-                        title="Chưa có lớp liên kết"
+                        title={uiText("Chưa có lớp liên kết")}
                         action={
                           <Link className="button" to="/app/teaching/classes">
-                            <Icon name="plus" size={15} /> Tạo lớp
+                            <Icon name="plus" size={15} /> {uiText(" Tạo lớp")}
                           </Link>
                         }
                       >
-                        Chỉ hiển thị lớp có liên kết tới khóa học này do Classroom quản lý.
+                        {uiText("Chỉ hiển thị lớp có liên kết tới khóa học này do Classroom quản lý.")}
                       </EmptyState>
                     )
                   }
@@ -2296,10 +2406,11 @@ export function CourseDetail() {
               <section className="dashboard-section-card">
                 <div className="section-card-header">
                   <div>
-                    <h2>Quản Lý Phiên Bản Khóa Học &amp; Bản Phát Hành (Course Versioning)</h2>
+                    <h2>{uiText("Quản Lý Phiên Bản Khóa Học & Bản Phát Hành (Course Versioning)")}</h2>
                     <p className="subtext">
-                      Quản lý vòng đời phát hành (Draft → RC → Live), ngăn xung đột đồng thời bằng CAS Guard
-                      và so sánh khác biệt nội dung (Diff).
+                      {uiText(
+                        "Quản lý vòng đời phát hành (Draft → RC → Live), ngăn xung đột đồng thời bằng CAS Guard và so sánh khác biệt nội dung (Diff).",
+                      )}
                     </p>
                   </div>
                 </div>
@@ -2315,7 +2426,7 @@ export function CourseDetail() {
                       marginBottom: "1rem",
                     }}
                   >
-                    <strong>Lỗi xung đột đồng thời:</strong> {publishError}
+                    <strong>{uiText("Lỗi xung đột đồng thời:")}</strong> {uiText(publishError)}
                   </div>
                 )}
 
@@ -2324,12 +2435,12 @@ export function CourseDetail() {
                   <table className="admin-table" style={{ width: "100%" }}>
                     <thead>
                       <tr>
-                        <th>Phiên bản</th>
-                        <th>Trạng thái</th>
-                        <th>Số bài giảng</th>
-                        <th>Thời gian phát hành</th>
-                        <th>Ghi chú phát hành</th>
-                        <th>Thao tác</th>
+                        <th>{uiText("Phiên bản")}</th>
+                        <th>{uiText("Trạng thái")}</th>
+                        <th>{uiText("Số bài giảng")}</th>
+                        <th>{uiText("Thời gian phát hành")}</th>
+                        <th>{uiText("Ghi chú phát hành")}</th>
+                        <th>{uiText("Thao tác")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2363,7 +2474,9 @@ export function CourseDetail() {
                               {rel.status}
                             </span>
                           </td>
-                          <td>{rel.lessonsCount} bài</td>
+                          <td>
+                            {rel.lessonsCount} {uiText(" bài")}
+                          </td>
                           <td>{rel.publishedAt}</td>
                           <td style={{ maxWidth: 260, fontSize: 12.5, color: "var(--muted, #64748b)" }}>
                             {rel.releaseNotes}
@@ -2379,7 +2492,7 @@ export function CourseDetail() {
                                 })
                               }
                             >
-                              So sánh (Diff)
+                              {uiText("So sánh (Diff)")}
                             </button>
                           </td>
                         </tr>
@@ -2398,7 +2511,7 @@ export function CourseDetail() {
                   }}
                 >
                   <h3 style={{ fontSize: 14, fontWeight: 700, margin: "0 0 10px 0" }}>
-                    Phát Hành Bản Mới (Optimistic Concurrency CAS Guard)
+                    {uiText("Phát Hành Bản Mới (Optimistic Concurrency CAS Guard)")}
                   </h3>
                   <form
                     onSubmit={handlePublishRelease}
@@ -2410,7 +2523,7 @@ export function CourseDetail() {
                   >
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>
-                        Phiên bản Semver
+                        {uiText("Phiên bản Semver")}
                       </label>
                       <input
                         type="text"
@@ -2428,7 +2541,7 @@ export function CourseDetail() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>
-                        Trạng thái phát hành
+                        {uiText("Trạng thái phát hành")}
                       </label>
                       <select
                         value={newReleaseForm.status}
@@ -2446,8 +2559,8 @@ export function CourseDetail() {
                         }}
                       >
                         <option value="RELEASE_CANDIDATE">RELEASE_CANDIDATE</option>
-                        <option value="LIVE">LIVE (Phát hành chính thức)</option>
-                        <option value="DRAFT">DRAFT</option>
+                        <option value="LIVE">{uiText("LIVE (Phát hành chính thức)")}</option>
+                        <option value="DRAFT">{uiText("DRAFT")}</option>
                       </select>
                     </div>
                     <div>
@@ -2474,7 +2587,7 @@ export function CourseDetail() {
                     </div>
                     <div style={{ gridColumn: "1 / -1" }}>
                       <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>
-                        Ghi chú phát hành (Release Notes)
+                        {uiText("Ghi chú phát hành (Release Notes)")}
                       </label>
                       <textarea
                         rows={2}
@@ -2482,7 +2595,7 @@ export function CourseDetail() {
                         onChange={(e) =>
                           setNewReleaseForm({ ...newReleaseForm, releaseNotes: e.target.value })
                         }
-                        placeholder="Ghi chú tóm tắt bài giảng mới hoặc cập nhật giáo trình..."
+                        placeholder={uiText("Ghi chú tóm tắt bài giảng mới hoặc cập nhật giáo trình...")}
                         style={{
                           width: "100%",
                           padding: 6,
@@ -2493,7 +2606,7 @@ export function CourseDetail() {
                     </div>
                     <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end" }}>
                       <button type="submit" className="button">
-                        <Icon name="check" size={15} /> Xác nhận phát hành (CAS Guard)
+                        <Icon name="check" size={15} /> {uiText(" Xác nhận phát hành (CAS Guard)")}
                       </button>
                     </div>
                   </form>
@@ -2512,21 +2625,23 @@ export function CourseDetail() {
                         <div>
                           <span className="kpi-tag accent">Release Diff</span>
                           <h2 id="release-diff-modal-title" style={{ fontSize: "1.2rem", marginTop: 4 }}>
-                            So Sánh Giữa {selectedDiffReleases.v1} và {selectedDiffReleases.v2}
+                            {uiText("So Sánh Giữa ")}
+                            {selectedDiffReleases.v1} {uiText(" và ")}
+                            {selectedDiffReleases.v2}
                           </h2>
                         </div>
                         <button
                           type="button"
                           className="button button-subtle"
                           onClick={() => setSelectedDiffReleases(null)}
-                          aria-label="Đóng"
+                          aria-label={uiText("Đóng")}
                         >
                           ✕
                         </button>
                       </div>
                       <div style={{ padding: "14px 0", display: "flex", flexDirection: "column", gap: 10 }}>
                         <div style={{ fontSize: 13, color: "var(--muted, #475569)" }}>
-                          Phân tích khác biệt cây học liệu và mục tiêu kiểm tra:
+                          {uiText("Phân tích khác biệt cây học liệu và mục tiêu kiểm tra:")}
                         </div>
                         <ul
                           style={{
@@ -2538,13 +2653,16 @@ export function CourseDetail() {
                           }}
                         >
                           <li>
-                            <strong>[+ Thêm mới]</strong> Bài học Sharding &amp; Replication Cassandra.
+                            <strong>{uiText("[+ Thêm mới]")}</strong>{" "}
+                            {uiText(" Bài học Sharding & Replication Cassandra.")}
                           </li>
                           <li>
-                            <strong>[~ Cập nhật]</strong> Sửa đổi tiêu chuẩn kiểm tra trắc nghiệm Bloom 4-5.
+                            <strong>{uiText("[~ Cập nhật]")}</strong>{" "}
+                            {uiText(" Sửa đổi tiêu chuẩn kiểm tra trắc nghiệm Bloom 4-5.")}
                           </li>
                           <li>
-                            <strong>[Giữ nguyên]</strong> {lessonList.length} bài giảng kế thừa.
+                            <strong>{uiText("[Giữ nguyên]")}</strong> {lessonList.length}{" "}
+                            {uiText(" bài giảng kế thừa.")}
                           </li>
                         </ul>
                         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
@@ -2553,7 +2671,7 @@ export function CourseDetail() {
                             className="button"
                             onClick={() => setSelectedDiffReleases(null)}
                           >
-                            Đóng
+                            {uiText("Đóng")}
                           </button>
                         </div>
                       </div>
@@ -2567,17 +2685,18 @@ export function CourseDetail() {
               <section className="dashboard-section-card">
                 <div className="section-card-header">
                   <div>
-                    <h2>Khóa hoặc xóa khóa học</h2>
+                    <h2>{uiText("Khóa hoặc xóa khóa học")}</h2>
                     <p className="subtext">
-                      Trạng thái hiện tại: {stateLabel(c.state)} · {c.activeStudentCount ?? 0} học viên đang
-                      có quyền học
+                      {uiText("Trạng thái hiện tại: ")}
+                      {uiText(stateLabel(c.state))} · {c.activeStudentCount ?? 0}{" "}
+                      {uiText(" học viên đang có quyền học")}
                     </p>
                   </div>
                 </div>
                 <p>
-                  Khóa học đã xuất bản sẽ được ẩn khỏi danh mục và ngừng nhận học viên mới. Học viên đã đăng
-                  ký vẫn xem bài học, làm bài và giữ tiến độ. Dữ liệu lớp học, đơn hàng và thanh toán được giữ
-                  lại.
+                  {uiText(
+                    "Khóa học đã xuất bản sẽ được ẩn khỏi danh mục và ngừng nhận học viên mới. Học viên đã đăng ký vẫn xem bài học, làm bài và giữ tiến độ. Dữ liệu lớp học, đơn hàng và thanh toán được giữ lại.",
+                  )}
                 </p>
                 {!["DELETED", "ARCHIVED"].includes(c.state ?? "") &&
                   (c.state !== "HIDDEN" || !c.publishedAt) && (
@@ -2591,7 +2710,7 @@ export function CourseDetail() {
                             setRetireConfirmation("");
                           }}
                         >
-                          Yêu cầu khóa học
+                          {uiText("Yêu cầu khóa học")}
                         </button>
                       )}
                       <button
@@ -2602,7 +2721,7 @@ export function CourseDetail() {
                           setRetireConfirmation("");
                         }}
                       >
-                        Yêu cầu xóa khóa học
+                        {uiText("Yêu cầu xóa khóa học")}
                       </button>
                     </div>
                   )}
@@ -2610,12 +2729,12 @@ export function CourseDetail() {
                   <div className="form-panel" style={{ marginTop: "1rem" }}>
                     <p>
                       {retireMode === "DELETE" && c.state !== "PUBLISHED"
-                        ? "Bản nháp sẽ được xóa mềm."
-                        : "Khóa học sẽ được ẩn an toàn để bảo toàn quyền học của học viên cũ."}{" "}
-                      Nhập chính xác tên khóa học để xác nhận:
+                        ? uiText("Bản nháp sẽ được xóa mềm.")
+                        : uiText("Khóa học sẽ được ẩn an toàn để bảo toàn quyền học của học viên cũ.")}{" "}
+                      {uiText("Nhập chính xác tên khóa học để xác nhận:")}
                     </p>
                     <input
-                      aria-label="Nhập tên khóa học để xác nhận"
+                      aria-label={uiText("Nhập tên khóa học để xác nhận")}
                       value={retireConfirmation}
                       onChange={(event) => setRetireConfirmation(event.target.value)}
                       placeholder={c.title}
@@ -2627,14 +2746,14 @@ export function CourseDetail() {
                         disabled={retiring || retireConfirmation !== c.title}
                         onClick={() => void retireCourse()}
                       >
-                        {retiring ? "Đang xử lý…" : "Xác nhận yêu cầu"}
+                        {retiring ? uiText("Đang xử lý…") : uiText("Xác nhận yêu cầu")}
                       </button>
                       <button
                         className="button button-subtle"
                         type="button"
                         onClick={() => setRetireMode(null)}
                       >
-                        Hủy
+                        {uiText("Hủy")}
                       </button>
                     </div>
                   </div>
@@ -2647,9 +2766,9 @@ export function CourseDetail() {
               <section className="dashboard-section-card">
                 <div className="section-card-header">
                   <div>
-                    <h2>Chỉnh Sửa Thông Tin Khóa Học</h2>
+                    <h2>{uiText("Chỉnh Sửa Thông Tin Khóa Học")}</h2>
                     <p className="subtext">
-                      Cập nhật tiêu đề, danh mục, hình thức đào tạo và học phí niêm yết.
+                      {uiText("Cập nhật tiêu đề, danh mục, hình thức đào tạo và học phí niêm yết.")}
                     </p>
                   </div>
                 </div>
@@ -2671,12 +2790,17 @@ export function CourseDetail() {
                       gap: "1.25rem",
                     }}
                   >
-                    <Field label="Tên khóa học" name="title" defaultValue={c.title} required />
+                    <Field label={uiText("Tên khóa học")} name="title" defaultValue={c.title} required />
                     <label>
-                      Mô tả
+                      {uiText("Mô tả")}
                       <textarea name="description" defaultValue={c.description ?? ""} maxLength={2000} />
                     </label>
-                    <Field label="Đường dẫn khóa học (Slug)" name="slug" defaultValue={c.slug} required />
+                    <Field
+                      label={uiText("Đường dẫn khóa học (Slug)")}
+                      name="slug"
+                      defaultValue={c.slug}
+                      required
+                    />
                   </div>
 
                   <div
@@ -2688,7 +2812,7 @@ export function CourseDetail() {
                     }}
                   >
                     <label>
-                      Chủ đề đào tạo
+                      {uiText("Chủ đề đào tạo")}
                       <input
                         key={c.categoryId + categoryOptions.length}
                         name="categoryName"
@@ -2696,7 +2820,7 @@ export function CourseDetail() {
                         required
                         minLength={2}
                         maxLength={80}
-                        placeholder="Nhập danh mục đào tạo"
+                        placeholder={uiText("Nhập danh mục đào tạo")}
                       />
                     </label>
                   </div>
@@ -2709,7 +2833,7 @@ export function CourseDetail() {
 
                   <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end" }}>
                     <button className="button" type="submit">
-                      <Icon name="check" size={15} /> Lưu thay đổi khóa học
+                      <Icon name="check" size={15} /> {uiText(" Lưu thay đổi khóa học")}
                     </button>
                   </div>
                 </form>
@@ -2720,13 +2844,14 @@ export function CourseDetail() {
       </State>
       {msg && (
         <div className="dashboard-banner-notice" role="status" style={{ marginTop: "1rem" }}>
-          <span>{msg}</span>
+          <span>{uiText(msg)}</span>
         </div>
       )}
     </div>
   );
 }
 export function Lessons() {
+  const uiText = useUiText();
   const { courseId = "" } = useParams(),
     q = useLecturer<Lesson[] | { lessons: Lesson[] }>(`/courses/${courseId}/lessons`),
     [msg, setMsg] = useState("");
@@ -2749,7 +2874,7 @@ export function Lessons() {
   return (
     <>
       <p className="eyebrow">LESSON AUTHORING</p>
-      <h1>Bài học.</h1>
+      <h1>{uiText("Bài học.")}</h1>
       <State q={q}>
         {(v) => (
           <div className="workspace-cards">
@@ -2758,28 +2883,29 @@ export function Lessons() {
                 <span className="badge">{x.state}</span>
                 <h2>{x.title}</h2>
                 <p>{x.sectionTitle}</p>
-                <Link to={`/app/teaching/lessons/${x.lessonId}`}>Sửa bài học →</Link>
+                <Link to={`/app/teaching/lessons/${x.lessonId}`}>{uiText("Sửa bài học →")}</Link>
               </article>
             ))}
           </div>
         )}
       </State>
       <form className="form-panel form-grid" onSubmit={(e) => void create(e)}>
-        <h2>Thêm bài học</h2>
-        <Field label="Tiêu đề" name="title" required />
-        <Field label="Chương" name="sectionTitle" required />
-        <Field label="Thứ tự chương" name="sectionOrder" type="number" defaultValue={1} required />
-        <Field label="Thứ tự bài" name="lessonOrder" type="number" defaultValue={1} required />
+        <h2>{uiText("Thêm bài học")}</h2>
+        <Field label={uiText("Tiêu đề")} name="title" required />
+        <Field label={uiText("Chương")} name="sectionTitle" required />
+        <Field label={uiText("Thứ tự chương")} name="sectionOrder" type="number" defaultValue={1} required />
+        <Field label={uiText("Thứ tự bài")} name="lessonOrder" type="number" defaultValue={1} required />
         <label>
-          <input name="preview" type="checkbox" /> Cho phép xem trước
+          <input name="preview" type="checkbox" /> {uiText(" Cho phép xem trước")}
         </label>
-        <button className="button">Tạo bài học</button>
-        <p role="status">{msg}</p>
+        <button className="button">{uiText("Tạo bài học")}</button>
+        <p role="status">{uiText(msg)}</p>
       </form>
     </>
   );
 }
 export function LessonDetail() {
+  const uiText = useUiText();
   const { lessonId = "" } = useParams(),
     q = useLecturer<Lesson>(`/lessons/${lessonId}`),
     [msg, setMsg] = useState("");
@@ -2791,35 +2917,37 @@ export function LessonDetail() {
             <div className="lesson-hero-header">
               <div className="lesson-hero-nav">
                 <Link className="lesson-breadcrumb" to={`/app/teaching/courses/${x.courseId}`}>
-                  <Icon name="chevronLeft" size={14} /> Quay lại danh mục bài học khóa học
+                  <Icon name="chevronLeft" size={14} /> {uiText(" Quay lại danh mục bài học khóa học")}
                 </Link>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span className={`badge ${x.state === "PUBLISHED" ? "success" : "warning"}`}>
-                    {x.state === "PUBLISHED" ? "ĐÃ XUẤT BẢN" : "BẢN SOẠN THẢO"}
+                    {x.state === "PUBLISHED" ? uiText("ĐÃ XUẤT BẢN") : uiText("BẢN SOẠN THẢO")}
                   </span>
                   {x.preview ? (
                     <span className="green-badge-pill">
-                      <Icon name="eye" size={13} /> Học viên được xem trước
+                      <Icon name="eye" size={13} /> {uiText(" Học viên được xem trước")}
                     </span>
                   ) : (
-                    <span className="kpi-tag">Nội dung có khóa</span>
+                    <span className="kpi-tag">{uiText("Nội dung có khóa")}</span>
                   )}
                 </div>
               </div>
 
               <div className="lesson-hero-title-area">
                 <p className="eyebrow" style={{ color: "#0284c7", fontWeight: 700, margin: 0 }}>
-                  AILSS LESSON STUDIO &bull; SOẠN THẢO BÀI GIẢNG
+                  {uiText("AILSS LESSON STUDIO • SOẠN THẢO BÀI GIẢNG")}
                 </p>
                 <div className="lesson-hero-title-row">
                   <h1 className="lesson-hero-title">{x.title}</h1>
                 </div>
                 <div className="lesson-meta-chips">
                   <span className="lesson-meta-chip">
-                    📁 Chương: <strong>{x.sectionTitle || "Chưa phân chương"}</strong>
+                    {uiText("📁 Chương: ")}
+                    <strong>{x.sectionTitle || "Chưa phân chương"}</strong>
                   </span>
                   <span className="lesson-meta-chip">
-                    🔢 Vị trí: Chương #{x.position?.sectionOrder || 1} &bull; Bài #
+                    {uiText("🔢 Vị trí: Chương #")}
+                    {x.position?.sectionOrder || 1} {uiText(" • Bài #")}
                     {x.position?.lessonOrder || 1}
                   </span>
                   <span className="lesson-meta-chip">
@@ -2864,9 +2992,9 @@ export function LessonDetail() {
                       </svg>
                     </div>
                     <div>
-                      <h2 className="lesson-card-title">Cấu hình bài học</h2>
+                      <h2 className="lesson-card-title">{uiText("Cấu hình bài học")}</h2>
                       <p className="lesson-card-subtitle">
-                        Tên bài giảng, định danh phân chương và thứ tự hiển thị.
+                        {uiText("Tên bài giảng, định danh phân chương và thứ tự hiển thị.")}
                       </p>
                     </div>
                   </div>
@@ -2895,19 +3023,24 @@ export function LessonDetail() {
                     }
                   }}
                 >
-                  <Field label="Tiêu đề" name="title" defaultValue={x.title} required />
-                  <Field label="Chương" name="sectionTitle" defaultValue={x.sectionTitle} required />
+                  <Field label={uiText("Tiêu đề")} name="title" defaultValue={x.title} required />
+                  <Field
+                    label={uiText("Chương")}
+                    name="sectionTitle"
+                    defaultValue={x.sectionTitle}
+                    required
+                  />
 
                   <div className="lesson-form-row">
                     <Field
-                      label="Thứ tự chương"
+                      label={uiText("Thứ tự chương")}
                       name="sectionOrder"
                       type="number"
                       defaultValue={x.position?.sectionOrder || 1}
                       required
                     />
                     <Field
-                      label="Thứ tự bài"
+                      label={uiText("Thứ tự bài")}
                       name="lessonOrder"
                       type="number"
                       defaultValue={x.position?.lessonOrder || 1}
@@ -2918,16 +3051,16 @@ export function LessonDetail() {
                   <label className="preview-toggle-card">
                     <input name="preview" type="checkbox" defaultChecked={x.preview} />
                     <div className="preview-toggle-text">
-                      <span className="preview-toggle-label">Xem trước (Học thử miễn phí)</span>
+                      <span className="preview-toggle-label">{uiText("Xem trước (Học thử miễn phí)")}</span>
                       <span className="preview-toggle-sub">
-                        Cho phép học viên chưa mua khóa học có thể xem trước nội dung bài học này
+                        {uiText("Cho phép học viên chưa mua khóa học có thể xem trước nội dung bài học này")}
                       </span>
                     </div>
                   </label>
 
                   <div className="lesson-save-bar">
                     <span style={{ fontSize: 13, color: "var(--muted, #64748b)" }}>
-                      Cập nhật sẽ áp dụng ngay vào cây học liệu khóa học.
+                      {uiText("Cập nhật sẽ áp dụng ngay vào cây học liệu khóa học.")}
                     </span>
                     <button
                       className="button"
@@ -2951,14 +3084,14 @@ export function LessonDetail() {
                       >
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
-                      Lưu bài học
+                      {uiText("Lưu bài học")}
                     </button>
                   </div>
                 </form>
 
                 {msg ? (
                   <div className="dashboard-banner-notice" role="status" style={{ margin: 0 }}>
-                    <span>{msg}</span>
+                    <span>{uiText(msg)}</span>
                   </div>
                 ) : null}
               </div>
@@ -2980,6 +3113,8 @@ interface CourseRosterMember {
 }
 
 export function CourseRoster() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { courseId = "" } = useParams();
   const q = useLecturer<CourseRosterMember[] | { items: CourseRosterMember[] }>(
     `/courses/${courseId}/roster`,
@@ -2994,7 +3129,9 @@ export function CourseRoster() {
   function exportCsv() {
     const cell = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
     const content = [
-      ["Mã học viên", "Họ tên", "Email", "Ngày ghi danh", "Tiến độ (%)", "Trạng thái"],
+      ["Mã học viên", "Họ tên", "Email", "Ngày ghi danh", "Tiến độ (%)", "Trạng thái"].map((source) =>
+        uiText(source),
+      ),
       ...filtered.map((row) => [
         row.studentId,
         row.studentName,
@@ -3016,30 +3153,37 @@ export function CourseRoster() {
   return (
     <>
       <Breadcrumbs
-        items={[{ label: "Khóa học", to: "/app/teaching/courses" }, { label: "Học viên khóa học" }]}
+        items={[
+          { label: uiText("Khóa học"), to: "/app/teaching/courses" },
+          { label: uiText("Học viên khóa học") },
+        ]}
       />
-      <h1>Học viên khóa học</h1>
-      <p>Danh sách ghi danh từ hệ thống. Hồ sơ hoặc tiến độ chưa được cung cấp sẽ hiển thị dấu —.</p>
+      <h1>{uiText("Học viên khóa học")}</h1>
+      <p>
+        {uiText("Danh sách ghi danh từ hệ thống. Hồ sơ hoặc tiến độ chưa được cung cấp sẽ hiển thị dấu —.")}
+      </p>
       <label>
-        Tìm học viên
+        {uiText("Tìm học viên")}
         <input value={search} onChange={(e) => setSearch(e.target.value)} />
       </label>
       <button className="button" disabled={q.pending || !!q.error || !filtered.length} onClick={exportCsv}>
-        Xuất danh sách CSV
+        {uiText("Xuất danh sách CSV")}
       </button>
       <State q={q}>
         {() =>
           rows.length ? (
             <div className="attendance-scroll">
-              <p>{rows.length} học viên ghi danh</p>
+              <p>
+                {rows.length} {uiText(" học viên ghi danh")}
+              </p>
               <table className="attendance-table">
                 <thead>
                   <tr>
-                    <th>Học viên</th>
+                    <th>{uiText("Học viên")}</th>
                     <th>Email</th>
-                    <th>Ngày ghi danh</th>
-                    <th>Tiến độ</th>
-                    <th>Trạng thái</th>
+                    <th>{uiText("Ngày ghi danh")}</th>
+                    <th>{uiText("Tiến độ")}</th>
+                    <th>{uiText("Trạng thái")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3047,27 +3191,29 @@ export function CourseRoster() {
                     <tr key={row.studentId}>
                       <td>{row.studentName || row.studentId}</td>
                       <td>{row.email || "—"}</td>
-                      <td>{row.enrolledAt ? new Date(row.enrolledAt).toLocaleDateString("vi-VN") : "—"}</td>
+                      <td>{row.enrolledAt ? new Date(row.enrolledAt).toLocaleDateString(uiLocale) : "—"}</td>
                       <td>{row.progressPercent === undefined ? "—" : `${row.progressPercent}%`}</td>
                       <td>{row.state}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {!filtered.length && <p>Không có học viên phù hợp.</p>}
+              {!filtered.length && <p>{uiText("Không có học viên phù hợp.")}</p>}
             </div>
           ) : (
-            <p>Chưa có học viên ghi danh khóa học này.</p>
+            <p>{uiText("Chưa có học viên ghi danh khóa học này.")}</p>
           )
         }
       </State>
       <Link className="button secondary" to="/app/teaching/grades">
-        Bảng điểm học viên
+        {uiText("Bảng điểm học viên")}
       </Link>
     </>
   );
 }
 export function Offerings() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const q = useLecturer<Offering[] | { items: Offering[] }>("/me/owned-offerings");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
@@ -3086,16 +3232,18 @@ export function Offerings() {
     <div className="teaching-offerings-container">
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">GIẢNG VIÊN · TUYỂN SINH &amp; DOANH THU</p>
-          <h1>Đợt Mở Bán Của Bạn (Offerings)</h1>
+          <p className="eyebrow">{uiText("GIẢNG VIÊN · TUYỂN SINH & DOANH THU")}</p>
+          <h1>{uiText("Đợt Mở Bán Của Bạn (Offerings)")}</h1>
           <p className="lead">
-            Quản lý đợt mở bán, phân quyền truy cập học tập và cấu hình mức học phí theo từng khóa học.
+            {uiText(
+              "Quản lý đợt mở bán, phân quyền truy cập học tập và cấu hình mức học phí theo từng khóa học.",
+            )}
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <Link className="button" to="/app/teaching/offerings/new" style={{ textDecoration: "none" }}>
             <Icon name="plus" size={16} />
-            <span>Tạo đợt mở bán mới</span>
+            <span>{uiText("Tạo đợt mở bán mới")}</span>
           </Link>
         </div>
       </div>
@@ -3107,46 +3255,46 @@ export function Offerings() {
             <span className="kpi-icon" aria-hidden="true">
               <Icon name="target" size={20} />
             </span>
-            <span className="kpi-tag accent">Đang quản lý</span>
+            <span className="kpi-tag accent">{uiText("Đang quản lý")}</span>
           </div>
           <div className="kpi-value">
-            <AnimatedNumber value={offeringsList.length} suffix=" Đợt" />
+            <AnimatedNumber value={offeringsList.length} suffix={uiText(" Đợt")} />
           </div>
-          <div className="kpi-label">Tổng số đợt mở bán</div>
-          <p className="kpi-subtext">Học kỳ 1 - 2026</p>
+          <div className="kpi-label">{uiText("Tổng số đợt mở bán")}</div>
+          <p className="kpi-subtext">{uiText("Học kỳ 1 - 2026")}</p>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">
             <span className="kpi-icon" aria-hidden="true">
               <Icon name="card" size={20} />
             </span>
-            <span className="kpi-tag accent">Doanh thu</span>
+            <span className="kpi-tag accent">{uiText("Doanh thu")}</span>
           </div>
           <div className="kpi-value">—</div>
-          <div className="kpi-label">Dòng tiền đối soát</div>
-          <p className="kpi-subtext">Chờ projection thanh toán và hoàn tiền</p>
+          <div className="kpi-label">{uiText("Dòng tiền đối soát")}</div>
+          <p className="kpi-subtext">{uiText("Chờ projection thanh toán và hoàn tiền")}</p>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">
             <span className="kpi-icon" aria-hidden="true">
               <Icon name="users" size={20} />
             </span>
-            <span className="kpi-tag accent">Tuyển sinh</span>
+            <span className="kpi-tag accent">{uiText("Tuyển sinh")}</span>
           </div>
           <div className="kpi-value">—</div>
-          <div className="kpi-label">Đã thanh toán &amp; kích hoạt</div>
-          <p className="kpi-subtext">Chờ dữ liệu tuyển sinh có thẩm quyền</p>
+          <div className="kpi-label">{uiText("Đã thanh toán & kích hoạt")}</div>
+          <p className="kpi-subtext">{uiText("Chờ dữ liệu tuyển sinh có thẩm quyền")}</p>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">
             <span className="kpi-icon" aria-hidden="true">
               <Icon name="sparkles" size={20} />
             </span>
-            <span className="kpi-tag">Trực tuyến</span>
+            <span className="kpi-tag">{uiText("Trực tuyến")}</span>
           </div>
-          <div className="kpi-value">Hoạt động</div>
-          <div className="kpi-label">Trạng thái cổng tuyển sinh</div>
-          <p className="kpi-subtext">Sẵn sàng nhận học viên mới</p>
+          <div className="kpi-value">{uiText("Hoạt động")}</div>
+          <div className="kpi-label">{uiText("Trạng thái cổng tuyển sinh")}</div>
+          <p className="kpi-subtext">{uiText("Sẵn sàng nhận học viên mới")}</p>
         </div>
       </div>
 
@@ -3157,10 +3305,10 @@ export function Offerings() {
         </span>
         <input
           type="search"
-          placeholder="Tìm kiếm đợt mở bán theo tên..."
+          placeholder={uiText("Tìm kiếm đợt mở bán theo tên...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          aria-label="Tìm kiếm đợt mở bán"
+          aria-label={uiText("Tìm kiếm đợt mở bán")}
         />
         {search && (
           <button
@@ -3169,7 +3317,7 @@ export function Offerings() {
             style={{ fontSize: 13, color: "var(--muted, #64748b)" }}
             onClick={() => setSearch("")}
           >
-            ✕ Xóa tìm kiếm
+            {uiText("✕ Xóa tìm kiếm")}
           </button>
         )}
       </div>
@@ -3186,14 +3334,17 @@ export function Offerings() {
         }}
       >
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--muted, #64748b)" }}>Hình thức:</span>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--muted, #64748b)" }}>
+            {uiText("Hình thức:")}
+          </span>
           <button
             type="button"
             className={`catalog-filter-pill ${typeFilter === "ALL" ? "active" : ""}`}
             onClick={() => setTypeFilter("ALL")}
             style={{ fontSize: 12, padding: "5px 12px", textDecoration: "none" }}
           >
-            Tất cả ({offeringsList.length})
+            {uiText("Tất cả (")}
+            {offeringsList.length})
           </button>
           <button
             type="button"
@@ -3201,7 +3352,7 @@ export function Offerings() {
             onClick={() => setTypeFilter("SELF_PACED")}
             style={{ fontSize: 12, padding: "5px 12px", textDecoration: "none" }}
           >
-            Tự học theo tiến độ (Self-paced)
+            {uiText("Tự học theo tiến độ (Self-paced)")}
           </button>
           <button
             type="button"
@@ -3209,14 +3360,14 @@ export function Offerings() {
             onClick={() => setTypeFilter("LIVE_COHORT")}
             style={{ fontSize: 12, padding: "5px 12px", textDecoration: "none" }}
           >
-            Học theo lớp trực tiếp (Live Cohort)
+            {uiText("Học theo lớp trực tiếp (Live Cohort)")}
           </button>
         </div>
 
         {/* View Mode Toggle: List vs Grid */}
         <div
           role="group"
-          aria-label="Chế độ hiển thị"
+          aria-label={uiText("Chế độ hiển thị")}
           style={{
             display: "inline-flex",
             background: "var(--surface-soft, #f1f5f9)",
@@ -3229,7 +3380,7 @@ export function Offerings() {
           <button
             type="button"
             onClick={() => setViewMode("list")}
-            title="Dạng danh sách (List View)"
+            title={uiText("Dạng danh sách (List View)")}
             style={{
               border: "none",
               background: viewMode === "list" ? "var(--surface, #ffffff)" : "transparent",
@@ -3247,12 +3398,12 @@ export function Offerings() {
             }}
           >
             <span>☰</span>
-            <span>Danh sách</span>
+            <span>{uiText("Danh sách")}</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode("grid")}
-            title="Dạng lưới thẻ (Grid View)"
+            title={uiText("Dạng lưới thẻ (Grid View)")}
             style={{
               border: "none",
               background: viewMode === "grid" ? "var(--surface, #ffffff)" : "transparent",
@@ -3270,7 +3421,7 @@ export function Offerings() {
             }}
           >
             <span>☷</span>
-            <span>Dạng lưới</span>
+            <span>{uiText("Dạng lưới")}</span>
           </button>
         </div>
       </div>
@@ -3288,8 +3439,12 @@ export function Offerings() {
                 >
                   <Icon name="target" size={32} />
                 </span>
-                <h3>Không tìm thấy đợt mở bán phù hợp</h3>
-                <p>Thử điều chỉnh bộ lọc hoặc tạo mới đợt mở bán để bắt đầu nhận ghi danh từ học viên.</p>
+                <h3>{uiText("Không tìm thấy đợt mở bán phù hợp")}</h3>
+                <p>
+                  {uiText(
+                    "Thử điều chỉnh bộ lọc hoặc tạo mới đợt mở bán để bắt đầu nhận ghi danh từ học viên.",
+                  )}
+                </p>
                 <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
                   <button
                     type="button"
@@ -3299,14 +3454,14 @@ export function Offerings() {
                       setSearch("");
                     }}
                   >
-                    Xóa bộ lọc
+                    {uiText("Xóa bộ lọc")}
                   </button>
                   <Link
                     className="button"
                     to="/app/teaching/offerings/new"
                     style={{ textDecoration: "none" }}
                   >
-                    + Tạo đợt mở bán mới
+                    {uiText("+ Tạo đợt mở bán mới")}
                   </Link>
                 </div>
               </div>
@@ -3329,11 +3484,11 @@ export function Offerings() {
                   <thead>
                     <tr>
                       <th style={{ width: 50, textAlign: "center" }}>STT</th>
-                      <th style={{ textAlign: "left" }}>Tên đợt mở bán</th>
-                      <th style={{ width: 220, textAlign: "left" }}>Hình thức</th>
-                      <th style={{ width: 170, textAlign: "left" }}>Mức học phí</th>
-                      <th style={{ width: 130, textAlign: "center" }}>Trạng thái</th>
-                      <th style={{ width: 190, textAlign: "right" }}>Thao tác</th>
+                      <th style={{ textAlign: "left" }}>{uiText("Tên đợt mở bán")}</th>
+                      <th style={{ width: 220, textAlign: "left" }}>{uiText("Hình thức")}</th>
+                      <th style={{ width: 170, textAlign: "left" }}>{uiText("Mức học phí")}</th>
+                      <th style={{ width: 130, textAlign: "center" }}>{uiText("Trạng thái")}</th>
+                      <th style={{ width: 190, textAlign: "right" }}>{uiText("Thao tác")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -3368,7 +3523,8 @@ export function Offerings() {
                                   {x.title}
                                 </div>
                                 <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
-                                  Mã đợt: <code style={{ fontSize: 11 }}>{x.offeringId.slice(0, 14)}</code>
+                                  {uiText("Mã đợt: ")}
+                                  <code style={{ fontSize: 11 }}>{x.offeringId.slice(0, 14)}</code>
                                 </div>
                               </div>
                             </div>
@@ -3389,17 +3545,21 @@ export function Offerings() {
                               }}
                             >
                               <Icon name={isSelfPaced ? "book" : "users"} size={12} />
-                              <span>{isSelfPaced ? "Tự học (Self-paced)" : "Lớp học (Live Cohort)"}</span>
+                              <span>
+                                {isSelfPaced
+                                  ? uiText("Tự học (Self-paced)")
+                                  : uiText("Lớp học (Live Cohort)")}
+                              </span>
                             </span>
                           </td>
                           <td>
                             {isFree ? (
                               <span style={{ fontWeight: 700, color: "#16a34a", fontSize: 13.5 }}>
-                                Miễn phí (0 ₫)
+                                {uiText("Miễn phí (0 ₫)")}
                               </span>
                             ) : (
                               <span style={{ fontWeight: 700, color: "var(--ink)", fontSize: 14 }}>
-                                {Number(x.price).toLocaleString("vi-VN")}{" "}
+                                {Number(x.price).toLocaleString(uiLocale)}{" "}
                                 <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
                                   {x.currency}
                                 </span>
@@ -3415,7 +3575,7 @@ export function Offerings() {
                               to={`/app/teaching/offerings/${x.offeringId}`}
                               style={{ textDecoration: "none", whiteSpace: "nowrap" }}
                             >
-                              Mở chi tiết đợt bán →
+                              {uiText("Mở chi tiết đợt bán →")}
                             </Link>
                           </td>
                         </tr>
@@ -3440,9 +3600,12 @@ export function Offerings() {
                     </div>
                     <h2>{x.title}</h2>
                     <p className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>
-                      {x.offeringType === "SELF_PACED" ? "Tự học theo tiến độ" : "Học theo lớp"} ·{" "}
+                      {x.offeringType === "SELF_PACED"
+                        ? uiText("Tự học theo tiến độ")
+                        : uiText("Học theo lớp")}{" "}
+                      ·{" "}
                       <strong style={{ color: "var(--blue, #0284c7)" }}>
-                        {Number(x.price).toLocaleString("vi-VN")} {x.currency}
+                        {Number(x.price).toLocaleString(uiLocale)} {x.currency}
                       </strong>
                     </p>
                   </div>
@@ -3451,7 +3614,7 @@ export function Offerings() {
                     to={`/app/teaching/offerings/${x.offeringId}`}
                     style={{ textDecoration: "none", textAlign: "center", marginTop: 14 }}
                   >
-                    Mở chi tiết đợt bán →
+                    {uiText("Mở chi tiết đợt bán →")}
                   </Link>
                 </article>
               ))}
@@ -3464,6 +3627,7 @@ export function Offerings() {
 }
 
 export function OfferingCreate() {
+  const uiText = useUiText();
   const nav = useNavigate();
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
@@ -3472,18 +3636,19 @@ export function OfferingCreate() {
     <div style={{ maxWidth: 720, margin: "0 auto", paddingBottom: 40 }}>
       <Breadcrumbs
         items={[
-          { label: "Giảng dạy", to: "/app/teaching" },
-          { label: "Đợt mở bán", to: "/app/teaching/offerings" },
-          { label: "Tạo đợt mở bán mới" },
+          { label: uiText("Giảng dạy"), to: "/app/teaching" },
+          { label: uiText("Đợt mở bán"), to: "/app/teaching/offerings" },
+          { label: uiText("Tạo đợt mở bán mới") },
         ]}
       />
       <p className="eyebrow" style={{ marginTop: 12 }}>
-        TUYỂN SINH &amp; DOANH THU · TẠO MỚI
+        {uiText("TUYỂN SINH & DOANH THU · TẠO MỚI")}
       </p>
-      <h1>Tạo đợt mở bán mới.</h1>
+      <h1>{uiText("Tạo đợt mở bán mới.")}</h1>
       <p className="lead">
-        Cấu hình đợt tuyển sinh, thiết lập học phí và liên kết khóa học hoặc lớp học phần để cấp quyền học
-        viên.
+        {uiText(
+          "Cấu hình đợt tuyển sinh, thiết lập học phí và liên kết khóa học hoặc lớp học phần để cấp quyền học viên.",
+        )}
       </p>
 
       {msg && (
@@ -3498,7 +3663,7 @@ export function OfferingCreate() {
           }}
         >
           <span>✕</span>
-          <span>{msg}</span>
+          <span>{uiText(msg)}</span>
         </div>
       )}
 
@@ -3528,38 +3693,38 @@ export function OfferingCreate() {
           }
         }}
       >
-        <h2>Thông tin đợt mở bán</h2>
-        <CatalogCourseSelect label="Khóa học áp dụng" name="courseId" required />
+        <h2>{uiText("Thông tin đợt mở bán")}</h2>
+        <CatalogCourseSelect label={uiText("Khóa học áp dụng")} name="courseId" required />
         <p className="subtext" style={{ marginTop: -8, marginBottom: 8 }}>
-          Catalog khóa học đã xuất bản. Quyền sử dụng được kiểm tra khi gửi.
+          {uiText("Catalog khóa học đã xuất bản. Quyền sử dụng được kiểm tra khi gửi.")}
         </p>
         <label>
-          Hình thức đào tạo
+          {uiText("Hình thức đào tạo")}
           <select name="offeringType">
-            <option value="SELF_PACED">Tự học theo tiến độ (Self-paced)</option>
-            <option value="LIVE_COHORT">Học theo lớp trực tiếp (Live Cohort)</option>
+            <option value="SELF_PACED">{uiText("Tự học theo tiến độ (Self-paced)")}</option>
+            <option value="LIVE_COHORT">{uiText("Học theo lớp trực tiếp (Live Cohort)")}</option>
           </select>
         </label>
         <Field
-          label="Mã lớp liên kết (khi học theo lớp)"
+          label={uiText("Mã lớp liên kết (khi học theo lớp)")}
           name="classId"
-          placeholder="Mã lớp học phần nếu có"
+          placeholder={uiText("Mã lớp học phần nếu có")}
         />
         <Field
-          label="Tên đợt mở bán"
+          label={uiText("Tên đợt mở bán")}
           name="title"
-          placeholder="Ví dụ: Đợt tuyển sinh Khóa 2026 - Nhóm 1"
+          placeholder={uiText("Ví dụ: Đợt tuyển sinh Khóa 2026 - Nhóm 1")}
           required
         />
-        <Field label="Học phí" name="price" type="number" defaultValue="0" min={0} required />
-        <Field label="Tiền tệ" name="currency" defaultValue="VND" required />
+        <Field label={uiText("Học phí")} name="price" type="number" defaultValue="0" min={0} required />
+        <Field label={uiText("Tiền tệ")} name="currency" defaultValue="VND" required />
         <RevenueQuote />
         <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 12 }}>
           <button className="button" disabled={busy}>
-            {busy ? "Đang tạo…" : "Tạo đợt mở bán"}
+            {busy ? uiText("Đang tạo…") : uiText("Tạo đợt mở bán")}
           </button>
           <Link className="button button-subtle" to="/app/teaching/offerings">
-            Hủy &amp; Quay lại
+            {uiText("Hủy & Quay lại")}
           </Link>
         </div>
       </form>
@@ -3567,6 +3732,7 @@ export function OfferingCreate() {
   );
 }
 export function OfferingDetail() {
+  const uiText = useUiText();
   const { offeringId = "" } = useParams(),
     q = useLecturer<Offering>(`/offerings/${offeringId}`),
     [msg, setMsg] = useState("");
@@ -3582,17 +3748,20 @@ export function OfferingDetail() {
             </p>
             <p>
               {x.state === "DRAFT"
-                ? "Đợt mở đăng ký đang ở bản nháp."
+                ? uiText("Đợt mở đăng ký đang ở bản nháp.")
                 : x.state === "PUBLISHED"
-                  ? "Học viên có thể nhận quyền truy cập theo quy tắc và thời gian của đợt mở đăng ký."
-                  : "Đợt mở đăng ký đã đóng."}
+                  ? uiText(
+                      "Học viên có thể nhận quyền truy cập theo quy tắc và thời gian của đợt mở đăng ký.",
+                    )
+                  : uiText("Đợt mở đăng ký đã đóng.")}
             </p>
             {x.offeringType === "LIVE_COHORT" &&
               (x.classId ? (
-                <Link to={`/app/teaching/classes/${x.classId}`}>Mở lớp gắn với đợt này →</Link>
+                <Link to={`/app/teaching/classes/${x.classId}`}>{uiText("Mở lớp gắn với đợt này →")}</Link>
               ) : (
                 <p>
-                  Cần chọn một lớp có lịch đã xuất bản. <Link to="/app/teaching/classes">Tạo lớp →</Link>
+                  {uiText("Cần chọn một lớp có lịch đã xuất bản. ")}
+                  <Link to="/app/teaching/classes">{uiText("Tạo lớp →")}</Link>
                 </p>
               ))}
             <form
@@ -3613,17 +3782,17 @@ export function OfferingDetail() {
                 }
               }}
             >
-              <Field label="Tên offering" name="title" defaultValue={x.title} required />
-              <Field label="Giá" name="price" defaultValue={x.price} required />
-              <Field label="Tiền tệ" name="currency" defaultValue={x.currency} required />
+              <Field label={uiText("Tên offering")} name="title" defaultValue={x.title} required />
+              <Field label={uiText("Giá")} name="price" defaultValue={x.price} required />
+              <Field label={uiText("Tiền tệ")} name="currency" defaultValue={x.currency} required />
               <RevenueQuote initialPrice={x.price} initialCurrency={x.currency} />
-              <button className="button">Lưu offering</button>
+              <button className="button">{uiText("Lưu offering")}</button>
             </form>
             <button
               className="button"
               onClick={async () => {
                 try {
-                  if (!window.confirm("Mở đăng ký offering này theo điều kiện hiện tại?")) return;
+                  if (!window.confirm(uiText("Mở đăng ký offering này theo điều kiện hiện tại?"))) return;
                   await lecturerRequest(`/offerings/${offeringId}/publish`, "POST", {});
                   setMsg("Đã xuất bản offering.");
                   q.retry();
@@ -3632,12 +3801,12 @@ export function OfferingDetail() {
                 }
               }}
             >
-              Xuất bản offering
+              {uiText("Xuất bản offering")}
             </button>
           </>
         )}
       </State>
-      <p role="status">{msg}</p>
+      <p role="status">{uiText(msg)}</p>
     </>
   );
 }

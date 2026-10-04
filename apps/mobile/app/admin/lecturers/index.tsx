@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../src/use-language";
+import { useUiText } from "../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, TextInput, FlatList, StyleSheet, ActivityIndicator, Modal } from "react-native";
 import { router } from "expo-router";
@@ -9,6 +11,8 @@ import { lecturerApplications, validatePassword, type LecturerApplication } from
 import { Page, Button, PasswordInput, styles, tokens } from "../../../src/ui";
 
 export default function AdminLecturerVerificationScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
@@ -152,9 +156,9 @@ export default function AdminLecturerVerificationScreen() {
   if (snapshot.user?.role !== "ADMIN") {
     return (
       <Page>
-        <Text style={styles.title}>Xác minh giảng viên</Text>
-        <Text style={styles.error}>Chức năng này yêu cầu quyền Quản trị viên (ADMIN).</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.title}>{uiText("Xác minh giảng viên")}</Text>
+        <Text style={styles.error}>{uiText("Chức năng này yêu cầu quyền Quản trị viên (ADMIN).")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -177,29 +181,41 @@ export default function AdminLecturerVerificationScreen() {
           ]}
         >
           <Text style={ls.badgeText}>
-            {item.status === "APPROVED" ? "ĐÃ DUYỆT" : item.status === "REJECTED" ? "TỪ CHỐI" : "CHỜ DUYỆT"}
+            {item.status === "APPROVED"
+              ? uiText("ĐÃ DUYỆT")
+              : item.status === "REJECTED"
+                ? uiText("TỪ CHỐI")
+                : uiText("CHỜ DUYỆT")}
           </Text>
         </View>
       </View>
 
       <Text style={ls.dateText}>
-        Nộp lúc: {new Date(item.submittedAt).toLocaleDateString("vi-VN")}
-        {item.decidedAt ? ` · Xử lý lúc: ${new Date(item.decidedAt).toLocaleDateString("vi-VN")}` : ""}
+        {uiText("Nộp lúc: ")}
+        {new Date(item.submittedAt).toLocaleDateString(uiLocale)}
+        {item.decidedAt
+          ? uiText(" · Xử lý lúc: {0}", [new Date(item.decidedAt).toLocaleDateString(uiLocale)])
+          : ""}
       </Text>
 
-      {item.notes ? <Text style={ls.notesText}>Ghi chú: {item.notes}</Text> : null}
+      {item.notes ? (
+        <Text style={ls.notesText}>
+          {uiText("Ghi chú: ")}
+          {item.notes}
+        </Text>
+      ) : null}
 
       {item.status === "PENDING" && (
         <View style={ls.cardActions}>
           <Button
-            label="Phê duyệt hồ sơ"
+            label={uiText("Phê duyệt hồ sơ")}
             onPress={() => {
               setSelectedApp(item);
               setDecisionType("APPROVE");
             }}
           />
           <Button
-            label="Từ chối hồ sơ"
+            label={uiText("Từ chối hồ sơ")}
             onPress={() => {
               setSelectedApp(item);
               setDecisionType("REJECT");
@@ -212,9 +228,9 @@ export default function AdminLecturerVerificationScreen() {
 
   return (
     <Page scroll={false}>
-      <Text style={styles.small}>Tháng đăng ký (YYYY-MM)</Text>
+      <Text style={styles.small}>{uiText("Tháng đăng ký (YYYY-MM)")}</Text>
       <TextInput
-        accessibilityLabel="Tháng hồ sơ"
+        accessibilityLabel={uiText("Tháng hồ sơ")}
         style={styles.input}
         value={month}
         onChangeText={(v) => {
@@ -223,47 +239,49 @@ export default function AdminLecturerVerificationScreen() {
         }}
       />
       <View style={{ flexDirection: "row", gap: 8 }}>
-        <Button label="Shard trước" disabled={shard === 0} onPress={() => setShard(shard - 1)} />
+        <Button label={uiText("Shard trước")} disabled={shard === 0} onPress={() => setShard(shard - 1)} />
         <Text style={styles.text}>Shard {shard}/15</Text>
         <Button label="Shard sau" disabled={shard === 15} onPress={() => setShard(shard + 1)} />
       </View>
       {nextCursor ? (
-        <Button label="Trang tiếp" onPress={() => void loadApplications(false, nextCursor)} />
+        <Button label={uiText("Trang tiếp")} onPress={() => void loadApplications(false, nextCursor)} />
       ) : null}
-      <Button label="Trang đầu" onPress={() => void loadApplications()} />
-      <Text style={styles.title}>Xác minh giảng viên</Text>
-      <Text style={styles.small}>Thẩm định hồ sơ chuyển vai trò và cấp quyền giảng dạy hệ thống</Text>
+      <Button label={uiText("Trang đầu")} onPress={() => void loadApplications()} />
+      <Text style={styles.title}>{uiText("Xác minh giảng viên")}</Text>
+      <Text style={styles.small}>
+        {uiText("Thẩm định hồ sơ chuyển vai trò và cấp quyền giảng dạy hệ thống")}
+      </Text>
 
-      {successMessage ? <Text style={ls.successText}>{successMessage}</Text> : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {successMessage ? <Text style={ls.successText}>{uiText(successMessage)}</Text> : null}
+      {error ? <Text style={styles.error}>{uiText(error)}</Text> : null}
 
       {/* Direct User Verification Accordion */}
       <View style={ls.directCard}>
-        <Text style={ls.directHeading}>Xác minh nhanh theo Mã người dùng</Text>
+        <Text style={ls.directHeading}>{uiText("Xác minh nhanh theo Mã người dùng")}</Text>
         <TextInput
-          placeholder="Mã người dùng (User ID / UUID)"
+          placeholder={uiText("Mã người dùng (User ID / UUID)")}
           value={directUserId}
           onChangeText={setDirectUserId}
           style={ls.input}
           autoCapitalize="none"
-          accessibilityLabel="Mã người dùng cần xác minh giảng viên"
+          accessibilityLabel={uiText("Mã người dùng cần xác minh giảng viên")}
         />
         <PasswordInput
-          placeholder="Mật khẩu quản trị viên hiện tại"
+          placeholder={uiText("Mật khẩu quản trị viên hiện tại")}
           value={directPassword}
           onChangeText={setDirectPassword}
           style={ls.input}
-          accessibilityLabel="Mật khẩu quản trị viên"
+          accessibilityLabel={uiText("Mật khẩu quản trị viên")}
         />
         <Button
-          label={directBusy ? "Đang xử lý..." : "Xác minh tư cách giảng viên"}
+          label={directBusy ? uiText("Đang xử lý...") : uiText("Xác minh tư cách giảng viên")}
           onPress={() => setShowDirectConfirm(true)}
           disabled={directBusy || !directUserId.trim() || !directPassword.trim()}
         />
       </View>
 
       <Text style={[styles.text, { fontWeight: "700", marginTop: tokens.space.medium }]}>
-        Hồ sơ ứng tuyển giảng viên
+        {uiText("Hồ sơ ứng tuyển giảng viên")}
       </Text>
 
       {loading && !refreshing ? (
@@ -277,7 +295,7 @@ export default function AdminLecturerVerificationScreen() {
           onRefresh={() => void loadApplications(true)}
           ListEmptyComponent={
             <View style={ls.emptyContainer}>
-              <Text style={ls.emptyText}>Hiện không có hồ sơ giảng viên chờ duyệt.</Text>
+              <Text style={ls.emptyText}>{uiText("Hiện không có hồ sơ giảng viên chờ duyệt.")}</Text>
             </View>
           }
           contentContainerStyle={ls.listContent}
@@ -294,26 +312,26 @@ export default function AdminLecturerVerificationScreen() {
         <View style={ls.modalOverlay}>
           <View style={ls.modalContent}>
             <Text style={ls.modalTitle}>
-              {decisionType === "APPROVE" ? "Phê duyệt giảng viên" : "Từ chối hồ sơ"}
+              {decisionType === "APPROVE" ? uiText("Phê duyệt giảng viên") : uiText("Từ chối hồ sơ")}
             </Text>
             <Text style={ls.modalText}>
-              Thao tác với hồ sơ của{" "}
-              <Text style={{ fontWeight: "700" }}>{selectedApp?.displayName ?? selectedApp?.userId}</Text>.
-              Nhập mật khẩu quản trị viên để xác nhận.
+              {uiText("Thao tác với hồ sơ của")}{" "}
+              <Text style={{ fontWeight: "700" }}>{selectedApp?.displayName ?? selectedApp?.userId}</Text>
+              {uiText(". Nhập mật khẩu quản trị viên để xác nhận.")}
             </Text>
 
             <PasswordInput
-              placeholder="Mật khẩu quản trị viên hiện tại"
+              placeholder={uiText("Mật khẩu quản trị viên hiện tại")}
               value={decisionPassword}
               onChangeText={setDecisionPassword}
               style={ls.input}
-              accessibilityLabel="Mật khẩu quản trị viên"
+              accessibilityLabel={uiText("Mật khẩu quản trị viên")}
             />
 
             <View style={ls.modalActions}>
-              <Button label="Hủy" onPress={() => setSelectedApp(null)} />
+              <Button label={uiText("Hủy")} onPress={() => setSelectedApp(null)} />
               <Button
-                label={decisionBusy ? "Đang xử lý..." : "Xác nhận quyết định"}
+                label={decisionBusy ? uiText("Đang xử lý...") : uiText("Xác nhận quyết định")}
                 onPress={() => void handleDecisionSubmit()}
                 disabled={decisionBusy || !decisionPassword.trim()}
               />
@@ -331,14 +349,14 @@ export default function AdminLecturerVerificationScreen() {
       >
         <View style={ls.modalOverlay}>
           <View style={ls.modalContent}>
-            <Text style={ls.modalTitle}>Xác nhận xác minh giảng viên</Text>
+            <Text style={ls.modalTitle}>{uiText("Xác nhận xác minh giảng viên")}</Text>
             <Text style={ls.modalText}>
-              Bạn có chắc chắn muốn xác minh tư cách giảng viên cho ID{" "}
+              {uiText("Bạn có chắc chắn muốn xác minh tư cách giảng viên cho ID")}{" "}
               <Text style={{ fontWeight: "700" }}>{directUserId}</Text>?
             </Text>
             <View style={ls.modalActions}>
-              <Button label="Hủy" onPress={() => setShowDirectConfirm(false)} />
-              <Button label="Xác nhận" onPress={() => void handleDirectVerify()} />
+              <Button label={uiText("Hủy")} onPress={() => setShowDirectConfirm(false)} />
+              <Button label={uiText("Xác nhận")} onPress={() => void handleDirectVerify()} />
             </View>
           </View>
         </View>

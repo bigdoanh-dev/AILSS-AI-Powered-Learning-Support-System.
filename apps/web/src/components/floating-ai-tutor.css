@@ -358,20 +358,26 @@
 }
 
 .floating-ai-mascot-select-row select {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(203, 213, 225, 0.8);
-  background: #ffffff;
-  color: #0f172a;
+  padding: 5px 10px !important;
+  margin-top: 0 !important;
+  border-radius: 8px;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
   cursor: pointer;
+  width: auto !important;
+  max-width: 220px;
+  display: inline-block !important;
+  height: auto !important;
+  line-height: normal !important;
 }
 
 :root[data-theme="dark"] .floating-ai-mascot-select-row select {
-  background: #1e293b;
-  border-color: rgba(255, 255, 255, 0.15);
-  color: #f1f5f9;
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #f1f5f9 !important;
 }
 
 /* Mode Bar */
@@ -623,8 +629,13 @@
 .floating-ai-msg.user {
   align-self: flex-end;
   background: linear-gradient(135deg, #0284c7, #2563eb);
-  color: #ffffff;
+  color: #ffffff !important;
   border-bottom-right-radius: 4px;
+}
+
+.floating-ai-msg.user p,
+.floating-ai-msg.user span {
+  color: #ffffff !important;
 }
 
 .floating-ai-msg.tutor {
@@ -634,6 +645,10 @@
   border: 1px solid rgba(226, 232, 240, 0.9);
   border-bottom-left-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.floating-ai-msg.tutor p {
+  color: #1e293b;
 }
 
 :root[data-theme="dark"] .floating-ai-msg.tutor {
@@ -790,21 +805,24 @@
 
 .floating-ai-form textarea {
   flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
   font-family: inherit;
   font-size: 13px;
   line-height: 1.4;
-  color: var(--ink, #0f172a);
+  color: var(--ink, #0f172a) !important;
   resize: none;
   min-height: 22px;
   max-height: 90px;
-  padding: 3px 0;
+  padding: 4px 0 !important;
+  margin-top: 0 !important;
+  box-shadow: none !important;
+  width: auto !important;
 }
 
 :root[data-theme="dark"] .floating-ai-form textarea {
-  color: #f8fafc;
+  color: #f8fafc !important;
 }
 
 .floating-ai-send-btn {

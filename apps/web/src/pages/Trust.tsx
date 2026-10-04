@@ -1,6 +1,8 @@
+import { useUiText } from "../lib/i18n";
 import { useLocation } from "react-router-dom";
 import { PageHero, Section, TextLink } from "../components/ui";
 export function Security() {
+  const uiText = useUiText();
   const items = [
     [
       "Danh tính người dùng",
@@ -31,26 +33,29 @@ export function Security() {
     <>
       <PageHero
         label="SECURITY"
-        title="Niềm tin được xây từ những ranh giới rõ ràng."
-        description="Những cơ chế bảo vệ đã được triển khai trong AILSS, trình bày minh bạch cùng phạm vi của chúng."
+        title={uiText("Niềm tin được xây từ những ranh giới rõ ràng.")}
+        description={uiText(
+          "Những cơ chế bảo vệ đã được triển khai trong AILSS, trình bày minh bạch cùng phạm vi của chúng.",
+        )}
       />
       <Section>
         <div className="security-intro">
           <h2>
-            Bảo vệ người dùng.
+            {uiText("Bảo vệ người dùng.")}
             <br />
-            Giữ học liệu riêng tư.
+            {uiText("Giữ học liệu riêng tư.")}
           </h2>
           <p className="lead">
-            Mỗi yêu cầu cần đúng danh tính, đúng quyền và đúng bối cảnh. Bảo mật được xem xét từ lối vào hệ
-            thống đến dữ liệu và công việc nền.
+            {uiText(
+              "Mỗi yêu cầu cần đúng danh tính, đúng quyền và đúng bối cảnh. Bảo mật được xem xét từ lối vào hệ thống đến dữ liệu và công việc nền.",
+            )}
           </p>
         </div>
         <div className="help-grid">
           {items.map(([title, body]) => (
             <article key={title}>
-              <h2>{title}</h2>
-              <p>{body}</p>
+              <h2>{uiText(title)}</h2>
+              <p>{uiText(body)}</p>
             </article>
           ))}
         </div>
@@ -58,20 +63,22 @@ export function Security() {
       <Section className="soft">
         <div className="split">
           <div>
-            <h2>Cam kết về sự minh bạch.</h2>
+            <h2>{uiText("Cam kết về sự minh bạch.")}</h2>
             <p>
-              Trang này mô tả thiết kế và cơ chế của dự án. Không tuyên bố có SOC 2, ISO, HIPAA, PCI hoặc
-              chứng nhận kiểm thử xâm nhập.
+              {uiText(
+                "Trang này mô tả thiết kế và cơ chế của dự án. Không tuyên bố có SOC 2, ISO, HIPAA, PCI hoặc chứng nhận kiểm thử xâm nhập.",
+              )}
             </p>
           </div>
           <div>
-            <h3>Báo cáo vấn đề</h3>
+            <h3>{uiText("Báo cáo vấn đề")}</h3>
             <p>
-              Nếu phát hiện vấn đề, hãy ghi lại bước tái hiện không chứa secret hoặc dữ liệu cá nhân và dùng
-              kênh quản trị được đơn vị triển khai cung cấp.
+              {uiText(
+                "Nếu phát hiện vấn đề, hãy ghi lại bước tái hiện không chứa secret hoặc dữ liệu cá nhân và dùng kênh quản trị được đơn vị triển khai cung cấp.",
+              )}
             </p>
-            <TextLink to="/contact">Chuẩn bị nội dung liên hệ</TextLink>
-            <TextLink to="/architecture">Xem kiến trúc hệ thống</TextLink>
+            <TextLink to="/contact">{uiText("Chuẩn bị nội dung liên hệ")}</TextLink>
+            <TextLink to="/architecture">{uiText("Xem kiến trúc hệ thống")}</TextLink>
           </div>
         </div>
       </Section>
@@ -79,38 +86,43 @@ export function Security() {
   );
 }
 export function Research() {
+  const uiText = useUiText();
   return (
     <>
       <PageHero
         label="RESEARCH / DISTRIBUTED SYSTEMS"
-        title="Hiểu hệ thống bằng cách đặt câu hỏi khó."
-        description="AILSS là bối cảnh nghiên cứu cho Cassandra-first, dịch vụ phân tán và luồng xử lý bất đồng bộ có thể quan sát."
+        title={uiText("Hiểu hệ thống bằng cách đặt câu hỏi khó.")}
+        description={uiText(
+          "AILSS là bối cảnh nghiên cứu cho Cassandra-first, dịch vụ phân tán và luồng xử lý bất đồng bộ có thể quan sát.",
+        )}
       />
       <Section>
         <div className="split">
           <div>
             <p className="eyebrow">CASSANDRA-FIRST</p>
             <h2>
-              Bắt đầu từ truy vấn.
+              {uiText("Bắt đầu từ truy vấn.")}
               <br />
-              Thiết kế cách lưu.
+              {uiText("Thiết kế cách lưu.")}
             </h2>
           </div>
           <div>
             <p className="lead">
-              Mỗi truy vấn nghiệp vụ có mục đích xác định. Mô hình dữ liệu phục vụ đường đọc cụ thể thay vì
-              trông chờ vào join hoặc tìm kiếm tùy ý.
+              {uiText(
+                "Mỗi truy vấn nghiệp vụ có mục đích xác định. Mô hình dữ liệu phục vụ đường đọc cụ thể thay vì trông chờ vào join hoặc tìm kiếm tùy ý.",
+              )}
             </p>
             <p>
-              Service sở hữu keyspace của mình; projection hỗ trợ truy cập theo nhu cầu và được kiểm tra với
-              dữ liệu canonical khi cần.
+              {uiText(
+                "Service sở hữu keyspace của mình; projection hỗ trợ truy cập theo nhu cầu và được kiểm tra với dữ liệu canonical khi cần.",
+              )}
             </p>
           </div>
         </div>
       </Section>
       <Section className="soft">
         <div className="section-heading">
-          <h2>Những câu hỏi dẫn đường.</h2>
+          <h2>{uiText("Những câu hỏi dẫn đường.")}</h2>
         </div>
         <div className="help-grid">
           {[
@@ -140,63 +152,72 @@ export function Research() {
             ],
           ].map(([title, body]) => (
             <article key={title}>
-              <h2>{title}</h2>
-              <p>{body}</p>
+              <h2>{uiText(title)}</h2>
+              <p>{uiText(body)}</p>
             </article>
           ))}
         </div>
       </Section>
       <Section>
-        <h2>Phạm vi của trang nghiên cứu</h2>
+        <h2>{uiText("Phạm vi của trang nghiên cứu")}</h2>
         <p className="measure">
-          Trang này giới thiệu phương pháp và các kịch bản nghiên cứu trong repository. Không công bố
-          benchmark, SLA hay kết luận khả năng mở rộng khi chưa gắn với môi trường và phép đo cụ thể.
+          {uiText(
+            "Trang này giới thiệu phương pháp và các kịch bản nghiên cứu trong repository. Không công bố benchmark, SLA hay kết luận khả năng mở rộng khi chưa gắn với môi trường và phép đo cụ thể.",
+          )}
         </p>
         <div className="actions">
-          <TextLink to="/architecture">Khám phá sáu service</TextLink>
-          <TextLink to="/contact">Trao đổi nghiên cứu</TextLink>
+          <TextLink to="/architecture">{uiText("Khám phá sáu service")}</TextLink>
+          <TextLink to="/contact">{uiText("Trao đổi nghiên cứu")}</TextLink>
         </div>
       </Section>
     </>
   );
 }
 export function Roadmap() {
+  const uiText = useUiText();
   return (
     <>
       <PageHero
         label="PRODUCT ROADMAP"
-        title="Nền tảng hôm nay. Trải nghiệm ngày mai."
-        description="Phân biệt rõ khả năng backend đã triển khai, công việc public web hiện tại và hướng phát triển tiếp theo."
+        title={uiText("Nền tảng hôm nay. Trải nghiệm ngày mai.")}
+        description={uiText(
+          "Phân biệt rõ khả năng backend đã triển khai, công việc public web hiện tại và hướng phát triển tiếp theo.",
+        )}
       />
       <Section>
         <ol className="roadmap">
           <li>
-            <span className="status-tag">Đã triển khai · Backend</span>
+            <span className="status-tag">{uiText("Đã triển khai · Backend")}</span>
             <h2>Phase 7–9</h2>
             <p>
-              Danh tính, khóa học, lớp học, lịch, enrollment và entitlement. Tiếp nối bởi đánh giá, tiến độ,
-              tương tác, review và kiểm duyệt.
+              {uiText(
+                "Danh tính, khóa học, lớp học, lịch, enrollment và entitlement. Tiếp nối bởi đánh giá, tiến độ, tương tác, review và kiểm duyệt.",
+              )}
             </p>
           </li>
           <li>
-            <span className="status-tag">Đã triển khai · Backend</span>
+            <span className="status-tag">{uiText("Đã triển khai · Backend")}</span>
             <h2>Phase 10–11</h2>
             <p>
-              Xử lý tài liệu, AI tạo câu hỏi, giảng viên phê duyệt và nhập Assessment DRAFT. Thông báo trong
-              ứng dụng được bổ sung bằng worker hỗ trợ.
+              {uiText(
+                "Xử lý tài liệu, AI tạo câu hỏi, giảng viên phê duyệt và nhập Assessment DRAFT. Thông báo trong ứng dụng được bổ sung bằng worker hỗ trợ.",
+              )}
             </p>
           </li>
           <li>
-            <span className="status-tag">Giai đoạn hiện tại</span>
+            <span className="status-tag">{uiText("Giai đoạn hiện tại")}</span>
             <h2>Phase 12.1 · Public experience</h2>
-            <p>Web foundation, NVD branding, thiết kế, public pages, media và UX xác thực ban đầu.</p>
+            <p>
+              {uiText("Web foundation, NVD branding, thiết kế, public pages, media và UX xác thực ban đầu.")}
+            </p>
           </li>
           <li>
-            <span className="status-tag future">Dự kiến · Chưa triển khai tại đây</span>
+            <span className="status-tag future">{uiText("Dự kiến · Chưa triển khai tại đây")}</span>
             <h2>Phase 12.2 · Authentication UX & application shell</h2>
             <p>
-              Hoàn thiện hành trình xác thực và khung ứng dụng trước khi xây các workspace sinh viên và giảng
-              viên. Không cam kết ngày phát hành.
+              {uiText(
+                "Hoàn thiện hành trình xác thực và khung ứng dụng trước khi xây các workspace sinh viên và giảng viên. Không cam kết ngày phát hành.",
+              )}
             </p>
           </li>
         </ol>
@@ -319,29 +340,30 @@ const policies: Record<
   },
 };
 export function Policy() {
+  const uiText = useUiText();
   const p = policies[useLocation().pathname];
   return (
     <>
-      <PageHero label={p.label} title={p.title} description={p.intro} />
+      <PageHero label={uiText(p.label)} title={uiText(p.title)} description={uiText(p.intro)} />
       <Section>
         <div className="policy-layout">
           <aside>
-            <strong>Trong trang này</strong>
+            <strong>{uiText("Trong trang này")}</strong>
             {p.sections.map(([title], i) => (
               <a href={`#policy-${i}`} key={title}>
-                {title}
+                {uiText(title)}
               </a>
             ))}
-            <small>Cập nhật: 06.09.2026</small>
+            <small>{uiText("Cập nhật: 06.09.2026")}</small>
           </aside>
           <div>
             {p.sections.map(([title, body], i) => (
               <section id={`policy-${i}`} key={title}>
-                <h2>{title}</h2>
-                <p>{body}</p>
+                <h2>{uiText(title)}</h2>
+                <p>{uiText(body)}</p>
               </section>
             ))}
-            <TextLink to="/contact">Chuẩn bị phản hồi</TextLink>
+            <TextLink to="/contact">{uiText("Chuẩn bị phản hồi")}</TextLink>
           </div>
         </div>
       </Section>

@@ -1,3 +1,4 @@
+import { useUiText } from "../../../../src/use-language";
 import { useEffect, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -9,6 +10,7 @@ import { lecturerCourse, type LecturerCourse } from "../../../../src/teaching";
 import { Page, Button, ScreenHeader, styles } from "../../../../src/ui";
 
 export default function CourseSettings() {
+  const uiText = useUiText();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -63,31 +65,33 @@ export default function CourseSettings() {
   if (snapshot.user?.role !== "LECTURER")
     return (
       <Page>
-        <Text style={styles.error}>Bạn không có quyền truy cập.</Text>
+        <Text style={styles.error}>{uiText("Bạn không có quyền truy cập.")}</Text>
       </Page>
     );
   return (
     <Page>
       <ScreenHeader
-        title="Cài đặt khóa học"
+        title={uiText("Cài đặt khóa học")}
         subtitle={course?.title ?? "Đang tải…"}
         onBack={() => router.back()}
       />
       {course && (
         <View style={styles.card}>
           <Text style={styles.text}>
-            Trạng thái: {course.state} · {course.activeStudentCount ?? 0} học viên đang có quyền học
+            {uiText("Trạng thái: ")}
+            {course.state} · {course.activeStudentCount ?? 0} {uiText(" học viên đang có quyền học")}
           </Text>
           <Text style={styles.text}>
-            Khóa học đã xuất bản sẽ ẩn khỏi danh mục và ngừng nhận học viên mới. Học viên đã đăng ký vẫn học,
-            làm bài và giữ tiến độ. Lớp học, đơn hàng và lịch sử thanh toán được bảo toàn.
+            {uiText(
+              "Khóa học đã xuất bản sẽ ẩn khỏi danh mục và ngừng nhận học viên mới. Học viên đã đăng ký vẫn học, làm bài và giữ tiến độ. Lớp học, đơn hàng và lịch sử thanh toán được bảo toàn.",
+            )}
           </Text>
           {!["DELETED", "ARCHIVED"].includes(course.state ?? "") &&
             (course.state !== "HIDDEN" || !course.publishedAt) && (
               <>
                 {course.state !== "HIDDEN" && (
                   <Button
-                    label="Yêu cầu khóa học"
+                    label={uiText("Yêu cầu khóa học")}
                     variant="outline"
                     onPress={() => {
                       setMode("LOCK");
@@ -96,7 +100,7 @@ export default function CourseSettings() {
                   />
                 )}
                 <Button
-                  label="Yêu cầu xóa khóa học"
+                  label={uiText("Yêu cầu xóa khóa học")}
                   variant="outline"
                   onPress={() => {
                     setMode("DELETE");
@@ -109,12 +113,12 @@ export default function CourseSettings() {
             <View>
               <Text style={styles.text}>
                 {mode === "DELETE" && course.state !== "PUBLISHED"
-                  ? "Bản nháp sẽ được xóa mềm."
-                  : "Khóa học sẽ được ẩn để bảo toàn quyền học của học viên cũ."}{" "}
-                Nhập chính xác tên khóa học để xác nhận.
+                  ? uiText("Bản nháp sẽ được xóa mềm.")
+                  : uiText("Khóa học sẽ được ẩn để bảo toàn quyền học của học viên cũ.")}{" "}
+                {uiText("Nhập chính xác tên khóa học để xác nhận.")}
               </Text>
               <TextInput
-                accessibilityLabel="Nhập tên khóa học để xác nhận"
+                accessibilityLabel={uiText("Nhập tên khóa học để xác nhận")}
                 value={confirmation}
                 onChangeText={setConfirmation}
                 placeholder={course.title}
@@ -128,18 +132,18 @@ export default function CourseSettings() {
                 }}
               />
               <Button
-                label={busy ? "Đang xử lý…" : "Xác nhận yêu cầu"}
+                label={busy ? uiText("Đang xử lý…") : uiText("Xác nhận yêu cầu")}
                 disabled={busy || confirmation !== course.title}
                 onPress={() => void submit()}
               />
-              <Button label="Hủy" variant="outline" onPress={() => setMode(null)} />
+              <Button label={uiText("Hủy")} variant="outline" onPress={() => setMode(null)} />
             </View>
           )}
         </View>
       )}
       {message ? (
         <Text accessibilityRole="alert" style={styles.text}>
-          {message}
+          {uiText(message)}
         </Text>
       ) : null}
     </Page>

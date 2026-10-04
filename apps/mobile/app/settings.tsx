@@ -1,3 +1,4 @@
+import { useUiText } from "../src/use-language";
 import { useState, useSyncExternalStore } from "react";
 import { Text, View, Switch, StyleSheet, ScrollView } from "react-native";
 import { router, type Href } from "expo-router";
@@ -6,6 +7,7 @@ import { getSystemSettings, updateSystemSettings, subscribeSystemSettings } from
 import { Page, Button, Icon, Badge, ScreenHeader, BottomNavBar, tokens } from "../src/ui";
 
 export default function SettingsScreen() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const settings = useSyncExternalStore(subscribeSystemSettings, getSystemSettings);
@@ -53,8 +55,8 @@ export default function SettingsScreen() {
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
       <Page>
         <ScreenHeader
-          title="Cài đặt hệ thống"
-          subtitle="Bảo mật phiên, thông báo & ứng dụng"
+          title={uiText("Cài đặt hệ thống")}
+          subtitle={uiText("Bảo mật phiên, thông báo & ứng dụng")}
           onBack={() => (router.canGoBack() ? router.back() : router.replace("/"))}
         />
 
@@ -66,17 +68,21 @@ export default function SettingsScreen() {
           <View style={s.section}>
             <View style={s.sectionHeaderRow}>
               <Icon name="shield" size={18} color={tokens.color.brand} />
-              <Text style={s.sectionTitle}>Bảo mật & Phiên làm việc</Text>
+              <Text style={s.sectionTitle}>{uiText("Bảo mật & Phiên làm việc")}</Text>
             </View>
 
             <View style={s.card}>
               <View style={s.rowBetween}>
                 <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={s.rowLabel}>Đăng nhập lại khi thoát app</Text>
+                  <Text style={s.rowLabel}>{uiText("Đăng nhập lại khi thoát app")}</Text>
                   <Text style={s.rowSub}>
                     {settings.requireLoginOnColdStart
-                      ? "Yêu cầu đăng nhập lại khi mở ứng dụng. Hàng đợi ngoại tuyến sẽ chỉ đồng bộ sau khi đăng nhập."
-                      : "Khôi phục phiên đã mã hóa khi mở ứng dụng; nếu mất mạng, dữ liệu đã đồng bộ và hàng đợi học tập có thể tiếp tục ngoại tuyến."}
+                      ? uiText(
+                          "Yêu cầu đăng nhập lại khi mở ứng dụng. Hàng đợi ngoại tuyến sẽ chỉ đồng bộ sau khi đăng nhập.",
+                        )
+                      : uiText(
+                          "Khôi phục phiên đã mã hóa khi mở ứng dụng; nếu mất mạng, dữ liệu đã đồng bộ và hàng đợi học tập có thể tiếp tục ngoại tuyến.",
+                        )}
                   </Text>
                 </View>
                 <Switch
@@ -85,13 +91,13 @@ export default function SettingsScreen() {
                   disabled={savingColdStartPreference}
                   trackColor={{ false: "#CBD5E1", true: tokens.color.brand }}
                   thumbColor="#FFFFFF"
-                  accessibilityLabel="Yêu cầu đăng nhập lại khi thoát app"
+                  accessibilityLabel={uiText("Yêu cầu đăng nhập lại khi thoát app")}
                 />
               </View>
 
               {coldStartPreferenceError ? (
                 <Text accessibilityRole="alert" style={{ color: "#B42318", fontSize: 13, marginTop: 8 }}>
-                  {coldStartPreferenceError}
+                  {uiText(coldStartPreferenceError)}
                 </Text>
               ) : null}
 
@@ -99,10 +105,11 @@ export default function SettingsScreen() {
 
               <View style={s.rowBetween}>
                 <View style={{ flex: 1 }}>
-                  <Text style={s.rowLabel}>Cơ chế xác thực</Text>
+                  <Text style={s.rowLabel}>{uiText("Cơ chế xác thực")}</Text>
                   <Text style={s.rowSub}>
-                    Token được lưu bằng SecureStore của hệ điều hành; bản này chưa xác minh phần cứng lưu
-                    khóa.
+                    {uiText(
+                      "Token được lưu bằng SecureStore của hệ điều hành; bản này chưa xác minh phần cứng lưu khóa.",
+                    )}
                   </Text>
                 </View>
                 <Badge label="SECURESTORE" variant="success" icon="check" />
@@ -112,7 +119,7 @@ export default function SettingsScreen() {
                 <>
                   <View style={s.divider} />
                   <Button
-                    label={busyLogout ? "Đang đăng xuất…" : "Đăng xuất tài khoản hiện tại"}
+                    label={busyLogout ? uiText("Đang đăng xuất…") : uiText("Đăng xuất tài khoản hiện tại")}
                     variant="danger"
                     size="sm"
                     onPress={handleLogout}
@@ -126,16 +133,17 @@ export default function SettingsScreen() {
           <View style={s.section}>
             <View style={s.sectionHeaderRow}>
               <Icon name="bell" size={18} color={tokens.color.brand} />
-              <Text style={s.sectionTitle}>Thông báo & Nhắc nhở</Text>
+              <Text style={s.sectionTitle}>{uiText("Thông báo & Nhắc nhở")}</Text>
             </View>
 
             <View style={s.card}>
               <View style={s.rowBetween}>
                 <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={s.rowLabel}>Thông báo trong ứng dụng</Text>
+                  <Text style={s.rowLabel}>{uiText("Thông báo trong ứng dụng")}</Text>
                   <Text style={s.rowSub}>
-                    Danh sách thông báo được đồng bộ khi mở ứng dụng. Push và nhắc lịch chưa khả dụng trong
-                    bản này.
+                    {uiText(
+                      "Danh sách thông báo được đồng bộ khi mở ứng dụng. Push và nhắc lịch chưa khả dụng trong bản này.",
+                    )}
                   </Text>
                 </View>
                 <Badge label="IN-APP ONLY" variant="neutral" />
@@ -147,21 +155,21 @@ export default function SettingsScreen() {
           <View style={s.section}>
             <View style={s.sectionHeaderRow}>
               <Icon name="grid" size={18} color={tokens.color.brand} />
-              <Text style={s.sectionTitle}>Giao diện & Trợ năng</Text>
+              <Text style={s.sectionTitle}>{uiText("Giao diện & Trợ năng")}</Text>
             </View>
 
             <View style={s.card}>
               <View style={s.rowBetween}>
                 <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={s.rowLabel}>Tăng cường độ tương phản</Text>
-                  <Text style={s.rowSub}>Tối ưu độ rõ nét của chữ và đường viền thẻ bài học</Text>
+                  <Text style={s.rowLabel}>{uiText("Tăng cường độ tương phản")}</Text>
+                  <Text style={s.rowSub}>{uiText("Tối ưu độ rõ nét của chữ và đường viền thẻ bài học")}</Text>
                 </View>
                 <Switch
                   value={settings.highContrast}
                   onValueChange={handleToggleContrast}
                   trackColor={{ false: "#CBD5E1", true: tokens.color.brand }}
                   thumbColor="#FFFFFF"
-                  accessibilityLabel="Độ tương phản cao"
+                  accessibilityLabel={uiText("Độ tương phản cao")}
                 />
               </View>
             </View>
@@ -171,16 +179,16 @@ export default function SettingsScreen() {
           <View style={s.section}>
             <View style={s.sectionHeaderRow}>
               <Icon name="trash" size={18} color={tokens.color.brand} />
-              <Text style={s.sectionTitle}>Dữ liệu & Bộ nhớ đệm</Text>
+              <Text style={s.sectionTitle}>{uiText("Dữ liệu & Bộ nhớ đệm")}</Text>
             </View>
 
             <View style={s.card}>
               <View style={s.rowBetween}>
                 <View>
-                  <Text style={s.rowLabel}>Bộ nhớ đệm (Cache)</Text>
-                  <Text style={s.rowSub}>Chưa có thông tin dung lượng bộ nhớ đệm.</Text>
+                  <Text style={s.rowLabel}>{uiText("Bộ nhớ đệm (Cache)")}</Text>
+                  <Text style={s.rowSub}>{uiText("Chưa có thông tin dung lượng bộ nhớ đệm.")}</Text>
                 </View>
-                <Text style={s.rowSub}>Chưa hỗ trợ dọn bộ nhớ đệm tại đây.</Text>
+                <Text style={s.rowSub}>{uiText("Chưa hỗ trợ dọn bộ nhớ đệm tại đây.")}</Text>
               </View>
             </View>
           </View>
@@ -189,16 +197,16 @@ export default function SettingsScreen() {
           <View style={s.section}>
             <View style={s.sectionHeaderRow}>
               <Icon name="info" size={18} color={tokens.color.brand} />
-              <Text style={s.sectionTitle}>Thông tin ứng dụng</Text>
+              <Text style={s.sectionTitle}>{uiText("Thông tin ứng dụng")}</Text>
             </View>
 
             <View style={s.card}>
               <View style={s.infoRow}>
-                <Text style={s.infoKey}>Phiên bản:</Text>
+                <Text style={s.infoKey}>{uiText("Phiên bản:")}</Text>
                 <Text style={s.infoVal}>v14.1.0 · Phase 41</Text>
               </View>
               <View style={s.infoRow}>
-                <Text style={s.infoKey}>Môi trường:</Text>
+                <Text style={s.infoKey}>{uiText("Môi trường:")}</Text>
                 <Text style={s.infoVal}>
                   {typeof process.env.EXPO_PUBLIC_AILSS_ENV !== "undefined"
                     ? process.env.EXPO_PUBLIC_AILSS_ENV.toUpperCase()
@@ -206,13 +214,15 @@ export default function SettingsScreen() {
                 </Text>
               </View>
               <View style={s.infoRow}>
-                <Text style={s.infoKey}>Kết nối API:</Text>
+                <Text style={s.infoKey}>{uiText("Kết nối API:")}</Text>
                 <Text style={s.infoVal}>{connectionSecurity}</Text>
               </View>
               <View style={s.infoRow}>
-                <Text style={s.infoKey}>Trạng thái tài khoản:</Text>
+                <Text style={s.infoKey}>{uiText("Trạng thái tài khoản:")}</Text>
                 <Text style={s.infoVal}>
-                  {snapshot.user ? `${snapshot.user.displayName} (${snapshot.user.role})` : "Khách vãng lai"}
+                  {snapshot.user
+                    ? `${snapshot.user.displayName} (${snapshot.user.role})`
+                    : uiText("Khách vãng lai")}
                 </Text>
               </View>
             </View>

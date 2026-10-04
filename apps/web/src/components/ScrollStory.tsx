@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useEffect, useRef, useState } from "react";
 
 const stages = [
@@ -34,6 +35,7 @@ const stages = [
 ];
 
 export function ScrollStory() {
+  const uiText = useUiText();
   const root = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
   // Auto-play cycling through 3D stages every 4 seconds
@@ -62,13 +64,13 @@ export function ScrollStory() {
     <section ref={root} className="scroll-story section ai-scroll-story-adaptive">
       <div className="container story-grid">
         <div className="story-sticky">
-          <p className="eyebrow">TỪ Ý TƯỞNG ĐẾN BÀI HỌC</p>
+          <p className="eyebrow">{uiText("TỪ Ý TƯỞNG ĐẾN BÀI HỌC")}</p>
           <h2>
-            Tri thức chuyển động.
+            {uiText("Tri thức chuyển động.")}
             <br />
-            Bạn giữ tay lái.
+            {uiText("Bạn giữ tay lái.")}
           </h2>
-          <p>Cuộn để khám phá cách tài liệu trở thành một cơ hội học tập.</p>
+          <p>{uiText("Cuộn để khám phá cách tài liệu trở thành một cơ hội học tập.")}</p>
 
           <div
             className="story-stage"
@@ -94,7 +96,7 @@ export function ScrollStory() {
               <span style={{ transform: `scaleX(${(active + 1) / 6})` }} />
             </div>
           </div>
-          <small>Minh họa quy trình. AI không tự xuất bản bài kiểm tra.</small>
+          <small>{uiText("Minh họa quy trình. AI không tự xuất bản bài kiểm tra.")}</small>
         </div>
         <ol className="story-chapters">
           {stages.map(([title, copy], i) => (
@@ -106,7 +108,7 @@ export function ScrollStory() {
                 setActive(i);
               }}
               style={{ cursor: "pointer" }}
-              title={`Nhấp để chuyển sang giai đoạn 0${i + 1}`}
+              title={uiText("Nhấp để chuyển sang giai đoạn 0{0}", [i + 1])}
             >
               <span className="story-number">0{i + 1}</span>
               <div>

@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 export function Arrow() {
@@ -113,6 +114,7 @@ export function Dialog({
   className?: string;
   children: ReactNode;
 }) {
+  const uiText = useUiText();
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -160,8 +162,8 @@ export function Dialog({
     >
       <div className="dialog-head">
         <strong>{title}</strong>
-        <button className="icon-button" onClick={onClose} aria-label="Đóng">
-          ×
+        <button className="icon-button" onClick={onClose} aria-label={uiText("Đóng")}>
+          {uiText("×")}
         </button>
       </div>
       {open && children}

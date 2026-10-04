@@ -1,7 +1,9 @@
+import { useUiText } from "../lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import type { SceneController, ScenePreset } from "../lib/scene";
 
 export function KnowledgeScene() {
+  const uiText = useUiText();
   const host = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<SceneController | null>(null);
   const [preset, setPreset] = useState<ScenePreset>("galaxy");
@@ -72,8 +74,10 @@ export function KnowledgeScene() {
       className="knowledge-scene"
       tabIndex={0}
       role="region"
-      aria-label="Không gian tri thức tương tác"
-      aria-description="Di chuyển chuột để tương tác với các hạt sáng. Kéo hoặc dùng phím mũi tên để xoay góc nhìn."
+      aria-label={uiText("Không gian tri thức tương tác")}
+      aria-description={uiText(
+        "Di chuyển chuột để tương tác với các hạt sáng. Kéo hoặc dùng phím mũi tên để xoay góc nhìn.",
+      )}
     >
       <div className="galaxy-poster" aria-hidden="true" />
       <div ref={host} className="webgl-layer" aria-hidden="true" />
@@ -81,32 +85,32 @@ export function KnowledgeScene() {
       <div className="scene-top-hud" aria-hidden="true">
         <div className="scene-live-tag">
           <span className="live-pulsing-dot" />
-          <span>8,600 Hạt tri thức 3D</span>
+          <span>{uiText("8,600 Hạt tri thức 3D")}</span>
         </div>
-        <div className="scene-hud-controls" role="group" aria-label="Góc nhìn không gian 3D">
+        <div className="scene-hud-controls" role="group" aria-label={uiText("Góc nhìn không gian 3D")}>
           <button
             type="button"
             className={`scene-preset-btn ${preset === "galaxy" ? "active" : ""}`}
             onClick={() => changePreset("galaxy")}
-            title="Xem toàn cảnh ngân hà tri thức"
+            title={uiText("Xem toàn cảnh ngân hà tri thức")}
           >
-            🌌 Toàn cảnh
+            {uiText("🌌 Toàn cảnh")}
           </button>
           <button
             type="button"
             className={`scene-preset-btn ${preset === "orbit" ? "active" : ""}`}
             onClick={() => changePreset("orbit")}
-            title="Quan sát các quỹ đạo tri thức"
+            title={uiText("Quan sát các quỹ đạo tri thức")}
           >
-            ⚡ Quỹ đạo
+            {uiText("⚡ Quỹ đạo")}
           </button>
           <button
             type="button"
             className={`scene-preset-btn ${preset === "core" ? "active" : ""}`}
             onClick={() => changePreset("core")}
-            title="Tập trung vào lõi năng lượng"
+            title={uiText("Tập trung vào lõi năng lượng")}
           >
-            ✨ Lõi tri thức
+            {uiText("✨ Lõi tri thức")}
           </button>
         </div>
       </div>
@@ -115,8 +119,8 @@ export function KnowledgeScene() {
         type="button"
         className="scene-reset-corner-btn"
         onClick={handleReset}
-        aria-label="Đặt lại góc nhìn dải ngân hà 3D"
-        title="Đặt lại góc nhìn"
+        aria-label={uiText("Đặt lại góc nhìn dải ngân hà 3D")}
+        title={uiText("Đặt lại góc nhìn")}
       >
         <svg
           width="16"

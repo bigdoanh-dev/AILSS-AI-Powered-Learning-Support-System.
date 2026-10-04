@@ -332,7 +332,11 @@ function csvCell(value: string | number) {
   return `"${safe.replaceAll('"', '""')}"`;
 }
 
-export function reportCsv(report: TeachingReport, classes: ReportClass[]) {
+export function reportCsv(
+  report: TeachingReport,
+  classes: ReportClass[],
+  translateHeader: (source: string) => string = (source) => source,
+) {
   const header = [
     "Từ ngày",
     "Đến ngày",
@@ -370,5 +374,7 @@ export function reportCsv(report: TeachingReport, classes: ReportClass[]) {
       stat.passRate?.toFixed(1) ?? "",
     ];
   });
-  return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+  return [header.map((source) => translateHeader(source)), ...rows]
+    .map((row) => row.map(csvCell).join(","))
+    .join("\r\n");
 }

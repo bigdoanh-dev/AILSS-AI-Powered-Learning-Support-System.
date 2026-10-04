@@ -1,3 +1,4 @@
+import { useLanguage, useUiText } from "../lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Dialog } from "../components/ui";
@@ -37,6 +38,8 @@ export interface StudentAssignmentItem {
 }
 
 export function Assessments() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const query = useAssignedQuizzes();
   const [params] = useSearchParams();
   const [target, setTarget] = useState(params.get("target") ?? "");
@@ -53,26 +56,30 @@ export function Assessments() {
     <div className="assessments-hub-container animate-fade-in">
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">HỌC TẬP & ĐÁNH GIÁ NĂNG LỰC</p>
-          <h1>Bài tập & Kiểm tra</h1>
-          <p className="lead">Bài kiểm tra được giảng viên phát hành cho khóa học và lớp bạn tham gia.</p>
+          <p className="eyebrow">{uiText("HỌC TẬP & ĐÁNH GIÁ NĂNG LỰC")}</p>
+          <h1>{uiText("Bài tập & Kiểm tra")}</h1>
+          <p className="lead">
+            {uiText("Bài kiểm tra được giảng viên phát hành cho khóa học và lớp bạn tham gia.")}
+          </p>
         </div>
         <div className="dashboard-header-actions">
-          <span className="kpi-tag accent">{quizzes.length} bài kiểm tra</span>
+          <span className="kpi-tag accent">
+            {quizzes.length} {uiText(" bài kiểm tra")}
+          </span>
         </div>
       </div>
 
       <div className="assessment-toolbar-card">
         <div className="assessment-filters-grid">
           <label className="assessment-filter-label">
-            <span className="assessment-label-text">Khóa học hoặc lớp</span>
+            <span className="assessment-label-text">{uiText("Khóa học hoặc lớp")}</span>
             <div className="assessment-select-wrap">
               <select
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
                 className="assessment-select"
               >
-                <option value="">Tất cả</option>
+                <option value="">{uiText("Tất cả")}</option>
                 {targets.map(([id, title]) => (
                   <option key={id} value={id}>
                     {title}
@@ -82,12 +89,12 @@ export function Assessments() {
             </div>
           </label>
           <label className="assessment-filter-label">
-            <span className="assessment-label-text">Tìm bài kiểm tra</span>
+            <span className="assessment-label-text">{uiText("Tìm bài kiểm tra")}</span>
             <div className="assessment-search-wrap">
               <Icon name="search" size={16} className="assessment-search-icon" />
               <input
                 className="assessment-search-input"
-                placeholder="Nhập tên bài kiểm tra cần tìm..."
+                placeholder={uiText("Nhập tên bài kiểm tra cần tìm...")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -96,7 +103,7 @@ export function Assessments() {
                   type="button"
                   className="assessment-search-clear"
                   onClick={() => setSearch("")}
-                  aria-label="Xóa từ khóa tìm kiếm"
+                  aria-label={uiText("Xóa từ khóa tìm kiếm")}
                 >
                   ✕
                 </button>
@@ -124,14 +131,14 @@ export function Assessments() {
                         <span>{q.targetTitle}</span>
                       </span>
                       {isClosed ? (
-                        <span className="status-pill status-reconciled">● Đã đóng</span>
+                        <span className="status-pill status-reconciled">{uiText("● Đã đóng")}</span>
                       ) : q.closesAt ? (
                         <span className="status-pill status-pending">
                           <Icon name="clock" size={12} />
-                          <span>Hạn nộp</span>
+                          <span>{uiText("Hạn nộp")}</span>
                         </span>
                       ) : (
-                        <span className="status-pill status-success">● Đang mở</span>
+                        <span className="status-pill status-success">{uiText("● Đang mở")}</span>
                       )}
                     </div>
                   </div>
@@ -142,20 +149,23 @@ export function Assessments() {
                     <span className="assessment-meta-item">
                       <Icon name="fileText" size={14} />
                       <span>
-                        {q.targetTitle} · {q.questionCount} câu hỏi
+                        {q.targetTitle} · {q.questionCount} {uiText(" câu hỏi")}
                       </span>
                     </span>
                     {q.closesAt && (
                       <span className="assessment-meta-item deadline-meta">
                         <Icon name="calendar" size={14} />
-                        <span>Đóng lúc {dateLabel(q.closesAt)}</span>
+                        <span>
+                          {uiText("Đóng lúc ")}
+                          {dateLabel(q.closesAt, undefined, uiLocale)}
+                        </span>
                       </span>
                     )}
                   </div>
 
                   <div className="assessment-card-footer">
                     <Link className="button assessment-cta-btn" to={`/app/assessments/${q.quizId}`}>
-                      <span>Xem bài kiểm tra</span>
+                      <span>{uiText("Xem bài kiểm tra")}</span>
                       <Icon name="chevronRight" size={16} />
                     </Link>
                   </div>
@@ -165,8 +175,9 @@ export function Assessments() {
           </div>
         ) : (
           <Empty>
-            Chưa có bài kiểm tra phù hợp. Bài mới sẽ xuất hiện khi giảng viên phát hành cho khóa học hoặc lớp
-            của bạn.
+            {uiText(
+              "Chưa có bài kiểm tra phù hợp. Bài mới sẽ xuất hiện khi giảng viên phát hành cho khóa học hoặc lớp của bạn.",
+            )}
           </Empty>
         )}
       </State>
@@ -175,6 +186,8 @@ export function Assessments() {
 }
 
 export function QuizDetail() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { quizId = "" } = useParams();
   const q = useStudent<Quiz>("/quizzes/" + quizId);
   const command = useCommand();
@@ -183,20 +196,35 @@ export function QuizDetail() {
   const notOpen = !!q.data?.opensAt && new Date(q.data.opensAt).getTime() > Date.now();
   return (
     <>
-      <Link to="/app/assessments">← Danh sách bài tập &amp; kiểm tra</Link>
+      <Link to="/app/assessments">{uiText("← Danh sách bài tập & kiểm tra")}</Link>
       <Heading title={q.data?.title || "Bài kiểm tra"} />
       <State query={q}>
         <section className="study-card">
-          <h2>Chuẩn bị làm bài</h2>
+          <h2>{uiText("Chuẩn bị làm bài")}</h2>
           <p>
-            {q.data?.questionCount} câu hỏi
-            {q.data?.durationSeconds ? ` · ${q.data.durationSeconds / 60} phút` : ""}
+            {q.data?.questionCount} {uiText(" câu hỏi")}
+            {q.data?.durationSeconds ? uiText(" · {0} phút", [q.data.durationSeconds / 60]) : ""}
           </p>
-          {q.data?.opensAt && <p>Mở lúc {dateLabel(q.data.opensAt)}</p>}
-          {q.data?.closesAt && <p>Đóng lúc {dateLabel(q.data.closesAt)}</p>}
-          <p>Số lần làm tối đa: {q.data?.attemptLimit ?? "Chưa có thông tin"}.</p>
+          {q.data?.opensAt && (
+            <p>
+              {uiText("Mở lúc ")}
+              {dateLabel(q.data.opensAt, undefined, uiLocale)}
+            </p>
+          )}
+          {q.data?.closesAt && (
+            <p>
+              {uiText("Đóng lúc ")}
+              {dateLabel(q.data.closesAt, undefined, uiLocale)}
+            </p>
+          )}
+          <p>
+            {uiText("Số lần làm tối đa: ")}
+            {q.data?.attemptLimit ?? "Chưa có thông tin"}.
+          </p>
           {(closed || notOpen) && (
-            <p role="status">{closed ? "Bài kiểm tra đã đóng." : "Bài kiểm tra chưa đến giờ mở."}</p>
+            <p role="status">
+              {closed ? uiText("Bài kiểm tra đã đóng.") : uiText("Bài kiểm tra chưa đến giờ mở.")}
+            </p>
           )}
           <button
             className="button"
@@ -206,7 +234,7 @@ export function QuizDetail() {
               if (attempt) navigate("/app/attempts/" + attempt.attemptId);
             }}
           >
-            Bắt đầu / tiếp tục làm bài
+            {uiText("Bắt đầu / tiếp tục làm bài")}
           </button>
           <Status command={command} />
         </section>
@@ -215,6 +243,8 @@ export function QuizDetail() {
   );
 }
 export function AttemptPage() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { attemptId = "" } = useParams(),
     query = useStudent<Attempt>("/attempts/" + attemptId),
     command = useCommand(),
@@ -222,21 +252,21 @@ export function AttemptPage() {
   const [active, setActive] = useState<Attempt | null>(null);
   return (
     <>
-      <Heading title="Lần làm bài của bạn" />
+      <Heading title={uiText("Lần làm bài của bạn")} />
       <State query={query}>
         {query.data && (
           <>
             {query.data.state === "SUBMITTED" ? (
               <section className="study-card">
-                <h2>Bài đã nộp</h2>
+                <h2>{uiText("Bài đã nộp")}</h2>
                 <Link className="button" to={"/app/attempts/" + attemptId + "/result"}>
-                  Xem kết quả →
+                  {uiText("Xem kết quả →")}
                 </Link>
               </section>
             ) : query.data.state === "EXPIRED" ? (
               <Empty>
-                Bài kiểm tra đã hết thời gian.{" "}
-                <Link to={"/app/assessments/" + query.data.quizId}>Về bài kiểm tra</Link>
+                {uiText("Bài kiểm tra đã hết thời gian.")}{" "}
+                <Link to={"/app/assessments/" + query.data.quizId}>{uiText("Về bài kiểm tra")}</Link>
               </Empty>
             ) : active ? (
               <AnswerForm
@@ -248,13 +278,18 @@ export function AttemptPage() {
               <section className="study-card">
                 <h2>
                   {query.data.state === "CREATED"
-                    ? "Lần làm bài đã được tạo"
-                    : "Tiếp tục lần làm bài đang diễn ra"}
+                    ? uiText("Lần làm bài đã được tạo")
+                    : uiText("Tiếp tục lần làm bài đang diễn ra")}
                 </h2>
                 {query.data.deadlineAt && (
-                  <p>Hạn nộp: {dateLabel(query.data.deadlineAt)} · Asia/Ho_Chi_Minh</p>
+                  <p>
+                    {uiText("Hạn nộp: ")}
+                    {dateLabel(query.data.deadlineAt, undefined, uiLocale)} · Asia/Ho_Chi_Minh
+                  </p>
                 )}
-                <p>Câu trả lời chưa nộp không được tự động lưu. Giữ trang này mở trong khi làm bài.</p>
+                <p>
+                  {uiText("Câu trả lời chưa nộp không được tự động lưu. Giữ trang này mở trong khi làm bài.")}
+                </p>
                 <button
                   className="button"
                   disabled={command.busy}
@@ -269,7 +304,7 @@ export function AttemptPage() {
                     }
                   }}
                 >
-                  Tải câu hỏi và tiếp tục
+                  {uiText("Tải câu hỏi và tiếp tục")}
                 </button>
                 <Status command={command} />
               </section>
@@ -281,6 +316,7 @@ export function AttemptPage() {
   );
 }
 function AnswerForm({ attempt, onSuccess }: { attempt: Attempt; onSuccess: () => void }) {
+  const uiText = useUiText();
   const [answers, setAnswers] = useState<Record<string, Answer>>({}),
     [confirm, setConfirm] = useState(false),
     [frozen, setFrozen] = useState(false),
@@ -312,13 +348,13 @@ function AnswerForm({ attempt, onSuccess }: { attempt: Attempt; onSuccess: () =>
       <div className="exam-card-header">
         <div className="exam-header-title-row">
           <div>
-            <span className="kpi-tag accent">ĐANG LÀM BÀI THI</span>
-            <h2>Trả lời câu hỏi</h2>
+            <span className="kpi-tag accent">{uiText("ĐANG LÀM BÀI THI")}</span>
+            <h2>{uiText("Trả lời câu hỏi")}</h2>
           </div>
           <div className="exam-answered-pill">
             <Icon name="checkCircle" size={15} />
             <span>
-              <strong>{answeredCount}</strong> / {questions.length} câu đã trả lời
+              <strong>{answeredCount}</strong> / {questions.length} {uiText(" câu đã trả lời")}
             </span>
           </div>
         </div>
@@ -334,17 +370,19 @@ function AnswerForm({ attempt, onSuccess }: { attempt: Attempt; onSuccess: () =>
       <div className="exam-unsaved-banner">
         <Icon name="alert" size={16} />
         <p>
-          Câu trả lời chưa nộp không được lưu trên máy chủ. Làm mới hoặc đóng trang có thể làm mất nội dung.
+          {uiText(
+            "Câu trả lời chưa nộp không được lưu trên máy chủ. Làm mới hoặc đóng trang có thể làm mất nội dung.",
+          )}
         </p>
       </div>
 
       <p className="sr-only">
-        {answeredCount} / {questions.length} câu đã trả lời.
+        {answeredCount} / {questions.length} {uiText(" câu đã trả lời.")}
       </p>
 
       <div className="exam-nav-wrapper">
-        <span className="exam-nav-title">Danh sách câu hỏi:</span>
-        <nav className="question-nav exam-question-nav" aria-label="Đi đến câu hỏi">
+        <span className="exam-nav-title">{uiText("Danh sách câu hỏi:")}</span>
+        <nav className="question-nav exam-question-nav" aria-label={uiText("Đi đến câu hỏi")}>
           {questions.map((q, i) => (
             <a
               key={q.questionId}
@@ -352,7 +390,7 @@ function AnswerForm({ attempt, onSuccess }: { attempt: Attempt; onSuccess: () =>
               href={"#q-" + q.questionId}
               aria-current={current === i ? "step" : undefined}
               onClick={() => setCurrent(i)}
-              aria-label={`Câu ${i + 1}: ${answered(q) ? "đã trả lời" : "chưa trả lời"}`}
+              aria-label={uiText("Câu {0}: {1}", [i + 1, answered(q) ? "đã trả lời" : "chưa trả lời"])}
             >
               <span className="nav-btn-num">{i + 1}</span>
               {answered(q) && <span className="nav-btn-check">✓</span>}
@@ -362,7 +400,7 @@ function AnswerForm({ attempt, onSuccess }: { attempt: Attempt; onSuccess: () =>
       </div>
 
       <fieldset disabled={frozen || command.busy} className="answer-fields exam-questions-list">
-        <legend className="sr-only">Nội dung bài làm</legend>
+        <legend className="sr-only">{uiText("Nội dung bài làm")}</legend>
         {questions.map((q, i) => (
           <fieldset
             id={"q-" + q.questionId}
@@ -370,7 +408,10 @@ function AnswerForm({ attempt, onSuccess }: { attempt: Attempt; onSuccess: () =>
             className={`study-question exam-question-card ${answered(q) ? "is-answered" : ""} ${current === i ? "is-current" : ""}`}
           >
             <legend className="exam-question-legend">
-              <span className="exam-q-pill">Câu {i + 1}</span>
+              <span className="exam-q-pill">
+                {uiText("Câu ")}
+                {i + 1}
+              </span>
               <span className="exam-q-prompt">{q.prompt}</span>
             </legend>
             <div className="exam-question-input-area">
@@ -387,13 +428,13 @@ function AnswerForm({ attempt, onSuccess }: { attempt: Attempt; onSuccess: () =>
           onClick={() => setConfirm(true)}
         >
           <Icon name="checkCircle" size={16} />
-          <span>Nộp bài</span>
+          <span>{uiText("Nộp bài")}</span>
         </button>
       </div>
 
       {command.message === "Dịch vụ tạm thời không khả dụng. Hãy thử lại." ? (
         <p role="status">
-          Chưa thể xác nhận trạng thái nộp bài. Hãy thử lại để kiểm tra và tiếp tục yêu cầu trước.
+          {uiText("Chưa thể xác nhận trạng thái nộp bài. Hãy thử lại để kiểm tra và tiếp tục yêu cầu trước.")}
         </p>
       ) : (
         <Status command={command} />
@@ -403,12 +444,15 @@ function AnswerForm({ attempt, onSuccess }: { attempt: Attempt; onSuccess: () =>
         onClose={() => {
           if (!command.busy) setConfirm(false);
         }}
-        title="Xác nhận nộp bài"
+        title={uiText("Xác nhận nộp bài")}
       >
-        <h2>Bạn đã sẵn sàng nộp?</h2>
+        <h2>{uiText("Bạn đã sẵn sàng nộp?")}</h2>
         <p>
-          Đã trả lời: {answeredCount}. Chưa trả lời: {questions.length - answeredCount}. Sau khi nộp thành
-          công, bạn không thể sửa câu trả lời.
+          {uiText("Đã trả lời: ")}
+          {answeredCount}
+          {uiText(". Chưa trả lời: ")}
+          {questions.length - answeredCount}
+          {uiText(". Sau khi nộp thành công, bạn không thể sửa câu trả lời.")}
         </p>
         <button
           className="button"
@@ -433,14 +477,16 @@ function AnswerForm({ attempt, onSuccess }: { attempt: Attempt; onSuccess: () =>
             }
           }}
         >
-          Xác nhận nộp bài
+          {uiText("Xác nhận nộp bài")}
         </button>
         <button className="button secondary" disabled={command.busy} onClick={() => setConfirm(false)}>
-          Tiếp tục kiểm tra
+          {uiText("Tiếp tục kiểm tra")}
         </button>
         {command.message === "Dịch vụ tạm thời không khả dụng. Hãy thử lại." ? (
           <p role="status">
-            Chưa thể xác nhận trạng thái nộp bài. Hãy thử lại để kiểm tra và tiếp tục yêu cầu trước.
+            {uiText(
+              "Chưa thể xác nhận trạng thái nộp bài. Hãy thử lại để kiểm tra và tiếp tục yêu cầu trước.",
+            )}
           </p>
         ) : (
           <Status command={command} />
@@ -451,6 +497,8 @@ function AnswerForm({ attempt, onSuccess }: { attempt: Attempt; onSuccess: () =>
 }
 
 function AttemptTimer({ deadline }: { deadline: string }) {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const update = () => setNow(Date.now()),
@@ -473,17 +521,23 @@ function AttemptTimer({ deadline }: { deadline: string }) {
         <Icon name="clock" size={20} className={isUrgent ? "timer-icon-urgent" : "timer-icon-pulse"} />
         <span className="attempt-timer-text">
           <strong>
-            Thời gian còn lại: {hours ? `${hours}:` : ""}
+            {uiText("Thời gian còn lại: ")}
+            {hours ? `${hours}:` : ""}
             {String(minutes).padStart(2, "0")}:{String(rest).padStart(2, "0")}
           </strong>
         </span>
       </div>
       <div className="attempt-timer-deadline-line">
-        <span>Hạn nộp theo máy chủ: {dateLabel(deadline)} · Asia/Ho_Chi_Minh</span>
+        <span>
+          {uiText("Hạn nộp theo máy chủ: ")}
+          {dateLabel(deadline, undefined, uiLocale)} · Asia/Ho_Chi_Minh
+        </span>
       </div>
       {left === 0 && (
         <div className="attempt-timer-expired-line">
-          <span>Đồng hồ đã về 0. Hệ thống sẽ xác nhận trạng thái khi bạn thực hiện thao tác tiếp theo.</span>
+          <span>
+            {uiText("Đồng hồ đã về 0. Hệ thống sẽ xác nhận trạng thái khi bạn thực hiện thao tác tiếp theo.")}
+          </span>
         </div>
       )}
     </div>
@@ -498,6 +552,7 @@ function QuestionInput({
   answer?: Answer;
   onChange: (a: Answer) => void;
 }) {
+  const uiText = useUiText();
   const isEssay =
     (q.questionType as string) === "ESSAY" ||
     q.prompt.toLowerCase().includes("tự luận") ||
@@ -523,14 +578,16 @@ function QuestionInput({
           }}
         >
           <span style={{ fontSize: 13, fontWeight: 700, color: "var(--brand, #0284c7)" }}>
-            📁 Nộp tệp đồ án / Báo cáo (Giảng viên chấm thủ công)
+            {uiText("📁 Nộp tệp đồ án / Báo cáo (Giảng viên chấm thủ công)")}
           </span>
           <p style={{ margin: "4px 0 8px 0", fontSize: 12, color: "var(--muted, #64748b)" }}>
-            Định dạng cho phép: .PDF, .ZIP, .DOCX hoặc liên kết lưu trữ trực tuyến (GitHub, Google Drive)
+            {uiText(
+              "Định dạng cho phép: .PDF, .ZIP, .DOCX hoặc liên kết lưu trữ trực tuyến (GitHub, Google Drive)",
+            )}
           </p>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <label className="button button-subtle button-small" style={{ cursor: "pointer", margin: 0 }}>
-              📎 Chọn tệp từ máy tính
+              {uiText("📎 Chọn tệp từ máy tính")}
               <input
                 type="file"
                 style={{ display: "none" }}
@@ -551,9 +608,9 @@ function QuestionInput({
           </div>
         </div>
         <label>
-          Hoặc dán liên kết Repository / Cloud Drive & Ghi chú đồ án:
+          {uiText("Hoặc dán liên kết Repository / Cloud Drive & Ghi chú đồ án:")}
           <input
-            placeholder="https://github.com/your-username/project-repo hoặc mô tả nộp bài..."
+            placeholder={uiText("https://github.com/your-username/project-repo hoặc mô tả nộp bài...")}
             maxLength={500}
             value={textVal}
             onChange={(e) => onChange({ questionId: q.questionId, text: e.target.value })}
@@ -569,9 +626,11 @@ function QuestionInput({
       <div style={{ margin: "8px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: "#7c3aed" }}>
-            ✍️ Bài làm tự luận (Giảng viên chấm thủ công)
+            {uiText("✍️ Bài làm tự luận (Giảng viên chấm thủ công)")}
           </span>
-          <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>{textVal.length} / 500 ký tự</span>
+          <span style={{ fontSize: 12, color: "var(--muted, #64748b)" }}>
+            {textVal.length} {uiText(" / 500 ký tự")}
+          </span>
         </div>
         <textarea
           rows={5}
@@ -583,7 +642,7 @@ function QuestionInput({
             fontFamily: "inherit",
             fontSize: 14,
           }}
-          placeholder="Nhập nội dung bài luận, câu trả lời tự luận hoặc lời giải chi tiết..."
+          placeholder={uiText("Nhập nội dung bài luận, câu trả lời tự luận hoặc lời giải chi tiết...")}
           maxLength={500}
           value={textVal}
           onChange={(e) => onChange({ questionId: q.questionId, text: e.target.value })}
@@ -595,7 +654,7 @@ function QuestionInput({
   if (q.questionType === "SHORT_ANSWER")
     return (
       <label>
-        Câu trả lời ngắn
+        {uiText("Câu trả lời ngắn")}
         <input
           maxLength={500}
           value={a && "text" in a ? a.text : ""}
@@ -614,7 +673,7 @@ function QuestionInput({
               checked={!!a && "value" in a && a.value === v}
               onChange={() => onChange({ questionId: q.questionId, value: v })}
             />
-            {v ? "Đúng" : "Sai"}
+            {v ? uiText("Đúng") : "Sai"}
           </label>
         ))}
       </>
@@ -650,25 +709,35 @@ function QuestionInput({
   );
 }
 export function ResultPage() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { attemptId = "" } = useParams();
   const query = useStudent<Result>(`/attempts/${attemptId}/result`);
   return (
     <>
-      <Heading title="Kết quả bài kiểm tra" />
+      <Heading title={uiText("Kết quả bài kiểm tra")} />
       <State query={query}>
         {query.data && (
           <section className="study-welcome">
             {query.data.gradingStatus === "PENDING_MANUAL_GRADING" ? (
-              <h2>Đang chờ giảng viên chấm</h2>
+              <h2>{uiText("Đang chờ giảng viên chấm")}</h2>
             ) : (
               <h2>
                 {query.data.manualScore ?? query.data.score} / {query.data.maxScore}
               </h2>
             )}
-            <p>Đã nộp lúc {dateLabel(query.data.submittedAt)}</p>
-            {query.data.teacherFeedback && <p>Nhận xét của giảng viên: {query.data.teacherFeedback}</p>}
+            <p>
+              {uiText("Đã nộp lúc ")}
+              {dateLabel(query.data.submittedAt, undefined, uiLocale)}
+            </p>
+            {query.data.teacherFeedback && (
+              <p>
+                {uiText("Nhận xét của giảng viên: ")}
+                {query.data.teacherFeedback}
+              </p>
+            )}
             <Link className="button" to="/app/assessments">
-              Trở lại bài kiểm tra
+              {uiText("Trở lại bài kiểm tra")}
             </Link>
           </section>
         )}

@@ -1,3 +1,5 @@
+import { useLanguage } from "../../src/use-language";
+import { useUiText } from "../../src/use-language";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
@@ -8,6 +10,8 @@ import { useStudentLearning } from "../../src/use-student-learning";
 import { StudentNav } from "../../src/StudentNav";
 
 export default function StudyPlanScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const session = runtime!;
   const auth = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const data = useStudentLearning(session, auth.user?.userId, auth.state);
@@ -60,38 +64,44 @@ export default function StudyPlanScreen() {
         <View style={{ gap: 5 }}>
           <Text style={local.eyebrow}>STUDY PLAN V2</Text>
           <Text testID="student-study-plan-title" style={styles.title}>
-            Lộ trình của bạn
+            {uiText("Lộ trình của bạn")}
           </Text>
-          <Text style={styles.text}>Đề xuất, lịch và lý do được cung cấp bởi Learning Service.</Text>
+          <Text style={styles.text}>
+            {uiText("Đề xuất, lịch và lý do được cung cấp bởi Learning Service.")}
+          </Text>
           <Text
             testID="student-study-plan-data-source"
-            accessibilityLabel={data.source === "LIVE" ? "LIVE" : "OFFLINE_CACHE"}
+            accessibilityLabel={data.source === "LIVE" ? uiText("LIVE") : "OFFLINE_CACHE"}
             style={styles.small}
           >
             {data.source === "LIVE"
-              ? "LIVE · dữ liệu mới nhất từ máy chủ"
-              : `OFFLINE_CACHE · LAST_SYNCED ${selected?.studyPlanSyncedAt ?? "chưa có"}`}
+              ? uiText("LIVE · dữ liệu mới nhất từ máy chủ")
+              : uiText("OFFLINE_CACHE · LAST_SYNCED {0}", [selected?.studyPlanSyncedAt ?? "chưa có"])}
           </Text>
         </View>
         {data.loading ? (
           <View style={local.center}>
             <ActivityIndicator color={tokens.color.brand} />
-            <Text style={styles.small}>Đang tải lộ trình…</Text>
+            <Text style={styles.small}>{uiText("Đang tải lộ trình…")}</Text>
           </View>
         ) : data.error ? (
           <View style={local.card}>
             <Text accessibilityRole="alert" style={styles.error}>
-              {data.error}
+              {uiText(data.error)}
             </Text>
-            <Button label="Tải lại" onPress={data.refresh} />
+            <Button label={uiText("Tải lại")} onPress={data.refresh} />
           </View>
         ) : data.courses.length === 0 ? (
           <View style={local.card}>
-            <Text style={local.heading}>Chưa có khóa học đang học</Text>
+            <Text style={local.heading}>{uiText("Chưa có khóa học đang học")}</Text>
           </View>
         ) : (
           <>
-            <View style={local.selector} accessibilityRole="radiogroup" accessibilityLabel="Chọn khóa học">
+            <View
+              style={local.selector}
+              accessibilityRole="radiogroup"
+              accessibilityLabel={uiText("Chọn khóa học")}
+            >
               {data.courses.map((item) => (
                 <Pressable
                   key={item.course.courseId}
@@ -119,9 +129,10 @@ export default function StudyPlanScreen() {
             {selected?.studyPlanError ? (
               <View style={local.card}>
                 <Text accessibilityRole="alert" style={styles.error}>
-                  Không tải được Study Plan: {selected.studyPlanError}
+                  {uiText("Không tải được Study Plan: ")}
+                  {selected.studyPlanError}
                 </Text>
-                <Button label="Thử lại" onPress={data.refresh} />
+                <Button label={uiText("Thử lại")} onPress={data.refresh} />
               </View>
             ) : selected?.studyPlan ? (
               <>
@@ -133,13 +144,15 @@ export default function StudyPlanScreen() {
                     {selected.course.title}
                   </Text>
                   <Text style={local.summaryText}>
-                    Sinh lúc {new Date(selected.studyPlan.generatedAt).toLocaleString("vi-VN")} · Mastery tổng
-                    quan {Math.round(selected.studyPlan.overallMasteryPercent)}%
+                    {uiText("Sinh lúc ")}
+                    {new Date(selected.studyPlan.generatedAt).toLocaleString(uiLocale)}{" "}
+                    {uiText(" · Mastery tổng quan ")}
+                    {Math.round(selected.studyPlan.overallMasteryPercent)}%
                   </Text>
                 </View>
                 {selected.studyPlan.items.length === 0 ? (
                   <View style={local.card}>
-                    <Text style={local.heading}>Chưa có việc học được đề xuất</Text>
+                    <Text style={local.heading}>{uiText("Chưa có việc học được đề xuất")}</Text>
                   </View>
                 ) : (
                   selected.studyPlan.items.map((item) => (
@@ -151,30 +164,34 @@ export default function StudyPlanScreen() {
                       <Text style={local.body}>{item.description}</Text>
                       <Text style={local.reason}>{item.rationale}</Text>
                       <Text style={local.body}>
-                        Lịch: {item.scheduledDate} · {item.estimatedMinutes} phút
+                        {uiText("Lịch: ")}
+                        {item.scheduledDate} · {item.estimatedMinutes} {uiText(" phút")}
                       </Text>
                       {item.dueAt && (
-                        <Text style={local.body}>Hạn: {new Date(item.dueAt).toLocaleString("vi-VN")}</Text>
+                        <Text style={local.body}>
+                          {uiText("Hạn: ")}
+                          {new Date(item.dueAt).toLocaleString(uiLocale)}
+                        </Text>
                       )}
                       {!["COMPLETED", "SKIPPED", "REPLACED"].includes(item.status) && (
                         <View style={local.actions}>
                           {item.status === "PROPOSED" || item.status === "PENDING" ? (
                             <Button
-                              label="Chấp nhận"
+                              label={uiText("Chấp nhận")}
                               size="sm"
                               disabled={auth.state !== "AUTHENTICATED"}
                               onPress={() => void act(item.itemId, "accept")}
                             />
                           ) : null}
                           <Button
-                            label="Hoàn thành"
+                            label={uiText("Hoàn thành")}
                             size="sm"
                             variant="secondary"
                             disabled={auth.state !== "AUTHENTICATED"}
                             onPress={() => void act(item.itemId, "complete")}
                           />
                           <Button
-                            label="Bỏ qua"
+                            label={uiText("Bỏ qua")}
                             size="sm"
                             variant="ghost"
                             disabled={auth.state !== "AUTHENTICATED"}
@@ -188,19 +205,19 @@ export default function StudyPlanScreen() {
               </>
             ) : (
               <View style={local.card}>
-                <Text style={local.heading}>Chưa có Study Plan cho khóa này</Text>
+                <Text style={local.heading}>{uiText("Chưa có Study Plan cho khóa này")}</Text>
                 <Text style={local.body}>
                   {selected?.masteryError
-                    ? `Không thể kiểm tra điều kiện tạo lộ trình: ${selected.masteryError}`
+                    ? uiText("Không thể kiểm tra điều kiện tạo lộ trình: {0}", [selected.masteryError])
                     : selected?.mastery?.length
-                      ? "Có dữ liệu Mastery. Bạn có thể tạo lộ trình mới từ dữ liệu hiện có."
-                      : "Cần có Mastery evidence trước khi hệ thống tạo lộ trình."}
+                      ? uiText("Có dữ liệu Mastery. Bạn có thể tạo lộ trình mới từ dữ liệu hiện có.")
+                      : uiText("Cần có Mastery evidence trước khi hệ thống tạo lộ trình.")}
                 </Text>
                 <Button
                   disabled={
                     auth.state !== "AUTHENTICATED" || !selected?.mastery?.length || !!selected?.masteryError
                   }
-                  label="Tạo lộ trình"
+                  label={uiText("Tạo lộ trình")}
                   onPress={() => void generate()}
                 />
               </View>
@@ -208,10 +225,10 @@ export default function StudyPlanScreen() {
             {actionError && (
               <View style={local.error}>
                 <Text accessibilityRole="alert" style={styles.error}>
-                  {actionError}
+                  {uiText(actionError)}
                 </Text>
                 <Button
-                  label="Tải trạng thái mới nhất"
+                  label={uiText("Tải trạng thái mới nhất")}
                   size="sm"
                   onPress={() => {
                     setActionError("");

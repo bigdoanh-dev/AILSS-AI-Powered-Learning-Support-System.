@@ -2,6 +2,37 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { studentOperation } from "./student.mjs";
 const id = "00000000-0000-4000-8000-000000000001";
+test("Student AI language is optional and limited to Vietnamese or English", () => {
+  for (const mode of ["STUDENT_ADVISOR", "STUDY_BUDDY"])
+    for (const responseLanguage of [undefined, "vi", "en"])
+      assert.equal(
+        studentOperation(
+          "/web-session/student/assistant/chat",
+          "POST",
+          {
+            mode,
+            message: "Explain this lesson",
+            courseId: id,
+            ...(responseLanguage ? { responseLanguage } : {}),
+          },
+          {},
+        ).path,
+        "/assistant/chat",
+      );
+  for (const responseLanguage of ["ja", "ko", "zh", "", null])
+    assert.throws(() =>
+      studentOperation(
+        "/web-session/student/assistant/chat",
+        "POST",
+        {
+          mode: "STUDY_BUDDY",
+          message: "Question",
+          responseLanguage,
+        },
+        {},
+      ),
+    );
+});
 test("Student commerce allowlist maps offering, order and payment simulation exactly", () => {
   assert.equal(
     studentOperation("/web-session/student/offerings?type=SELF_PACED&limit=50", "GET", undefined, {}).path,

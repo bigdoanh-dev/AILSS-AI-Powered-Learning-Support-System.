@@ -1,3 +1,4 @@
+import { useUiText, useLanguage } from "../lib/i18n";
 import { Link, useSearchParams } from "react-router-dom";
 export type CalendarSession = {
   sessionId: string;
@@ -53,8 +54,8 @@ export function useCalendar() {
     });
   return { day, view, ...calendarWindow(day, view), update };
 }
-const time = (value: string) =>
-  new Intl.DateTimeFormat("vi-VN", {
+const time = (value: string, locale: string) =>
+  new Intl.DateTimeFormat(locale, {
     timeZone: "Asia/Ho_Chi_Minh",
     hour: "2-digit",
     minute: "2-digit",
@@ -66,6 +67,8 @@ export function ScheduleCalendar({
   items: CalendarSession[];
   calendar: ReturnType<typeof useCalendar>;
 }) {
+  const uiText = useUiText();
+  const { locale } = useLanguage();
   const { day, view, start, end, update } = calendar;
   const sorted = [...items]
     .filter((x) => {
@@ -91,29 +94,37 @@ export function ScheduleCalendar({
       key={x.sessionId}
     >
       <strong>
-        {time(x.startAt)}–{time(x.endAt)}
+        {time(x.startAt, locale)}–{time(x.endAt, locale)}
       </strong>
       <span>{x.title}</span>
       {x.className && <small>{x.className}</small>}
-      {x.status === "CANCELLED" && <small>Đã hủy</small>}
+      {x.status === "CANCELLED" && <small>{uiText("Đã hủy")}</small>}
     </Link>
   );
   return (
     <section className="schedule-panel">
       <div className="calendar-toolbar">
         <div className="inline-actions">
-          <button className="button secondary small" aria-label="Khoảng trước" onClick={() => move(-1)}>
+          <button
+            className="button secondary small"
+            aria-label={uiText("Khoảng trước")}
+            onClick={() => move(-1)}
+          >
             ←
           </button>
           <button className="button secondary small" onClick={() => update({ date: localDay() })}>
-            Hôm nay
+            {uiText("Hôm nay")}
           </button>
-          <button className="button secondary small" aria-label="Khoảng sau" onClick={() => move(1)}>
+          <button
+            className="button secondary small"
+            aria-label={uiText("Khoảng sau")}
+            onClick={() => move(1)}
+          >
             →
           </button>
         </div>
         <label>
-          Ngày xem
+          {uiText("Ngày xem")}
           <input
             type="date"
             value={day}
@@ -123,7 +134,7 @@ export function ScheduleCalendar({
             }}
           />
         </label>
-        <div className="calendar-views" role="group" aria-label="Chế độ xem lịch">
+        <div className="calendar-views" role="group" aria-label={uiText("Chế độ xem lịch")}>
           {[
             ["day", "Ngày"],
             ["week", "Tuần"],
@@ -138,28 +149,35 @@ export function ScheduleCalendar({
       </div>
       <p className="muted">
         {view === "day"
-          ? `Ngày ${day.slice(8, 10)}/${day.slice(5, 7)}/${day.slice(0, 4)}`
+          ? uiText("Ngày {0}/{1}/{2}", [day.slice(8, 10), day.slice(5, 7), day.slice(0, 4)])
           : view === "week"
             ? `${start} – ${end}`
-            : `Tháng ${day.slice(5, 7)}/${day.slice(0, 4)}`}{" "}
-        · Giờ Việt Nam (UTC+7)
+            : uiText("Tháng {0}/{1}", [day.slice(5, 7), day.slice(0, 4)])}{" "}
+        {uiText("· Giờ Việt Nam (UTC+7)")}
       </p>
-      {!sorted.length && view !== "day" && <p role="status">Chưa có buổi học trong khoảng thời gian này.</p>}
+      {!sorted.length && view !== "day" && (
+        <p role="status">{uiText("Chưa có buổi học trong khoảng thời gian này.")}</p>
+      )}
       {view === "day" ? (
         <div className="calendar-day-agenda">
           <div className="calendar-day-header">
             <h3>
-              Lịch học ngày {day.slice(8, 10)}/{day.slice(5, 7)}/{day.slice(0, 4)}
+              {uiText("Lịch học ngày ")}
+              {day.slice(8, 10)}/{day.slice(5, 7)}/{day.slice(0, 4)}
             </h3>
-            <span className="badge">{sorted.length} buổi học</span>
+            <span className="badge">
+              {sorted.length} {uiText(" buổi học")}
+            </span>
           </div>
           {!sorted.length ? (
             <div
               className="empty-day-box"
               style={{ padding: "32px 16px", textAlign: "center", color: "var(--muted)" }}
             >
-              <p style={{ margin: 0, fontWeight: 600 }}>Không có buổi học nào được xếp lịch vào ngày này.</p>
-              <small>Bạn có thể chọn ngày khác hoặc chuyển sang xem theo Tuần/Tháng.</small>
+              <p style={{ margin: 0, fontWeight: 600 }}>
+                {uiText("Không có buổi học nào được xếp lịch vào ngày này.")}
+              </p>
+              <small>{uiText("Bạn có thể chọn ngày khác hoặc chuyển sang xem theo Tuần/Tháng.")}</small>
             </div>
           ) : (
             <div
@@ -170,17 +188,19 @@ export function ScheduleCalendar({
                 <article key={x.sessionId} className="home-activity-card">
                   <div className="home-activity-card-top">
                     <span className="badge" style={{ fontWeight: 700 }}>
-                      ⏰ {time(x.startAt)} – {time(x.endAt)}
+                      ⏰ {time(x.startAt, locale)} – {time(x.endAt, locale)}
                     </span>
                     <span className={x.status === "CANCELLED" ? "red-badge-pill" : "green-badge-pill"}>
-                      {x.status === "CANCELLED" ? "● Đã hủy" : "● Sắp diễn ra"}
+                      {x.status === "CANCELLED" ? uiText("● Đã hủy") : uiText("● Sắp diễn ra")}
                     </span>
                   </div>
                   <h4 className="home-activity-card-title">{x.title}</h4>
                   <div className="home-activity-card-meta">
-                    <span>{x.className ? `Lớp: ${x.className}` : "Lớp học chính khóa"}</span>
+                    <span>
+                      {x.className ? uiText("Lớp: {0}", [x.className]) : uiText("Lớp học chính khóa")}
+                    </span>
                     <Link to={x.href} className="button small" style={{ textDecoration: "none" }}>
-                      Vào chi tiết →
+                      {uiText("Vào chi tiết →")}
                     </Link>
                   </div>
                 </article>
@@ -198,11 +218,11 @@ export function ScheduleCalendar({
           ))}
         </div>
       ) : (
-        <div className="calendar-scroll" tabIndex={0} aria-label="Lịch theo ngày">
+        <div className="calendar-scroll" tabIndex={0} aria-label={uiText("Lịch theo ngày")}>
           <div className="calendar-grid">
             {["Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy", "Chủ nhật"].map((d) => (
               <div className="calendar-weekday" key={d}>
-                {d}
+                {uiText(d)}
               </div>
             ))}
             {Array.from({ length: view === "week" ? 7 : 42 }, (_, i) => addDays(start, i)).map((d) => (

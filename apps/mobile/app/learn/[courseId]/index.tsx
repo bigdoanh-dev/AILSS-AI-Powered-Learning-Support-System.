@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useSyncExternalStore, useState, useEffect, useCallback, useMemo } from "react";
 import { Text, View, ActivityIndicator, Pressable, StyleSheet } from "react-native";
 import { type Href, router, useLocalSearchParams } from "expo-router";
@@ -26,6 +27,7 @@ import {
 import { ScalePressable } from "../../../src/motion";
 
 export default function CourseLearningScreen() {
+  const uiText = useUiText();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -107,14 +109,14 @@ export default function CourseLearningScreen() {
   if (snapshot.state !== "AUTHENTICATED") {
     return (
       <Page>
-        <ScreenHeader title="Nội dung khóa học" onBack={() => router.push("/learn" as Href)} />
+        <ScreenHeader title={uiText("Nội dung khóa học")} onBack={() => router.push("/learn" as Href)} />
         <View style={localStyles.authCard}>
           <Icon name="lock" size={36} color={tokens.color.brand} />
-          <Text style={localStyles.authTitle}>Yêu cầu đăng nhập</Text>
+          <Text style={localStyles.authTitle}>{uiText("Yêu cầu đăng nhập")}</Text>
           <Text style={localStyles.authDesc}>
-            Vui lòng đăng nhập tài khoản học viên để truy cập giáo trình và nội dung bài giảng.
+            {uiText("Vui lòng đăng nhập tài khoản học viên để truy cập giáo trình và nội dung bài giảng.")}
           </Text>
-          <Button label="Đăng nhập ngay" onPress={() => router.push("/login" as Href)} />
+          <Button label={uiText("Đăng nhập ngay")} onPress={() => router.push("/login" as Href)} />
         </View>
         <BottomNavBar
           currentRoute="/learn"
@@ -128,10 +130,10 @@ export default function CourseLearningScreen() {
   if (loading) {
     return (
       <Page>
-        <ScreenHeader title="Đang tải khóa học..." onBack={() => router.push("/learn" as Href)} />
+        <ScreenHeader title={uiText("Đang tải khóa học...")} onBack={() => router.push("/learn" as Href)} />
         <View style={localStyles.center}>
           <ActivityIndicator size="large" color={tokens.color.brand} />
-          <Text style={localStyles.loadingText}>Đang chuẩn bị giáo trình bài học…</Text>
+          <Text style={localStyles.loadingText}>{uiText("Đang chuẩn bị giáo trình bài học…")}</Text>
         </View>
         <BottomNavBar
           currentRoute="/learn"
@@ -145,16 +147,16 @@ export default function CourseLearningScreen() {
   if (error || !course) {
     return (
       <Page>
-        <ScreenHeader title="Nội dung khóa học" onBack={() => router.push("/learn" as Href)} />
+        <ScreenHeader title={uiText("Nội dung khóa học")} onBack={() => router.push("/learn" as Href)} />
         <View style={localStyles.errorCard}>
           <Icon name="alert" size={32} color={tokens.color.danger} />
           <Text accessibilityRole="alert" style={localStyles.errorText}>
             {error || "Đã xảy ra lỗi khi tải khóa học."}
           </Text>
           <View style={localStyles.errorActions}>
-            <Button label="Thử lại" onPress={() => void fetchSyllabus()} />
+            <Button label={uiText("Thử lại")} onPress={() => void fetchSyllabus()} />
             <Button
-              label="← Quay lại khóa học của tôi"
+              label={uiText("← Quay lại khóa học của tôi")}
               variant="outline"
               onPress={() => router.push("/learn" as Href)}
             />
@@ -171,17 +173,19 @@ export default function CourseLearningScreen() {
 
   return (
     <Page>
-      <ScreenHeader title="Chi tiết giáo trình" onBack={() => router.push("/learn" as Href)} />
+      <ScreenHeader title={uiText("Chi tiết giáo trình")} onBack={() => router.push("/learn" as Href)} />
 
       {/* Course Hero Header */}
       <View style={localStyles.heroCard}>
         <View style={localStyles.heroBadgeRow}>
-          <Badge label="CHƯƠNG TRÌNH ĐÀO TẠO" variant="primary" />
-          {course.priceType === "FREE" && <Badge label="MIỄN PHÍ" variant="success" />}
+          <Badge label={uiText("CHƯƠNG TRÌNH ĐÀO TẠO")} variant="primary" />
+          {course.priceType === "FREE" && <Badge label={uiText("MIỄN PHÍ")} variant="success" />}
         </View>
         <Text style={localStyles.courseTitle}>{course.title}</Text>
         <Text style={localStyles.courseMeta}>
-          Tổng số bài: {lessonsList.length} bài • {sections.length} chương chuyên đề
+          {uiText("Tổng số bài: ")}
+          {lessonsList.length} {uiText(" bài • ")}
+          {sections.length} {uiText(" chương chuyên đề")}
         </Text>
       </View>
 
@@ -194,7 +198,8 @@ export default function CourseLearningScreen() {
           <Text
             style={[localStyles.tabSwitchText, courseTab === "lessons" && localStyles.tabSwitchTextActive]}
           >
-            📖 Bài Giảng ({lessonsList.length})
+            {uiText("📖 Bài Giảng (")}
+            {lessonsList.length})
           </Text>
         </ScalePressable>
         <ScalePressable
@@ -210,7 +215,7 @@ export default function CourseLearningScreen() {
               courseTab === "assessments" && localStyles.tabSwitchTextActive,
             ]}
           >
-            📝 Bài kiểm tra
+            {uiText("📝 Bài kiểm tra")}
           </Text>
         </ScalePressable>
       </View>
@@ -222,9 +227,10 @@ export default function CourseLearningScreen() {
             <View style={localStyles.progressCard}>
               <View style={localStyles.progressTopRow}>
                 <View style={localStyles.progressInfo}>
-                  <Text style={localStyles.progressHeading}>Tiến độ học tập</Text>
+                  <Text style={localStyles.progressHeading}>{uiText("Tiến độ học tập")}</Text>
                   <Text style={localStyles.progressSub}>
-                    Đã hoàn thành {courseProgress.completedCount}/{courseProgress.publishedTotal} bài giảng
+                    {uiText("Đã hoàn thành ")}
+                    {courseProgress.completedCount}/{courseProgress.publishedTotal} {uiText(" bài giảng")}
                   </Text>
                 </View>
                 <View style={localStyles.percentCircle}>
@@ -237,7 +243,7 @@ export default function CourseLearningScreen() {
               {nextLesson && (
                 <View style={localStyles.resumeBox}>
                   <View style={localStyles.resumeTextCol}>
-                    <Text style={localStyles.resumeLabel}>TIẾP TỤC BÀI HỌC</Text>
+                    <Text style={localStyles.resumeLabel}>{uiText("TIẾP TỤC BÀI HỌC")}</Text>
                     <Text style={localStyles.resumeTitle} numberOfLines={1}>
                       {nextLesson.title}
                     </Text>
@@ -246,10 +252,10 @@ export default function CourseLearningScreen() {
                     style={localStyles.resumeBtn}
                     onPress={() => router.push(`/learn/${courseId}/lessons/${nextLesson.lessonId}` as Href)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Học tiếp bài ${nextLesson.title}`}
+                    accessibilityLabel={uiText("Học tiếp bài {0}", [nextLesson.title])}
                   >
                     <Icon name="play" size={16} color="#FFFFFF" />
-                    <Text style={localStyles.resumeBtnText}>Học tiếp</Text>
+                    <Text style={localStyles.resumeBtnText}>{uiText("Học tiếp")}</Text>
                   </Pressable>
                 </View>
               )}
@@ -259,15 +265,19 @@ export default function CourseLearningScreen() {
           {/* Syllabus Section */}
           <View style={localStyles.syllabusSection}>
             <View style={localStyles.sectionHeaderRow}>
-              <Text style={localStyles.syllabusHeading}>Danh sách bài giảng</Text>
-              <Text style={localStyles.syllabusCounter}>{lessonsList.length} bài học</Text>
+              <Text style={localStyles.syllabusHeading}>{uiText("Danh sách bài giảng")}</Text>
+              <Text style={localStyles.syllabusCounter}>
+                {lessonsList.length} {uiText(" bài học")}
+              </Text>
             </View>
 
             {sections.length === 0 ? (
               <EmptyState
                 icon="book"
-                title="Chưa có bài học nào"
-                description="Khóa học này hiện chưa có bài giảng nào được xuất bản. Vui lòng quay lại sau."
+                title={uiText("Chưa có bài học nào")}
+                description={uiText(
+                  "Khóa học này hiện chưa có bài giảng nào được xuất bản. Vui lòng quay lại sau.",
+                )}
               />
             ) : (
               sections.map((sec, secIdx) => (
@@ -278,7 +288,9 @@ export default function CourseLearningScreen() {
                     </View>
                     <View style={localStyles.chapterTitleCol}>
                       <Text style={localStyles.chapterTitle}>{sec.title}</Text>
-                      <Text style={localStyles.chapterCount}>{sec.items.length} bài học</Text>
+                      <Text style={localStyles.chapterCount}>
+                        {sec.items.length} {uiText(" bài học")}
+                      </Text>
                     </View>
                   </View>
 
@@ -292,7 +304,7 @@ export default function CourseLearningScreen() {
                         ]}
                         onPress={() => router.push(`/learn/${courseId}/lessons/${lesson.lessonId}` as Href)}
                         accessibilityRole="button"
-                        accessibilityLabel={`Bài học ${lesson.title}`}
+                        accessibilityLabel={uiText("Bài học {0}", [lesson.title])}
                       >
                         <View style={localStyles.lessonIconBox}>
                           <Icon name="play" size={16} color={tokens.color.brand} />
@@ -304,7 +316,7 @@ export default function CourseLearningScreen() {
                           </Text>
                           {lesson.preview && (
                             <View style={localStyles.previewBadgeRow}>
-                              <Badge label="Học thử miễn phí" variant="success" />
+                              <Badge label={uiText("Học thử miễn phí")} variant="success" />
                             </View>
                           )}
                         </View>
@@ -321,14 +333,14 @@ export default function CourseLearningScreen() {
       ) : assessmentsLoading ? (
         <View style={localStyles.center} accessibilityRole="progressbar">
           <ActivityIndicator color={tokens.color.brand} />
-          <Text style={localStyles.loadingText}>Đang tải bài kiểm tra đã phát hành…</Text>
+          <Text style={localStyles.loadingText}>{uiText("Đang tải bài kiểm tra đã phát hành…")}</Text>
         </View>
       ) : assessmentsError ? (
         <View style={localStyles.errorCard}>
           <Text accessibilityRole="alert" style={localStyles.errorText}>
-            {assessmentsError}
+            {uiText(assessmentsError)}
           </Text>
-          <Button label="Thử lại" onPress={() => void fetchCourseAssessments()} />
+          <Button label={uiText("Thử lại")} onPress={() => void fetchCourseAssessments()} />
         </View>
       ) : courseAssessments && courseAssessments.length > 0 ? (
         <View style={{ gap: 10 }}>
@@ -339,18 +351,24 @@ export default function CourseLearningScreen() {
               onPress={() => router.push(`/assessments/${quiz.quizId}` as Href)}
             >
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Badge label="ĐÃ PHÁT HÀNH" variant="success" />
+                <Badge label={uiText("ĐÃ PHÁT HÀNH")} variant="success" />
                 <Text style={styles.small}>
-                  {quiz.questionCount} câu
-                  {quiz.durationSeconds ? ` · ${Math.round(quiz.durationSeconds / 60)} phút` : ""}
+                  {quiz.questionCount} {uiText(" câu")}
+                  {quiz.durationSeconds ? uiText(" · {0} phút", [Math.round(quiz.durationSeconds / 60)]) : ""}
                 </Text>
               </View>
               <Text style={localStyles.exerciseTitle}>{quiz.title}</Text>
               {!!quiz.opensAt && (
-                <Text style={styles.small}>Mở lúc {new Date(quiz.opensAt).toLocaleString()}</Text>
+                <Text style={styles.small}>
+                  {uiText("Mở lúc ")}
+                  {new Date(quiz.opensAt).toLocaleString()}
+                </Text>
               )}
               {!!quiz.closesAt && (
-                <Text style={styles.small}>Đóng lúc {new Date(quiz.closesAt).toLocaleString()}</Text>
+                <Text style={styles.small}>
+                  {uiText("Đóng lúc ")}
+                  {new Date(quiz.closesAt).toLocaleString()}
+                </Text>
               )}
             </ScalePressable>
           ))}
@@ -358,18 +376,18 @@ export default function CourseLearningScreen() {
       ) : courseAssessments ? (
         <EmptyState
           icon="quiz"
-          title="Chưa có bài kiểm tra"
-          description="Khóa học hiện chưa có bài kiểm tra đã phát hành."
+          title={uiText("Chưa có bài kiểm tra")}
+          description={uiText("Khóa học hiện chưa có bài kiểm tra đã phát hành.")}
         />
       ) : (
         <View style={localStyles.center}>
-          <Button label="Tải bài kiểm tra" onPress={() => void fetchCourseAssessments()} />
+          <Button label={uiText("Tải bài kiểm tra")} onPress={() => void fetchCourseAssessments()} />
         </View>
       )}
 
       <View style={localStyles.footerActions}>
         <Button
-          label="← Quay lại khóa học của tôi"
+          label={uiText("← Quay lại khóa học của tôi")}
           variant="outline"
           onPress={() => router.push("/learn" as Href)}
         />

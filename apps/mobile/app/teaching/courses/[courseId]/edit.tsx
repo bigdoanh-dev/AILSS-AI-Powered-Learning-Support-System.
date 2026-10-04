@@ -1,3 +1,4 @@
+import { useUiText } from "../../../../src/use-language";
 import { loadCourseCategories } from "../../../../src/catalog-preview";
 import { useEffect, useState, useCallback } from "react";
 import { Text, TextInput, View, Pressable, StyleSheet, ScrollView } from "react-native";
@@ -11,6 +12,7 @@ import { Page, Button, ScreenHeader, styles, tokens } from "../../../../src/ui";
 import { RevenueQuote } from "../../../../src/RevenueQuote";
 
 export default function CourseEdit() {
+  const uiText = useUiText();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -108,8 +110,8 @@ export default function CourseEdit() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <Text style={styles.error}>Bạn không có quyền truy cập.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Bạn không có quyền truy cập.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -117,14 +119,14 @@ export default function CourseEdit() {
   return (
     <Page>
       <ScreenHeader
-        title="Chỉnh sửa khóa học"
-        subtitle="Cập nhật thông tin giảng dạy & thiết lập học phí"
+        title={uiText("Chỉnh sửa khóa học")}
+        subtitle={uiText("Cập nhật thông tin giảng dạy & thiết lập học phí")}
         onBack={() => (router.canGoBack() ? router.back() : router.replace(`/teaching/courses/${courseId}`))}
       />
 
       {!course && !error && (
         <Text accessibilityRole="alert" style={styles.text}>
-          Đang tải…
+          {uiText("Đang tải…")}
         </Text>
       )}
 
@@ -136,9 +138,11 @@ export default function CourseEdit() {
           {/* Live Preview Card */}
           <View style={[styles.card, ed.previewBox]}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <Text style={ed.previewTag}>👁️ XEM TRƯỚC HIỂN THỊ HỌC VIÊN</Text>
+              <Text style={ed.previewTag}>{uiText("👁️ XEM TRƯỚC HIỂN THỊ HỌC VIÊN")}</Text>
               <View style={[ed.badge, course.state === "PUBLISHED" ? ed.published : ed.draft]}>
-                <Text style={ed.badgeText}>{course.state === "PUBLISHED" ? "ĐÃ XUẤT BẢN" : "BẢN NHÁP"}</Text>
+                <Text style={ed.badgeText}>
+                  {course.state === "PUBLISHED" ? uiText("ĐÃ XUẤT BẢN") : uiText("BẢN NHÁP")}
+                </Text>
               </View>
             </View>
             <Text style={ed.previewTitle} numberOfLines={2}>
@@ -146,7 +150,7 @@ export default function CourseEdit() {
             </Text>
             <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
               <Text style={ed.previewPrice}>
-                {priceType === "FREE" ? "Miễn phí" : `${price.trim() || "0"} ${currency}`}
+                {priceType === "FREE" ? uiText("Miễn phí") : `${price.trim() || "0"} ${currency}`}
               </Text>
               <Text style={ed.previewCat}>📁 {categoryName || "Chưa phân loại"}</Text>
             </View>
@@ -154,55 +158,55 @@ export default function CourseEdit() {
 
           {/* Form Card 1: Thông tin cơ bản */}
           <View style={[styles.card, ed.formCard]}>
-            <Text style={ed.cardHeading}>📝 Thông tin cơ bản</Text>
+            <Text style={ed.cardHeading}>{uiText("📝 Thông tin cơ bản")}</Text>
 
             <View style={ed.fieldGroup}>
               <View style={ed.labelRow}>
-                <Text style={ed.fieldLabel}>Tên khóa học *</Text>
+                <Text style={ed.fieldLabel}>{uiText("Tên khóa học *")}</Text>
                 <Text style={ed.charCount}>{title.length}/200</Text>
               </View>
               <TextInput
-                accessibilityLabel="Tên khóa học"
+                accessibilityLabel={uiText("Tên khóa học")}
                 style={[styles.input, ed.input]}
                 value={title}
                 onChangeText={setTitle}
                 maxLength={200}
-                placeholder="Nhập tên khóa học rõ ràng, hấp dẫn..."
+                placeholder={uiText("Nhập tên khóa học rõ ràng, hấp dẫn...")}
               />
             </View>
 
             <View style={ed.fieldGroup}>
               <View style={ed.labelRow}>
-                <Text style={ed.fieldLabel}>Mô tả chi tiết</Text>
+                <Text style={ed.fieldLabel}>{uiText("Mô tả chi tiết")}</Text>
                 <Text style={ed.charCount}>{description.length}/2000</Text>
               </View>
               <TextInput
-                accessibilityLabel="Mô tả"
+                accessibilityLabel={uiText("Mô tả")}
                 style={[styles.input, ed.input, { minHeight: 96, textAlignVertical: "top" }]}
                 value={description}
                 onChangeText={setDescription}
                 multiline
                 maxLength={2000}
-                placeholder="Giới thiệu mục tiêu, kiến thức đạt được và đối tượng học viên..."
+                placeholder={uiText("Giới thiệu mục tiêu, kiến thức đạt được và đối tượng học viên...")}
               />
             </View>
 
             <View style={ed.fieldGroup}>
-              <Text style={ed.fieldLabel}>Danh mục đào tạo</Text>
+              <Text style={ed.fieldLabel}>{uiText("Danh mục đào tạo")}</Text>
               <TextInput
-                accessibilityLabel="Danh mục đào tạo"
+                accessibilityLabel={uiText("Danh mục đào tạo")}
                 style={[styles.input, ed.input]}
                 value={categoryName}
                 onChangeText={setCategoryName}
                 maxLength={80}
-                placeholder="Nhập danh mục đào tạo"
+                placeholder={uiText("Nhập danh mục đào tạo")}
               />
             </View>
           </View>
 
           {/* Form Card 2: Học phí & Thương mại */}
           <View style={[styles.card, ed.formCard]}>
-            <Text style={ed.cardHeading}>💰 Chính sách học phí & Thương mại</Text>
+            <Text style={ed.cardHeading}>{uiText("💰 Chính sách học phí & Thương mại")}</Text>
 
             <View style={ed.priceTypeSelector}>
               <Pressable
@@ -213,7 +217,7 @@ export default function CourseEdit() {
                 }}
               >
                 <Text style={[ed.priceTypeText, priceType === "FREE" && ed.priceTypeTextActive]}>
-                  🆓 Khóa học Miễn Phí
+                  {uiText("🆓 Khóa học Miễn Phí")}
                 </Text>
               </Pressable>
               <Pressable
@@ -221,7 +225,7 @@ export default function CourseEdit() {
                 onPress={() => setPriceType("PAID")}
               >
                 <Text style={[ed.priceTypeText, priceType === "PAID" && ed.priceTypeTextActive]}>
-                  💳 Có Thu Phí (VNĐ)
+                  {uiText("💳 Có Thu Phí (VNĐ)")}
                 </Text>
               </Pressable>
             </View>
@@ -229,21 +233,21 @@ export default function CourseEdit() {
             {priceType === "PAID" && (
               <View style={{ gap: 10, marginTop: 10 }}>
                 <View style={ed.fieldGroup}>
-                  <Text style={ed.fieldLabel}>Học phí niêm yết</Text>
+                  <Text style={ed.fieldLabel}>{uiText("Học phí niêm yết")}</Text>
                   <TextInput
-                    accessibilityLabel="Giá"
+                    accessibilityLabel={uiText("Giá")}
                     style={[styles.input, ed.input]}
                     value={price}
                     onChangeText={setPrice}
                     keyboardType="numeric"
-                    placeholder="Ví dụ: 450000"
+                    placeholder={uiText("Ví dụ: 450000")}
                   />
                 </View>
 
                 <View style={ed.fieldGroup}>
-                  <Text style={ed.fieldLabel}>Đơn vị tiền tệ</Text>
+                  <Text style={ed.fieldLabel}>{uiText("Đơn vị tiền tệ")}</Text>
                   <TextInput
-                    accessibilityLabel="Đơn vị tiền tệ"
+                    accessibilityLabel={uiText("Đơn vị tiền tệ")}
                     style={[styles.input, ed.input]}
                     value={currency}
                     onChangeText={setCurrency}
@@ -257,28 +261,30 @@ export default function CourseEdit() {
           {/* Form Card 3: Lưu ý nền tảng */}
           <RevenueQuote price={price} currency={currency} paid={priceType === "PAID"} />
           <View style={[styles.card, ed.policyCard]}>
-            <Text style={[ed.cardHeading, { fontSize: 13, color: "#92400e" }]}>📌 Lưu ý phát hành</Text>
+            <Text style={[ed.cardHeading, { fontSize: 13, color: "#92400e" }]}>
+              {uiText("📌 Lưu ý phát hành")}
+            </Text>
             <Text style={ed.policyText}>• {CONTRACT_LIMITED.coursePublish}</Text>
             <Text style={ed.policyText}>• {CONTRACT_LIMITED.courseImageUpload}</Text>
           </View>
 
           {message ? (
             <View style={ed.successBanner}>
-              <Text style={ed.successBannerText}>{message}</Text>
+              <Text style={ed.successBannerText}>{uiText(message)}</Text>
             </View>
           ) : null}
 
           {/* Action Buttons */}
           <View style={{ gap: 10, marginTop: 4 }}>
             <Button
-              label={busy ? "Đang lưu thay đổi…" : "💾 Lưu thay đổi khóa học"}
+              label={busy ? uiText("Đang lưu thay đổi…") : uiText("💾 Lưu thay đổi khóa học")}
               disabled={busy || !title.trim()}
               onPress={() => {
                 void handleSave();
               }}
             />
             <Button
-              label="Quay lại chi tiết"
+              label={uiText("Quay lại chi tiết")}
               variant="outline"
               onPress={() =>
                 router.canGoBack() ? router.back() : router.replace(`/teaching/courses/${courseId}`)
@@ -290,10 +296,10 @@ export default function CourseEdit() {
 
       {error && (
         <Text accessibilityRole="alert" style={styles.error}>
-          {error}
+          {uiText(error)}
         </Text>
       )}
-      {error && <Button label="Thử lại" onPress={() => setRetry((v) => v + 1)} />}
+      {error && <Button label={uiText("Thử lại")} onPress={() => setRetry((v) => v + 1)} />}
     </Page>
   );
 }

@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../../src/use-language";
+import { useUiText } from "../../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, TextInput, StyleSheet, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -15,6 +17,8 @@ import {
 import { Page, Button, Icon, NonVirtualizedList, styles, tokens } from "../../../../src/ui";
 
 export default function ClassAnnouncementsScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { classId } = useLocalSearchParams<{ classId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -89,8 +93,10 @@ export default function ClassAnnouncementsScreen() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <Text style={styles.error}>Chỉ Giảng viên phụ trách lớp mới có quyền truy cập thông báo.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.error}>
+          {uiText("Chỉ Giảng viên phụ trách lớp mới có quyền truy cập thông báo.")}
+        </Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -100,7 +106,7 @@ export default function ClassAnnouncementsScreen() {
       <View style={annStyles.cardHeader}>
         <Text style={[styles.title, { fontSize: 16 }]}>{item.title}</Text>
         <Text style={styles.small}>
-          {new Date(item.createdAt).toLocaleDateString("vi-VN", {
+          {new Date(item.createdAt).toLocaleDateString(uiLocale, {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
@@ -115,8 +121,8 @@ export default function ClassAnnouncementsScreen() {
 
   return (
     <Page>
-      <Text style={styles.small}>LỚP HỌC</Text>
-      <Text style={styles.title}>Thông báo lớp học</Text>
+      <Text style={styles.small}>{uiText("LỚP HỌC")}</Text>
+      <Text style={styles.title}>{uiText("Thông báo lớp học")}</Text>
 
       {/* Contract Limited Notice */}
       <View style={[annStyles.infoBanner, { flexDirection: "row", alignItems: "center", gap: 8 }]}>
@@ -128,7 +134,7 @@ export default function ClassAnnouncementsScreen() {
 
       {/* Post New Announcement Card */}
       <View style={styles.card}>
-        <Text style={[styles.title, { fontSize: 16 }]}>Đăng thông báo mới</Text>
+        <Text style={[styles.title, { fontSize: 16 }]}>{uiText("Đăng thông báo mới")}</Text>
 
         {formMsg && (
           <Text accessibilityRole="alert" style={formMsg.type === "error" ? styles.error : styles.small}>
@@ -137,31 +143,31 @@ export default function ClassAnnouncementsScreen() {
         )}
 
         <View style={annStyles.inputGroup}>
-          <Text style={styles.small}>Tiêu đề thông báo</Text>
+          <Text style={styles.small}>{uiText("Tiêu đề thông báo")}</Text>
           <TextInput
             style={annStyles.input}
             value={title}
             onChangeText={setTitle}
-            placeholder="Nhập tiêu đề (3-160 ký tự)"
-            accessibilityLabel="Tiêu đề thông báo"
+            placeholder={uiText("Nhập tiêu đề (3-160 ký tự)")}
+            accessibilityLabel={uiText("Tiêu đề thông báo")}
           />
         </View>
 
         <View style={annStyles.inputGroup}>
-          <Text style={styles.small}>Nội dung thông báo</Text>
+          <Text style={styles.small}>{uiText("Nội dung thông báo")}</Text>
           <TextInput
             style={[annStyles.input, annStyles.textarea]}
             value={body}
             onChangeText={setBody}
-            placeholder="Nhập nội dung thông báo cho học viên…"
+            placeholder={uiText("Nhập nội dung thông báo cho học viên…")}
             multiline
             numberOfLines={4}
-            accessibilityLabel="Nội dung thông báo"
+            accessibilityLabel={uiText("Nội dung thông báo")}
           />
         </View>
 
         <Button
-          label={saving ? "Đang đăng thông báo…" : "Đăng thông báo"}
+          label={saving ? uiText("Đang đăng thông báo…") : uiText("Đăng thông báo")}
           onPress={() => void handlePostAnnouncement()}
           disabled={saving}
         />
@@ -169,24 +175,25 @@ export default function ClassAnnouncementsScreen() {
 
       {/* Announcement List */}
       <Text style={[styles.text, { fontWeight: "600", marginTop: tokens.space.medium }]}>
-        Danh sách thông báo đã đăng ({items?.length ?? 0})
+        {uiText("Danh sách thông báo đã đăng (")}
+        {items?.length ?? 0})
       </Text>
 
       {loading ? (
         <View style={annStyles.center}>
           <ActivityIndicator size="large" color={tokens.color.brand} />
-          <Text style={styles.small}>Đang tải thông báo…</Text>
+          <Text style={styles.small}>{uiText("Đang tải thông báo…")}</Text>
         </View>
       ) : error ? (
         <View style={styles.card}>
           <Text accessibilityRole="alert" style={styles.error}>
-            {error}
+            {uiText(error)}
           </Text>
-          <Button label="Thử lại" onPress={() => setRetry((v) => v + 1)} />
+          <Button label={uiText("Thử lại")} onPress={() => setRetry((v) => v + 1)} />
         </View>
       ) : items && items.length === 0 ? (
         <View style={styles.card}>
-          <Text style={styles.text}>Lớp học chưa có thông báo nào.</Text>
+          <Text style={styles.text}>{uiText("Lớp học chưa có thông báo nào.")}</Text>
         </View>
       ) : (
         <NonVirtualizedList
@@ -198,7 +205,7 @@ export default function ClassAnnouncementsScreen() {
       )}
 
       <Button
-        label="Quay lại chi tiết lớp học"
+        label={uiText("Quay lại chi tiết lớp học")}
         onPress={() => (router.canGoBack() ? router.back() : router.replace(`/teaching/classes/${classId}`))}
       />
     </Page>

@@ -1,3 +1,4 @@
+import { useUiText, useLanguage } from "../lib/i18n";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
 import { SafeMascot } from "./SafeMascot";
@@ -16,6 +17,8 @@ export const AVAILABLE_MASCOTS = [
 ];
 
 export function FloatingAiTutor() {
+  const uiText = useUiText();
+  const { language } = useLanguage();
   const { profile } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
@@ -99,7 +102,7 @@ export function FloatingAiTutor() {
   const courseTitle = courses.data?.find((course) => course.courseId === courseId)?.title;
 
   return (
-    <div className="floating-ai-tutor-root" aria-label="Gia sư AI AILSS">
+    <div className="floating-ai-tutor-root" aria-label={uiText("Gia sư AI AILSS")}>
       {/* Floating Chat Window Modal */}
       {isOpen && (
         <section
@@ -116,14 +119,15 @@ export function FloatingAiTutor() {
                   directions={`/mascots/${mascotId}-directions.webp`}
                   reactions={`/mascots/${mascotId}-reactions.webp`}
                   size={40}
-                  label={currentMascot.label}
+                  label={uiText(currentMascot.label)}
                 />
               </div>
               <div className="floating-ai-header-info">
                 <h2 id="floating-tutor-heading">
-                  Gia sư AI <span className="floating-ai-tag">AILSS</span>
+                  {uiText("Gia sư AI ")}
+                  <span className="floating-ai-tag">{uiText("AILSS")}</span>
                 </h2>
-                <p>{pending ? status : "Sẵn sàng hỗ trợ 24/7"}</p>
+                <p>{pending ? uiText(status) : uiText("Sẵn sàng hỗ trợ 24/7")}</p>
               </div>
             </div>
             <div className="floating-ai-header-actions">
@@ -133,8 +137,8 @@ export function FloatingAiTutor() {
                 onClick={toggleArchive}
                 aria-expanded={archiveOpen}
                 aria-controls="floating-tutor-archive"
-                title="Đoạn chat đã lưu"
-                aria-label="Mở lịch sử trò chuyện"
+                title={uiText("Đoạn chat đã lưu")}
+                aria-label={uiText("Mở lịch sử trò chuyện")}
               >
                 ▤
               </button>
@@ -143,16 +147,16 @@ export function FloatingAiTutor() {
                 className="floating-ai-icon-btn"
                 onClick={resetConversation}
                 disabled={pending}
-                title="Tạo đoạn chat mới"
-                aria-label="Tạo đoạn chat mới"
+                title={uiText("Tạo đoạn chat mới")}
+                aria-label={uiText("Tạo đoạn chat mới")}
               >
                 ＋
               </button>
               <Link
                 to={`/app/ai-tutor${courseId ? `?courseId=${encodeURIComponent(courseId)}` : ""}`}
                 className="floating-ai-icon-btn"
-                title="Mở toàn màn hình"
-                aria-label="Mở trang Gia sư đầy đủ"
+                title={uiText("Mở toàn màn hình")}
+                aria-label={uiText("Mở trang Gia sư đầy đủ")}
                 onClick={() => setIsOpen(false)}
               >
                 ↗
@@ -161,8 +165,8 @@ export function FloatingAiTutor() {
                 type="button"
                 className="floating-ai-icon-btn"
                 onClick={toggleOpen}
-                title="Thu nhỏ Gia sư AI"
-                aria-label="Đóng khung chat Gia sư"
+                title={uiText("Thu nhỏ Gia sư AI")}
+                aria-label={uiText("Đóng khung chat Gia sư")}
               >
                 ✕
               </button>
@@ -178,30 +182,30 @@ export function FloatingAiTutor() {
               id="floating-mascot-picker"
               value={mascotId}
               onChange={(e) => changeMascot(e.target.value)}
-              aria-label="Chọn con mascot bạn thích"
+              aria-label={uiText("Chọn con mascot bạn thích")}
             >
               {AVAILABLE_MASCOTS.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.name}
+                  {uiText(m.name)}
                 </option>
               ))}
             </select>
           </div>
 
           <div className="floating-ai-unified-hint">
-            Tìm khóa học · Hỏi bài học trong cùng cuộc trò chuyện
+            {uiText("Tìm khóa học · Hỏi bài học trong cùng cuộc trò chuyện")}
           </div>
 
           <div className="floating-ai-mascot-select-row" style={{ background: "rgba(56, 189, 248, 0.08)" }}>
-            <label htmlFor="floating-course-select">Đang học:</label>
+            <label htmlFor="floating-course-select">{uiText("Đang học:")}</label>
             <select
               id="floating-course-select"
               value={courseId}
               onChange={(e) => selectCourse(e.target.value)}
               disabled={!courses.data?.length || pending}
-              aria-label="Chọn khóa học đang học"
+              aria-label={uiText("Chọn khóa học đang học")}
             >
-              <option value="">Chưa chọn khóa học</option>
+              <option value="">{uiText("Chưa chọn khóa học")}</option>
               {courses.data?.length
                 ? courses.data.map((c) => (
                     <option key={c.courseId} value={c.courseId}>
@@ -221,17 +225,20 @@ export function FloatingAiTutor() {
                     directions={`/mascots/${mascotId}-directions.webp`}
                     reactions={`/mascots/${mascotId}-reactions.webp`}
                     size={80}
-                    label={currentMascot.label}
+                    label={uiText(currentMascot.label)}
                   />
                 </div>
-                <h3>Chào {profile?.displayName || "bạn"}! ✨</h3>
+                <h3>
+                  {uiText("Chào ")}
+                  {profile?.displayName || "bạn"}! ✨
+                </h3>
                 <p>
                   {courseId
-                    ? "Mình có thể giúp bạn hỏi bài trong khóa đã chọn hoặc tìm thêm khóa học khác."
-                    : "Mình có thể giúp bạn tìm khóa học; chọn khóa đang học nếu muốn hỏi bài."}
+                    ? uiText("Mình có thể giúp bạn hỏi bài trong khóa đã chọn hoặc tìm thêm khóa học khác.")
+                    : uiText("Mình có thể giúp bạn tìm khóa học; chọn khóa đang học nếu muốn hỏi bài.")}
                 </p>
                 <div className="floating-ai-starters">
-                  {tutorPrompts(courseId, courseTitle).map((prompt) => (
+                  {tutorPrompts(courseId, courseTitle, language).map((prompt) => (
                     <button
                       key={prompt}
                       type="button"
@@ -254,7 +261,7 @@ export function FloatingAiTutor() {
                   <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{msg.text}</p>
                   {msg.citations && msg.citations.length > 0 && (
                     <div className="floating-ai-citations">
-                      <strong>Nguồn tham khảo:</strong>
+                      <strong>{uiText("Nguồn tham khảo:")}</strong>
                       {msg.citations.map((c, i) => (
                         <span key={i} className="floating-ai-cite-tag">
                           📖 {c.title}
@@ -264,7 +271,7 @@ export function FloatingAiTutor() {
                   )}
                   {msg.catalogCourses && msg.catalogCourses.length > 0 && (
                     <div className="floating-ai-citations">
-                      <strong>Khóa học đề xuất:</strong>
+                      <strong>{uiText("Khóa học đề xuất:")}</strong>
                       {msg.catalogCourses.map((c) => (
                         <Link
                           key={c.courseId}
@@ -282,9 +289,9 @@ export function FloatingAiTutor() {
             )}
 
             {messages.length > 0 && !pending && !error && (
-              <div className="floating-ai-followups" aria-label="Gợi ý câu hỏi tiếp theo">
-                <span>Bạn có thể hỏi tiếp</span>
-                {tutorPrompts(courseId, courseTitle).map((prompt) => (
+              <div className="floating-ai-followups" aria-label={uiText("Gợi ý câu hỏi tiếp theo")}>
+                <span>{uiText("Bạn có thể hỏi tiếp")}</span>
+                {tutorPrompts(courseId, courseTitle, language).map((prompt) => (
                   <button key={prompt} type="button" onClick={() => void sendMessage(prompt)}>
                     {prompt}
                   </button>
@@ -301,17 +308,17 @@ export function FloatingAiTutor() {
                 </div>
                 <span>{status || "Gia sư đang suy nghĩ…"}</span>
                 <button type="button" onClick={stopRequest}>
-                  Dừng
+                  {uiText("Dừng")}
                 </button>
               </div>
             )}
 
             {error && (
               <div className="floating-ai-error" role="alert">
-                <span>⚠️ {error}</span>
+                <span>⚠️ {uiText(error)}</span>
                 {input.trim() && (
                   <button type="button" onClick={() => void sendMessage()}>
-                    Thử lại
+                    {uiText("Thử lại")}
                   </button>
                 )}
               </div>
@@ -332,23 +339,23 @@ export function FloatingAiTutor() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Hỏi Gia sư AI… (Enter để gửi)"
+                placeholder={uiText("Hỏi Gia sư AI… (Enter để gửi)")}
                 rows={1}
                 maxLength={4000}
-                aria-label="Nhập câu hỏi cho Gia sư AI"
+                aria-label={uiText("Nhập câu hỏi cho Gia sư AI")}
                 disabled={pending}
               />
               <button
                 type="submit"
                 className="floating-ai-send-btn"
                 disabled={!input.trim() || pending}
-                aria-label="Gửi tin nhắn"
-                title="Gửi câu hỏi"
+                aria-label={uiText("Gửi tin nhắn")}
+                title={uiText("Gửi câu hỏi")}
               >
                 ➤
               </button>
             </form>
-            <p className="floating-ai-disclaimer">Gia sư AI AILSS · Hỗ trợ học tập 24/7</p>
+            <p className="floating-ai-disclaimer">{uiText("Gia sư AI AILSS · Hỗ trợ học tập 24/7")}</p>
           </footer>
         </section>
       )}
@@ -359,16 +366,16 @@ export function FloatingAiTutor() {
         onClick={toggleOpen}
         role="button"
         tabIndex={0}
-        aria-label="Mở Gia sư AI"
+        aria-label={uiText("Mở Gia sư AI")}
       >
         {showGreeting && !isOpen && (
           <div className="floating-ai-speech-bubble" onClick={(e) => e.stopPropagation()}>
-            <span>👋 Chào bạn! Cần giải bài hay tìm khóa học? Bấm vào mình nhé!</span>
+            <span>{uiText("👋 Chào bạn! Cần giải bài hay tìm khóa học? Bấm vào mình nhé!")}</span>
             <button
               type="button"
               className="floating-ai-bubble-close"
               onClick={dismissGreeting}
-              aria-label="Tắt gợi ý"
+              aria-label={uiText("Tắt gợi ý")}
             >
               ✕
             </button>
@@ -380,9 +387,9 @@ export function FloatingAiTutor() {
             directions={`/mascots/${mascotId}-directions.webp`}
             reactions={`/mascots/${mascotId}-reactions.webp`}
             size={68}
-            label={currentMascot.label}
+            label={uiText(currentMascot.label)}
           />
-          <span className="floating-ai-status-dot" title="Gia sư AI đang trực tuyến" />
+          <span className="floating-ai-status-dot" title={uiText("Gia sư AI đang trực tuyến")} />
         </div>
       </div>
     </div>

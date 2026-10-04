@@ -1,3 +1,4 @@
+import { useUiText } from "./use-language";
 import { useEffect, useState } from "react";
 import { Text, View, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
@@ -5,6 +6,7 @@ import type { Session } from "./session";
 import { mediaError, mediaSession } from "./media";
 
 export function MediaPlayer({ lessonId, session }: { lessonId: string; session: Session }) {
+  const uiText = useUiText();
   const player = useVideoPlayer(null, (p) => {
     p.playbackRate = 1.5;
   });
@@ -63,11 +65,15 @@ export function MediaPlayer({ lessonId, session }: { lessonId: string; session: 
     };
   }, [lessonId, player, revision, session]);
   return (
-    <View style={styles.card} accessibilityLabel="Video bài giảng được bảo vệ" testID="native-media-player">
+    <View
+      style={styles.card}
+      accessibilityLabel={uiText("Video bài giảng được bảo vệ")}
+      testID="native-media-player"
+    >
       <View style={styles.videoStage}>
         {status === "loading" && (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#38BDF8" accessibilityLabel="Đang tải video" />
+            <ActivityIndicator size="large" color="#38BDF8" accessibilityLabel={uiText("Đang tải video")} />
           </View>
         )}
         <VideoView
@@ -88,19 +94,20 @@ export function MediaPlayer({ lessonId, session }: { lessonId: string; session: 
           </View>
         </View>
         <Text style={styles.statusText} accessibilityRole={status === "error" ? "alert" : "text"}>
-          {message}
+          {uiText(message)}
         </Text>
         {captionLabels.length > 0 ? (
           <Text style={styles.captionText} accessibilityRole="text">
-            Phụ đề: {captionLabels.join(", ")}. Phiên bản Mobile hiện chưa hiển thị phụ đề rời; bạn có thể xem
-            phụ đề trên Web.
+            {uiText("Phụ đề: ")}
+            {captionLabels.join(", ")}
+            {uiText(". Phiên bản Mobile hiện chưa hiển thị phụ đề rời; bạn có thể xem phụ đề trên Web.")}
           </Text>
         ) : null}
         <View style={styles.controls}>
           <Pressable
             style={[styles.ctrlBtn, styles.ctrlBtnPrimary]}
             accessibilityRole="button"
-            accessibilityLabel={playing ? "Tạm dừng video" : "Phát video"}
+            accessibilityLabel={playing ? uiText("Tạm dừng video") : uiText("Phát video")}
             disabled={status !== "ready"}
             onPress={() => {
               if (player.playing) player.pause();
@@ -108,12 +115,12 @@ export function MediaPlayer({ lessonId, session }: { lessonId: string; session: 
               setPlaying(player.playing);
             }}
           >
-            <Text style={styles.ctrlBtnPrimaryText}>{playing ? "Tạm dừng" : "Phát"}</Text>
+            <Text style={styles.ctrlBtnPrimaryText}>{playing ? uiText("Tạm dừng") : uiText("Phát")}</Text>
           </Pressable>
           <Pressable
             style={styles.ctrlBtn}
             accessibilityRole="button"
-            accessibilityLabel="Lùi 10 giây"
+            accessibilityLabel={uiText("Lùi 10 giây")}
             disabled={status !== "ready"}
             onPress={() => player.seekBy(-10)}
           >
@@ -122,7 +129,7 @@ export function MediaPlayer({ lessonId, session }: { lessonId: string; session: 
           <Pressable
             style={styles.ctrlBtn}
             accessibilityRole="button"
-            accessibilityLabel="Tiến 10 giây"
+            accessibilityLabel={uiText("Tiến 10 giây")}
             disabled={status !== "ready"}
             onPress={() => player.seekBy(10)}
           >
@@ -131,7 +138,7 @@ export function MediaPlayer({ lessonId, session }: { lessonId: string; session: 
           <Pressable
             style={styles.ctrlBtn}
             accessibilityRole="button"
-            accessibilityLabel="Đổi tốc độ phát"
+            accessibilityLabel={uiText("Đổi tốc độ phát")}
             disabled={status !== "ready"}
             onPress={() => {
               const next = speed >= 2 ? 1 : speed + 0.25;
@@ -139,19 +146,22 @@ export function MediaPlayer({ lessonId, session }: { lessonId: string; session: 
               setSpeed(next);
             }}
           >
-            <Text style={styles.ctrlBtnText}>{String(speed)}×</Text>
+            <Text style={styles.ctrlBtnText}>
+              {String(speed)}
+              {uiText("×")}
+            </Text>
           </Pressable>
           {status === "error" && (
             <Pressable
               style={[styles.ctrlBtn, styles.ctrlBtnRetry]}
               accessibilityRole="button"
-              accessibilityLabel="Thử lại video"
+              accessibilityLabel={uiText("Thử lại video")}
               onPress={() => {
                 setStatus("loading");
                 setRevision((value) => value + 1);
               }}
             >
-              <Text style={styles.ctrlBtnRetryText}>Thử lại</Text>
+              <Text style={styles.ctrlBtnRetryText}>{uiText("Thử lại")}</Text>
             </Pressable>
           )}
         </View>

@@ -60,6 +60,7 @@ export const chatRequestSchema = z.object({
     .default("STUDENT_ADVISOR"),
   courseId: z.string().uuid().optional(),
   message: z.string().trim().min(1).max(4000),
+  responseLanguage: z.enum(["vi", "en"]).optional(),
   historyLimit: z.number().int().min(1).max(50).optional(),
 });
 

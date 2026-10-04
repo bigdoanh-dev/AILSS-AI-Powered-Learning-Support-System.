@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -25,6 +26,7 @@ interface StudentAnalyticsProps {
 }
 
 function StudentAnalyticsOverview({ courses, progress }: StudentAnalyticsProps) {
+  const uiText = useUiText();
   // 1. Calculate real Course Progress List (No fake fallback math)
   const courseProgressList = useMemo(() => {
     return courses.map((c) => {
@@ -92,17 +94,22 @@ function StudentAnalyticsOverview({ courses, progress }: StudentAnalyticsProps) 
     totalPublishedLessons > 0 ? Math.round((totalCompletedLessons / totalPublishedLessons) * 100) : 0;
 
   return (
-    <div className="student-analytics-section" aria-label="Bảng phân tích trực quan tiến độ học tập">
+    <div
+      className="student-analytics-section"
+      aria-label={uiText("Bảng phân tích trực quan tiến độ học tập")}
+    >
       {/* ROW 1: DONUT CHART (PHÂN BỐ TRẠNG THÁI) + TỔNG LƯỢNG BÀI HỌC TÍCH LŨY */}
       <div className="student-charts-row">
         {/* DONUT CHART */}
         <section className="student-chart-card">
           <div className="student-chart-header">
             <div>
-              <h3>Phân bố trạng thái khóa học</h3>
-              <p className="subtext">Tỷ lệ các khóa đã hoàn tất, đang học dở dang và chưa bắt đầu</p>
+              <h3>{uiText("Phân bố trạng thái khóa học")}</h3>
+              <p className="subtext">
+                {uiText("Tỷ lệ các khóa đã hoàn tất, đang học dở dang và chưa bắt đầu")}
+              </p>
             </div>
-            <span className="badge">Tổng thể</span>
+            <span className="badge">{uiText("Tổng thể")}</span>
           </div>
 
           <div className="donut-summary-container">
@@ -134,7 +141,7 @@ function StudentAnalyticsOverview({ courses, progress }: StudentAnalyticsProps) 
               </ResponsiveContainer>
               <div className="donut-center-metric">
                 <strong>{avgCompletion}%</strong>
-                <span>Trung bình</span>
+                <span>{uiText("Trung bình")}</span>
               </div>
             </div>
 
@@ -142,22 +149,28 @@ function StudentAnalyticsOverview({ courses, progress }: StudentAnalyticsProps) 
               <div className="donut-legend-item">
                 <span className="donut-legend-dot" style={{ backgroundColor: "#10b981" }} />
                 <div className="donut-legend-text">
-                  <strong>{statusCounts.completed} khóa hoàn thành (100%)</strong>
-                  <span>Đã học hết toàn bộ bài giảng</span>
+                  <strong>
+                    {statusCounts.completed} {uiText(" khóa hoàn thành (100%)")}
+                  </strong>
+                  <span>{uiText("Đã học hết toàn bộ bài giảng")}</span>
                 </div>
               </div>
               <div className="donut-legend-item">
                 <span className="donut-legend-dot" style={{ backgroundColor: "#1760ef" }} />
                 <div className="donut-legend-text">
-                  <strong>{statusCounts.inProgress} khóa đang học</strong>
-                  <span>Nội dung đang tiếp tục tích lũy</span>
+                  <strong>
+                    {statusCounts.inProgress} {uiText(" khóa đang học")}
+                  </strong>
+                  <span>{uiText("Nội dung đang tiếp tục tích lũy")}</span>
                 </div>
               </div>
               <div className="donut-legend-item">
                 <span className="donut-legend-dot" style={{ backgroundColor: "#cbd5e1" }} />
                 <div className="donut-legend-text">
-                  <strong>{statusCounts.notStarted} khóa chưa học</strong>
-                  <span>Chưa bắt đầu học bài đầu tiên</span>
+                  <strong>
+                    {statusCounts.notStarted} {uiText(" khóa chưa học")}
+                  </strong>
+                  <span>{uiText("Chưa bắt đầu học bài đầu tiên")}</span>
                 </div>
               </div>
             </div>
@@ -168,10 +181,15 @@ function StudentAnalyticsOverview({ courses, progress }: StudentAnalyticsProps) 
         <section className="student-chart-card">
           <div className="student-chart-header">
             <div>
-              <h3>Tổng lượng bài học tích lũy</h3>
-              <p className="subtext">Tổng hợp số lượng bài giảng đã hoàn thành trên toàn bộ các khóa học</p>
+              <h3>{uiText("Tổng lượng bài học tích lũy")}</h3>
+              <p className="subtext">
+                {uiText("Tổng hợp số lượng bài giảng đã hoàn thành trên toàn bộ các khóa học")}
+              </p>
             </div>
-            <span className="kpi-tag accent">{lessonRate}% đạt chuẩn</span>
+            <span className="kpi-tag accent">
+              {lessonRate}
+              {uiText("% đạt chuẩn")}
+            </span>
           </div>
 
           <div
@@ -194,9 +212,9 @@ function StudentAnalyticsOverview({ courses, progress }: StudentAnalyticsProps) 
                   fontSize: 13,
                 }}
               >
-                <span style={{ color: "var(--muted)" }}>Tỷ lệ bài giảng đã hoàn tất</span>
+                <span style={{ color: "var(--muted)" }}>{uiText("Tỷ lệ bài giảng đã hoàn tất")}</span>
                 <strong>
-                  {totalCompletedLessons} / {totalPublishedLessons} bài học
+                  {totalCompletedLessons} / {totalPublishedLessons} {uiText(" bài học")}
                 </strong>
               </div>
               <div
@@ -228,11 +246,13 @@ function StudentAnalyticsOverview({ courses, progress }: StudentAnalyticsProps) 
                   borderRadius: 10,
                 }}
               >
-                <div style={{ fontSize: 12, color: "#059669", fontWeight: 600 }}>Đã hoàn tất</div>
+                <div style={{ fontSize: 12, color: "#059669", fontWeight: 600 }}>{uiText("Đã hoàn tất")}</div>
                 <div style={{ fontSize: 24, fontWeight: 800, color: "#059669", marginTop: 2 }}>
                   {totalCompletedLessons}
                 </div>
-                <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "2px 0 0" }}>Bài giảng tích lũy</p>
+                <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "2px 0 0" }}>
+                  {uiText("Bài giảng tích lũy")}
+                </p>
               </div>
               <div
                 style={{
@@ -242,11 +262,15 @@ function StudentAnalyticsOverview({ courses, progress }: StudentAnalyticsProps) 
                   borderRadius: 10,
                 }}
               >
-                <div style={{ fontSize: 12, color: "#0284c7", fontWeight: 600 }}>Cần hoàn thành</div>
+                <div style={{ fontSize: 12, color: "#0284c7", fontWeight: 600 }}>
+                  {uiText("Cần hoàn thành")}
+                </div>
                 <div style={{ fontSize: 24, fontWeight: 800, color: "#0284c7", marginTop: 2 }}>
                   {Math.max(0, totalPublishedLessons - totalCompletedLessons)}
                 </div>
-                <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "2px 0 0" }}>Bài giảng đang chờ</p>
+                <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "2px 0 0" }}>
+                  {uiText("Bài giảng đang chờ")}
+                </p>
               </div>
             </div>
           </div>
@@ -257,10 +281,14 @@ function StudentAnalyticsOverview({ courses, progress }: StudentAnalyticsProps) 
       <section className="student-chart-card">
         <div className="student-chart-header">
           <div>
-            <h3>Tiến độ hoàn thành từng khóa học</h3>
-            <p className="subtext">So sánh tỷ lệ phần trăm bài giảng đã học giữa các khóa học đã ghi danh</p>
+            <h3>{uiText("Tiến độ hoàn thành từng khóa học")}</h3>
+            <p className="subtext">
+              {uiText("So sánh tỷ lệ phần trăm bài giảng đã học giữa các khóa học đã ghi danh")}
+            </p>
           </div>
-          <span className="badge">{courseProgressList.length} khóa học</span>
+          <span className="badge">
+            {courseProgressList.length} {uiText(" khóa học")}
+          </span>
         </div>
 
         <div style={{ width: "100%", height: 320, minHeight: 300, marginTop: 8 }}>
@@ -289,17 +317,19 @@ function StudentAnalyticsOverview({ courses, progress }: StudentAnalyticsProps) 
               <Tooltip
                 formatter={(v: unknown, name: unknown) => [
                   `${v}%`,
-                  name === "completedPercent" ? "Đã học" : "Còn lại",
+                  uiText(name === "completedPercent" ? "Đã học" : "Còn lại"),
                 ]}
                 labelFormatter={(_label, payload) => {
                   const item = payload?.[0]?.payload;
-                  return item ? `${item.fullTitle} (${item.completedCount}/${item.totalCount} bài học)` : "";
+                  return item
+                    ? uiText("{0} ({1}/{2} bài học)", [item.fullTitle, item.completedCount, item.totalCount])
+                    : "";
                 }}
               />
               <Legend
                 verticalAlign="bottom"
                 wrapperStyle={{ paddingTop: 20 }}
-                formatter={(val) => (val === "completedPercent" ? "Đã học (%)" : "Còn lại (%)")}
+                formatter={(val) => uiText(val === "completedPercent" ? "Đã học (%)" : "Còn lại (%)")}
               />
               <Bar
                 dataKey="completedPercent"
@@ -324,6 +354,7 @@ function StudentAnalyticsOverview({ courses, progress }: StudentAnalyticsProps) 
 }
 
 function CourseProgress({ course }: { course: LearningCourse }) {
+  const uiText = useUiText();
   const query = useStudent<Progress>(`/courses/${course.courseId}/progress`);
   const percent = query.data?.percent ?? 0;
   const isComplete = percent >= 100 || !!query.data?.completed;
@@ -336,11 +367,11 @@ function CourseProgress({ course }: { course: LearningCourse }) {
         </div>
         <div className="progress-course-title-wrap">
           <div className="progress-course-badge-row">
-            <span className="badge">Khóa học</span>
+            <span className="badge">{uiText("Khóa học")}</span>
             {isComplete ? (
-              <span className="status-pill status-success">✓ Đã hoàn thành</span>
+              <span className="status-pill status-success">{uiText("✓ Đã hoàn thành")}</span>
             ) : (
-              <span className="status-pill status-pending">● Đang học</span>
+              <span className="status-pill status-pending">{uiText("● Đang học")}</span>
             )}
           </div>
           <h2>{course.title}</h2>
@@ -353,7 +384,7 @@ function CourseProgress({ course }: { course: LearningCourse }) {
 
       <div className="progress-course-footer">
         <Link className="button secondary progress-open-btn" to={`/app/learn/${course.courseId}`}>
-          <span>{isComplete ? "Xem lại khóa học" : "Mở khóa học"} →</span>
+          <span>{isComplete ? uiText("Xem lại khóa học") : uiText("Mở khóa học")} →</span>
         </Link>
       </div>
     </article>
@@ -361,6 +392,7 @@ function CourseProgress({ course }: { course: LearningCourse }) {
 }
 
 export default function ProgressDashboard() {
+  const uiText = useUiText();
   const { courses, progress } = useLearningOverview();
   const [search, setSearch] = useState("");
   const list =
@@ -385,12 +417,14 @@ export default function ProgressDashboard() {
     <div className="student-progress-container animate-fade-in">
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">HỌC TẬP &amp; KẾT QUẢ ĐẠT ĐƯỢC</p>
-          <Heading title="Tiến độ học tập">Theo dõi các khóa học và bài giảng bạn đã hoàn thành.</Heading>
+          <p className="eyebrow">{uiText("HỌC TẬP & KẾT QUẢ ĐẠT ĐƯỢC")}</p>
+          <Heading title={uiText("Tiến độ học tập")}>
+            {uiText("Theo dõi các khóa học và bài giảng bạn đã hoàn thành.")}
+          </Heading>
         </div>
         <div className="dashboard-header-actions">
           <Link className="button" to="/courses">
-            Khám phá khóa học
+            {uiText("Khám phá khóa học")}
           </Link>
         </div>
       </div>
@@ -399,68 +433,68 @@ export default function ProgressDashboard() {
         <div className="kpi-card progress-kpi-card">
           <div className="kpi-header">
             <span className="kpi-icon">📚</span>
-            <span className="kpi-tag accent">Đang học</span>
+            <span className="kpi-tag accent">{uiText("Đang học")}</span>
           </div>
           <div className="kpi-value">{coursesCount}</div>
-          <div className="kpi-label">Khóa học đã đăng ký</div>
-          <p className="kpi-subtext">Toàn bộ chương trình tham gia</p>
+          <div className="kpi-label">{uiText("Khóa học đã đăng ký")}</div>
+          <p className="kpi-subtext">{uiText("Toàn bộ chương trình tham gia")}</p>
         </div>
 
         <div className="kpi-card progress-kpi-card">
           <div className="kpi-header">
             <span className="kpi-icon">🏆</span>
-            <span className="kpi-tag accent">Mục tiêu</span>
+            <span className="kpi-tag accent">{uiText("Mục tiêu")}</span>
           </div>
           <div className="kpi-value">{completedCount}</div>
-          <div className="kpi-label">Khóa học đã hoàn thành</div>
-          <p className="kpi-subtext">Đạt 100% nội dung &amp; bài giảng</p>
+          <div className="kpi-label">{uiText("Khóa học đã hoàn thành")}</div>
+          <p className="kpi-subtext">{uiText("Đạt 100% nội dung & bài giảng")}</p>
         </div>
 
         <div className="kpi-card progress-kpi-card">
           <div className="kpi-header">
             <span className="kpi-icon">📖</span>
-            <span className="kpi-tag accent">Tích lũy</span>
+            <span className="kpi-tag accent">{uiText("Tích lũy")}</span>
           </div>
           <div className="kpi-value">{lessonsCount}</div>
-          <div className="kpi-label">Bài học đã hoàn thành</div>
-          <p className="kpi-subtext">Tổng các bài giảng đã tích lũy</p>
+          <div className="kpi-label">{uiText("Bài học đã hoàn thành")}</div>
+          <p className="kpi-subtext">{uiText("Tổng các bài giảng đã tích lũy")}</p>
         </div>
 
         <div className="kpi-card progress-kpi-card">
           <div className="kpi-header">
             <span className="kpi-icon">📊</span>
-            <span className="kpi-tag accent">Tiến độ</span>
+            <span className="kpi-tag accent">{uiText("Tiến độ")}</span>
           </div>
           <div className="kpi-number" style={{ fontSize: "2rem", fontWeight: 800, color: "var(--ink)" }}>
             {avgCompletion}%
           </div>
-          <div className="kpi-label">Tiến độ trung bình</div>
-          <p className="kpi-subtext">Tỷ lệ hoàn thành trên toàn bộ khóa học</p>
+          <div className="kpi-label">{uiText("Tiến độ trung bình")}</div>
+          <p className="kpi-subtext">{uiText("Tỷ lệ hoàn thành trên toàn bộ khóa học")}</p>
         </div>
       </div>
 
       {/* Quick Action Toolbar */}
-      <div className="workspace-quick-actions" role="toolbar" aria-label="Thao tác học tập nhanh">
+      <div className="workspace-quick-actions" role="toolbar" aria-label={uiText("Thao tác học tập nhanh")}>
         <Link
           className="quick-action-chip"
           to={firstCourse ? `/app/learn/${firstCourse.courseId}` : "/courses"}
         >
-          <span>{firstCourse ? "Tiếp tục học khóa gần nhất" : "Khám phá khóa học"}</span>
+          <span>{firstCourse ? uiText("Tiếp tục học khóa gần nhất") : uiText("Khám phá khóa học")}</span>
         </Link>
         <Link className="quick-action-chip" to="/app/classes">
-          <span>Lớp học của tôi</span>
+          <span>{uiText("Lớp học của tôi")}</span>
         </Link>
         <Link className="quick-action-chip" to="/app/schedule">
-          <span>Lịch học</span>
+          <span>{uiText("Lịch học")}</span>
         </Link>
         <Link className="quick-action-chip" to="/app/assessments">
-          <span>Bài tập &amp; Kiểm tra</span>
+          <span>{uiText("Bài tập & Kiểm tra")}</span>
         </Link>
         <Link className="quick-action-chip" to="/app/ai-tutor">
-          <span>Gia sư AI</span>
+          <span>{uiText("Gia sư AI")}</span>
         </Link>
         <Link className="quick-action-chip" to="/courses">
-          <span>Khám phá khóa học mới</span>
+          <span>{uiText("Khám phá khóa học mới")}</span>
         </Link>
       </div>
 
@@ -483,21 +517,21 @@ export default function ProgressDashboard() {
 
       <div className="progress-search-card">
         <label className="progress-search-label">
-          <span className="progress-search-title">Tìm khóa học</span>
+          <span className="progress-search-title">{uiText("Tìm khóa học")}</span>
           <div className="progress-search-wrap">
             <Icon name="search" size={16} className="progress-search-icon" />
             <input
               className="progress-search-input"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tên khóa học"
+              placeholder={uiText("Tên khóa học")}
             />
             {search && (
               <button
                 type="button"
                 className="progress-search-clear"
                 onClick={() => setSearch("")}
-                aria-label="Xóa từ khóa tìm kiếm"
+                aria-label={uiText("Xóa từ khóa tìm kiếm")}
               >
                 ✕
               </button>
@@ -515,7 +549,9 @@ export default function ProgressDashboard() {
           </div>
         ) : (
           <Empty>
-            {courses.data?.length ? "Không có khóa học phù hợp." : "Bạn chưa đăng ký khóa học nào."}
+            {courses.data?.length
+              ? uiText("Không có khóa học phù hợp.")
+              : uiText("Bạn chưa đăng ký khóa học nào.")}
           </Empty>
         )}
       </State>

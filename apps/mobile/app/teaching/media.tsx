@@ -1,3 +1,4 @@
+import { useUiText } from "../../src/use-language";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import * as Crypto from "expo-crypto";
@@ -52,6 +53,7 @@ function errorMessage(error: unknown): string {
 }
 
 export default function LecturerMediaUpload() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [courses, setCourses] = useState<TeachingCourse[] | null>(null);
@@ -370,11 +372,11 @@ export default function LecturerMediaUpload() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <ScreenHeader title="Tải video bài học" onBack={() => router.replace("/")} />
+        <ScreenHeader title={uiText("Tải video bài học")} onBack={() => router.replace("/")} />
         <Text accessibilityRole="alert" style={styles.error}>
-          Chức năng này chỉ dành cho Giảng viên.
+          {uiText("Chức năng này chỉ dành cho Giảng viên.")}
         </Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -386,8 +388,8 @@ export default function LecturerMediaUpload() {
   return (
     <Page testID="lecturer-media-upload">
       <ScreenHeader
-        title="Tải video bài học"
-        subtitle="Chọn khóa học và bài học để tải video riêng tư lên"
+        title={uiText("Tải video bài học")}
+        subtitle={uiText("Chọn khóa học và bài học để tải video riêng tư lên")}
         onBack={() => (router.canGoBack() ? router.back() : router.replace("/account"))}
       />
       <View
@@ -400,19 +402,22 @@ export default function LecturerMediaUpload() {
         }}
       >
         <Text style={{ color: tokens.color.brandDark, fontWeight: "700" }}>
-          Video được tải trực tiếp theo từng phần
+          {uiText("Video được tải trực tiếp theo từng phần")}
         </Text>
         <Text style={styles.small}>
-          Chỉ hỗ trợ MP4/WebM. Video được kiểm tra và chuyển mã trên máy chủ; chưa phát cho học viên cho đến
-          khi trạng thái READY và được gắn vào bài học.
+          {uiText(
+            "Chỉ hỗ trợ MP4/WebM. Video được kiểm tra và chuyển mã trên máy chủ; chưa phát cho học viên cho đến khi trạng thái READY và được gắn vào bài học.",
+          )}
         </Text>
       </View>
 
-      <Text style={styles.title}>1. Chọn khóa học</Text>
+      <Text style={styles.title}>{uiText("1. Chọn khóa học")}</Text>
       {courses === null && !error ? (
-        <ActivityIndicator accessibilityLabel="Đang tải khóa học" color={tokens.color.brand} />
+        <ActivityIndicator accessibilityLabel={uiText("Đang tải khóa học")} color={tokens.color.brand} />
       ) : null}
-      {courses?.length === 0 ? <Text style={styles.text}>Bạn chưa có khóa học để quản lý video.</Text> : null}
+      {courses?.length === 0 ? (
+        <Text style={styles.text}>{uiText("Bạn chưa có khóa học để quản lý video.")}</Text>
+      ) : null}
       {courses?.map((item) => (
         <Pressable
           key={item.courseId}
@@ -441,11 +446,18 @@ export default function LecturerMediaUpload() {
         </Pressable>
       ))}
 
-      {activeCourse ? <Text style={styles.title}>2. Chọn bài học trong {activeCourse.title}</Text> : null}
-      {courseId && lessons === null && !error ? (
-        <ActivityIndicator accessibilityLabel="Đang tải bài học" color={tokens.color.brand} />
+      {activeCourse ? (
+        <Text style={styles.title}>
+          {uiText("2. Chọn bài học trong ")}
+          {activeCourse.title}
+        </Text>
       ) : null}
-      {lessons?.length === 0 ? <Text style={styles.text}>Khóa học này chưa có bài học.</Text> : null}
+      {courseId && lessons === null && !error ? (
+        <ActivityIndicator accessibilityLabel={uiText("Đang tải bài học")} color={tokens.color.brand} />
+      ) : null}
+      {lessons?.length === 0 ? (
+        <Text style={styles.text}>{uiText("Khóa học này chưa có bài học.")}</Text>
+      ) : null}
       {lessons?.map((item) => {
         const selected = lesson?.lessonId === item.lessonId;
         return (
@@ -453,7 +465,10 @@ export default function LecturerMediaUpload() {
             key={item.lessonId}
             accessibilityRole="button"
             accessibilityState={{ selected, disabled: lockedSelection || item.preview }}
-            accessibilityLabel={`${item.title}${item.preview ? ", bài xem trước, không hỗ trợ video riêng tư" : ""}`}
+            accessibilityLabel={uiText("{0}{1}", [
+              item.title,
+              item.preview ? ", bài xem trước, không hỗ trợ video riêng tư" : "",
+            ])}
             disabled={lockedSelection || item.preview}
             onPress={() => {
               setLesson(item);
@@ -478,7 +493,7 @@ export default function LecturerMediaUpload() {
             {item.sectionTitle ? <Text style={styles.small}>{item.sectionTitle}</Text> : null}
             {item.preview ? (
               <Text style={styles.small}>
-                Xem trước · hãy tắt chế độ này trên bài học trước khi tải video riêng tư
+                {uiText("Xem trước · hãy tắt chế độ này trên bài học trước khi tải video riêng tư")}
               </Text>
             ) : null}
           </Pressable>
@@ -487,15 +502,16 @@ export default function LecturerMediaUpload() {
 
       {lesson && !lesson.preview ? (
         <>
-          <Text style={styles.title}>3. Chọn video</Text>
+          <Text style={styles.title}>{uiText("3. Chọn video")}</Text>
           {pendingUpload ? (
             <Text style={styles.text}>
-              Phiên đang chờ: {pendingUpload.fileName} · {(pendingUpload.sizeBytes / 1024 / 1024).toFixed(1)}{" "}
-              MiB. Chọn lại đúng video để tiếp tục tải các phần còn thiếu.
+              {uiText("Phiên đang chờ: ")}
+              {pendingUpload.fileName} · {(pendingUpload.sizeBytes / 1024 / 1024).toFixed(1)}{" "}
+              {uiText("MiB. Chọn lại đúng video để tiếp tục tải các phần còn thiếu.")}
             </Text>
           ) : null}
           <Button
-            label={video ? "Chọn video khác" : "Chọn MP4 hoặc WebM từ thư viện"}
+            label={video ? uiText("Chọn video khác") : uiText("Chọn MP4 hoặc WebM từ thư viện")}
             variant="secondary"
             disabled={
               busy || restoringUpload || Boolean(asset && !["DELETED", "UPLOADING"].includes(asset.status))
@@ -510,10 +526,10 @@ export default function LecturerMediaUpload() {
           <Button
             label={
               busy
-                ? "Đang tải video…"
+                ? uiText("Đang tải video…")
                 : attemptRef.current?.mediaAssetId
-                  ? "Tiếp tục tải phần còn thiếu"
-                  : "Tải video lên"
+                  ? uiText("Tiếp tục tải phần còn thiếu")
+                  : uiText("Tải video lên")
             }
             disabled={!video || busy || Boolean(asset && !["DELETED", "UPLOADING"].includes(asset.status))}
             onPress={() => void startUpload()}
@@ -524,7 +540,8 @@ export default function LecturerMediaUpload() {
               accessibilityValue={{ min: 0, max: progress.total, now: progress.complete }}
             >
               <Text style={styles.text}>
-                Đã tải {progress.complete} / {progress.total} phần
+                {uiText("Đã tải ")}
+                {progress.complete} / {progress.total} {uiText(" phần")}
               </Text>
               <View
                 style={{
@@ -550,29 +567,31 @@ export default function LecturerMediaUpload() {
       {asset ? (
         <View style={[styles.card, { gap: 8 }]}>
           <Text style={{ color: tokens.color.ink, fontWeight: "700" }}>
-            Trạng thái: {MEDIA_STATUS_COPY[asset.status]}
+            {uiText("Trạng thái: ")}
+            {MEDIA_STATUS_COPY[asset.status]}
           </Text>
           <Text style={styles.small}>{asset.originalFilename}</Text>
           {asset.failureCode ? (
             <Text accessibilityRole="alert" style={styles.error}>
-              Mã lỗi xử lý: {asset.failureCode}
+              {uiText("Mã lỗi xử lý: ")}
+              {asset.failureCode}
             </Text>
           ) : null}
           {asset.status === "READY" && !attached ? (
             <Button
-              label={busy ? "Đang gắn…" : "Gắn video vào bài học"}
+              label={busy ? uiText("Đang gắn…") : uiText("Gắn video vào bài học")}
               disabled={busy}
               onPress={() => void attachVideo()}
             />
           ) : null}
           {attached ? (
             <Text accessibilityLiveRegion="polite" style={styles.text}>
-              Video đã được gắn.
+              {uiText("Video đã được gắn.")}
             </Text>
           ) : null}
           {asset.status === "UPLOADING" ? (
             <Button
-              label="Hủy phiên tải lên"
+              label={uiText("Hủy phiên tải lên")}
               variant="danger"
               disabled={busy}
               onPress={() => void cancelUpload()}
@@ -583,22 +602,22 @@ export default function LecturerMediaUpload() {
 
       {error ? (
         <Text accessibilityRole="alert" style={styles.error}>
-          {error}
+          {uiText(error)}
         </Text>
       ) : null}
       {message ? (
         <Text accessibilityLiveRegion="polite" style={styles.text}>
-          {message}
+          {uiText(message)}
         </Text>
       ) : null}
       <Button
-        label="Tải lại danh sách"
+        label={uiText("Tải lại danh sách")}
         variant="outline"
         disabled={busy}
         onPress={() => setRetry((value) => value + 1)}
       />
       <Button
-        label="Đăng xuất"
+        label={uiText("Đăng xuất")}
         variant="ghost"
         disabled={busy}
         onPress={() => void session.logout().catch(() => {})}

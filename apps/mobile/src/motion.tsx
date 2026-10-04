@@ -1,3 +1,4 @@
+import { useLanguage } from "./use-language";
 import React, { useRef, useEffect, useSyncExternalStore } from "react";
 import {
   AccessibilityInfo,
@@ -377,7 +378,7 @@ function parseMobileNumber(
     };
   }
   const str = String(input).trim();
-  const match = str.match(/^([^\d\-+]*)([\-+]?\d(?:[\d.,]*\d)?)(.*)$/);
+  const match = str.match(/^([^\d+-]*)([+-]?\d(?:[\d.,]*\d)?)(.*)$/);
   if (!match) return { target: 0, decimals: 0 };
   let cleanNum = match[2];
   let dec = explicitDecimals ?? 0;
@@ -426,6 +427,7 @@ export function AnimatedNumber({
   formatter?: (val: number) => string;
   style?: StyleProp<TextStyle>;
 }) {
+  const { locale: uiLocale } = useLanguage();
   const { target, decimals: parsedDecimals } = parseMobileNumber(value, decimals);
   const [displayValue, setDisplayValue] = React.useState(0);
   const animValue = useRef(new Animated.Value(0)).current;
@@ -461,7 +463,7 @@ export function AnimatedNumber({
     ? formatter(displayValue)
     : parsedDecimals > 0
       ? displayValue.toFixed(parsedDecimals)
-      : Math.round(displayValue).toLocaleString("vi-VN");
+      : Math.round(displayValue).toLocaleString(uiLocale);
 
   return (
     <Text style={style}>

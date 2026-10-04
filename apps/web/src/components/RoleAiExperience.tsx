@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useSession } from "../auth/session";
@@ -6,6 +7,7 @@ import { FloatingAiTutor } from "./FloatingAiTutor";
 import { SafeMascot } from "./SafeMascot";
 
 export function RoleAiExperience({ children }: { children: ReactNode }) {
+  const uiText = useUiText();
   const { state, profile } = useSession();
   if (!profile || (state !== "AUTHENTICATED" && state !== "REFRESHING")) return <>{children}</>;
 
@@ -20,9 +22,17 @@ export function RoleAiExperience({ children }: { children: ReactNode }) {
 
   const destination =
     profile.role === "ADMIN"
-      ? { path: "/app/admin/ai", label: "Mở AI quản trị", description: "Hỗ trợ quản trị AILSS" }
+      ? {
+          path: "/app/admin/ai",
+          label: uiText("Mở AI quản trị"),
+          description: uiText("Hỗ trợ quản trị AILSS"),
+        }
       : profile.lecturerVerified
-        ? { path: "/app/teaching/ai", label: "Mở trợ lý soạn bài AI", description: "Soạn và rà soát câu hỏi" }
+        ? {
+            path: "/app/teaching/ai",
+            label: uiText("Mở trợ lý soạn bài AI"),
+            description: uiText("Soạn và rà soát câu hỏi"),
+          }
         : null;
 
   return (
@@ -36,7 +46,7 @@ export function RoleAiExperience({ children }: { children: ReactNode }) {
             title={destination.description}
           >
             <span className="floating-ai-role-label">{destination.description}</span>
-            <span className="floating-ai-mascot-pod" aria-hidden="true">
+            <span className="floating-ai-mascot-pod" aria-hidden="true" inert>
               <SafeMascot
                 directions="/mascots/tv-directions.webp"
                 reactions="/mascots/tv-reactions.webp"

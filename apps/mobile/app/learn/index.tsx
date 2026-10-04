@@ -1,3 +1,4 @@
+import { useUiText } from "../../src/use-language";
 import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
 import { Text, View, ActivityIndicator, Pressable, StyleSheet } from "react-native";
 import { router, type Href } from "expo-router";
@@ -25,6 +26,7 @@ import {
 type EnrolledCourse = Course & { progress?: Progress };
 
 export default function MyLearningScreen() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [coursesList, setCoursesList] = useState<EnrolledCourse[]>([]);
@@ -81,11 +83,11 @@ export default function MyLearningScreen() {
         <Page>
           <View style={[styles.card, { alignItems: "center", paddingVertical: 40, gap: 14 }]}>
             <Icon name="book" size={40} color={tokens.color.brand} />
-            <Text style={styles.title}>Không gian học tập</Text>
+            <Text style={styles.title}>{uiText("Không gian học tập")}</Text>
             <Text style={[styles.text, { textAlign: "center", maxWidth: 300 }]}>
-              Vui lòng đăng nhập tài khoản học viên để xem các khóa học đang theo học.
+              {uiText("Vui lòng đăng nhập tài khoản học viên để xem các khóa học đang theo học.")}
             </Text>
-            <Button label="Đăng nhập ngay" size="lg" onPress={() => router.push("/login")} />
+            <Button label={uiText("Đăng nhập ngay")} size="lg" onPress={() => router.push("/login")} />
           </View>
         </Page>
         <BottomNavBar currentRoute="learn" onNavigate={(path) => router.push(path as Href)} />
@@ -97,28 +99,32 @@ export default function MyLearningScreen() {
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
       <Page style={{ paddingBottom: 24 }}>
         <View style={{ gap: 4 }}>
-          <Badge label="TIẾN ĐỘ HỌC TẬP" variant="primary" icon="sparkles" />
-          <Text style={styles.title}>Khóa học của tôi</Text>
-          <Text style={styles.text}>Tiếp tục các bài học dở dang và theo dõi mục tiêu học tập.</Text>
+          <Badge label={uiText("TIẾN ĐỘ HỌC TẬP")} variant="primary" icon="sparkles" />
+          <Text style={styles.title}>{uiText("Khóa học của tôi")}</Text>
+          <Text style={styles.text}>
+            {uiText("Tiếp tục các bài học dở dang và theo dõi mục tiêu học tập.")}
+          </Text>
         </View>
 
         {error ? (
           <View style={[styles.card, { borderColor: tokens.color.dangerLight, backgroundColor: "#FEF2F2" }]}>
             <Text accessibilityRole="alert" style={styles.error}>
-              {error}
+              {uiText(error)}
             </Text>
-            <Button label="Thử lại" size="sm" onPress={() => void fetchMyLearning()} />
+            <Button label={uiText("Thử lại")} size="sm" onPress={() => void fetchMyLearning()} />
           </View>
         ) : loading ? (
           <View style={localStyles.center}>
             <ActivityIndicator size="large" color={tokens.color.brand} />
-            <Text style={styles.small}>Đang tải tiến độ học tập…</Text>
+            <Text style={styles.small}>{uiText("Đang tải tiến độ học tập…")}</Text>
           </View>
         ) : coursesList.length === 0 ? (
           <EmptyState
             icon="book"
-            title="Chưa tham gia khóa học nào"
-            description="Bạn chưa đăng ký khóa học nào. Hãy bắt đầu khám phá thư viện khóa học phong phú của AILSS ngay!"
+            title={uiText("Chưa tham gia khóa học nào")}
+            description={uiText(
+              "Bạn chưa đăng ký khóa học nào. Hãy bắt đầu khám phá thư viện khóa học phong phú của AILSS ngay!",
+            )}
             actionLabel="Khám phá khóa học ngay"
             onAction={() => router.push("/courses")}
           />
@@ -128,7 +134,7 @@ export default function MyLearningScreen() {
             <View style={localStyles.summaryRow}>
               <View style={localStyles.summaryItem}>
                 <Text style={localStyles.summaryNum}>{coursesList.length}</Text>
-                <Text style={localStyles.summaryLabel}>Khóa đang học</Text>
+                <Text style={localStyles.summaryLabel}>{uiText("Khóa đang học")}</Text>
               </View>
               <View style={localStyles.summaryDivider} />
               <View style={localStyles.summaryItem}>
@@ -141,14 +147,14 @@ export default function MyLearningScreen() {
                     : 0}
                   %
                 </Text>
-                <Text style={localStyles.summaryLabel}>Tiến độ TB</Text>
+                <Text style={localStyles.summaryLabel}>{uiText("Tiến độ TB")}</Text>
               </View>
               <View style={localStyles.summaryDivider} />
               <View style={localStyles.summaryItem}>
                 <Text style={[localStyles.summaryNum, { color: tokens.color.brand }]}>
                   {coursesList.filter((c) => c.progress?.completed).length}
                 </Text>
-                <Text style={localStyles.summaryLabel}>Khóa hoàn thành</Text>
+                <Text style={localStyles.summaryLabel}>{uiText("Khóa hoàn thành")}</Text>
               </View>
             </View>
 
@@ -156,7 +162,7 @@ export default function MyLearningScreen() {
             <SearchBar
               value={search}
               onChangeText={setSearch}
-              placeholder="Tìm kiếm khóa học của tôi..."
+              placeholder={uiText("Tìm kiếm khóa học của tôi...")}
               onClear={() => setSearch("")}
             />
 
@@ -169,7 +175,8 @@ export default function MyLearningScreen() {
                 <Text
                   style={[localStyles.filterChipText, filter === "ALL" && localStyles.filterChipTextActive]}
                 >
-                  Tất cả ({coursesList.length})
+                  {uiText("Tất cả (")}
+                  {coursesList.length})
                 </Text>
               </Pressable>
               <Pressable
@@ -182,7 +189,8 @@ export default function MyLearningScreen() {
                     filter === "IN_PROGRESS" && localStyles.filterChipTextActive,
                   ]}
                 >
-                  Đang học ({coursesList.filter((c) => !(c.progress?.completed ?? false)).length})
+                  {uiText("Đang học (")}
+                  {coursesList.filter((c) => !(c.progress?.completed ?? false)).length})
                 </Text>
               </Pressable>
               <Pressable
@@ -195,7 +203,8 @@ export default function MyLearningScreen() {
                     filter === "COMPLETED" && localStyles.filterChipTextActive,
                   ]}
                 >
-                  Đã xong ({coursesList.filter((c) => c.progress?.completed ?? false).length})
+                  {uiText("Đã xong (")}
+                  {coursesList.filter((c) => c.progress?.completed ?? false).length})
                 </Text>
               </Pressable>
             </View>
@@ -225,7 +234,7 @@ export default function MyLearningScreen() {
                     style={localStyles.courseCard}
                     onPress={() => router.push(`/learn/${item.courseId}` as Href)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Tiếp tục học ${item.title}`}
+                    accessibilityLabel={uiText("Tiếp tục học {0}", [item.title])}
                   >
                     <View style={{ flexDirection: "row", gap: 14, alignItems: "flex-start" }}>
                       <View style={[localStyles.courseThumb, { backgroundColor: bgGradient }]}>
@@ -237,7 +246,7 @@ export default function MyLearningScreen() {
                         >
                           <Badge label={category.toUpperCase()} variant="neutral" />
                           <Badge
-                            label={isDone ? "HOÀN THÀNH" : `${pct}% HOÀN TẤT`}
+                            label={isDone ? uiText("HOÀN THÀNH") : uiText("{0}% HOÀN TẤT", [pct])}
                             variant={isDone ? "success" : "ai"}
                           />
                         </View>
@@ -258,12 +267,15 @@ export default function MyLearningScreen() {
                       >
                         <Text style={styles.small}>
                           {item.progress
-                            ? `Đã học ${item.progress.completedCount}/${item.progress.publishedTotal} bài`
-                            : "Đang cập nhật tiến độ"}
+                            ? uiText("Đã học {0}/{1} bài", [
+                                item.progress.completedCount,
+                                item.progress.publishedTotal,
+                              ])
+                            : uiText("Đang cập nhật tiến độ")}
                         </Text>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                           <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
-                            {isDone ? "Ôn tập lại" : "Học tiếp"}
+                            {isDone ? uiText("Ôn tập lại") : uiText("Học tiếp")}
                           </Text>
                           <Icon name="chevronRight" size={14} color={tokens.color.brand} />
                         </View>

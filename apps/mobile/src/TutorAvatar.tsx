@@ -1,3 +1,4 @@
+import { useUiText } from "./use-language";
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, StyleSheet, View } from "react-native";
 import robot from "../assets/tutor-bot.png";
@@ -11,6 +12,7 @@ export function TutorAvatar({
   decorative?: boolean;
   size?: number;
 }) {
+  const uiText = useUiText();
   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
   const motion = useRef(new Animated.Value(0)).current;
 
@@ -55,7 +57,7 @@ export function TutorAvatar({
     <View
       accessible={!decorative}
       accessibilityRole="image"
-      accessibilityLabel={active ? "Robot Gia sư AI đang trả lời" : "Robot Gia sư AI"}
+      accessibilityLabel={active ? uiText("Robot Gia sư AI đang trả lời") : uiText("Robot Gia sư AI")}
       importantForAccessibility={decorative ? "no-hide-descendants" : "auto"}
       style={[avatar.frame, { width: size, height: size }]}
     >

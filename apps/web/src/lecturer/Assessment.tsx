@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { useUiText, interfaceMessage, type InterfaceMessage } from "../lib/i18n";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -71,6 +73,8 @@ const validate = (questions: Question[]) =>
   });
 
 export function Assessments() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const [params, setParams] = useSearchParams(),
     courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses"),
     classes = useLecturer<ClassItem[] | { classes: ClassItem[] }>("/me/owned-classes");
@@ -82,7 +86,7 @@ export function Assessments() {
           ? `CLASS/${params.get("class")}`
           : "",
     ),
-    [msg, setMsg] = useState(""),
+    [msg, setMsg] = useState<InterfaceMessage>(""),
     [createDeadline, setCreateDeadline] = useState("");
   const quizzes = useLecturer<Quiz[] | { quizzes: Quiz[] }>(target ? `/targets/${target}/quizzes` : null),
     courseItems = courses.data ? (Array.isArray(courses.data) ? courses.data : courses.data.items || []) : [],
@@ -113,12 +117,12 @@ export function Assessments() {
     <>
       <Breadcrumbs
         items={[
-          { label: "Giảng dạy", to: "/app/teaching" },
-          { label: activeTab === "gradebook" ? "Bảng điểm học viên" : "Đánh giá" },
+          { label: uiText("Giảng dạy"), to: "/app/teaching" },
+          { label: uiText(activeTab === "gradebook" ? "Bảng điểm học viên" : "Bài kiểm tra") },
         ]}
       />
       <div className="dashboard-toolbar-row" style={{ marginTop: "0.5rem", marginBottom: "1.5rem" }}>
-        <div className="dashboard-filter-group" role="tablist" aria-label="Điều hướng đánh giá">
+        <div className="dashboard-filter-group" role="tablist" aria-label={uiText("Điều hướng đánh giá")}>
           <button
             type="button"
             role="tab"
@@ -131,7 +135,7 @@ export function Assessments() {
               });
             }}
           >
-            📝 Soạn & Quản Lý Đề Thi
+            {uiText("📝 Soạn & Quản Lý Đề Thi")}
           </button>
           <button
             type="button"
@@ -145,7 +149,7 @@ export function Assessments() {
               });
             }}
           >
-            📊 Bảng Điểm & Chấm Thi Học Viên
+            {uiText("📊 Bảng Điểm & Chấm Thi Học Viên")}
           </button>
         </div>
       </div>
@@ -161,13 +165,13 @@ export function Assessments() {
         />
       ) : (
         <>
-          <p className="eyebrow">ĐÁNH GIÁ</p>
-          <h1>Soạn bài kiểm tra theo khóa học hoặc lớp.</h1>
+          <p className="eyebrow">{uiText("ĐÁNH GIÁ")}</p>
+          <h1>{uiText("Soạn bài kiểm tra theo khóa học hoặc lớp.")}</h1>
           <section className="form-panel">
             <label>
-              Nội dung phụ trách
+              {uiText("Nội dung phụ trách")}
               <select value={target} onChange={(e) => setTarget(e.target.value)}>
-                <option value="">Chọn khóa học hoặc lớp</option>
+                <option value="">{uiText("Chọn khóa học hoặc lớp")}</option>
                 {courseItems.map((x) => (
                   <option key={x.courseId} value={`COURSE/${x.courseId}`}>
                     {x.title}
@@ -187,13 +191,13 @@ export function Assessments() {
                   style={{ flexWrap: "wrap", gap: "12px", alignItems: "flex-end" }}
                 >
                   <div style={{ flex: "1 1 280px" }}>
-                    <Field label="Tên bài kiểm tra / bài tập mới" name="title" required />
+                    <Field label={uiText("Tên bài kiểm tra / bài tập mới")} name="title" required />
                   </div>
                   <p className="muted" style={{ flex: "1 1 260px" }}>
-                    Câu hỏi trắc nghiệm và trả lời ngắn được hệ thống chấm tự động.
+                    {uiText("Câu hỏi trắc nghiệm và trả lời ngắn được hệ thống chấm tự động.")}
                   </p>
                   <label style={{ flex: "1 1 200px" }}>
-                    ⏰ Lịch hạn nộp bài (Deadline)
+                    {uiText("⏰ Lịch hạn nộp bài (Deadline)")}
                     <input
                       type="datetime-local"
                       value={createDeadline}
@@ -211,16 +215,18 @@ export function Assessments() {
                 {/* Cấu hình chính sách nộp muộn do Giảng viên quyết định */}
                 <div className="deadline-config-panel" style={{ marginTop: "14px", marginBottom: "14px" }}>
                   <div className="deadline-config-title">
-                    <span>⚙️ Chính sách xử lý khi học viên quá hạn nộp bài (Do giảng viên quy định):</span>
+                    <span>
+                      {uiText("⚙️ Chính sách xử lý khi học viên quá hạn nộp bài (Do giảng viên quy định):")}
+                    </span>
                   </div>
-                  <p>Bài kiểm tra sẽ đóng khi đến hạn do máy chủ xác thực.</p>
+                  <p>{uiText("Bài kiểm tra sẽ đóng khi đến hạn do máy chủ xác thực.")}</p>
                 </div>
                 <button className="button" type="submit" style={{ marginTop: "4px" }}>
-                  + Tạo bản nháp bài kiểm tra
+                  {uiText("+ Tạo bản nháp bài kiểm tra")}
                 </button>
               </form>
             )}
-            <p role="status">{msg}</p>
+            <p role="status">{uiText(msg)}</p>
           </section>
           {target ? (
             <State q={quizzes}>
@@ -232,7 +238,7 @@ export function Assessments() {
                       const storedPolicy = "BLOCK_LATE";
                       const storedDeadline = x.closesAt;
                       const formattedDeadline = storedDeadline
-                        ? new Date(storedDeadline).toLocaleString("vi-VN", {
+                        ? new Date(storedDeadline).toLocaleString(uiLocale, {
                             hour: "2-digit",
                             minute: "2-digit",
                             day: "2-digit",
@@ -257,12 +263,15 @@ export function Assessments() {
                           >
                             <StateChip state={x.state} />
                             <span className="assessment-format-badge">
-                              {isObjective ? "⚡ Trắc nghiệm tự động" : "✍️ Giảng viên chấm thủ công"}
+                              {isObjective
+                                ? uiText("⚡ Trắc nghiệm tự động")
+                                : uiText("✍️ Giảng viên chấm thủ công")}
                             </span>
                           </div>
                           <h2>{x.title}</h2>
                           <p>
-                            {x.questionCount} câu · Phiên bản v{x.currentVersion}
+                            {x.questionCount} {uiText(" câu · Phiên bản v")}
+                            {x.currentVersion}
                           </p>
                           <div
                             style={{
@@ -275,35 +284,37 @@ export function Assessments() {
                             }}
                           >
                             <div>
-                              ⏰ <strong>Hạn nộp:</strong> {formattedDeadline}
+                              ⏰ <strong>{uiText("Hạn nộp:")}</strong> {formattedDeadline}
                             </div>
                             <div>
                               {storedPolicy === "BLOCK_LATE" ? (
                                 <span style={{ color: "#dc2626", fontWeight: 600 }}>
-                                  🚫 Chính sách: Khóa cổng khi trễ hạn
+                                  {uiText("🚫 Chính sách: Khóa cổng khi trễ hạn")}
                                 </span>
                               ) : (
                                 <span style={{ color: "#d97706", fontWeight: 600 }}>
-                                  🚩 Chính sách: Cho nộp trễ (Đánh dấu đỏ)
+                                  {uiText("🚩 Chính sách: Cho nộp trễ (Đánh dấu đỏ)")}
                                 </span>
                               )}
                             </div>
                           </div>
-                          <Link to={`/app/teaching/assessments/${x.quizId}`}>Mở bài kiểm tra →</Link>
+                          <Link to={`/app/teaching/assessments/${x.quizId}`}>
+                            {uiText("Mở bài kiểm tra →")}
+                          </Link>
                         </article>
                       );
                     })}
                   </div>
                 ) : (
-                  <EmptyState title="Chưa có bài kiểm tra cho nội dung này.">
-                    Tạo bản nháp đầu tiên khi bạn đã sẵn sàng.
+                  <EmptyState title={uiText("Chưa có bài kiểm tra cho nội dung này.")}>
+                    {uiText("Tạo bản nháp đầu tiên khi bạn đã sẵn sàng.")}
                   </EmptyState>
                 );
               }}
             </State>
           ) : (
-            <EmptyState title="Chọn nội dung để bắt đầu.">
-              Danh sách luôn giới hạn trong khóa học hoặc lớp bạn chọn.
+            <EmptyState title={uiText("Chọn nội dung để bắt đầu.")}>
+              {uiText("Danh sách luôn giới hạn trong khóa học hoặc lớp bạn chọn.")}
             </EmptyState>
           )}
         </>
@@ -319,12 +330,13 @@ export function AssessmentDetail() {
 }
 
 function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
+  const uiText = useUiText();
   const [title, setTitle] = useState(quiz.title),
     [questions, setQuestions] = useState(quiz.questions || []),
     [selected, setSelected] = useState(0),
     [dirty, setDirty] = useState(false),
     [preview, setPreview] = useState(false),
-    [msg, setMsg] = useState(""),
+    [msg, setMsg] = useState<InterfaceMessage>(""),
     [conflict, setConflict] = useState(false),
     [deadline, setDeadline] = useState(() =>
       quiz.closesAt
@@ -361,7 +373,7 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
         questions: questions.map(clean),
         closesAt: deadline ? new Date(deadline).toISOString() : null,
       });
-      setMsg(`Đã lưu phiên bản v${r.data.currentVersion}.`);
+      setMsg(interfaceMessage("Đã lưu phiên bản v{0}.", [r.data.currentVersion]));
       setDirty(false);
       reload();
     } catch (e) {
@@ -374,13 +386,15 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
     if (dirty || errors.length) return setMsg("Hãy lưu bản hợp lệ trước khi xuất bản.");
     if (
       !confirm(
-        "Xuất bản bài kiểm tra này sẽ tạo phiên bản dành cho học viên. Hãy kiểm tra lại câu hỏi và đáp án trước khi tiếp tục.",
+        uiText(
+          "Xuất bản bài kiểm tra này sẽ tạo phiên bản dành cho học viên. Hãy kiểm tra lại câu hỏi và đáp án trước khi tiếp tục.",
+        ),
       )
     )
       return;
     try {
       const r = await lecturerRequest<Quiz>(`/quizzes/${quiz.quizId}/publish`, "POST", {});
-      setMsg(`Đã xuất bản phiên bản v${r.data.currentVersion}.`);
+      setMsg(interfaceMessage("Đã xuất bản phiên bản v{0}.", [r.data.currentVersion]));
       reload();
     } catch (e) {
       setMsg(lecturerError(e));
@@ -388,10 +402,12 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
   }
   function removeQuestion(index: number) {
     if (questions.length <= 1) {
-      if (!confirm("Xóa câu hỏi này sẽ làm bài kiểm tra không còn câu hỏi nào. Bạn có chắc muốn xóa?"))
+      if (
+        !confirm(uiText("Xóa câu hỏi này sẽ làm bài kiểm tra không còn câu hỏi nào. Bạn có chắc muốn xóa?"))
+      )
         return;
     } else {
-      if (!confirm(`Bạn có chắc muốn xóa Câu ${index + 1}?`)) return;
+      if (!confirm(uiText("Bạn có chắc muốn xóa Câu {0}?", [index + 1]))) return;
     }
     setQuestions((v) => v.filter((_, i) => i !== index));
     setSelected((prev) => (prev >= index ? Math.max(0, prev - 1) : prev));
@@ -399,19 +415,22 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
   }
   return (
     <>
-      <Breadcrumbs items={[{ label: "Đánh giá", to: "/app/teaching/assessments" }, { label: quiz.title }]} />
+      <Breadcrumbs
+        items={[{ label: uiText("Bài kiểm tra"), to: "/app/teaching/assessments" }, { label: quiz.title }]}
+      />
       <div className="assessment-builder">
         <aside className="builder-nav">
-          <h2>Câu hỏi</h2>
+          <h2>{uiText("Câu hỏi")}</h2>
           <select
             className="builder-mobile-select"
-            aria-label="Chọn câu hỏi"
+            aria-label={uiText("Chọn câu hỏi")}
             value={selected}
             onChange={(e) => setSelected(Number(e.target.value))}
           >
             {questions.map((_, i) => (
               <option key={i} value={i}>
-                Câu {i + 1}
+                {uiText("Câu ")}
+                {i + 1}
               </option>
             ))}
           </select>
@@ -423,15 +442,16 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
                   className={selected === i ? "active" : ""}
                   onClick={() => setSelected(i)}
                 >
-                  Câu {i + 1}
+                  {uiText("Câu ")}
+                  {i + 1}
                   <small>{question.prompt || "Chưa có nội dung"}</small>
                 </button>
                 {editable && (
                   <button
                     type="button"
                     className="question-remove-btn"
-                    aria-label={`Xóa câu ${i + 1}`}
-                    title={`Xóa câu ${i + 1}`}
+                    aria-label={uiText("Xóa câu {0}", [i + 1])}
+                    title={uiText("Xóa câu {0}", [i + 1])}
                     onClick={(e) => {
                       e.stopPropagation();
                       removeQuestion(i);
@@ -453,13 +473,13 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
                 setDirty(true);
               }}
             >
-              + Thêm câu hỏi
+              {uiText("+ Thêm câu hỏi")}
             </button>
           )}
         </aside>
         <main className="builder-editor">
           <label>
-            Tên bài kiểm tra
+            {uiText("Tên bài kiểm tra")}
             <input
               value={title}
               disabled={!editable}
@@ -473,7 +493,8 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
             <>
               <div className="question-editor-topbar">
                 <h3>
-                  Câu {selected + 1} / {questions.length}
+                  {uiText("Câu ")}
+                  {selected + 1} / {questions.length}
                 </h3>
                 {editable && (
                   <button
@@ -481,21 +502,28 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
                     className="button danger small"
                     onClick={() => removeQuestion(selected)}
                   >
-                    Xóa câu hỏi này
+                    {uiText("Xóa câu hỏi này")}
                   </button>
                 )}
               </div>
               <QuestionEditor q={questions[selected]} disabled={!editable} update={update} />
             </>
           ) : (
-            <EmptyState title="Chưa có câu hỏi.">Thêm câu hỏi để bắt đầu soạn bài.</EmptyState>
+            <EmptyState title={uiText("Chưa có câu hỏi.")}>
+              {uiText("Thêm câu hỏi để bắt đầu soạn bài.")}
+            </EmptyState>
           )}
         </main>
         <aside className="builder-summary">
           <StateChip state={quiz.state} />
-          <h2>Phiên bản hiện tại: v{quiz.currentVersion}</h2>
-          <p>{questions.length} câu hỏi</p>
-          <h3>Kiểm tra nội dung</h3>
+          <h2>
+            {uiText("Phiên bản hiện tại: v")}
+            {quiz.currentVersion}
+          </h2>
+          <p>
+            {questions.length} {uiText(" câu hỏi")}
+          </p>
+          <h3>{uiText("Kiểm tra nội dung")}</h3>
           {errors.length ? (
             <ul className="validation-list">
               {errors.map((e) => (
@@ -503,16 +531,16 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
               ))}
             </ul>
           ) : (
-            <p>Nội dung hiện tại hợp lệ để lưu.</p>
+            <p>{uiText("Nội dung hiện tại hợp lệ để lưu.")}</p>
           )}
           {conflict && (
             <div role="alert">
-              <strong>Bài kiểm tra đã được cập nhật ở nơi khác.</strong>
+              <strong>{uiText("Bài kiểm tra đã được cập nhật ở nơi khác.")}</strong>
               <button className="button secondary" onClick={reload}>
-                Tải phiên bản mới
+                {uiText("Tải phiên bản mới")}
               </button>
               <button className="button secondary" onClick={() => setConflict(false)}>
-                Xem lại thay đổi hiện tại
+                {uiText("Xem lại thay đổi hiện tại")}
               </button>
               <button
                 className="button secondary"
@@ -521,17 +549,17 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
                   reload();
                 }}
               >
-                Hủy chỉnh sửa cục bộ
+                {uiText("Hủy chỉnh sửa cục bộ")}
               </button>
             </div>
           )}
           {/* Cấu hình Deadline & Chính sách nộp muộn do Giảng viên quyết định */}
           <div className="deadline-config-panel" style={{ margin: "16px 0", textAlign: "left" }}>
             <div className="deadline-config-title">
-              <span>⏰ Lịch nộp &amp; Chính sách trễ hạn</span>
+              <span>{uiText("⏰ Lịch nộp & Chính sách trễ hạn")}</span>
             </div>
             <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, margin: "8px 0 4px" }}>
-              Hạn nộp bài của học viên:
+              {uiText("Hạn nộp bài của học viên:")}
               <input
                 type="datetime-local"
                 value={deadline}
@@ -551,26 +579,26 @@ function QuizEditor({ quiz, reload }: { quiz: Quiz; reload: () => void }) {
                 }}
               />
             </label>
-            <p>Bài kiểm tra sẽ đóng khi đến hạn do máy chủ xác thực.</p>
+            <p>{uiText("Bài kiểm tra sẽ đóng khi đến hạn do máy chủ xác thực.")}</p>
           </div>
 
           <div className="builder-actions">
             <button className="button secondary" onClick={() => setPreview(true)}>
-              Xem trước
+              {uiText("Xem trước")}
             </button>
             {editable && (
               <button className="button" onClick={() => void save()}>
-                Lưu
+                {uiText("Lưu")}
               </button>
             )}
             {editable && (
               <button className="button" onClick={() => void publish()}>
-                Xuất bản
+                {uiText("Xuất bản")}
               </button>
             )}
-            <Link to={`/app/teaching/assessments/${quiz.quizId}/results`}>Xem kết quả →</Link>
+            <Link to={`/app/teaching/assessments/${quiz.quizId}/results`}>{uiText("Xem kết quả →")}</Link>
           </div>
-          <p role="status">{msg}</p>
+          <p role="status">{uiText(msg)}</p>
         </aside>
       </div>
       {preview && <Preview title={title} questions={questions} close={() => setPreview(false)} />}
@@ -587,20 +615,21 @@ function QuestionEditor({
   disabled: boolean;
   update: (p: Partial<Question>) => void;
 }) {
+  const uiText = useUiText();
   return (
     <fieldset disabled={disabled} className="question-editor">
-      <legend>Câu hỏi đang chọn</legend>
+      <legend>{uiText("Câu hỏi đang chọn")}</legend>
       <label>
-        Loại câu hỏi
+        {uiText("Loại câu hỏi")}
         <select value={q.questionType} onChange={(e) => update(blank(e.target.value as QType))}>
-          <option value="SINGLE_CHOICE">Một đáp án</option>
-          <option value="MULTIPLE_CHOICE">Nhiều đáp án</option>
-          <option value="TRUE_FALSE">Đúng / Sai</option>
-          <option value="SHORT_ANSWER">Trả lời ngắn</option>
+          <option value="SINGLE_CHOICE">{uiText("Một đáp án")}</option>
+          <option value="MULTIPLE_CHOICE">{uiText("Nhiều đáp án")}</option>
+          <option value="TRUE_FALSE">{uiText("Đúng / Sai")}</option>
+          <option value="SHORT_ANSWER">{uiText("Trả lời ngắn")}</option>
         </select>
       </label>
       <label>
-        Nội dung
+        {uiText("Nội dung")}
         <textarea
           rows={5}
           maxLength={2000}
@@ -609,16 +638,16 @@ function QuestionEditor({
         />
       </label>
       <label>
-        Điểm
+        {uiText("Điểm")}
         <input inputMode="decimal" value={q.points} onChange={(e) => update({ points: e.target.value })} />
       </label>
       {q.options && (
         <div>
-          <h3>Lựa chọn và đáp án đúng</h3>
+          <h3>{uiText("Lựa chọn và đáp án đúng")}</h3>
           {q.options.map((option, i) => (
             <div className="option-editor" key={i}>
               <input
-                aria-label={`Lựa chọn ${i + 1}`}
+                aria-label={uiText("Lựa chọn {0}", [i + 1])}
                 maxLength={500}
                 value={option}
                 onChange={(e) => {
@@ -653,7 +682,7 @@ function QuestionEditor({
                     })
                   }
                 />
-                Đúng
+                {uiText("Đúng")}
               </label>
             </div>
           ))}
@@ -663,7 +692,7 @@ function QuestionEditor({
             disabled={q.options.length >= 10}
             onClick={() => update({ options: [...q.options!, ""] })}
           >
-            Thêm lựa chọn
+            {uiText("Thêm lựa chọn")}
           </button>
         </div>
       )}
@@ -676,7 +705,7 @@ function QuestionEditor({
               checked={q.correctAnswer === true}
               onChange={() => update({ correctAnswer: true })}
             />
-            Đúng
+            {uiText("Đúng")}
           </label>
           <label>
             <input
@@ -691,7 +720,7 @@ function QuestionEditor({
       )}
       {q.questionType === "SHORT_ANSWER" && (
         <label>
-          Đáp án được chấp nhận
+          {uiText("Đáp án được chấp nhận")}
           <input
             maxLength={500}
             value={String(q.correctAnswer)}
@@ -703,6 +732,7 @@ function QuestionEditor({
   );
 }
 function Preview({ title, questions, close }: { title: string; questions: Question[]; close: () => void }) {
+  const uiText = useUiText();
   const closeButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
@@ -714,7 +744,7 @@ function Preview({ title, questions, close }: { title: string; questions: Questi
       className="preview-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="Xem trước bài kiểm tra"
+      aria-label={uiText("Xem trước bài kiểm tra")}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.preventDefault();
@@ -724,7 +754,7 @@ function Preview({ title, questions, close }: { title: string; questions: Questi
     >
       <section className="preview-panel">
         <button ref={closeButton} className="button secondary" onClick={close}>
-          Đóng xem trước
+          {uiText("Đóng xem trước")}
         </button>
         <h1>{title}</h1>
         {questions.map((q, i) => (
@@ -733,7 +763,7 @@ function Preview({ title, questions, close }: { title: string; questions: Questi
               {i + 1}. {q.prompt || "Chưa có nội dung"}
             </h2>
             <p>
-              {q.questionType} · {q.points} điểm
+              {q.questionType} · {q.points} {uiText(" điểm")}
             </p>
             {q.options?.map((o) => (
               <p key={o}>
@@ -742,8 +772,18 @@ function Preview({ title, questions, close }: { title: string; questions: Questi
                   "✓ Đáp án đúng"}
               </p>
             ))}
-            {q.questionType === "TRUE_FALSE" && <p>Đáp án đúng: {q.correctAnswer ? "Đúng" : "Sai"}</p>}
-            {q.questionType === "SHORT_ANSWER" && <p>Đáp án được chấp nhận: {String(q.correctAnswer)}</p>}
+            {q.questionType === "TRUE_FALSE" && (
+              <p>
+                {uiText("Đáp án đúng: ")}
+                {q.correctAnswer ? uiText("Đúng") : "Sai"}
+              </p>
+            )}
+            {q.questionType === "SHORT_ANSWER" && (
+              <p>
+                {uiText("Đáp án được chấp nhận: ")}
+                {String(q.correctAnswer)}
+              </p>
+            )}
           </article>
         ))}
       </section>
@@ -753,11 +793,12 @@ function Preview({ title, questions, close }: { title: string; questions: Questi
 }
 
 export function Results() {
+  const uiText = useUiText();
   const { quizId = "" } = useParams();
   return (
     <>
-      <h1>Kết quả &amp; Chấm điểm</h1>
-      <Link to={`/app/teaching/assessments/${quizId}`}>← Bài kiểm tra</Link>
+      <h1>{uiText("Kết quả & Chấm điểm")}</h1>
+      <Link to={`/app/teaching/assessments/${quizId}`}>{uiText("← Bài kiểm tra")}</Link>
       <QuizResults key={quizId} quizId={quizId} />
     </>
   );

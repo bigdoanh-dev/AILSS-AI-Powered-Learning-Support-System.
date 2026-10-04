@@ -12,6 +12,26 @@ const request = (
 });
 describe("Local administrator guidance", () => {
   it.each([
+    ["How do I reconcile payments?", "/app/admin/revenue"],
+    ["Verify a lecturer", "/app/admin/lecturer-applications"],
+    ["Publish a course", "/app/admin/courses"],
+    ["Review moderation reports", "/app/admin/moderation"],
+    ["Monitor service health", "/app/admin/monitoring"],
+    ["Learning analytics", "/app/admin/stats"],
+  ])("supports English guidance for %s without calling an online model", async (question, path) => {
+    const generate = vi.fn();
+    const provider = new LocalAdminGuideProvider({ generate });
+    const input = request(question);
+    const answer = await provider.generate({
+      ...input,
+      integrationContext: { mode: "ADMIN_SUPPORT", toolResults: [], responseLanguage: "en" },
+    });
+    expect(answer.content).toContain("Local guide — no online AI model is called.");
+    expect(answer.content).toContain(path);
+    expect(answer.content).not.toMatch(/[À-ỹĐđ]/u);
+    expect(generate).not.toHaveBeenCalled();
+  });
+  it.each([
     ["Xem báo cáo kiểm duyệt ở đâu?", "/app/admin/moderation"],
     ["Cách xét duyệt hồ sơ giảng viên mới?", "/app/admin/lecturer-applications"],
     ["Quy trình xuất bản khóa học trực tuyến?", "/app/admin/courses"],

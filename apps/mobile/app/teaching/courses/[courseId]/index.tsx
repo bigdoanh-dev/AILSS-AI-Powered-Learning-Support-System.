@@ -1,3 +1,4 @@
+import { useUiText } from "../../../../src/use-language";
 import { loadCourseCategories, type CourseCategory } from "../../../../src/catalog-preview";
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, Pressable, StyleSheet } from "react-native";
@@ -19,6 +20,7 @@ import { Page, Button, ScreenHeader, Icon, styles, tokens } from "../../../../sr
 import { ScalePressable, FadeSlideIn } from "../../../../src/motion";
 
 export default function CourseDetail() {
+  const uiText = useUiText();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const session = runtime!;
   const command = useMobileCommand();
@@ -105,8 +107,8 @@ export default function CourseDetail() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <Text style={styles.error}>Bạn không có quyền truy cập.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Bạn không có quyền truy cập.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -119,13 +121,13 @@ export default function CourseDetail() {
         </Text>
       ) : null}
       <ScreenHeader
-        title={course ? course.title : "Chi tiết khóa học"}
-        subtitle="Quản trị nội dung bài giảng & gói đào tạo"
+        title={course ? course.title : uiText("Chi tiết khóa học")}
+        subtitle={uiText("Quản trị nội dung bài giảng & gói đào tạo")}
         onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching/courses"))}
         rightElement={
           course ? (
             <Button
-              label="Sửa"
+              label={uiText("Sửa")}
               size="sm"
               variant="outline"
               icon={<Icon name="pencil" size={14} color={tokens.color.ink} />}
@@ -137,7 +139,7 @@ export default function CourseDetail() {
 
       {!error && !course && (
         <Text accessibilityRole="alert" style={styles.text}>
-          Đang tải…
+          {uiText("Đang tải…")}
         </Text>
       )}
       {course && (
@@ -155,17 +157,17 @@ export default function CourseDetail() {
                 />
                 <Text style={[ds.badgeText, course.state === "PUBLISHED" ? ds.publishedText : ds.draftText]}>
                   {course.state === "PUBLISHED"
-                    ? "ĐÃ XUẤT BẢN"
+                    ? uiText("ĐÃ XUẤT BẢN")
                     : course.state === "HIDDEN"
-                      ? "ĐÃ ẨN"
-                      : "BẢN NHÁP"}
+                      ? uiText("ĐÃ ẨN")
+                      : uiText("BẢN NHÁP")}
                 </Text>
               </View>
               <View style={ds.pricePill}>
                 <Icon name="card" size={13} color="#1D4ED8" />
                 <Text style={ds.pricePillText}>
                   {course.priceType === "FREE"
-                    ? "Miễn phí"
+                    ? uiText("Miễn phí")
                     : `${course.price ?? "—"} ${course.currency ?? "VND"}`}
                 </Text>
               </View>
@@ -201,14 +203,14 @@ export default function CourseDetail() {
                 <Icon name="book" size={18} color={tokens.color.brand} />
               </View>
               <Text style={ds.kpiValue}>{lessons?.length ?? 0}</Text>
-              <Text style={ds.kpiLabel}>Bài học</Text>
+              <Text style={ds.kpiLabel}>{uiText("Bài học")}</Text>
             </View>
             <View style={ds.kpiCard}>
               <View style={[ds.kpiIconBox, { backgroundColor: "#CCFBF1" }]}>
                 <Icon name="tag" size={18} color="#0D9488" />
               </View>
               <Text style={ds.kpiValue}>{offerings?.length ?? 0}</Text>
-              <Text style={ds.kpiLabel}>Đợt mở bán</Text>
+              <Text style={ds.kpiLabel}>{uiText("Đợt mở bán")}</Text>
             </View>
             <ScalePressable
               style={ds.kpiCard}
@@ -218,16 +220,18 @@ export default function CourseDetail() {
                 <Icon name="starFilled" size={18} color="#F59E0B" />
               </View>
               <Text style={[ds.kpiValue, { color: "#D97706" }]}>{ratingAvg}</Text>
-              <Text style={ds.kpiLabel}>{reviewCount} đánh giá</Text>
+              <Text style={ds.kpiLabel}>
+                {reviewCount} {uiText(" đánh giá")}
+              </Text>
             </ScalePressable>
             <View style={ds.kpiCard}>
               <View style={[ds.kpiIconBox, { backgroundColor: "#D1FAE5" }]}>
                 <Icon name="card" size={18} color="#059669" />
               </View>
               <Text style={[ds.kpiValue, { fontSize: 13 }]} numberOfLines={1}>
-                {course.priceType === "FREE" ? "Free" : `${course.price ?? "0"}`}
+                {course.priceType === "FREE" ? uiText("Free") : `${course.price ?? "0"}`}
               </Text>
-              <Text style={ds.kpiLabel}>Học phí</Text>
+              <Text style={ds.kpiLabel}>{uiText("Học phí")}</Text>
             </View>
           </View>
 
@@ -243,7 +247,7 @@ export default function CourseDetail() {
                 }}
               >
                 <Icon name="sparkles" size={16} color="#FFFFFF" />
-                <Text style={ds.primaryActionBtnText}>Gửi xét duyệt khóa học</Text>
+                <Text style={ds.primaryActionBtnText}>{uiText("Gửi xét duyệt khóa học")}</Text>
               </ScalePressable>
             )}
             <ScalePressable
@@ -251,7 +255,7 @@ export default function CourseDetail() {
               onPress={() => router.push(`/teaching/courses/${courseId}/roster` as Href)}
             >
               <Icon name="people" size={16} color="#FFFFFF" />
-              <Text style={ds.primaryActionBtnText}>Danh sách học viên</Text>
+              <Text style={ds.primaryActionBtnText}>{uiText("Danh sách học viên")}</Text>
             </ScalePressable>
           </View>
 
@@ -262,28 +266,33 @@ export default function CourseDetail() {
               onPress={() => router.push(`/teaching/courses/${courseId}/settings` as Href)}
             >
               <Icon name="settings" size={15} color={tokens.color.ink} />
-              <Text style={ds.actionButtonText}>Cài đặt</Text>
+              <Text style={ds.actionButtonText}>{uiText("Cài đặt")}</Text>
             </ScalePressable>
             <ScalePressable
               style={ds.actionButton}
               onPress={() => router.push(`/teaching/courses/${courseId}/edit` as Href)}
             >
               <Icon name="pencil" size={15} color={tokens.color.ink} />
-              <Text style={ds.actionButtonText}>Chỉnh sửa</Text>
+              <Text style={ds.actionButtonText}>{uiText("Chỉnh sửa")}</Text>
             </ScalePressable>
             <ScalePressable
               style={ds.actionButton}
               onPress={() => router.push(`/teaching/courses/${courseId}/lessons` as Href)}
             >
               <Icon name="add" size={15} color={tokens.color.brand} />
-              <Text style={[ds.actionButtonText, { color: tokens.color.brand }]}>Thêm bài học</Text>
+              <Text style={[ds.actionButtonText, { color: tokens.color.brand }]}>
+                {uiText("Thêm bài học")}
+              </Text>
             </ScalePressable>
             <ScalePressable
               style={[ds.actionButton, ds.actionButtonAccent]}
               onPress={() => router.push(`/teaching/courses/${courseId}/reviews` as Href)}
             >
               <Icon name="starFilled" size={15} color="#D97706" />
-              <Text style={[ds.actionButtonText, ds.actionButtonAccentText]}>Đánh giá ({reviewCount})</Text>
+              <Text style={[ds.actionButtonText, ds.actionButtonAccentText]}>
+                {uiText("Đánh giá (")}
+                {reviewCount})
+              </Text>
             </ScalePressable>
           </View>
 
@@ -299,7 +308,8 @@ export default function CourseDetail() {
                 color={activeTab === "lessons" ? tokens.color.brand : tokens.color.muted}
               />
               <Text style={[ds.tabItemText, activeTab === "lessons" && ds.tabItemTextActive]}>
-                Bài Giảng ({lessons?.length ?? 0})
+                {uiText("Bài Giảng (")}
+                {lessons?.length ?? 0})
               </Text>
             </Pressable>
             <Pressable
@@ -312,7 +322,8 @@ export default function CourseDetail() {
                 color={activeTab === "offerings" ? tokens.color.brand : tokens.color.muted}
               />
               <Text style={[ds.tabItemText, activeTab === "offerings" && ds.tabItemTextActive]}>
-                Đợt Mở Bán ({offerings?.length ?? 0})
+                {uiText("Đợt Mở Bán (")}
+                {offerings?.length ?? 0})
               </Text>
             </Pressable>
           </View>
@@ -336,7 +347,7 @@ export default function CourseDetail() {
                         {lesson.preview ? (
                           <View style={ds.previewBadge}>
                             <Icon name="eye" size={12} color="#047857" />
-                            <Text style={ds.previewBadgeText}>Xem thử</Text>
+                            <Text style={ds.previewBadgeText}>{uiText("Xem thử")}</Text>
                           </View>
                         ) : null}
                         <View style={[ds.badge, lesson.state === "PUBLISHED" ? ds.published : ds.draft]}>
@@ -352,9 +363,9 @@ export default function CourseDetail() {
                   <View style={ds.emptyIconRing}>
                     <Icon name="book" size={26} color={tokens.color.brand} />
                   </View>
-                  <Text style={ds.emptyText}>Chưa có bài học nào trong khóa học này.</Text>
+                  <Text style={ds.emptyText}>{uiText("Chưa có bài học nào trong khóa học này.")}</Text>
                   <Button
-                    label="Thêm bài học đầu tiên"
+                    label={uiText("Thêm bài học đầu tiên")}
                     icon={<Icon name="add" size={16} color="#FFFFFF" />}
                     onPress={() => router.push(`/teaching/courses/${courseId}/lessons` as Href)}
                   />
@@ -379,13 +390,16 @@ export default function CourseDetail() {
                         <Text style={ds.badgeText}>{o.state}</Text>
                       </View>
                       <Text style={ds.offeringPrice}>
-                        {o.price ? `${o.price} ${o.currency ?? "VND"}`.trim() : "Miễn phí"}
+                        {o.price ? `${o.price} ${o.currency ?? "VND"}`.trim() : uiText("Miễn phí")}
                       </Text>
                     </View>
-                    <Text style={ds.offeringTypeTitle}>Gói: {o.offeringType}</Text>
+                    <Text style={ds.offeringTypeTitle}>
+                      {uiText("Gói: ")}
+                      {o.offeringType}
+                    </Text>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                       <Text style={[styles.small, { color: tokens.color.brand, fontWeight: "700" }]}>
-                        Quản lý đợt tuyển sinh
+                        {uiText("Quản lý đợt tuyển sinh")}
                       </Text>
                       <Icon name="chevronRight" size={14} color={tokens.color.brand} />
                     </View>
@@ -396,9 +410,9 @@ export default function CourseDetail() {
                   <View style={ds.emptyIconRing}>
                     <Icon name="tag" size={26} color={tokens.color.brand} />
                   </View>
-                  <Text style={ds.emptyText}>Chưa có đợt mở bán nào.</Text>
+                  <Text style={ds.emptyText}>{uiText("Chưa có đợt mở bán nào.")}</Text>
                   <Button
-                    label="Tạo đợt mở bán mới"
+                    label={uiText("Tạo đợt mở bán mới")}
                     icon={<Icon name="add" size={16} color="#FFFFFF" />}
                     onPress={() => router.push(`/teaching/offerings/create?courseId=${courseId}` as Href)}
                   />
@@ -411,13 +425,13 @@ export default function CourseDetail() {
 
       {error && (
         <Text accessibilityRole="alert" style={styles.error}>
-          {error}
+          {uiText(error)}
         </Text>
       )}
-      {error && <Button label="Thử lại" onPress={handleRetry} />}
+      {error && <Button label={uiText("Thử lại")} onPress={handleRetry} />}
       <View style={{ marginTop: 14 }}>
         <Button
-          label="Quay lại danh sách"
+          label={uiText("Quay lại danh sách")}
           variant="outline"
           onPress={() => (router.canGoBack() ? router.back() : router.replace("/teaching/courses"))}
         />

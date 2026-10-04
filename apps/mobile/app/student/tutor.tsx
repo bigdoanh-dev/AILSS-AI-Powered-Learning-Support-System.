@@ -1,3 +1,5 @@
+import { useLanguage } from "../../src/use-language";
+import { useUiText, interfaceMessage, type InterfaceMessage } from "../../src/use-language";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   AccessibilityInfo,
@@ -49,6 +51,8 @@ export default function TutorScreen() {
 }
 
 function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
+  const { locale: uiLocale, language } = useLanguage();
+  const uiText = useUiText();
   const params = useLocalSearchParams<{ courseId?: string }>();
   const [mode, setMode] = useState<TutorMode>(params.courseId ? "STUDY_BUDDY" : "STUDENT_ADVISOR");
   // Course snapshots are only needed in Study Buddy, not for catalog advice.
@@ -63,7 +67,7 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
   const [conversationId, setConversationId] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [nativeGlass, setNativeGlass] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<InterfaceMessage>("");
   const [showCourses, setShowCourses] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const glassTarget = useRef<View | null>(null);
@@ -182,6 +186,7 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
           conversationId,
           message,
           signal: abort.signal,
+          responseLanguage: language,
         });
         if (abort.signal.aborted || controller.current !== abort) return;
         setConversationId(reply.conversationId);
@@ -198,14 +203,18 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
           },
         ]);
         AccessibilityInfo.announceForAccessibility(
-          "Gia sư đã trả lời. Vuốt để nghe câu trả lời và nguồn trích dẫn.",
+          uiText("Gia sư đã trả lời. Vuốt để nghe câu trả lời và nguồn trích dẫn."),
         );
       } catch (reason) {
         if (controller.current === abort) {
           setDraft(message);
           pendingPrompt.current = "";
           const detail = reason instanceof ApiError ? reason.message : "Không thể kết nối với Gia sư AI.";
-          setError(`${detail} Vui lòng kiểm tra lại kết nối hoặc thử gửi lại câu hỏi.`);
+          setError(
+            interfaceMessage("{0} Vui lòng kiểm tra lại kết nối hoặc thử gửi lại câu hỏi.", [
+              interfaceMessage(detail),
+            ]),
+          );
         }
       } finally {
         if (controller.current === abort) {
@@ -215,11 +224,13 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
         }
       }
     },
-    [busy, conversationId, draft, mode, selectedCourseId, session],
+    [busy, conversationId, draft, mode, selectedCourseId, session, language, uiText],
   );
 
   const offline = auth.state === "OFFLINE_CACHE";
-  const prompts = mode === "STUDENT_ADVISOR" ? advisorPrompts : studyPrompts;
+  const prompts = (mode === "STUDENT_ADVISOR" ? advisorPrompts : studyPrompts).map((prompt) =>
+    uiText(prompt),
+  );
   return (
     <KeyboardAvoidingView style={chat.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <BlurTargetView
@@ -233,7 +244,7 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
       <View style={chat.topBar}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Về trang học tập"
+          accessibilityLabel={uiText("Về trang học tập")}
           onPress={() => router.replace("/")}
           style={chat.backButton}
         >
@@ -244,7 +255,7 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
             <Text style={chat.chatTabText}>Chat</Text>
           </View>
           <View accessibilityRole="tab" accessibilityState={{ disabled: true }} style={chat.voiceTab}>
-            <Text style={chat.voiceTabText}>Voice · sắp có</Text>
+            <Text style={chat.voiceTabText}>{uiText("Voice · sắp có")}</Text>
           </View>
         </View>
         <View style={chat.topSpacer} />
@@ -272,10 +283,14 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
           <TutorAvatar active={busy} size={64} />
           <View style={chat.panelTitleWrap}>
             <Text testID="student-tutor-panel" style={chat.panelTitle}>
-              Gia sư AILSS
+              {uiText("Gia sư AILSS")}
             </Text>
             <Text style={chat.panelSubtitle}>
-              {offline ? "Cần kết nối để trò chuyện" : busy ? "Đang tìm câu trả lời…" : "Sẵn sàng trò chuyện"}
+              {offline
+                ? uiText("Cần kết nối để trò chuyện")
+                : busy
+                  ? uiText("Đang tìm câu trả lời…")
+                  : uiText("Sẵn sàng trò chuyện")}
             </Text>
           </View>
         </View>
@@ -289,7 +304,7 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
             style={[chat.modeTab, mode === "STUDENT_ADVISOR" && chat.modeTabActive]}
           >
             <Text style={[chat.modeText, mode === "STUDENT_ADVISOR" && chat.modeTextActive]}>
-              Chọn khóa học
+              {uiText("Chọn khóa học")}
             </Text>
           </Pressable>
           <Pressable
@@ -299,7 +314,9 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
             onPress={() => chooseMode("STUDY_BUDDY")}
             style={[chat.modeTab, mode === "STUDY_BUDDY" && chat.modeTabActive]}
           >
-            <Text style={[chat.modeText, mode === "STUDY_BUDDY" && chat.modeTextActive]}>Hỏi bài học</Text>
+            <Text style={[chat.modeText, mode === "STUDY_BUDDY" && chat.modeTextActive]}>
+              {uiText("Hỏi bài học")}
+            </Text>
           </Pressable>
         </View>
 
@@ -309,7 +326,9 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
               <ActivityIndicator color={tokens.color.brand} />
             ) : data.error ? (
               <Pressable accessibilityRole="button" onPress={data.refresh} style={chat.courseNotice}>
-                <Text style={chat.courseNoticeText}>Không tải được khóa học. Chạm để thử lại.</Text>
+                <Text style={chat.courseNoticeText}>
+                  {uiText("Không tải được khóa học. Chạm để thử lại.")}
+                </Text>
               </Pressable>
             ) : data.courses.length === 0 ? (
               <Pressable
@@ -317,14 +336,16 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
                 onPress={() => router.push("/courses")}
                 style={chat.courseNotice}
               >
-                <Text style={chat.courseNoticeText}>Bạn chưa có khóa học đang học. Xem khóa học</Text>
+                <Text style={chat.courseNoticeText}>
+                  {uiText("Bạn chưa có khóa học đang học. Xem khóa học")}
+                </Text>
               </Pressable>
             ) : (
               <>
                 <Pressable
                   testID="student-tutor-course-selector"
                   accessibilityRole="button"
-                  accessibilityLabel="Chọn ngữ cảnh khóa học"
+                  accessibilityLabel={uiText("Chọn ngữ cảnh khóa học")}
                   accessibilityState={{ expanded: showCourses }}
                   onPress={() => setShowCourses((value) => !value)}
                   style={chat.courseButton}
@@ -383,8 +404,12 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
           <View style={chat.greeting}>
             <Text style={chat.greetingText}>
               {mode === "STUDENT_ADVISOR"
-                ? "Xin chào! Bạn muốn học điều gì? Mình sẽ hỏi thêm về mục tiêu và trình độ trước khi tìm khóa học phù hợp."
-                : "Bạn đang vướng ở phần nào? Mình có thể dùng tài liệu khóa học, năng lực và lộ trình của bạn để giải thích."}
+                ? uiText(
+                    "Xin chào! Bạn muốn học điều gì? Mình sẽ hỏi thêm về mục tiêu và trình độ trước khi tìm khóa học phù hợp.",
+                  )
+                : uiText(
+                    "Bạn đang vướng ở phần nào? Mình có thể dùng tài liệu khóa học, năng lực và lộ trình của bạn để giải thích.",
+                  )}
             </Text>
           </View>
           {messages.length === 0 && !offline && (
@@ -432,42 +457,43 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
                   style={chat.citation}
                 >
                   <Text style={chat.citationTitle}>
-                    Nguồn {String(index + 1)}: {citation.title}
+                    {uiText("Nguồn ")}
+                    {String(index + 1)}: {citation.title}
                   </Text>
                   {citation.snippet ? <Text style={chat.citationSnippet}>{citation.snippet}</Text> : null}
                   {citation.lessonId && citation.courseId ? (
                     <Pressable
                       testID={`student-tutor-citation-link-${index + 1}`}
                       accessibilityRole="link"
-                      accessibilityLabel={`Mở bài học ${citation.title}`}
+                      accessibilityLabel={uiText("Mở bài học {0}", [citation.title])}
                       onPress={() =>
                         router.push(`/learn/${citation.courseId}/lessons/${citation.lessonId}` as Href)
                       }
                       style={chat.citationLink}
                     >
-                      <Text style={chat.citationLinkText}>Mở bài học</Text>
+                      <Text style={chat.citationLinkText}>{uiText("Mở bài học")}</Text>
                     </Pressable>
                   ) : null}
                 </View>
               ))}
               {message.catalogCourses && message.catalogCourses.length > 0 ? (
                 <View style={chat.catalogMatches}>
-                  <Text style={chat.catalogCaption}>Khóa học đang có trong danh mục</Text>
+                  <Text style={chat.catalogCaption}>{uiText("Khóa học đang có trong danh mục")}</Text>
                   {message.catalogCourses.map((course) => (
                     <Pressable
                       key={course.courseId}
                       accessibilityRole="link"
-                      accessibilityLabel={`Xem khóa học ${course.title}`}
+                      accessibilityLabel={uiText("Xem khóa học {0}", [course.title])}
                       onPress={() => router.push(`/courses/${course.courseId}` as Href)}
                       style={chat.catalogCourse}
                     >
                       <Text style={chat.catalogTitle}>{course.title}</Text>
                       <Text style={chat.catalogPrice}>
                         {course.priceAmount === 0
-                          ? "Miễn phí"
-                          : `${course.priceAmount.toLocaleString("vi-VN")} ${course.priceCurrency}`}
+                          ? uiText("Miễn phí")
+                          : `${course.priceAmount.toLocaleString(uiLocale)} ${course.priceCurrency}`}
                       </Text>
-                      <Text style={chat.catalogOpen}>Xem khóa học ›</Text>
+                      <Text style={chat.catalogOpen}>{uiText("Xem khóa học ›")}</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -477,7 +503,7 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
           {busy && (
             <View style={chat.thinking}>
               <ActivityIndicator size="small" color={tokens.color.brand} />
-              <Text style={chat.thinkingText}>Gia sư đang suy nghĩ…</Text>
+              <Text style={chat.thinkingText}>{uiText("Gia sư đang suy nghĩ…")}</Text>
               <Pressable
                 accessibilityRole="button"
                 onPress={() =>
@@ -487,27 +513,29 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
                 }
                 style={chat.cancelButton}
               >
-                <Text style={chat.cancelText}>Dừng</Text>
+                <Text style={chat.cancelText}>{uiText("Dừng")}</Text>
               </Pressable>
             </View>
           )}
           {error ? (
             <View accessibilityRole="alert" style={chat.errorBox}>
-              <Text style={chat.errorText}>{error}</Text>
+              <Text style={chat.errorText}>{uiText(error)}</Text>
               {!offline && draft.trim() ? (
-                <Text style={chat.errorHint}>Câu hỏi vẫn ở ô nhập để bạn gửi lại.</Text>
+                <Text style={chat.errorHint}>{uiText("Câu hỏi vẫn ở ô nhập để bạn gửi lại.")}</Text>
               ) : null}
             </View>
           ) : null}
           {offline && (
             <View style={chat.errorBox}>
-              <Text style={chat.errorText}>Gia sư cần kết nối mạng để trả lời từ dữ liệu thật.</Text>
+              <Text style={chat.errorText}>
+                {uiText("Gia sư cần kết nối mạng để trả lời từ dữ liệu thật.")}
+              </Text>
               <Pressable
                 accessibilityRole="button"
                 onPress={() => void session.restore()}
                 style={chat.reconnect}
               >
-                <Text style={chat.reconnectText}>Kết nối lại</Text>
+                <Text style={chat.reconnectText}>{uiText("Kết nối lại")}</Text>
               </Pressable>
             </View>
           )}
@@ -516,9 +544,11 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
         <View style={chat.composer}>
           <TextInput
             testID="student-tutor-composer"
-            accessibilityLabel="Câu hỏi cho Gia sư AI"
+            accessibilityLabel={uiText("Câu hỏi cho Gia sư AI")}
             accessibilityHint={
-              mode === "STUDENT_ADVISOR" ? "Hỏi về lựa chọn khóa học" : "Hỏi về khóa học đã chọn"
+              mode === "STUDENT_ADVISOR"
+                ? uiText("Hỏi về lựa chọn khóa học")
+                : uiText("Hỏi về khóa học đã chọn")
             }
             multiline
             maxLength={4000}
@@ -528,14 +558,16 @@ function TutorChat({ session, auth }: { session: Session; auth: Snapshot }) {
             value={draft}
             onChangeText={setDraft}
             onSubmitEditing={() => void send()}
-            placeholder={mode === "STUDENT_ADVISOR" ? "Bạn muốn học gì?" : "Hỏi về bài học của bạn…"}
+            placeholder={
+              mode === "STUDENT_ADVISOR" ? uiText("Bạn muốn học gì?") : uiText("Hỏi về bài học của bạn…")
+            }
             placeholderTextColor="#89939F"
             style={chat.input}
           />
           <Pressable
             testID="student-tutor-send"
             accessibilityRole="button"
-            accessibilityLabel="Gửi câu hỏi"
+            accessibilityLabel={uiText("Gửi câu hỏi")}
             accessibilityState={{
               disabled: offline || busy || !draft.trim() || (mode === "STUDY_BUDDY" && !selectedCourseId),
             }}

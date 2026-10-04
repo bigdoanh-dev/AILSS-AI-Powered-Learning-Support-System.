@@ -1,12 +1,14 @@
+import { useUiText } from "../../../src/use-language";
 import { RoleAssistantChat } from "../../../src/RoleAssistantChat";
 
 export default function AdminAiScreen() {
+  const uiText = useUiText();
   return (
     <RoleAssistantChat
       role="ADMIN"
       mode="ADMIN_SUPPORT"
-      title="AI quản trị"
-      subtitle="Hỗ trợ quy trình, báo cáo và vận hành"
+      title={uiText("AI quản trị")}
+      subtitle={uiText("Hỗ trợ quy trình, báo cáo và vận hành")}
       back="/admin"
     />
   );

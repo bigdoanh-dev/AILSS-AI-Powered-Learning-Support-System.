@@ -1,3 +1,4 @@
+import { useUiText } from "./use-language";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
@@ -37,6 +38,7 @@ function Segment({
 }
 
 export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; studentCount?: number }) {
+  const uiText = useUiText();
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [width, setWidth] = useState(280);
@@ -49,12 +51,14 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
       <View style={s.caption}>
         <Text style={styles.small}>Thang 0–100</Text>
         <Text style={s.coverage}>
-          {observed}/{axes.length} nội dung đã đánh giá
+          {observed}/{axes.length} {uiText(" nội dung đã đánh giá")}
         </Text>
       </View>
       {!axes.length ? (
         <Text style={styles.text}>
-          Chưa có nội dung để vẽ biểu đồ. Kết quả sẽ xuất hiện khi khóa học có bài học hoặc bài kiểm tra.
+          {uiText(
+            "Chưa có nội dung để vẽ biểu đồ. Kết quả sẽ xuất hiện khi khóa học có bài học hoặc bài kiểm tra.",
+          )}
         </Text>
       ) : (
         <>
@@ -63,7 +67,9 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
               onLayout={(event) => setWidth(Math.min(320, event.nativeEvent.layout.width))}
               style={{ width: "100%", height: width, overflow: "hidden" }}
               accessibilityRole="image"
-              accessibilityLabel="Biểu đồ radar mức độ làm chủ; số thứ tự tương ứng danh sách nội dung bên dưới"
+              accessibilityLabel={uiText(
+                "Biểu đồ radar mức độ làm chủ; số thứ tự tương ứng danh sách nội dung bên dưới",
+              )}
             >
               <View
                 style={{
@@ -156,7 +162,7 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
             </View>
           ) : (
             <Text style={styles.small}>
-              Cần ít nhất 3 nội dung để vẽ radar. Kết quả hiện có vẫn hiển thị bên dưới.
+              {uiText("Cần ít nhất 3 nội dung để vẽ radar. Kết quả hiện có vẫn hiển thị bên dưới.")}
             </Text>
           )}
           {group.map((axis, index) => (
@@ -164,22 +170,26 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
               key={axis.id}
               accessibilityRole="button"
               accessibilityState={{ selected: selected === axis.id }}
-              accessibilityLabel={`${index + 1}. ${axis.label}: ${axis.score === null ? "Chưa đánh giá" : `${axis.score} phần trăm`}`}
+              accessibilityLabel={uiText("{0}. {1}: {2}", [
+                index + 1,
+                axis.label,
+                axis.score === null ? "Chưa đánh giá" : `${axis.score} phần trăm`,
+              ])}
               onPress={() => setSelected(axis.id)}
               style={[s.row, selected === axis.id && s.selected]}
             >
               <Text style={s.index}>{index + 1}</Text>
               <Text style={s.label}>{axis.label}</Text>
-              <Text style={s.score}>{axis.score === null ? "Chưa đánh giá" : `${axis.score}%`}</Text>
+              <Text style={s.score}>{axis.score === null ? uiText("Chưa đánh giá") : `${axis.score}%`}</Text>
             </Pressable>
           ))}
           <Text style={styles.small}>
-            ● {studentCount === undefined ? "Mức độ làm chủ" : "Mức độ làm chủ trung bình"} ○ Chưa có bằng
-            chứng đánh giá
+            ● {studentCount === undefined ? uiText("Mức độ làm chủ") : uiText("Mức độ làm chủ trung bình")}{" "}
+            {uiText(" ○ Chưa có bằng chứng đánh giá")}
           </Text>
           {!observed && (
             <Text style={styles.text}>
-              Chưa có kết quả đánh giá. Hoàn thành bài học và bài kiểm tra để cập nhật biểu đồ.
+              {uiText("Chưa có kết quả đánh giá. Hoàn thành bài học và bài kiểm tra để cập nhật biểu đồ.")}
             </Text>
           )}
           {detail && (
@@ -187,15 +197,23 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
               <Text style={s.heading}>{detail.label}</Text>
               <Text style={styles.text}>
                 {detail.score === null
-                  ? "Chưa có bằng chứng để xác định mức độ làm chủ."
-                  : `${studentCount === undefined ? "Mức độ làm chủ" : "Mức độ làm chủ trung bình"} ${detail.score}%${studentCount === undefined ? "" : ` · ${detail.assessedStudentCount ?? 0}/${studentCount} học viên đã đánh giá`} · ${detail.evidenceCount} bằng chứng học tập${detail.confidence === null ? "" : ` · Độ tin cậy ${Math.round(detail.confidence)}%`}.`}
+                  ? uiText("Chưa có bằng chứng để xác định mức độ làm chủ.")
+                  : uiText("{0} {1}%{2} · {3} bằng chứng học tập{4}.", [
+                      studentCount === undefined ? "Mức độ làm chủ" : "Mức độ làm chủ trung bình",
+                      detail.score,
+                      studentCount === undefined
+                        ? ""
+                        : ` · ${detail.assessedStudentCount ?? 0}/${studentCount} học viên đã đánh giá`,
+                      detail.evidenceCount,
+                      detail.confidence === null ? "" : ` · Độ tin cậy ${Math.round(detail.confidence)}%`,
+                    ])}
               </Text>
             </View>
           )}
           {groups.length > 1 && (
             <View style={s.pagination}>
               <Button
-                label="Nhóm trước"
+                label={uiText("Nhóm trước")}
                 disabled={page === 0}
                 onPress={() => {
                   setPage(page - 1);
@@ -206,7 +224,7 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
                 {Math.min(page, groups.length - 1) + 1}/{groups.length}
               </Text>
               <Button
-                label="Nhóm tiếp"
+                label={uiText("Nhóm tiếp")}
                 disabled={page >= groups.length - 1}
                 onPress={() => {
                   setPage(page + 1);

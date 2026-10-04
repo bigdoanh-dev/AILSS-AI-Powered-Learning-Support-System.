@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../../src/use-language";
+import { useUiText } from "../../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
@@ -15,6 +17,8 @@ import {
 import { Page, Button, Icon, styles, tokens } from "../../../../src/ui";
 
 export default function AdminOrderDetailScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -56,9 +60,9 @@ export default function AdminOrderDetailScreen() {
   if (snapshot.user?.role !== "ADMIN") {
     return (
       <Page>
-        <Text style={styles.title}>Chi tiết đơn hàng</Text>
-        <Text style={styles.error}>Chức năng này yêu cầu quyền Quản trị viên (ADMIN).</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.title}>{uiText("Chi tiết đơn hàng")}</Text>
+        <Text style={styles.error}>{uiText("Chức năng này yêu cầu quyền Quản trị viên (ADMIN).")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -94,19 +98,25 @@ export default function AdminOrderDetailScreen() {
   return (
     <Page>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Button label="← Tra cứu thương mại" onPress={() => router.back()} />
+        <Button label={uiText("← Tra cứu thương mại")} onPress={() => router.back()} />
 
         {loading ? (
           <ActivityIndicator size="large" color={tokens.color.brand} style={{ marginTop: 24 }} />
         ) : error && !order ? (
           <View style={{ marginTop: 16 }}>
-            <Text style={styles.error}>{error}</Text>
-            <Button label="Thử lại" onPress={() => void loadOrder()} />
+            <Text style={styles.error}>{uiText(error)}</Text>
+            <Button label={uiText("Thử lại")} onPress={() => void loadOrder()} />
           </View>
         ) : order ? (
           <View style={{ marginTop: tokens.space.medium }}>
-            <Text style={styles.title}>Đơn hàng {order.orderId.slice(0, 8)}...</Text>
-            <Text style={styles.small}>ID: {order.orderId}</Text>
+            <Text style={styles.title}>
+              {uiText("Đơn hàng ")}
+              {order.orderId.slice(0, 8)}...
+            </Text>
+            <Text style={styles.small}>
+              {uiText("ID:")}
+              {order.orderId}
+            </Text>
 
             {/* State Status Banner */}
             <View style={[od.stateBanner, getStateBadgeStyle(order.state)]}>
@@ -115,46 +125,46 @@ export default function AdminOrderDetailScreen() {
 
             {/* Facts Card */}
             <View style={od.card}>
-              <Text style={od.cardHeading}>Thông tin thanh toán & gói học</Text>
+              <Text style={od.cardHeading}>{uiText("Thông tin thanh toán & gói học")}</Text>
 
               <View style={od.factRow}>
-                <Text style={od.factLabel}>Số tiền:</Text>
-                <Text style={od.factVal}>{formatVND(order.price)}</Text>
+                <Text style={od.factLabel}>{uiText("Số tiền:")}</Text>
+                <Text style={od.factVal}>{formatVND(order.price, uiLocale)}</Text>
               </View>
 
               <View style={od.factRow}>
-                <Text style={od.factLabel}>Tiền tệ:</Text>
+                <Text style={od.factLabel}>{uiText("Tiền tệ:")}</Text>
                 <Text style={od.factVal}>{order.currency ?? "VND"}</Text>
               </View>
 
               <View style={od.factRow}>
-                <Text style={od.factLabel}>Hình thức học:</Text>
+                <Text style={od.factLabel}>{uiText("Hình thức học:")}</Text>
                 <Text style={od.factVal}>{order.offeringType ?? "SELF_PACED"}</Text>
               </View>
 
               <View style={od.factRow}>
-                <Text style={od.factLabel}>Trạng thái xử lý cấp quyền:</Text>
+                <Text style={od.factLabel}>{uiText("Trạng thái xử lý cấp quyền:")}</Text>
                 <Text style={od.factVal}>{order.fulfillmentState ?? "NOT_STARTED"}</Text>
               </View>
 
               {order.courseId ? (
                 <View style={od.factRow}>
-                  <Text style={od.factLabel}>Mã khóa học:</Text>
+                  <Text style={od.factLabel}>{uiText("Mã khóa học:")}</Text>
                   <Text style={od.factVal}>{order.courseId}</Text>
                 </View>
               ) : null}
 
               {order.offeringId ? (
                 <View style={od.factRow}>
-                  <Text style={od.factLabel}>Mã gói học (Offering):</Text>
+                  <Text style={od.factLabel}>{uiText("Mã gói học (Offering):")}</Text>
                   <Text style={od.factVal}>{order.offeringId}</Text>
                 </View>
               ) : null}
 
               {order.createdAt ? (
                 <View style={od.factRow}>
-                  <Text style={od.factLabel}>Thời điểm khởi tạo:</Text>
-                  <Text style={od.factVal}>{new Date(order.createdAt).toLocaleString("vi-VN")}</Text>
+                  <Text style={od.factLabel}>{uiText("Thời điểm khởi tạo:")}</Text>
+                  <Text style={od.factVal}>{new Date(order.createdAt).toLocaleString(uiLocale)}</Text>
                 </View>
               ) : null}
             </View>
@@ -162,10 +172,13 @@ export default function AdminOrderDetailScreen() {
             {/* Entitlement Status Explanation */}
             {isPaymentPendingEntitlement(order.state) && (
               <View style={od.pendingBox}>
-                <Text style={od.pendingTitle}>⏳ Đơn hàng đã nhận tiền, đang xử lý cấp quyền</Text>
+                <Text style={od.pendingTitle}>
+                  {uiText("⏳ Đơn hàng đã nhận tiền, đang xử lý cấp quyền")}
+                </Text>
                 <Text style={od.pendingText}>
-                  Tiền đã vào tài khoản hệ thống nhưng tiến trình cấp quyền bất đồng bộ đang xử lý trong nền.
-                  Học viên chưa thể vào học ngay cho đến khi trạng thái chuyển sang ENTITLED.
+                  {uiText(
+                    "Tiền đã vào tài khoản hệ thống nhưng tiến trình cấp quyền bất đồng bộ đang xử lý trong nền. Học viên chưa thể vào học ngay cho đến khi trạng thái chuyển sang ENTITLED.",
+                  )}
                 </Text>
               </View>
             )}
@@ -174,10 +187,12 @@ export default function AdminOrderDetailScreen() {
               <View style={od.entitledBox}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
                   <Icon name="check" size={16} color={tokens.color.success} />
-                  <Text style={od.entitledTitle}>Quyền học đã được xác nhận</Text>
+                  <Text style={od.entitledTitle}>{uiText("Quyền học đã được xác nhận")}</Text>
                 </View>
                 <Text style={od.entitledText}>
-                  Khóa học đã xuất hiện trong danh sách khóa học của học viên và có thể bắt đầu học ngay.
+                  {uiText(
+                    "Khóa học đã xuất hiện trong danh sách khóa học của học viên và có thể bắt đầu học ngay.",
+                  )}
                 </Text>
               </View>
             )}
@@ -186,13 +201,16 @@ export default function AdminOrderDetailScreen() {
             <View style={od.noticeBox}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
                 <Icon name="scale" size={16} color={tokens.color.ink} />
-                <Text style={od.noticeTitle}>Thao tác quản trị</Text>
+                <Text style={od.noticeTitle}>{uiText("Thao tác quản trị")}</Text>
               </View>
               <Text style={od.noticeText}>
                 • {CONTRACT_LIMITED.manualPaymentMutation}
-                {"\n"}• Để cập nhật trạng thái mới nhất từ dịch vụ xử lý nền, hãy nhấn nút Tải lại bên dưới.
+                {"\n"}
+                {uiText(
+                  "• Để cập nhật trạng thái mới nhất từ dịch vụ xử lý nền, hãy nhấn nút Tải lại bên dưới.",
+                )}
               </Text>
-              <Button label="Tải lại trạng thái đơn hàng" onPress={() => void loadOrder()} />
+              <Button label={uiText("Tải lại trạng thái đơn hàng")} onPress={() => void loadOrder()} />
             </View>
           </View>
         ) : null}

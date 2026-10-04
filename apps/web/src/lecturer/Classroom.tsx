@@ -1,3 +1,6 @@
+import { LocalizedFileInput } from "../components/LocalizedFileInput";
+import { useLanguage } from "../lib/i18n";
+import { useUiText, interfaceMessage, type InterfaceMessage } from "../lib/i18n";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { lecturerError, lecturerRequest, month, range, useLecturer } from "./api";
@@ -56,6 +59,7 @@ const arr = <T,>(v?: T[] | { classes?: T[]; sessions?: T[]; items?: T[] }) =>
   !v ? [] : Array.isArray(v) ? v : v.classes || v.sessions || v.items || [];
 
 export function Classes() {
+  const uiText = useUiText();
   const q = useLecturer<C[] | { classes: C[] }>("/me/owned-classes");
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<string>("ALL");
@@ -74,27 +78,29 @@ export function Classes() {
     <div className="teaching-classes-container">
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">GIẢNG VIÊN · QUẢN LÝ LỚP HỌC</p>
-          <h1>Danh Sách Lớp Học Phụ Trách</h1>
+          <p className="eyebrow">{uiText("GIẢNG VIÊN · QUẢN LÝ LỚP HỌC")}</p>
+          <h1>{uiText("Danh Sách Lớp Học Phụ Trách")}</h1>
           <p className="lead">
-            Quản lý các lớp học phần, theo dõi sĩ số sinh viên, tổ chức điểm danh buổi học và điều hành lớp.
+            {uiText(
+              "Quản lý các lớp học phần, theo dõi sĩ số sinh viên, tổ chức điểm danh buổi học và điều hành lớp.",
+            )}
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <button className="button" type="button" onClick={() => setShowCreateModal(true)}>
-            + Mở lớp học mới
+            {uiText("+ Mở lớp học mới")}
           </button>
         </div>
       </div>
 
       <div className="kpi-grid">
         <article className="kpi-card">
-          <h2>Lớp phụ trách</h2>
+          <h2>{uiText("Lớp phụ trách")}</h2>
           <p className="kpi-value">{q.pending || q.error ? "—" : classesList.length}</p>
         </article>
         <article className="kpi-card">
-          <h2>Điểm danh và lịch học</h2>
-          <p>Mở từng lớp để xem lịch và dữ liệu điểm danh thực tế.</p>
+          <h2>{uiText("Điểm danh và lịch học")}</h2>
+          <p>{uiText("Mở từng lớp để xem lịch và dữ liệu điểm danh thực tế.")}</p>
         </article>
       </div>
 
@@ -105,10 +111,10 @@ export function Classes() {
         </span>
         <input
           type="search"
-          placeholder="Tìm kiếm lớp học theo tên..."
+          placeholder={uiText("Tìm kiếm lớp học theo tên...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          aria-label="Tìm kiếm lớp học"
+          aria-label={uiText("Tìm kiếm lớp học")}
         />
         {search && (
           <button
@@ -117,20 +123,23 @@ export function Classes() {
             style={{ fontSize: 13, color: "var(--muted, #64748b)" }}
             onClick={() => setSearch("")}
           >
-            ✕ Xóa tìm kiếm
+            {uiText("✕ Xóa tìm kiếm")}
           </button>
         )}
       </div>
 
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--muted, #64748b)" }}>Loại lớp:</span>
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--muted, #64748b)" }}>
+          {uiText("Loại lớp:")}
+        </span>
         <button
           type="button"
           className={`catalog-filter-pill ${kindFilter === "ALL" ? "active" : ""}`}
           onClick={() => setKindFilter("ALL")}
           style={{ fontSize: 12, padding: "4px 12px" }}
         >
-          Tất cả loại lớp ({classesList.length})
+          {uiText("Tất cả loại lớp (")}
+          {classesList.length})
         </button>
         <button
           type="button"
@@ -138,7 +147,7 @@ export function Classes() {
           onClick={() => setKindFilter("LIVE_COHORT")}
           style={{ fontSize: 12, padding: "4px 12px" }}
         >
-          Lớp theo khóa (Live Cohort)
+          {uiText("Lớp theo khóa (Live Cohort)")}
         </button>
         <button
           type="button"
@@ -146,7 +155,7 @@ export function Classes() {
           onClick={() => setKindFilter("PRIVATE")}
           style={{ fontSize: 12, padding: "4px 12px" }}
         >
-          Lớp riêng (Private)
+          {uiText("Lớp riêng (Private)")}
         </button>
         <button
           type="button"
@@ -154,7 +163,7 @@ export function Classes() {
           onClick={() => setKindFilter("INSTITUTIONAL")}
           style={{ fontSize: 12, padding: "4px 12px" }}
         >
-          Lớp doanh nghiệp (Institutional)
+          {uiText("Lớp doanh nghiệp (Institutional)")}
         </button>
       </div>
 
@@ -167,8 +176,10 @@ export function Classes() {
                 <span className="empty-hub-icon" aria-hidden="true">
                   🏫
                 </span>
-                <h3>Không tìm thấy lớp học phù hợp</h3>
-                <p>Thử điều chỉnh bộ lọc tìm kiếm hoặc tạo lớp học phần mới để bắt đầu quản lý.</p>
+                <h3>{uiText("Không tìm thấy lớp học phù hợp")}</h3>
+                <p>
+                  {uiText("Thử điều chỉnh bộ lọc tìm kiếm hoặc tạo lớp học phần mới để bắt đầu quản lý.")}
+                </p>
                 <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
                   <button
                     type="button"
@@ -178,10 +189,10 @@ export function Classes() {
                       setSearch("");
                     }}
                   >
-                    Xóa bộ lọc
+                    {uiText("Xóa bộ lọc")}
                   </button>
                   <button className="button" type="button" onClick={() => setShowCreateModal(true)}>
-                    + Mở lớp học mới
+                    {uiText("+ Mở lớp học mới")}
                   </button>
                 </div>
               </div>
@@ -194,7 +205,7 @@ export function Classes() {
                   {x.coverDataUrl && (
                     <img
                       src={x.coverDataUrl}
-                      alt="Ảnh bìa lớp"
+                      alt={uiText("Ảnh bìa lớp")}
                       style={{
                         width: "100%",
                         height: 130,
@@ -213,12 +224,13 @@ export function Classes() {
                     </div>
                     <h2>{x.name}</h2>
                     <p className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>
-                      Tối đa {x.maxMembers} học viên ·{" "}
+                      {uiText("Tối đa ")}
+                      {x.maxMembers} {uiText(" học viên ·")}{" "}
                       {x.classKind === "LIVE_COHORT"
-                        ? "Lớp theo khóa"
+                        ? uiText("Lớp theo khóa")
                         : x.classKind === "PRIVATE"
-                          ? "Lớp riêng"
-                          : "Lớp doanh nghiệp"}
+                          ? uiText("Lớp riêng")
+                          : uiText("Lớp doanh nghiệp")}
                     </p>
                   </div>
                   <div
@@ -243,14 +255,14 @@ export function Classes() {
                         boxSizing: "border-box",
                       }}
                     >
-                      <span>Điều hành lớp</span>
+                      <span>{uiText("Điều hành lớp")}</span>
                       <Icon name="chevronRight" size={14} />
                     </Link>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                       <Link
                         className="button button-subtle button-small"
                         to={`/app/teaching/classes/${x.classId}/roster`}
-                        title="Danh sách sinh viên và sĩ số"
+                        title={uiText("Danh sách sinh viên và sĩ số")}
                         style={{
                           textAlign: "center",
                           justifyContent: "center",
@@ -265,12 +277,12 @@ export function Classes() {
                         }}
                       >
                         <Icon name="users" size={13} />
-                        <span>Sĩ số</span>
+                        <span>{uiText("Sĩ số")}</span>
                       </Link>
                       <Link
                         className="button button-subtle button-small"
                         to={`/app/teaching/classes/${x.classId}/schedule`}
-                        title="Thời khóa biểu và lịch học"
+                        title={uiText("Thời khóa biểu và lịch học")}
                         style={{
                           textAlign: "center",
                           justifyContent: "center",
@@ -285,7 +297,7 @@ export function Classes() {
                         }}
                       >
                         <Icon name="calendar" size={13} />
-                        <span>Lịch học</span>
+                        <span>{uiText("Lịch học")}</span>
                       </Link>
                     </div>
                   </div>
@@ -315,8 +327,9 @@ export function ClassCreateModal({
   onClose: () => void;
   onCreated?: (data: C & { joinCode?: string }) => void;
 }) {
+  const uiText = useUiText();
   const nav = useNavigate();
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] = useState<InterfaceMessage>("");
   const [busy, setBusy] = useState(false);
 
   if (!isOpen) return null;
@@ -360,16 +373,21 @@ export function ClassCreateModal({
         <div className="admin-modal-header">
           <div>
             <p className="eyebrow" style={{ margin: 0, color: "var(--blue, #0284c7)" }}>
-              LỚP HỌC · THIẾT LẬP MỚI
+              {uiText("LỚP HỌC · THIẾT LẬP MỚI")}
             </p>
             <h2 id="class-create-modal-title" style={{ margin: "4px 0 0" }}>
-              Tạo Lớp Học Mới
+              {uiText("Tạo Lớp Học Mới")}
             </h2>
             <p className="subtext" style={{ margin: "4px 0 0" }}>
-              Thiết lập lớp học phần, loại hình đào tạo và sĩ số tối đa.
+              {uiText("Thiết lập lớp học phần, loại hình đào tạo và sĩ số tối đa.")}
             </p>
           </div>
-          <button type="button" className="admin-modal-close-btn" onClick={onClose} aria-label="Đóng">
+          <button
+            type="button"
+            className="admin-modal-close-btn"
+            onClick={onClose}
+            aria-label={uiText("Đóng")}
+          >
             ✕
           </button>
         </div>
@@ -386,31 +404,33 @@ export function ClassCreateModal({
             }}
           >
             <span>✕</span>
-            <span>{msg}</span>
+            <span>{uiText(msg)}</span>
           </div>
         )}
 
         <form className="form-panel form-grid" onSubmit={(e) => void create(e)}>
           <Field
-            label="Tên lớp"
+            label={uiText("Tên lớp")}
             name="name"
-            placeholder="Ví dụ: Cơ sở dữ liệu Nâng cao - Nhóm 01 (Khai giảng T9)"
+            placeholder={uiText("Ví dụ: Cơ sở dữ liệu Nâng cao - Nhóm 01 (Khai giảng T9)")}
             required
           />
           <label>
-            Loại hình đào tạo
+            {uiText("Loại hình đào tạo")}
             <select name="classKind" defaultValue="INSTITUTIONAL">
-              <option value="INSTITUTIONAL">Lớp trường học / tổ chức (tham gia bằng mã)</option>
-              <option value="LIVE_COHORT">Lớp theo khóa / thanh toán</option>
-              <option value="PRIVATE">Lớp riêng</option>
+              <option value="INSTITUTIONAL">{uiText("Lớp trường học / tổ chức (tham gia bằng mã)")}</option>
+              <option value="LIVE_COHORT">{uiText("Lớp theo khóa / thanh toán")}</option>
+              <option value="PRIVATE">{uiText("Lớp riêng")}</option>
             </select>
           </label>
-          <CatalogCourseSelect name="linkedCourseId" label="Liên kết khóa học" />
+          <CatalogCourseSelect name="linkedCourseId" label={uiText("Liên kết khóa học")} />
           <p className="subtext" style={{ marginTop: -8, marginBottom: 8 }}>
-            Tùy chọn. Có thể tạo lớp độc lập với khóa học; nếu liên kết, chọn khóa học đã xuất bản.
+            {uiText(
+              "Tùy chọn. Có thể tạo lớp độc lập với khóa học; nếu liên kết, chọn khóa học đã xuất bản.",
+            )}
           </p>
           <Field
-            label="Số học viên tối đa"
+            label={uiText("Số học viên tối đa")}
             name="maxMembers"
             type="number"
             defaultValue={100}
@@ -427,10 +447,10 @@ export function ClassCreateModal({
             }}
           >
             <button type="button" className="button button-subtle" onClick={onClose} disabled={busy}>
-              Hủy &amp; Quay lại
+              {uiText("Hủy & Quay lại")}
             </button>
             <button className="button" disabled={busy}>
-              {busy ? "Đang tạo lớp…" : "+ Tạo lớp học"}
+              {busy ? uiText("Đang tạo lớp…") : uiText("+ Tạo lớp học")}
             </button>
           </div>
         </form>
@@ -440,8 +460,9 @@ export function ClassCreateModal({
 }
 
 export function ClassCreate() {
+  const uiText = useUiText();
   const nav = useNavigate();
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] = useState<InterfaceMessage>("");
   const [busy, setBusy] = useState(false);
 
   async function create(e: FormEvent<HTMLFormElement>) {
@@ -473,17 +494,19 @@ export function ClassCreate() {
     <div style={{ maxWidth: 720, margin: "0 auto", paddingBottom: 40 }}>
       <Breadcrumbs
         items={[
-          { label: "Giảng dạy", to: "/app/teaching" },
-          { label: "Lớp học", to: "/app/teaching/classes" },
-          { label: "Tạo lớp học mới" },
+          { label: uiText("Giảng dạy"), to: "/app/teaching" },
+          { label: uiText("Lớp học"), to: "/app/teaching/classes" },
+          { label: uiText("Tạo lớp học mới") },
         ]}
       />
       <p className="eyebrow" style={{ marginTop: 12 }}>
-        LỚP HỌC · THIẾT LẬP MỚI
+        {uiText("LỚP HỌC · THIẾT LẬP MỚI")}
       </p>
-      <h1>Tạo lớp học mới.</h1>
+      <h1>{uiText("Tạo lớp học mới.")}</h1>
       <p className="lead">
-        Thiết lập thông tin lớp học phần, loại hình đào tạo và sĩ số tối đa cho sinh viên tham gia.
+        {uiText(
+          "Thiết lập thông tin lớp học phần, loại hình đào tạo và sĩ số tối đa cho sinh viên tham gia.",
+        )}
       </p>
 
       {msg && (
@@ -498,32 +521,32 @@ export function ClassCreate() {
           }}
         >
           <span>✕</span>
-          <span>{msg}</span>
+          <span>{uiText(msg)}</span>
         </div>
       )}
 
       <form className="form-panel form-grid" onSubmit={(e) => void create(e)}>
-        <h2>Thông tin lớp học</h2>
+        <h2>{uiText("Thông tin lớp học")}</h2>
         <Field
-          label="Tên lớp"
+          label={uiText("Tên lớp")}
           name="name"
-          placeholder="Ví dụ: Cơ sở dữ liệu Nâng cao - Nhóm 01 (Khai giảng T9)"
+          placeholder={uiText("Ví dụ: Cơ sở dữ liệu Nâng cao - Nhóm 01 (Khai giảng T9)")}
           required
         />
         <label>
-          Loại
+          {uiText("Loại")}
           <select name="classKind">
-            <option value="INSTITUTIONAL">Lớp trường học / tổ chức (tham gia bằng mã)</option>
-            <option value="LIVE_COHORT">Lớp theo khóa / thanh toán</option>
-            <option value="PRIVATE">Lớp riêng</option>
+            <option value="INSTITUTIONAL">{uiText("Lớp trường học / tổ chức (tham gia bằng mã)")}</option>
+            <option value="LIVE_COHORT">{uiText("Lớp theo khóa / thanh toán")}</option>
+            <option value="PRIVATE">{uiText("Lớp riêng")}</option>
           </select>
         </label>
-        <CatalogCourseSelect name="linkedCourseId" label="Liên kết khóa học" />
+        <CatalogCourseSelect name="linkedCourseId" label={uiText("Liên kết khóa học")} />
         <p className="subtext" style={{ marginTop: -8, marginBottom: 8 }}>
-          Tùy chọn. Có thể tạo lớp độc lập với khóa học; nếu liên kết, chọn khóa học đã xuất bản.
+          {uiText("Tùy chọn. Có thể tạo lớp độc lập với khóa học; nếu liên kết, chọn khóa học đã xuất bản.")}
         </p>
         <Field
-          label="Số học viên tối đa"
+          label={uiText("Số học viên tối đa")}
           name="maxMembers"
           type="number"
           defaultValue={100}
@@ -532,10 +555,10 @@ export function ClassCreate() {
         />
         <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 12 }}>
           <button className="button" disabled={busy}>
-            {busy ? "Đang tạo lớp…" : "Tạo lớp"}
+            {busy ? uiText("Đang tạo lớp…") : uiText("Tạo lớp")}
           </button>
           <Link className="button button-subtle" to="/app/teaching/classes">
-            Hủy &amp; Quay lại
+            {uiText("Hủy & Quay lại")}
           </Link>
         </div>
       </form>
@@ -543,18 +566,19 @@ export function ClassCreate() {
   );
 }
 export function ClassDetail() {
+  const uiText = useUiText();
   const location = useLocation();
   const navigate = useNavigate();
   const { classId = "" } = useParams(),
     q = useLecturer<C>(`/classes/${classId}`),
-    [msg, setMsg] = useState(""),
+    [msg, setMsg] = useState<InterfaceMessage>(""),
     [imageBusy, setImageBusy] = useState(false),
     [joinCode, setJoinCode] = useState(
       () => (location.state as { joinCode?: string } | null)?.joinCode ?? "",
     );
   async function reset() {
     try {
-      if (!window.confirm("Đổi mã tham gia sẽ làm mã cũ mất hiệu lực. Tiếp tục?")) return;
+      if (!window.confirm(uiText("Đổi mã tham gia sẽ làm mã cũ mất hiệu lực. Tiếp tục?"))) return;
       const r = await lecturerRequest<{ joinCode: string }>(
         `/classes/${classId}/join-code/reset`,
         "POST",
@@ -609,7 +633,7 @@ export function ClassDetail() {
   async function deleteClass() {
     if (
       !window.confirm(
-        "Xóa lớp này? Chỉ lớp nháp chưa có học viên, buổi học hoặc khóa học liên kết mới có thể xóa.",
+        uiText("Xóa lớp này? Chỉ lớp nháp chưa có học viên, buổi học hoặc khóa học liên kết mới có thể xóa."),
       )
     )
       return;
@@ -630,8 +654,8 @@ export function ClassDetail() {
             </p>
             <Breadcrumbs
               items={[
-                { label: "Giảng dạy", to: "/app/teaching" },
-                { label: "Lớp học", to: "/app/teaching/classes" },
+                { label: uiText("Giảng dạy"), to: "/app/teaching" },
+                { label: uiText("Lớp học"), to: "/app/teaching/classes" },
                 { label: x.name },
               ]}
             />
@@ -639,24 +663,25 @@ export function ClassDetail() {
             {x.coverDataUrl && (
               <img
                 src={x.coverDataUrl}
-                alt="Ảnh bìa lớp"
+                alt={uiText("Ảnh bìa lớp")}
                 style={{ width: "100%", maxHeight: 240, objectFit: "cover", borderRadius: 16 }}
               />
             )}
             {x.photoDataUrl && (
               <img
                 src={x.photoDataUrl}
-                alt="Ảnh lớp"
+                alt={uiText("Ảnh lớp")}
                 style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 16, marginTop: 12 }}
               />
             )}
             <p>
-              {x.classKind} · tối đa {x.maxMembers} học viên
+              {x.classKind} {uiText(" · tối đa ")}
+              {x.maxMembers} {uiText(" học viên")}
             </p>
             <div className="form-panel" style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
               <label>
-                Ảnh lớp{" "}
-                <input
+                {uiText("Ảnh lớp")}{" "}
+                <LocalizedFileInput
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
                   disabled={imageBusy}
@@ -664,15 +689,15 @@ export function ClassDetail() {
                 />
               </label>
               <label>
-                Ảnh bìa{" "}
-                <input
+                {uiText("Ảnh bìa")}{" "}
+                <LocalizedFileInput
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
                   disabled={imageBusy}
                   onChange={(e) => void uploadImage("coverDataUrl", e.currentTarget.files?.[0])}
                 />
               </label>
-              <span className="subtext">Ảnh được tự thu nhỏ trước khi lưu.</span>
+              <span className="subtext">{uiText("Ảnh được tự thu nhỏ trước khi lưu.")}</span>
             </div>
             <form
               className="form-panel form-grid"
@@ -691,18 +716,18 @@ export function ClassDetail() {
                 }
               }}
             >
-              <Field label="Tên lớp" name="name" defaultValue={x.name} required />
+              <Field label={uiText("Tên lớp")} name="name" defaultValue={x.name} required />
               <Field
-                label="Số học viên tối đa"
+                label={uiText("Số học viên tối đa")}
                 name="maxMembers"
                 type="number"
                 defaultValue={x.maxMembers}
                 required
               />
-              <button className="button">Lưu lớp</button>
+              <button className="button">{uiText("Lưu lớp")}</button>
             </form>
             <button type="button" className="button button-subtle" onClick={() => void deleteClass()}>
-              Xóa lớp
+              {uiText("Xóa lớp")}
             </button>
             {/* Quick Management Hub */}
             <div className="workspace-quick-actions" style={{ margin: "1.5rem 0" }}>
@@ -710,36 +735,36 @@ export function ClassDetail() {
                 <span className="chip-icon">
                   <Icon name="users" size={16} />
                 </span>
-                <span>Danh sách lớp & Học viên</span>
+                <span>{uiText("Danh sách lớp & Học viên")}</span>
               </Link>
               <Link className="quick-action-chip" to={`/app/teaching/classes/${classId}/schedule`}>
                 <span className="chip-icon">
                   <Icon name="calendar" size={16} />
                 </span>
-                <span>Lịch dạy & Điểm danh</span>
+                <span>{uiText("Lịch dạy & Điểm danh")}</span>
               </Link>
               <Link className="quick-action-chip" to={`/app/teaching/classes/${classId}/announcements`}>
                 <span className="chip-icon">
                   <Icon name="bell" size={16} />
                 </span>
-                <span>Thông báo lớp</span>
+                <span>{uiText("Thông báo lớp")}</span>
               </Link>
               <Link className="quick-action-chip" to={`/app/teaching/discussion/CLASS/${classId}`}>
                 <span className="chip-icon">
                   <Icon name="message" size={16} />
                 </span>
-                <span>Thảo luận lớp</span>
+                <span>{uiText("Thảo luận lớp")}</span>
               </Link>
               <button type="button" className="quick-action-chip" onClick={() => void reset()}>
                 <span className="chip-icon">
                   <Icon name="refresh" size={16} />
                 </span>
-                <span>Đổi mã tham gia</span>
+                <span>{uiText("Đổi mã tham gia")}</span>
               </button>
             </div>
             {joinCode && (
               <section className="form-panel" aria-live="polite">
-                <h2>Mã tham gia mới</h2>
+                <h2>{uiText("Mã tham gia mới")}</h2>
                 <p>
                   <code>{joinCode}</code>
                 </p>
@@ -750,24 +775,28 @@ export function ClassDetail() {
                     setMsg("Đã sao chép mã tham gia.");
                   }}
                 >
-                  Sao chép mã
+                  {uiText("Sao chép mã")}
                 </button>
-                <p>Chỉ chia sẻ mã này với người cần tham gia lớp. Trang công khai không chứa mã.</p>
+                <p>
+                  {uiText("Chỉ chia sẻ mã này với người cần tham gia lớp. Trang công khai không chứa mã.")}
+                </p>
               </section>
             )}
           </>
         )}
       </State>
-      <p role="status">{msg}</p>
+      <p role="status">{uiText(msg)}</p>
     </>
   );
 }
 export function ClassRoster() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { classId = "" } = useParams(),
     q = useLecturer<Member[] | { members: Member[] }>(`/classes/${classId}/members`),
     detail = useLecturer<C>(`/classes/${classId}`),
     [search, setSearch] = useState(""),
-    [message, setMessage] = useState(""),
+    [message, setMessage] = useState<InterfaceMessage>(""),
     [busyId, setBusyId] = useState(""),
     [warningStudentId, setWarningStudentId] = useState(""),
     [warningReason, setWarningReason] = useState("");
@@ -781,7 +810,7 @@ export function ClassRoster() {
       await lecturerRequest(`/classes/${classId}/members/${member.studentId}/warnings`, "POST", {
         reason: warningReason.trim(),
       });
-      setMessage(`Đã gửi cảnh báo đến ${member.displayName}.`);
+      setMessage(interfaceMessage("Đã gửi cảnh báo đến {0}.", [member.displayName]));
       setWarningStudentId("");
       setWarningReason("");
     } catch (error) {
@@ -791,11 +820,14 @@ export function ClassRoster() {
     }
   }
   async function remove(member: Member) {
-    if (!window.confirm(`Xóa ${member.displayName} khỏi lớp? Học viên sẽ mất quyền truy cập lớp.`)) return;
+    if (
+      !window.confirm(uiText("Xóa {0} khỏi lớp? Học viên sẽ mất quyền truy cập lớp.", [member.displayName]))
+    )
+      return;
     setBusyId(member.studentId);
     try {
       await lecturerRequest(`/classes/${classId}/members/${member.studentId}`, "DELETE", {});
-      setMessage(`Đã xóa ${member.displayName} khỏi lớp.`);
+      setMessage(interfaceMessage("Đã xóa {0} khỏi lớp.", [member.displayName]));
       q.retry();
     } catch (error) {
       setMessage(lecturerError(error));
@@ -807,24 +839,28 @@ export function ClassRoster() {
     <>
       <Breadcrumbs
         items={[
-          { label: "Giảng dạy", to: "/app/teaching" },
-          { label: "Lớp học", to: "/app/teaching/classes" },
-          { label: "Chi tiết lớp", to: `/app/teaching/classes/${classId}` },
-          { label: "Danh sách lớp" },
+          { label: uiText("Giảng dạy"), to: "/app/teaching" },
+          { label: uiText("Lớp học"), to: "/app/teaching/classes" },
+          { label: uiText("Chi tiết lớp"), to: `/app/teaching/classes/${classId}` },
+          { label: uiText("Danh sách lớp") },
         ]}
       />
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">QUẢN TRỊ THÀNH VIÊN</p>
-          <h1>Danh sách học viên trong lớp.</h1>
-          <p className="lead">Theo dõi hồ sơ học viên, ngày đăng ký tài khoản và thời điểm tham gia lớp.</p>
+          <p className="eyebrow">{uiText("QUẢN TRỊ THÀNH VIÊN")}</p>
+          <h1>{uiText("Danh sách học viên trong lớp.")}</h1>
+          <p className="lead">
+            {uiText("Theo dõi hồ sơ học viên, ngày đăng ký tài khoản và thời điểm tham gia lớp.")}
+          </p>
         </div>
         <Link className="button button-subtle" to={`/app/teaching/classes/${classId}`}>
-          ← Quay lại lớp
+          {uiText("← Quay lại lớp")}
         </Link>
       </div>
-      <p role="status">{message}</p>
-      <p className="subtext">Màu xanh: tài khoản đăng ký trong 21 ngày. Màu trung tính: học viên cũ.</p>
+      <p role="status">{uiText(message)}</p>
+      <p className="subtext">
+        {uiText("Màu xanh: tài khoản đăng ký trong 21 ngày. Màu trung tính: học viên cũ.")}
+      </p>
 
       <State q={q}>
         {(v) => {
@@ -841,23 +877,30 @@ export function ClassRoster() {
             <section className="dashboard-section-card">
               <div className="section-card-header">
                 <div>
-                  <h2>Học Viên Đã Ghi Danh ({rawItems.length})</h2>
-                  <p className="subtext">Sĩ số chính thức của lớp do phân hệ Classroom quản lý.</p>
+                  <h2>
+                    {uiText("Học Viên Đã Ghi Danh (")}
+                    {rawItems.length})
+                  </h2>
+                  <p className="subtext">
+                    {uiText("Sĩ số chính thức của lớp do phân hệ Classroom quản lý.")}
+                  </p>
                 </div>
                 <div className="table-search-box">
                   <input
                     type="search"
-                    placeholder="Tìm theo tên, email, mã học viên..."
+                    placeholder={uiText("Tìm theo tên, email, mã học viên...")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    aria-label="Tìm kiếm học viên"
+                    aria-label={uiText("Tìm kiếm học viên")}
                   />
                 </div>
               </div>
 
               {rawItems.length === 0 ? (
-                <EmptyState title="Chưa có thành viên">
-                  Danh sách do Classroom quản lý; học viên tham gia bằng mã lớp hoặc qua đợt tuyển sinh.
+                <EmptyState title={uiText("Chưa có thành viên")}>
+                  {uiText(
+                    "Danh sách do Classroom quản lý; học viên tham gia bằng mã lớp hoặc qua đợt tuyển sinh.",
+                  )}
                 </EmptyState>
               ) : (
                 <div className="table-responsive">
@@ -865,12 +908,12 @@ export function ClassRoster() {
                     <thead>
                       <tr>
                         <th>STT</th>
-                        <th>Học viên</th>
-                        <th>Ngày đăng ký</th>
-                        <th>Nguồn Tham Gia</th>
-                        <th>Ngày Tham Gia</th>
-                        <th>Trạng Thái</th>
-                        <th>Quản lý</th>
+                        <th>{uiText("Học viên")}</th>
+                        <th>{uiText("Ngày đăng ký")}</th>
+                        <th>{uiText("Nguồn Tham Gia")}</th>
+                        <th>{uiText("Ngày Tham Gia")}</th>
+                        <th>{uiText("Trạng Thái")}</th>
+                        <th>{uiText("Quản lý")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -883,26 +926,26 @@ export function ClassRoster() {
                           <td>
                             <strong>{m.displayName}</strong>{" "}
                             <span style={{ color: isNewStudent(m.createdAt) ? "#047857" : "#475569" }}>
-                              {isNewStudent(m.createdAt) ? "Mới" : "Cũ"}
+                              {isNewStudent(m.createdAt) ? uiText("Mới") : uiText("Cũ")}
                             </span>
                             <br />
                             <small>{m.emailMasked}</small>
                             <br />
                             <code className="code-badge">{m.studentId}</code>
                           </td>
-                          <td>{new Date(m.createdAt).toLocaleDateString("vi-VN")}</td>
+                          <td>{new Date(m.createdAt).toLocaleDateString(uiLocale)}</td>
                           <td>
                             <strong>
                               {m.source === "OFFERING"
-                                ? "Đợt tuyển sinh"
+                                ? uiText("Đợt tuyển sinh")
                                 : m.source === "JOIN_CODE"
-                                  ? "Mã mời lớp"
+                                  ? uiText("Mã mời lớp")
                                   : m.source}
                             </strong>
                           </td>
                           <td>
                             <span className="time-sub">
-                              {new Date(m.joinedAt).toLocaleDateString("vi-VN")}
+                              {new Date(m.joinedAt).toLocaleDateString(uiLocale)}
                             </span>
                           </td>
                           <td>
@@ -917,12 +960,13 @@ export function ClassRoster() {
                                 setWarningReason("");
                               }}
                             >
-                              Cảnh báo
+                              {uiText("Cảnh báo")}
                             </button>{" "}
                             {warningStudentId === m.studentId && (
                               <div style={{ display: "grid", gap: 6, minWidth: 220, margin: "8px 0" }}>
                                 <label>
-                                  Nội dung gửi cho {m.displayName}
+                                  {uiText("Nội dung gửi cho ")}
+                                  {m.displayName}
                                   <textarea
                                     value={warningReason}
                                     onChange={(event) => setWarningReason(event.target.value)}
@@ -932,10 +976,10 @@ export function ClassRoster() {
                                   />
                                 </label>
                                 <button type="button" disabled={!!busyId} onClick={() => void warn(m)}>
-                                  Gửi cảnh báo
+                                  {uiText("Gửi cảnh báo")}
                                 </button>
                                 <button type="button" onClick={() => setWarningStudentId("")}>
-                                  Hủy
+                                  {uiText("Hủy")}
                                 </button>
                               </div>
                             )}
@@ -946,10 +990,10 @@ export function ClassRoster() {
                                 detail.data?.scheduleState === "PUBLISHED" ||
                                 m.source !== "JOIN_CODE"
                               }
-                              title="Chỉ xóa học viên tham gia bằng mã khi lịch lớp chưa xuất bản"
+                              title={uiText("Chỉ xóa học viên tham gia bằng mã khi lịch lớp chưa xuất bản")}
                               onClick={() => void remove(m)}
                             >
-                              Xóa khỏi lớp
+                              {uiText("Xóa khỏi lớp")}
                             </button>
                           </td>
                         </tr>
@@ -957,7 +1001,8 @@ export function ClassRoster() {
                       {items.length === 0 && (
                         <tr>
                           <td colSpan={7} className="table-empty-row">
-                            Không tìm thấy học viên nào khớp với "{search}".
+                            {uiText('Không tìm thấy học viên nào khớp với "')}
+                            {search}".
                           </td>
                         </tr>
                       )}
@@ -973,12 +1018,14 @@ export function ClassRoster() {
   );
 }
 export function Announcements() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { classId = "" } = useParams(),
     q = useLecturer<Notice[]>(`/classes/${classId}/announcements?month=${month()}-01`),
-    [msg, setMsg] = useState("");
+    [msg, setMsg] = useState<InterfaceMessage>("");
   return (
     <>
-      <h1>Thông báo lớp.</h1>
+      <h1>{uiText("Thông báo lớp.")}</h1>
       <State q={q}>
         {(v) =>
           v.length ? (
@@ -987,12 +1034,14 @@ export function Announcements() {
                 <article key={n.announcementId}>
                   <h2>{n.title}</h2>
                   <p>{n.body}</p>
-                  <time dateTime={n.createdAt}>{new Date(n.createdAt).toLocaleString("vi-VN")}</time>
+                  <time dateTime={n.createdAt}>{new Date(n.createdAt).toLocaleString(uiLocale)}</time>
                 </article>
               ))}
             </div>
           ) : (
-            <EmptyState title="Chưa có thông báo">Thông báo mới sẽ xuất hiện tại đây.</EmptyState>
+            <EmptyState title={uiText("Chưa có thông báo")}>
+              {uiText("Thông báo mới sẽ xuất hiện tại đây.")}
+            </EmptyState>
           )
         }
       </State>
@@ -1013,21 +1062,22 @@ export function Announcements() {
           }
         }}
       >
-        <Field label="Tiêu đề" name="title" required />
+        <Field label={uiText("Tiêu đề")} name="title" required />
         <label>
-          Nội dung
+          {uiText("Nội dung")}
           <textarea name="body" required rows={5} />
         </label>
-        <button className="button">Đăng thông báo</button>
-        <p role="status">{msg}</p>
+        <button className="button">{uiText("Đăng thông báo")}</button>
+        <p role="status">{uiText(msg)}</p>
       </form>
     </>
   );
 }
 export function Schedule() {
+  const uiText = useUiText();
   const { classId = "" } = useParams(),
     q = useLecturer<S[] | { sessions: S[] }>(`/classes/${classId}/sessions?${range()}`),
-    [msg, setMsg] = useState("");
+    [msg, setMsg] = useState<InterfaceMessage>("");
   async function create(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget),
@@ -1051,7 +1101,7 @@ export function Schedule() {
   return (
     <>
       <p className="eyebrow">SCHEDULE</p>
-      <h1>Lịch dạy.</h1>
+      <h1>{uiText("Lịch dạy.")}</h1>
       <State q={q}>
         {(v) => (
           <div className="workspace-cards">
@@ -1062,27 +1112,27 @@ export function Schedule() {
                 <p>
                   <ScheduleTime start={x.startAt} end={x.endAt} timezone={x.timezone || "Asia/Ho_Chi_Minh"} />
                 </p>
-                <Link to={`/app/teaching/sessions/${x.sessionId}`}>Mở session →</Link>
+                <Link to={`/app/teaching/sessions/${x.sessionId}`}>{uiText("Mở session →")}</Link>
               </article>
             ))}
           </div>
         )}
       </State>
       <form className="form-panel form-grid" onSubmit={(e) => void create(e)}>
-        <h2>Thêm session</h2>
-        <Field label="Tiêu đề" name="title" required />
-        <Field label="Bắt đầu" name="startAt" type="datetime-local" required />
-        <Field label="Kết thúc" name="endAt" type="datetime-local" required />
+        <h2>{uiText("Thêm session")}</h2>
+        <Field label={uiText("Tiêu đề")} name="title" required />
+        <Field label={uiText("Bắt đầu")} name="startAt" type="datetime-local" required />
+        <Field label={uiText("Kết thúc")} name="endAt" type="datetime-local" required />
         <label>
-          Hình thức
+          {uiText("Hình thức")}
           <select name="mode">
             <option>OFFLINE</option>
             <option>ONLINE</option>
           </select>
         </label>
-        <Field label="Địa điểm hoặc meeting URL" name="place" required />
-        <Field label="Múi giờ IANA" name="timezone" defaultValue="Asia/Ho_Chi_Minh" required />
-        <button className="button">Tạo session</button>
+        <Field label={uiText("Địa điểm hoặc meeting URL")} name="place" required />
+        <Field label={uiText("Múi giờ IANA")} name="timezone" defaultValue="Asia/Ho_Chi_Minh" required />
+        <button className="button">{uiText("Tạo session")}</button>
         <button
           className="button secondary"
           type="button"
@@ -1096,19 +1146,21 @@ export function Schedule() {
             }
           }}
         >
-          Xuất bản lịch
+          {uiText("Xuất bản lịch")}
         </button>
-        <p role="status">{msg}</p>
+        <p role="status">{uiText(msg)}</p>
       </form>
     </>
   );
 }
 export function SessionDetail() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { sessionId = "" } = useParams();
   const q = useLecturer<S>(`/class-sessions/${sessionId}`);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<InterfaceMessage>("");
   const [error, setError] = useState("");
   const [form, setForm] = useState({
     title: "",
@@ -1178,12 +1230,15 @@ export function SessionDetail() {
       {(x) => (
         <>
           <Breadcrumbs
-            items={[{ label: "Lớp học", to: "/app/teaching/classes" }, { label: "Chi tiết buổi học" }]}
+            items={[
+              { label: uiText("Lớp học"), to: "/app/teaching/classes" },
+              { label: uiText("Chi tiết buổi học") },
+            ]}
           />
           <p className="eyebrow">{x.status}</p>
           <h1>{x.title}</h1>
           <p>
-            {new Date(x.startAt).toLocaleString("vi-VN")} — {new Date(x.endAt).toLocaleString("vi-VN")}
+            {new Date(x.startAt).toLocaleString(uiLocale)} — {new Date(x.endAt).toLocaleString(uiLocale)}
           </p>
           {["DRAFT", "SCHEDULED"].includes(x.status) && !editing && (
             <button
@@ -1195,13 +1250,13 @@ export function SessionDetail() {
                 setEditing(true);
               }}
             >
-              Chỉnh sửa buổi học
+              {uiText("Chỉnh sửa buổi học")}
             </button>
           )}
           {editing && ["DRAFT", "SCHEDULED"].includes(x.status) && (
             <form className="form-grid" onSubmit={(event) => void save(event)} style={{ margin: "1rem 0" }}>
               <label>
-                Tiêu đề
+                {uiText("Tiêu đề")}
                 <input
                   value={form.title}
                   onChange={(event) => setForm({ ...form, title: event.target.value })}
@@ -1209,7 +1264,7 @@ export function SessionDetail() {
                 />
               </label>
               <label>
-                Bắt đầu
+                {uiText("Bắt đầu")}
                 <input
                   type="datetime-local"
                   value={form.startAt}
@@ -1218,7 +1273,7 @@ export function SessionDetail() {
                 />
               </label>
               <label>
-                Kết thúc
+                {uiText("Kết thúc")}
                 <input
                   type="datetime-local"
                   value={form.endAt}
@@ -1227,7 +1282,7 @@ export function SessionDetail() {
                 />
               </label>
               <label>
-                Múi giờ
+                {uiText("Múi giờ")}
                 <input
                   value={form.timezone}
                   onChange={(event) => setForm({ ...form, timezone: event.target.value })}
@@ -1237,7 +1292,7 @@ export function SessionDetail() {
               {x.mode === "ONLINE" ? (
                 <>
                   <label>
-                    Nhà cung cấp phòng họp
+                    {uiText("Nhà cung cấp phòng họp")}
                     <input
                       value={form.meetingProvider}
                       onChange={(event) => setForm({ ...form, meetingProvider: event.target.value })}
@@ -1245,7 +1300,7 @@ export function SessionDetail() {
                     />
                   </label>
                   <label>
-                    URL phòng họp
+                    {uiText("URL phòng họp")}
                     <input
                       type="url"
                       value={form.meetingUrl}
@@ -1256,7 +1311,7 @@ export function SessionDetail() {
                 </>
               ) : (
                 <label>
-                  Địa điểm
+                  {uiText("Địa điểm")}
                   <input
                     value={form.location}
                     onChange={(event) => setForm({ ...form, location: event.target.value })}
@@ -1266,7 +1321,7 @@ export function SessionDetail() {
               )}
               <div style={{ display: "flex", gap: 8 }}>
                 <button className="button" type="submit" disabled={saving}>
-                  {saving ? "Đang lưu…" : "Lưu thay đổi"}
+                  {saving ? uiText("Đang lưu…") : uiText("Lưu thay đổi")}
                 </button>
                 <button
                   className="button secondary"
@@ -1274,22 +1329,22 @@ export function SessionDetail() {
                   onClick={() => setEditing(false)}
                   disabled={saving}
                 >
-                  Hủy
+                  {uiText("Hủy")}
                 </button>
               </div>
             </form>
           )}
-          {message && <p role="status">{message}</p>}
+          {message && <p role="status">{uiText(message)}</p>}
           {error && (
             <p role="alert" className="error">
-              {error}
+              {uiText(error)}
             </p>
           )}
           <Link
             className="button"
             to={`/app/teaching/sessions/${sessionId}/attendance${x.classId ? `?class=${x.classId}` : ""}`}
           >
-            Điểm danh
+            {uiText("Điểm danh")}
           </Link>
         </>
       )}
@@ -1297,6 +1352,7 @@ export function SessionDetail() {
   );
 }
 export function Attendance() {
+  const uiText = useUiText();
   const { sessionId = "" } = useParams();
   const [params] = useSearchParams();
   const query = useLecturer<A[] | { attendance: A[] }>(`/class-sessions/${sessionId}/attendance`);
@@ -1314,7 +1370,7 @@ export function Attendance() {
   }
 
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<InterfaceMessage>("");
   const [search, setSearch] = useState("");
   const rows = (Array.isArray(query.data) ? query.data : query.data?.attendance) ?? [];
   async function update(row: A, status: string) {
@@ -1339,15 +1395,15 @@ export function Attendance() {
     <>
       <Breadcrumbs
         items={[
-          { label: "Lớp học", to: "/app/teaching/classes" },
-          ...(classId ? [{ label: "Chi tiết lớp", to: `/app/teaching/classes/${classId}` }] : []),
-          { label: "Buổi học", to: `/app/teaching/sessions/${sessionId}` },
-          { label: "Điểm danh" },
+          { label: uiText("Lớp học"), to: "/app/teaching/classes" },
+          ...(classId ? [{ label: uiText("Chi tiết lớp"), to: `/app/teaching/classes/${classId}` }] : []),
+          { label: uiText("Buổi học"), to: `/app/teaching/sessions/${sessionId}` },
+          { label: uiText("Điểm danh") },
         ]}
       />
       <div className="section-header" style={{ marginTop: "1rem" }}>
         <div>
-          <h1>Điểm danh buổi học</h1>
+          <h1>{uiText("Điểm danh buổi học")}</h1>
           <div
             style={{
               marginTop: "0.5rem",
@@ -1359,26 +1415,30 @@ export function Attendance() {
           >
             <strong>
               {sessionQuery.data?.mode === "ONLINE"
-                ? "🌐 Buổi học trực tuyến (Online)"
-                : "🏫 Buổi học trực tiếp (Offline)"}
+                ? uiText("🌐 Buổi học trực tuyến (Online)")
+                : uiText("🏫 Buổi học trực tiếp (Offline)")}
             </strong>
             <p style={{ margin: "0.25rem 0 0", fontSize: "0.9rem", color: "var(--muted)" }}>
               {sessionQuery.data?.mode === "ONLINE"
-                ? "Điểm danh tự động & thủ công: Hệ thống tự động ghi nhận khi học viên tham gia phòng học trực tuyến. Giảng viên có thể điểm danh hoặc ghi đè thủ công (Có mặt / Vắng / Có phép) bất cứ lúc nào."
-                : "Điểm danh trực tiếp tại lớp: Giảng viên điểm danh thủ công theo danh sách bằng cách tích chọn Có mặt, Vắng, hoặc Có phép cho từng học viên."}
+                ? uiText(
+                    "Điểm danh tự động & thủ công: Hệ thống tự động ghi nhận khi học viên tham gia phòng học trực tuyến. Giảng viên có thể điểm danh hoặc ghi đè thủ công (Có mặt / Vắng / Có phép) bất cứ lúc nào.",
+                  )
+                : uiText(
+                    "Điểm danh trực tiếp tại lớp: Giảng viên điểm danh thủ công theo danh sách bằng cách tích chọn Có mặt, Vắng, hoặc Có phép cho từng học viên.",
+                  )}
             </p>
           </div>
         </div>
       </div>
       <label>
-        Tìm học viên (tên hoặc ID)
+        {uiText("Tìm học viên (tên hoặc ID)")}
         <input
-          placeholder="Nhập tên hoặc mã ID học viên..."
+          placeholder={uiText("Nhập tên hoặc mã ID học viên...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </label>
-      {message && <p role="status">{message}</p>}
+      {message && <p role="status">{uiText(message)}</p>}
       <State q={query}>
         {() =>
           rows.length ? (
@@ -1386,10 +1446,10 @@ export function Attendance() {
               <table className="attendance-table">
                 <thead>
                   <tr>
-                    <th>Học viên</th>
-                    <th>Trạng thái</th>
-                    <th>Nguồn ghi nhận</th>
-                    <th>Cập nhật thủ công</th>
+                    <th>{uiText("Học viên")}</th>
+                    <th>{uiText("Trạng thái")}</th>
+                    <th>{uiText("Nguồn ghi nhận")}</th>
+                    <th>{uiText("Cập nhật thủ công")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1413,23 +1473,27 @@ export function Attendance() {
                         </td>
                         <td>
                           {row.attendanceStatus === "PRESENT"
-                            ? "Có mặt"
+                            ? uiText("Có mặt")
                             : row.attendanceStatus === "EXCUSED"
-                              ? "Có phép"
+                              ? uiText("Có phép")
                               : row.attendanceStatus === "ABSENT"
-                                ? "Vắng"
-                                : "Chưa ghi nhận"}
+                                ? uiText("Vắng")
+                                : uiText("Chưa ghi nhận")}
                         </td>
                         <td>
                           {row.source === "ONLINE_PRESENCE"
-                            ? `Tự động (Realtime) · ${row.presenceState === "ONLINE" ? "đang kết nối" : "đã rời phòng"}`
+                            ? uiText("Tự động (Realtime) · {0}", [
+                                row.presenceState === "ONLINE" ? "đang kết nối" : "đã rời phòng",
+                              ])
                             : row.source === "MANUAL_OFFLINE"
-                              ? "Thủ công · giảng viên"
-                              : "Chưa có dữ liệu"}
+                              ? uiText("Thủ công · giảng viên")
+                              : uiText("Chưa có dữ liệu")}
                         </td>
                         <td>
                           <select
-                            aria-label={`Điểm danh ${nameMap.get(row.studentId) || row.studentId}`}
+                            aria-label={uiText("Điểm danh {0}", [
+                              nameMap.get(row.studentId) || row.studentId,
+                            ])}
                             value={
                               row.attendanceStatus === "NOT_RECORDED" ? "UNMARKED" : row.attendanceStatus
                             }
@@ -1437,11 +1501,11 @@ export function Attendance() {
                             onChange={(e) => void update(row, e.target.value)}
                           >
                             <option value="UNMARKED" disabled>
-                              Chưa ghi nhận
+                              {uiText("Chưa ghi nhận")}
                             </option>
-                            <option value="PRESENT">Có mặt</option>
-                            <option value="ABSENT">Vắng</option>
-                            <option value="EXCUSED">Có phép</option>
+                            <option value="PRESENT">{uiText("Có mặt")}</option>
+                            <option value="ABSENT">{uiText("Vắng")}</option>
+                            <option value="EXCUSED">{uiText("Có phép")}</option>
                           </select>
                         </td>
                       </tr>
@@ -1450,7 +1514,7 @@ export function Attendance() {
               </table>
             </div>
           ) : (
-            <p>Chưa có học viên để điểm danh trong buổi học này.</p>
+            <p>{uiText("Chưa có học viên để điểm danh trong buổi học này.")}</p>
           )
         }
       </State>

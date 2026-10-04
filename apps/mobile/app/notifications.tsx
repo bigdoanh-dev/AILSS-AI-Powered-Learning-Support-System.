@@ -1,3 +1,5 @@
+import { useLanguage } from "../src/use-language";
+import { useUiText } from "../src/use-language";
 import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
 import { Text, View, ActivityIndicator, StyleSheet } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
@@ -16,6 +18,8 @@ import { Page, Button, Badge, Icon, EmptyState, ScreenHeader, BottomNavBar, styl
 import { ScalePressable, FadeSlideIn } from "../src/motion";
 
 export default function NotificationsScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { r } = useLocalSearchParams<{ r?: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -110,16 +114,18 @@ export default function NotificationsScreen() {
       <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
         <Page>
           <ScreenHeader
-            title="Thông báo"
+            title={uiText("Thông báo")}
             onBack={() => {
               if (router.canGoBack()) router.back();
               else router.push("/");
             }}
           />
           <View style={styles.card}>
-            <Text style={styles.title}>Thông báo</Text>
-            <Text style={styles.text}>Vui lòng đăng nhập để xem thông báo lớp học và khóa học.</Text>
-            <Button label="Đăng nhập ngay" onPress={() => router.push("/login")} />
+            <Text style={styles.title}>{uiText("Thông báo")}</Text>
+            <Text style={styles.text}>
+              {uiText("Vui lòng đăng nhập để xem thông báo lớp học và khóa học.")}
+            </Text>
+            <Button label={uiText("Đăng nhập ngay")} onPress={() => router.push("/login")} />
           </View>
         </Page>
         <BottomNavBar
@@ -135,8 +141,8 @@ export default function NotificationsScreen() {
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
       <Page style={{ paddingBottom: 24 }}>
         <ScreenHeader
-          title="Thông báo"
-          subtitle="Hộp thư đến & cập nhật mới nhất"
+          title={uiText("Thông báo")}
+          subtitle={uiText("Hộp thư đến & cập nhật mới nhất")}
           onBack={() => {
             if (router.canGoBack()) {
               router.back();
@@ -146,9 +152,9 @@ export default function NotificationsScreen() {
           }}
           rightElement={
             unreadCount > 0 ? (
-              <Badge label={`${unreadCount} mới`} variant="primary" icon="bell" />
+              <Badge label={uiText("{0} mới", [unreadCount])} variant="primary" icon="bell" />
             ) : (
-              <Badge label="ĐÃ CẬP NHẬT" variant="neutral" icon="check" />
+              <Badge label={uiText("ĐÃ CẬP NHẬT")} variant="neutral" icon="check" />
             )
           }
         />
@@ -157,12 +163,12 @@ export default function NotificationsScreen() {
         <View style={localStyles.monthBar}>
           <ScalePressable
             accessibilityRole="button"
-            accessibilityLabel="Tháng trước"
+            accessibilityLabel={uiText("Tháng trước")}
             style={localStyles.monthBtn}
             onPress={() => handleMonthShift(-1)}
           >
             <Icon name="chevronLeft" size={14} color="#FFF" />
-            <Text style={localStyles.monthBtnText}>Trước</Text>
+            <Text style={localStyles.monthBtnText}>{uiText("Trước")}</Text>
           </ScalePressable>
           <View style={localStyles.monthBadge}>
             <Icon name="calendar" size={14} color={tokens.color.brand} />
@@ -170,7 +176,7 @@ export default function NotificationsScreen() {
           </View>
           <ScalePressable
             accessibilityRole="button"
-            accessibilityLabel="Tháng sau"
+            accessibilityLabel={uiText("Tháng sau")}
             style={localStyles.monthBtn}
             onPress={() => handleMonthShift(1)}
           >
@@ -182,22 +188,26 @@ export default function NotificationsScreen() {
         {error && (
           <View style={[styles.card, { borderColor: tokens.color.dangerLight, backgroundColor: "#FEF2F2" }]}>
             <Text accessibilityRole="alert" style={styles.error}>
-              {error}
+              {uiText(error)}
             </Text>
-            <Button label="Thử lại" size="sm" onPress={() => void fetchNotifications(month, null, true)} />
+            <Button
+              label={uiText("Thử lại")}
+              size="sm"
+              onPress={() => void fetchNotifications(month, null, true)}
+            />
           </View>
         )}
 
         {loading ? (
           <View style={localStyles.center}>
             <ActivityIndicator size="large" color={tokens.color.brand} />
-            <Text style={styles.small}>Đang tải thông báo…</Text>
+            <Text style={styles.small}>{uiText("Đang tải thông báo…")}</Text>
           </View>
         ) : items.length === 0 ? (
           <EmptyState
             icon="bell"
-            title="Không có thông báo nào"
-            description={`Bạn không có thông báo mới trong ${formatDisplayMonth(month)}.`}
+            title={uiText("Không có thông báo nào")}
+            description={uiText("Bạn không có thông báo mới trong {0}.", [formatDisplayMonth(month)])}
             actionLabel="Xem tháng hiện tại"
             onAction={() => setMonth(formatCurrentMonth())}
           />
@@ -212,10 +222,13 @@ export default function NotificationsScreen() {
                     <View style={localStyles.cardHeader}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                         {!read && <View style={localStyles.unreadDot} />}
-                        <Badge label={read ? "ĐÃ ĐỌC" : "MỚI"} variant={read ? "neutral" : "primary"} />
+                        <Badge
+                          label={read ? uiText("ĐÃ ĐỌC") : uiText("MỚI")}
+                          variant={read ? "neutral" : "primary"}
+                        />
                       </View>
                       <Text style={styles.small}>
-                        {new Date(item.createdAt).toLocaleDateString("vi-VN", {
+                        {new Date(item.createdAt).toLocaleDateString(uiLocale, {
                           day: "2-digit",
                           month: "2-digit",
                           hour: "2-digit",
@@ -230,7 +243,11 @@ export default function NotificationsScreen() {
                     <View style={localStyles.cardActions}>
                       {!read && (
                         <Button
-                          label={markingId === item.notificationId ? "Đang xử lý…" : "Đánh dấu đã đọc"}
+                          label={
+                            markingId === item.notificationId
+                              ? uiText("Đang xử lý…")
+                              : uiText("Đánh dấu đã đọc")
+                          }
                           size="sm"
                           variant="secondary"
                           onPress={() => void handleMarkRead(item)}
@@ -239,7 +256,7 @@ export default function NotificationsScreen() {
                       )}
                       {targetRoute && (
                         <Button
-                          label="Xem chi tiết →"
+                          label={uiText("Xem chi tiết →")}
                           size="sm"
                           variant={read ? "outline" : "primary"}
                           onPress={() => router.push(targetRoute as Href)}
@@ -253,7 +270,7 @@ export default function NotificationsScreen() {
             {nextCursor && (
               <View style={localStyles.footer}>
                 <Button
-                  label={loadingMore ? "Đang tải thêm…" : "Tải thêm thông báo"}
+                  label={loadingMore ? uiText("Đang tải thêm…") : uiText("Tải thêm thông báo")}
                   size="sm"
                   variant="outline"
                   onPress={() => void fetchNotifications(month, nextCursor)}

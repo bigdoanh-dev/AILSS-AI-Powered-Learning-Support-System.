@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useHydrated } from "../lib/hydration";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { sessionRequest, useSession } from "../auth/session";
@@ -37,6 +38,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   return <ThemeContext.Provider value={{ theme, toggle }}>{children}</ThemeContext.Provider>;
 }
 export function ThemeToggle() {
+  const uiText = useUiText();
   const { theme: currentTheme, toggle } = useContext(ThemeContext);
   const theme = useHydrated() ? currentTheme : "light";
   return (
@@ -44,8 +46,8 @@ export function ThemeToggle() {
       className="theme-toggle"
       type="button"
       onClick={toggle}
-      aria-label={theme === "light" ? "Bật chế độ tối" : "Bật chế độ sáng"}
-      title={theme === "light" ? "Chế độ tối" : "Chế độ sáng"}
+      aria-label={theme === "light" ? uiText("Bật chế độ tối") : uiText("Bật chế độ sáng")}
+      title={theme === "light" ? uiText("Chế độ tối") : uiText("Chế độ sáng")}
     >
       <svg
         width="20"

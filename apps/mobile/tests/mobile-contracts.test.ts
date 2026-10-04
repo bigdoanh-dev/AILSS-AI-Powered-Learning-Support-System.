@@ -118,6 +118,19 @@ describe("Phase 41 mobile DTO parity", () => {
     expect(reply.content).toContain("Không tìm thấy");
   });
 
+  it("sends the English preference without modifying the user's question", async () => {
+    let body: unknown;
+    const request = async (_path: string, options?: { body?: unknown }) => {
+      body = options?.body;
+      return { conversationId: "conversation-en", content: "Let's review quorum.", citations: [] };
+    };
+    await askTutor(
+      { request },
+      { message: "Giải thích quorum", responseLanguage: "en", signal: new AbortController().signal },
+    );
+    expect(body).toMatchObject({ message: "Giải thích quorum", responseLanguage: "en" });
+  });
+
   it("starts course advice without attaching an unrelated enrolled course", async () => {
     let sentBody: unknown;
     const request = async (_path: string, options?: { body?: unknown }) => {

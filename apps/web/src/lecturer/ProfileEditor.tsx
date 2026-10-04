@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { sessionRequest, useSession } from "../auth/session";
@@ -32,6 +33,7 @@ interface LecturerApplicationData {
 }
 
 export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
+  const uiText = useUiText();
   const auth = useSession();
   const avatar = useAvatar();
   const p = auth.profile;
@@ -142,17 +144,17 @@ export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
           <div className="lecturer-identity-text">
             <div className="lecturer-role-row">
               <span className="eyebrow" style={{ margin: 0 }}>
-                HỒ SƠ GIẢNG VIÊN AILSS
+                {uiText("HỒ SƠ GIẢNG VIÊN AILSS")}
               </span>
               {isVerified ? (
                 <span className="lecturer-verification-pill verified">
                   <Icon name="checkCircle" size={13} />
-                  <span>Đã xác minh chính thức</span>
+                  <span>{uiText("Đã xác minh chính thức")}</span>
                 </span>
               ) : (
                 <span className="lecturer-verification-pill pending">
                   <Icon name="clock" size={13} />
-                  <span>Đang chờ duyệt xét</span>
+                  <span>{uiText("Đang chờ duyệt xét")}</span>
                 </span>
               )}
             </div>
@@ -162,7 +164,8 @@ export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
               <span>{p?.emailMasked ?? ""}</span>
               <span>•</span>
               <span>
-                Mã ID: <code>{lecturerId.slice(0, 13)}…</code>
+                {uiText("Mã ID: ")}
+                <code>{lecturerId.slice(0, 13)}…</code>
               </span>
               {appData?.institution && (
                 <>
@@ -181,7 +184,7 @@ export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
             style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
           >
             <Icon name="eye" size={14} />
-            <span>Xem hồ sơ công khai</span>
+            <span>{uiText("Xem hồ sơ công khai")}</span>
           </Link>
           <Link
             to="/app/teaching/revenue"
@@ -198,14 +201,15 @@ export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
       <section className="lecturer-verification-stepper-card">
         <div className="stepper-header-row">
           <div>
-            <h2>Quy Trình Xác Thực Giảng Viên</h2>
+            <h2>{uiText("Quy Trình Xác Thực Giảng Viên")}</h2>
             <p className="subtext">
-              Lộ trình 4 mốc tiêu chuẩn từ đăng ký tài khoản đến xuất bản khóa học và nhận thanh toán doanh
-              thu.
+              {uiText(
+                "Lộ trình 4 mốc tiêu chuẩn từ đăng ký tài khoản đến xuất bản khóa học và nhận thanh toán doanh thu.",
+              )}
             </p>
           </div>
           <span className={`kpi-tag ${isVerified ? "accent" : ""}`}>
-            {isVerified ? "4/4 Mốc Đã Hoàn Thành" : "Đang Trong Tiến Trình Xác Thực"}
+            {isVerified ? uiText("4/4 Mốc Đã Hoàn Thành") : uiText("Đang Trong Tiến Trình Xác Thực")}
           </span>
         </div>
 
@@ -216,9 +220,11 @@ export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
               <Icon name="check" size={16} strokeWidth={2.5} />
             </div>
             <div className="step-content">
-              <div className="step-tag">Bước 1 · Đã xong</div>
-              <div className="step-title">Khởi tạo vai trò</div>
-              <p className="step-desc">Tài khoản được đăng ký định danh Giảng viên trong hệ thống AILSS.</p>
+              <div className="step-tag">{uiText("Bước 1 · Đã xong")}</div>
+              <div className="step-title">{uiText("Khởi tạo vai trò")}</div>
+              <p className="step-desc">
+                {uiText("Tài khoản được đăng ký định danh Giảng viên trong hệ thống AILSS.")}
+              </p>
             </div>
           </div>
 
@@ -235,11 +241,14 @@ export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
             </div>
             <div className="step-content">
               <div className="step-tag">
-                Bước 2 · {value?.bio || value?.experience ? "Đã cập nhật" : "Cần hoàn thiện"}
+                {uiText("Bước 2 · ")}
+                {value?.bio || value?.experience ? uiText("Đã cập nhật") : uiText("Cần hoàn thiện")}
               </div>
-              <div className="step-title">Hồ sơ chuyên môn</div>
+              <div className="step-title">{uiText("Hồ sơ chuyên môn")}</div>
               <p className="step-desc">
-                Cập nhật tiểu sử, học vị, kinh nghiệm giảng dạy và các chứng chỉ, bằng cấp liên quan.
+                {uiText(
+                  "Cập nhật tiểu sử, học vị, kinh nghiệm giảng dạy và các chứng chỉ, bằng cấp liên quan.",
+                )}
               </p>
             </div>
           </div>
@@ -250,12 +259,15 @@ export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
               {payout ? <Icon name="check" size={16} strokeWidth={2.5} /> : <Icon name="card" size={16} />}
             </div>
             <div className="step-content">
-              <div className="step-tag">Bước 3 · {payout ? "Đã liên kết" : "Cần thiết lập"}</div>
-              <div className="step-title">Tài khoản nhận tiền</div>
+              <div className="step-tag">
+                {uiText("Bước 3 · ")}
+                {payout ? uiText("Đã liên kết") : uiText("Cần thiết lập")}
+              </div>
+              <div className="step-title">{uiText("Tài khoản nhận tiền")}</div>
               <p className="step-desc">
                 {payout
                   ? `${payout.bankName} (${payout.accountNumber})`
-                  : "Cung cấp tài khoản ngân hàng để nhận đối soát chi trả doanh thu hàng tháng."}
+                  : uiText("Cung cấp tài khoản ngân hàng để nhận đối soát chi trả doanh thu hàng tháng.")}
               </p>
             </div>
           </div>
@@ -266,12 +278,15 @@ export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
               {isVerified ? <Icon name="shield" size={16} /> : <Icon name="clock" size={16} />}
             </div>
             <div className="step-content">
-              <div className="step-tag">Bước 4 · {isVerified ? "Đã phê duyệt" : "Chờ quản trị viên"}</div>
-              <div className="step-title">Thẩm định &amp; Cấp quyền</div>
+              <div className="step-tag">
+                {uiText("Bước 4 · ")}
+                {isVerified ? uiText("Đã phê duyệt") : uiText("Chờ quản trị viên")}
+              </div>
+              <div className="step-title">{uiText("Thẩm định & Cấp quyền")}</div>
               <p className="step-desc">
                 {isVerified
-                  ? "Đã kích hoạt toàn quyền tạo khóa học, điều hành lớp và mở bán đợt tuyển sinh."
-                  : "Quản trị viên đối soát thông tin hồ sơ và kích hoạt cờ xác minh chính thức."}
+                  ? uiText("Đã kích hoạt toàn quyền tạo khóa học, điều hành lớp và mở bán đợt tuyển sinh.")
+                  : uiText("Quản trị viên đối soát thông tin hồ sơ và kích hoạt cờ xác minh chính thức.")}
               </p>
             </div>
           </div>
@@ -282,14 +297,16 @@ export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
       <section className="lecturer-profile-form-card">
         <div className="profile-form-header">
           <div>
-            <h2>Thông Tin Hồ Sơ Giảng Viên Công Khai</h2>
+            <h2>{uiText("Thông Tin Hồ Sơ Giảng Viên Công Khai")}</h2>
             <p className="subtext">
-              Học viên sẽ xem thông tin này trên trang giới thiệu khóa học trước khi đăng ký hoặc mua học phí.
+              {uiText(
+                "Học viên sẽ xem thông tin này trên trang giới thiệu khóa học trước khi đăng ký hoặc mua học phí.",
+              )}
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <Link to="/app/account" className="button button-subtle button-small" style={{ fontSize: 12 }}>
-              Đổi ảnh đại diện
+              {uiText("Đổi ảnh đại diện")}
             </Link>
           </div>
         </div>
@@ -300,97 +317,111 @@ export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
             role="status"
           >
             <Icon name={messageType === "success" ? "checkCircle" : "alert"} size={16} />
-            <span>{message}</span>
+            <span>{uiText(message)}</span>
           </div>
         )}
 
         {value ? (
           <form className="form-panel form-grid" onSubmit={(event) => void save(event)}>
             <label>
-              <strong>Tiểu sử &amp; Giới thiệu ngắn</strong>
+              <strong>{uiText("Tiểu sử & Giới thiệu ngắn")}</strong>
               <span className="field-hint">
-                Tóm tắt ngắn gọn phong cách giảng dạy và chuyên môn nổi bật (tối đa 2.000 ký tự).
+                {uiText("Tóm tắt ngắn gọn phong cách giảng dạy và chuyên môn nổi bật (tối đa 2.000 ký tự).")}
               </span>
               <textarea
                 name="bio"
                 rows={3}
                 maxLength={2000}
                 defaultValue={value.bio}
-                placeholder="Ví dụ: Giảng viên chuyên ngành Khoa học máy tính với hơn 10 năm kinh nghiệm nghiên cứu AI..."
+                placeholder={uiText(
+                  "Ví dụ: Giảng viên chuyên ngành Khoa học máy tính với hơn 10 năm kinh nghiệm nghiên cứu AI...",
+                )}
               />
             </label>
 
             <label>
-              <strong>Kinh nghiệm giảng dạy &amp; Làm việc</strong>
+              <strong>{uiText("Kinh nghiệm giảng dạy & Làm việc")}</strong>
               <span className="field-hint">
-                Các dự án thực chiến, vị trí công tác hoặc số năm kinh nghiệm sư phạm (tối đa 3.000 ký tự).
+                {uiText(
+                  "Các dự án thực chiến, vị trí công tác hoặc số năm kinh nghiệm sư phạm (tối đa 3.000 ký tự).",
+                )}
               </span>
               <textarea
                 name="experience"
                 rows={4}
                 maxLength={3000}
                 defaultValue={value.experience}
-                placeholder="Ví dụ: Nguyên Trưởng nhóm Kỹ thuật tại..., Giảng dạy hơn 1.200 sinh viên tại Đại học..."
+                placeholder={uiText(
+                  "Ví dụ: Nguyên Trưởng nhóm Kỹ thuật tại..., Giảng dạy hơn 1.200 sinh viên tại Đại học...",
+                )}
               />
             </label>
 
             <label>
-              <strong>Học vấn &amp; Bằng cấp chuyên môn</strong>
+              <strong>{uiText("Học vấn & Bằng cấp chuyên môn")}</strong>
               <span className="field-hint">
-                Trường đại học, viện nghiên cứu, học vị (Thạc sĩ, Tiến sĩ, Kỹ sư...) (tối đa 2.000 ký tự).
+                {uiText(
+                  "Trường đại học, viện nghiên cứu, học vị (Thạc sĩ, Tiến sĩ, Kỹ sư...) (tối đa 2.000 ký tự).",
+                )}
               </span>
               <textarea
                 name="education"
                 rows={3}
                 maxLength={2000}
                 defaultValue={value.education}
-                placeholder="Ví dụ: Thạc sĩ Công nghệ Thông tin - Đại học Bách Khoa Hà Nội (2018)..."
+                placeholder={uiText(
+                  "Ví dụ: Thạc sĩ Công nghệ Thông tin - Đại học Bách Khoa Hà Nội (2018)...",
+                )}
               />
             </label>
 
             <label>
-              <strong>Thành tựu, Chứng chỉ &amp; Giải thưởng</strong>
+              <strong>{uiText("Thành tựu, Chứng chỉ & Giải thưởng")}</strong>
               <span className="field-hint">
-                Chứng chỉ quốc tế (AWS, Google Cloud, Microsoft...) hoặc giải thưởng khoa học (tối đa 2.000 ký
-                tự).
+                {uiText(
+                  "Chứng chỉ quốc tế (AWS, Google Cloud, Microsoft...) hoặc giải thưởng khoa học (tối đa 2.000 ký tự).",
+                )}
               </span>
               <textarea
                 name="achievements"
                 rows={3}
                 maxLength={2000}
                 defaultValue={value.achievements}
-                placeholder="Ví dụ: AWS Certified Solutions Architect, Tác giả bài báo khoa học xuất bản tại IEEE..."
+                placeholder={uiText(
+                  "Ví dụ: AWS Certified Solutions Architect, Tác giả bài báo khoa học xuất bản tại IEEE...",
+                )}
               />
             </label>
 
             <label className="profile-photo-consent-box">
               <input type="checkbox" name="showPhoto" defaultChecked={value.showPhoto} />
               <div>
-                <strong>Hiển thị ảnh đại diện thật trên hồ sơ công khai</strong>
+                <strong>{uiText("Hiển thị ảnh đại diện thật trên hồ sơ công khai")}</strong>
                 <p>
-                  Khi bật, ảnh chân dung thật trong Tài khoản của bạn sẽ xuất hiện trên trang khóa học và
-                  trang cá nhân giảng viên để tăng độ tin cậy với học viên.
+                  {uiText(
+                    "Khi bật, ảnh chân dung thật trong Tài khoản của bạn sẽ xuất hiện trên trang khóa học và trang cá nhân giảng viên để tăng độ tin cậy với học viên.",
+                  )}
                 </p>
               </div>
             </label>
 
             <div className="profile-form-footer-actions">
               <button className="button" type="submit" disabled={busy}>
-                {busy ? "Đang lưu thay đổi…" : "Lưu hồ sơ công khai"}
+                {busy ? uiText("Đang lưu thay đổi…") : uiText("Lưu hồ sơ công khai")}
               </button>
               <Link
                 to={`/lecturers/${lecturerId}`}
                 className="button button-subtle"
                 style={{ textDecoration: "none" }}
               >
-                Xem trước trang hồ sơ →
+                {uiText("Xem trước trang hồ sơ →")}
               </Link>
             </div>
           </form>
         ) : (
           <div className="profile-loading-state">
             <span className="live-pulsing-dot" aria-hidden="true" />
-            <span>Đang tải thông tin hồ sơ giảng viên…</span>
+            <span>{uiText("Đang tải thông tin hồ sơ giảng viên…")}</span>
           </div>
         )}
       </section>
@@ -402,10 +433,11 @@ export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
             <Icon name="card" size={20} />
           </div>
           <div style={{ flex: 1 }}>
-            <h3>Tài Khoản Ngân Hàng Nhận Doanh Thu (Payout)</h3>
+            <h3>{uiText("Tài Khoản Ngân Hàng Nhận Doanh Thu (Payout)")}</h3>
             <p className="subtext">
-              Doanh thu bán khóa học sau khi trừ tỷ lệ chiết khấu nền tảng sẽ được tổng hợp và đối soát để chi
-              trả theo định kỳ.
+              {uiText(
+                "Doanh thu bán khóa học sau khi trừ tỷ lệ chiết khấu nền tảng sẽ được tổng hợp và đối soát để chi trả theo định kỳ.",
+              )}
             </p>
           </div>
           <Link
@@ -413,41 +445,42 @@ export function LecturerProfileEditor({ lecturerId }: { lecturerId: string }) {
             className="button button-subtle button-small"
             style={{ textDecoration: "none" }}
           >
-            {payout ? "Chỉnh sửa tài khoản" : "Cấu hình tài khoản"}
+            {payout ? uiText("Chỉnh sửa tài khoản") : uiText("Cấu hình tài khoản")}
           </Link>
         </div>
 
         {payout ? (
           <div className="payout-details-row">
             <div className="payout-detail-block">
-              <span className="detail-label">Ngân hàng</span>
+              <span className="detail-label">{uiText("Ngân hàng")}</span>
               <strong className="detail-value">{payout.bankName}</strong>
             </div>
             <div className="payout-detail-block">
-              <span className="detail-label">Số tài khoản</span>
+              <span className="detail-label">{uiText("Số tài khoản")}</span>
               <strong className="detail-value">{payout.accountNumber}</strong>
             </div>
             <div className="payout-detail-block">
-              <span className="detail-label">Chủ tài khoản</span>
+              <span className="detail-label">{uiText("Chủ tài khoản")}</span>
               <strong className="detail-value">{payout.accountHolder}</strong>
             </div>
             <div className="payout-detail-block">
-              <span className="detail-label">Trạng thái</span>
-              <span className="payout-verified-badge">✓ Sẵn sàng nhận chi trả</span>
+              <span className="detail-label">{uiText("Trạng thái")}</span>
+              <span className="payout-verified-badge">{uiText("✓ Sẵn sàng nhận chi trả")}</span>
             </div>
           </div>
         ) : (
           <div className="payout-empty-banner">
             <p>
-              Bạn chưa liên kết tài khoản ngân hàng. Hãy cấu hình để sẵn sàng nhận tiền bán khóa học khi quản
-              trị viên lập phiếu chi.
+              {uiText(
+                "Bạn chưa liên kết tài khoản ngân hàng. Hãy cấu hình để sẵn sàng nhận tiền bán khóa học khi quản trị viên lập phiếu chi.",
+              )}
             </p>
             <Link
               to="/app/teaching/revenue"
               className="button button-small"
               style={{ textDecoration: "none" }}
             >
-              + Thêm tài khoản ngân hàng ngay
+              {uiText("+ Thêm tài khoản ngân hàng ngay")}
             </Link>
           </div>
         )}

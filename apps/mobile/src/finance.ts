@@ -23,12 +23,14 @@ export function commission(value: unknown): Commission {
     updatedBy: data.updatedBy === null ? null : string(data.updatedBy),
   };
 }
-export const percent = (basisPoints: number) =>
-  `${(basisPoints / 100).toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`;
+export const percent = (basisPoints: number, locale: string = "vi-VN") =>
+  `${(basisPoints / 100).toLocaleString(locale, { maximumFractionDigits: 2 })}%`;
 // Format exact integer digits without passing BigInt to native Intl implementations.
-const groupedInteger = (amount: bigint) => amount.toString().replace(/\B(?=(\d{3})+(?!\d))/gu, ".");
-export const vnd = (amount: string | bigint) => `${groupedInteger(BigInt(amount))} ₫`;
-export function quote(price: string, currency: string, basisPoints: number) {
+const groupedInteger = (amount: bigint, locale: string) =>
+  amount.toString().replace(/\B(?=(\d{3})+(?!\d))/gu, locale === "en-US" ? "," : ".");
+export const vnd = (amount: string | bigint, locale: string = "vi-VN") =>
+  `${groupedInteger(BigInt(amount), locale)} ₫`;
+export function quote(price: string, currency: string, basisPoints: number, locale: string = "vi-VN") {
   points(basisPoints);
   const scale = currency === "VND" ? 1n : 100n;
   const match = /^(0|[1-9]\d*)(?:\.(\d{1,2}))?$/u.exec(price);
@@ -37,7 +39,7 @@ export function quote(price: string, currency: string, basisPoints: number) {
     BigInt(match[1]!) * scale + (scale === 100n ? BigInt((match[2] ?? "").padEnd(2, "0") || "0") : 0n);
   const fee = (amount * BigInt(basisPoints)) / 10_000n;
   const format = (value: bigint) =>
-    `${groupedInteger(value / scale)}${scale === 100n ? `,${String(value % scale).padStart(2, "0")}` : ""} ${currency}`;
+    `${groupedInteger(value / scale, locale)}${scale === 100n ? `${locale === "en-US" ? "." : ","}${String(value % scale).padStart(2, "0")}` : ""} ${currency}`;
   return { gross: format(amount), fee: format(fee), earnings: format(amount - fee) };
 }
 export async function readCommission(api: Requester, role: "ADMIN" | "LECTURER") {

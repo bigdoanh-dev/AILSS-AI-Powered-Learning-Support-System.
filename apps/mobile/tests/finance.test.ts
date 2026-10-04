@@ -2,6 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 import { quote, vnd } from "../src/finance";
 
 describe("exact mobile money formatting", () => {
+  it("uses English separators without changing exact monetary values", () => {
+    expect(vnd("9007199254740993", "en-US")).toBe("9,007,199,254,740,993 ₫");
+    expect(quote("1234.56", "USD", 1500, "en-US")).toEqual({
+      gross: "1,234.56 USD",
+      fee: "185.18 USD",
+      earnings: "1,049.38 USD",
+    });
+  });
   it("formats amounts without native Intl BigInt conversion", () => {
     const formatter = vi.spyOn(Intl, "NumberFormat").mockImplementation(() => {
       throw new TypeError("Cannot convert BigInt to number");

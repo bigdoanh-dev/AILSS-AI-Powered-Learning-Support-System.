@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../src/use-language";
+import { useUiText } from "../../../src/use-language";
 import { useState, useMemo } from "react";
 import { StyleSheet, Text, TextInput, View, Pressable } from "react-native";
 import { router, type Href } from "expo-router";
@@ -7,6 +9,8 @@ import { Page, ScreenHeader, Button, Icon, tokens, styles } from "../../../src/u
 import { ScalePressable, FadeSlideIn } from "../../../src/motion";
 
 export default function Offerings() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const query = useMobileQuery("/api/v1/me/owned-offerings", ownedOfferings);
   const [search, setSearch] = useState("");
 
@@ -24,12 +28,12 @@ export default function Offerings() {
   return (
     <Page>
       <ScreenHeader
-        title="Đợt mở bán"
-        subtitle={`${query.data?.length ?? 0} đợt bán đã thiết lập`}
+        title={uiText("Đợt mở bán")}
+        subtitle={uiText("{0} đợt bán đã thiết lập", [query.data?.length ?? 0])}
         onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching"))}
         rightElement={
           <Button
-            label="+ Tạo mới"
+            label={uiText("+ Tạo mới")}
             size="sm"
             icon={<Icon name="add" size={14} color="#FFFFFF" />}
             onPress={() => router.push("/teaching/offerings/create" as Href)}
@@ -47,7 +51,7 @@ export default function Offerings() {
               </View>
               <View>
                 <Text style={os.statValue}>{query.data.length}</Text>
-                <Text style={os.statLabel}>Tổng đợt bán</Text>
+                <Text style={os.statLabel}>{uiText("Tổng đợt bán")}</Text>
               </View>
             </View>
 
@@ -59,7 +63,7 @@ export default function Offerings() {
               </View>
               <View>
                 <Text style={[os.statValue, { color: "#15803D" }]}>{activeCount}</Text>
-                <Text style={os.statLabel}>Đang mở bán</Text>
+                <Text style={os.statLabel}>{uiText("Đang mở bán")}</Text>
               </View>
             </View>
 
@@ -71,7 +75,7 @@ export default function Offerings() {
               </View>
               <View>
                 <Text style={os.statValue}>VND</Text>
-                <Text style={os.statLabel}>Tiền tệ</Text>
+                <Text style={os.statLabel}>{uiText("Tiền tệ")}</Text>
               </View>
             </View>
           </View>
@@ -81,7 +85,7 @@ export default function Offerings() {
             <Icon name="search" size={16} color={tokens.color.muted} />
             <TextInput
               style={os.searchInput}
-              placeholder="Tìm kiếm đợt mở bán..."
+              placeholder={uiText("Tìm kiếm đợt mở bán...")}
               placeholderTextColor={tokens.color.muted}
               value={search}
               onChangeText={setSearch}
@@ -97,14 +101,14 @@ export default function Offerings() {
 
       {query.loading ? (
         <View style={os.emptyBox}>
-          <Text style={styles.text}>Đang tải danh sách đợt mở bán…</Text>
+          <Text style={styles.text}>{uiText("Đang tải danh sách đợt mở bán…")}</Text>
         </View>
       ) : null}
 
       {query.error ? (
         <View style={os.errorCard}>
-          <Text style={styles.error}>{query.error}</Text>
-          <Button label="Thử lại" size="sm" onPress={query.retry} />
+          <Text style={styles.error}>{uiText(query.error)}</Text>
+          <Button label={uiText("Thử lại")} size="sm" onPress={query.retry} />
         </View>
       ) : null}
 
@@ -113,12 +117,12 @@ export default function Offerings() {
           <View style={os.emptyIconBox}>
             <Icon name="tag" size={32} color={tokens.color.brand} />
           </View>
-          <Text style={os.emptyTitle}>Chưa có đợt mở bán nào</Text>
+          <Text style={os.emptyTitle}>{uiText("Chưa có đợt mở bán nào")}</Text>
           <Text style={os.emptyDesc}>
-            Hãy tạo đợt mở bán để học viên có thể đăng ký và mua khóa học của bạn.
+            {uiText("Hãy tạo đợt mở bán để học viên có thể đăng ký và mua khóa học của bạn.")}
           </Text>
           <Button
-            label="Tạo đợt mở bán ngay"
+            label={uiText("Tạo đợt mở bán ngay")}
             icon={<Icon name="add" size={16} color="#FFFFFF" />}
             onPress={() => router.push("/teaching/offerings/create" as Href)}
           />
@@ -140,15 +144,15 @@ export default function Offerings() {
                   style={[os.statusDot, { backgroundColor: isPublished ? tokens.color.success : "#D97706" }]}
                 />
                 <Text style={[os.badgeText, isPublished ? os.badgeTextPublished : os.badgeTextDraft]}>
-                  {isPublished ? "ĐÃ MỞ BÁN" : "BẢN NHÁP"}
+                  {isPublished ? uiText("ĐÃ MỞ BÁN") : uiText("BẢN NHÁP")}
                 </Text>
               </View>
               <View style={os.pricePill}>
                 <Icon name="card" size={13} color="#0D9488" />
                 <Text style={os.pricePillText}>
                   {item.price
-                    ? `${Number(item.price).toLocaleString("vi-VN")} ${item.currency ?? "VND"}`
-                    : "Miễn phí"}
+                    ? `${Number(item.price).toLocaleString(uiLocale)} ${item.currency ?? "VND"}`
+                    : uiText("Miễn phí")}
                 </Text>
               </View>
             </View>
@@ -159,11 +163,13 @@ export default function Offerings() {
               <View style={os.typeBadge}>
                 <Icon name="book" size={13} color={tokens.color.muted} />
                 <Text style={os.typeBadgeText}>
-                  {item.offeringType === "LIVE_COHORT" ? "Lớp học trực tiếp" : "Tự học có hướng dẫn"}
+                  {item.offeringType === "LIVE_COHORT"
+                    ? uiText("Lớp học trực tiếp")
+                    : uiText("Tự học có hướng dẫn")}
                 </Text>
               </View>
               <View style={os.actionLink}>
-                <Text style={os.actionLinkText}>Chi tiết</Text>
+                <Text style={os.actionLinkText}>{uiText("Chi tiết")}</Text>
                 <Icon name="chevronRight" size={14} color={tokens.color.brand} />
               </View>
             </View>

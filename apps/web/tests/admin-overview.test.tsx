@@ -126,9 +126,9 @@ describe("Admin Control Center overview", () => {
     wrap();
     await screen.findByText("12.480");
     await waitFor(() =>
-      expect(screen.getByText("API Gateway").closest("tr")?.textContent).toContain("Unknown"),
+      expect(screen.getByText("API Gateway").closest("tr")?.textContent).toContain("Không rõ"),
     );
-    expect(screen.queryByText("API Gateway · Critical")).toBeNull();
+    expect(screen.queryByText("API Gateway · Cần xử lý")).toBeNull();
   });
   it("surfaces stale service warnings in the alerts panel", async () => {
     sources([], {
@@ -138,7 +138,7 @@ describe("Admin Control Center overview", () => {
       ),
     });
     wrap();
-    expect(await screen.findByText("API Gateway · Warning")).toBeTruthy();
+    expect(await screen.findByText("API Gateway · Cần theo dõi")).toBeTruthy();
   });
   it("renders eight KPIs and preserves the reference Prometheus/Grafana panel", async () => {
     sources();
@@ -170,12 +170,14 @@ describe("Admin Control Center overview", () => {
       expect(fetcher.mock.calls.some(([url]) => String(url).includes("operations?range=90d"))).toBe(true),
     );
     expect(screen.getByRole("button", { name: "90 ngày" }).getAttribute("aria-pressed")).toBe("true");
-    fireEvent.click(screen.getByRole("button", { name: "Active users" }));
+    fireEvent.click(screen.getByRole("button", { name: "Người dùng hoạt động" }));
     expect(screen.getByText("Chưa có tổng hợp người dùng hoạt động theo ngày.")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "AI usage" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mức sử dụng AI" }));
     expect(await screen.findByRole("img", { name: "AI requests mỗi ngày" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /Manage Users/ }).getAttribute("href")).toBe("/app/admin/users");
-    expect(screen.getByRole("button", { name: /Create Admin/ }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByRole("link", { name: /^Quản lý người dùng$/ }).getAttribute("href")).toBe(
+      "/app/admin/users",
+    );
+    expect(screen.getByRole("button", { name: /Tạo quản trị viên/ }).hasAttribute("disabled")).toBe(true);
   });
   it("keeps monitoring and account data when independent finance sources fail", async () => {
     sources(["/dashboard/revenue", "/payouts"]);
@@ -210,6 +212,6 @@ describe("Admin Control Center overview", () => {
     expect(screen.queryByText("12.480")).toBeNull();
     expect(screen.queryByText("9.00")).toBeNull();
     expect(screen.queryByText("24.820")).toBeNull();
-    expect(screen.getAllByText("Unknown").length).toBeGreaterThanOrEqual(7);
+    expect(screen.getAllByText("Không rõ").length).toBeGreaterThanOrEqual(7);
   });
 });

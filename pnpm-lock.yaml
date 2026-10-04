@@ -295,6 +295,8 @@ importers:
 
   packages/logger: {}
 
+  packages/localization: {}
+
   packages/observability: {}
 
   packages/outbox: {}

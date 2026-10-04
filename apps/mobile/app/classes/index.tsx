@@ -1,3 +1,4 @@
+import { useLanguage, useUiText } from "../../src/use-language";
 import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
 import {
   Text,
@@ -123,6 +124,8 @@ function getClassVisualTheme(title: string) {
 }
 
 export default function StudentClassesScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { tab } = useLocalSearchParams<{ tab?: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -255,11 +258,11 @@ export default function StudentClassesScreen() {
         <Page>
           <View style={[styles.card, { alignItems: "center", paddingVertical: 40, gap: 14 }]}>
             <Icon name="calendar" size={40} color={tokens.color.brand} />
-            <Text style={styles.title}>Lớp học & Lịch học</Text>
+            <Text style={styles.title}>{uiText("Lớp học & Lịch học")}</Text>
             <Text style={[styles.text, { textAlign: "center", maxWidth: 300 }]}>
-              Vui lòng đăng nhập tài khoản học viên để xem danh sách lớp và lịch học của bạn.
+              {uiText("Vui lòng đăng nhập tài khoản học viên để xem danh sách lớp và lịch học của bạn.")}
             </Text>
-            <Button label="Đăng nhập ngay" size="lg" onPress={() => router.push("/login")} />
+            <Button label={uiText("Đăng nhập ngay")} size="lg" onPress={() => router.push("/login")} />
           </View>
         </Page>
         <BottomNavBar currentRoute="classes" onNavigate={(path) => router.push(path as Href)} />
@@ -306,15 +309,15 @@ export default function StudentClassesScreen() {
         <ScreenHeader
           title={
             activeTab === "attendance"
-              ? "Điểm danh học tập"
+              ? uiText("Điểm danh học tập")
               : activeTab === "schedule"
-                ? "Lịch học của bạn"
-                : "Lớp học của bạn"
+                ? uiText("Lịch học của bạn")
+                : uiText("Lớp học của bạn")
           }
           subtitle={
             activeTab === "attendance"
-              ? "Theo dõi chuyên cần và lịch sử điểm danh"
-              : "Theo dõi thời khóa biểu và tham gia các buổi học trực tuyến"
+              ? uiText("Theo dõi chuyên cần và lịch sử điểm danh")
+              : uiText("Theo dõi thời khóa biểu và tham gia các buổi học trực tuyến")
           }
           onBack={() => {
             if (router.canGoBack()) router.back();
@@ -323,7 +326,11 @@ export default function StudentClassesScreen() {
           rightElement={
             activeTab === "attendance" ? (
               <Badge
-                label={presentRate >= 80 ? `${presentRate}% ĐẠT` : `${presentRate}% CẦN CỐ GẮNG`}
+                label={
+                  presentRate >= 80
+                    ? uiText("{0}% ĐẠT", [presentRate])
+                    : uiText("{0}% CẦN CỐ GẮNG", [presentRate])
+                }
                 variant={presentRate >= 80 ? "success" : "warning"}
                 icon="check"
               />
@@ -349,7 +356,8 @@ export default function StudentClassesScreen() {
                 numberOfLines={1}
                 style={[localStyles.tabText, activeTab === "classes" && localStyles.tabTextActive]}
               >
-                Lớp học ({classesList.length})
+                {uiText("Lớp học (")}
+                {classesList.length})
               </Text>
             </View>
           </ScalePressable>
@@ -370,7 +378,8 @@ export default function StudentClassesScreen() {
                 numberOfLines={1}
                 style={[localStyles.tabText, activeTab === "schedule" && localStyles.tabTextActive]}
               >
-                Lịch học ({scheduleList.length})
+                {uiText("Lịch học (")}
+                {scheduleList.length})
               </Text>
             </View>
           </ScalePressable>
@@ -391,7 +400,8 @@ export default function StudentClassesScreen() {
                 numberOfLines={1}
                 style={[localStyles.tabText, activeTab === "attendance" && localStyles.tabTextActive]}
               >
-                Điểm danh ({attendanceList.length})
+                {uiText("Điểm danh (")}
+                {attendanceList.length})
               </Text>
             </View>
           </ScalePressable>
@@ -401,7 +411,7 @@ export default function StudentClassesScreen() {
         {loading && !refreshing && (
           <View style={localStyles.center}>
             <ActivityIndicator size="large" color={tokens.color.brand} />
-            <Text style={[styles.small, { marginTop: 8 }]}>Đang tải dữ liệu…</Text>
+            <Text style={[styles.small, { marginTop: 8 }]}>{uiText("Đang tải dữ liệu…")}</Text>
           </View>
         )}
 
@@ -409,9 +419,9 @@ export default function StudentClassesScreen() {
         {error && !loading && (
           <View style={[styles.card, { borderColor: tokens.color.dangerLight, backgroundColor: "#FEF2F2" }]}>
             <Text accessibilityRole="alert" style={styles.error}>
-              {error}
+              {uiText(error)}
             </Text>
-            <Button label="Thử lại" size="sm" onPress={() => void fetchData()} />
+            <Button label={uiText("Thử lại")} size="sm" onPress={() => void fetchData()} />
           </View>
         )}
 
@@ -426,19 +436,19 @@ export default function StudentClassesScreen() {
                     <Icon name="quiz" size={20} color="#0284C7" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={localStyles.todoTitle}>Sắp đến hạn</Text>
+                    <Text style={localStyles.todoTitle}>{uiText("Sắp đến hạn")}</Text>
                     <Text style={localStyles.todoSubtitle}>
-                      Việc cần làm và bài tập được giao trong các lớp học bạn đang tham gia.
+                      {uiText("Việc cần làm và bài tập được giao trong các lớp học bạn đang tham gia.")}
                     </Text>
                   </View>
                 </View>
                 <ScalePressable
                   accessibilityRole="button"
-                  accessibilityLabel="Xem tất cả việc cần làm"
+                  accessibilityLabel={uiText("Xem tất cả việc cần làm")}
                   style={localStyles.todoViewAllBtn}
                   onPress={() => router.push("/assessments")}
                 >
-                  <Text style={localStyles.todoViewAllText}>Xem tất cả</Text>
+                  <Text style={localStyles.todoViewAllText}>{uiText("Xem tất cả")}</Text>
                   <Icon name="chevronRight" size={12} color="#0284C7" />
                 </ScalePressable>
               </View>
@@ -446,7 +456,7 @@ export default function StudentClassesScreen() {
               {quizzesLoading ? (
                 <View style={localStyles.todoLoadingRow}>
                   <ActivityIndicator size="small" color="#0284C7" />
-                  <Text style={localStyles.todoLoadingText}>Đang kiểm tra bài tập lớp học…</Text>
+                  <Text style={localStyles.todoLoadingText}>{uiText("Đang kiểm tra bài tập lớp học…")}</Text>
                 </View>
               ) : classQuizzes.length > 0 ? (
                 <View style={localStyles.todoList}>
@@ -477,14 +487,16 @@ export default function StudentClassesScreen() {
                               {quiz.title}
                             </Text>
                             <View style={localStyles.todoMetaRow}>
-                              <Text style={localStyles.todoMetaLabel}>Lớp:</Text>
+                              <Text style={localStyles.todoMetaLabel}>{uiText("Lớp:")}</Text>
                               <Text numberOfLines={1} style={localStyles.todoMetaClass}>
                                 {quiz.targetName || "Lớp học trực tuyến"}
                               </Text>
                               {quiz.questionCount ? (
                                 <>
                                   <Text style={localStyles.todoMetaDot}>•</Text>
-                                  <Text style={localStyles.todoMetaCount}>{quiz.questionCount} câu</Text>
+                                  <Text style={localStyles.todoMetaCount}>
+                                    {quiz.questionCount} {uiText(" câu")}
+                                  </Text>
                                 </>
                               ) : null}
                             </View>
@@ -493,7 +505,7 @@ export default function StudentClassesScreen() {
 
                         <View style={localStyles.todoItemRight}>
                           <View style={{ alignItems: "flex-end" }}>
-                            <Text style={localStyles.todoDueCaption}>Hạn nộp</Text>
+                            <Text style={localStyles.todoDueCaption}>{uiText("Hạn nộp")}</Text>
                             <Text
                               style={[localStyles.todoDueDate, isUrgent && localStyles.todoDueDateUrgent]}
                             >
@@ -501,7 +513,7 @@ export default function StudentClassesScreen() {
                             </Text>
                           </View>
                           <View style={localStyles.todoActionBtn}>
-                            <Text style={localStyles.todoActionBtnText}>Làm bài</Text>
+                            <Text style={localStyles.todoActionBtnText}>{uiText("Làm bài")}</Text>
                             <Icon name="chevronRight" size={11} color="#0284C7" />
                           </View>
                         </View>
@@ -515,9 +527,11 @@ export default function StudentClassesScreen() {
                     <Icon name="checkCircle" size={22} color="#10B981" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={localStyles.todoEmptyTitle}>Không có bài tập nào cần nộp</Text>
+                    <Text style={localStyles.todoEmptyTitle}>{uiText("Không có bài tập nào cần nộp")}</Text>
                     <Text style={localStyles.todoEmptySub}>
-                      Hiện không có bài kiểm tra hoặc bài tập nào sắp đến hạn trong các lớp học của bạn.
+                      {uiText(
+                        "Hiện không có bài kiểm tra hoặc bài tập nào sắp đến hạn trong các lớp học của bạn.",
+                      )}
                     </Text>
                   </View>
                 </View>
@@ -527,12 +541,12 @@ export default function StudentClassesScreen() {
             {/* 2. Danh sách lớp header with "+ Thêm lớp học" toggle button */}
             <View style={localStyles.classesSectionHeader}>
               <View>
-                <Text style={localStyles.classesSectionEyebrow}>DANH SÁCH LỚP</Text>
-                <Text style={localStyles.classesSectionTitle}>Lớp học của tôi</Text>
+                <Text style={localStyles.classesSectionEyebrow}>{uiText("DANH SÁCH LỚP")}</Text>
+                <Text style={localStyles.classesSectionTitle}>{uiText("Lớp học của tôi")}</Text>
               </View>
               <ScalePressable
                 accessibilityRole="button"
-                accessibilityLabel={showJoinForm ? "Ẩn khung tham gia" : "Thêm lớp học"}
+                accessibilityLabel={showJoinForm ? uiText("Ẩn khung tham gia") : uiText("Thêm lớp học")}
                 style={[localStyles.joinToggleBtn, showJoinForm && localStyles.joinToggleBtnActive]}
                 onPress={() => setShowJoinForm((v) => !v)}
               >
@@ -544,7 +558,7 @@ export default function StudentClassesScreen() {
                 <Text
                   style={[localStyles.joinToggleBtnText, showJoinForm && localStyles.joinToggleBtnTextActive]}
                 >
-                  {showJoinForm ? "Ẩn khung" : "+ Thêm lớp"}
+                  {showJoinForm ? uiText("Ẩn khung") : uiText("+ Thêm lớp")}
                 </Text>
               </ScalePressable>
             </View>
@@ -557,10 +571,11 @@ export default function StudentClassesScreen() {
                     <Icon name="class" size={18} color="#0284C7" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={localStyles.joinBoxTitle}>Tham gia lớp học mới</Text>
+                    <Text style={localStyles.joinBoxTitle}>{uiText("Tham gia lớp học mới")}</Text>
                     <Text style={localStyles.joinBoxSub}>
-                      Nhập mã tham gia do giảng viên cung cấp (từ 6 - 32 ký tự) để tự động ghi danh vào lớp
-                      học.
+                      {uiText(
+                        "Nhập mã tham gia 6 ký tự do giảng viên cung cấp để tự động ghi danh vào lớp học.",
+                      )}
                     </Text>
                   </View>
                 </View>
@@ -573,9 +588,9 @@ export default function StudentClassesScreen() {
                     autoCapitalize="characters"
                     autoCorrect={false}
                     maxLength={32}
-                    placeholder="VD: AILSS-REACT-2026"
+                    placeholder="VD: K26A2B"
                     placeholderTextColor="#94A3B8"
-                    accessibilityLabel="Mã tham gia lớp"
+                    accessibilityLabel={uiText("Mã tham gia lớp")}
                   />
                   <ScalePressable
                     style={[localStyles.joinSubmitBtn, joinBusy && { opacity: 0.7 }]}
@@ -586,7 +601,7 @@ export default function StudentClassesScreen() {
                       <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
                       <>
-                        <Text style={localStyles.joinSubmitBtnText}>Vào lớp</Text>
+                        <Text style={localStyles.joinSubmitBtnText}>{uiText("Vào lớp")}</Text>
                         <Icon name="chevronRight" size={12} color="#FFFFFF" />
                       </>
                     )}
@@ -613,8 +628,10 @@ export default function StudentClassesScreen() {
             {classesList.length === 0 ? (
               <EmptyState
                 icon="calendar"
-                title="Chưa tham gia lớp học nào"
-                description="Đăng ký khóa học hoặc sử dụng mã tham gia do giảng viên cung cấp để vào lớp."
+                title={uiText("Chưa tham gia lớp học nào")}
+                description={uiText(
+                  "Đăng ký khóa học hoặc sử dụng mã tham gia do giảng viên cung cấp để vào lớp.",
+                )}
                 actionLabel="Khám phá khóa học"
                 onAction={() => router.push("/courses")}
               />
@@ -637,7 +654,7 @@ export default function StudentClassesScreen() {
                       <View style={localStyles.artworkContentRow}>
                         <View style={localStyles.artworkIconPill}>
                           <Icon name="class" size={13} color="#FFFFFF" />
-                          <Text style={localStyles.artworkPillText}>Lớp học</Text>
+                          <Text style={localStyles.artworkPillText}>{uiText("Lớp học")}</Text>
                         </View>
                         <View
                           style={[
@@ -656,7 +673,7 @@ export default function StudentClassesScreen() {
                               { color: hasSchedule ? "#16A34A" : "#D97706" },
                             ]}
                           >
-                            {hasSchedule ? "ĐÃ CÓ LỊCH" : "CHỜ LỊCH"}
+                            {hasSchedule ? uiText("ĐÃ CÓ LỊCH") : uiText("CHỜ LỊCH")}
                           </Text>
                         </View>
                       </View>
@@ -674,7 +691,7 @@ export default function StudentClassesScreen() {
                     {/* Card Body */}
                     <View style={localStyles.classCardBody}>
                       <View style={localStyles.classHeadingRow}>
-                        <Text style={localStyles.classCategoryChip}>Lớp theo lịch</Text>
+                        <Text style={localStyles.classCategoryChip}>{uiText("Lớp theo lịch")}</Text>
                         <View
                           style={[
                             localStyles.classKindBadge,
@@ -696,7 +713,7 @@ export default function StudentClassesScreen() {
                               { color: isLive ? "#0D9488" : isPrivate ? "#7C3AED" : "#2563EB" },
                             ]}
                           >
-                            {isLive ? "LIVE" : isPrivate ? "Kèm 1-1" : "Trực tuyến"}
+                            {isLive ? uiText("LIVE") : isPrivate ? uiText("Kèm 1-1") : uiText("Trực tuyến")}
                           </Text>
                         </View>
                       </View>
@@ -707,19 +724,22 @@ export default function StudentClassesScreen() {
                       <View style={localStyles.richClassMetaRow}>
                         <View style={localStyles.classMetaItem}>
                           <Icon name="calendar" size={13} color="#0284C7" />
-                          <Text style={localStyles.classMetaText}>Lịch học trực tiếp</Text>
+                          <Text style={localStyles.classMetaText}>{uiText("Lịch học trực tiếp")}</Text>
                         </View>
                         <Text style={localStyles.classMetaDot}>•</Text>
                         <View style={localStyles.classMetaItem}>
                           <Icon name="attendance" size={13} color="#10B981" />
-                          <Text style={localStyles.classMetaText}>Có điểm danh</Text>
+                          <Text style={localStyles.classMetaText}>{uiText("Có điểm danh")}</Text>
                         </View>
                         {item.maxMembers ? (
                           <>
                             <Text style={localStyles.classMetaDot}>•</Text>
                             <View style={localStyles.classMetaItem}>
                               <Icon name="people" size={13} color={tokens.color.muted} />
-                              <Text style={localStyles.classMetaText}>Tối đa {item.maxMembers} bạn</Text>
+                              <Text style={localStyles.classMetaText}>
+                                {uiText("Tối đa ")}
+                                {item.maxMembers} {uiText(" bạn")}
+                              </Text>
                             </View>
                           </>
                         ) : null}
@@ -734,7 +754,8 @@ export default function StudentClassesScreen() {
                           <View style={localStyles.dueSnippetHeader}>
                             <Icon name="alert" size={12} color="#DC2626" />
                             <Text style={localStyles.dueSnippetLabel}>
-                              Đến hạn {formatDueLabel(firstDueQuiz.closesAt)}
+                              {uiText("Đến hạn ")}
+                              {formatDueLabel(firstDueQuiz.closesAt)}
                             </Text>
                           </View>
                           <Text numberOfLines={1} style={localStyles.dueSnippetTitle}>
@@ -745,15 +766,19 @@ export default function StudentClassesScreen() {
                         <View style={localStyles.classBenefitsBox}>
                           <View style={localStyles.benefitItem}>
                             <Icon name="check" size={12} color="#10B981" />
-                            <Text style={localStyles.benefitText}>Thảo luận cùng giảng viên</Text>
+                            <Text style={localStyles.benefitText}>{uiText("Thảo luận cùng giảng viên")}</Text>
                           </View>
                           <View style={localStyles.benefitItem}>
                             <Icon name="check" size={12} color="#10B981" />
-                            <Text style={localStyles.benefitText}>Bài tập & tài liệu lớp học</Text>
+                            <Text style={localStyles.benefitText}>
+                              {uiText("Bài tập & tài liệu lớp học")}
+                            </Text>
                           </View>
                           <View style={localStyles.benefitItem}>
                             <Icon name="check" size={12} color="#10B981" />
-                            <Text style={localStyles.benefitText}>Theo dõi chuyên cần & tiến độ</Text>
+                            <Text style={localStyles.benefitText}>
+                              {uiText("Theo dõi chuyên cần & tiến độ")}
+                            </Text>
                           </View>
                         </View>
                       )}
@@ -764,22 +789,22 @@ export default function StudentClassesScreen() {
                       <View style={localStyles.richClassCardActions}>
                         <ScalePressable
                           accessibilityRole="button"
-                          accessibilityLabel="Xem lịch học"
+                          accessibilityLabel={uiText("Xem lịch học")}
                           style={localStyles.classActionSecondaryBtn}
                           onPress={() => setActiveTab("schedule")}
                         >
                           <Icon name="calendar" size={14} color="#334155" />
-                          <Text style={localStyles.classActionSecondaryText}>Xem lịch</Text>
+                          <Text style={localStyles.classActionSecondaryText}>{uiText("Xem lịch")}</Text>
                         </ScalePressable>
 
                         <ScalePressable
                           accessibilityRole="button"
-                          accessibilityLabel={`Vào lớp học ${item.name}`}
+                          accessibilityLabel={uiText("Vào lớp học {0}", [item.name])}
                           style={localStyles.classActionPrimaryBtn}
                           onPress={() => router.push(`/classes/${item.classId}`)}
                         >
                           <Icon name="class" size={14} color="#FFFFFF" />
-                          <Text style={localStyles.classActionPrimaryText}>Vào lớp học</Text>
+                          <Text style={localStyles.classActionPrimaryText}>{uiText("Vào lớp học")}</Text>
                           <Icon name="chevronRight" size={12} color="#FFFFFF" />
                         </ScalePressable>
                       </View>
@@ -798,9 +823,9 @@ export default function StudentClassesScreen() {
             <View style={localStyles.viewModeSwitch}>
               {(
                 [
-                  { id: "day", label: "Theo Ngày" },
-                  { id: "week", label: "Theo Tuần" },
-                  { id: "month", label: "Theo Tháng" },
+                  { id: "day", label: uiText("Theo Ngày") },
+                  { id: "week", label: uiText("Theo Tuần") },
+                  { id: "month", label: uiText("Theo Tháng") },
                 ] as const
               ).map((mode) => (
                 <ScalePressable
@@ -826,8 +851,10 @@ export default function StudentClassesScreen() {
             {scheduleList.length === 0 ? (
               <EmptyState
                 icon="calendar"
-                title="Không có lịch học nào"
-                description="Lịch học của các lớp bạn tham gia trong 30 ngày tới sẽ tự động hiển thị tại đây khi giảng viên công bố."
+                title={uiText("Không có lịch học nào")}
+                description={uiText(
+                  "Lịch học của các lớp bạn tham gia trong 30 ngày tới sẽ tự động hiển thị tại đây khi giảng viên công bố.",
+                )}
               />
             ) : scheduleViewMode === "day" ? (
               <View>
@@ -880,11 +907,11 @@ export default function StudentClassesScreen() {
                   }}
                 >
                   <Text style={{ fontSize: 14, fontWeight: "700", color: tokens.color.ink }}>
-                    Lịch học ngày {selectedDateStr.slice(8, 10)}/{selectedDateStr.slice(5, 7)}/
-                    {selectedDateStr.slice(0, 4)}
+                    {uiText("Lịch học ngày ")}
+                    {selectedDateStr.slice(8, 10)}/{selectedDateStr.slice(5, 7)}/{selectedDateStr.slice(0, 4)}
                   </Text>
                   <Badge
-                    label={`${daySessions.length} buổi học`}
+                    label={uiText("{0} buổi học", [daySessions.length])}
                     variant={daySessions.length > 0 ? "success" : "neutral"}
                   />
                 </View>
@@ -894,24 +921,24 @@ export default function StudentClassesScreen() {
                   <View style={localStyles.emptyDayBox}>
                     <Icon name="calendar" size={32} color={tokens.color.muted} />
                     <Text style={{ fontSize: 14, fontWeight: "700", color: tokens.color.ink }}>
-                      Không có tiết học nào trong ngày này
+                      {uiText("Không có tiết học nào trong ngày này")}
                     </Text>
                     <Text style={[styles.small, { textAlign: "center", maxWidth: 260 }]}>
-                      Bạn có thể chọn ngày khác trên dải lịch hoặc chuyển sang chế độ xem Tuần.
+                      {uiText("Bạn có thể chọn ngày khác trên dải lịch hoặc chuyển sang chế độ xem Tuần.")}
                     </Text>
                   </View>
                 ) : (
                   daySessions.map((sess) => {
                     const start = parseTimestamp(sess.startAt);
                     const end = parseTimestamp(sess.endAt);
-                    const timeStr = formatTimeRange(start, end, sess.timezone);
+                    const timeStr = formatTimeRange(start, end, sess.timezone, uiLocale);
                     const isOnline = sess.mode === "ONLINE";
 
                     return (
                       <Pressable
                         key={sess.sessionId}
                         accessibilityRole="button"
-                        accessibilityLabel={`Xem buổi học ${sess.title}`}
+                        accessibilityLabel={uiText("Xem buổi học {0}", [sess.title])}
                         style={[localStyles.sessionCard, isOnline && localStyles.sessionCardOnline]}
                         onPress={() => router.push(`/classes/${sess.classId}/sessions/${sess.sessionId}`)}
                       >
@@ -923,7 +950,7 @@ export default function StudentClassesScreen() {
                           }}
                         >
                           <Badge
-                            label={isOnline ? "TRỰC TUYẾN • LIVE" : "TRỰC TIẾP"}
+                            label={isOnline ? uiText("TRỰC TUYẾN • LIVE") : uiText("TRỰC TIẾP")}
                             variant={isOnline ? "success" : "neutral"}
                           />
                           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
@@ -933,7 +960,10 @@ export default function StudentClassesScreen() {
                         </View>
 
                         <Text style={localStyles.sessionTitle}>{sess.title}</Text>
-                        <Text style={localStyles.sessionClassName}>Lớp: {sess.className}</Text>
+                        <Text style={localStyles.sessionClassName}>
+                          {uiText("Lớp: ")}
+                          {sess.className}
+                        </Text>
 
                         <View
                           style={{
@@ -945,7 +975,7 @@ export default function StudentClassesScreen() {
                           }}
                         >
                           <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
-                            Vào chi tiết
+                            {uiText("Vào chi tiết")}
                           </Text>
                           <Icon name="chevronRight" size={14} color={tokens.color.brand} />
                         </View>
@@ -960,7 +990,7 @@ export default function StudentClassesScreen() {
                 <View style={localStyles.monthOverviewCard}>
                   <View style={localStyles.monthOverviewItem}>
                     <Text style={localStyles.monthOverviewNum}>{scheduleList.length}</Text>
-                    <Text style={localStyles.monthOverviewLabel}>Tổng số buổi</Text>
+                    <Text style={localStyles.monthOverviewLabel}>{uiText("Tổng số buổi")}</Text>
                   </View>
                   <View style={localStyles.monthOverviewItem}>
                     <Text style={[localStyles.monthOverviewNum, { color: "#059669" }]}>
@@ -972,14 +1002,14 @@ export default function StudentClassesScreen() {
                     <Text style={[localStyles.monthOverviewNum, { color: "#D97706" }]}>
                       {scheduleList.filter((s) => s.mode !== "ONLINE").length}
                     </Text>
-                    <Text style={localStyles.monthOverviewLabel}>Trực tiếp</Text>
+                    <Text style={localStyles.monthOverviewLabel}>{uiText("Trực tiếp")}</Text>
                   </View>
                 </View>
 
                 {/* All Month Sessions Grouped */}
                 {Array.from(groupedSchedule.entries()).map(([dateKey, sessions]) => {
                   const sampleDate = parseTimestamp(sessions[0].startAt);
-                  const formattedDay = formatDate(sampleDate, sessions[0].timezone);
+                  const formattedDay = formatDate(sampleDate, sessions[0].timezone, uiLocale);
                   return (
                     <View key={dateKey} style={localStyles.daySection}>
                       <View style={localStyles.dayHeader}>
@@ -987,20 +1017,20 @@ export default function StudentClassesScreen() {
                           <Icon name="calendar" size={15} color={tokens.color.brand} />
                           <Text style={localStyles.dayTitle}>{formattedDay}</Text>
                         </View>
-                        <Badge label={`${sessions.length} buổi`} variant="neutral" />
+                        <Badge label={uiText("{0} buổi", [sessions.length])} variant="neutral" />
                       </View>
 
                       {sessions.map((sess) => {
                         const start = parseTimestamp(sess.startAt);
                         const end = parseTimestamp(sess.endAt);
-                        const timeStr = formatTimeRange(start, end, sess.timezone);
+                        const timeStr = formatTimeRange(start, end, sess.timezone, uiLocale);
                         const isOnline = sess.mode === "ONLINE";
 
                         return (
                           <Pressable
                             key={sess.sessionId}
                             accessibilityRole="button"
-                            accessibilityLabel={`Xem buổi học ${sess.title}`}
+                            accessibilityLabel={uiText("Xem buổi học {0}", [sess.title])}
                             style={[localStyles.sessionCard, isOnline && localStyles.sessionCardOnline]}
                             onPress={() => router.push(`/classes/${sess.classId}/sessions/${sess.sessionId}`)}
                           >
@@ -1012,7 +1042,7 @@ export default function StudentClassesScreen() {
                               }}
                             >
                               <Badge
-                                label={isOnline ? "TRỰC TUYẾN • LIVE" : "TRỰC TIẾP"}
+                                label={isOnline ? uiText("TRỰC TUYẾN • LIVE") : uiText("TRỰC TIẾP")}
                                 variant={isOnline ? "success" : "neutral"}
                               />
                               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
@@ -1022,7 +1052,10 @@ export default function StudentClassesScreen() {
                             </View>
 
                             <Text style={localStyles.sessionTitle}>{sess.title}</Text>
-                            <Text style={localStyles.sessionClassName}>Lớp: {sess.className}</Text>
+                            <Text style={localStyles.sessionClassName}>
+                              {uiText("Lớp: ")}
+                              {sess.className}
+                            </Text>
 
                             <View
                               style={{
@@ -1034,7 +1067,7 @@ export default function StudentClassesScreen() {
                               }}
                             >
                               <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
-                                Vào chi tiết
+                                {uiText("Vào chi tiết")}
                               </Text>
                               <Icon name="chevronRight" size={14} color={tokens.color.brand} />
                             </View>
@@ -1049,7 +1082,7 @@ export default function StudentClassesScreen() {
               /* Week View */
               Array.from(groupedSchedule.entries()).map(([dateKey, sessions]) => {
                 const sampleDate = parseTimestamp(sessions[0].startAt);
-                const formattedDay = formatDate(sampleDate, sessions[0].timezone);
+                const formattedDay = formatDate(sampleDate, sessions[0].timezone, uiLocale);
                 return (
                   <View key={dateKey} style={localStyles.daySection}>
                     <View style={localStyles.dayHeader}>
@@ -1057,20 +1090,20 @@ export default function StudentClassesScreen() {
                         <Icon name="calendar" size={15} color={tokens.color.brand} />
                         <Text style={localStyles.dayTitle}>{formattedDay}</Text>
                       </View>
-                      <Badge label={`${sessions.length} buổi`} variant="neutral" />
+                      <Badge label={uiText("{0} buổi", [sessions.length])} variant="neutral" />
                     </View>
 
                     {sessions.map((sess) => {
                       const start = parseTimestamp(sess.startAt);
                       const end = parseTimestamp(sess.endAt);
-                      const timeStr = formatTimeRange(start, end, sess.timezone);
+                      const timeStr = formatTimeRange(start, end, sess.timezone, uiLocale);
                       const isOnline = sess.mode === "ONLINE";
 
                       return (
                         <Pressable
                           key={sess.sessionId}
                           accessibilityRole="button"
-                          accessibilityLabel={`Xem buổi học ${sess.title}`}
+                          accessibilityLabel={uiText("Xem buổi học {0}", [sess.title])}
                           style={[localStyles.sessionCard, isOnline && localStyles.sessionCardOnline]}
                           onPress={() => router.push(`/classes/${sess.classId}/sessions/${sess.sessionId}`)}
                         >
@@ -1082,7 +1115,7 @@ export default function StudentClassesScreen() {
                             }}
                           >
                             <Badge
-                              label={isOnline ? "TRỰC TUYẾN • LIVE" : "TRỰC TIẾP"}
+                              label={isOnline ? uiText("TRỰC TUYẾN • LIVE") : uiText("TRỰC TIẾP")}
                               variant={isOnline ? "success" : "neutral"}
                             />
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
@@ -1092,7 +1125,10 @@ export default function StudentClassesScreen() {
                           </View>
 
                           <Text style={localStyles.sessionTitle}>{sess.title}</Text>
-                          <Text style={localStyles.sessionClassName}>Lớp: {sess.className}</Text>
+                          <Text style={localStyles.sessionClassName}>
+                            {uiText("Lớp: ")}
+                            {sess.className}
+                          </Text>
 
                           <View
                             style={{
@@ -1104,7 +1140,7 @@ export default function StudentClassesScreen() {
                             }}
                           >
                             <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
-                              Vào chi tiết
+                              {uiText("Vào chi tiết")}
                             </Text>
                             <Icon name="chevronRight" size={14} color={tokens.color.brand} />
                           </View>
@@ -1125,19 +1161,19 @@ export default function StudentClassesScreen() {
             <View style={localStyles.kpiGrid}>
               <View style={[localStyles.kpiCard, { borderColor: "#A7F3D0", backgroundColor: "#ECFDF5" }]}>
                 <Text style={[localStyles.kpiNumber, { color: "#059669" }]}>{presentCount}</Text>
-                <Text style={localStyles.kpiLabel}>Có mặt</Text>
+                <Text style={localStyles.kpiLabel}>{uiText("Có mặt")}</Text>
               </View>
               <View style={[localStyles.kpiCard, { borderColor: "#FDE68A", backgroundColor: "#FFFBEB" }]}>
                 <Text style={[localStyles.kpiNumber, { color: "#D97706" }]}>{excusedCount}</Text>
-                <Text style={localStyles.kpiLabel}>Có phép</Text>
+                <Text style={localStyles.kpiLabel}>{uiText("Có phép")}</Text>
               </View>
               <View style={[localStyles.kpiCard, { borderColor: "#FECACA", backgroundColor: "#FEF2F2" }]}>
                 <Text style={[localStyles.kpiNumber, { color: "#DC2626" }]}>{absentCount}</Text>
-                <Text style={localStyles.kpiLabel}>Vắng</Text>
+                <Text style={localStyles.kpiLabel}>{uiText("Vắng")}</Text>
               </View>
               <View style={[localStyles.kpiCard, { borderColor: "#BAE6FD", backgroundColor: "#F0F9FF" }]}>
                 <Text style={[localStyles.kpiNumber, { color: "#0284C7" }]}>{presentRate}%</Text>
-                <Text style={localStyles.kpiLabel}>Chuyên cần</Text>
+                <Text style={localStyles.kpiLabel}>{uiText("Chuyên cần")}</Text>
               </View>
             </View>
 
@@ -1145,12 +1181,12 @@ export default function StudentClassesScreen() {
             <View style={localStyles.monthBar}>
               <ScalePressable
                 accessibilityRole="button"
-                accessibilityLabel="Tháng trước"
+                accessibilityLabel={uiText("Tháng trước")}
                 style={localStyles.monthBtn}
                 onPress={() => handleAttendanceMonthShift(-1)}
               >
                 <Icon name="chevronLeft" size={14} color="#FFF" />
-                <Text style={localStyles.monthBtnText}>Trước</Text>
+                <Text style={localStyles.monthBtnText}>{uiText("Trước")}</Text>
               </ScalePressable>
               <View style={localStyles.monthBadge}>
                 <Icon name="calendar" size={14} color={tokens.color.brand} />
@@ -1158,7 +1194,7 @@ export default function StudentClassesScreen() {
               </View>
               <ScalePressable
                 accessibilityRole="button"
-                accessibilityLabel="Tháng sau"
+                accessibilityLabel={uiText("Tháng sau")}
                 style={localStyles.monthBtn}
                 onPress={() => handleAttendanceMonthShift(1)}
               >
@@ -1171,8 +1207,10 @@ export default function StudentClassesScreen() {
             {attendanceList.length === 0 ? (
               <EmptyState
                 icon="check"
-                title="Không có lịch điểm danh"
-                description={`Bạn không có buổi học nào ghi nhận điểm danh trong ${formatDisplayMonth(attendanceMonth)}.`}
+                title={uiText("Không có lịch điểm danh")}
+                description={uiText("Bạn không có buổi học nào ghi nhận điểm danh trong {0}.", [
+                  formatDisplayMonth(attendanceMonth),
+                ])}
               />
             ) : (
               attendanceList.map((item, index) => {
@@ -1211,14 +1249,17 @@ export default function StudentClassesScreen() {
                         }}
                       >
                         <Badge label={badgeLabel} variant={badgeVariant} icon="check" />
-                        <Text style={styles.small}>{formatDate(parseTimestamp(item.startAt))}</Text>
+                        <Text style={styles.small}>
+                          {formatDate(parseTimestamp(item.startAt), undefined, uiLocale)}
+                        </Text>
                       </View>
                       <Text style={[styles.title, { fontSize: 16, marginTop: 6 }]}>{item.title}</Text>
                       {item.connectedDurationSeconds > 0 && (
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 }}>
                           <Icon name="clock" size={12} color={tokens.color.muted} />
                           <Text style={styles.small}>
-                            Đã tham gia: {Math.round(item.connectedDurationSeconds / 60)} phút
+                            {uiText("Đã tham gia: ")}
+                            {Math.round(item.connectedDurationSeconds / 60)} {uiText(" phút")}
                           </Text>
                         </View>
                       )}
@@ -1232,7 +1273,7 @@ export default function StudentClassesScreen() {
                         }}
                       >
                         <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
-                          Chi tiết buổi học
+                          {uiText("Chi tiết buổi học")}
                         </Text>
                         <Icon name="chevronRight" size={14} color={tokens.color.brand} />
                       </View>

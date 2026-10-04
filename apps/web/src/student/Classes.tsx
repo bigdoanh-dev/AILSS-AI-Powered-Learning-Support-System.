@@ -1,3 +1,4 @@
+import { useUiText, useLanguage } from "../lib/i18n";
 import { OperationResult } from "../components/OperationResult";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -18,8 +19,8 @@ import { Icon } from "../components/Icon";
 import { CourseArtwork } from "../components/CourseArtwork";
 import { useClassAssignedQuizzes } from "./overview";
 
-function formatDeadline(isoDate?: string) {
-  if (!isoDate) return "Không có hạn nộp";
+function formatDeadline(isoDate: string | undefined, uiText: ReturnType<typeof useUiText>, locale: string) {
+  if (!isoDate) return uiText("Không có hạn nộp");
   try {
     const d = new Date(isoDate);
     const now = new Date();
@@ -33,12 +34,12 @@ function formatDeadline(isoDate?: string) {
       d.getDate() === tomorrow.getDate() &&
       d.getMonth() === tomorrow.getMonth() &&
       d.getFullYear() === tomorrow.getFullYear();
-    const timeStr = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false });
-    if (isToday) return `Hôm nay, ${timeStr}`;
-    if (isTomorrow) return `Ngày mai, ${timeStr}`;
-    return dateLabel(isoDate);
+    const timeStr = d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hour12: false });
+    if (isToday) return uiText("Hôm nay, {0}", [timeStr]);
+    if (isTomorrow) return uiText("Ngày mai, {0}", [timeStr]);
+    return dateLabel(isoDate, undefined, locale);
   } catch {
-    return dateLabel(isoDate);
+    return dateLabel(isoDate, undefined, locale);
   }
 }
 
@@ -61,6 +62,8 @@ function formatDueLabel(isoDate?: string) {
 }
 
 export function Classes() {
+  const uiText = useUiText();
+  const { locale } = useLanguage();
   const query = useStudent<ClassItem[]>("/me/classes"),
     [code, setCode] = useState(""),
     [showJoinForm, setShowJoinForm] = useState(false),
@@ -79,39 +82,43 @@ export function Classes() {
     return (
       <OperationResult
         success={false}
-        title="Chưa thể tham gia lớp"
+        title={uiText("Chưa thể tham gia lớp")}
         onComplete={command.clear}
         action={
           <button className="button" onClick={command.clear}>
-            Kiểm tra lại mã lớp
+            {uiText("Kiểm tra lại mã lớp")}
           </button>
         }
       >
-        <p>{command.message}</p>
+        <p>{uiText(command.message)}</p>
       </OperationResult>
     );
   return (
     <>
-      <Heading title="Lớp học của tôi">
-        Theo dõi lịch học, bài tập trên lớp và kết nối với giảng viên.
+      <Heading title={uiText("Lớp học của tôi")}>
+        {uiText("Theo dõi lịch học, bài tập trên lớp và kết nối với giảng viên.")}
       </Heading>
 
       {/* Sắp đến hạn / Việc cần phải làm - CHỈ BÀI TẬP THUỘC LỚP HỌC */}
-      <section className="class-todo-card animate-fade-in" aria-label="Bài tập lớp học sắp đến hạn">
+      <section className="class-todo-card animate-fade-in" aria-label={uiText("Bài tập lớp học sắp đến hạn")}>
         <div className="class-todo-header">
           <div className="class-todo-header-left">
             <div className="class-todo-icon-wrap">
               <Icon name="quiz" size={22} />
             </div>
             <div>
-              <h2>Sắp đến hạn</h2>
+              <h2>{uiText("Sắp đến hạn")}</h2>
               <p className="subtext">
-                Việc cần làm và bài tập được giao trực tiếp trong các lớp học bạn đang tham gia.
+                {uiText("Việc cần làm và bài tập được giao trực tiếp trong các lớp học bạn đang tham gia.")}
               </p>
             </div>
           </div>
-          <Link to="/app/assessments" className="class-todo-view-all-link" title="Xem tất cả bài tập">
-            <span>Xem việc cần làm</span>
+          <Link
+            to="/app/assessments"
+            className="class-todo-view-all-link"
+            title={uiText("Xem tất cả bài tập")}
+          >
+            <span>{uiText("Xem việc cần làm")}</span>
             <Icon name="chevronRight" size={14} />
           </Link>
         </div>
@@ -119,12 +126,12 @@ export function Classes() {
         {classQuizzesQuery.pending ? (
           <div className="class-todo-loading" role="status">
             <Icon name="refresh" size={18} className="spin-animation" />
-            <span>Đang kiểm tra danh sách bài tập lớp học…</span>
+            <span>{uiText("Đang kiểm tra danh sách bài tập lớp học…")}</span>
           </div>
         ) : sortedClassQuizzes.length > 0 ? (
           <div className="class-todo-list">
             {sortedClassQuizzes.slice(0, 5).map((q) => {
-              const deadlineText = formatDeadline(q.closesAt);
+              const deadlineText = formatDeadline(q.closesAt, uiText, locale);
               const isUrgent =
                 q.closesAt &&
                 new Date(q.closesAt).getTime() - Date.now() < 24 * 3600 * 1000 &&
@@ -140,14 +147,16 @@ export function Classes() {
                         {q.title}
                       </Link>
                       <div className="class-todo-meta">
-                        <span className="class-todo-label">Lớp học:</span>
+                        <span className="class-todo-label">{uiText("Lớp học:")}</span>
                         <Link to={`/app/classes/${q.targetId}`} className="class-todo-class-link">
                           {q.targetTitle}
                         </Link>
                         {q.questionCount ? (
                           <>
                             <span className="class-todo-dot">•</span>
-                            <span className="class-todo-count">{q.questionCount} câu hỏi</span>
+                            <span className="class-todo-count">
+                              {q.questionCount} {uiText(" câu hỏi")}
+                            </span>
                           </>
                         ) : null}
                       </div>
@@ -156,7 +165,7 @@ export function Classes() {
 
                   <div className="class-todo-item-right">
                     <div className="class-todo-due-col">
-                      <span className="class-todo-due-caption">Hạn nộp</span>
+                      <span className="class-todo-due-caption">{uiText("Hạn nộp")}</span>
                       <span className={`class-todo-due-date ${isUrgent ? "urgent-text" : ""}`}>
                         {deadlineText}
                       </span>
@@ -165,7 +174,7 @@ export function Classes() {
                       to={`/app/assessments/${q.quizId}`}
                       className="button button-small class-todo-action-btn"
                     >
-                      Làm bài →
+                      {uiText("Làm bài →")}
                     </Link>
                   </div>
                 </div>
@@ -178,8 +187,10 @@ export function Classes() {
               <Icon name="checkCircle" size={26} />
             </div>
             <div>
-              <strong>Không có bài tập nào cần nộp</strong>
-              <p>Hiện không có bài kiểm tra hoặc bài tập nào sắp đến hạn trong các lớp học của bạn.</p>
+              <strong>{uiText("Không có bài tập nào cần nộp")}</strong>
+              <p>
+                {uiText("Hiện không có bài kiểm tra hoặc bài tập nào sắp đến hạn trong các lớp học của bạn.")}
+              </p>
             </div>
           </div>
         )}
@@ -188,8 +199,8 @@ export function Classes() {
       {/* Class Section Header with "+ Thêm lớp học" button */}
       <div className="class-hub-header">
         <div>
-          <p className="eyebrow">DANH SÁCH LỚP</p>
-          <h2>Lớp học</h2>
+          <p className="eyebrow">{uiText("DANH SÁCH LỚP")}</p>
+          <h2>{uiText("Lớp học")}</h2>
         </div>
         <button
           type="button"
@@ -197,7 +208,7 @@ export function Classes() {
           onClick={() => setShowJoinForm((v) => !v)}
         >
           <Icon name={showJoinForm ? "checkCircle" : "plus"} size={14} />
-          <span>{showJoinForm ? "Ẩn khung tham gia" : "+ Thêm lớp học"}</span>
+          <span>{showJoinForm ? uiText("Ẩn khung tham gia") : uiText("+ Thêm lớp học")}</span>
         </button>
       </div>
 
@@ -209,9 +220,9 @@ export function Classes() {
               <Icon name="class" size={20} />
             </div>
             <div>
-              <h3>Tham gia lớp học mới</h3>
+              <h3>{uiText("Tham gia lớp học mới")}</h3>
               <p className="muted" style={{ margin: "2px 0 0", fontSize: "13px" }}>
-                Nhập mã tham gia do giảng viên cung cấp (từ 6 - 32 ký tự) để tự động ghi danh vào lớp học.
+                {uiText("Nhập mã tham gia 6 ký tự do giảng viên cung cấp để tự động ghi danh vào lớp học.")}
               </p>
             </div>
           </div>
@@ -229,21 +240,21 @@ export function Classes() {
                 navigate("/app/result", {
                   state: {
                     success: true,
-                    title: "Tham gia lớp thành công",
+                    title: uiText("Tham gia lớp thành công"),
                     message: "Bạn đã được thêm vào lớp. Lịch học và thông báo đã sẵn sàng.",
                     to: "/app/classes/" + joined.classId,
-                    label: "Vào lớp học",
+                    label: uiText("Vào lớp học"),
                   },
                 });
               }
             }}
           >
             <label>
-              Mã tham gia
+              {uiText("Mã tham gia")}
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="VD: AILSS-REACT-2026"
+                placeholder="VD: K26A2B"
                 required
                 minLength={6}
                 maxLength={32}
@@ -251,7 +262,7 @@ export function Classes() {
               />
             </label>
             <button className="button" disabled={command.busy}>
-              Tham gia lớp →
+              {uiText("Tham gia lớp →")}
             </button>
           </form>
           <Status command={command} />
@@ -273,19 +284,19 @@ export function Classes() {
                   <div className="learning-card-media">
                     <CourseArtwork title={c.name} />
                     <span className="learning-card-type">
-                      <Icon name="class" size={14} /> Lớp học
+                      <Icon name="class" size={14} /> {uiText(" Lớp học")}
                     </span>
                   </div>
                   <div className="learning-card-content">
                     <div className="learning-card-heading-row">
-                      <span className="course-category-chip">Lớp theo lịch</span>
+                      <span className="course-category-chip">{uiText("Lớp theo lịch")}</span>
                       <StateChip state={c.state} />
                     </div>
                     <h2>{c.name}</h2>
                     <p className="learning-card-meta">
-                      <Icon name="calendar" size={14} /> Lịch học trực tiếp
+                      <Icon name="calendar" size={14} /> {uiText(" Lịch học trực tiếp")}
                       <span>•</span>
-                      <Icon name="attendance" size={14} /> Có điểm danh
+                      <Icon name="attendance" size={14} /> {uiText(" Có điểm danh")}
                     </p>
 
                     {/* Due Assignment Snippet (if class has active tasks) */}
@@ -294,7 +305,8 @@ export function Classes() {
                         <div className="due-snippet-header">
                           <Icon name="alert" size={13} />
                           <span className="due-snippet-label">
-                            Đến hạn {formatDueLabel(firstDueQuiz.closesAt)}
+                            {uiText("Đến hạn ")}
+                            {uiText(formatDueLabel(firstDueQuiz.closesAt))}
                           </span>
                         </div>
                         <Link
@@ -306,20 +318,20 @@ export function Classes() {
                         </Link>
                       </div>
                     ) : (
-                      <ul className="course-benefits" aria-label="Tiện ích lớp học">
-                        <li>✓ Thảo luận cùng giảng viên</li>
-                        <li>✓ Bài tập &amp; tài liệu lớp</li>
-                        <li>✓ Theo dõi chuyên cần</li>
+                      <ul className="course-benefits" aria-label={uiText("Tiện ích lớp học")}>
+                        <li>{uiText("✓ Thảo luận cùng giảng viên")}</li>
+                        <li>{uiText("✓ Bài tập & tài liệu lớp")}</li>
+                        <li>{uiText("✓ Theo dõi chuyên cần")}</li>
                       </ul>
                     )}
 
                     <div className="course-card-divider" />
                     <div className="course-card-actions">
                       <Link className="learning-card-button secondary" to="/app/schedule">
-                        <Icon name="calendar" size={15} /> Xem lịch
+                        <Icon name="calendar" size={15} /> {uiText(" Xem lịch")}
                       </Link>
                       <Link className="learning-card-button primary" to={"/app/classes/" + c.classId}>
-                        <Icon name="class" size={15} /> Vào lớp học
+                        <Icon name="class" size={15} /> {uiText(" Vào lớp học")}
                       </Link>
                     </div>
                   </div>
@@ -328,21 +340,22 @@ export function Classes() {
             })}
           </div>
         ) : (
-          <Empty>Bạn chưa có lớp học. Nhập mã được giảng viên cung cấp để tham gia.</Empty>
+          <Empty>{uiText("Bạn chưa có lớp học. Nhập mã được giảng viên cung cấp để tham gia.")}</Empty>
         )}
       </State>
       <div className="inline-actions" style={{ marginTop: "24px" }}>
         <Link className="button secondary" to="/app/schedule">
-          📅 Xem lịch học
+          {uiText("📅 Xem lịch học")}
         </Link>
         <Link className="button secondary" to="/app/attendance">
-          📋 Bảng điểm danh
+          {uiText("📋 Bảng điểm danh")}
         </Link>
       </div>
     </>
   );
 }
 export function ClassDetail() {
+  const uiText = useUiText();
   const { classId = "" } = useParams();
   const query = useStudent<ClassItem>(`/classes/${classId}`);
   const [month, setMonth] = useState(monthNow());
@@ -350,7 +363,7 @@ export function ClassDetail() {
     <div className="class-detail-page-container">
       <div style={{ marginBottom: 12 }}>
         <Link className="button button-subtle button-small" to="/app/classes">
-          ← Lớp học của tôi
+          {uiText("← Lớp học của tôi")}
         </Link>
       </div>
 
@@ -366,8 +379,8 @@ export function ClassDetail() {
                 </div>
                 <div className="class-hero-content">
                   <div className="class-badge-row">
-                    <span className="badge">Lớp học trực tiếp</span>
-                    <span className="green-badge-pill">● Đang hoạt động</span>
+                    <span className="badge">{uiText("Lớp học trực tiếp")}</span>
+                    <span className="green-badge-pill">{uiText("● Đang hoạt động")}</span>
                     <span className="class-meta-chip">
                       <Icon name="users" size={13} />
                       <span>{query.data.scheduleState || "Lịch học định kỳ"}</span>
@@ -375,8 +388,9 @@ export function ClassDetail() {
                   </div>
                   <h1 className="class-hero-title">{query.data.name}</h1>
                   <p className="class-hero-desc">
-                    Không gian học tập tương tác, cập nhật lịch trình các buổi học, thông báo từ giảng viên và
-                    bài kiểm tra định kỳ.
+                    {uiText(
+                      "Không gian học tập tương tác, cập nhật lịch trình các buổi học, thông báo từ giảng viên và bài kiểm tra định kỳ.",
+                    )}
                   </p>
                 </div>
               </div>
@@ -386,12 +400,12 @@ export function ClassDetail() {
                 {query.data.linkedCourseId && (
                   <Link className="button" to={`/app/learn/${query.data.linkedCourseId}`}>
                     <Icon name="book" size={15} />
-                    <span>Xem giáo trình khóa học →</span>
+                    <span>{uiText("Xem giáo trình khóa học →")}</span>
                   </Link>
                 )}
                 <Link className="button button-subtle" to={`/app/assessments?target=CLASS/${classId}`}>
                   <Icon name="quiz" size={15} />
-                  <span>Bài kiểm tra của lớp</span>
+                  <span>{uiText("Bài kiểm tra của lớp")}</span>
                 </Link>
               </div>
             </div>
@@ -400,14 +414,14 @@ export function ClassDetail() {
             <div className="class-month-toolbar">
               <div className="class-month-label">
                 <Icon name="calendar" size={16} />
-                <span>Chọn tháng học:</span>
+                <span>{uiText("Chọn tháng học:")}</span>
               </div>
               <input
                 className="class-month-input"
                 type="month"
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
-                aria-label="Tháng học"
+                aria-label={uiText("Tháng học")}
               />
             </div>
 
@@ -416,10 +430,10 @@ export function ClassDetail() {
             <div className="dashboard-section-card" style={{ marginTop: 24 }}>
               <div className="section-card-header">
                 <div>
-                  <p className="eyebrow">TRAO ĐỔI &amp; HỎI ĐÁP</p>
-                  <h2>Thảo luận lớp học</h2>
+                  <p className="eyebrow">{uiText("TRAO ĐỔI & HỎI ĐÁP")}</p>
+                  <h2>{uiText("Thảo luận lớp học")}</h2>
                 </div>
-                <span className="kpi-tag">Cộng đồng lớp</span>
+                <span className="kpi-tag">{uiText("Cộng đồng lớp")}</span>
               </div>
               <Discussion type="CLASS" id={classId} canWrite />
             </div>
@@ -431,6 +445,8 @@ export function ClassDetail() {
 }
 
 function ClassContent({ id, month }: { id: string; month: string }) {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const q = useStudent<SessionItem[]>(
     "/classes/" + id + "/sessions?" + new URLSearchParams(rangeForMonth(month)),
   );
@@ -442,10 +458,12 @@ function ClassContent({ id, month }: { id: string; month: string }) {
       <section className="dashboard-section-card" style={{ marginTop: 20 }}>
         <div className="section-card-header">
           <div>
-            <p className="eyebrow">LỊCH TRÌNH</p>
-            <h2>Các buổi học trong tháng</h2>
+            <p className="eyebrow">{uiText("LỊCH TRÌNH")}</p>
+            <h2>{uiText("Các buổi học trong tháng")}</h2>
           </div>
-          <span className="kpi-tag accent">{q.data?.length ?? 0} buổi học</span>
+          <span className="kpi-tag accent">
+            {q.data?.length ?? 0} {uiText(" buổi học")}
+          </span>
         </div>
         <State query={q}>
           {q.data?.length ? (
@@ -455,8 +473,12 @@ function ClassContent({ id, month }: { id: string; month: string }) {
               <div className="class-empty-icon-circle">
                 <Icon name="calendar" size={26} />
               </div>
-              <h3>Chưa có buổi học trong tháng này</h3>
-              <p>Giảng viên sẽ sớm công bố lịch trình chi tiết và link tham gia buổi học trực tuyến.</p>
+              <h3>{uiText("Chưa có buổi học trong tháng này")}</h3>
+              <p>
+                {uiText(
+                  "Giảng viên sẽ sớm công bố lịch trình chi tiết và link tham gia buổi học trực tuyến.",
+                )}
+              </p>
             </div>
           )}
         </State>
@@ -465,10 +487,12 @@ function ClassContent({ id, month }: { id: string; month: string }) {
       <section className="dashboard-section-card" style={{ marginTop: 20 }}>
         <div className="section-card-header">
           <div>
-            <p className="eyebrow">BẢNG TIN</p>
-            <h2>Thông báo của lớp</h2>
+            <p className="eyebrow">{uiText("BẢNG TIN")}</p>
+            <h2>{uiText("Thông báo của lớp")}</h2>
           </div>
-          <span className="kpi-tag">{a.data?.length ?? 0} thông báo</span>
+          <span className="kpi-tag">
+            {a.data?.length ?? 0} {uiText(" thông báo")}
+          </span>
         </div>
         <State query={a}>
           {a.data?.length ? (
@@ -478,7 +502,9 @@ function ClassContent({ id, month }: { id: string; month: string }) {
                   <div className="class-announcement-header">
                     <Icon name="bell" size={16} />
                     <h3>{v.title}</h3>
-                    <span className="class-announcement-time">{dateLabel(v.createdAt)}</span>
+                    <span className="class-announcement-time">
+                      {dateLabel(v.createdAt, undefined, uiLocale)}
+                    </span>
                   </div>
                   <p className="study-text">{v.body}</p>
                 </article>
@@ -492,8 +518,10 @@ function ClassContent({ id, month }: { id: string; month: string }) {
               >
                 <Icon name="bell" size={26} />
               </div>
-              <h3>Chưa có thông báo trong tháng</h3>
-              <p>Các thông tin và dặn dò quan trọng từ giảng viên sẽ được gửi trực tiếp tại đây.</p>
+              <h3>{uiText("Chưa có thông báo trong tháng")}</h3>
+              <p>
+                {uiText("Các thông tin và dặn dò quan trọng từ giảng viên sẽ được gửi trực tiếp tại đây.")}
+              </p>
             </div>
           )}
         </State>
@@ -502,6 +530,7 @@ function ClassContent({ id, month }: { id: string; month: string }) {
   );
 }
 function Sessions({ items }: { items: SessionItem[] }) {
+  const uiText = useUiText();
   const [selected, setSelected] = useState("");
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
@@ -524,7 +553,7 @@ function Sessions({ items }: { items: SessionItem[] }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <span className={`study-session-mode-badge ${v.mode === "ONLINE" ? "online" : "offline"}`}>
                 <Icon name={v.mode === "ONLINE" ? "sparkles" : "users"} size={13} />
-                {v.mode === "ONLINE" ? "Trực tuyến" : "Trực tiếp"}
+                {v.mode === "ONLINE" ? uiText("Trực tuyến") : uiText("Trực tiếp")}
               </span>
               {v.location && <span className="study-session-location-tag">📍 {v.location}</span>}
             </div>
@@ -536,14 +565,17 @@ function Sessions({ items }: { items: SessionItem[] }) {
               <ScheduleTime start={v.startAt} end={v.endAt} timezone={v.timezone} />
             </span>
             <span className="study-session-meta-item">
-              <span>Múi giờ: {v.timezone}</span>
+              <span>
+                {uiText("Múi giờ: ")}
+                {v.timezone}
+              </span>
             </span>
           </div>
 
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
             {v.status === "CANCELLED" ? (
               <span className="kpi-tag" style={{ color: "#ef4444" }}>
-                Buổi học đã hủy
+                {uiText("Buổi học đã hủy")}
               </span>
             ) : (
               <button
@@ -551,7 +583,9 @@ function Sessions({ items }: { items: SessionItem[] }) {
                 className={`button button-small ${selected === v.sessionId ? "button-subtle" : ""}`}
                 onClick={() => setSelected((prev) => (prev === v.sessionId ? "" : v.sessionId))}
               >
-                {selected === v.sessionId ? "Ẩn thông tin tham gia" : "Xem thông tin tham gia →"}
+                {selected === v.sessionId
+                  ? uiText("Ẩn thông tin tham gia")
+                  : uiText("Xem thông tin tham gia →")}
               </button>
             )}
           </div>
@@ -574,6 +608,7 @@ function Sessions({ items }: { items: SessionItem[] }) {
   );
 }
 function SessionAccess({ id }: { id: string }) {
+  const uiText = useUiText();
   const q = useStudent<SessionItem>("/class-sessions/" + id);
   const url = safeContentUrl(q.data?.meetingUrl);
   return (
@@ -582,12 +617,12 @@ function SessionAccess({ id }: { id: string }) {
         <p>
           {url ? (
             <a href={url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">
-              Mở phòng học ↗
+              {uiText("Mở phòng học ↗")}
             </a>
           ) : q.data.mode === "OFFLINE" ? (
             q.data.location
           ) : (
-            "Liên kết phòng học chưa mở hoặc không còn trong thời gian tham gia."
+            uiText("Liên kết phòng học chưa mở hoặc không còn trong thời gian tham gia.")
           )}
         </p>
       )}

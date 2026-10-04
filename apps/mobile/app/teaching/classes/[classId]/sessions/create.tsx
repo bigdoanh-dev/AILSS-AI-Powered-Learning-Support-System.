@@ -1,3 +1,4 @@
+import { useUiText } from "../../../../../src/use-language";
 import { useState } from "react";
 import { Text, TextInput, View, StyleSheet, ScrollView, Pressable } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -7,6 +8,7 @@ import { runtime } from "../../../../../src/runtime";
 import { Page, Button, styles, tokens } from "../../../../../src/ui";
 
 export default function CreateSessionScreen() {
+  const uiText = useUiText();
   const { classId } = useLocalSearchParams<{ classId: string }>();
   const session = runtime!;
 
@@ -78,18 +80,18 @@ export default function CreateSessionScreen() {
   return (
     <Page>
       <ScrollView contentContainerStyle={{ gap: 12 }}>
-        <Text style={styles.title}>Thêm buổi học mới</Text>
+        <Text style={styles.title}>{uiText("Thêm buổi học mới")}</Text>
 
-        <Text style={styles.small}>Tiêu đề buổi học *</Text>
+        <Text style={styles.small}>{uiText("Tiêu đề buổi học *")}</Text>
         <TextInput
-          accessibilityLabel="Tiêu đề buổi học"
+          accessibilityLabel={uiText("Tiêu đề buổi học")}
           style={sc.input}
-          placeholder="VD: Buổi 1: Giới thiệu tổng quan"
+          placeholder={uiText("VD: Buổi 1: Giới thiệu tổng quan")}
           value={title}
           onChangeText={setTitle}
         />
 
-        <Text style={styles.small}>Hình thức tổ chức *</Text>
+        <Text style={styles.small}>{uiText("Hình thức tổ chức *")}</Text>
         <View style={sc.modeRow}>
           <Pressable
             accessibilityRole="button"
@@ -97,7 +99,7 @@ export default function CreateSessionScreen() {
             style={[sc.modeButton, mode === "ONLINE" && sc.modeButtonActive]}
           >
             <Text style={[sc.modeButtonText, mode === "ONLINE" && sc.modeButtonTextActive]}>
-              Trực tuyến (Online)
+              {uiText("Trực tuyến (Online)")}
             </Text>
           </Pressable>
           <Pressable
@@ -106,16 +108,16 @@ export default function CreateSessionScreen() {
             style={[sc.modeButton, mode === "OFFLINE" && sc.modeButtonActive]}
           >
             <Text style={[sc.modeButtonText, mode === "OFFLINE" && sc.modeButtonTextActive]}>
-              Trực tiếp (Offline)
+              {uiText("Trực tiếp (Offline)")}
             </Text>
           </Pressable>
         </View>
 
         {mode === "ONLINE" ? (
           <>
-            <Text style={styles.small}>Đường dẫn phòng họp trực tuyến (URL) *</Text>
+            <Text style={styles.small}>{uiText("Đường dẫn phòng họp trực tuyến (URL) *")}</Text>
             <TextInput
-              accessibilityLabel="Đường dẫn họp"
+              accessibilityLabel={uiText("Đường dẫn họp")}
               style={sc.input}
               placeholder="https://meet.google.com/..."
               value={meetingUrl}
@@ -125,28 +127,28 @@ export default function CreateSessionScreen() {
           </>
         ) : (
           <>
-            <Text style={styles.small}>Địa điểm phòng học *</Text>
+            <Text style={styles.small}>{uiText("Địa điểm phòng học *")}</Text>
             <TextInput
-              accessibilityLabel="Địa điểm"
+              accessibilityLabel={uiText("Địa điểm")}
               style={sc.input}
-              placeholder="VD: Phòng B302, Giảng đường A"
+              placeholder={uiText("VD: Phòng B302, Giảng đường A")}
               value={location}
               onChangeText={setLocation}
             />
           </>
         )}
 
-        <Text style={styles.small}>Thời gian bắt đầu (ISO 8601 UTC) *</Text>
+        <Text style={styles.small}>{uiText("Thời gian bắt đầu (ISO 8601 UTC) *")}</Text>
         <TextInput
-          accessibilityLabel="Thời gian bắt đầu"
+          accessibilityLabel={uiText("Thời gian bắt đầu")}
           style={sc.input}
           value={startAt}
           onChangeText={setStartAt}
         />
 
-        <Text style={styles.small}>Thời gian kết thúc (ISO 8601 UTC) *</Text>
+        <Text style={styles.small}>{uiText("Thời gian kết thúc (ISO 8601 UTC) *")}</Text>
         <TextInput
-          accessibilityLabel="Thời gian kết thúc"
+          accessibilityLabel={uiText("Thời gian kết thúc")}
           style={sc.input}
           value={endAt}
           onChangeText={setEndAt}
@@ -154,13 +156,13 @@ export default function CreateSessionScreen() {
 
         {error ? (
           <Text accessibilityRole="alert" style={styles.error}>
-            {error}
+            {uiText(error)}
           </Text>
         ) : null}
 
-        <Button label={busy ? "Đang tạo…" : "Lưu buổi học"} onPress={handleSubmit} />
+        <Button label={busy ? uiText("Đang tạo…") : uiText("Lưu buổi học")} onPress={handleSubmit} />
 
-        <Button label="Hủy bỏ" onPress={() => router.back()} />
+        <Button label={uiText("Hủy bỏ")} onPress={() => router.back()} />
       </ScrollView>
     </Page>
   );

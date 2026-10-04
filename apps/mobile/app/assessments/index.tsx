@@ -1,3 +1,4 @@
+import { useUiText } from "../../src/use-language";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { type Href, router } from "expo-router";
@@ -6,6 +7,7 @@ import { runtime } from "../../src/runtime";
 import { Button, Badge, Icon, EmptyState, BottomNavBar, Page, styles, tokens } from "../../src/ui";
 
 export default function AssessmentListScreen() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
@@ -46,11 +48,15 @@ export default function AssessmentListScreen() {
         <Page>
           <View style={[styles.card, { alignItems: "center", paddingVertical: 40, gap: 14 }]}>
             <Icon name="sparkles" size={40} color={tokens.color.brand} />
-            <Text style={styles.title}>Bài kiểm tra</Text>
+            <Text style={styles.title}>{uiText("Bài kiểm tra")}</Text>
             <Text style={[styles.text, { textAlign: "center", maxWidth: 300 }]}>
-              Vui lòng đăng nhập để xem danh sách bài kiểm tra và bài luyện tập.
+              {uiText("Vui lòng đăng nhập để xem danh sách bài kiểm tra và bài luyện tập.")}
             </Text>
-            <Button label="Đăng nhập ngay" size="lg" onPress={() => router.push("/login" as Href)} />
+            <Button
+              label={uiText("Đăng nhập ngay")}
+              size="lg"
+              onPress={() => router.push("/login" as Href)}
+            />
           </View>
         </Page>
         <BottomNavBar currentRoute="classes" onNavigate={(path) => router.push(path as Href)} />
@@ -62,22 +68,24 @@ export default function AssessmentListScreen() {
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
       <Page testID="student-assessment-list" style={{ paddingBottom: 24 }}>
         <View style={{ gap: 4 }}>
-          <Badge label="ĐÁNH GIÁ NĂNG LỰC" variant="ai" icon="sparkles" />
-          <Text style={styles.title}>Bài kiểm tra</Text>
-          <Text style={styles.text}>Luyện tập thích ứng AI và hoàn thành các bài thi đánh giá khóa học.</Text>
+          <Badge label={uiText("ĐÁNH GIÁ NĂNG LỰC")} variant="ai" icon="sparkles" />
+          <Text style={styles.title}>{uiText("Bài kiểm tra")}</Text>
+          <Text style={styles.text}>
+            {uiText("Luyện tập thích ứng AI và hoàn thành các bài thi đánh giá khóa học.")}
+          </Text>
         </View>
 
         {loading && (
           <View style={screenStyles.center}>
             <ActivityIndicator size="large" color={tokens.color.brand} />
-            <Text style={screenStyles.loadingText}>Đang tải bài kiểm tra...</Text>
+            <Text style={screenStyles.loadingText}>{uiText("Đang tải bài kiểm tra...")}</Text>
           </View>
         )}
 
         {error && (
           <View style={[styles.card, { borderColor: tokens.color.dangerLight, backgroundColor: "#FEF2F2" }]}>
-            <Text style={styles.error}>{error}</Text>
-            <Button label="Thử lại" size="sm" onPress={() => setRevision((value) => value + 1)} />
+            <Text style={styles.error}>{uiText(error)}</Text>
+            <Button label={uiText("Thử lại")} size="sm" onPress={() => setRevision((value) => value + 1)} />
           </View>
         )}
 
@@ -91,10 +99,11 @@ export default function AssessmentListScreen() {
             );
           }) && (
             <View style={[styles.card, { gap: 6 }]}>
-              <Text style={styles.title}>Thời gian mở bài</Text>
+              <Text style={styles.title}>{uiText("Thời gian mở bài")}</Text>
               <Text style={styles.small}>
-                Một số bài đã phát hành nhưng chưa mở hoặc đã đóng; thời gian chính thức được máy chủ xác minh
-                khi bắt đầu làm bài.
+                {uiText(
+                  "Một số bài đã phát hành nhưng chưa mở hoặc đã đóng; thời gian chính thức được máy chủ xác minh khi bắt đầu làm bài.",
+                )}
               </Text>
             </View>
           )}
@@ -102,8 +111,10 @@ export default function AssessmentListScreen() {
         {!loading && !error && visibleQuizzes.length === 0 && (
           <EmptyState
             icon="sparkles"
-            title="Chưa có bài kiểm tra"
-            description="Hiện tại chưa có bài kiểm tra nào được phát hành cho các khóa học hoặc lớp của bạn."
+            title={uiText("Chưa có bài kiểm tra")}
+            description={uiText(
+              "Hiện tại chưa có bài kiểm tra nào được phát hành cho các khóa học hoặc lớp của bạn.",
+            )}
             actionLabel="Khám phá khóa học"
             onAction={() => router.push("/courses" as Href)}
           />
@@ -116,24 +127,29 @@ export default function AssessmentListScreen() {
                 key={item.quizId}
                 testID={`student-assessment-${item.quizId}`}
                 accessibilityRole="button"
-                accessibilityLabel={`Bài kiểm tra: ${item.title}`}
+                accessibilityLabel={uiText("Bài kiểm tra: {0}", [item.title])}
                 style={screenStyles.quizCard}
                 onPress={() => router.push(`/assessments/${item.quizId}` as Href)}
               >
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <Badge label={item.targetType === "COURSE" ? "KHÓA HỌC" : "LỚP HỌC"} variant="primary" />
-                  <Badge label="ĐÃ XUẤT BẢN" variant="success" icon="check" />
+                  <Badge
+                    label={item.targetType === "COURSE" ? uiText("KHÓA HỌC") : uiText("LỚP HỌC")}
+                    variant="primary"
+                  />
+                  <Badge label={uiText("ĐÃ XUẤT BẢN")} variant="success" icon="check" />
                 </View>
 
                 <Text style={screenStyles.cardTitle}>{item.title}</Text>
                 {!!item.opensAt && (
                   <Text style={screenStyles.targetNameText}>
-                    Mở lúc: {new Date(item.opensAt).toLocaleString()}
+                    {uiText("Mở lúc: ")}
+                    {new Date(item.opensAt).toLocaleString()}
                   </Text>
                 )}
                 {!!item.closesAt && (
                   <Text style={screenStyles.targetNameText}>
-                    Đóng lúc: {new Date(item.closesAt).toLocaleString()}
+                    {uiText("Đóng lúc: ")}
+                    {new Date(item.closesAt).toLocaleString()}
                   </Text>
                 )}
                 {item.targetName && (
@@ -145,7 +161,9 @@ export default function AssessmentListScreen() {
                 <View style={screenStyles.infoRow}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                     <Icon name="academic" size={13} color={tokens.color.muted} />
-                    <Text style={screenStyles.infoItem}>{item.questionCount} câu hỏi</Text>
+                    <Text style={screenStyles.infoItem}>
+                      {item.questionCount} {uiText(" câu hỏi")}
+                    </Text>
                   </View>
                   {item.durationSeconds !== undefined && (
                     <>
@@ -153,7 +171,7 @@ export default function AssessmentListScreen() {
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                         <Icon name="clock" size={13} color={tokens.color.muted} />
                         <Text style={screenStyles.infoItem}>
-                          {Math.round(item.durationSeconds / 60)} phút
+                          {Math.round(item.durationSeconds / 60)} {uiText(" phút")}
                         </Text>
                       </View>
                     </>
@@ -161,7 +179,10 @@ export default function AssessmentListScreen() {
                   {item.attemptLimit !== undefined && (
                     <>
                       <Text style={screenStyles.infoDot}>•</Text>
-                      <Text style={screenStyles.infoItem}>Tối đa {item.attemptLimit} lượt</Text>
+                      <Text style={screenStyles.infoItem}>
+                        {uiText("Tối đa ")}
+                        {item.attemptLimit} {uiText(" lượt")}
+                      </Text>
                     </>
                   )}
                 </View>
@@ -176,7 +197,7 @@ export default function AssessmentListScreen() {
                   }}
                 >
                   <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.brand }}>
-                    Chi tiết & Làm bài
+                    {uiText("Chi tiết & Làm bài")}
                   </Text>
                   <Icon name="chevronRight" size={14} color={tokens.color.brand} />
                 </View>

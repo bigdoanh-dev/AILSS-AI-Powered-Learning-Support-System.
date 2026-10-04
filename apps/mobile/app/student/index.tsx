@@ -1,3 +1,5 @@
+import { useLanguage } from "../../src/use-language";
+import { useUiText } from "../../src/use-language";
 import { useSyncExternalStore } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { Redirect, router, type Href } from "expo-router";
@@ -7,6 +9,8 @@ import { useStudentLearning } from "../../src/use-student-learning";
 import { StudentNav } from "../../src/StudentNav";
 
 export default function StudentWorkspace() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const session = runtime!;
   const auth = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const data = useStudentLearning(session, auth.user?.userId, auth.state);
@@ -18,17 +22,20 @@ export default function StudentWorkspace() {
       <Page style={screen.page}>
         <View style={screen.header}>
           <View style={{ flex: 1, gap: 5 }}>
-            <Text style={screen.eyebrow}>KHÔNG GIAN HỌC TẬP</Text>
-            <Text style={styles.title}>Chào {auth.user.displayName}</Text>
+            <Text style={screen.eyebrow}>{uiText("KHÔNG GIAN HỌC TẬP")}</Text>
+            <Text style={styles.title}>
+              {uiText("Chào ")}
+              {auth.user.displayName}
+            </Text>
             <Text style={styles.text}>
               {data.source === "LIVE"
-                ? "Dữ liệu học tập trực tiếp từ AILSS."
-                : "Đang xem bản lưu cục bộ, không thay thế dữ liệu máy chủ."}
+                ? uiText("Dữ liệu học tập trực tiếp từ AILSS.")
+                : uiText("Đang xem bản lưu cục bộ, không thay thế dữ liệu máy chủ.")}
             </Text>
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Tài khoản"
+            accessibilityLabel={uiText("Tài khoản")}
             onPress={() => router.push("/account")}
             style={screen.account}
           >
@@ -38,36 +45,40 @@ export default function StudentWorkspace() {
         {data.loading ? (
           <View style={screen.state}>
             <ActivityIndicator color={tokens.color.brand} />
-            <Text style={styles.small}>Đang tải dữ liệu học tập…</Text>
+            <Text style={styles.small}>{uiText("Đang tải dữ liệu học tập…")}</Text>
           </View>
         ) : data.error ? (
           <View style={screen.state}>
             <Text accessibilityRole="alert" style={styles.error}>
-              {data.error}
+              {uiText(data.error)}
             </Text>
-            <Button label="Tải lại" onPress={data.refresh} />
+            <Button label={uiText("Tải lại")} onPress={data.refresh} />
           </View>
         ) : data.courses.length === 0 ? (
           <View style={screen.empty}>
-            <Text style={screen.emptyTitle}>Chưa có khóa học đang học</Text>
-            <Text style={styles.text}>Các khóa bạn được quyền truy cập sẽ xuất hiện tại đây.</Text>
-            <Button label="Khám phá khóa học" onPress={() => router.push("/courses")} />
+            <Text style={screen.emptyTitle}>{uiText("Chưa có khóa học đang học")}</Text>
+            <Text style={styles.text}>
+              {uiText("Các khóa bạn được quyền truy cập sẽ xuất hiện tại đây.")}
+            </Text>
+            <Button label={uiText("Khám phá khóa học")} onPress={() => router.push("/courses")} />
           </View>
         ) : (
           <>
             <View style={screen.sectionHead}>
-              <Text style={screen.sectionTitle}>Khóa học của bạn</Text>
+              <Text style={screen.sectionTitle}>{uiText("Khóa học của bạn")}</Text>
               <Text
-                accessibilityLabel={data.source === "LIVE" ? "LIVE" : "OFFLINE_CACHE"}
+                accessibilityLabel={data.source === "LIVE" ? uiText("LIVE") : "OFFLINE_CACHE"}
                 style={screen.live}
               >
-                {data.source === "LIVE" ? "LIVE" : "OFFLINE_CACHE"}
+                {data.source === "LIVE" ? uiText("LIVE") : "OFFLINE_CACHE"}
               </Text>
             </View>
             {data.source === "OFFLINE_CACHE" && (
               <Text style={styles.small}>
                 LAST_SYNCED ·{" "}
-                {data.courseSyncedAt ? new Date(data.courseSyncedAt).toLocaleString("vi-VN") : "chưa rõ"}
+                {data.courseSyncedAt
+                  ? new Date(data.courseSyncedAt).toLocaleString(uiLocale)
+                  : uiText("chưa rõ")}
               </Text>
             )}
             {data.courses.map(({ course, mastery, masteryError, studyPlan, studyPlanError }) => {
@@ -80,7 +91,7 @@ export default function StudentWorkspace() {
                 <View key={course.courseId} style={screen.course}>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`Mở khóa ${course.title}`}
+                    accessibilityLabel={uiText("Mở khóa {0}", [course.title])}
                     onPress={() => router.push(`/learn/${course.courseId}` as Href)}
                     style={screen.courseHead}
                   >
@@ -89,43 +100,44 @@ export default function StudentWorkspace() {
                     </View>
                     <View style={{ flex: 1, gap: 3 }}>
                       <Text style={screen.courseTitle}>{course.title}</Text>
-                      <Text style={screen.courseMeta}>Mở nội dung khóa học</Text>
+                      <Text style={screen.courseMeta}>{uiText("Mở nội dung khóa học")}</Text>
                     </View>
                     <Icon name="chevronRight" size={18} color={tokens.color.muted} />
                   </Pressable>
                   <View style={screen.metrics}>
                     <View style={screen.metric}>
                       <Text style={screen.metricValue}>{masteryError ? "—" : (mastery?.length ?? 0)}</Text>
-                      <Text style={screen.metricLabel}>kết quả năng lực</Text>
+                      <Text style={screen.metricLabel}>{uiText("kết quả năng lực")}</Text>
                     </View>
                     <View style={screen.metricDivider} />
                     <View style={screen.metric}>
                       <Text style={screen.metricValue}>{masteryError ? "—" : mastered}</Text>
-                      <Text style={screen.metricLabel}>đạt thành thạo</Text>
+                      <Text style={screen.metricLabel}>{uiText("đạt thành thạo")}</Text>
                     </View>
                   </View>
                   {masteryError && (
                     <Text accessibilityRole="alert" style={screen.warning}>
-                      Không tải được Mastery: {masteryError}
+                      {uiText("Không tải được Mastery: ")}
+                      {uiText(masteryError)}
                     </Text>
                   )}
                   <View style={screen.planBox}>
                     <View style={{ flex: 1, gap: 4 }}>
-                      <Text style={screen.planLabel}>LỘ TRÌNH HỌC</Text>
+                      <Text style={screen.planLabel}>{uiText("LỘ TRÌNH HỌC")}</Text>
                       <Text style={screen.planText}>
                         {studyPlanError
-                          ? "Không tải được Study Plan"
+                          ? uiText("Không tải được Study Plan")
                           : (next?.title ?? (studyPlan ? "Không còn việc đang chờ" : "Chưa có Study Plan"))}
                       </Text>
                       {next && (
                         <Text style={screen.planMeta}>
-                          {next.scheduledDate} · {next.estimatedMinutes} phút
+                          {next.scheduledDate} · {next.estimatedMinutes} {uiText(" phút")}
                         </Text>
                       )}
                     </View>
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel="Mở lộ trình học"
+                      accessibilityLabel={uiText("Mở lộ trình học")}
                       onPress={() =>
                         router.push({
                           pathname: "/student/study-plan",
@@ -134,7 +146,7 @@ export default function StudentWorkspace() {
                       }
                       style={screen.action}
                     >
-                      <Text style={screen.actionText}>Mở</Text>
+                      <Text style={screen.actionText}>{uiText("Mở")}</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -146,23 +158,23 @@ export default function StudentWorkspace() {
                 onPress={() => router.push("/assessments")}
                 style={screen.quick}
               >
-                <Text style={screen.quickTitle}>Bài kiểm tra</Text>
-                <Text style={screen.quickDetail}>Xem bài đã phát hành</Text>
+                <Text style={screen.quickTitle}>{uiText("Bài kiểm tra")}</Text>
+                <Text style={screen.quickDetail}>{uiText("Xem bài đã phát hành")}</Text>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
                 onPress={() => router.push("/notifications")}
                 style={screen.quick}
               >
-                <Text style={screen.quickTitle}>Thông báo</Text>
-                <Text style={screen.quickDetail}>Cập nhật từ lớp học</Text>
+                <Text style={screen.quickTitle}>{uiText("Thông báo")}</Text>
+                <Text style={screen.quickDetail}>{uiText("Cập nhật từ lớp học")}</Text>
               </Pressable>
             </View>
           </>
         )}
         {auth.error && (
           <Text accessibilityRole="alert" style={styles.error}>
-            {auth.error}
+            {uiText(auth.error)}
           </Text>
         )}
       </Page>

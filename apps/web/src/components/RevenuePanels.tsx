@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { useUiText } from "../lib/i18n";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export type RevenueDay = {
@@ -26,26 +28,32 @@ export type LecturerRevenue = {
   dailyRevenue: RevenueDay[];
   courses: RevenueCourse[];
 };
-export const money = (value: string | number | bigint) => {
+export const money = (value: string | number | bigint, locale: string = "vi-VN") => {
   const amount =
     typeof value === "bigint"
       ? value
       : typeof value === "string" && /^-?\d+$/.test(value)
         ? BigInt(value)
         : Number(value);
-  return `${new Intl.NumberFormat("vi-VN").format(amount)} ₫`;
+  return `${new Intl.NumberFormat(locale).format(amount)} ₫`;
 };
 
 export function RevenueChart({ rows }: { rows: RevenueDay[] }) {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const points = rows.map((row) => ({
-    day: new Date(`${row.day}T00:00:00Z`).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }),
+    day: new Date(`${row.day}T00:00:00Z`).toLocaleDateString(uiLocale, { day: "2-digit", month: "2-digit" }),
     gross: Number(row.grossMinor),
     net: Number(row.netMinor),
     orders: row.orders ?? 0,
   }));
 
   return (
-    <div className="revenue-chart" role="img" aria-label={`Biểu đồ doanh thu ${rows.length} ngày`}>
+    <div
+      className="revenue-chart"
+      role="img"
+      aria-label={uiText("Biểu đồ doanh thu {0} ngày", [rows.length])}
+    >
       <ResponsiveContainer width="100%" height={280}>
         <AreaChart data={points} margin={{ top: 16, right: 20, left: 8, bottom: 0 }}>
           <defs>
@@ -75,14 +83,19 @@ export function RevenueChart({ rows }: { rows: RevenueDay[] }) {
                 const grossVal = Number(payload.find((p) => p.dataKey === "gross")?.value ?? 0);
                 return (
                   <div className="rev-custom-tooltip">
-                    <div className="rev-tooltip-date">Ngày {label}</div>
-                    <div className="rev-tooltip-row">
-                      <span style={{ color: "#0284c7", fontWeight: 600 }}>Sau hoàn tiền:</span>
-                      <strong>{money(netVal)}</strong>
+                    <div className="rev-tooltip-date">
+                      {uiText("Ngày ")}
+                      {label}
                     </div>
                     <div className="rev-tooltip-row">
-                      <span style={{ color: "var(--muted)", fontWeight: 500 }}>Doanh số gốc:</span>
-                      <span>{money(grossVal)}</span>
+                      <span style={{ color: "#0284c7", fontWeight: 600 }}>{uiText("Sau hoàn tiền:")}</span>
+                      <strong>{money(netVal, uiLocale)}</strong>
+                    </div>
+                    <div className="rev-tooltip-row">
+                      <span style={{ color: "var(--muted)", fontWeight: 500 }}>
+                        {uiText("Doanh số gốc:")}
+                      </span>
+                      <span>{money(grossVal, uiLocale)}</span>
                     </div>
                   </div>
                 );
@@ -112,11 +125,11 @@ export function RevenueChart({ rows }: { rows: RevenueDay[] }) {
       <div className="rev-chart-legend" style={{ justifyContent: "center", marginTop: 12 }}>
         <span className="rev-chart-legend-item">
           <span className="rev-legend-dot net" />
-          <span>Doanh thu ròng (sau hoàn tiền, trước phí nền tảng)</span>
+          <span>{uiText("Doanh thu ròng (sau hoàn tiền, trước phí nền tảng)")}</span>
         </span>
         <span className="rev-chart-legend-item">
           <span className="rev-legend-dot gross" />
-          <span>Tổng doanh số bán</span>
+          <span>{uiText("Tổng doanh số bán")}</span>
         </span>
       </div>
     </div>
@@ -124,6 +137,8 @@ export function RevenueChart({ rows }: { rows: RevenueDay[] }) {
 }
 
 export function RevenueCourses({ rows }: { rows: RevenueCourse[] }) {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const maxNet = Math.max(...rows.map((r) => Number(r.netMinor)), 1);
 
   return (
@@ -139,11 +154,12 @@ export function RevenueCourses({ rows }: { rows: RevenueCourse[] }) {
                   <div>
                     <h4 className="rev-course-title">{course.title}</h4>
                     <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                      {course.orders} lượt thanh toán · hoàn {money(course.refundMinor)}
+                      {course.orders} {uiText(" lượt thanh toán · hoàn ")}
+                      {money(course.refundMinor, uiLocale)}
                     </span>
                   </div>
                 </div>
-                <span className="rev-course-net-amount">{money(course.netMinor)}</span>
+                <span className="rev-course-net-amount">{money(course.netMinor, uiLocale)}</span>
               </div>
               <div className="rev-progress-track">
                 <div className="rev-progress-fill" style={{ width: `${percent}%` }} />
@@ -153,7 +169,7 @@ export function RevenueCourses({ rows }: { rows: RevenueCourse[] }) {
         })
       ) : (
         <p style={{ color: "var(--muted)", fontSize: 13.5, margin: "10px 0" }}>
-          Chưa có giao dịch trong khoảng thời gian này.
+          {uiText("Chưa có giao dịch trong khoảng thời gian này.")}
         </p>
       )}
     </div>

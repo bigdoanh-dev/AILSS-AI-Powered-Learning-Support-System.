@@ -44,6 +44,7 @@ export function adminOperation(url, method, body, headers) {
     z.object({
       conversationId: z.string().uuid().optional(),
       mode: z.literal("ADMIN_SUPPORT"),
+      responseLanguage: z.enum(["vi", "en"]).optional(),
       message: z.string().trim().min(1).max(4000),
     })
       .strict()

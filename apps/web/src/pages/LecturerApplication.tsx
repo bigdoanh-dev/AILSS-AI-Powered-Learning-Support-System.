@@ -1,3 +1,4 @@
+import { useUiText, interfaceMessage, type InterfaceMessage } from "../lib/i18n";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { sessionRequest, useSession } from "../auth/session";
@@ -19,13 +20,14 @@ type Application = Body & {
   submittedAt: string;
 };
 export function LecturerApplication() {
+  const uiText = useUiText();
   const auth = useSession(),
     location = useLocation(),
     navigate = useNavigate();
   const statusRoute = location.pathname.endsWith("/status");
   const [application, setApplication] = useState<Application | null>(null),
     [loading, setLoading] = useState(true),
-    [error, setError] = useState(""),
+    [error, setError] = useState<InterfaceMessage>(""),
     [busy, setBusy] = useState(false),
     [body, setBody] = useState<Body | null>(null);
   const key = useRef(crypto.randomUUID());
@@ -54,7 +56,7 @@ export function LecturerApplication() {
         .normalize("NFC")
         .trim();
       if ([...v].length < f.min || [...v].length > f.max) {
-        setError(`${f.label}: cần ${f.min}–${f.max} ký tự.`);
+        setError(interfaceMessage("{0}: cần {1}–{2} ký tự.", [interfaceMessage(f.label), f.min, f.max]));
         return;
       }
       next[f.name] = v;
@@ -77,70 +79,75 @@ export function LecturerApplication() {
   }
   return (
     <section className="auth-card lecturer-onboarding">
-      <p className="eyebrow">NVD · GIẢNG VIÊN</p>
-      <h1>Chia sẻ chuyên môn của bạn.</h1>
-      <p>Đăng ký để tạo khóa học, tổ chức lớp học và sử dụng AI hỗ trợ chuẩn bị nội dung.</p>
-      {error && <p role="alert">{error}</p>}
+      <p className="eyebrow">{uiText("NVD · GIẢNG VIÊN")}</p>
+      <h1>{uiText("Chia sẻ chuyên môn của bạn.")}</h1>
+      <p>{uiText("Đăng ký để tạo khóa học, tổ chức lớp học và sử dụng AI hỗ trợ chuẩn bị nội dung.")}</p>
+      {error && <p role="alert">{uiText(error)}</p>}
       {auth.state !== "AUTHENTICATED" ? (
         <>
           <p>
-            Hãy đăng ký tài khoản Sinh viên và đăng nhập trước khi gửi yêu cầu. Nếu phiên vừa hết hạn sau khi
-            duyệt, hãy đăng nhập lại để cập nhật vai trò.
+            {uiText(
+              "Hãy đăng ký tài khoản Sinh viên và đăng nhập trước khi gửi yêu cầu. Nếu phiên vừa hết hạn sau khi duyệt, hãy đăng nhập lại để cập nhật vai trò.",
+            )}
           </p>
           <Link className="button" to="/auth/login?returnTo=%2Fauth%2Fregister%2Flecturer%2Fapplication">
-            Đăng nhập
+            {uiText("Đăng nhập")}
           </Link>
           <Link to="/auth/register/student?returnTo=%2Fauth%2Fregister%2Flecturer%2Fapplication">
-            Tạo tài khoản
+            {uiText("Tạo tài khoản")}
           </Link>
         </>
       ) : loading ? (
-        <p role="status">Đang đọc yêu cầu…</p>
+        <p role="status">{uiText("Đang đọc yêu cầu…")}</p>
       ) : application ? (
         <>
-          <p className="eyebrow">TRẠNG THÁI YÊU CẦU</p>
+          <p className="eyebrow">{uiText("TRẠNG THÁI YÊU CẦU")}</p>
           <h2>
             {application.status === "SUBMITTED"
-              ? "Yêu cầu của bạn đang được xem xét."
+              ? uiText("Yêu cầu của bạn đang được xem xét.")
               : application.status === "REJECTED"
-                ? "Yêu cầu chưa được chấp thuận."
+                ? uiText("Yêu cầu chưa được chấp thuận.")
                 : application.result === "APPROVED_VERIFIED"
-                  ? "Giảng viên đã được xác minh."
-                  : "Tài khoản đã được chuyển sang Giảng viên."}
+                  ? uiText("Giảng viên đã được xác minh.")
+                  : uiText("Tài khoản đã được chuyển sang Giảng viên.")}
           </h2>
           <p>
             {application.result === "APPROVED_AWAITING_VERIFICATION"
-              ? "Bạn vẫn cần được xác minh trước khi sử dụng các chức năng yêu cầu giảng viên đã xác minh."
+              ? uiText(
+                  "Bạn vẫn cần được xác minh trước khi sử dụng các chức năng yêu cầu giảng viên đã xác minh.",
+                )
               : application.status === "REJECTED"
-                ? "Bạn vẫn có thể tiếp tục sử dụng tài khoản Sinh viên. Hiện chưa hỗ trợ gửi lại yêu cầu."
-                : "Bạn có thể kiểm tra trạng thái tại đây."}
+                ? uiText(
+                    "Bạn vẫn có thể tiếp tục sử dụng tài khoản Sinh viên. Hiện chưa hỗ trợ gửi lại yêu cầu.",
+                  )
+                : uiText("Bạn có thể kiểm tra trạng thái tại đây.")}
           </p>
           <button className="button secondary" onClick={() => void load()}>
-            Cập nhật trạng thái
+            {uiText("Cập nhật trạng thái")}
           </button>
-          <Link to="/app">Về tài khoản</Link>
+          <Link to="/app">{uiText("Về tài khoản")}</Link>
         </>
       ) : error ? (
         <button className="button" onClick={() => void load()}>
-          Thử lại
+          {uiText("Thử lại")}
         </button>
       ) : statusRoute ? (
         <>
-          <p>Bạn chưa gửi yêu cầu.</p>
-          <Link to="/auth/register/lecturer/application">Điền đơn</Link>
+          <p>{uiText("Bạn chưa gửi yêu cầu.")}</p>
+          <Link to="/auth/register/lecturer/application">{uiText("Điền đơn")}</Link>
         </>
       ) : auth.profile?.role !== "STUDENT" ? (
-        <p>Luồng đăng ký này dành cho tài khoản Sinh viên.</p>
+        <p>{uiText("Luồng đăng ký này dành cho tài khoản Sinh viên.")}</p>
       ) : (
         <>
-          <ol className="application-steps" aria-label="Các bước đăng ký">
-            <li aria-current={!body ? "step" : undefined}>Thông tin</li>
-            <li aria-current={body ? "step" : undefined}>Xem lại</li>
-            <li>Gửi yêu cầu</li>
+          <ol className="application-steps" aria-label={uiText("Các bước đăng ký")}>
+            <li aria-current={!body ? "step" : undefined}>{uiText("Thông tin")}</li>
+            <li aria-current={body ? "step" : undefined}>{uiText("Xem lại")}</li>
+            <li>{uiText("Gửi yêu cầu")}</li>
           </ol>
           {body ? (
             <div className="application-panel">
-              <h2>Xem lại yêu cầu</h2>
+              <h2>{uiText("Xem lại yêu cầu")}</h2>
               <dl>
                 {fields.map((f) => (
                   <div key={f.name}>
@@ -150,15 +157,17 @@ export function LecturerApplication() {
                 ))}
               </dl>
               <p>
-                Gửi đơn chưa cấp quyền Giảng viên. Quản trị viên cần duyệt đơn; sau đó việc xác minh Giảng
-                viên vẫn là bước riêng.
+                {uiText(
+                  "Gửi đơn chưa cấp quyền Giảng viên. Quản trị viên cần duyệt đơn; sau đó việc xác minh Giảng viên vẫn là bước riêng.",
+                )}
               </p>
               <p>
-                Mỗi tài khoản chỉ gửi một đơn. Khi được duyệt, vai trò Sinh viên chuyển sang Giảng viên; các
-                chức năng chỉ dành cho Sinh viên có thể không còn truy cập được.
+                {uiText(
+                  "Mỗi tài khoản chỉ gửi một đơn. Khi được duyệt, vai trò Sinh viên chuyển sang Giảng viên; các chức năng chỉ dành cho Sinh viên có thể không còn truy cập được.",
+                )}
               </p>
               <button className="button" disabled={busy} onClick={() => void submit()}>
-                {busy ? "Đang gửi…" : "Gửi yêu cầu"}
+                {busy ? uiText("Đang gửi…") : uiText("Gửi yêu cầu")}
               </button>
               <button
                 className="button secondary"
@@ -168,7 +177,7 @@ export function LecturerApplication() {
                   key.current = crypto.randomUUID();
                 }}
               >
-                Sửa thông tin
+                {uiText("Sửa thông tin")}
               </button>
             </div>
           ) : (
@@ -182,11 +191,11 @@ export function LecturerApplication() {
                     <input name={f.name} required />
                   )}
                   <small>
-                    {f.min}–{f.max} ký tự
+                    {f.min}–{f.max} {uiText(" ký tự")}
                   </small>
                 </label>
               ))}
-              <button className="button">Xem lại yêu cầu</button>
+              <button className="button">{uiText("Xem lại yêu cầu")}</button>
             </form>
           )}
         </>
@@ -249,6 +258,7 @@ const DEMO_APPLICATIONS: Application[] = [
 ];
 
 export function AdminLecturerApplications() {
+  const uiText = useUiText();
   const auth = useSession();
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7)),
     [shard, setShard] = useState(0),
@@ -359,7 +369,7 @@ export function AdminLecturerApplications() {
     }
   }
 
-  if (auth.profile?.role !== "ADMIN") return <p>Chỉ Quản trị viên được xem và duyệt yêu cầu.</p>;
+  if (auth.profile?.role !== "ADMIN") return <p>{uiText("Chỉ Quản trị viên được xem và duyệt yêu cầu.")}</p>;
 
   // Display list: loaded items or demo applications if empty
   const displaySource = items.length > 0 ? items : DEMO_APPLICATIONS;
@@ -385,11 +395,12 @@ export function AdminLecturerApplications() {
     <div className="admin-dashboard-container">
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">QUẢN TRỊ · GIẢNG VIÊN</p>
-          <h1>Duyệt Yêu Cầu Giảng Dạy &amp; Thẩm Định Hồ Sơ</h1>
+          <p className="eyebrow">{uiText("QUẢN TRỊ · GIẢNG VIÊN")}</p>
+          <h1>{uiText("Duyệt Yêu Cầu Giảng Dạy & Thẩm Định Hồ Sơ")}</h1>
           <p className="lead">
-            Thẩm định đơn đăng ký trở thành giảng viên, rà soát học vị, đơn vị công tác và kích hoạt quyền mở
-            lớp.
+            {uiText(
+              "Thẩm định đơn đăng ký trở thành giảng viên, rà soát học vị, đơn vị công tác và kích hoạt quyền mở lớp.",
+            )}
           </p>
         </div>
       </div>
@@ -414,7 +425,7 @@ export function AdminLecturerApplications() {
                 marginBottom: "6px",
               }}
             >
-              Tháng nộp hồ sơ
+              {uiText("Tháng nộp hồ sơ")}
             </span>
             <input
               type="month"
@@ -445,7 +456,7 @@ export function AdminLecturerApplications() {
                 marginBottom: "6px",
               }}
             >
-              Phân vùng dữ liệu (Shard)
+              {uiText("Phân vùng dữ liệu (Shard)")}
             </span>
             <select
               value={shard}
@@ -465,7 +476,8 @@ export function AdminLecturerApplications() {
             >
               {Array.from({ length: 16 }, (_, i) => (
                 <option key={i} value={i}>
-                  Phân vùng {i}
+                  {uiText("Phân vùng ")}
+                  {i}
                 </option>
               ))}
             </select>
@@ -483,14 +495,14 @@ export function AdminLecturerApplications() {
             }}
           >
             <Icon name={busy ? "refresh" : "search"} size={15} />
-            <span>{busy ? "Đang tải…" : "Tải danh sách chờ"}</span>
+            <span>{busy ? uiText("Đang tải…") : uiText("Tải danh sách chờ")}</span>
           </button>
         </div>
       </form>
 
       {message && (
         <p role="status" className="notice error">
-          {message}
+          {uiText(message)}
         </p>
       )}
 
@@ -502,20 +514,21 @@ export function AdminLecturerApplications() {
           </span>
           <input
             type="search"
-            placeholder="Tìm theo tên ứng viên, chuyên môn, viện/trường..."
+            placeholder={uiText("Tìm theo tên ứng viên, chuyên môn, viện/trường...")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            aria-label="Tìm kiếm hồ sơ giảng viên"
+            aria-label={uiText("Tìm kiếm hồ sơ giảng viên")}
           />
         </div>
 
-        <div className="dashboard-filter-group" role="group" aria-label="Lọc trạng thái hồ sơ">
+        <div className="dashboard-filter-group" role="group" aria-label={uiText("Lọc trạng thái hồ sơ")}>
           <button
             type="button"
             className={`filter-pill-button ${statusFilter === "ALL" ? "active" : ""}`}
             onClick={() => setStatusFilter("ALL")}
           >
-            Tất cả ({displaySource.length})
+            {uiText("Tất cả (")}
+            {displaySource.length})
           </button>
           <button
             type="button"
@@ -524,7 +537,7 @@ export function AdminLecturerApplications() {
             style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
             <Icon name="clock" size={13} />
-            <span>Chờ duyệt</span>
+            <span>{uiText("Chờ duyệt")}</span>
           </button>
           <button
             type="button"
@@ -533,7 +546,7 @@ export function AdminLecturerApplications() {
             style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
             <Icon name="checkCircle" size={13} />
-            <span>Đã duyệt</span>
+            <span>{uiText("Đã duyệt")}</span>
           </button>
           <button
             type="button"
@@ -542,7 +555,7 @@ export function AdminLecturerApplications() {
             style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
             <Icon name="close" size={13} />
-            <span>Đã từ chối</span>
+            <span>{uiText("Đã từ chối")}</span>
           </button>
         </div>
       </div>
@@ -552,13 +565,13 @@ export function AdminLecturerApplications() {
         <table className="dashboard-data-table" role="table">
           <thead>
             <tr>
-              <th scope="col">Ứng viên</th>
-              <th scope="col">Chức danh &amp; Học vị</th>
-              <th scope="col">Lĩnh vực giảng dạy</th>
-              <th scope="col">Đơn vị công tác</th>
-              <th scope="col">Trạng thái</th>
+              <th scope="col">{uiText("Ứng viên")}</th>
+              <th scope="col">{uiText("Chức danh & Học vị")}</th>
+              <th scope="col">{uiText("Lĩnh vực giảng dạy")}</th>
+              <th scope="col">{uiText("Đơn vị công tác")}</th>
+              <th scope="col">{uiText("Trạng thái")}</th>
               <th scope="col" style={{ textAlign: "right" }}>
-                Thao tác
+                {uiText("Thao tác")}
               </th>
             </tr>
           </thead>
@@ -580,11 +593,14 @@ export function AdminLecturerApplications() {
                       <div>
                         <div className="user-name-title">{a.displayNameSnapshot}</div>
                         <div className="user-id-code">
-                          <span>Mã đơn: {a.applicationId.slice(0, 8)}…</span>
+                          <span>
+                            {uiText("Mã đơn: ")}
+                            {a.applicationId.slice(0, 8)}…
+                          </span>
                           <button
                             type="button"
                             className="copy-id-btn"
-                            title="Sao chép toàn bộ mã đơn"
+                            title={uiText("Sao chép toàn bộ mã đơn")}
                             onClick={() => handleCopyId(a.applicationId)}
                           >
                             <Icon name="fileText" size={13} />
@@ -611,7 +627,7 @@ export function AdminLecturerApplications() {
                         style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                       >
                         <Icon name="clock" size={12} />
-                        <span>Chờ duyệt</span>
+                        <span>{uiText("Chờ duyệt")}</span>
                       </span>
                     ) : a.status === "REJECTED" ? (
                       <span
@@ -619,7 +635,7 @@ export function AdminLecturerApplications() {
                         style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                       >
                         <Icon name="close" size={12} />
-                        <span>Từ chối</span>
+                        <span>{uiText("Từ chối")}</span>
                       </span>
                     ) : a.result === "APPROVED_VERIFIED" ? (
                       <span
@@ -627,7 +643,7 @@ export function AdminLecturerApplications() {
                         style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                       >
                         <Icon name="shield" size={12} />
-                        <span>Đã xác minh</span>
+                        <span>{uiText("Đã xác minh")}</span>
                       </span>
                     ) : (
                       <span
@@ -635,7 +651,7 @@ export function AdminLecturerApplications() {
                         style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                       >
                         <Icon name="checkCircle" size={12} />
-                        <span>Đã duyệt</span>
+                        <span>{uiText("Đã duyệt")}</span>
                       </span>
                     )}
                   </td>
@@ -647,7 +663,7 @@ export function AdminLecturerApplications() {
                       onClick={() => void open(a.applicationId)}
                       style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
                     >
-                      <span>Thẩm định hồ sơ</span>
+                      <span>{uiText("Thẩm định hồ sơ")}</span>
                       <Icon name="chevronRight" size={13} />
                     </button>
                   </td>
@@ -660,14 +676,14 @@ export function AdminLecturerApplications() {
 
       {filteredApplications.length === 0 && (
         <div className="study-state" style={{ marginTop: "20px" }}>
-          Không tìm thấy hồ sơ giảng viên nào phù hợp với bộ lọc hiện tại.
+          {uiText("Không tìm thấy hồ sơ giảng viên nào phù hợp với bộ lọc hiện tại.")}
         </div>
       )}
 
       {cursor && (
         <div style={{ marginTop: "18px" }}>
           <button className="button secondary" disabled={busy} onClick={() => void queue(cursor)}>
-            Trang tiếp theo →
+            {uiText("Trang tiếp theo →")}
           </button>
         </div>
       )}
@@ -689,18 +705,27 @@ export function AdminLecturerApplications() {
                     className={`admin-badge ${detail.status === "SUBMITTED" ? "pending" : detail.status === "APPROVED" ? "approved" : "rejected"}`}
                   >
                     {detail.status === "SUBMITTED"
-                      ? "HỒ SƠ CHỜ DUYỆT"
+                      ? uiText("HỒ SƠ CHỜ DUYỆT")
                       : detail.status === "REJECTED"
-                        ? "HỒ SƠ BỊ TỪ CHỐI"
+                        ? uiText("HỒ SƠ BỊ TỪ CHỐI")
                         : detail.result === "APPROVED_VERIFIED"
-                          ? "ĐÃ DUYỆT & ĐÃ XÁC MINH"
-                          : "ĐÃ DUYỆT (CHƯA XÁC MINH)"}
+                          ? uiText("ĐÃ DUYỆT & ĐÃ XÁC MINH")
+                          : uiText("ĐÃ DUYỆT (CHƯA XÁC MINH)")}
                   </span>
                 </div>
                 <h2 id="appraisal-title">{detail.displayNameSnapshot}</h2>
                 <div className="user-id-code" style={{ marginTop: "4px" }}>
-                  <span>ID Hồ sơ: {detail.applicationId}</span>
-                  {detail.applicantId && <span> · ID Tài khoản: {detail.applicantId}</span>}
+                  <span>
+                    {uiText("ID Hồ sơ: ")}
+                    {detail.applicationId}
+                  </span>
+                  {detail.applicantId && (
+                    <span>
+                      {" "}
+                      {uiText(" · ID Tài khoản: ")}
+                      {detail.applicantId}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -708,7 +733,7 @@ export function AdminLecturerApplications() {
                 type="button"
                 className="admin-modal-close-btn"
                 onClick={() => setDetail(null)}
-                aria-label="Đóng cửa sổ thẩm định"
+                aria-label={uiText("Đóng cửa sổ thẩm định")}
               >
                 <Icon name="close" size={16} />
               </button>
@@ -731,7 +756,9 @@ export function AdminLecturerApplications() {
                   border: "1px solid var(--line)",
                 }}
               >
-                <div style={{ fontSize: "12px", color: "var(--muted)" }}>Chức danh chuyên môn</div>
+                <div style={{ fontSize: "12px", color: "var(--muted)" }}>
+                  {uiText("Chức danh chuyên môn")}
+                </div>
                 <div style={{ fontWeight: 700, fontSize: "14.5px", marginTop: "4px", color: "var(--ink)" }}>
                   {detail.professionalTitle}
                 </div>
@@ -744,7 +771,9 @@ export function AdminLecturerApplications() {
                   border: "1px solid var(--line)",
                 }}
               >
-                <div style={{ fontSize: "12px", color: "var(--muted)" }}>Đơn vị công tác / Viện đào tạo</div>
+                <div style={{ fontSize: "12px", color: "var(--muted)" }}>
+                  {uiText("Đơn vị công tác / Viện đào tạo")}
+                </div>
                 <div style={{ fontWeight: 700, fontSize: "14.5px", marginTop: "4px", color: "var(--ink)" }}>
                   {detail.institution}
                 </div>
@@ -757,7 +786,9 @@ export function AdminLecturerApplications() {
                   border: "1px solid var(--line)",
                 }}
               >
-                <div style={{ fontSize: "12px", color: "var(--muted)" }}>Lĩnh vực đăng ký giảng dạy</div>
+                <div style={{ fontSize: "12px", color: "var(--muted)" }}>
+                  {uiText("Lĩnh vực đăng ký giảng dạy")}
+                </div>
                 <div style={{ fontWeight: 700, fontSize: "14.5px", marginTop: "4px", color: "var(--ink)" }}>
                   {detail.teachingArea}
                 </div>
@@ -766,7 +797,9 @@ export function AdminLecturerApplications() {
 
             {/* Motivation / Teaching Proposal */}
             <div style={{ marginBottom: "24px" }}>
-              <h3 style={{ fontSize: "15px", marginBottom: "8px" }}>Mong muốn & Kế hoạch giảng dạy</h3>
+              <h3 style={{ fontSize: "15px", marginBottom: "8px" }}>
+                {uiText("Mong muốn & Kế hoạch giảng dạy")}
+              </h3>
               <div
                 style={{
                   padding: "16px",
@@ -792,11 +825,16 @@ export function AdminLecturerApplications() {
                   border: "1px solid var(--line)",
                 }}
               >
-                <h3 style={{ fontSize: "16px", margin: "0 0 8px" }}>Phê duyệt hoặc Từ chối hồ sơ</h3>
+                <h3 style={{ fontSize: "16px", margin: "0 0 8px" }}>
+                  {uiText("Phê duyệt hoặc Từ chối hồ sơ")}
+                </h3>
                 <p style={{ fontSize: "13px", color: "var(--muted)", margin: "0 0 16px" }}>
-                  <strong>Duyệt</strong>: Nâng cấp tài khoản Sinh viên lên Giảng viên; xác minh là bước riêng
-                  biệt tiếp theo.
-                  <strong>Từ chối</strong>: Giữ nguyên trạng thái tài khoản sinh viên.
+                  <strong>{uiText("Duyệt")}</strong>
+                  {uiText(
+                    ": Nâng cấp tài khoản Sinh viên lên Giảng viên; xác minh là bước riêng biệt tiếp theo.",
+                  )}
+                  <strong>{uiText("Từ chối")}</strong>
+                  {uiText(": Giữ nguyên trạng thái tài khoản sinh viên.")}
                 </p>
 
                 <form onSubmit={decide}>
@@ -809,22 +847,22 @@ export function AdminLecturerApplications() {
                     }}
                   >
                     <label>
-                      Quyết định thẩm định
+                      {uiText("Quyết định thẩm định")}
                       <select name="decision" style={{ width: "100%", marginTop: "6px" }}>
-                        <option value="APPROVE">Phê duyệt làm Giảng viên (APPROVE)</option>
-                        <option value="REJECT">Từ chối hồ sơ này (REJECT)</option>
+                        <option value="APPROVE">{uiText("Phê duyệt làm Giảng viên (APPROVE)")}</option>
+                        <option value="REJECT">{uiText("Từ chối hồ sơ này (REJECT)")}</option>
                       </select>
                     </label>
 
                     <label>
-                      Mật khẩu quản trị viên hiện tại
+                      {uiText("Mật khẩu quản trị viên hiện tại")}
                       <input
                         type="password"
                         name="currentPassword"
                         autoComplete="current-password"
                         required
                         maxLength={128}
-                        placeholder="Nhập mật khẩu admin..."
+                        placeholder={uiText("Nhập mật khẩu admin...")}
                         style={{ width: "100%", marginTop: "6px" }}
                       />
                     </label>
@@ -837,10 +875,10 @@ export function AdminLecturerApplications() {
                       disabled={busy}
                       onClick={() => setDetail(null)}
                     >
-                      Đóng
+                      {uiText("Đóng")}
                     </button>
                     <button className="button" disabled={busy}>
-                      {busy ? "Đang xử lý…" : "Xác nhận quyết định"}
+                      {busy ? uiText("Đang xử lý…") : uiText("Xác nhận quyết định")}
                     </button>
                   </div>
                 </form>
@@ -855,24 +893,25 @@ export function AdminLecturerApplications() {
                 }}
               >
                 <h3 style={{ fontSize: "16px", margin: "0 0 8px" }}>
-                  Xác minh Giảng viên chính thức (Bước riêng biệt)
+                  {uiText("Xác minh Giảng viên chính thức (Bước riêng biệt)")}
                 </h3>
                 <p style={{ fontSize: "13px", color: "var(--muted)", margin: "0 0 16px" }}>
-                  Sau khi xác minh, giảng viên sẽ được cấp huy hiệu tin cậy và quyền xuất bản các khóa học có
-                  thu phí.
+                  {uiText(
+                    "Sau khi xác minh, giảng viên sẽ được cấp huy hiệu tin cậy và quyền xuất bản các khóa học có thu phí.",
+                  )}
                 </p>
 
                 <form onSubmit={verify}>
                   <div style={{ marginBottom: "16px" }}>
                     <label>
-                      Mật khẩu quản trị viên hiện tại
+                      {uiText("Mật khẩu quản trị viên hiện tại")}
                       <input
                         type="password"
                         name="currentPassword"
                         required
                         autoComplete="current-password"
                         maxLength={128}
-                        placeholder="Nhập mật khẩu admin để xác minh..."
+                        placeholder={uiText("Nhập mật khẩu admin để xác minh...")}
                         style={{ width: "100%", maxWidth: "380px", marginTop: "6px" }}
                       />
                     </label>
@@ -885,10 +924,10 @@ export function AdminLecturerApplications() {
                       disabled={busy}
                       onClick={() => setDetail(null)}
                     >
-                      Đóng
+                      {uiText("Đóng")}
                     </button>
                     <button className="button" disabled={busy}>
-                      {busy ? "Đang xử lý…" : "Xác minh Giảng viên"}
+                      {busy ? uiText("Đang xử lý…") : uiText("Xác minh Giảng viên")}
                     </button>
                   </div>
                 </form>

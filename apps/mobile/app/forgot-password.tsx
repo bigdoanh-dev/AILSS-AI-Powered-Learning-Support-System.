@@ -1,3 +1,4 @@
+import { useUiText } from "../src/use-language";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
@@ -7,6 +8,7 @@ import { PasswordResetApi, passwordResetError } from "../src/password-reset";
 import { Button, Page, PasswordInput, styles } from "../src/ui";
 
 export default function ForgotPassword() {
+  const uiText = useUiText();
   const api = useMemo(() => new PasswordResetApi(runtime!.api), []);
   const [step, setStep] = useState<"email" | "code" | "password" | "done">("email");
   const [email, setEmail] = useState("");
@@ -96,33 +98,43 @@ export default function ForgotPassword() {
   return (
     <Page>
       <Text style={styles.title} accessibilityRole="header">
-        {step === "done" ? "Đặt lại mật khẩu thành công" : "Quên mật khẩu?"}
+        {step === "done" ? uiText("Đặt lại mật khẩu thành công") : uiText("Quên mật khẩu?")}
       </Text>
       {step === "done" ? (
         <>
-          <Text style={styles.text}>Mật khẩu mới đã được lưu. Hãy đăng nhập lại để tiếp tục học tập.</Text>
-          <Button label="Đến trang đăng nhập" onPress={() => router.replace("/login")} />
+          <Text style={styles.text}>
+            {uiText("Mật khẩu mới đã được lưu. Hãy đăng nhập lại để tiếp tục học tập.")}
+          </Text>
+          <Button label={uiText("Đến trang đăng nhập")} onPress={() => router.replace("/login")} />
         </>
       ) : (
         <View style={{ gap: 16 }}>
           <Text style={styles.small}>
-            Bước {step === "email" ? "1/3 · Email" : step === "code" ? "2/3 · Mã OTP" : "3/3 · Mật khẩu mới"}
+            {uiText("Bước ")}
+            {step === "email"
+              ? "1/3 · Email"
+              : step === "code"
+                ? uiText("2/3 · Mã OTP")
+                : uiText("3/3 · Mật khẩu mới")}
           </Text>
           <Text style={styles.text}>
             {step === "email"
-              ? "Nhập email đã đăng ký để nhận mã đặt lại mật khẩu."
-              : `Nếu email ${email} có tài khoản dùng mật khẩu, bạn sẽ nhận mã OTP gồm 6 chữ số. Mã có hiệu lực 15 phút. Kiểm tra cả thư rác.`}
+              ? uiText("Nhập email đã đăng ký để nhận mã đặt lại mật khẩu.")
+              : uiText(
+                  "Nếu email {0} có tài khoản dùng mật khẩu, bạn sẽ nhận mã OTP gồm 6 chữ số. Mã có hiệu lực 15 phút. Kiểm tra cả thư rác.",
+                  [email],
+                )}
           </Text>
           {!!error && (
             <Text accessibilityRole="alert" style={styles.error}>
-              {error}
+              {uiText(error)}
             </Text>
           )}
           {step === "email" && (
             <>
-              <Text style={styles.text}>Email đăng ký</Text>
+              <Text style={styles.text}>{uiText("Email đăng ký")}</Text>
               <TextInput
-                accessibilityLabel="Email đăng ký"
+                accessibilityLabel={uiText("Email đăng ký")}
                 style={styles.input}
                 value={email}
                 onChangeText={setEmail}
@@ -137,9 +149,9 @@ export default function ForgotPassword() {
           )}
           {step === "code" && (
             <>
-              <Text style={styles.text}>Mã OTP</Text>
+              <Text style={styles.text}>{uiText("Mã OTP")}</Text>
               <TextInput
-                accessibilityLabel="Mã OTP"
+                accessibilityLabel={uiText("Mã OTP")}
                 style={[styles.input, { textAlign: "center", letterSpacing: 6 }]}
                 value={code}
                 onChangeText={(v) => setCode(v.replace(/\D/g, "").slice(0, 6))}
@@ -153,21 +165,21 @@ export default function ForgotPassword() {
           )}
           {step === "password" && (
             <>
-              <Text style={styles.text}>Mật khẩu mới</Text>
+              <Text style={styles.text}>{uiText("Mật khẩu mới")}</Text>
               <PasswordInput
                 key="new"
-                accessibilityLabel="Mật khẩu mới"
+                accessibilityLabel={uiText("Mật khẩu mới")}
                 value={password}
                 onChangeText={setPassword}
                 autoComplete="new-password"
                 maxLength={128}
                 editable={!busy}
               />
-              <Text style={styles.small}>Dùng 12–128 ký tự.</Text>
-              <Text style={styles.text}>Nhập lại mật khẩu mới</Text>
+              <Text style={styles.small}>{uiText("Dùng 12–128 ký tự.")}</Text>
+              <Text style={styles.text}>{uiText("Nhập lại mật khẩu mới")}</Text>
               <PasswordInput
                 key="confirm"
-                accessibilityLabel="Nhập lại mật khẩu mới"
+                accessibilityLabel={uiText("Nhập lại mật khẩu mới")}
                 value={confirmation}
                 onChangeText={setConfirmation}
                 autoComplete="new-password"
@@ -179,14 +191,14 @@ export default function ForgotPassword() {
           <Button
             label={
               busy
-                ? "Đang xử lý…"
+                ? uiText("Đang xử lý…")
                 : step === "email"
                   ? remaining > 0
-                    ? `Gửi mã sau ${remaining}s`
-                    : "Gửi mã OTP"
+                    ? uiText("Gửi mã sau {0}s", [remaining])
+                    : uiText("Gửi mã OTP")
                   : step === "code"
-                    ? "Xác nhận mã OTP"
-                    : "Lưu mật khẩu mới"
+                    ? uiText("Xác nhận mã OTP")
+                    : uiText("Lưu mật khẩu mới")
             }
             onPress={() => void send(step === "email" ? "request" : step === "code" ? "verify" : "complete")}
             disabled={
@@ -199,17 +211,28 @@ export default function ForgotPassword() {
           {step === "code" && (
             <Button
               variant="secondary"
-              label={remaining > 0 ? `Gửi lại mã sau ${remaining}s` : "Gửi lại mã OTP"}
+              label={remaining > 0 ? uiText("Gửi lại mã sau {0}s", [remaining]) : uiText("Gửi lại mã OTP")}
               disabled={busy || remaining > 0}
               onPress={() => void send("request")}
             />
           )}
           {step !== "email" && (
-            <Button variant="ghost" label="Đổi email / bắt đầu lại" disabled={busy} onPress={changeEmail} />
+            <Button
+              variant="ghost"
+              label={uiText("Đổi email / bắt đầu lại")}
+              disabled={busy}
+              onPress={changeEmail}
+            />
           )}
-          <Button variant="ghost" label="Quay lại đăng nhập" onPress={() => router.replace("/login")} />
+          <Button
+            variant="ghost"
+            label={uiText("Quay lại đăng nhập")}
+            onPress={() => router.replace("/login")}
+          />
           <Text style={styles.small}>
-            Nếu dùng Google để đăng nhập, bạn có thể tiếp tục bằng nút Google trên trang đăng nhập.
+            {uiText(
+              "Nếu dùng Google để đăng nhập, bạn có thể tiếp tục bằng nút Google trên trang đăng nhập.",
+            )}
           </Text>
         </View>
       )}

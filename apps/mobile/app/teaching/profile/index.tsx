@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { router, type Href } from "expo-router";
@@ -26,6 +27,7 @@ const parse = (value: unknown): Details => {
 };
 
 export default function LecturerProfileEditor() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -93,8 +95,8 @@ export default function LecturerProfileEditor() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <ScreenHeader title="Hồ sơ giảng viên" onBack={() => router.replace("/")} />
-        <Text style={styles.error}>Chỉ giảng viên được cập nhật hồ sơ.</Text>
+        <ScreenHeader title={uiText("Hồ sơ giảng viên")} onBack={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Chỉ giảng viên được cập nhật hồ sơ.")}</Text>
       </Page>
     );
   }
@@ -103,8 +105,8 @@ export default function LecturerProfileEditor() {
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
       <Page>
         <ScreenHeader
-          title="Hồ sơ &amp; Xác thực Giảng viên"
-          subtitle="Thông tin chuyên môn và tiến trình thẩm định"
+          title={uiText("Hồ sơ & Xác thực Giảng viên")}
+          subtitle={uiText("Thông tin chuyên môn và tiến trình thẩm định")}
           onBack={() => router.replace("/teaching" as Href)}
         />
 
@@ -123,14 +125,17 @@ export default function LecturerProfileEditor() {
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <Text style={ds.displayName}>{snapshot.user.displayName}</Text>
                 <Badge
-                  label={isVerified ? "Đã xác minh chính thức" : "Đang chờ duyệt xét"}
+                  label={isVerified ? uiText("Đã xác minh chính thức") : uiText("Đang chờ duyệt xét")}
                   variant={isVerified ? "success" : "warning"}
                 />
               </View>
               <Text style={styles.small}>{snapshot.user.emailMasked}</Text>
               <View style={ds.idBadge}>
                 <Icon name="shield" size={12} color="#0D9488" />
-                <Text style={ds.idBadgeText}>Mã GV: {snapshot.user.userId.slice(0, 14)}…</Text>
+                <Text style={ds.idBadgeText}>
+                  {uiText("Mã GV: ")}
+                  {snapshot.user.userId.slice(0, 14)}…
+                </Text>
               </View>
             </View>
           </View>
@@ -140,7 +145,7 @@ export default function LecturerProfileEditor() {
         <View style={ds.card}>
           <View style={ds.sectionHeaderRow}>
             <Icon name="shield" size={16} color={tokens.color.brand} />
-            <Text style={ds.sectionHeaderTitle}>QUY TRÌNH XÁC THỰC GIẢNG VIÊN</Text>
+            <Text style={ds.sectionHeaderTitle}>{uiText("QUY TRÌNH XÁC THỰC GIẢNG VIÊN")}</Text>
           </View>
 
           <View style={ds.stepperList}>
@@ -151,12 +156,12 @@ export default function LecturerProfileEditor() {
               </View>
               <View style={{ flex: 1 }}>
                 <View style={ds.stepTitleRow}>
-                  <Text style={ds.stepTitle}>1. Khởi tạo tài khoản Giảng viên</Text>
+                  <Text style={ds.stepTitle}>{uiText("1. Khởi tạo tài khoản Giảng viên")}</Text>
                   <View style={[ds.stepPill, ds.stepPillSuccess]}>
-                    <Text style={ds.stepPillTextSuccess}>Hoàn thành</Text>
+                    <Text style={ds.stepPillTextSuccess}>{uiText("Hoàn thành")}</Text>
                   </View>
                 </View>
-                <Text style={styles.small}>Đã hoàn thành đăng ký vai trò giảng viên AILSS.</Text>
+                <Text style={styles.small}>{uiText("Đã hoàn thành đăng ký vai trò giảng viên AILSS.")}</Text>
               </View>
             </View>
 
@@ -176,7 +181,7 @@ export default function LecturerProfileEditor() {
               </View>
               <View style={{ flex: 1 }}>
                 <View style={ds.stepTitleRow}>
-                  <Text style={ds.stepTitle}>2. Khai báo hồ sơ chuyên môn</Text>
+                  <Text style={ds.stepTitle}>{uiText("2. Khai báo hồ sơ chuyên môn")}</Text>
                   <View
                     style={[
                       ds.stepPill,
@@ -188,12 +193,12 @@ export default function LecturerProfileEditor() {
                         details?.bio || details?.experience ? ds.stepPillTextSuccess : ds.stepPillTextActive
                       }
                     >
-                      {details?.bio || details?.experience ? "Đã lưu" : "Đang cập nhật"}
+                      {details?.bio || details?.experience ? uiText("Đã lưu") : uiText("Đang cập nhật")}
                     </Text>
                   </View>
                 </View>
                 <Text style={styles.small}>
-                  Tiểu sử, học vị, kinh nghiệm giảng dạy và các chứng chỉ, bằng cấp.
+                  {uiText("Tiểu sử, học vị, kinh nghiệm giảng dạy và các chứng chỉ, bằng cấp.")}
                 </Text>
               </View>
             </View>
@@ -205,13 +210,13 @@ export default function LecturerProfileEditor() {
               </View>
               <View style={{ flex: 1 }}>
                 <View style={ds.stepTitleRow}>
-                  <Text style={ds.stepTitle}>3. Thiết lập tài khoản Payout</Text>
+                  <Text style={ds.stepTitle}>{uiText("3. Thiết lập tài khoản Payout")}</Text>
                   <View style={[ds.stepPill, ds.stepPillActive]}>
-                    <Text style={ds.stepPillTextActive}>Sẵn sàng</Text>
+                    <Text style={ds.stepPillTextActive}>{uiText("Sẵn sàng")}</Text>
                   </View>
                 </View>
                 <Text style={styles.small}>
-                  Khai báo tài khoản ngân hàng để nhận chi trả tiền bán khóa học.
+                  {uiText("Khai báo tài khoản ngân hàng để nhận chi trả tiền bán khóa học.")}
                 </Text>
               </View>
             </View>
@@ -223,17 +228,17 @@ export default function LecturerProfileEditor() {
               </View>
               <View style={{ flex: 1 }}>
                 <View style={ds.stepTitleRow}>
-                  <Text style={ds.stepTitle}>4. Quản trị viên thẩm định & Cấp quyền</Text>
+                  <Text style={ds.stepTitle}>{uiText("4. Quản trị viên thẩm định & Cấp quyền")}</Text>
                   <View style={[ds.stepPill, isVerified ? ds.stepPillSuccess : ds.stepPillWarning]}>
                     <Text style={isVerified ? ds.stepPillTextSuccess : ds.stepPillTextWarning}>
-                      {isVerified ? "Đã duyệt" : "Chờ duyệt"}
+                      {isVerified ? uiText("Đã duyệt") : uiText("Chờ duyệt")}
                     </Text>
                   </View>
                 </View>
                 <Text style={styles.small}>
                   {isVerified
-                    ? "Tài khoản có toàn quyền xuất bản khóa học và đối soát doanh thu."
-                    : "Quản trị viên đối soát thông tin và cấp quyền giảng dạy chính thức."}
+                    ? uiText("Tài khoản có toàn quyền xuất bản khóa học và đối soát doanh thu.")
+                    : uiText("Quản trị viên đối soát thông tin và cấp quyền giảng dạy chính thức.")}
                 </Text>
               </View>
             </View>
@@ -244,16 +249,17 @@ export default function LecturerProfileEditor() {
         <View style={ds.card}>
           <View style={ds.sectionHeaderRow}>
             <Icon name="people" size={16} color={tokens.color.brand} />
-            <Text style={ds.sectionHeaderTitle}>HỒ SƠ CÔNG KHAI CHO HỌC VIÊN</Text>
+            <Text style={ds.sectionHeaderTitle}>{uiText("HỒ SƠ CÔNG KHAI CHO HỌC VIÊN")}</Text>
           </View>
 
           <Text style={styles.small}>
-            Thông tin này hiển thị trên trang khóa học và hồ sơ giảng viên công khai trước khi học viên đăng
-            ký.
+            {uiText(
+              "Thông tin này hiển thị trên trang khóa học và hồ sơ giảng viên công khai trước khi học viên đăng ký.",
+            )}
           </Text>
 
           {!details ? (
-            <Text style={styles.small}>Đang tải thông tin hồ sơ…</Text>
+            <Text style={styles.small}>{uiText("Đang tải thông tin hồ sơ…")}</Text>
           ) : (
             <>
               {(
@@ -281,7 +287,7 @@ export default function LecturerProfileEditor() {
                     multiline
                     maxLength={maxLength}
                     value={details[key]}
-                    placeholder={`Nhập ${label.toLowerCase()}…`}
+                    placeholder={uiText("Nhập {0}…", [label.toLowerCase()])}
                     onChangeText={(value) =>
                       setDetails((current) => (current ? { ...current, [key]: value } : current))
                     }
@@ -303,7 +309,7 @@ export default function LecturerProfileEditor() {
                 }}
               >
                 <Switch
-                  accessibilityLabel="Hiển thị ảnh thật công khai"
+                  accessibilityLabel={uiText("Hiển thị ảnh thật công khai")}
                   value={details.showPhoto}
                   onValueChange={(value) =>
                     setDetails((current) => (current ? { ...current, showPhoto: value } : current))
@@ -311,16 +317,16 @@ export default function LecturerProfileEditor() {
                 />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.text, { fontWeight: "700", fontSize: 13 }]}>
-                    Hiển thị ảnh chân dung thật
+                    {uiText("Hiển thị ảnh chân dung thật")}
                   </Text>
                   <Text style={[styles.small, { fontSize: 11 }]}>
-                    Sử dụng ảnh đại diện thật từ Tài khoản của bạn trên hồ sơ công khai.
+                    {uiText("Sử dụng ảnh đại diện thật từ Tài khoản của bạn trên hồ sơ công khai.")}
                   </Text>
                 </View>
               </View>
 
               <Button
-                label={busy ? "Đang lưu…" : "Lưu hồ sơ công khai"}
+                label={busy ? uiText("Đang lưu…") : uiText("Lưu hồ sơ công khai")}
                 variant="primary"
                 icon={<Icon name="checkCircle" size={18} color="#FFFFFF" />}
                 disabled={busy}
@@ -340,7 +346,7 @@ export default function LecturerProfileEditor() {
                 },
               ]}
             >
-              {message}
+              {uiText(message)}
             </Text>
           ) : null}
         </View>
@@ -348,19 +354,19 @@ export default function LecturerProfileEditor() {
         {/* 4. Quick Actions */}
         <View style={{ gap: 8, marginTop: 4 }}>
           <Button
-            label="Xem trang hồ sơ công khai"
+            label={uiText("Xem trang hồ sơ công khai")}
             variant="outline"
             icon={<Icon name="eye" size={16} color={tokens.color.brand} />}
             onPress={() => router.push(`/lecturers/${snapshot.user!.userId}` as Href)}
           />
           <Button
-            label="Cài đặt tài khoản nhận tiền (Payout)"
+            label={uiText("Cài đặt tài khoản nhận tiền (Payout)")}
             variant="outline"
             icon={<Icon name="card" size={16} color={tokens.color.brand} />}
             onPress={() => router.push("/teaching/revenue" as Href)}
           />
           <Button
-            label="Đổi ảnh đại diện trong Tài khoản"
+            label={uiText("Đổi ảnh đại diện trong Tài khoản")}
             variant="outline"
             icon={<Icon name="user" size={16} color={tokens.color.brand} />}
             onPress={() => router.push("/account" as Href)}

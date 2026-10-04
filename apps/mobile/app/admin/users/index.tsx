@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, Pressable, FlatList, StyleSheet, ActivityIndicator, TextInput } from "react-native";
 import { router, type Href } from "expo-router";
@@ -13,6 +14,7 @@ import {
 import { Page, Button, Icon, styles, tokens } from "../../../src/ui";
 
 export default function AdminUsersListScreen() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
@@ -87,9 +89,9 @@ export default function AdminUsersListScreen() {
   if (snapshot.user?.role !== "ADMIN") {
     return (
       <Page>
-        <Text style={styles.title}>Người dùng</Text>
-        <Text style={styles.error}>Chức năng này yêu cầu quyền Quản trị viên (ADMIN).</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.title}>{uiText("Người dùng")}</Text>
+        <Text style={styles.error}>{uiText("Chức năng này yêu cầu quyền Quản trị viên (ADMIN).")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -97,7 +99,7 @@ export default function AdminUsersListScreen() {
   const renderItem = ({ item }: { item: AdminUser }) => (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Người dùng ${item.displayName}`}
+      accessibilityLabel={uiText("Người dùng {0}", [item.displayName])}
       style={us.card}
       onPress={() => router.push(`/admin/users/${item.userId}` as Href)}
     >
@@ -119,15 +121,23 @@ export default function AdminUsersListScreen() {
           <View style={us.tagsRow}>
             <View style={[us.badge, item.role === "LECTURER" ? us.badgeLecturer : us.badgeRole]}>
               <Text style={us.badgeText}>
-                {item.role === "LECTURER" ? "Giảng viên" : item.role === "ADMIN" ? "Quản trị" : "Sinh viên"}
+                {item.role === "LECTURER"
+                  ? uiText("Giảng viên")
+                  : item.role === "ADMIN"
+                    ? uiText("Quản trị")
+                    : uiText("Sinh viên")}
               </Text>
             </View>
             <View style={[us.badge, item.status === "ACTIVE" ? us.badgeActive : us.badgeSuspended]}>
-              <Text style={us.badgeText}>{item.status === "ACTIVE" ? "Hoạt động" : "Tạm khóa"}</Text>
+              <Text style={us.badgeText}>
+                {item.status === "ACTIVE" ? uiText("Hoạt động") : uiText("Tạm khóa")}
+              </Text>
             </View>
             {item.role === "LECTURER" && (
               <View style={[us.badge, item.lecturerVerified ? us.badgeVerified : us.badgeUnverified]}>
-                <Text style={us.badgeText}>{item.lecturerVerified ? "Đã xác minh" : "Chưa xác minh"}</Text>
+                <Text style={us.badgeText}>
+                  {item.lecturerVerified ? uiText("Đã xác minh") : uiText("Chưa xác minh")}
+                </Text>
               </View>
             )}
             {item.providers?.some((p) => p.toUpperCase() === "GOOGLE") && (
@@ -146,51 +156,57 @@ export default function AdminUsersListScreen() {
     <Page scroll={false}>
       <TextInput
         style={styles.input}
-        accessibilityLabel="Tìm tài khoản"
-        placeholder="Tên, email Google hoặc mã tài khoản"
+        accessibilityLabel={uiText("Tìm tài khoản")}
+        placeholder={uiText("Tên, email Google hoặc mã tài khoản")}
         value={search}
         onChangeText={setSearch}
       />
-      <Text style={styles.title}>Tra cứu người dùng</Text>
-      <Text style={styles.small}>Lọc theo vai trò và trạng thái chính thức trên hệ thống</Text>
+      <Text style={styles.title}>{uiText("Tra cứu người dùng")}</Text>
+      <Text style={styles.small}>{uiText("Lọc theo vai trò và trạng thái chính thức trên hệ thống")}</Text>
 
       {/* Role Filters */}
-      <Text style={[styles.text, { fontWeight: "600", marginTop: tokens.space.small }]}>Vai trò:</Text>
+      <Text style={[styles.text, { fontWeight: "600", marginTop: tokens.space.small }]}>
+        {uiText("Vai trò:")}
+      </Text>
       <View style={us.filterGroup}>
         {(["STUDENT", "LECTURER", "ADMIN"] as AdminRole[]).map((r) => (
           <Pressable
             key={r}
             accessibilityRole="button"
-            accessibilityLabel={`Lọc vai trò ${r}`}
+            accessibilityLabel={uiText("Lọc vai trò {0}", [r])}
             style={[us.chip, role === r && us.chipSelected]}
             onPress={() => setRole(r)}
           >
             <Text style={[us.chipText, role === r && us.chipTextSelected]}>
-              {r === "STUDENT" ? "Sinh viên" : r === "LECTURER" ? "Giảng viên" : "Quản trị"}
+              {r === "STUDENT"
+                ? uiText("Sinh viên")
+                : r === "LECTURER"
+                  ? uiText("Giảng viên")
+                  : uiText("Quản trị")}
             </Text>
           </Pressable>
         ))}
       </View>
 
       {/* Status Filters */}
-      <Text style={[styles.text, { fontWeight: "600", marginTop: 4 }]}>Trạng thái:</Text>
+      <Text style={[styles.text, { fontWeight: "600", marginTop: 4 }]}>{uiText("Trạng thái:")}</Text>
       <View style={us.filterGroup}>
         {(["ACTIVE", "SUSPENDED"] as AdminUserStatus[]).map((s) => (
           <Pressable
             key={s}
             accessibilityRole="button"
-            accessibilityLabel={`Lọc trạng thái ${s}`}
+            accessibilityLabel={uiText("Lọc trạng thái {0}", [s])}
             style={[us.chip, status === s && us.chipSelected]}
             onPress={() => setStatus(s)}
           >
             <Text style={[us.chipText, status === s && us.chipTextSelected]}>
-              {s === "ACTIVE" ? "Đang hoạt động" : "Tạm khóa"}
+              {s === "ACTIVE" ? uiText("Đang hoạt động") : uiText("Tạm khóa")}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={styles.error}>{uiText(error)}</Text> : null}
 
       {loading && !refreshing ? (
         <ActivityIndicator size="large" color={tokens.color.brand} style={{ marginTop: 24 }} />
@@ -203,13 +219,13 @@ export default function AdminUsersListScreen() {
           onRefresh={() => void loadUsers(true, "")}
           ListEmptyComponent={
             <View style={us.emptyContainer}>
-              <Text style={us.emptyText}>Không tìm thấy người dùng phù hợp.</Text>
+              <Text style={us.emptyText}>{uiText("Không tìm thấy người dùng phù hợp.")}</Text>
             </View>
           }
           ListFooterComponent={
             <View style={us.footerContainer}>
-              {nextCursor ? <Button label="Trang tiếp theo →" onPress={handleNextPage} /> : null}
-              {cursor ? <Button label="Quay lại trang đầu" onPress={handleResetToFirst} /> : null}
+              {nextCursor ? <Button label={uiText("Trang tiếp theo →")} onPress={handleNextPage} /> : null}
+              {cursor ? <Button label={uiText("Quay lại trang đầu")} onPress={handleResetToFirst} /> : null}
             </View>
           }
           contentContainerStyle={us.listContent}

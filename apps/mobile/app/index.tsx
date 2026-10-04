@@ -1,3 +1,4 @@
+import { useLanguage, useUiText } from "../src/use-language";
 import { loadAssignedQuizzes, type AssignedQuiz } from "../src/assigned-quizzes";
 import { useSyncExternalStore, useState, useEffect, useRef } from "react";
 import {
@@ -31,12 +32,15 @@ import { TutorAvatar } from "../src/TutorAvatar";
 
 import { getFeaturesForRole, type FeatureItem } from "../src/features";
 export { getFeaturesForRole, type FeatureItem };
-import { getSystemSettings, updateSystemSettings, subscribeSystemSettings } from "../src/settings";
+import { getSystemSettings, subscribeSystemSettings } from "../src/settings";
+import { setAppLanguage } from "../src/runtime";
 import { loadCourseCategories, loadConfiguredCoursePreview } from "../src/catalog-preview";
 import { ApiError } from "../src/api";
 import { LANGUAGES, getTranslation } from "../src/i18n";
 
 export default function Home() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const { fontScale } = useWindowDimensions();
@@ -52,6 +56,8 @@ export default function Home() {
   const [classList, setClassList] = useState<StudentClass[]>([]);
   const [showAllModal, setShowAllModal] = useState(false);
   const [showLangModal, setShowLangModal] = useState(false);
+  const [savingLanguage, setSavingLanguage] = useState(false);
+  const [languageError, setLanguageError] = useState("");
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
   const lastScrollY = useRef(0);
 
@@ -223,7 +229,10 @@ export default function Home() {
 
   const activeCourse = enrolledList[0];
   const displayName = snapshot.user?.displayName || "HỌC VIÊN AILSS";
-  const features = getFeaturesForRole(snapshot.user?.role);
+  const features = getFeaturesForRole(snapshot.user?.role).map((feature) => ({
+    ...feature,
+    label: uiText(feature.label),
+  }));
 
   const handleFeaturePress = (feature: FeatureItem) => {
     if (feature.path === "modal:all") {
@@ -271,10 +280,10 @@ export default function Home() {
         {homeError ? (
           <View style={styles.card}>
             <Text accessibilityRole="alert" style={styles.error}>
-              {homeError}
+              {uiText(homeError)}
             </Text>
             <Button
-              label="Thử tải lại"
+              label={uiText("Thử tải lại")}
               onPress={() => {
                 setHomeError("");
                 setHomeRevision((v) => v + 1);
@@ -300,7 +309,7 @@ export default function Home() {
                   router.push(snapshot.state === "AUTHENTICATED" ? ("/account" as Href) : ("/login" as Href))
                 }
                 accessibilityRole="button"
-                accessibilityLabel="Hồ sơ tài khoản"
+                accessibilityLabel={uiText("Hồ sơ tài khoản")}
               >
                 <View style={hStyles.avatarCircle}>
                   {userAvatarUrl ? (
@@ -387,9 +396,9 @@ export default function Home() {
                   scaleTo={0.95}
                   onPress={() => router.push("/register" as Href)}
                   accessibilityRole="button"
-                  accessibilityLabel="Tạo tài khoản mới"
+                  accessibilityLabel={uiText("Tạo tài khoản mới")}
                 >
-                  <Text style={hStyles.guestBtnSecondaryText}>Tạo tài khoản mới</Text>
+                  <Text style={hStyles.guestBtnSecondaryText}>{uiText("Tạo tài khoản mới")}</Text>
                 </ScalePressable>
               </View>
             </View>
@@ -403,7 +412,7 @@ export default function Home() {
                 )
               }
               accessibilityRole="button"
-              accessibilityLabel="Chi tiết buổi học sắp diễn ra"
+              accessibilityLabel={uiText("Chi tiết buổi học sắp diễn ra")}
             >
               <FloatingElement distance={3} duration={1600}>
                 <View style={hStyles.heroIconBox}>
@@ -414,10 +423,12 @@ export default function Home() {
               <View style={{ flex: 1, gap: 3 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                   <Badge
-                    label={upcomingSession.mode === "ONLINE" ? "LIVE CLASS" : "TRỰC TIẾP"}
+                    label={upcomingSession.mode === "ONLINE" ? "LIVE CLASS" : uiText("TRỰC TIẾP")}
                     variant={upcomingSession.mode === "ONLINE" ? "success" : "neutral"}
                   />
-                  <Text style={{ fontSize: 11, fontWeight: "700", color: "#0284C7" }}>SẮP TỚI</Text>
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: "#0284C7" }}>
+                    {uiText("SẮP TỚI")}
+                  </Text>
                 </View>
                 <Text style={hStyles.heroSubjectTitle} numberOfLines={1}>
                   {upcomingSession.title}
@@ -427,11 +438,14 @@ export default function Home() {
                     parseTimestamp(upcomingSession.startAt),
                     parseTimestamp(upcomingSession.endAt),
                     upcomingSession.timezone,
+                    uiLocale,
                   )}{" "}
                   • {upcomingSession.className}
                 </Text>
                 <Text style={hStyles.heroRoomText} numberOfLines={1}>
-                  {upcomingSession.mode === "ONLINE" ? "Trực tuyến • Live Classroom" : "Phòng học trực tiếp"}
+                  {upcomingSession.mode === "ONLINE"
+                    ? uiText("Trực tuyến • Live Classroom")
+                    : uiText("Phòng học trực tiếp")}
                 </Text>
               </View>
 
@@ -445,7 +459,7 @@ export default function Home() {
               scaleTo={0.96}
               onPress={() => router.push(`/learn/${activeCourse.courseId}` as Href)}
               accessibilityRole="button"
-              accessibilityLabel="Tiếp tục bài học gần nhất"
+              accessibilityLabel={uiText("Tiếp tục bài học gần nhất")}
             >
               <FloatingElement distance={3} duration={1600}>
                 <View style={[hStyles.heroIconBox, { backgroundColor: "#EDE9FE" }]}>
@@ -455,13 +469,13 @@ export default function Home() {
 
               <View style={{ flex: 1, gap: 3 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <Badge label="TIẾP TỤC HỌC" variant="ai" icon="sparkles" />
+                  <Badge label={uiText("TIẾP TỤC HỌC")} variant="ai" icon="sparkles" />
                 </View>
                 <Text style={hStyles.heroSubjectTitle} numberOfLines={1}>
                   {activeCourse.title}
                 </Text>
                 <Text style={hStyles.heroTimeText} numberOfLines={1}>
-                  Bài học tiếp theo đã sẵn sàng • Bấm để vào học
+                  {uiText("Bài học tiếp theo đã sẵn sàng • Bấm để vào học")}
                 </Text>
               </View>
 
@@ -475,7 +489,7 @@ export default function Home() {
               scaleTo={0.96}
               onPress={() => router.push("/admin" as Href)}
               accessibilityRole="button"
-              accessibilityLabel="Mở Trung tâm Quản trị AILSS"
+              accessibilityLabel={uiText("Mở Trung tâm Quản trị AILSS")}
             >
               <FloatingElement distance={3} duration={1600}>
                 <View style={[hStyles.heroIconBox, { backgroundColor: "#FEE2E2" }]}>
@@ -485,17 +499,17 @@ export default function Home() {
 
               <View style={{ flex: 1, gap: 3 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <Badge label="QUẢN TRỊ VIÊN HỆ THỐNG" variant="danger" icon="shield" />
+                  <Badge label={uiText("QUẢN TRỊ VIÊN HỆ THỐNG")} variant="danger" icon="shield" />
                   <Text style={{ fontSize: 11, fontWeight: "700", color: "#DC2626" }}>ADMIN DASHBOARD</Text>
                 </View>
                 <Text style={hStyles.heroSubjectTitle} numberOfLines={2}>
-                  Trung tâm Điều hành & Quản trị
+                  {uiText("Trung tâm Điều hành & Quản trị")}
                 </Text>
                 <Text style={hStyles.heroTimeText} numberOfLines={2}>
-                  Duyệt giảng viên, kiểm duyệt báo cáo, đối soát tự động & doanh thu
+                  {uiText("Duyệt giảng viên, kiểm duyệt báo cáo, đối soát tự động & doanh thu")}
                 </Text>
                 <Text style={[hStyles.heroRoomText, { color: "#DC2626", fontWeight: "700" }]}>
-                  Mở Bảng điều khiển Quản trị →
+                  {uiText("Mở Bảng điều khiển Quản trị →")}
                 </Text>
               </View>
 
@@ -509,7 +523,7 @@ export default function Home() {
               scaleTo={0.96}
               onPress={() => router.push("/teaching" as Href)}
               accessibilityRole="button"
-              accessibilityLabel="Mở Bàn làm việc Giảng dạy"
+              accessibilityLabel={uiText("Mở Bàn làm việc Giảng dạy")}
             >
               <FloatingElement distance={3} duration={1600}>
                 <View style={[hStyles.heroIconBox, { backgroundColor: "#EDE9FE" }]}>
@@ -519,16 +533,16 @@ export default function Home() {
 
               <View style={{ flex: 1, gap: 3 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <Badge label="GIẢNG VIÊN AILSS" variant="ai" icon="academic" />
+                  <Badge label={uiText("GIẢNG VIÊN AILSS")} variant="ai" icon="academic" />
                 </View>
                 <Text style={hStyles.heroSubjectTitle} numberOfLines={2}>
-                  Bàn làm việc Giảng dạy & Soạn đề
+                  {uiText("Bàn làm việc Giảng dạy & Soạn đề")}
                 </Text>
                 <Text style={hStyles.heroTimeText} numberOfLines={2}>
-                  Quản lý lớp phụ trách, khóa học và soạn bài thi thích ứng AI
+                  {uiText("Quản lý lớp phụ trách, khóa học và soạn bài thi thích ứng AI")}
                 </Text>
                 <Text style={[hStyles.heroRoomText, { color: "#7C3AED", fontWeight: "700" }]}>
-                  Vào không gian Giảng dạy →
+                  {uiText("Vào không gian Giảng dạy →")}
                 </Text>
               </View>
 
@@ -542,7 +556,7 @@ export default function Home() {
               scaleTo={0.96}
               onPress={() => router.push("/courses" as Href)}
               accessibilityRole="button"
-              accessibilityLabel="Khám phá khóa học AILSS"
+              accessibilityLabel={uiText("Khám phá khóa học AILSS")}
             >
               <FloatingElement distance={3} duration={1600}>
                 <View style={[hStyles.heroIconBox, { backgroundColor: "#E0F2FE" }]}>
@@ -555,13 +569,13 @@ export default function Home() {
                   <Badge label="AILSS EDTECH AI" variant="primary" icon="academic" />
                 </View>
                 <Text style={hStyles.heroSubjectTitle} numberOfLines={1}>
-                  Học tập thông minh cùng Trợ lý AI
+                  {uiText("Học tập thông minh cùng Trợ lý AI")}
                 </Text>
                 <Text style={hStyles.heroTimeText} numberOfLines={1}>
-                  Bài giảng video, luyện đề trắc nghiệm AI &amp; phản hồi trực tiếp
+                  {uiText("Bài giảng video, luyện đề trắc nghiệm AI & phản hồi trực tiếp")}
                 </Text>
                 <Text style={hStyles.heroRoomText} numberOfLines={1}>
-                  Khám phá thư viện khóa học ngay →
+                  {uiText("Khám phá thư viện khóa học ngay →")}
                 </Text>
               </View>
 
@@ -577,10 +591,10 @@ export default function Home() {
           <FadeSlideIn delay={90} duration={350}>
             <View style={[styles.card, { marginHorizontal: 16, marginTop: 14, marginBottom: 4 }]}>
               <Text accessibilityRole="alert" style={styles.error}>
-                {homeError}
+                {uiText(homeError)}
               </Text>
               <Button
-                label="Thử tải lại"
+                label={uiText("Thử tải lại")}
                 onPress={() => {
                   setHomeError("");
                   setHomeRevision((v) => v + 1);
@@ -598,7 +612,7 @@ export default function Home() {
                 scaleTo={0.98}
                 onPress={() => router.push("/teaching" as Href)}
                 accessibilityRole="button"
-                accessibilityLabel="Mở Bàn làm việc Giảng dạy"
+                accessibilityLabel={uiText("Mở Bàn làm việc Giảng dạy")}
               >
                 <View style={hStyles.academicMetricsStrip}>
                   <View style={hStyles.academicMetricItem}>
@@ -607,7 +621,7 @@ export default function Home() {
                     </View>
                     <View>
                       <Text style={hStyles.academicMetricValue}>{lecturerInfo?.offerings ?? "—"}</Text>
-                      <Text style={hStyles.academicMetricLabel}>Phụ trách</Text>
+                      <Text style={hStyles.academicMetricLabel}>{uiText("Phụ trách")}</Text>
                     </View>
                   </View>
 
@@ -619,7 +633,7 @@ export default function Home() {
                     </View>
                     <View>
                       <Text style={hStyles.academicMetricValue}>—</Text>
-                      <Text style={hStyles.academicMetricLabel}>Học viên</Text>
+                      <Text style={hStyles.academicMetricLabel}>{uiText("Học viên")}</Text>
                     </View>
                   </View>
 
@@ -631,7 +645,7 @@ export default function Home() {
                     </View>
                     <View>
                       <Text style={[hStyles.academicMetricValue, { color: "#DC2626" }]}>—</Text>
-                      <Text style={hStyles.academicMetricLabel}>Chờ chấm 🔥</Text>
+                      <Text style={hStyles.academicMetricLabel}>{uiText("Chờ chấm 🔥")}</Text>
                     </View>
                   </View>
                 </View>
@@ -641,7 +655,7 @@ export default function Home() {
                 scaleTo={0.98}
                 onPress={() => router.push("/admin" as Href)}
                 accessibilityRole="button"
-                accessibilityLabel="Mở Trung tâm Quản trị Admin"
+                accessibilityLabel={uiText("Mở Trung tâm Quản trị Admin")}
               >
                 <View style={hStyles.academicMetricsStrip}>
                   <View style={hStyles.academicMetricItem}>
@@ -662,7 +676,7 @@ export default function Home() {
                     </View>
                     <View>
                       <Text style={hStyles.academicMetricValue}>—</Text>
-                      <Text style={hStyles.academicMetricLabel}>Học viên</Text>
+                      <Text style={hStyles.academicMetricLabel}>{uiText("Học viên")}</Text>
                     </View>
                   </View>
 
@@ -674,7 +688,7 @@ export default function Home() {
                     </View>
                     <View>
                       <Text style={[hStyles.academicMetricValue, { color: "#DC2626" }]}>—</Text>
-                      <Text style={hStyles.academicMetricLabel}>Chờ duyệt 🔥</Text>
+                      <Text style={hStyles.academicMetricLabel}>{uiText("Chờ duyệt 🔥")}</Text>
                     </View>
                   </View>
                 </View>
@@ -685,7 +699,7 @@ export default function Home() {
                 scaleTo={0.98}
                 onPress={() => router.push("/progress" as Href)}
                 accessibilityRole="button"
-                accessibilityLabel="Mở Báo cáo tiến độ và năng lực học tập"
+                accessibilityLabel={uiText("Mở Báo cáo tiến độ và năng lực học tập")}
               >
                 <View style={hStyles.academicMetricsStrip}>
                   <View style={hStyles.academicMetricItem}>
@@ -694,7 +708,7 @@ export default function Home() {
                     </View>
                     <View>
                       <Text style={hStyles.academicMetricValue}>—</Text>
-                      <Text style={hStyles.academicMetricLabel}>Năng lực</Text>
+                      <Text style={hStyles.academicMetricLabel}>{uiText("Năng lực")}</Text>
                     </View>
                   </View>
 
@@ -706,7 +720,7 @@ export default function Home() {
                     </View>
                     <View>
                       <Text style={hStyles.academicMetricValue}>—</Text>
-                      <Text style={hStyles.academicMetricLabel}>Hoạt động học</Text>
+                      <Text style={hStyles.academicMetricLabel}>{uiText("Hoạt động học")}</Text>
                     </View>
                   </View>
 
@@ -718,7 +732,7 @@ export default function Home() {
                     </View>
                     <View>
                       <Text style={[hStyles.academicMetricValue, { color: "#DC2626" }]}>—</Text>
-                      <Text style={hStyles.academicMetricLabel}>Hạn hôm nay</Text>
+                      <Text style={hStyles.academicMetricLabel}>{uiText("Hạn hôm nay")}</Text>
                     </View>
                   </View>
                 </View>
@@ -732,9 +746,9 @@ export default function Home() {
           <FadeSlideIn delay={140} duration={450}>
             <View style={hStyles.sectionContainer}>
               <View style={hStyles.sectionHeader}>
-                <Text style={hStyles.sectionTitle}>Chức năng</Text>
+                <Text style={hStyles.sectionTitle}>{uiText("Chức năng")}</Text>
                 <ScalePressable scaleTo={0.9} onPress={() => setShowAllModal(true)}>
-                  <Text style={hStyles.sectionLink}>Tuỳ chỉnh</Text>
+                  <Text style={hStyles.sectionLink}>{uiText("Tuỳ chỉnh")}</Text>
                 </ScalePressable>
               </View>
 
@@ -779,11 +793,11 @@ export default function Home() {
                 <View style={hStyles.sectionContainer}>
                   <View style={hStyles.sectionHeader}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={hStyles.sectionTitle}>Lớp học của tôi</Text>
-                      <Badge label="CHÍNH KHÓA" variant="primary" />
+                      <Text style={hStyles.sectionTitle}>{uiText("Lớp học của tôi")}</Text>
+                      <Badge label={uiText("CHÍNH KHÓA")} variant="primary" />
                     </View>
                     <ScalePressable scaleTo={0.92} onPress={() => router.push("/classes" as Href)}>
-                      <Text style={hStyles.sectionLink}>Tất cả lớp &gt;</Text>
+                      <Text style={hStyles.sectionLink}>{uiText("Tất cả lớp >")}</Text>
                     </ScalePressable>
                   </View>
 
@@ -795,11 +809,13 @@ export default function Home() {
                         scaleTo={0.97}
                         onPress={() => router.push(`/classes/${c.classId}` as Href)}
                         accessibilityRole="button"
-                        accessibilityLabel={`Lớp học ${c.name}`}
+                        accessibilityLabel={uiText("Lớp học {0}", [c.name])}
                       >
                         <View style={hStyles.cardBadgeRow}>
                           <Badge
-                            label={c.classKind === "LIVE_COHORT" ? "LỚP TRỰC TUYẾN" : "LỚP HỌC"}
+                            label={
+                              c.classKind === "LIVE_COHORT" ? uiText("LỚP TRỰC TUYẾN") : uiText("LỚP HỌC")
+                            }
                             variant="neutral"
                           />
                           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
@@ -807,7 +823,7 @@ export default function Home() {
                               style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: "#10B981" }}
                             />
                             <Text style={{ fontSize: 11, fontWeight: "700", color: "#10B981" }}>
-                              Đang học
+                              {uiText("Đang học")}
                             </Text>
                           </View>
                         </View>
@@ -824,17 +840,17 @@ export default function Home() {
                           }}
                         >
                           <Text style={[styles.small, { flex: 1 }]} numberOfLines={1}>
-                            Mở chi tiết lớp để xem giảng viên phụ trách
+                            {uiText("Mở chi tiết lớp để xem giảng viên phụ trách")}
                           </Text>
                           <View style={hStyles.actionMiniBtn}>
-                            <Text style={hStyles.actionMiniBtnText}>Vào lớp</Text>
+                            <Text style={hStyles.actionMiniBtnText}>{uiText("Vào lớp")}</Text>
                             <Icon name="chevronRight" size={12} color="#FFFFFF" />
                           </View>
                         </View>
                       </ScalePressable>
                     ))}
                     {classList.length === 0 && (
-                      <Text style={styles.small}>Lớp được ghi danh sẽ xuất hiện ở đây.</Text>
+                      <Text style={styles.small}>{uiText("Lớp được ghi danh sẽ xuất hiện ở đây.")}</Text>
                     )}
                   </View>
                 </View>
@@ -845,7 +861,7 @@ export default function Home() {
                 <View style={hStyles.sectionContainer}>
                   <View style={hStyles.sectionHeader}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <Text style={hStyles.sectionTitle}>Bài kiểm tra được giao</Text>
+                      <Text style={hStyles.sectionTitle}>{uiText("Bài kiểm tra được giao")}</Text>
                       {quizLoadState === "ready" && (
                         <View style={[hStyles.pendingHeaderDot, { backgroundColor: "#D97706" }]}>
                           <Text style={hStyles.pendingHeaderDotText}>{homeQuizzes.length}</Text>
@@ -853,7 +869,7 @@ export default function Home() {
                       )}
                     </View>
                     <ScalePressable scaleTo={0.92} onPress={() => router.push("/assessments" as Href)}>
-                      <Text style={hStyles.sectionLink}>Tất cả đề thi &gt;</Text>
+                      <Text style={hStyles.sectionLink}>{uiText("Tất cả đề thi >")}</Text>
                     </ScalePressable>
                   </View>
 
@@ -886,23 +902,31 @@ export default function Home() {
                             )}
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                               <View style={hStyles.adaptiveMiniBadge}>
-                                <Text style={hStyles.adaptiveMiniText}>Bài kiểm tra</Text>
+                                <Text style={hStyles.adaptiveMiniText}>{uiText("Bài kiểm tra")}</Text>
                               </View>
                               <Text style={{ fontSize: 10, color: "#94A3B8" }}>•</Text>
-                              <Text style={hStyles.rowCardSub}>{count} câu hỏi</Text>
+                              <Text style={hStyles.rowCardSub}>
+                                {count} {uiText(" câu hỏi")}
+                              </Text>
                             </View>
                           </View>
                           <View style={[hStyles.rowActionBtn, { backgroundColor: "#FFFBEB" }]}>
-                            <Text style={[hStyles.rowActionText, { color: "#D97706" }]}>Xem đề</Text>
+                            <Text style={[hStyles.rowActionText, { color: "#D97706" }]}>
+                              {uiText("Xem đề")}
+                            </Text>
                             <Icon name="chevronRight" size={12} color="#D97706" />
                           </View>
                         </ScalePressable>
                       );
                     })}
-                    {quizLoadState === "loading" && <Text style={styles.small}>Đang tải đề được giao…</Text>}
+                    {quizLoadState === "loading" && (
+                      <Text style={styles.small}>{uiText("Đang tải đề được giao…")}</Text>
+                    )}
                     {quizLoadState === "ready" && homeQuizzes.length === 0 && (
                       <Text style={styles.small}>
-                        Chưa có bài kiểm tra được giao. Đề do giảng viên xuất bản sẽ hiển thị ở đây.
+                        {uiText(
+                          "Chưa có bài kiểm tra được giao. Đề do giảng viên xuất bản sẽ hiển thị ở đây.",
+                        )}
                       </Text>
                     )}
                   </View>
@@ -921,17 +945,17 @@ export default function Home() {
               <View style={guestStyles.statsStrip}>
                 <View style={guestStyles.statItem}>
                   <Text style={guestStyles.statValue}>100%</Text>
-                  <Text style={guestStyles.statLabel}>AI Tương tác</Text>
+                  <Text style={guestStyles.statLabel}>{uiText("AI Tương tác")}</Text>
                 </View>
                 <View style={guestStyles.statDivider} />
                 <View style={guestStyles.statItem}>
-                  <Text style={guestStyles.statValue}>40+ Giờ</Text>
-                  <Text style={guestStyles.statLabel}>Bài giảng chuẩn</Text>
+                  <Text style={guestStyles.statValue}>{uiText("40+ Giờ")}</Text>
+                  <Text style={guestStyles.statLabel}>{uiText("Bài giảng chuẩn")}</Text>
                 </View>
                 <View style={guestStyles.statDivider} />
                 <View style={guestStyles.statItem}>
                   <Text style={guestStyles.statValue}>24/7</Text>
-                  <Text style={guestStyles.statLabel}>Trợ lý AI Copilot</Text>
+                  <Text style={guestStyles.statLabel}>{uiText("Trợ lý AI Copilot")}</Text>
                 </View>
               </View>
             </FadeSlideIn>
@@ -941,8 +965,8 @@ export default function Home() {
               <View style={hStyles.sectionContainer}>
                 <View style={hStyles.sectionHeader}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <Text style={hStyles.sectionTitle}>Trải nghiệm AILSS Copilot</Text>
-                    <Badge label="NỔI BẬT" variant="ai" icon="sparkles" />
+                    <Text style={hStyles.sectionTitle}>{uiText("Trải nghiệm AILSS Copilot")}</Text>
+                    <Badge label={uiText("NỔI BẬT")} variant="ai" icon="sparkles" />
                   </View>
                 </View>
 
@@ -952,15 +976,17 @@ export default function Home() {
                     scaleTo={0.97}
                     onPress={() => router.push("/courses" as Href)}
                     accessibilityRole="button"
-                    accessibilityLabel="Khám phá các khóa học công nghệ"
+                    accessibilityLabel={uiText("Khám phá các khóa học công nghệ")}
                   >
                     <View style={[guestStyles.featureCardIcon, { backgroundColor: "#E0F2FE" }]}>
                       <Icon name="book" size={22} color="#0284C7" />
                     </View>
                     <View style={{ flex: 1, gap: 2 }}>
-                      <Text style={guestStyles.featureCardTitle}>Thư viện khóa học chuyên sâu</Text>
+                      <Text style={guestStyles.featureCardTitle}>
+                        {uiText("Thư viện khóa học chuyên sâu")}
+                      </Text>
                       <Text style={guestStyles.featureCardDesc}>
-                        Lập trình Web, CSDL nâng cao, Trí tuệ nhân tạo và LLMs thực chiến.
+                        {uiText("Lập trình Web, CSDL nâng cao, Trí tuệ nhân tạo và LLMs thực chiến.")}
                       </Text>
                     </View>
                     <View style={[guestStyles.featureCardCta, { backgroundColor: "#F0F9FF" }]}>
@@ -973,19 +999,23 @@ export default function Home() {
                     scaleTo={0.97}
                     onPress={() => router.push("/login" as Href)}
                     accessibilityRole="button"
-                    accessibilityLabel="Luyện thi trắc nghiệm AI"
+                    accessibilityLabel={uiText("Luyện thi trắc nghiệm AI")}
                   >
                     <View style={[guestStyles.featureCardIcon, { backgroundColor: "#FEF3C7" }]}>
                       <Icon name="sparkles" size={22} color="#D97706" />
                     </View>
                     <View style={{ flex: 1, gap: 2 }}>
-                      <Text style={guestStyles.featureCardTitle}>Luyện đề thi Thích ứng AI</Text>
+                      <Text style={guestStyles.featureCardTitle}>{uiText("Luyện đề thi Thích ứng AI")}</Text>
                       <Text style={guestStyles.featureCardDesc}>
-                        Hệ thống tự động điều chỉnh độ khó theo năng lực và phân tích điểm yếu ngay lập tức.
+                        {uiText(
+                          "Hệ thống tự động điều chỉnh độ khó theo năng lực và phân tích điểm yếu ngay lập tức.",
+                        )}
                       </Text>
                     </View>
                     <View style={[guestStyles.featureCardCta, { backgroundColor: "#FFFBEB" }]}>
-                      <Text style={[guestStyles.featureCardCtaText, { color: "#D97706" }]}>Khám phá</Text>
+                      <Text style={[guestStyles.featureCardCtaText, { color: "#D97706" }]}>
+                        {uiText("Khám phá")}
+                      </Text>
                     </View>
                   </ScalePressable>
 
@@ -994,19 +1024,25 @@ export default function Home() {
                     scaleTo={0.97}
                     onPress={() => router.push("/login" as Href)}
                     accessibilityRole="button"
-                    accessibilityLabel="Lớp học trực tiếp tương tác"
+                    accessibilityLabel={uiText("Lớp học trực tiếp tương tác")}
                   >
                     <View style={[guestStyles.featureCardIcon, { backgroundColor: "#EDE9FE" }]}>
                       <Icon name="class" size={22} color="#7C3AED" />
                     </View>
                     <View style={{ flex: 1, gap: 2 }}>
-                      <Text style={guestStyles.featureCardTitle}>Lớp học LIVE &amp; Điểm danh tự động</Text>
+                      <Text style={guestStyles.featureCardTitle}>
+                        {uiText("Lớp học LIVE & Điểm danh tự động")}
+                      </Text>
                       <Text style={guestStyles.featureCardDesc}>
-                        Tương tác trực tiếp cùng giảng viên, hỏi đáp tài liệu và theo dõi điểm chuyên cần.
+                        {uiText(
+                          "Tương tác trực tiếp cùng giảng viên, hỏi đáp tài liệu và theo dõi điểm chuyên cần.",
+                        )}
                       </Text>
                     </View>
                     <View style={[guestStyles.featureCardCta, { backgroundColor: "#F5F3FF" }]}>
-                      <Text style={[guestStyles.featureCardCtaText, { color: "#7C3AED" }]}>Tìm hiểu</Text>
+                      <Text style={[guestStyles.featureCardCtaText, { color: "#7C3AED" }]}>
+                        {uiText("Tìm hiểu")}
+                      </Text>
                     </View>
                   </ScalePressable>
                 </View>
@@ -1022,9 +1058,9 @@ export default function Home() {
                   </View>
                 </FloatingElement>
                 <View style={{ flex: 1, gap: 4 }}>
-                  <Text style={guestStyles.ctaBannerTitle}>Tham gia miễn phí hôm nay</Text>
+                  <Text style={guestStyles.ctaBannerTitle}>{uiText("Tham gia miễn phí hôm nay")}</Text>
                   <Text style={guestStyles.ctaBannerSub}>
-                    Tạo tài khoản trong 30 giây. Đăng nhập để lưu tiến độ và làm bài kiểm tra.
+                    {uiText("Tạo tài khoản trong 30 giây. Đăng nhập để lưu tiến độ và làm bài kiểm tra.")}
                   </Text>
                 </View>
                 <ScalePressable
@@ -1032,9 +1068,9 @@ export default function Home() {
                   scaleTo={0.93}
                   onPress={() => router.push("/register" as Href)}
                   accessibilityRole="button"
-                  accessibilityLabel="Đăng ký miễn phí"
+                  accessibilityLabel={uiText("Đăng ký miễn phí")}
                 >
-                  <Text style={guestStyles.ctaBannerBtnText}>Đăng ký →</Text>
+                  <Text style={guestStyles.ctaBannerBtnText}>{uiText("Đăng ký →")}</Text>
                 </ScalePressable>
               </View>
             </FadeSlideIn>
@@ -1050,11 +1086,11 @@ export default function Home() {
             ]}
           >
             <Text accessibilityRole="alert" style={styles.error}>
-              {snapshot.error}
+              {uiText(snapshot.error)}
             </Text>
             {snapshot.state === "SESSION_EXPIRED" && (
               <Button
-                label="Xóa phiên trên thiết bị"
+                label={uiText("Xóa phiên trên thiết bị")}
                 variant="danger"
                 size="sm"
                 onPress={() => {
@@ -1064,7 +1100,7 @@ export default function Home() {
             )}
             {snapshot.state === "NETWORK_UNAVAILABLE" && (
               <Button
-                label="Thử khôi phục phiên"
+                label={uiText("Thử khôi phục phiên")}
                 size="sm"
                 onPress={() => {
                   void session.restore();
@@ -1079,28 +1115,33 @@ export default function Home() {
           <FadeSlideIn delay={280} duration={450}>
             <View style={hStyles.lecturerWidget}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Badge label="KHÔNG GIAN GIẢNG VIÊN" variant="primary" icon="academic" />
+                <Badge label={uiText("KHÔNG GIAN GIẢNG VIÊN")} variant="primary" icon="academic" />
                 <Text style={{ fontSize: 12, fontWeight: "700", color: tokens.color.brand }}>
-                  {lecturerInfo.courses} Khóa • {lecturerInfo.offerings} Lớp
+                  {lecturerInfo.courses} {uiText(" Khóa • ")}
+                  {lecturerInfo.offerings} {uiText(" Lớp")}
                 </Text>
               </View>
               <Text style={{ fontSize: 17, fontWeight: "800", color: tokens.color.ink, marginTop: 4 }}>
-                Quản lý giảng dạy &amp; Lớp học
+                {uiText("Quản lý giảng dạy & Lớp học")}
               </Text>
               <Text style={styles.small}>
-                Theo dõi điểm danh buổi học, tạo bài kiểm tra AI và công bố điểm số.
+                {uiText("Theo dõi điểm danh buổi học, tạo bài kiểm tra AI và công bố điểm số.")}
               </Text>
               <View style={{ flexDirection: "row", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
-                <Button label="Bàn làm việc" size="sm" onPress={() => router.push("/teaching" as Href)} />
                 <Button
-                  label="Báo cáo"
+                  label={uiText("Bàn làm việc")}
+                  size="sm"
+                  onPress={() => router.push("/teaching" as Href)}
+                />
+                <Button
+                  label={uiText("Báo cáo")}
                   icon={<Icon name="chart" size={13} color={tokens.color.brand} />}
                   variant="outline"
                   size="sm"
                   onPress={() => router.push("/teaching/reports" as Href)}
                 />
                 <Button
-                  label="Trợ lý AI"
+                  label={uiText("Trợ lý AI")}
                   icon={<Icon name="sparkles" size={14} color="#FFF" />}
                   variant="ai"
                   size="sm"
@@ -1116,7 +1157,7 @@ export default function Home() {
           <FadeSlideIn delay={300} duration={450}>
             <View style={hStyles.resumeCard}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Badge label="TIẾP TỤC HỌC TẬP" variant="ai" icon="sparkles" />
+                <Badge label={uiText("TIẾP TỤC HỌC TẬP")} variant="ai" icon="sparkles" />
               </View>
               <Text style={{ fontSize: 17, fontWeight: "800", color: tokens.color.ink }}>
                 {activeCourse.title}
@@ -1131,11 +1172,11 @@ export default function Home() {
               >
                 <ScalePressable scaleTo={0.95} onPress={() => router.push("/progress" as Href)}>
                   <Text style={{ fontSize: 12, fontWeight: "700", color: tokens.color.brand }}>
-                    📊 Xem báo cáo học tập →
+                    {uiText("📊 Xem báo cáo học tập →")}
                   </Text>
                 </ScalePressable>
                 <Button
-                  label="Học tiếp"
+                  label={uiText("Học tiếp")}
                   icon={<Icon name="play" size={13} color="#FFF" />}
                   size="sm"
                   variant="ai"
@@ -1144,7 +1185,7 @@ export default function Home() {
               </View>
               <Button
                 testID="student-home-study-plan"
-                label="Mở lộ trình học"
+                label={uiText("Mở lộ trình học")}
                 variant="outline"
                 size="sm"
                 onPress={() =>
@@ -1163,9 +1204,9 @@ export default function Home() {
           <FadeSlideIn delay={360} duration={450}>
             <View style={hStyles.sectionContainer}>
               <View style={hStyles.sectionHeader}>
-                <Text style={hStyles.sectionTitle}>Khóa học Lập trình</Text>
+                <Text style={hStyles.sectionTitle}>{uiText("Khóa học Lập trình")}</Text>
                 <ScalePressable scaleTo={0.92} onPress={() => router.push("/courses" as Href)}>
-                  <Text style={hStyles.sectionLink}>Tất cả &gt;</Text>
+                  <Text style={hStyles.sectionLink}>{uiText("Tất cả >")}</Text>
                 </ScalePressable>
               </View>
 
@@ -1177,7 +1218,7 @@ export default function Home() {
                     scaleTo={0.97}
                     onPress={() => router.push(`/courses/${c.courseId}` as Href)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Khóa học ${c.title}`}
+                    accessibilityLabel={uiText("Khóa học {0}", [c.title])}
                   >
                     <View
                       style={[
@@ -1196,7 +1237,7 @@ export default function Home() {
                         }}
                       >
                         <Badge
-                          label={c.priceType === "FREE" ? "Miễn phí" : "Chính khóa"}
+                          label={c.priceType === "FREE" ? uiText("Miễn phí") : uiText("Chính khóa")}
                           variant={c.priceType === "FREE" ? "success" : "neutral"}
                         />
                       </View>
@@ -1207,7 +1248,7 @@ export default function Home() {
                         {c.title}
                       </Text>
                       <Text style={styles.small} numberOfLines={1}>
-                        Hệ thống hỗ trợ học tập thông minh AILSS
+                        {uiText("Hệ thống hỗ trợ học tập thông minh AILSS")}
                       </Text>
                     </View>
                   </ScalePressable>
@@ -1232,12 +1273,12 @@ export default function Home() {
           scaleTo={0.93}
           onPress={() => router.push("/student/tutor" as Href)}
           accessibilityRole="button"
-          accessibilityLabel="Trò chuyện với Gia sư AI"
-          accessibilityHint="Hỏi bài học hoặc tìm khóa học phù hợp"
+          accessibilityLabel={uiText("Trò chuyện với Gia sư AI")}
+          accessibilityHint={uiText("Hỏi bài học hoặc tìm khóa học phù hợp")}
         >
           {/* Web-identical Speech Bubble */}
           <View style={hStyles.tutorSpeechBubble}>
-            <Text style={hStyles.tutorSpeechText}>Hỏi AI ✨</Text>
+            <Text style={hStyles.tutorSpeechText}>{uiText("Hỏi AI ✨")}</Text>
             <View style={hStyles.tutorSpeechArrow} />
           </View>
 
@@ -1260,12 +1301,12 @@ export default function Home() {
         <View style={hStyles.modalBackdrop}>
           <View style={hStyles.modalSheet}>
             <View style={hStyles.modalHeader}>
-              <Text style={hStyles.modalTitle}>Tất cả chức năng AILSS</Text>
+              <Text style={hStyles.modalTitle}>{uiText("Tất cả chức năng AILSS")}</Text>
               <ScalePressable
                 onPress={() => setShowAllModal(false)}
                 style={hStyles.modalCloseBtn}
                 accessibilityRole="button"
-                accessibilityLabel="Đóng"
+                accessibilityLabel={uiText("Đóng")}
               >
                 <Icon name="close" size={18} color="#64748B" />
               </ScalePressable>
@@ -1278,7 +1319,7 @@ export default function Home() {
                     item.id === "all"
                       ? {
                           id: "account",
-                          label: "Cá nhân",
+                          label: uiText("Cá nhân"),
                           icon: "user" as IconName,
                           bgColor: "#F1F5F9",
                           iconColor: "#475569",
@@ -1309,7 +1350,7 @@ export default function Home() {
             </ScrollView>
 
             <Button
-              label="Đóng bảng chức năng"
+              label={uiText("Đóng bảng chức năng")}
               variant="outline"
               size="md"
               onPress={() => setShowAllModal(false)}
@@ -1343,6 +1384,7 @@ export default function Home() {
             </View>
 
             <View style={hStyles.langListContainer}>
+              {languageError ? <Text accessibilityRole="alert">{t(languageError)}</Text> : null}
               {LANGUAGES.map((item) => {
                 const isSelected = item.code === settings.language;
                 return (
@@ -1350,9 +1392,18 @@ export default function Home() {
                     key={item.code}
                     style={[hStyles.langOptionCard, isSelected && hStyles.langOptionCardActive]}
                     scaleTo={0.97}
-                    onPress={() => {
-                      updateSystemSettings({ language: item.code });
-                      setShowLangModal(false);
+                    disabled={savingLanguage}
+                    onPress={async () => {
+                      setSavingLanguage(true);
+                      setLanguageError("");
+                      try {
+                        await setAppLanguage(item.code);
+                        setShowLangModal(false);
+                      } catch {
+                        setLanguageError("Không thể lưu ngôn ngữ. Vui lòng thử lại.");
+                      } finally {
+                        setSavingLanguage(false);
+                      }
                     }}
                     accessibilityRole="button"
                     accessibilityLabel={item.name}

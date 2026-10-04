@@ -79,8 +79,11 @@ function fixture(options: { outage?: boolean; ttlSeconds?: number; content?: str
     tenantId: "tenant-a",
     now: () => new Date(now),
   });
-  const chat = (userId: string, message = "Where is the dashboard?") =>
-    orchestrator.chat({ userId, role: "ADMIN" }, { mode: "ADMIN_SUPPORT", message });
+  const chat = (userId: string, message = "Where is the dashboard?", responseLanguage?: "vi" | "en") =>
+    orchestrator.chat(
+      { userId, role: "ADMIN" },
+      { mode: "ADMIN_SUPPORT", message, ...(responseLanguage ? { responseLanguage } : {}) },
+    );
   return {
     chat,
     entries,
@@ -94,6 +97,16 @@ function fixture(options: { outage?: boolean; ttlSeconds?: number; content?: str
 }
 
 describe("assistant response cache", () => {
+  it("separates VI and EN responses, while legacy clients retain the VI cache partition", async () => {
+    const f = fixture();
+    const userId = randomUUID();
+    const viReply = await f.chat(userId);
+    const enReply = await f.chat(userId, undefined, "en");
+    expect(enReply.content).not.toBe(viReply.content);
+    expect((await f.chat(userId, undefined, "vi")).content).toBe(viReply.content);
+    expect((await f.chat(userId, undefined, "en")).content).toBe(enReply.content);
+    expect(f.calls).toBe(2);
+  });
   it("uses the model on miss and returns the same content on hit with fresh response IDs", async () => {
     const f = fixture();
     const userId = randomUUID();

@@ -1,3 +1,5 @@
+import type { SupportedLanguage } from "../../../../packages/localization/src";
+
 export interface SocialWebConfig {
   googleClientId: string;
   appleClientId: string;
@@ -24,7 +26,7 @@ interface GoogleIdentityApi {
       text: "signin_with";
       shape: "rectangular";
       width: number;
-      locale: "vi";
+      locale: SupportedLanguage;
     },
   ): void;
 }
@@ -63,6 +65,10 @@ declare global {
 }
 
 const sdkLoads = new Map<string, Promise<void>>();
+const initializedGoogle = new WeakMap<
+  GoogleIdentityApi,
+  { clientId: string; onCredential: (token: string) => void }
+>();
 
 function loadSdk(id: string, src: string, isReady: () => boolean): Promise<void> {
   if (isReady()) return Promise.resolve();
@@ -93,30 +99,55 @@ export async function mountGoogleSignInButton(
   element: HTMLElement,
   clientId: string,
   onCredential: (idToken: string) => void,
+  language: SupportedLanguage = "vi",
+  signal?: AbortSignal,
 ): Promise<void> {
-  await loadSdk("google", "https://accounts.google.com/gsi/client", () =>
+  await loadSdk("google", `https://accounts.google.com/gsi/client?hl=${language}`, () =>
     Boolean(window.google?.accounts?.id),
   );
   const google = window.google?.accounts?.id;
   if (!google) throw new Error("GOOGLE_SDK_UNAVAILABLE");
+  if (signal?.aborted) return;
 
-  google.initialize({
-    client_id: clientId,
-    callback: ({ credential }) => {
-      if (credential) onCredential(credential);
-    },
-    ux_mode: "popup",
-    auto_select: false,
-  });
-  google.renderButton(element, {
-    type: "standard",
-    theme: "outline",
-    size: "large",
-    text: "signin_with",
-    shape: "rectangular",
-    width: Math.max(280, Math.min(400, Math.floor(element.getBoundingClientRect().width || 340))),
-    locale: "vi",
-  });
+  const previous = initializedGoogle.get(google);
+  if (previous?.clientId === clientId) previous.onCredential = onCredential;
+  else {
+    const current = { clientId, onCredential };
+    initializedGoogle.set(google, current);
+    google.initialize({
+      client_id: clientId,
+      callback: ({ credential }) => {
+        if (credential) current.onCredential(credential);
+      },
+      ux_mode: "popup",
+      auto_select: false,
+    });
+  }
+  let renderedWidth = 0;
+  const render = () => {
+    if (signal?.aborted) return;
+    const width = Math.max(200, Math.min(400, Math.floor(element.getBoundingClientRect().width || 340)));
+    if (width === renderedWidth) return;
+    renderedWidth = width;
+    element.replaceChildren();
+    google.renderButton(element, {
+      type: "standard",
+      theme: "outline",
+      size: "large",
+      text: "signin_with",
+      shape: "rectangular",
+      width,
+      locale: language,
+    });
+  };
+  render();
+  // Match responsive layout changes without reinitializing the Google identity client.
+  // Auth owns this signal and cancels it on unmount or language changes.
+  if (signal && typeof ResizeObserver !== "undefined") {
+    const observer = new ResizeObserver(render);
+    observer.observe(element);
+    signal.addEventListener("abort", () => observer.disconnect(), { once: true });
+  }
 }
 
 export function prepareAppleSignIn(): Promise<void> {

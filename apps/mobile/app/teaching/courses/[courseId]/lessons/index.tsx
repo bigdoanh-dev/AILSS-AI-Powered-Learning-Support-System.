@@ -1,3 +1,4 @@
+import { useUiText } from "../../../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, Pressable, StyleSheet } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
@@ -8,6 +9,7 @@ import { lecturerLessons, type LecturerLesson, CONTRACT_LIMITED } from "../../..
 import { Page, Button, NonVirtualizedList, styles, tokens } from "../../../../../src/ui";
 
 export default function LessonList() {
+  const uiText = useUiText();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -37,8 +39,8 @@ export default function LessonList() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <Text style={styles.error}>Bạn không có quyền truy cập.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Bạn không có quyền truy cập.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -54,7 +56,7 @@ export default function LessonList() {
   const renderLesson = ({ item }: { item: LecturerLesson }) => (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Bài học ${item.title}`}
+      accessibilityLabel={uiText("Bài học {0}", [item.title])}
       style={ls.card}
       onPress={() => router.push(`/teaching/courses/${courseId}/lessons/${item.lessonId}` as Href)}
     >
@@ -72,7 +74,7 @@ export default function LessonList() {
         </View>
         {item.preview && (
           <View style={ls.previewBadge}>
-            <Text style={ls.previewText}>XEM TRƯỚC</Text>
+            <Text style={ls.previewText}>{uiText("XEM TRƯỚC")}</Text>
           </View>
         )}
       </View>
@@ -81,20 +83,20 @@ export default function LessonList() {
 
   return (
     <Page>
-      <Text style={styles.title}>Bài học</Text>
+      <Text style={styles.title}>{uiText("Bài học")}</Text>
 
       <Button
-        label="Tạo bài học mới"
+        label={uiText("Tạo bài học mới")}
         onPress={() => router.push(`/teaching/courses/${courseId}/lessons/create` as Href)}
       />
 
       {!error && items === null && (
         <Text accessibilityRole="alert" style={styles.text}>
-          Đang tải…
+          {uiText("Đang tải…")}
         </Text>
       )}
       {sorted && sorted.length === 0 && (
-        <Text style={styles.text}>Chưa có bài học nào. Hãy tạo bài học đầu tiên.</Text>
+        <Text style={styles.text}>{uiText("Chưa có bài học nào. Hãy tạo bài học đầu tiên.")}</Text>
       )}
       {sorted && sorted.length > 0 && (
         <NonVirtualizedList
@@ -112,11 +114,14 @@ export default function LessonList() {
 
       {error && (
         <Text accessibilityRole="alert" style={styles.error}>
-          {error}
+          {uiText(error)}
         </Text>
       )}
-      {error && <Button label="Thử lại" onPress={handleRetry} />}
-      <Button label="Quay lại" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />
+      {error && <Button label={uiText("Thử lại")} onPress={handleRetry} />}
+      <Button
+        label={uiText("Quay lại")}
+        onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+      />
     </Page>
   );
 }

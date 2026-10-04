@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { useUiText } from "../lib/i18n";
 import { useCourseCategories } from "../lib/course-categories";
 import { CourseRating, CourseReviews, FeaturedInstructors } from "../components/CourseCommunity";
 import { LecturerLink } from "../components/PublicLecturer";
@@ -12,6 +14,8 @@ import { TiltCard } from "../components/TiltCard";
 import { Icon } from "../components/Icon";
 
 export function CourseCard({ course }: { course: Course }) {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const categoryOptions = useCourseCategories();
   const subject =
     categoryOptions.find((item) => item.id === course.categoryId) ??
@@ -26,7 +30,7 @@ export function CourseCard({ course }: { course: Course }) {
           categoryId={course.categoryId}
         />
         <span className="course-ai-badge" aria-hidden="true">
-          <span>⚡</span> AI Hỗ trợ
+          <span>⚡</span> {uiText(" AI Hỗ trợ")}
         </span>
       </div>
       <div className="course-card-body">
@@ -41,22 +45,23 @@ export function CourseCard({ course }: { course: Course }) {
         <div className="course-card-divider" />
         <div className="course-price-row">
           <strong className={paid ? "course-sale-price" : "course-sale-price free"}>
-            {priceLabel(course)}
+            {uiText(priceLabel(course, uiLocale))}
           </strong>
         </div>
         <div className="course-card-actions">
           <Link
-            aria-label="Xem khóa học"
+            aria-label={uiText("Xem khóa học")}
             className="course-detail-button learning-card-button secondary"
             to={`/courses/${course.courseId}`}
           >
-            <Icon name="eye" size={15} /> Chi tiết
+            <Icon name="eye" size={15} /> {uiText(" Chi tiết")}
           </Link>
           <Link
             className="course-buy-button learning-card-button primary"
             to={paid ? `/app/purchase/${course.courseId}` : `/app/learn/${course.courseId}`}
           >
-            <Icon name={paid ? "card" : "book"} size={15} /> {paid ? "Mua ngay" : "Học miễn phí"}
+            <Icon name={paid ? "card" : "book"} size={15} />{" "}
+            {paid ? uiText("Mua ngay") : uiText("Học miễn phí")}
           </Link>
         </div>
       </div>
@@ -64,6 +69,7 @@ export function CourseCard({ course }: { course: Course }) {
   );
 }
 export function CourseSearch({ compact = false }: { compact?: boolean }) {
+  const uiText = useUiText();
   const categories = useCourseCategories();
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState(params.get("q") || "");
@@ -164,7 +170,7 @@ export function CourseSearch({ compact = false }: { compact?: boolean }) {
   return (
     <div className="course-search">
       <form onSubmit={submit} className="search-form">
-        <label htmlFor={compact ? "home-search" : "course-search"}>Bạn muốn học điều gì?</label>
+        <label htmlFor={compact ? "home-search" : "course-search"}>{uiText("Bạn muốn học điều gì?")}</label>
         <div>
           <input
             id={compact ? "home-search" : "course-search"}
@@ -172,17 +178,17 @@ export function CourseSearch({ compact = false }: { compact?: boolean }) {
             onChange={(e) => setQuery(e.target.value)}
             type="search"
             maxLength={20}
-            placeholder="Tìm lập trình, dữ liệu, trí tuệ nhân tạo…"
+            placeholder={uiText("Tìm lập trình, dữ liệu, trí tuệ nhân tạo…")}
             aria-describedby="search-help"
           />
           <button className="button" type="submit" disabled={state === "loading"}>
-            {state === "loading" ? "Đang tìm…" : "Tìm khóa học"}
+            {state === "loading" ? uiText("Đang tìm…") : uiText("Tìm khóa học")}
           </button>
         </div>
-        <small id="search-help">Nhập từ khóa từ 3 ký tự để tìm khóa học theo tên.</small>
+        <small id="search-help">{uiText("Nhập từ khóa từ 3 ký tự để tìm khóa học theo tên.")}</small>
       </form>
-      <div className="subject-tabs" aria-label="Chủ đề khóa học">
-        {[{ id: "all", name: "Tất cả chủ đề" }, ...categories].map((c) => (
+      <div className="subject-tabs" aria-label={uiText("Chủ đề khóa học")}>
+        {[{ id: "all", name: uiText("Tất cả chủ đề") }, ...categories].map((c) => (
           <button
             type="button"
             key={c.id}
@@ -198,43 +204,45 @@ export function CourseSearch({ compact = false }: { compact?: boolean }) {
       </div>
       <div className="catalog-filters">
         <label>
-          Hình thức học
+          {uiText("Hình thức học")}
           <select value={mode} onChange={(e) => setParams({ category, price, mode: e.target.value })}>
-            <option value="ALL">Tất cả hình thức</option>
-            <option value="SELF_PACED">Tự học qua video và bài giảng</option>
-            <option value="LIVE_COHORT">Trực tuyến theo lịch</option>
+            <option value="ALL">{uiText("Tất cả hình thức")}</option>
+            <option value="SELF_PACED">{uiText("Tự học qua video và bài giảng")}</option>
+            <option value="LIVE_COHORT">{uiText("Trực tuyến theo lịch")}</option>
           </select>
         </label>
         <label>
-          Học phí
+          {uiText("Học phí")}
           <select value={price} onChange={(e) => setParams({ category, mode, price: e.target.value })}>
-            <option value="ALL">Miễn phí và có phí</option>
-            <option value="FREE">Miễn phí</option>
-            <option value="PAID">Có phí</option>
+            <option value="ALL">{uiText("Miễn phí và có phí")}</option>
+            <option value="FREE">{uiText("Miễn phí")}</option>
+            <option value="PAID">{uiText("Có phí")}</option>
           </select>
         </label>
       </div>
       <div aria-live="polite">
         {message && (
           <div className="notice error" role="alert">
-            <p>{message}</p>
+            <p>{uiText(message)}</p>
             {state === "error" && (
-              <button onClick={() => void load(activeQuery.current || normalizeQuery(query))}>Thử lại</button>
+              <button onClick={() => void load(activeQuery.current || normalizeQuery(query))}>
+                {uiText("Thử lại")}
+              </button>
             )}
           </div>
         )}
         {state === "idle" && (
           <div className="search-empty">
-            <span className="eyebrow">Khởi đầu từ một câu hỏi</span>
-            <h2>Kiến thức tiếp theo bạn muốn khám phá?</h2>
-            <p>Tìm khóa học đã xuất bản bằng một từ khóa. Kết quả sẽ xuất hiện tại đây.</p>
+            <span className="eyebrow">{uiText("Khởi đầu từ một câu hỏi")}</span>
+            <h2>{uiText("Kiến thức tiếp theo bạn muốn khám phá?")}</h2>
+            <p>{uiText("Tìm khóa học đã xuất bản bằng một từ khóa. Kết quả sẽ xuất hiện tại đây.")}</p>
           </div>
         )}
-        {state === "loading" && <p role="status">Đang kết nối danh mục khóa học…</p>}
+        {state === "loading" && <p role="status">{uiText("Đang kết nối danh mục khóa học…")}</p>}
         {state === "done" && items.length === 0 && (
           <div className="search-empty">
-            <h3>Chưa tìm thấy khóa học phù hợp.</h3>
-            <p>Thử một từ khóa khác hoặc chọn chủ đề bạn muốn học.</p>
+            <h3>{uiText("Chưa tìm thấy khóa học phù hợp.")}</h3>
+            <p>{uiText("Thử một từ khóa khác hoặc chọn chủ đề bạn muốn học.")}</p>
           </div>
         )}
       </div>
@@ -263,20 +271,22 @@ export function CourseSearch({ compact = false }: { compact?: boolean }) {
           disabled={state === "loading"}
           onClick={() => void load(activeQuery.current, next)}
         >
-          Xem thêm khóa học
+          {uiText("Xem thêm khóa học")}
         </button>
       )}
     </div>
   );
 }
 export default function Courses() {
+  const uiText = useUiText();
   return (
     <>
       <PageHero
-        label="Khám phá khóa học"
-        title="Điều bạn muốn học,
-đang chờ bạn ở đây."
-        description="Khám phá khóa học công khai và tìm điểm bắt đầu cho hành trình học tập của bạn."
+        label={uiText("Khám phá khóa học")}
+        title={uiText("Điều bạn muốn học,\nđang chờ bạn ở đây.")}
+        description={uiText(
+          "Khám phá khóa học công khai và tìm điểm bắt đầu cho hành trình học tập của bạn.",
+        )}
       />
       <Section>
         <CourseSearch />
@@ -284,20 +294,23 @@ export default function Courses() {
       <Section className="soft">
         <div className="split">
           <div>
-            <h2>Tìm thấy khóa học phù hợp?</h2>
+            <h2>{uiText("Tìm thấy khóa học phù hợp?")}</h2>
             <p>
-              Đọc thông tin công khai trước khi đăng nhập. Quyền tham gia và học liệu được kiểm tra khi bạn
-              bắt đầu học.
+              {uiText(
+                "Đọc thông tin công khai trước khi đăng nhập. Quyền tham gia và học liệu được kiểm tra khi bạn bắt đầu học.",
+              )}
             </p>
-            <ButtonLink to="/students">Trải nghiệm sinh viên</ButtonLink>
+            <ButtonLink to="/students">{uiText("Trải nghiệm sinh viên")}</ButtonLink>
           </div>
-          <Picture name="study" alt="Minh họa học viên thảo luận trong thư viện" />
+          <Picture name="study" alt={uiText("Minh họa học viên thảo luận trong thư viện")} />
         </div>
       </Section>
     </>
   );
 }
 export function CourseDetail() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const categoryOptions = useCourseCategories();
   const { profile } = useSession();
   const { id } = useParams();
@@ -340,13 +353,13 @@ export function CourseDetail() {
     <>
       <Section className="course-detail-page">
         <TextLink to={profile?.role === "STUDENT" ? "/app/learn" : "/courses"}>
-          ← Quay lại danh sách khóa học
+          {uiText("← Quay lại danh sách khóa học")}
         </TextLink>
         {error ? (
           <div role="alert" className="notice">
-            <p>{error}</p>
-            <button onClick={() => setRetry(retry + 1)}>Thử lại</button>
-            <TextLink to="/courses">Quay về danh mục</TextLink>
+            <p>{uiText(error)}</p>
+            <button onClick={() => setRetry(retry + 1)}>{uiText("Thử lại")}</button>
+            <TextLink to="/courses">{uiText("Quay về danh mục")}</TextLink>
           </div>
         ) : course ? (
           <div className="course-detail-shell">
@@ -354,19 +367,21 @@ export function CourseDetail() {
               <span className="course-category-chip">{subject?.name}</span>
               <h1>{course.title}</h1>
               <p className="course-detail-lead">
-                Xem thông tin giảng viên và phản hồi của học viên trước khi đăng ký.
+                {uiText("Xem thông tin giảng viên và phản hồi của học viên trước khi đăng ký.")}
               </p>
               <div className="course-detail-meta">
                 <CourseRating id={course.courseId} />
                 <span>
-                  Giảng viên:{" "}
+                  {uiText("Giảng viên:")}{" "}
                   <strong>
                     <LecturerLink id={course.lecturerId} />
                   </strong>
                 </span>
                 <span>
-                  Cập nhật{" "}
-                  {course.updatedAt ? new Date(course.updatedAt).toLocaleDateString("vi-VN") : "gần đây"}
+                  {uiText("Cập nhật")}{" "}
+                  {course.updatedAt
+                    ? new Date(course.updatedAt).toLocaleDateString(uiLocale)
+                    : uiText("gần đây")}
                 </span>
               </div>
             </div>
@@ -379,7 +394,7 @@ export function CourseDetail() {
                     poster={trailer.posterUrl}
                     src={trailer.playlistUrl}
                     style={{ width: "100%", borderRadius: "8px", aspectRatio: "16/9", objectFit: "cover" }}
-                    aria-label="Video giới thiệu khóa học"
+                    aria-label={uiText("Video giới thiệu khóa học")}
                   />
                 </div>
               ) : (
@@ -391,7 +406,9 @@ export function CourseDetail() {
                 />
               )}
               <div className="course-enroll-content">
-                <strong className={`course-detail-price ${paid ? "" : "free"}`}>{priceLabel(course)}</strong>
+                <strong className={`course-detail-price ${paid ? "" : "free"}`}>
+                  {uiText(priceLabel(course, uiLocale))}
+                </strong>
                 <ButtonLink
                   to={
                     profile && profile.role !== "STUDENT"
@@ -403,22 +420,22 @@ export function CourseDetail() {
                 >
                   {profile
                     ? paid
-                      ? "Mua khóa học"
-                      : "Bắt đầu học"
+                      ? uiText("Mua khóa học")
+                      : uiText("Bắt đầu học")
                     : paid
-                      ? "Đăng nhập để mua"
-                      : "Đăng nhập để học"}
+                      ? uiText("Đăng nhập để mua")
+                      : uiText("Đăng nhập để học")}
                 </ButtonLink>
                 <p>
                   <Link to={`/lecturers/${course.lecturerId}`}>
-                    Xem hồ sơ giảng viên và các khóa học khác →
+                    {uiText("Xem hồ sơ giảng viên và các khóa học khác →")}
                   </Link>
                 </p>
               </div>
             </aside>
           </div>
         ) : (
-          <p role="status">Đang tải thông tin khóa học…</p>
+          <p role="status">{uiText("Đang tải thông tin khóa học…")}</p>
         )}
       </Section>
       {course && (

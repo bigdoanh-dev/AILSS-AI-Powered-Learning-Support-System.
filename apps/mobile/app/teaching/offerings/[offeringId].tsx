@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useEffect, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -20,6 +21,7 @@ function decode(value: unknown) {
   };
 }
 export default function OfferingDetailScreen() {
+  const uiText = useUiText();
   const { offeringId } = useLocalSearchParams<{ offeringId: string }>();
   const query = useMobileQuery(offeringId ? `/api/v1/offerings/${offeringId}` : null, decode);
   const command = useMobileCommand();
@@ -59,14 +61,14 @@ export default function OfferingDetailScreen() {
   return (
     <Page>
       <ScreenHeader
-        title="Đợt mở bán"
+        title={uiText("Đợt mở bán")}
         onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching/offerings"))}
       />
-      {query.loading ? <Text>Đang tải…</Text> : null}
+      {query.loading ? <Text>{uiText("Đang tải…")}</Text> : null}
       {query.error ? (
         <View>
-          <Text style={styles.error}>{query.error}</Text>
-          <Button label="Thử lại" onPress={query.retry} />
+          <Text style={styles.error}>{uiText(query.error)}</Text>
+          <Button label={uiText("Thử lại")} onPress={query.retry} />
         </View>
       ) : null}
       {query.data ? (
@@ -79,53 +81,54 @@ export default function OfferingDetailScreen() {
             {query.data.price} {query.data.currency}
           </Text>
           <Text style={styles.small}>
-            Bán từ {query.data.salesStartAt || "không giới hạn"} đến{" "}
+            {uiText("Bán từ ")}
+            {query.data.salesStartAt || "không giới hạn"} {uiText(" đến")}{" "}
             {query.data.salesEndAt || "không giới hạn"}.
           </Text>
         </View>
       ) : null}
       {query.data?.state === "DRAFT" ? (
         <View style={styles.card}>
-          <Text>Tên đợt bán</Text>
+          <Text>{uiText("Tên đợt bán")}</Text>
           <TextInput
             style={styles.input}
-            accessibilityLabel="Tên đợt bán"
+            accessibilityLabel={uiText("Tên đợt bán")}
             value={title}
             onChangeText={setTitle}
             maxLength={160}
           />
-          <Text>Giá</Text>
+          <Text>{uiText("Giá")}</Text>
           <TextInput
             style={styles.input}
-            accessibilityLabel="Giá"
+            accessibilityLabel={uiText("Giá")}
             value={price}
             onChangeText={setPrice}
             keyboardType="decimal-pad"
           />
-          <Text>Tiền tệ</Text>
+          <Text>{uiText("Tiền tệ")}</Text>
           <TextInput
             style={styles.input}
-            accessibilityLabel="Tiền tệ"
+            accessibilityLabel={uiText("Tiền tệ")}
             value={currency}
             onChangeText={setCurrency}
             maxLength={3}
           />
           <RevenueQuote price={price} currency={currency || "VND"} />
-          <Text>Thời gian bán (ISO 8601 có múi giờ; để trống nếu không giới hạn)</Text>
+          <Text>{uiText("Thời gian bán (ISO 8601 có múi giờ; để trống nếu không giới hạn)")}</Text>
           <TextInput
             style={styles.input}
-            accessibilityLabel="Bắt đầu bán"
+            accessibilityLabel={uiText("Bắt đầu bán")}
             value={start}
             onChangeText={setStart}
           />
           <TextInput
             style={styles.input}
-            accessibilityLabel="Kết thúc bán"
+            accessibilityLabel={uiText("Kết thúc bán")}
             value={end}
             onChangeText={setEnd}
           />
-          <Button label="Lưu thay đổi" disabled={command.busy} onPress={() => void save()} />
-          <Button label="Xuất bản đợt bán" disabled={command.busy} onPress={() => void publish()} />
+          <Button label={uiText("Lưu thay đổi")} disabled={command.busy} onPress={() => void save()} />
+          <Button label={uiText("Xuất bản đợt bán")} disabled={command.busy} onPress={() => void publish()} />
         </View>
       ) : null}
       {error || command.message ? (

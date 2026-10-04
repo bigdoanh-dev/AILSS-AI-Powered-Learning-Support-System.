@@ -1,3 +1,5 @@
+import { LocalizedFileInput } from "../components/LocalizedFileInput";
+import { useUiText } from "../lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "../auth/session";
 import { lecturerError, lecturerRequest } from "./api";
@@ -63,6 +65,7 @@ export function MediaUpload({
   preview: boolean;
   mediaAssetId?: string;
 }) {
+  const uiText = useUiText();
   const { profile } = useSession();
   const ownerId = profile?.userId ?? "";
   const [file, setFile] = useState<File | null>(null),
@@ -197,7 +200,7 @@ export function MediaUpload({
     }
   }
   return (
-    <section className="form-panel lesson-card" aria-label="Video bài giảng riêng tư">
+    <section className="form-panel lesson-card" aria-label={uiText("Video bài giảng riêng tư")}>
       <div className="lesson-card-header">
         <div className="lesson-card-header-main">
           <div className="lesson-icon-circle">
@@ -222,21 +225,22 @@ export function MediaUpload({
             </svg>
           </div>
           <div>
-            <h2 className="lesson-card-title">Video bài giảng riêng tư</h2>
+            <h2 className="lesson-card-title">{uiText("Video bài giảng riêng tư")}</h2>
             <p className="lesson-card-subtitle">
-              Tải lên kho lưu trữ đám mây bảo mật & mã hóa HLS đa chất lượng (Adaptive Bitrate).
+              {uiText("Tải lên kho lưu trữ đám mây bảo mật & mã hóa HLS đa chất lượng (Adaptive Bitrate).")}
             </p>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span className="kpi-tag accent">HLS Encrypted</span>
-          <span className="green-badge-pill">Kho riêng tư</span>
+          <span className="green-badge-pill">{uiText("Kho riêng tư")}</span>
         </div>
       </div>
 
       <p style={{ fontSize: 13, color: "var(--muted, #64748b)", margin: 0, lineHeight: 1.6 }}>
-        Video tải trực tiếp lên kho riêng tư. Sau khi mở lại trình duyệt, chọn lại đúng tệp để tiếp tục các
-        phần còn thiếu trong phiên còn hiệu lực.
+        {uiText(
+          "Video tải trực tiếp lên kho riêng tư. Sau khi mở lại trình duyệt, chọn lại đúng tệp để tiếp tục các phần còn thiếu trong phiên còn hiệu lực.",
+        )}
       </p>
 
       {pending ? (
@@ -252,7 +256,9 @@ export function MediaUpload({
           }}
         >
           <p role="status" style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#92400E" }}>
-            Có phiên tải lên chưa hoàn tất cho {pending.name}. Chọn lại chính tệp đó để tiếp tục.
+            {uiText("Có phiên tải lên chưa hoàn tất cho ")}
+            {pending.name}
+            {uiText(". Chọn lại chính tệp đó để tiếp tục.")}
           </p>
           <div>
             <button
@@ -271,7 +277,7 @@ export function MediaUpload({
                 }
               }}
             >
-              Hủy phiên tải lên cũ
+              {uiText("Hủy phiên tải lên cũ")}
             </button>
           </div>
         </div>
@@ -287,7 +293,7 @@ export function MediaUpload({
           }}
         >
           <p role="status" style={{ margin: 0, fontSize: 13, color: "#475569" }}>
-            Tắt “Xem trước” để dùng video có bảo vệ. Trailer công khai là luồng riêng.
+            {uiText("Tắt “Xem trước” để dùng video có bảo vệ. Trailer công khai là luồng riêng.")}
           </p>
         </div>
       ) : (
@@ -309,14 +315,15 @@ export function MediaUpload({
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
             </div>
-            <div className="media-dropzone-title">Chọn tệp video từ thiết bị của bạn</div>
+            <div className="media-dropzone-title">{uiText("Chọn tệp video từ thiết bị của bạn")}</div>
             <div className="media-dropzone-hint">
-              Hỗ trợ định dạng MP4 hoặc WebM, tối đa 2GB. Quá trình tải lên hỗ trợ tạm dừng và tiếp tục mượt
-              mà.
+              {uiText(
+                "Hỗ trợ định dạng MP4 hoặc WebM, tối đa 2GB. Quá trình tải lên hỗ trợ tạm dừng và tiếp tục mượt mà.",
+              )}
             </div>
             <label style={{ cursor: "pointer", marginTop: 6, display: "inline-block" }}>
-              Chọn video MP4 hoặc WebM{" "}
-              <input
+              {uiText("Chọn video MP4 hoặc WebM")}{" "}
+              <LocalizedFileInput
                 type="file"
                 accept="video/mp4,video/webm"
                 disabled={busy}
@@ -337,7 +344,7 @@ export function MediaUpload({
                 <span className="media-selected-file-name">{file.name}</span>
                 <span className="media-selected-file-size">{(file.size / 1024 ** 2).toFixed(1)} MiB</span>
               </div>
-              <span style={{ fontSize: 12, color: "#0284c7", fontWeight: 700 }}>Đã chọn</span>
+              <span style={{ fontSize: 12, color: "#0284c7", fontWeight: 700 }}>{uiText("Đã chọn")}</span>
             </div>
           ) : null}
 
@@ -368,14 +375,14 @@ export function MediaUpload({
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
-              {busy ? "Đang tải…" : "Tải video / thử lại phần còn thiếu"}
+              {busy ? uiText("Đang tải…") : uiText("Tải video / thử lại phần còn thiếu")}
             </button>
           </div>
 
           {total > 0 ? (
             <div className="media-progress-box">
               <div className="media-progress-header">
-                <span>Tiến độ tải dữ liệu theo phân mảnh</span>
+                <span>{uiText("Tiến độ tải dữ liệu theo phân mảnh")}</span>
                 <span style={{ color: "#0284c7", fontWeight: 700 }}>
                   {total > 0 ? Math.round((done / total) * 100) : 0}%
                 </span>
@@ -386,9 +393,14 @@ export function MediaUpload({
                   style={{ width: `${total > 0 ? Math.round((done / total) * 100) : 0}%` }}
                 />
               </div>
-              <progress aria-label="Tiến độ tải video" max={total} value={done} style={{ display: "none" }} />
+              <progress
+                aria-label={uiText("Tiến độ tải video")}
+                max={total}
+                value={done}
+                style={{ display: "none" }}
+              />
               <p role="status" style={{ margin: 0, fontSize: 12.5, color: "#64748b" }}>
-                {done}/{total} phần đã tải
+                {done}/{total} {uiText(" phần đã tải")}
               </p>
             </div>
           ) : null}
@@ -406,23 +418,30 @@ export function MediaUpload({
                   : ""
             }`}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 22 }}>
+            <div className="media-asset-badge-info">
+              <span className="media-asset-badge-icon" aria-hidden="true">
                 {asset.status === "READY" ? "✅" : asset.status === "FAILED" ? "❌" : "⏳"}
               </span>
-              <div>
-                <p role="status" style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
-                  {statuses[asset.status] ?? asset.status} · {asset.originalFilename}
+              <div className="media-asset-badge-texts">
+                <p role="status" className="media-asset-badge-title">
+                  <span className="media-asset-badge-status-pill">
+                    {uiText(statuses[asset.status] ?? asset.status)}
+                  </span>
+                  <span className="media-asset-badge-filename">{asset.originalFilename}</span>
                 </p>
-                <small style={{ color: "#64748b", fontSize: 12 }}>
-                  Mã tài nguyên HLS: <code>{asset.mediaAssetId}</code>
-                </small>
+                <div className="media-asset-badge-meta">
+                  <span className="media-asset-meta-label">{uiText("Mã tài nguyên HLS:")}</span>
+                  <code className="media-asset-badge-code" title={asset.mediaAssetId}>
+                    {asset.mediaAssetId}
+                  </code>
+                </div>
               </div>
             </div>
 
             {asset.status === "READY" ? (
               <button
-                className="button secondary"
+                type="button"
+                className="media-asset-attach-btn"
                 onClick={async () => {
                   try {
                     await lecturerRequest(`/media-assets/${asset.mediaAssetId}/attach`, "POST", {});
@@ -432,7 +451,8 @@ export function MediaUpload({
                   }
                 }}
               >
-                Gắn video đã xử lý vào bài học
+                <span className="media-attach-icon">🔗</span>
+                <span>{uiText("Gắn video đã xử lý vào bài học")}</span>
               </button>
             ) : null}
           </div>
@@ -467,16 +487,17 @@ export function MediaUpload({
                 >
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
-                <span>Phụ đề WebVTT cho video này</span>
+                <span>{uiText("Phụ đề WebVTT cho video này")}</span>
               </div>
               <p style={{ margin: 0, fontSize: 12.5, color: "#64748b" }}>
-                Thêm tệp phụ đề song ngữ hoặc tiếng Việt giúp học viên dễ dàng theo dõi bài học và tìm kiếm
-                nội dung theo lời thoại.
+                {uiText(
+                  "Thêm tệp phụ đề song ngữ hoặc tiếng Việt giúp học viên dễ dàng theo dõi bài học và tìm kiếm nội dung theo lời thoại.",
+                )}
               </p>
 
               <div>
-                <input
-                  aria-label="Chọn tệp phụ đề WebVTT"
+                <LocalizedFileInput
+                  aria-label={uiText("Chọn tệp phụ đề WebVTT")}
                   type="file"
                   accept=".vtt,text/vtt"
                   onChange={(event) => setCaptionFile(event.target.files?.[0] ?? null)}
@@ -485,18 +506,18 @@ export function MediaUpload({
 
               <div className="media-captions-grid">
                 <label>
-                  Ngôn ngữ{" "}
+                  {uiText("Ngôn ngữ")}{" "}
                   <input
-                    aria-label="Ngôn ngữ phụ đề"
+                    aria-label={uiText("Ngôn ngữ phụ đề")}
                     value={captionLanguage}
                     maxLength={35}
                     onChange={(event) => setCaptionLanguage(event.target.value)}
                   />
                 </label>
                 <label>
-                  Tên phụ đề{" "}
+                  {uiText("Tên phụ đề")}{" "}
                   <input
-                    aria-label="Tên phụ đề"
+                    aria-label={uiText("Tên phụ đề")}
                     value={captionLabel}
                     maxLength={80}
                     onChange={(event) => setCaptionLabel(event.target.value)}
@@ -533,14 +554,15 @@ export function MediaUpload({
                     }
                   }}
                 >
-                  {captionBusy ? "Đang lưu phụ đề…" : "Thêm phụ đề"}
+                  {captionBusy ? uiText("Đang lưu phụ đề…") : uiText("Thêm phụ đề")}
                 </button>
               </div>
 
               {asset.captionTracks?.length ? (
                 <div style={{ background: "#F1F5F9", padding: "8px 12px", borderRadius: 8 }}>
                   <p role="status" style={{ margin: 0, fontSize: 12.5, fontWeight: 600, color: "#334155" }}>
-                    Danh sách phụ đề: {asset.captionTracks.map((track) => track.label).join(", ")}
+                    {uiText("Danh sách phụ đề: ")}
+                    {asset.captionTracks.map((track) => track.label).join(", ")}
                   </p>
                 </div>
               ) : null}
@@ -560,7 +582,7 @@ export function MediaUpload({
           }}
         >
           <p role="status" style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#0369A1" }}>
-            {message}
+            {uiText(message)}
           </p>
         </div>
       ) : null}

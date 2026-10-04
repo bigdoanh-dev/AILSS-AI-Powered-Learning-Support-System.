@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useState } from "react";
 import { Text, View, TextInput, StyleSheet } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -8,6 +9,7 @@ import { authoringQuiz } from "../../../src/assessment-authoring";
 import { Page, Button, ScreenHeader, styles, tokens } from "../../../src/ui";
 
 export default function CreateAssessmentScreen() {
+  const uiText = useUiText();
   const params = useLocalSearchParams<{ targetType?: string; targetId?: string }>();
   const session = runtime!;
 
@@ -59,17 +61,17 @@ export default function CreateAssessmentScreen() {
   return (
     <Page>
       <ScreenHeader
-        title="Tạo bài kiểm tra"
-        subtitle="Tạo bản nháp bài kiểm tra mới và thêm câu hỏi sau đó"
+        title={uiText("Tạo bài kiểm tra")}
+        subtitle={uiText("Tạo bản nháp bài kiểm tra mới và thêm câu hỏi sau đó")}
         onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching/assessments"))}
       />
 
       <View style={s.formCard}>
-        <Text style={s.label}>Tên bài kiểm tra *</Text>
+        <Text style={s.label}>{uiText("Tên bài kiểm tra *")}</Text>
         <TextInput
-          accessibilityLabel="Tên bài kiểm tra"
+          accessibilityLabel={uiText("Tên bài kiểm tra")}
           style={s.input}
-          placeholder="Ví dụ: Kiểm tra giữa kỳ môn JavaScript"
+          placeholder={uiText("Ví dụ: Kiểm tra giữa kỳ môn JavaScript")}
           value={title}
           onChangeText={(v) => {
             setTitle(v);
@@ -79,34 +81,35 @@ export default function CreateAssessmentScreen() {
         />
 
         <Text style={styles.small}>
-          Bài kiểm tra khách quan gồm trắc nghiệm và câu trả lời ngắn. Bài tự luận dài/nộp file chưa được hỗ
-          trợ.
+          {uiText(
+            "Bài kiểm tra khách quan gồm trắc nghiệm và câu trả lời ngắn. Bài tự luận dài/nộp file chưa được hỗ trợ.",
+          )}
         </Text>
-        <Text style={s.label}>Hạn đóng bài (ISO 8601, có múi giờ)</Text>
+        <Text style={s.label}>{uiText("Hạn đóng bài (ISO 8601, có múi giờ)")}</Text>
         <TextInput
-          accessibilityLabel="Hạn đóng bài"
+          accessibilityLabel={uiText("Hạn đóng bài")}
           style={s.input}
           value={deadline}
           onChangeText={setDeadline}
           placeholder="2026-10-20T23:59:00+07:00"
         />
-        <Text style={s.label}>Loại đối tượng liên kết</Text>
+        <Text style={s.label}>{uiText("Loại đối tượng liên kết")}</Text>
         <View style={s.radioRow}>
           <Button
-            label={targetType === "COURSE" ? "● Khóa học (COURSE)" : "○ Khóa học (COURSE)"}
+            label={targetType === "COURSE" ? uiText("● Khóa học (COURSE)") : uiText("○ Khóa học (COURSE)")}
             onPress={() => setTargetType("COURSE")}
           />
           <Button
-            label={targetType === "CLASS" ? "● Lớp học (CLASS)" : "○ Lớp học (CLASS)"}
+            label={targetType === "CLASS" ? uiText("● Lớp học (CLASS)") : uiText("○ Lớp học (CLASS)")}
             onPress={() => setTargetType("CLASS")}
           />
         </View>
 
-        <Text style={s.label}>Mã đối tượng (Target ID) *</Text>
+        <Text style={s.label}>{uiText("Mã đối tượng (Target ID) *")}</Text>
         <TextInput
-          accessibilityLabel="Mã đối tượng"
+          accessibilityLabel={uiText("Mã đối tượng")}
           style={s.input}
-          placeholder="Mã khóa học hoặc lớp học"
+          placeholder={uiText("Mã khóa học hoặc lớp học")}
           value={targetId}
           onChangeText={(v) => {
             setTargetId(v);
@@ -119,16 +122,16 @@ export default function CreateAssessmentScreen() {
 
       {error ? (
         <View style={styles.card}>
-          <Text style={styles.error}>{error}</Text>
+          <Text style={styles.error}>{uiText(error)}</Text>
         </View>
       ) : null}
 
       <Button
-        label={busy ? "Đang tạo bản nháp…" : "Tạo bản nháp bài kiểm tra"}
+        label={busy ? uiText("Đang tạo bản nháp…") : uiText("Tạo bản nháp bài kiểm tra")}
         onPress={() => void handleCreate()}
       />
 
-      <Button label="Hủy" onPress={() => router.back()} />
+      <Button label={uiText("Hủy")} onPress={() => router.back()} />
     </Page>
   );
 }

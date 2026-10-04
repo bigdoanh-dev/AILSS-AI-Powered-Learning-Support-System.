@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useState } from "react";
 import { useLecturer } from "./api";
 import { State } from "./ui";
@@ -10,6 +11,7 @@ import {
 
 type Member = { studentId: string; studentName?: string };
 function ContentRadar({ courseId, studentId }: { courseId: string; studentId?: string }) {
+  const uiText = useUiText();
   const mastery = useLecturer<RadarEvidence[] | CourseMasterySummary>(
     studentId ? `/courses/${courseId}/students/${studentId}/mastery` : `/courses/${courseId}/mastery-summary`,
   );
@@ -37,8 +39,10 @@ function ContentRadar({ courseId, studentId }: { courseId: string; studentId?: s
         <>
           {summary && (
             <p>
-              {summary.assessedStudentCount}/{summary.studentCount} học viên có kết quả đánh giá. Mỗi trục là
-              điểm trung bình của những người đã được đánh giá ở nội dung đó.
+              {summary.assessedStudentCount}/{summary.studentCount}{" "}
+              {uiText(
+                " học viên có kết quả đánh giá. Mỗi trục là điểm trung bình của những người đã được đánh giá ở nội dung đó.",
+              )}
             </p>
           )}
           <LearningRadar
@@ -59,6 +63,7 @@ function ContentRadar({ courseId, studentId }: { courseId: string; studentId?: s
   );
 }
 function IndividualRadar({ courseId }: { courseId: string }) {
+  const uiText = useUiText();
   const roster = useLecturer<Member[] | { items: Member[] }>(`/courses/${courseId}/roster`);
   const [selected, setSelected] = useState("");
   const members = Array.isArray(roster.data) ? roster.data : (roster.data?.items ?? []);
@@ -73,7 +78,7 @@ function IndividualRadar({ courseId }: { courseId: string }) {
             <>
               <div className="learning-radar-controls">
                 <label>
-                  Học viên xem năng lực
+                  {uiText("Học viên xem năng lực")}
                   <select value={studentId} onChange={(event) => setSelected(event.target.value)}>
                     {members.map((member) => (
                       <option key={member.studentId} value={member.studentId}>
@@ -86,7 +91,7 @@ function IndividualRadar({ courseId }: { courseId: string }) {
               <ContentRadar key={`${courseId}:${studentId}`} courseId={courseId} studentId={studentId} />
             </>
           ) : (
-            <p>Chưa có học viên ghi danh khóa học này.</p>
+            <p>{uiText("Chưa có học viên ghi danh khóa học này.")}</p>
           )
         }
       </State>
@@ -94,14 +99,19 @@ function IndividualRadar({ courseId }: { courseId: string }) {
   );
 }
 export function LecturerLearningRadar({ courseId }: { courseId: string }) {
+  const uiText = useUiText();
   const [individual, setIndividual] = useState(false);
   return (
-    <section className="learning-radar-panel" aria-label="Tổng quan năng lực khóa học">
-      <h2>Tổng quan năng lực khóa học</h2>
-      <p>Theo dõi nội dung học viên đang nắm tốt và nội dung cần hỗ trợ trong khóa học bạn phụ trách.</p>
+    <section className="learning-radar-panel" aria-label={uiText("Tổng quan năng lực khóa học")}>
+      <h2>{uiText("Tổng quan năng lực khóa học")}</h2>
+      <p>
+        {uiText(
+          "Theo dõi nội dung học viên đang nắm tốt và nội dung cần hỗ trợ trong khóa học bạn phụ trách.",
+        )}
+      </p>
       <ContentRadar key={courseId} courseId={courseId} />
       <details onToggle={(event) => setIndividual(event.currentTarget.open)}>
-        <summary>Xem chi tiết từng học viên</summary>
+        <summary>{uiText("Xem chi tiết từng học viên")}</summary>
         {individual && <IndividualRadar key={courseId} courseId={courseId} />}
       </details>
     </section>

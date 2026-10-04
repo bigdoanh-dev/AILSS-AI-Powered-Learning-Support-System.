@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -42,6 +43,7 @@ export function OperationResult({
   autoRedirect?: boolean;
   redirectDelayMs?: number;
 }) {
+  const uiText = useUiText();
   const heading = useRef<HTMLHeadingElement>(null);
   const hasAutoComplete = Boolean(onComplete);
   const completion = useRef(onComplete);
@@ -93,8 +95,8 @@ export function OperationResult({
           </div>
           <p className="operation-result-countdown">
             {success
-              ? `Tự động chuyển tiếp sau ${secondsLeft}s…`
-              : `Tự chuyển trang sau ${secondsLeft} giây.`}
+              ? uiText("Tự động chuyển tiếp sau {0}s…", [secondsLeft])
+              : uiText("Tự chuyển trang sau {0} giây.", [secondsLeft])}
           </p>
         </div>
       )}
@@ -103,7 +105,7 @@ export function OperationResult({
         {action ||
           (onComplete && (
             <button className="button" onClick={onComplete}>
-              Tiếp tục
+              {uiText("Tiếp tục")}
             </button>
           ))}
       </div>
@@ -112,6 +114,7 @@ export function OperationResult({
 }
 
 export default function OperationResultPage() {
+  const uiText = useUiText();
   const { state, key } = useLocation();
   const navigate = useNavigate();
   const result = state as {
@@ -135,14 +138,14 @@ export default function OperationResultPage() {
       redirectDelayMs={delayMs}
       onComplete={result ? () => navigate(to, { replace: true }) : undefined}
       success={isSuccess}
-      title={result?.title || (isSuccess ? "Thao tác thành công" : "Chưa có kết quả thao tác")}
+      title={uiText(result?.title || (isSuccess ? "Thao tác thành công" : "Chưa có kết quả thao tác"))}
       action={
         <Link className="button" to={to}>
-          {result?.label || (isSuccess ? "Tiếp tục" : "Quay lại")}
+          {uiText(result?.label || (isSuccess ? "Tiếp tục" : "Quay lại"))}
         </Link>
       }
     >
-      <p>{result?.message || "Hãy quay lại trang thao tác để kiểm tra trạng thái hiện tại."}</p>
+      <p>{uiText(result?.message || "Hãy quay lại trang thao tác để kiểm tra trạng thái hiện tại.")}</p>
     </OperationResult>
   );
 }

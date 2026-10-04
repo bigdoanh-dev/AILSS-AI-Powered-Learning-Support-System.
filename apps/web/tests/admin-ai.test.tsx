@@ -42,6 +42,7 @@ describe("AI quản trị", () => {
     expect(request).toHaveBeenCalledWith("/assistant/chat", "POST", {
       mode: "ADMIN_SUPPORT",
       message: "Xem thống kê ở đâu?",
+      responseLanguage: "vi",
     });
     expect(screen.getByRole("link", { name: "Thống kê học tập và AI" }).getAttribute("href")).toBe(
       "/app/admin/stats",

@@ -1,3 +1,4 @@
+import { useLanguage, useUiText } from "../lib/i18n";
 import { Fragment } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ScheduleCalendar, useCalendar } from "../components/ScheduleCalendar";
@@ -10,6 +11,7 @@ export const attendanceLabel: Record<string, string> = {
   NOT_RECORDED: "Chưa ghi nhận",
 };
 export function StudentSchedule() {
+  const uiText = useUiText();
   const calendar = useCalendar();
   const first = useStudent<SessionItem[]>("/me/schedule?" + calendar.queries[0]);
   const second = useStudent<SessionItem[]>(
@@ -33,13 +35,19 @@ export function StudentSchedule() {
   };
   return (
     <>
-      <Heading title="Lịch học">Theo dõi các buổi học theo danh sách, tuần hoặc tháng.</Heading>
-      <div className="module-segmented-bar" role="navigation" aria-label="Phân hệ lịch trình & điểm danh">
+      <Heading title={uiText("Lịch học")}>
+        {uiText("Theo dõi các buổi học theo danh sách, tuần hoặc tháng.")}
+      </Heading>
+      <div
+        className="module-segmented-bar"
+        role="navigation"
+        aria-label={uiText("Phân hệ lịch trình & điểm danh")}
+      >
         <Link to="/app/schedule" className="segmented-tab active">
-          <span>📅 Lịch học theo tuần / tháng</span>
+          <span>{uiText("📅 Lịch học theo tuần / tháng")}</span>
         </Link>
         <Link to="/app/attendance" className="segmented-tab">
-          <span>📋 Bảng tổng hợp điểm danh</span>
+          <span>{uiText("📋 Bảng tổng hợp điểm danh")}</span>
         </Link>
       </div>
       <State query={q}>
@@ -52,6 +60,8 @@ export function StudentSchedule() {
   );
 }
 export function StudentAttendance() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const [params, setParams] = useSearchParams();
   const raw = params.get("month") || "";
   const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(raw) ? raw : monthNow();
@@ -63,45 +73,53 @@ export function StudentAttendance() {
     items.filter((x) => x.attendanceStatus === status).length;
   return (
     <>
-      <Heading title="Thông tin điểm danh">
-        Tổng hợp theo lớp, mở từng dòng để xem các buổi đã được ghi nhận.
+      <Heading title={uiText("Thông tin điểm danh")}>
+        {uiText("Tổng hợp theo lớp, mở từng dòng để xem các buổi đã được ghi nhận.")}
       </Heading>
-      <div className="module-segmented-bar" role="navigation" aria-label="Phân hệ lịch trình & điểm danh">
+      <div
+        className="module-segmented-bar"
+        role="navigation"
+        aria-label={uiText("Phân hệ lịch trình & điểm danh")}
+      >
         <Link to="/app/schedule" className="segmented-tab">
-          <span>📅 Lịch học theo tuần / tháng</span>
+          <span>{uiText("📅 Lịch học theo tuần / tháng")}</span>
         </Link>
         <Link to="/app/attendance" className="segmented-tab active">
-          <span>📋 Bảng tổng hợp điểm danh</span>
+          <span>{uiText("📋 Bảng tổng hợp điểm danh")}</span>
         </Link>
       </div>
       <div className="attendance-summary-bar">
         <div className="attendance-summary-pill">
           <span>
-            Tổng số lượt ghi nhận: <strong>{rows.length}</strong>
+            {uiText("Tổng số lượt ghi nhận: ")}
+            <strong>{rows.length}</strong>
           </span>
         </div>
         <div className="attendance-summary-pill present">
           <span className="dot" aria-hidden="true" />
           <span>
-            Có mặt: <strong>{count(rows, "PRESENT")}</strong>
+            {uiText("Có mặt: ")}
+            <strong>{count(rows, "PRESENT")}</strong>
           </span>
         </div>
         <div className="attendance-summary-pill absent">
           <span className="dot" aria-hidden="true" />
           <span>
-            Vắng không phép: <strong>{count(rows, "ABSENT")}</strong>
+            {uiText("Vắng không phép: ")}
+            <strong>{count(rows, "ABSENT")}</strong>
           </span>
         </div>
         <div className="attendance-summary-pill excused">
           <span className="dot" aria-hidden="true" />
           <span>
-            Vắng có phép: <strong>{count(rows, "EXCUSED")}</strong>
+            {uiText("Vắng có phép: ")}
+            <strong>{count(rows, "EXCUSED")}</strong>
           </span>
         </div>
       </div>
       <div className="calendar-toolbar">
         <label>
-          Tháng điểm danh (UTC)
+          {uiText("Tháng điểm danh (UTC)")}
           <input
             type="month"
             value={month}
@@ -113,23 +131,26 @@ export function StudentAttendance() {
         </label>
       </div>
       <p className="muted">
-        Đơn vị: buổi học. Chỉ tổng hợp bản ghi điểm danh đã có; chưa có bản ghi không có nghĩa là vắng học.
+        {uiText(
+          "Đơn vị: buổi học. Chỉ tổng hợp bản ghi điểm danh đã có; chưa có bản ghi không có nghĩa là vắng học.",
+        )}
       </p>
       <State query={q}>
         {rows.length ? (
-          <div className="attendance-scroll" tabIndex={0} aria-label="Bảng tổng hợp điểm danh">
+          <div className="attendance-scroll" tabIndex={0} aria-label={uiText("Bảng tổng hợp điểm danh")}>
             <table className="attendance-table">
               <caption>
-                Điểm danh tháng {month.slice(5)}/{month.slice(0, 4)}
+                {uiText("Điểm danh tháng ")}
+                {month.slice(5)}/{month.slice(0, 4)}
               </caption>
               <thead>
                 <tr>
                   <th scope="col">STT</th>
-                  <th scope="col">Lớp học / mã lớp</th>
-                  <th scope="col">Có mặt</th>
-                  <th scope="col">Vắng có phép</th>
-                  <th scope="col">Vắng không phép</th>
-                  <th scope="col">Chưa ghi nhận</th>
+                  <th scope="col">{uiText("Lớp học / mã lớp")}</th>
+                  <th scope="col">{uiText("Có mặt")}</th>
+                  <th scope="col">{uiText("Vắng có phép")}</th>
+                  <th scope="col">{uiText("Vắng không phép")}</th>
+                  <th scope="col">{uiText("Chưa ghi nhận")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -157,7 +178,9 @@ export function StudentAttendance() {
                         <td colSpan={6}>
                           <details>
                             <summary>
-                              Chi tiết {items.length} buổi · {name}
+                              {uiText("Chi tiết ")}
+                              {items.length} {uiText(" buổi · ")}
+                              {name}
                             </summary>
                             <ul className="attendance-details">
                               {[...items]
@@ -166,7 +189,7 @@ export function StudentAttendance() {
                                   <li key={x.sessionId}>
                                     <span>
                                       <strong>{x.title}</strong>
-                                      <small>{dateLabel(x.startAt, "Asia/Ho_Chi_Minh")}</small>
+                                      <small>{dateLabel(x.startAt, "Asia/Ho_Chi_Minh", uiLocale)}</small>
                                     </span>
                                     <span
                                       className={`attendance-chip status-${x.attendanceStatus.toLowerCase()}`}
@@ -186,7 +209,7 @@ export function StudentAttendance() {
               <tfoot>
                 <tr>
                   <th colSpan={2} scope="row">
-                    Tổng trong tháng
+                    {uiText("Tổng trong tháng")}
                   </th>
                   {["PRESENT", "EXCUSED", "ABSENT", "NOT_RECORDED"].map((s) => (
                     <td key={s}>{count(rows, s)}</td>
@@ -196,7 +219,7 @@ export function StudentAttendance() {
             </table>
           </div>
         ) : (
-          <Empty>Chưa có dữ liệu điểm danh trong tháng này.</Empty>
+          <Empty>{uiText("Chưa có dữ liệu điểm danh trong tháng này.")}</Empty>
         )}
       </State>
     </>

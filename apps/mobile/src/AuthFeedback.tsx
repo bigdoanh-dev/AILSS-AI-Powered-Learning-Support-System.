@@ -1,15 +1,7 @@
+import { useUiText } from "./use-language";
 import React, { useEffect, useRef } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  Animated,
-  Dimensions,
-  type StyleProp,
-  type ViewStyle,
-} from "react-native";
-import { Icon, tokens, type IconName } from "./ui";
+import { Modal, View, Text, StyleSheet, Animated, Dimensions } from "react-native";
+import { Icon, type IconName } from "./ui";
 import { ScalePressable, PulseBadge, useReducedMotionPreference } from "./motion";
 
 export type AuthFeedbackType = "LOGIN_SUCCESS" | "LOGIN_ERROR" | "LOGOUT_SUCCESS" | "REGISTER_SUCCESS";
@@ -41,6 +33,7 @@ export function AuthFeedbackModal({
   proceedLabel,
   autoProceedMs = 2000,
 }: AuthFeedbackProps) {
+  const uiText = useUiText();
   const isSuccess = type === "LOGIN_SUCCESS" || type === "REGISTER_SUCCESS";
   const isLogout = type === "LOGOUT_SUCCESS";
   const isError = type === "LOGIN_ERROR";
@@ -132,10 +125,20 @@ export function AuthFeedbackModal({
 
   const roleMeta =
     user?.role === "ADMIN"
-      ? { label: "Quản trị viên (ADMIN)", color: "#DC2626", bg: "#FEE2E2", icon: "shield" as IconName }
+      ? {
+          label: uiText("Quản trị viên (ADMIN)"),
+          color: "#DC2626",
+          bg: "#FEE2E2",
+          icon: "shield" as IconName,
+        }
       : user?.role === "LECTURER"
-        ? { label: "Giảng viên (LECTURER)", color: "#7C3AED", bg: "#EDE9FE", icon: "academic" as IconName }
-        : { label: "Học viên (STUDENT)", color: "#0A7E85", bg: "#E6F7F7", icon: "user" as IconName };
+        ? {
+            label: uiText("Giảng viên (LECTURER)"),
+            color: "#7C3AED",
+            bg: "#EDE9FE",
+            icon: "academic" as IconName,
+          }
+        : { label: uiText("Học viên (STUDENT)"), color: "#0A7E85", bg: "#E6F7F7", icon: "user" as IconName };
 
   const iconMeta = isSuccess
     ? { name: "check" as IconName, color: "#10B981", bg: "#D1FAE5", border: "#A7F3D0" }
@@ -196,8 +199,8 @@ export function AuthFeedbackModal({
             </PulseBadge>
 
             {/* Title & Feedback message */}
-            <Text style={feedbackStyles.titleText}>{title}</Text>
-            <Text style={feedbackStyles.messageText}>{message}</Text>
+            <Text style={feedbackStyles.titleText}>{uiText(title)}</Text>
+            <Text style={feedbackStyles.messageText}>{uiText(message)}</Text>
 
             {/* User Profile Capsule (if logged in) */}
             {isSuccess && user && (
@@ -260,7 +263,7 @@ export function AuthFeedbackModal({
 
               {isError && onDismiss && (
                 <ScalePressable style={feedbackStyles.secondaryBtn} onPress={onDismiss}>
-                  <Text style={feedbackStyles.secondaryBtnText}>Thử lại</Text>
+                  <Text style={feedbackStyles.secondaryBtnText}>{uiText("Thử lại")}</Text>
                 </ScalePressable>
               )}
             </View>

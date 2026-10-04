@@ -9,6 +9,8 @@ import {
   type PropsWithChildren,
 } from "react";
 import { useSession } from "../auth/session";
+import { useLanguage, type SupportedLanguage } from "../lib/i18n";
+import { formatInterface } from "../../../../packages/localization/src";
 import { studentError, studentRequest, useStudent, type LearningCourse } from "./api";
 
 export interface TutorCitation {
@@ -37,17 +39,24 @@ export interface TutorMessage {
   isStreaming?: boolean;
 }
 
-export function tutorPrompts(courseId: string, courseTitle?: string): string[] {
+export function tutorPrompts(
+  courseId: string,
+  courseTitle?: string,
+  language: SupportedLanguage = "vi",
+): string[] {
+  const text = (source: string, values?: readonly unknown[]) => formatInterface(source, language, values);
   return courseId
     ? [
-        "Mình đang học khóa nào và mức độ hiểu bài ra sao?",
-        "Giải thích phần mình đang học bằng ví dụ dễ hiểu",
-        courseTitle ? `Gợi ý khóa học liên quan đến ${courseTitle}` : "Mình muốn tìm khóa học về SQL",
+        text("Mình đang học khóa nào và mức độ hiểu bài ra sao?"),
+        text("Giải thích phần mình đang học bằng ví dụ dễ hiểu"),
+        courseTitle
+          ? text("Gợi ý khóa học liên quan đến {0}", [courseTitle])
+          : text("Mình muốn tìm khóa học về SQL"),
       ]
     : [
-        "Mình chưa biết nên chọn khóa học nào",
-        "Mình mới bắt đầu học lập trình, nên học từ đâu?",
-        "Mình muốn tìm khóa học về SQL",
+        text("Mình chưa biết nên chọn khóa học nào"),
+        text("Mình mới bắt đầu học lập trình, nên học từ đâu?"),
+        text("Mình muốn tìm khóa học về SQL"),
       ];
 }
 
@@ -129,7 +138,8 @@ interface TutorConversationValue {
 }
 
 const TutorConversationContext = createContext<TutorConversationValue | null>(null);
-function formatTutorText(text: string) {
+function formatTutorText(text: string, language: SupportedLanguage = "vi") {
+  if (language === "en") return text;
   if (text.startsWith("INSUFFICIENT_EVIDENCE:")) {
     return `Chưa tìm thấy đủ bằng chứng trong tài liệu được cấp quyền: ${text.slice("INSUFFICIENT_EVIDENCE:".length).trim()}`;
   }
@@ -162,6 +172,7 @@ function pause(ms: number, signal: AbortSignal) {
 }
 
 function ConversationStore({ children }: PropsWithChildren) {
+  const { language } = useLanguage();
   const [courseId, setCourseIdState] = useState("");
   const courses = useStudent<LearningCourse[]>("/me/courses");
   const archive = useStudent<TutorSavedConversation[]>("/assistant/conversations");
@@ -324,6 +335,7 @@ function ConversationStore({ children }: PropsWithChildren) {
           mode: courseId ? "STUDY_BUDDY" : "STUDENT_ADVISOR",
           ...(courseId ? { courseId } : {}),
           message: text,
+          responseLanguage: language,
         });
         if (controller.signal.aborted || activeRequestRef.current !== request) return;
 
@@ -354,7 +366,7 @@ function ConversationStore({ children }: PropsWithChildren) {
           messages: [...current.messages, assistantMessage],
         }));
 
-        const answer = formatTutorText(response.data.content);
+        const answer = formatTutorText(response.data.content, language);
         const words = answer.match(/\S+\s*/gu) ?? [answer];
         const groupSize = Math.max(1, Math.ceil(words.length / 72));
         let visibleText = "";
@@ -407,7 +419,7 @@ function ConversationStore({ children }: PropsWithChildren) {
         }
       }
     },
-    [archive, courseId, input, thread.conversationId, updateThread],
+    [archive, courseId, input, thread.conversationId, updateThread, language],
   );
 
   const stopRequest = useCallback(() => {

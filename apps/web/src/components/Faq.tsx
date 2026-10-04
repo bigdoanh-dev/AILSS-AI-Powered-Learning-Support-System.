@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useState } from "react";
 export const questions = [
   [
@@ -52,32 +53,35 @@ export const questions = [
   ],
 ];
 export function Faq({ compact = false }: { compact?: boolean }) {
+  const uiText = useUiText();
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("All");
   const items = (compact ? questions.filter((_, i) => [0, 2, 6, 7].includes(i)) : questions).filter(
     ([c, t, a]) =>
       (category === "All" || category === c) &&
-      `${t} ${a}`.toLocaleLowerCase("vi").includes(q.toLocaleLowerCase("vi")),
+      `${uiText(t)} ${uiText(a)}`.toLocaleLowerCase().includes(q.toLocaleLowerCase()),
   );
   return (
     <div className="faq">
       {!compact && (
         <div className="faq-filters">
           <label>
-            Tìm câu hỏi
+            {uiText("Tìm câu hỏi")}
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               type="search"
-              placeholder="AI, tài khoản, khóa học…"
+              placeholder={uiText("AI, tài khoản, khóa học…")}
             />
           </label>
           <label>
-            Chủ đề
+            {uiText("Chủ đề")}
             <select value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="All">Tất cả</option>
+              <option value="All">{uiText("Tất cả")}</option>
               {questions.map(([c]) => (
-                <option key={c}>{c}</option>
+                <option key={c} value={c}>
+                  {uiText(c)}
+                </option>
               ))}
             </select>
           </label>
@@ -87,15 +91,17 @@ export function Faq({ compact = false }: { compact?: boolean }) {
         {items.map(([c, t, a]) => (
           <details key={t}>
             <summary>
-              {t}
+              {uiText(t)}
               <span aria-hidden="true">+</span>
             </summary>
-            <p>{a}</p>
-            {!compact && <small>{c}</small>}
+            <p>{uiText(a)}</p>
+            {!compact && <small>{uiText(c)}</small>}
           </details>
         ))}
       </div>
-      {items.length === 0 && <p role="status">Chưa tìm thấy câu hỏi phù hợp. Hãy thử từ khóa khác.</p>}
+      {items.length === 0 && (
+        <p role="status">{uiText("Chưa tìm thấy câu hỏi phù hợp. Hãy thử từ khóa khác.")}</p>
+      )}
     </div>
   );
 }

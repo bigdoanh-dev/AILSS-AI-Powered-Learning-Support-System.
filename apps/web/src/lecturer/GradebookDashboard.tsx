@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { useUiText, interfaceMessage, type InterfaceMessage } from "../lib/i18n";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useLecturer, month, lecturerRequest, lecturerError } from "./api";
@@ -19,6 +21,8 @@ type Result = {
 };
 
 export function QuizResults({ quizId, target = "" }: { quizId: string; target?: string }) {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const [selectedMonth, setMonth] = useState(month());
   const [cursor, setCursor] = useState("");
   const query = useLecturer<{ items: Result[]; nextCursor?: string }>(
@@ -53,7 +57,7 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
   const [score, setScore] = useState("");
   const [feedback, setFeedback] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<InterfaceMessage>("");
   async function save() {
     if (!editing) return;
     if (
@@ -62,7 +66,7 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
       Number(score) < 0 ||
       Number(score) > Number(editing.maxScore)
     ) {
-      setMessage(`Nhập điểm từ 0 đến ${editing.maxScore}.`);
+      setMessage(interfaceMessage("Nhập điểm từ 0 đến {0}.", [editing.maxScore]));
       return;
     }
     setBusy(true);
@@ -104,10 +108,10 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
               <line x1="16" y1="17" x2="8" y2="17"></line>
               <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
-            Danh sách bài nộp &amp; Chấm điểm
+            {uiText("Danh sách bài nộp & Chấm điểm")}
           </h2>
           <p style={{ margin: "4px 0 0 0", fontSize: 13, color: "var(--muted, #64748b)" }}>
-            Duyệt bài làm, chấm điểm thủ công và phản hồi trực tiếp đến học viên.
+            {uiText("Duyệt bài làm, chấm điểm thủ công và phản hồi trực tiếp đến học viên.")}
           </p>
         </div>
         <div style={{ minWidth: 200 }}>
@@ -121,7 +125,7 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
               gap: 6,
             }}
           >
-            Tháng nộp bài
+            {uiText("Tháng nộp bài")}
             <input
               type="month"
               value={selectedMonth}
@@ -146,7 +150,7 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
           }}
         >
           <p role="status" style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#0369A1" }}>
-            {message}
+            {uiText(message)}
           </p>
         </div>
       )}
@@ -158,10 +162,10 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Học viên</th>
-                    <th>Điểm</th>
-                    <th>Nộp lúc</th>
-                    <th>Chấm điểm</th>
+                    <th>{uiText("Học viên")}</th>
+                    <th>{uiText("Điểm")}</th>
+                    <th>{uiText("Nộp lúc")}</th>
+                    <th>{uiText("Chấm điểm")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -187,7 +191,7 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
                               fontWeight: 700,
                             }}
                           >
-                            Chờ chấm
+                            {uiText("Chờ chấm")}
                           </span>
                         ) : (
                           <span style={{ fontWeight: 700, color: "#0284c7" }}>
@@ -195,7 +199,7 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
                           </span>
                         )}
                       </td>
-                      <td>{new Date(row.submittedAt).toLocaleString("vi-VN")}</td>
+                      <td>{new Date(row.submittedAt).toLocaleString(uiLocale)}</td>
                       <td>
                         <button
                           className="button secondary"
@@ -206,7 +210,7 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
                             setFeedback(row.teacherFeedback ?? "");
                           }}
                         >
-                          Chấm điểm
+                          {uiText("Chấm điểm")}
                         </button>
                       </td>
                     </tr>
@@ -216,7 +220,7 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
               {value.nextCursor && (
                 <div style={{ marginTop: 14 }}>
                   <button className="button" onClick={() => setCursor(value.nextCursor!)}>
-                    Trang tiếp theo
+                    {uiText("Trang tiếp theo")}
                   </button>
                 </div>
               )}
@@ -224,7 +228,7 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
           ) : (
             <div style={{ padding: "16px 0" }}>
               <p style={{ margin: 0, color: "var(--muted, #64748b)", fontSize: 13.5 }}>
-                Chưa có bài nộp trong tháng này.
+                {uiText("Chưa có bài nộp trong tháng này.")}
               </p>
             </div>
           )
@@ -236,9 +240,12 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
           className="form-panel"
           style={{ marginTop: 12, background: "#f8fafc", borderRadius: 14, border: "1.5px solid #cbd5e1" }}
         >
-          <h2>Chấm bài của {editing.studentId}</h2>
+          <h2>
+            {uiText("Chấm bài của ")}
+            {editing.studentId}
+          </h2>
           <label>
-            Điểm
+            {uiText("Điểm")}
             <input
               type="number"
               min="0"
@@ -249,7 +256,7 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
             />
           </label>
           <label>
-            Nhận xét
+            {uiText("Nhận xét")}
             <textarea
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
@@ -259,10 +266,10 @@ export function QuizResults({ quizId, target = "" }: { quizId: string; target?: 
           </label>
           <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
             <button className="button" disabled={busy} onClick={() => void save()}>
-              Lưu điểm
+              {uiText("Lưu điểm")}
             </button>
             <button className="button secondary" disabled={busy} onClick={() => setEditing(null)}>
-              Hủy
+              {uiText("Hủy")}
             </button>
           </div>
         </section>
@@ -275,6 +282,7 @@ export default function GradebookDashboard({
 }: {
   onManageAssessments?: () => void;
 } = {}) {
+  const uiText = useUiText();
   const courses = useLecturer<Course[] | { items: Course[] }>("/me/owned-courses");
   const classes = useLecturer<Class[] | { classes: Class[] }>("/me/owned-classes");
   const [target, setTarget] = useState("");
@@ -287,12 +295,13 @@ export default function GradebookDashboard({
       <div className="gradebook-hero-header">
         <div className="gradebook-hero-main">
           <div className="gradebook-hero-title-row">
-            <h1 className="gradebook-hero-title">Bảng điểm học viên</h1>
+            <h1 className="gradebook-hero-title">{uiText("Bảng điểm học viên")}</h1>
             <span className="kpi-tag accent">AI Master Radar</span>
           </div>
           <p className="gradebook-hero-desc">
-            Kết quả bài kiểm tra của khóa học và lớp do bạn phụ trách. Theo dõi phân bố năng lực học tập và
-            chấm điểm tự luận/thực hành.
+            {uiText(
+              "Kết quả bài kiểm tra của khóa học và lớp do bạn phụ trách. Theo dõi phân bố năng lực học tập và chấm điểm tự luận/thực hành.",
+            )}
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -323,14 +332,14 @@ export default function GradebookDashboard({
               <line x1="16" y1="17" x2="8" y2="17"></line>
               <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
-            Quản lý bài kiểm tra
+            {uiText("Quản lý bài kiểm tra")}
           </Link>
           <Link
             className="button button-subtle"
             to="/app/teaching/reports"
             style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
-            📊 Báo cáo &amp; Biểu đồ Radar →
+            {uiText("📊 Báo cáo & Biểu đồ Radar →")}
           </Link>
         </div>
       </div>
@@ -352,7 +361,7 @@ export default function GradebookDashboard({
             }}
           >
             <p style={{ margin: 0, color: "#991B1B", fontSize: 13.5, fontWeight: 600 }}>
-              Bạn chưa có khóa học hoặc lớp học để xem điểm.
+              {uiText("Bạn chưa có khóa học hoặc lớp học để xem điểm.")}
             </p>
           </div>
         )}
@@ -375,7 +384,7 @@ export default function GradebookDashboard({
                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
               </svg>
-              Khóa học hoặc lớp
+              {uiText("Khóa học hoặc lớp")}
               <select
                 value={target}
                 onChange={(e) => {
@@ -383,11 +392,15 @@ export default function GradebookDashboard({
                   setQuiz("");
                 }}
               >
-                <option value="">Chọn khóa học hoặc lớp</option>
+                <option value="">{uiText("Chọn khóa học hoặc lớp")}</option>
                 {courseList.map((c) => (
                   <option key={c.courseId} value={`COURSE/${c.courseId}`}>
                     {c.title}
-                    {c.state === "DRAFT" ? " — Bản nháp" : c.state === "IN_REVIEW" ? " — Chờ duyệt" : ""}
+                    {c.state === "DRAFT"
+                      ? uiText(" — Bản nháp")
+                      : c.state === "IN_REVIEW"
+                        ? uiText(" — Chờ duyệt")
+                        : ""}
                   </option>
                 ))}
                 {classList.map((c) => (
@@ -418,9 +431,9 @@ export default function GradebookDashboard({
                       >
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                       </svg>
-                      Bài kiểm tra
+                      {uiText("Bài kiểm tra")}
                       <select value={quizId} onChange={(e) => setQuiz(e.target.value)}>
-                        <option value="">Chọn bài kiểm tra</option>
+                        <option value="">{uiText("Chọn bài kiểm tra")}</option>
                         {items.map((q) => (
                           <option key={q.quizId} value={q.quizId}>
                             {q.title}
@@ -431,7 +444,7 @@ export default function GradebookDashboard({
                   ) : (
                     <div style={{ padding: "10px 0" }}>
                       <p style={{ margin: 0, fontSize: 13, color: "var(--muted, #64748b)" }}>
-                        Chưa có bài kiểm tra cho mục đã chọn.
+                        {uiText("Chưa có bài kiểm tra cho mục đã chọn.")}
                       </p>
                     </div>
                   )

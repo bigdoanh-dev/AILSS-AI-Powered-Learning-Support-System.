@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../src/use-language";
+import { useUiText } from "../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, Pressable, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import { router, type Href } from "expo-router";
@@ -8,6 +10,8 @@ import { moderationListResponse, type ModerationReport } from "../../../src/admi
 import { Page, Button, styles, tokens } from "../../../src/ui";
 
 export default function AdminModerationQueueScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
@@ -69,9 +73,9 @@ export default function AdminModerationQueueScreen() {
   if (snapshot.user?.role !== "ADMIN") {
     return (
       <Page>
-        <Text style={styles.title}>Trung tâm kiểm duyệt</Text>
-        <Text style={styles.error}>Chức năng này yêu cầu quyền Quản trị viên (ADMIN).</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.title}>{uiText("Trung tâm kiểm duyệt")}</Text>
+        <Text style={styles.error}>{uiText("Chức năng này yêu cầu quyền Quản trị viên (ADMIN).")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -79,7 +83,7 @@ export default function AdminModerationQueueScreen() {
   const renderReport = ({ item }: { item: ModerationReport }) => (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Báo cáo ${item.targetType} ${item.targetId}`}
+      accessibilityLabel={uiText("Báo cáo {0} {1}", [item.targetType, item.targetId])}
       style={ms.card}
       onPress={() => router.push(`/admin/moderation/${item.reportId}` as Href)}
     >
@@ -87,21 +91,26 @@ export default function AdminModerationQueueScreen() {
         <View style={ms.content}>
           <View style={ms.tagRow}>
             <View style={[ms.badge, item.targetType === "COMMENT" ? ms.badgeComment : ms.badgeReview]}>
-              <Text style={ms.badgeText}>{item.targetType === "COMMENT" ? "BÌNH LUẬN" : "ĐÁNH GIÁ"}</Text>
+              <Text style={ms.badgeText}>
+                {item.targetType === "COMMENT" ? uiText("BÌNH LUẬN") : uiText("ĐÁNH GIÁ")}
+              </Text>
             </View>
             <View style={[ms.badge, item.state === "OPEN" ? ms.badgeOpen : ms.badgeResolved]}>
-              <Text style={ms.badgeText}>{item.state === "OPEN" ? "ĐANG MỞ" : "ĐÃ XỬ LÝ"}</Text>
+              <Text style={ms.badgeText}>
+                {item.state === "OPEN" ? uiText("ĐANG MỞ") : uiText("ĐÃ XỬ LÝ")}
+              </Text>
             </View>
             <Text style={ms.versionTag}>v{item.version}</Text>
           </View>
 
           <Text style={ms.targetId} numberOfLines={1}>
-            Mục: {item.targetId}
+            {uiText("Mục: ")}
+            {item.targetId}
           </Text>
 
           <Text style={ms.dateText}>
-            {new Date(item.createdAt).toLocaleString("vi-VN")}
-            {item.decision ? ` · Quyết định: ${item.decision}` : ""}
+            {new Date(item.createdAt).toLocaleString(uiLocale)}
+            {item.decision ? uiText(" · Quyết định: {0}", [item.decision]) : ""}
           </Text>
         </View>
 
@@ -112,12 +121,12 @@ export default function AdminModerationQueueScreen() {
 
   return (
     <Page scroll={false}>
-      <Text style={styles.title}>Trung tâm kiểm duyệt</Text>
+      <Text style={styles.title}>{uiText("Trung tâm kiểm duyệt")}</Text>
       <Text style={styles.small}>
-        Hàng đợi các báo cáo vi phạm nội dung cộng đồng từ học viên & giảng viên
+        {uiText("Hàng đợi các báo cáo vi phạm nội dung cộng đồng từ học viên & giảng viên")}
       </Text>
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={styles.error}>{uiText(error)}</Text> : null}
 
       {loading && !refreshing ? (
         <ActivityIndicator size="large" color={tokens.color.brand} style={{ marginTop: 24 }} />
@@ -130,13 +139,13 @@ export default function AdminModerationQueueScreen() {
           onRefresh={() => void loadReports(true, "")}
           ListEmptyComponent={
             <View style={ms.emptyContainer}>
-              <Text style={ms.emptyText}>Hiện không có báo cáo nào cần xử lý.</Text>
+              <Text style={ms.emptyText}>{uiText("Hiện không có báo cáo nào cần xử lý.")}</Text>
             </View>
           }
           ListFooterComponent={
             <View style={ms.footerContainer}>
-              {nextCursor ? <Button label="Trang tiếp theo →" onPress={handleNextPage} /> : null}
-              {cursor ? <Button label="Quay lại trang đầu" onPress={handleResetToFirst} /> : null}
+              {nextCursor ? <Button label={uiText("Trang tiếp theo →")} onPress={handleNextPage} /> : null}
+              {cursor ? <Button label={uiText("Quay lại trang đầu")} onPress={handleResetToFirst} /> : null}
             </View>
           }
           contentContainerStyle={ms.listContent}

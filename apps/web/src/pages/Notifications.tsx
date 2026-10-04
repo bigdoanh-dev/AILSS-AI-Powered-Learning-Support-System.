@@ -1,3 +1,4 @@
+import { useLanguage, useUiText } from "../lib/i18n";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSession, sessionRequest } from "../auth/session";
@@ -6,6 +7,8 @@ import { monthNow, dateLabel, isUuid, type Notices } from "../student/api";
 import { useSSE, type SSEEvent } from "../lib/useSSE";
 
 export default function Notifications() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { profile } = useSession();
   const [month, setMonth] = useState(monthNow()),
     [cursor, setCursor] = useState(""),
@@ -62,11 +65,11 @@ export default function Notifications() {
     <>
       <div className="dashboard-heading">
         <div>
-          <h1>Thông báo</h1>
-          <p>Cập nhật dành cho tài khoản của bạn.</p>
+          <h1>{uiText("Thông báo")}</h1>
+          <p>{uiText("Cập nhật dành cho tài khoản của bạn.")}</p>
         </div>
         <button className="button secondary" onClick={() => setRev((v) => v + 1)} disabled={pending}>
-          Làm mới
+          {uiText("Làm mới")}
         </button>
       </div>
       {realtimeAlert && (
@@ -74,12 +77,12 @@ export default function Notifications() {
           <span className="live-dot" />
           <span>{realtimeAlert}</span>
           <button className="button button-subtle button-small" onClick={() => setRealtimeAlert(null)}>
-            ✕ Đóng
+            {uiText("✕ Đóng")}
           </button>
         </div>
       )}
       <label>
-        Tháng thông báo (UTC)
+        {uiText("Tháng thông báo (UTC)")}
         <input
           type="month"
           required
@@ -94,14 +97,14 @@ export default function Notifications() {
       </label>
       {error && (
         <div role="alert" className="study-state">
-          {error}
+          {uiText(error)}
           <button className="button secondary" onClick={() => setRev((v) => v + 1)}>
-            Thử lại
+            {uiText("Thử lại")}
           </button>
         </div>
       )}
       {pending ? (
-        <p role="status">Đang tải thông báo…</p>
+        <p role="status">{uiText("Đang tải thông báo…")}</p>
       ) : (
         <section className="notification-list">
           {data?.items.length
@@ -110,10 +113,10 @@ export default function Notifications() {
                   key={n.notificationId}
                   className={`study-card study-notice ${n.readAt ? "" : "unread"}`}
                 >
-                  <span className="badge">{n.readAt ? "Đã đọc" : "Chưa đọc"}</span>
+                  <span className="badge">{n.readAt ? uiText("Đã đọc") : uiText("Chưa đọc")}</span>
                   <h2>{n.title}</h2>
                   <p>{n.body}</p>
-                  <small>{dateLabel(n.createdAt)}</small>
+                  <small>{dateLabel(n.createdAt, undefined, uiLocale)}</small>
                   <div className="inline-actions">
                     {!n.readAt && (
                       <button
@@ -121,7 +124,7 @@ export default function Notifications() {
                         disabled={!!busy}
                         onClick={() => void read(n.notificationId, n.locator)}
                       >
-                        {busy === n.notificationId ? "Đang cập nhật…" : "Đánh dấu đã đọc"}
+                        {busy === n.notificationId ? uiText("Đang cập nhật…") : uiText("Đánh dấu đã đọc")}
                       </button>
                     )}
                     {n.source.type === "CLASS_ANNOUNCEMENT" &&
@@ -134,24 +137,24 @@ export default function Notifications() {
                             n.source.contextId
                           }
                         >
-                          Xem lớp học
+                          {uiText("Xem lớp học")}
                         </Link>
                       )}
                   </div>
                 </article>
               ))
-            : !error && <p className="study-state">Chưa có thông báo trong tháng này.</p>}
+            : !error && <p className="study-state">{uiText("Chưa có thông báo trong tháng này.")}</p>}
         </section>
       )}
       <div className="inline-actions">
         {cursor && (
           <button className="button secondary" onClick={() => setCursor("")}>
-            Về đầu danh sách
+            {uiText("Về đầu danh sách")}
           </button>
         )}
         {data?.page?.nextCursor && (
           <button className="button" disabled={pending} onClick={() => setCursor(data.page.nextCursor!)}>
-            Thông báo tiếp theo
+            {uiText("Thông báo tiếp theo")}
           </button>
         )}
       </div>

@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../../../src/use-language";
+import { useUiText } from "../../../../../src/use-language";
 import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import { Text, View, StyleSheet, ActivityIndicator, Modal, TextInput, Alert, ScrollView } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -20,6 +22,8 @@ function currentMonth(): string {
 }
 
 export default function LecturerQuizResultsScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { quizId } = useLocalSearchParams<{ quizId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -101,7 +105,7 @@ export default function LecturerQuizResultsScreen() {
     const val = parseFloat(manualScore);
     const maxVal = parseFloat(gradingItem.maxScore || "10");
     if (isNaN(val) || val < 0 || val > maxVal) {
-      Alert.alert("Lỗi nhập điểm", `Điểm số phải từ 0 đến ${maxVal}`);
+      Alert.alert(uiText("Lỗi nhập điểm"), uiText("Điểm số phải từ 0 đến {0}", [maxVal]));
       return;
     }
 
@@ -120,42 +124,43 @@ export default function LecturerQuizResultsScreen() {
       }
     } catch (cause: unknown) {
       Alert.alert(
-        "Chưa lưu được điểm",
-        cause instanceof ApiError ? cause.message : "Máy chủ chưa xác nhận kết quả chấm điểm.",
+        uiText("Chưa lưu được điểm"),
+        uiText(cause instanceof ApiError ? cause.message : "Máy chủ chưa xác nhận kết quả chấm điểm."),
       );
       return;
     }
 
     gradeSubmission(gradingItem.attemptId, manualScore, manualFeedback);
     setGradingItem(null);
-    Alert.alert("Thành công", "Đã lưu kết quả chấm điểm và gửi phản hồi tới học viên!");
+    Alert.alert(uiText("Thành công"), uiText("Đã lưu kết quả chấm điểm và gửi phản hồi tới học viên!"));
   };
 
   return (
     <Page>
-      <Text style={styles.title}>Bảng kết quả & Chấm điểm</Text>
+      <Text style={styles.title}>{uiText("Bảng kết quả & Chấm điểm")}</Text>
       <Text style={styles.small}>
-        Tháng {selectedMonth} · Hỗ trợ chấm tự động (trắc nghiệm) & chấm thủ công (tự luận / đồ án).
+        {uiText("Tháng ")}
+        {selectedMonth} {uiText(" · Hỗ trợ chấm tự động (trắc nghiệm) & chấm thủ công (tự luận / đồ án).")}
       </Text>
 
       {loading && (
         <View style={s.centerBox}>
           <ActivityIndicator color={tokens.color.brand} />
-          <Text style={styles.small}>Đang tải kết quả học viên…</Text>
+          <Text style={styles.small}>{uiText("Đang tải kết quả học viên…")}</Text>
         </View>
       )}
 
       {error ? (
         <View style={styles.card}>
-          <Text style={styles.error}>{error}</Text>
-          <Button label="Thử lại" onPress={handleRefresh} />
+          <Text style={styles.error}>{uiText(error)}</Text>
+          <Button label={uiText("Thử lại")} onPress={handleRefresh} />
         </View>
       ) : null}
 
       {!loading && !error && items && items.length === 0 && (
         <View style={s.emptyBox}>
-          <Text style={styles.text}>Chưa có kết quả làm bài trong tháng này.</Text>
-          <Text style={styles.small}>Kết quả sẽ tự động hiển thị sau khi học viên nộp bài.</Text>
+          <Text style={styles.text}>{uiText("Chưa có kết quả làm bài trong tháng này.")}</Text>
+          <Text style={styles.small}>{uiText("Kết quả sẽ tự động hiển thị sau khi học viên nộp bài.")}</Text>
         </View>
       )}
 
@@ -175,28 +180,31 @@ export default function LecturerQuizResultsScreen() {
                 <View style={s.resultCard}>
                   <View style={s.row}>
                     <Text style={s.studentId}>
-                      {index + 1}. Học viên: {item.studentId.slice(0, 8)}...
+                      {index + 1}
+                      {uiText(". Học viên: ")}
+                      {item.studentId.slice(0, 8)}...
                     </Text>
                     <View style={s.scoreBadge}>
                       <Text style={s.scoreText}>
-                        {currentScore} / {item.maxScore} điểm
+                        {currentScore} / {item.maxScore} {uiText(" điểm")}
                       </Text>
                     </View>
                   </View>
 
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginVertical: 4 }}>
                     {isManualGraded ? (
-                      <Badge label="✍️ Đã chấm thủ công" variant="ai" />
+                      <Badge label={uiText("✍️ Đã chấm thủ công")} variant="ai" />
                     ) : isPending ? (
-                      <Badge label="⏳ Chờ chấm thủ công" variant="warning" />
+                      <Badge label={uiText("⏳ Chờ chấm thủ công")} variant="warning" />
                     ) : (
-                      <Badge label="⚡ Chấm tự động" variant="success" />
+                      <Badge label={uiText("⚡ Chấm tự động")} variant="success" />
                     )}
                   </View>
 
                   {sub?.lecturerFeedback && (
                     <Text style={[styles.small, { fontStyle: "italic", color: "#475569" }]}>
-                      "Lời phê: {sub.lecturerFeedback}"
+                      {uiText('"Lời phê: ')}
+                      {sub.lecturerFeedback}"
                     </Text>
                   )}
 
@@ -209,8 +217,8 @@ export default function LecturerQuizResultsScreen() {
                     }}
                   >
                     <Text style={styles.small}>
-                      Nộp:{" "}
-                      {new Date(item.submittedAt).toLocaleDateString("vi-VN", {
+                      {uiText("Nộp:")}{" "}
+                      {new Date(item.submittedAt).toLocaleDateString(uiLocale, {
                         hour: "2-digit",
                         minute: "2-digit",
                         day: "2-digit",
@@ -218,14 +226,16 @@ export default function LecturerQuizResultsScreen() {
                       })}
                     </Text>
 
-                    <Button label="✏️ Chấm / Sửa điểm" onPress={() => handleOpenGrading(item)} />
+                    <Button label={uiText("✏️ Chấm / Sửa điểm")} onPress={() => handleOpenGrading(item)} />
                   </View>
                 </View>
               );
             }}
           />
 
-          {nextCursor ? <Button label="Trang tiếp theo →" onPress={() => setCursor(nextCursor)} /> : null}
+          {nextCursor ? (
+            <Button label={uiText("Trang tiếp theo →")} onPress={() => setCursor(nextCursor)} />
+          ) : null}
         </>
       )}
 
@@ -238,15 +248,17 @@ export default function LecturerQuizResultsScreen() {
       >
         <View style={s.modalOverlay}>
           <View style={s.modalSheet}>
-            <Text style={s.modalTitle}>Chấm điểm bài làm</Text>
+            <Text style={s.modalTitle}>{uiText("Chấm điểm bài làm")}</Text>
             <Text style={styles.small}>
-              Học viên: {gradingItem?.studentId} · Điểm tối đa: {gradingItem?.maxScore}
+              {uiText("Học viên: ")}
+              {gradingItem?.studentId} {uiText(" · Điểm tối đa: ")}
+              {gradingItem?.maxScore}
             </Text>
 
             <ScrollView style={{ maxHeight: 300, marginVertical: 8 }}>
               <View style={s.submissionBox}>
                 <Text style={{ fontWeight: "700", color: "#1E293B", marginBottom: 4 }}>
-                  Nội dung bài làm (Tự luận / File đồ án):
+                  {uiText("Nội dung bài làm (Tự luận / File đồ án):")}
                 </Text>
                 <Text style={{ fontSize: 13, color: "#334155", lineHeight: 18 }}>
                   {getSubmissionByAttemptId(gradingItem?.attemptId || "")?.essayContent ||
@@ -255,50 +267,53 @@ export default function LecturerQuizResultsScreen() {
                 {getSubmissionByAttemptId(gradingItem?.attemptId || "")?.fileAttachment && (
                   <View style={{ marginTop: 8, padding: 8, backgroundColor: "#E0F2FE", borderRadius: 8 }}>
                     <Text style={{ fontSize: 12, fontWeight: "700", color: "#0284C7" }}>
-                      📁 Tệp đính kèm:{" "}
+                      {uiText("📁 Tệp đính kèm:")}{" "}
                       {getSubmissionByAttemptId(gradingItem?.attemptId || "")?.fileAttachment?.fileName}
                     </Text>
                     <Text style={{ fontSize: 11, color: "#475569" }}>
-                      Dung lượng:{" "}
+                      {uiText("Dung lượng:")}{" "}
                       {getSubmissionByAttemptId(gradingItem?.attemptId || "")?.fileAttachment?.fileSize}
                     </Text>
                   </View>
                 )}
               </View>
 
-              <Text style={s.label}>Điểm số (Thang {gradingItem?.maxScore}) *</Text>
+              <Text style={s.label}>
+                {uiText("Điểm số (Thang ")}
+                {gradingItem?.maxScore}) *
+              </Text>
               <TextInput
                 style={s.scoreInput}
                 keyboardType="numeric"
                 value={manualScore}
                 onChangeText={setManualScore}
-                placeholder="Ví dụ: 8.5"
+                placeholder={uiText("Ví dụ: 8.5")}
               />
 
-              <Text style={s.label}>Nhận xét & Lời phê của Giảng viên</Text>
+              <Text style={s.label}>{uiText("Nhận xét & Lời phê của Giảng viên")}</Text>
               <TextInput
                 style={s.feedbackInput}
                 multiline
                 numberOfLines={3}
                 value={manualFeedback}
                 onChangeText={setManualFeedback}
-                placeholder="Nhập đánh giá chi tiết cho học viên..."
+                placeholder={uiText("Nhập đánh giá chi tiết cho học viên...")}
               />
             </ScrollView>
 
             <View style={{ flexDirection: "row", gap: 10, marginTop: 8 }}>
               <View style={{ flex: 1 }}>
-                <Button label="Lưu điểm & Gửi nhận xét" onPress={handleSaveGrade} />
+                <Button label={uiText("Lưu điểm & Gửi nhận xét")} onPress={handleSaveGrade} />
               </View>
               <View style={{ flex: 1 }}>
-                <Button label="Đóng" variant="outline" onPress={() => setGradingItem(null)} />
+                <Button label={uiText("Đóng")} variant="outline" onPress={() => setGradingItem(null)} />
               </View>
             </View>
           </View>
         </View>
       </Modal>
 
-      <Button label="Quay lại chi tiết bài" onPress={() => router.back()} />
+      <Button label={uiText("Quay lại chi tiết bài")} onPress={() => router.back()} />
     </Page>
   );
 }

@@ -1,0 +1,43 @@
+.localized-file-input {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.localized-file-input:focus-within {
+  outline: 2px solid var(--brand, #0284c7);
+  outline-offset: 3px;
+}
+.localized-file-input.is-disabled {
+  opacity: 0.65;
+}
+.localized-file-input-choice {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  color: var(--ink, #0f172a);
+  background: var(--surface-sunken, #f1f5f9);
+  border-radius: 6px;
+  font-weight: 700;
+}
+.localized-file-input-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.localized-file-input > input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.localized-file-input > input:disabled {
+  cursor: not-allowed;
+}

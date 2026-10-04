@@ -85,6 +85,7 @@ rule(
     .object({
       conversationId: z.string().uuid().optional(),
       mode: z.enum(["STUDENT_ADVISOR", "STUDY_BUDDY"]),
+      responseLanguage: z.enum(["vi", "en"]).optional(),
       courseId: z.string().uuid().optional(),
       message: z.string().trim().min(1).max(4000),
     })

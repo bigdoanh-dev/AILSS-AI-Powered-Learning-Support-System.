@@ -1,3 +1,4 @@
+import { useUiText, useLanguage } from "../../src/use-language";
 import { useSyncExternalStore } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { Redirect } from "expo-router";
@@ -21,10 +22,10 @@ function isStrong(record: MasteryRecord): boolean {
   return record.masteryState === "PROFICIENT" || record.masteryState === "MASTERED";
 }
 
-function formatSync(value?: string): string {
+function formatSync(value: string | undefined, locale: string): string {
   if (!value) return "Chưa có thời điểm đồng bộ";
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("vi-VN");
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString(locale);
 }
 
 function ScoreTrack({ value, label }: { value: number; label: string }) {
@@ -43,6 +44,8 @@ function ScoreTrack({ value, label }: { value: number; label: string }) {
 }
 
 export default function MasteryScreen() {
+  const uiText = useUiText();
+  const { locale } = useLanguage();
   const session = runtime!;
   const auth = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const data = useStudentLearning(session, auth.user?.userId, auth.state);
@@ -69,29 +72,31 @@ export default function MasteryScreen() {
             <Icon name="stats" size={19} color={tokens.color.brand} />
           </View>
           <Text testID="student-mastery-title" style={styles.title}>
-            Năng lực học tập
+            {uiText("Năng lực học tập")}
           </Text>
-          <Text style={styles.text}>Theo dõi từng khái niệm từ bằng chứng học tập đã được ghi nhận.</Text>
+          <Text style={styles.text}>
+            {uiText("Theo dõi từng khái niệm từ bằng chứng học tập đã được ghi nhận.")}
+          </Text>
         </View>
 
         {data.loading ? (
           <View style={local.center}>
             <ActivityIndicator color={tokens.color.brand} />
-            <Text style={styles.small}>Đang tải năng lực của bạn…</Text>
+            <Text style={styles.small}>{uiText("Đang tải năng lực của bạn…")}</Text>
           </View>
         ) : data.error ? (
           <View style={local.center}>
             <Text accessibilityRole="alert" style={styles.error}>
-              {data.error}
+              {uiText(data.error)}
             </Text>
-            <Button label="Tải lại" onPress={data.refresh} />
+            <Button label={uiText("Tải lại")} onPress={data.refresh} />
           </View>
         ) : data.courses.length === 0 ? (
           <View style={local.emptyCard}>
             <Icon name="academic" size={24} color={tokens.color.brand} />
-            <Text style={local.emptyHeading}>Chưa có khóa học</Text>
+            <Text style={local.emptyHeading}>{uiText("Chưa có khóa học")}</Text>
             <Text style={styles.text}>
-              Năng lực sẽ xuất hiện sau khi bạn bắt đầu học và có bằng chứng đầu tiên.
+              {uiText("Năng lực sẽ xuất hiện sau khi bạn bắt đầu học và có bằng chứng đầu tiên.")}
             </Text>
           </View>
         ) : (
@@ -101,30 +106,33 @@ export default function MasteryScreen() {
                 <View style={local.overviewMark}>
                   <Icon name="award" size={19} color="#BDF5E3" />
                 </View>
-                <Text style={local.overviewCaption}>Bản đồ năng lực</Text>
+                <Text style={local.overviewCaption}>{uiText("Bản đồ năng lực")}</Text>
               </View>
               <View style={local.overviewCountRow}>
                 <Text style={local.overviewCount}>{strong}</Text>
-                <Text style={local.overviewTotal}>/ {records.length} khái niệm đạt mức thành thạo</Text>
+                <Text style={local.overviewTotal}>
+                  / {records.length} {uiText(" khái niệm đạt mức thành thạo")}
+                </Text>
               </View>
               <Text style={local.overviewExplanation}>
-                Tổng hợp từ {availableCourses.length} khóa học đã tải dữ liệu Mastery
-                {notObserved > 0 ? ` · ${notObserved} khái niệm chưa ghi nhận` : ""}.
+                {uiText("Tổng hợp từ ")}
+                {availableCourses.length} {uiText(" khóa học đã tải dữ liệu Mastery")}
+                {notObserved > 0 ? uiText(" · {0} khái niệm chưa ghi nhận", [notObserved]) : ""}.
               </Text>
               <View style={local.statRow}>
                 <View style={local.statCell}>
                   <Text style={local.statValue}>{strong}</Text>
-                  <Text style={local.statLabel}>Thành thạo</Text>
+                  <Text style={local.statLabel}>{uiText("Thành thạo")}</Text>
                 </View>
                 <View style={local.statDivider} />
                 <View style={local.statCell}>
                   <Text style={local.statValue}>{developing}</Text>
-                  <Text style={local.statLabel}>Đang học</Text>
+                  <Text style={local.statLabel}>{uiText("Đang học")}</Text>
                 </View>
                 <View style={local.statDivider} />
                 <View style={local.statCell}>
                   <Text style={local.statValue}>{review}</Text>
-                  <Text style={local.statLabel}>Cần ôn lại</Text>
+                  <Text style={local.statLabel}>{uiText("Cần ôn lại")}</Text>
                 </View>
               </View>
             </View>
@@ -133,19 +141,19 @@ export default function MasteryScreen() {
               <View style={[local.sourceDot, hasCachedMastery ? local.cachedDot : local.liveDot]} />
               <Text style={local.sourceText}>
                 {hasCachedMastery
-                  ? "Một số dữ liệu lấy từ bản lưu trên thiết bị"
-                  : "Dữ liệu Mastery từ máy chủ"}
+                  ? uiText("Một số dữ liệu lấy từ bản lưu trên thiết bị")
+                  : uiText("Dữ liệu Mastery từ máy chủ")}
               </Text>
             </View>
             {availableCourses.length < data.courses.length ? (
               <Text accessibilityRole="alert" style={local.partialNotice}>
-                Tổng quan chưa bao gồm {data.courses.length - availableCourses.length} khóa học chưa tải được
-                Mastery.
+                {uiText("Tổng quan chưa bao gồm ")}
+                {data.courses.length - availableCourses.length} {uiText(" khóa học chưa tải được Mastery.")}
               </Text>
             ) : null}
 
             <StudentLearningRadar courses={data.courses} live={auth.state === "AUTHENTICATED"} />
-            <Text style={local.sectionHeading}>Theo khóa học</Text>
+            <Text style={local.sectionHeading}>{uiText("Theo khóa học")}</Text>
             {data.courses.map(({ course, mastery, masteryError, masterySource, masterySyncedAt }) => {
               const mastered = mastery?.filter(isStrong).length ?? 0;
               const total = mastery?.length ?? 0;
@@ -160,26 +168,30 @@ export default function MasteryScreen() {
                       <Text style={local.courseTitle}>{course.title}</Text>
                       <Text style={local.courseMeta}>
                         {masterySource === "OFFLINE_CACHE"
-                          ? `Bản lưu · ${formatSync(masterySyncedAt)}`
-                          : "Đã đồng bộ từ máy chủ"}
+                          ? uiText("Bản lưu · {0}", [uiText(formatSync(masterySyncedAt, locale))])
+                          : uiText("Đã đồng bộ từ máy chủ")}
                       </Text>
                     </View>
                   </View>
                   {masteryError ? (
                     <Text accessibilityRole="alert" style={styles.error}>
-                      Không tải được dữ liệu Mastery: {masteryError}
+                      {uiText("Không tải được dữ liệu Mastery: ")}
+                      {uiText(masteryError)}
                     </Text>
                   ) : total > 0 && mastery ? (
                     <>
                       <View style={local.courseProgressHeader}>
                         <Text style={local.courseProgressLabel}>
-                          {mastered}/{total} khái niệm thành thạo
+                          {mastered}/{total} {uiText(" khái niệm thành thạo")}
                         </Text>
                         <Text style={local.courseProgressValue}>{share}%</Text>
                       </View>
                       <ScoreTrack
                         value={share}
-                        label={`Tỷ lệ khái niệm thành thạo của ${course.title}: ${share} phần trăm`}
+                        label={uiText("Tỷ lệ khái niệm thành thạo của {0}: {1} phần trăm", [
+                          course.title,
+                          share,
+                        ])}
                       />
                       <View style={local.conceptList}>
                         {mastery.map((item) => {
@@ -194,21 +206,25 @@ export default function MasteryScreen() {
                                 </Text>
                               </View>
                               <View style={local.scoreLine}>
-                                <Text style={local.scoreLabel}>Mức độ làm chủ</Text>
+                                <Text style={local.scoreLabel}>{uiText("Mức độ làm chủ")}</Text>
                                 <Text style={local.score}>{score}%</Text>
                               </View>
                               <ScoreTrack
                                 value={item.masteryScore}
-                                label={`Mức độ làm chủ ${item.conceptId}: ${score} phần trăm`}
+                                label={uiText("Mức độ làm chủ {0}: {1} phần trăm", [item.conceptId, score])}
                               />
                               <Text style={local.description}>{item.explanation.whyState}</Text>
                               <Text style={local.evidence}>
-                                Bằng chứng {item.evidenceCount} · Độ tin cậy{" "}
+                                {uiText("Bằng chứng ")}
+                                {item.evidenceCount} {uiText(" · Độ tin cậy")}{" "}
                                 {Math.round(item.confidenceScore)}%
                               </Text>
                               <View style={local.nextBox}>
                                 <Icon name="sparkles" size={15} color={tokens.color.brandDark} />
-                                <Text style={local.next}>Tiếp theo: {item.explanation.nextSteps}</Text>
+                                <Text style={local.next}>
+                                  {uiText("Tiếp theo: ")}
+                                  {item.explanation.nextSteps}
+                                </Text>
                               </View>
                             </View>
                           );
@@ -217,9 +233,9 @@ export default function MasteryScreen() {
                     </>
                   ) : (
                     <View style={local.noEvidence}>
-                      <Text style={local.emptyHeading}>Chưa có bằng chứng cho khóa học này</Text>
+                      <Text style={local.emptyHeading}>{uiText("Chưa có bằng chứng cho khóa học này")}</Text>
                       <Text style={styles.text}>
-                        Hoàn thành bài học hoặc bài đánh giá để hệ thống cập nhật năng lực.
+                        {uiText("Hoàn thành bài học hoặc bài đánh giá để hệ thống cập nhật năng lực.")}
                       </Text>
                     </View>
                   )}

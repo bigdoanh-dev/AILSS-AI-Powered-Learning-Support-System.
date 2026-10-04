@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../src/use-language";
+import { useUiText } from "../../../src/use-language";
 import { useState, useCallback, useSyncExternalStore } from "react";
 import {
   Text,
@@ -38,6 +40,8 @@ function generateSlug(text: string): string {
 }
 
 export default function CreateCourse() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
@@ -71,8 +75,8 @@ export default function CreateCourse() {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
         Alert.alert(
-          "Cần cấp quyền truy cập",
-          "Vui lòng cho phép ứng dụng truy cập thư viện ảnh để tải lên ảnh bìa khóa học.",
+          uiText("Cần cấp quyền truy cập"),
+          uiText("Vui lòng cho phép ứng dụng truy cập thư viện ảnh để tải lên ảnh bìa khóa học."),
         );
         return;
       }
@@ -94,7 +98,7 @@ export default function CreateCourse() {
         setCoverUri(dataUrl);
       }
     } catch {
-      Alert.alert("Lỗi", "Không thể chọn ảnh từ thiết bị. Vui lòng thử lại.");
+      Alert.alert(uiText("Lỗi"), uiText("Không thể chọn ảnh từ thiết bị. Vui lòng thử lại."));
     } finally {
       setCoverLoading(false);
     }
@@ -155,8 +159,8 @@ export default function CreateCourse() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <Text style={styles.error}>Bạn không có quyền truy cập trang này.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Bạn không có quyền truy cập trang này.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -165,8 +169,8 @@ export default function CreateCourse() {
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
       <Page>
         <ScreenHeader
-          title="Tạo khóa học mới"
-          subtitle="Thiết lập nội dung & hình ảnh quảng bá khóa học"
+          title={uiText("Tạo khóa học mới")}
+          subtitle={uiText("Thiết lập nội dung & hình ảnh quảng bá khóa học")}
           onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching/courses"))}
         />
 
@@ -181,18 +185,24 @@ export default function CreateCourse() {
                 <Icon name="checkCircle" size={28} color="#059669" />
               </View>
               <View style={{ flex: 1, gap: 4 }}>
-                <Text style={cs.successTitle}>{message}</Text>
+                <Text style={cs.successTitle}>{uiText(message)}</Text>
                 <Text style={cs.successSub}>
-                  Khóa học <Text style={{ fontWeight: "700" }}>"{title}"</Text> đã được khởi tạo trong hệ
-                  thống.
+                  {uiText("Khóa học ")}
+                  <Text style={{ fontWeight: "700" }}>"{title}"</Text>{" "}
+                  {uiText(" đã được khởi tạo trong hệ thống.")}
                 </Text>
                 <View style={cs.successActions}>
                   <Button
-                    label="Danh sách khóa học"
+                    label={uiText("Danh sách khóa học")}
                     size="sm"
                     onPress={() => router.replace("/teaching/courses" as Href)}
                   />
-                  <Button label="+ Tạo thêm khóa học" size="sm" variant="outline" onPress={handleResetForm} />
+                  <Button
+                    label={uiText("+ Tạo thêm khóa học")}
+                    size="sm"
+                    variant="outline"
+                    onPress={handleResetForm}
+                  />
                 </View>
               </View>
             </View>
@@ -202,7 +212,7 @@ export default function CreateCourse() {
           {error ? (
             <View style={cs.errorBanner} accessibilityRole="alert">
               <Icon name="alert" size={20} color="#DC2626" />
-              <Text style={cs.errorText}>{error}</Text>
+              <Text style={cs.errorText}>{uiText(error)}</Text>
             </View>
           ) : null}
 
@@ -211,10 +221,12 @@ export default function CreateCourse() {
             <View style={cs.previewHeaderRow}>
               <View style={cs.previewLiveTag}>
                 <View style={cs.liveDot} />
-                <Text style={cs.previewLiveText}>XEM TRƯỚC HIỂN THỊ (LIVE PREVIEW)</Text>
+                <Text style={cs.previewLiveText}>{uiText("XEM TRƯỚC HIỂN THỊ (LIVE PREVIEW)")}</Text>
               </View>
               <View style={cs.previewRoleBadge}>
-                <Text style={cs.previewRoleText}>{priceType === "FREE" ? "🎁 MIỄN PHÍ" : "💳 CÓ PHÍ"}</Text>
+                <Text style={cs.previewRoleText}>
+                  {priceType === "FREE" ? uiText("🎁 MIỄN PHÍ") : uiText("💳 CÓ PHÍ")}
+                </Text>
               </View>
             </View>
 
@@ -225,13 +237,13 @@ export default function CreateCourse() {
                   <Image source={{ uri: coverUri }} style={cs.previewImage} resizeMode="cover" />
                   <View style={cs.previewImageBadge}>
                     <Icon name="check" size={12} color="#FFFFFF" />
-                    <Text style={cs.previewImageBadgeText}>Ảnh bìa 16:9</Text>
+                    <Text style={cs.previewImageBadgeText}>{uiText("Ảnh bìa 16:9")}</Text>
                   </View>
                 </View>
               ) : (
                 <View style={cs.previewImagePlaceholder}>
                   <Icon name="image" size={32} color={tokens.color.muted} />
-                  <Text style={cs.previewPlaceholderText}>Chưa có ảnh bìa khóa học</Text>
+                  <Text style={cs.previewPlaceholderText}>{uiText("Chưa có ảnh bìa khóa học")}</Text>
                 </View>
               )}
 
@@ -245,8 +257,8 @@ export default function CreateCourse() {
                   </View>
                   <Text style={cs.previewPriceHighlight}>
                     {priceType === "FREE"
-                      ? "Miễn phí"
-                      : `${Number(price || 0).toLocaleString("vi-VN")} ${currency}`}
+                      ? uiText("Miễn phí")
+                      : `${Number(price || 0).toLocaleString(uiLocale)} ${currency}`}
                   </Text>
                 </View>
 
@@ -271,7 +283,7 @@ export default function CreateCourse() {
                   </Text>
                   <View style={cs.previewVerifiedBadge}>
                     <Icon name="shield" size={10} color="#0A7E85" />
-                    <Text style={cs.previewVerifiedText}>Đã xác minh</Text>
+                    <Text style={cs.previewVerifiedText}>{uiText("Đã xác minh")}</Text>
                   </View>
                 </View>
               </View>
@@ -285,9 +297,9 @@ export default function CreateCourse() {
                 <Icon name="image" size={20} color={tokens.color.brand} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={cs.sectionTitle}>Hình ảnh đại diện & Ảnh bìa</Text>
+                <Text style={cs.sectionTitle}>{uiText("Hình ảnh đại diện & Ảnh bìa")}</Text>
                 <Text style={cs.sectionSubtitle}>
-                  Khuyên dùng tỉ lệ chuẩn 16:9 (1280×720px), hỗ trợ JPG, PNG hoặc WebP
+                  {uiText("Khuyên dùng tỉ lệ chuẩn 16:9 (1280×720px), hỗ trợ JPG, PNG hoặc WebP")}
                 </Text>
               </View>
             </View>
@@ -298,19 +310,19 @@ export default function CreateCourse() {
                   <Image source={{ uri: coverUri }} style={cs.coverImagePreview} resizeMode="cover" />
                   <View style={cs.coverBadgeOverlay}>
                     <Icon name="checkCircle" size={14} color="#FFFFFF" />
-                    <Text style={cs.coverBadgeText}>Ảnh đã chọn · lưu khi tạo khóa</Text>
+                    <Text style={cs.coverBadgeText}>{uiText("Ảnh đã chọn · lưu khi tạo khóa")}</Text>
                   </View>
                 </View>
                 <View style={cs.coverActionRow}>
                   <ScalePressable style={cs.coverActionBtn} onPress={handlePickCover} disabled={coverLoading}>
                     <Icon name="camera" size={14} color={tokens.color.ink} />
                     <Text style={cs.coverActionBtnText}>
-                      {coverLoading ? "Đang chọn..." : "Đổi ảnh khác"}
+                      {coverLoading ? uiText("Đang chọn...") : uiText("Đổi ảnh khác")}
                     </Text>
                   </ScalePressable>
                   <ScalePressable style={[cs.coverActionBtn, cs.coverDeleteBtn]} onPress={handleRemoveCover}>
                     <Icon name="trash" size={14} color="#DC2626" />
-                    <Text style={[cs.coverActionBtnText, { color: "#DC2626" }]}>Gỡ bỏ ảnh</Text>
+                    <Text style={[cs.coverActionBtnText, { color: "#DC2626" }]}>{uiText("Gỡ bỏ ảnh")}</Text>
                   </ScalePressable>
                 </View>
               </View>
@@ -320,25 +332,27 @@ export default function CreateCourse() {
                 onPress={handlePickCover}
                 disabled={coverLoading}
                 accessibilityRole="button"
-                accessibilityLabel="Tải lên ảnh bìa khóa học"
+                accessibilityLabel={uiText("Tải lên ảnh bìa khóa học")}
               >
                 {coverLoading ? (
                   <View style={cs.dropzoneContent}>
                     <ActivityIndicator color={tokens.color.brand} size="large" />
-                    <Text style={cs.dropzoneTitle}>Đang tải ảnh lên...</Text>
+                    <Text style={cs.dropzoneTitle}>{uiText("Đang tải ảnh lên...")}</Text>
                   </View>
                 ) : (
                   <View style={cs.dropzoneContent}>
                     <View style={cs.uploadIconCircle}>
                       <Icon name="camera" size={26} color={tokens.color.brand} />
                     </View>
-                    <Text style={cs.dropzoneTitle}>Nhấn để tải lên ảnh bìa khóa học</Text>
+                    <Text style={cs.dropzoneTitle}>{uiText("Nhấn để tải lên ảnh bìa khóa học")}</Text>
                     <Text style={cs.dropzoneDesc}>
-                      Ảnh đại diện bắt mắt giúp tăng 45% tỷ lệ học viên quan tâm và tham gia học tập.
+                      {uiText(
+                        "Ảnh đại diện bắt mắt giúp tăng 45% tỷ lệ học viên quan tâm và tham gia học tập.",
+                      )}
                     </Text>
                     <View style={cs.dropzoneButton}>
                       <Icon name="image" size={14} color="#FFFFFF" />
-                      <Text style={cs.dropzoneButtonText}>Chọn từ thư viện ảnh</Text>
+                      <Text style={cs.dropzoneButtonText}>{uiText("Chọn từ thư viện ảnh")}</Text>
                     </View>
                   </View>
                 )}
@@ -353,32 +367,36 @@ export default function CreateCourse() {
                 <Icon name="pencil" size={20} color={tokens.color.brand} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={cs.sectionTitle}>Thông tin cơ bản</Text>
-                <Text style={cs.sectionSubtitle}>Tên khóa học và nội dung giới thiệu bài giảng</Text>
+                <Text style={cs.sectionTitle}>{uiText("Thông tin cơ bản")}</Text>
+                <Text style={cs.sectionSubtitle}>
+                  {uiText("Tên khóa học và nội dung giới thiệu bài giảng")}
+                </Text>
               </View>
             </View>
 
             <View style={cs.fieldGroup}>
               <View style={cs.fieldLabelRow}>
                 <Text style={cs.fieldLabel}>
-                  Tên khóa học <Text style={{ color: "#DC2626" }}>*</Text>
+                  {uiText("Tên khóa học ")}
+                  <Text style={{ color: "#DC2626" }}>*</Text>
                 </Text>
                 <Text style={cs.charCounter}>{title.length}/160</Text>
               </View>
               <TextInput
-                accessibilityLabel="Tên khóa học"
+                accessibilityLabel={uiText("Tên khóa học")}
                 style={[styles.input, cs.textInput]}
                 value={title}
                 onChangeText={setTitle}
                 maxLength={160}
-                placeholder="VD: Lập trình Fullstack Web & Trợ lý AI thực chiến..."
+                placeholder={uiText("VD: Lập trình Fullstack Web & Trợ lý AI thực chiến...")}
                 placeholderTextColor={tokens.color.muted}
               />
               {title.trim() ? (
                 <View style={cs.slugRow}>
                   <Icon name="compass" size={12} color={tokens.color.muted} />
                   <Text style={cs.slugText} numberOfLines={1}>
-                    Đường dẫn: /courses/{generateSlug(title)}
+                    {uiText("Đường dẫn: /courses/")}
+                    {generateSlug(title)}
                   </Text>
                 </View>
               ) : null}
@@ -386,17 +404,19 @@ export default function CreateCourse() {
 
             <View style={cs.fieldGroup}>
               <View style={cs.fieldLabelRow}>
-                <Text style={cs.fieldLabel}>Mô tả khóa học</Text>
+                <Text style={cs.fieldLabel}>{uiText("Mô tả khóa học")}</Text>
                 <Text style={cs.charCounter}>{description.length}/2000</Text>
               </View>
               <TextInput
-                accessibilityLabel="Mô tả"
+                accessibilityLabel={uiText("Mô tả")}
                 style={[styles.input, cs.textInput, { minHeight: 90, textAlignVertical: "top" }]}
                 value={description}
                 onChangeText={setDescription}
                 multiline
                 maxLength={2000}
-                placeholder="Giới thiệu mục tiêu, đối tượng người học, kiến thức cốt lõi sẽ đạt được..."
+                placeholder={uiText(
+                  "Giới thiệu mục tiêu, đối tượng người học, kiến thức cốt lõi sẽ đạt được...",
+                )}
                 placeholderTextColor={tokens.color.muted}
               />
             </View>
@@ -409,20 +429,24 @@ export default function CreateCourse() {
                 <Icon name="grid" size={20} color={tokens.color.brand} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={cs.sectionTitle}>Danh mục đào tạo</Text>
-                <Text style={cs.sectionSubtitle}>Tự nhập chuyên ngành hoặc lĩnh vực của khóa học</Text>
+                <Text style={cs.sectionTitle}>{uiText("Danh mục đào tạo")}</Text>
+                <Text style={cs.sectionSubtitle}>
+                  {uiText("Tự nhập chuyên ngành hoặc lĩnh vực của khóa học")}
+                </Text>
               </View>
             </View>
 
             <TextInput
-              accessibilityLabel="Danh mục đào tạo"
+              accessibilityLabel={uiText("Danh mục đào tạo")}
               style={[styles.input, cs.textInput]}
               value={categoryName}
               onChangeText={setCategoryName}
               maxLength={80}
-              placeholder="Ví dụ: Thiết kế đồ họa, Kế toán, Lập trình Python"
+              placeholder={uiText("Ví dụ: Thiết kế đồ họa, Kế toán, Lập trình Python")}
             />
-            <Text style={styles.small}>Nhập từ 2 đến 80 ký tự. Danh mục sẽ dùng để lọc và tìm khóa học.</Text>
+            <Text style={styles.small}>
+              {uiText("Nhập từ 2 đến 80 ký tự. Danh mục sẽ dùng để lọc và tìm khóa học.")}
+            </Text>
           </View>
 
           {/* Section 4: Thiết lập học phí & Doanh thu (Pricing) */}
@@ -432,8 +456,10 @@ export default function CreateCourse() {
                 <Icon name="card" size={20} color={tokens.color.brand} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={cs.sectionTitle}>Học phí & Doanh thu</Text>
-                <Text style={cs.sectionSubtitle}>Lựa chọn khóa học miễn phí cộng đồng hoặc có thu phí</Text>
+                <Text style={cs.sectionTitle}>{uiText("Học phí & Doanh thu")}</Text>
+                <Text style={cs.sectionSubtitle}>
+                  {uiText("Lựa chọn khóa học miễn phí cộng đồng hoặc có thu phí")}
+                </Text>
               </View>
             </View>
 
@@ -452,7 +478,7 @@ export default function CreateCourse() {
                   color={priceType === "FREE" ? tokens.color.brand : tokens.color.muted}
                 />
                 <Text style={[cs.segmentBtnText, priceType === "FREE" && cs.segmentBtnTextActive]}>
-                  Miễn phí (FREE)
+                  {uiText("Miễn phí (FREE)")}
                 </Text>
               </ScalePressable>
 
@@ -469,14 +495,14 @@ export default function CreateCourse() {
                   color={priceType === "PAID" ? tokens.color.brand : tokens.color.muted}
                 />
                 <Text style={[cs.segmentBtnText, priceType === "PAID" && cs.segmentBtnTextActive]}>
-                  Có phí (PAID)
+                  {uiText("Có phí (PAID)")}
                 </Text>
               </ScalePressable>
             </View>
 
             {/* Accessible TextInput for Price Type */}
             <TextInput
-              accessibilityLabel="Loại giá"
+              accessibilityLabel={uiText("Loại giá")}
               style={{ height: 0, opacity: 0 }}
               value={priceType}
               onChangeText={(val) => setPriceType(val.toUpperCase() === "PAID" ? "PAID" : "FREE")}
@@ -485,7 +511,7 @@ export default function CreateCourse() {
 
             {priceType === "PAID" ? (
               <View style={{ gap: 12, marginTop: 4 }}>
-                <Text style={cs.fieldLabel}>Mức giá đề xuất nhanh:</Text>
+                <Text style={cs.fieldLabel}>{uiText("Mức giá đề xuất nhanh:")}</Text>
                 <View style={cs.pricePresetsRow}>
                   {PRICE_PRESETS.map((p) => {
                     const selected = price === p.value;
@@ -504,10 +530,10 @@ export default function CreateCourse() {
                 </View>
 
                 <View style={cs.fieldGroup}>
-                  <Text style={cs.fieldLabel}>Giá bán thực tế (VND)</Text>
+                  <Text style={cs.fieldLabel}>{uiText("Giá bán thực tế (VND)")}</Text>
                   <View style={cs.priceInputWrapper}>
                     <TextInput
-                      accessibilityLabel="Giá"
+                      accessibilityLabel={uiText("Giá")}
                       style={[styles.input, cs.textInput, cs.priceInput]}
                       value={price}
                       onChangeText={(t) => setPrice(t.replace(/[^0-9]/g, ""))}
@@ -521,7 +547,7 @@ export default function CreateCourse() {
                 </View>
 
                 <View style={cs.currencySelectorRow}>
-                  <Text style={cs.fieldLabel}>Đơn vị tiền tệ:</Text>
+                  <Text style={cs.fieldLabel}>{uiText("Đơn vị tiền tệ:")}</Text>
                   <View style={{ flexDirection: "row", gap: 8 }}>
                     {["VND", "USD"].map((cur) => (
                       <ScalePressable
@@ -537,7 +563,7 @@ export default function CreateCourse() {
 
                 {/* Accessible TextInput for Currency */}
                 <TextInput
-                  accessibilityLabel="Đơn vị tiền tệ"
+                  accessibilityLabel={uiText("Đơn vị tiền tệ")}
                   style={{ height: 0, opacity: 0 }}
                   value={currency}
                   onChangeText={setCurrency}
@@ -555,14 +581,14 @@ export default function CreateCourse() {
           {/* Action Button */}
           <View style={cs.bottomActionWrapper}>
             <Button
-              label={busy ? "Đang tạo khóa học..." : "+ Hoàn tất & Tạo khóa học"}
+              label={busy ? uiText("Đang tạo khóa học...") : uiText("+ Hoàn tất & Tạo khóa học")}
               disabled={busy || !title.trim()}
               onPress={() => {
                 void handleCreate();
               }}
             />
             <Button
-              label="Quay lại danh sách"
+              label={uiText("Quay lại danh sách")}
               variant="outline"
               onPress={() => (router.canGoBack() ? router.back() : router.replace("/teaching/courses"))}
             />

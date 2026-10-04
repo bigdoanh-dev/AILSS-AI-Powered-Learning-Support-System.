@@ -1,3 +1,4 @@
+import { useUiText } from "../../../../src/use-language";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   ActivityIndicator,
@@ -32,6 +33,7 @@ import { runtime } from "../../../../src/runtime";
 import { Button, Page, Badge, ProgressBar, Icon, styles, tokens } from "../../../../src/ui";
 
 export default function AttemptScreen() {
+  const uiText = useUiText();
   const { quizId, attemptId, confirm } = useLocalSearchParams<{
     quizId: string;
     attemptId: string;
@@ -243,7 +245,10 @@ export default function AttemptScreen() {
         }
         if (outcome === "EXPIRED") {
           submissionGate.current.finish("COMPLETE");
-          Alert.alert("Hết giờ làm bài", "Bài làm đã hết thời gian quy định và hệ thống đã ghi nhận.");
+          Alert.alert(
+            uiText("Hết giờ làm bài"),
+            uiText("Bài làm đã hết thời gian quy định và hệ thống đã ghi nhận."),
+          );
           setAttemptData(fresh);
           setIsSubmitting(false);
           return;
@@ -253,8 +258,10 @@ export default function AttemptScreen() {
       }
 
       Alert.alert(
-        "Nộp bài chưa hoàn tất",
-        "Không xác minh được kết quả với máy chủ. Bản trả lời đã được khóa để lần thử lại dùng cùng mã chống trùng; vui lòng thử nộp lại khi có mạng.",
+        uiText("Nộp bài chưa hoàn tất"),
+        uiText(
+          "Không xác minh được kết quả với máy chủ. Bản trả lời đã được khóa để lần thử lại dùng cùng mã chống trùng; vui lòng thử nộp lại khi có mạng.",
+        ),
       );
       submissionGate.current.finish("RETRYABLE");
       setIsSubmitting(false);
@@ -264,9 +271,9 @@ export default function AttemptScreen() {
   if (snapshot.state !== "AUTHENTICATED") {
     return (
       <Page testID="student-assessment-confirm">
-        <Text style={styles.title}>Làm bài kiểm tra</Text>
-        <Text style={styles.text}>Vui lòng đăng nhập để tiếp tục.</Text>
-        <Button label="Đăng nhập" onPress={() => router.push("/login" as Href)} />
+        <Text style={styles.title}>{uiText("Làm bài kiểm tra")}</Text>
+        <Text style={styles.text}>{uiText("Vui lòng đăng nhập để tiếp tục.")}</Text>
+        <Button label={uiText("Đăng nhập")} onPress={() => router.push("/login" as Href)} />
       </Page>
     );
   }
@@ -276,7 +283,7 @@ export default function AttemptScreen() {
       <Page>
         <View style={screenStyles.center}>
           <ActivityIndicator size="large" color={tokens.color.brand} />
-          <Text style={screenStyles.loadingText}>Đang tải câu hỏi bài thi...</Text>
+          <Text style={screenStyles.loadingText}>{uiText("Đang tải câu hỏi bài thi...")}</Text>
         </View>
       </Page>
     );
@@ -285,11 +292,11 @@ export default function AttemptScreen() {
   if (error && (!attemptData || !quizData)) {
     return (
       <Page>
-        <Text style={styles.title}>Thông báo</Text>
+        <Text style={styles.title}>{uiText("Thông báo")}</Text>
         <View style={screenStyles.errorBox}>
-          <Text style={styles.error}>{error}</Text>
+          <Text style={styles.error}>{uiText(error)}</Text>
         </View>
-        <Button label="Quay lại danh sách" onPress={() => router.push("/assessments" as Href)} />
+        <Button label={uiText("Quay lại danh sách")} onPress={() => router.push("/assessments" as Href)} />
       </Page>
     );
   }
@@ -304,9 +311,10 @@ export default function AttemptScreen() {
       <Page>
         <View style={screenStyles.topBar}>
           <View>
-            <Text style={screenStyles.counterText}>Xác nhận nộp bài thi</Text>
+            <Text style={screenStyles.counterText}>{uiText("Xác nhận nộp bài thi")}</Text>
             <Text style={screenStyles.answeredSummary}>
-              Tiến độ: {answered}/{total} câu
+              {uiText("Tiến độ: ")}
+              {answered}/{total} {uiText(" câu")}
             </Text>
           </View>
           {attemptData.deadlineAt && (
@@ -327,34 +335,43 @@ export default function AttemptScreen() {
           <View style={screenStyles.confirmIconCircle}>
             <Icon name="alert" size={32} color={tokens.color.brand} />
           </View>
-          <Text style={screenStyles.confirmTitle}>Bạn đã sẵn sàng nộp bài?</Text>
+          <Text style={screenStyles.confirmTitle}>{uiText("Bạn đã sẵn sàng nộp bài?")}</Text>
           <Text style={screenStyles.confirmText}>
-            Bạn đã hoàn thành {answered}/{total} câu hỏi trong bài thi. Sau khi nộp bài, bạn không thể chỉnh
-            sửa đáp án và hệ thống sẽ tự động chấm điểm khách quan.
+            {uiText("Bạn đã hoàn thành ")}
+            {answered}/{total}{" "}
+            {uiText(
+              " câu hỏi trong bài thi. Sau khi nộp bài, bạn không thể chỉnh sửa đáp án và hệ thống sẽ tự động chấm điểm khách quan.",
+            )}
           </Text>
           {answered < total && (
             <View style={screenStyles.unansweredNotice}>
               <Icon name="alert" size={16} color={tokens.color.danger} />
               <Text style={screenStyles.unansweredNoticeText}>
-                Lưu ý: Còn {total - answered} câu hỏi chưa có câu trả lời!
+                {uiText("Lưu ý: Còn ")}
+                {total - answered} {uiText(" câu hỏi chưa có câu trả lời!")}
               </Text>
             </View>
           )}
           {submissionOperation.current && (
             <Text accessibilityRole="alert" style={[styles.text, { color: tokens.color.warning }]}>
-              Yêu cầu nộp trước đó chưa được xác minh. Lần thử lại sẽ gửi nguyên câu trả lời với cùng mã chống
-              trùng.
+              {uiText(
+                "Yêu cầu nộp trước đó chưa được xác minh. Lần thử lại sẽ gửi nguyên câu trả lời với cùng mã chống trùng.",
+              )}
             </Text>
           )}
           <View style={screenStyles.confirmActions}>
             <Button
               testID="student-assessment-confirm-submit"
-              label={isSubmitting ? "Đang nộp bài..." : "Xác nhận nộp bài"}
+              label={isSubmitting ? uiText("Đang nộp bài...") : uiText("Xác nhận nộp bài")}
               onPress={() => void handleSubmitAttempt()}
               disabled={isSubmitting}
               size="lg"
             />
-            <Button label="Quay lại làm tiếp" variant="outline" onPress={() => setShowConfirmModal(false)} />
+            <Button
+              label={uiText("Quay lại làm tiếp")}
+              variant="outline"
+              onPress={() => setShowConfirmModal(false)}
+            />
           </View>
         </View>
       </Page>
@@ -367,10 +384,12 @@ export default function AttemptScreen() {
       <View style={screenStyles.topBar}>
         <View style={{ flex: 1 }}>
           <Text style={screenStyles.counterText}>
-            Câu {currentIndex + 1} / {questions.length}
+            {uiText("Câu ")}
+            {currentIndex + 1} / {questions.length}
           </Text>
           <Text style={screenStyles.answeredSummary}>
-            Đã trả lời: {answered}/{total} câu
+            {uiText("Đã trả lời: ")}
+            {answered}/{total} {uiText(" câu")}
           </Text>
         </View>
 
@@ -399,17 +418,19 @@ export default function AttemptScreen() {
       {/* Expired banner */}
       {isExpired && (
         <View style={screenStyles.expiredBanner}>
-          <Text style={screenStyles.expiredTitle}>Hết thời gian làm bài</Text>
+          <Text style={screenStyles.expiredTitle}>{uiText("Hết thời gian làm bài")}</Text>
           <Text style={screenStyles.expiredText}>
-            Thời gian làm bài thi đã kết thúc. Bài thi đã quá hạn và không thể nộp thêm câu trả lời.
+            {uiText(
+              "Thời gian làm bài thi đã kết thúc. Bài thi đã quá hạn và không thể nộp thêm câu trả lời.",
+            )}
           </Text>
         </View>
       )}
       {submissionOperation.current && (
         <View style={screenStyles.expiredBanner} accessibilityRole="alert">
-          <Text style={screenStyles.expiredTitle}>Đáp án đã khóa để xác minh lần nộp</Text>
+          <Text style={screenStyles.expiredTitle}>{uiText("Đáp án đã khóa để xác minh lần nộp")}</Text>
           <Text style={screenStyles.expiredText}>
-            Nếu mạng gián đoạn, thử nộp lại sẽ dùng cùng nội dung và mã chống trùng.
+            {uiText("Nếu mạng gián đoạn, thử nộp lại sẽ dùng cùng nội dung và mã chống trùng.")}
           </Text>
         </View>
       )}
@@ -418,8 +439,11 @@ export default function AttemptScreen() {
         {/* Question card */}
         <View style={screenStyles.questionCard}>
           <View style={screenStyles.questionHeader}>
-            <Text style={screenStyles.questionNumber}>CÂU HỎI {currentIndex + 1}</Text>
-            <Badge label={`${currentQuestion.points} điểm`} variant="primary" />
+            <Text style={screenStyles.questionNumber}>
+              {uiText("CÂU HỎI ")}
+              {currentIndex + 1}
+            </Text>
+            <Badge label={uiText("{0} điểm", [currentQuestion.points])} variant="primary" />
           </View>
 
           <Text style={screenStyles.promptText}>{currentQuestion.prompt}</Text>
@@ -488,7 +512,7 @@ export default function AttemptScreen() {
                 accessibilityState={{
                   selected: currentAnswer && "value" in currentAnswer && currentAnswer.value === true,
                 }}
-                accessibilityLabel="Đúng"
+                accessibilityLabel={uiText("Đúng")}
                 disabled={isExpired || isSubmitting || !!submissionOperation.current}
                 style={[
                   screenStyles.tfButton,
@@ -508,7 +532,7 @@ export default function AttemptScreen() {
                       screenStyles.tfButtonTextSelected,
                   ]}
                 >
-                  Đúng
+                  {uiText("Đúng")}
                 </Text>
               </Pressable>
 
@@ -548,10 +572,10 @@ export default function AttemptScreen() {
           {currentQuestion.questionType === "SHORT_ANSWER" && (
             <TextInput
               accessibilityRole="none"
-              accessibilityLabel="Câu trả lời ngắn"
+              accessibilityLabel={uiText("Câu trả lời ngắn")}
               editable={!isExpired && !isSubmitting && !submissionOperation.current}
               style={screenStyles.textInput}
-              placeholder="Nhập câu trả lời của bạn..."
+              placeholder={uiText("Nhập câu trả lời của bạn...")}
               placeholderTextColor={tokens.color.muted}
               value={currentAnswer && "text" in currentAnswer ? currentAnswer.text : ""}
               onChangeText={handleShortAnswerChange}
@@ -561,7 +585,7 @@ export default function AttemptScreen() {
 
         {/* Question Index Grid */}
         <View style={screenStyles.indexGridCard}>
-          <Text style={screenStyles.indexGridHeading}>Danh sách câu hỏi</Text>
+          <Text style={screenStyles.indexGridHeading}>{uiText("Danh sách câu hỏi")}</Text>
           <View style={screenStyles.indexGrid}>
             {questions.map((q, idx) => {
               const isAns = !!draftAnswers[q.questionId];
@@ -570,7 +594,7 @@ export default function AttemptScreen() {
                 <Pressable
                   key={q.questionId}
                   accessibilityRole="button"
-                  accessibilityLabel={`Câu ${idx + 1}`}
+                  accessibilityLabel={uiText("Câu {0}", [idx + 1])}
                   style={[
                     screenStyles.indexDot,
                     isAns && screenStyles.indexDotAnswered,
@@ -598,7 +622,7 @@ export default function AttemptScreen() {
       <View style={screenStyles.navButtonsRow}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Câu hỏi trước"
+          accessibilityLabel={uiText("Câu hỏi trước")}
           disabled={currentIndex === 0}
           style={[screenStyles.navButton, currentIndex === 0 && screenStyles.navButtonDisabled]}
           onPress={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
@@ -606,13 +630,13 @@ export default function AttemptScreen() {
           <Text
             style={[screenStyles.navButtonText, currentIndex === 0 && screenStyles.navButtonTextDisabled]}
           >
-            ← Câu trước
+            {uiText("← Câu trước")}
           </Text>
         </Pressable>
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Câu hỏi tiếp"
+          accessibilityLabel={uiText("Câu hỏi tiếp")}
           disabled={currentIndex === questions.length - 1}
           style={[
             screenStyles.navButton,
@@ -626,7 +650,7 @@ export default function AttemptScreen() {
               currentIndex === questions.length - 1 && screenStyles.navButtonTextDisabled,
             ]}
           >
-            Câu tiếp →
+            {uiText("Câu tiếp →")}
           </Text>
         </Pressable>
       </View>
@@ -636,10 +660,10 @@ export default function AttemptScreen() {
           testID="student-assessment-submit"
           label={
             isExpired
-              ? "Thời gian đã hết"
+              ? uiText("Thời gian đã hết")
               : submissionOperation.current
-                ? "Thử xác minh nộp bài"
-                : "Nộp bài thi"
+                ? uiText("Thử xác minh nộp bài")
+                : uiText("Nộp bài thi")
           }
           onPress={() => {
             if (!isExpired) setShowConfirmModal(true);

@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { Text, Pressable, StyleSheet, View, TextInput } from "react-native";
 import { router, type Href } from "expo-router";
@@ -18,6 +19,7 @@ import {
 import { ScalePressable, FadeSlideIn } from "../../../src/motion";
 
 export default function OwnedCoursesList() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [courses, setCourses] = useState<{ courseId: string; title: string }[] | null>(null);
@@ -55,8 +57,8 @@ export default function OwnedCoursesList() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <Text style={styles.error}>Chức năng này chỉ dành cho Giảng viên.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Chức năng này chỉ dành cho Giảng viên.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -64,7 +66,7 @@ export default function OwnedCoursesList() {
   const renderCourse = ({ item }: { item: { courseId: string; title: string } }) => (
     <ScalePressable
       accessibilityRole="button"
-      accessibilityLabel={`Khóa học ${item.title}`}
+      accessibilityLabel={uiText("Khóa học {0}", [item.title])}
       style={cs.card}
       onPress={() => router.push(`/teaching/courses/${item.courseId}` as Href)}
     >
@@ -77,9 +79,9 @@ export default function OwnedCoursesList() {
         </Text>
         <View style={cs.metaRow}>
           <View style={cs.badge}>
-            <Text style={cs.badgeText}>Khóa giảng dạy</Text>
+            <Text style={cs.badgeText}>{uiText("Khóa giảng dạy")}</Text>
           </View>
-          <Text style={cs.actionText}>Quản trị bài giảng ›</Text>
+          <Text style={cs.actionText}>{uiText("Quản trị bài giảng ›")}</Text>
         </View>
       </View>
       <Icon name="chevronRight" size={18} color={tokens.color.muted} />
@@ -90,12 +92,12 @@ export default function OwnedCoursesList() {
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
       <Page>
         <ScreenHeader
-          title="Khóa giảng dạy"
-          subtitle={`${courses?.length ?? 0} khóa học đang quản lý`}
+          title={uiText("Khóa giảng dạy")}
+          subtitle={uiText("{0} khóa học đang quản lý", [courses?.length ?? 0])}
           onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching"))}
           rightElement={
             <Button
-              label="+ Tạo mới"
+              label={uiText("+ Tạo mới")}
               size="sm"
               icon={<Icon name="add" size={14} color="#FFFFFF" />}
               onPress={() => router.push("/teaching/courses/create" as Href)}
@@ -113,7 +115,7 @@ export default function OwnedCoursesList() {
                 </View>
                 <View>
                   <Text style={cs.statValue}>{courses.length}</Text>
-                  <Text style={cs.statLabel}>Khóa học</Text>
+                  <Text style={cs.statLabel}>{uiText("Khóa học")}</Text>
                 </View>
               </View>
 
@@ -124,8 +126,8 @@ export default function OwnedCoursesList() {
                   <Icon name="academic" size={16} color="#0D9488" />
                 </View>
                 <View>
-                  <Text style={cs.statValue}>Giảng dạy</Text>
-                  <Text style={cs.statLabel}>Chế độ mở</Text>
+                  <Text style={cs.statValue}>{uiText("Giảng dạy")}</Text>
+                  <Text style={cs.statLabel}>{uiText("Chế độ mở")}</Text>
                 </View>
               </View>
 
@@ -136,8 +138,8 @@ export default function OwnedCoursesList() {
                   <Icon name="sparkles" size={16} color="#D97706" />
                 </View>
                 <View>
-                  <Text style={cs.statValue}>Trợ lý AI</Text>
-                  <Text style={cs.statLabel}>Đồng hành</Text>
+                  <Text style={cs.statValue}>{uiText("Trợ lý AI")}</Text>
+                  <Text style={cs.statLabel}>{uiText("Đồng hành")}</Text>
                 </View>
               </View>
             </View>
@@ -147,7 +149,7 @@ export default function OwnedCoursesList() {
               <Icon name="search" size={16} color={tokens.color.muted} />
               <TextInput
                 style={cs.searchInput}
-                placeholder="Tìm kiếm khóa học theo tên..."
+                placeholder={uiText("Tìm kiếm khóa học theo tên...")}
                 placeholderTextColor={tokens.color.muted}
                 value={search}
                 onChangeText={setSearch}
@@ -164,7 +166,7 @@ export default function OwnedCoursesList() {
         {!error && courses === null && (
           <View style={cs.loadingBox}>
             <Text accessibilityRole="alert" style={styles.text}>
-              Đang tải danh sách khóa học…
+              {uiText("Đang tải danh sách khóa học…")}
             </Text>
           </View>
         )}
@@ -174,12 +176,12 @@ export default function OwnedCoursesList() {
             <View style={cs.emptyIconRing}>
               <Icon name="academic" size={32} color={tokens.color.brand} />
             </View>
-            <Text style={cs.emptyTitle}>Bạn chưa có khóa học nào</Text>
+            <Text style={cs.emptyTitle}>{uiText("Bạn chưa có khóa học nào")}</Text>
             <Text style={cs.emptySubtitle}>
-              Bắt đầu tạo khóa học mới để xây dựng giáo trình bài giảng và mở bán cho học viên.
+              {uiText("Bắt đầu tạo khóa học mới để xây dựng giáo trình bài giảng và mở bán cho học viên.")}
             </Text>
             <Button
-              label="Tạo khóa học đầu tiên"
+              label={uiText("Tạo khóa học đầu tiên")}
               icon={<Icon name="add" size={16} color="#FFFFFF" />}
               onPress={() => router.push("/teaching/courses/create" as Href)}
             />
@@ -191,8 +193,11 @@ export default function OwnedCoursesList() {
             {filteredCourses.length === 0 ? (
               <View style={cs.emptyCard}>
                 <Icon name="search" size={24} color={tokens.color.muted} />
-                <Text style={cs.emptyTitle}>Không tìm thấy kết quả</Text>
-                <Text style={cs.emptySubtitle}>Không có khóa học nào khớp với từ khóa "{search}".</Text>
+                <Text style={cs.emptyTitle}>{uiText("Không tìm thấy kết quả")}</Text>
+                <Text style={cs.emptySubtitle}>
+                  {uiText('Không có khóa học nào khớp với từ khóa "')}
+                  {search}".
+                </Text>
               </View>
             ) : (
               <NonVirtualizedList
@@ -207,13 +212,13 @@ export default function OwnedCoursesList() {
 
         {error && (
           <Text accessibilityRole="alert" style={styles.error}>
-            {error}
+            {uiText(error)}
           </Text>
         )}
-        {error && <Button label="Thử lại" onPress={handleRetry} />}
+        {error && <Button label={uiText("Thử lại")} onPress={handleRetry} />}
         <View style={{ marginTop: 12 }}>
           <Button
-            label="Về trang chủ giảng viên"
+            label={uiText("Về trang chủ giảng viên")}
             variant="outline"
             onPress={() => router.replace("/teaching")}
           />

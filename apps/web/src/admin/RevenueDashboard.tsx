@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { useUiText } from "../lib/i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "../components/Icon";
@@ -46,6 +48,8 @@ const TIME_RANGES = [
 ];
 
 export default function RevenueDashboard() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const [range, setRange] = useState("30d");
   const { data, loading, error, isLive, refresh, lastUpdated } = useAdminData<RevenueData>(
     `/dashboard/revenue?range=${range}`,
@@ -143,15 +147,15 @@ export default function RevenueDashboard() {
     <div className="admin-dashboard-container animate-fade-in">
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">TÀI CHÍNH &amp; THƯƠNG MẠI</p>
-          <h1>Dashboard Doanh Thu &amp; Đối Soát SePay</h1>
+          <p className="eyebrow">{uiText("TÀI CHÍNH & THƯƠNG MẠI")}</p>
+          <h1>{uiText("Dashboard Doanh Thu & Đối Soát SePay")}</h1>
           <p className="lead">
-            Chỉ hiển thị số liệu đã được tổng hợp từ thanh toán và hoàn tiền có thể kiểm toán.
+            {uiText("Chỉ hiển thị số liệu đã được tổng hợp từ thanh toán và hoàn tiền có thể kiểm toán.")}
           </p>
         </div>
         <div className="dashboard-header-actions">
           <Link className="button button-subtle" to="/app">
-            ← Tổng quan Admin
+            {uiText("← Tổng quan Admin")}
           </Link>
         </div>
       </div>
@@ -163,23 +167,25 @@ export default function RevenueDashboard() {
               <div className="admin-commission-icon-box">
                 <Icon name="card" size={20} />
               </div>
-              <h2>Chiết khấu nền tảng</h2>
+              <h2>{uiText("Chiết khấu nền tảng")}</h2>
             </div>
             <p className="subtext">
-              Tỷ lệ mới áp dụng cho các khoản thanh toán từ thời điểm lưu. Doanh thu và hoàn tiền của đơn cũ
-              giữ tỷ lệ lúc mua.
+              {uiText(
+                "Tỷ lệ mới áp dụng cho các khoản thanh toán từ thời điểm lưu. Doanh thu và hoàn tiền của đơn cũ giữ tỷ lệ lúc mua.",
+              )}
             </p>
             {commission.data && (
               <p className="finance-data-note">
-                Hiện tại: {commission.data.basisPoints / 100}% · Giảng viên nhận{" "}
-                {100 - commission.data.basisPoints / 100}% · Hiệu lực từ{" "}
-                {new Date(commission.data.effectiveAt).toLocaleString("vi-VN")}
+                {uiText("Hiện tại: ")}
+                {commission.data.basisPoints / 100}
+                {uiText("% · Giảng viên nhận")} {100 - commission.data.basisPoints / 100}
+                {uiText("% · Hiệu lực từ")} {new Date(commission.data.effectiveAt).toLocaleString(uiLocale)}
               </p>
             )}
           </div>
           <div className="inline-actions admin-commission-actions">
             <label className="admin-commission-label">
-              <span className="admin-commission-label-title">Chiết khấu (%)</span>
+              <span className="admin-commission-label-title">{uiText("Chiết khấu (%)")}</span>
               <div className="admin-commission-input-wrap">
                 <input
                   type="number"
@@ -201,14 +207,17 @@ export default function RevenueDashboard() {
               disabled={!commission.data || savingCommission}
               onClick={() => void saveCommission()}
             >
-              {savingCommission ? "Đang lưu…" : "Lưu tỷ lệ"}
+              {savingCommission ? uiText("Đang lưu…") : uiText("Lưu tỷ lệ")}
             </button>
           </div>
         </div>
         {commission.error && (
           <div className="admin-notice-callout warning" role="alert">
             <Icon name="alert" size={16} />
-            <span>Không tải được tỷ lệ chiết khấu: {commission.error}</span>
+            <span>
+              {uiText("Không tải được tỷ lệ chiết khấu: ")}
+              {uiText(commission.error)}
+            </span>
           </div>
         )}
         {commissionMessage && (
@@ -220,7 +229,7 @@ export default function RevenueDashboard() {
       </section>
 
       <div className="dashboard-toolbar-row">
-        <div className="dashboard-filter-group" role="group" aria-label="Khoảng thời gian">
+        <div className="dashboard-filter-group" role="group" aria-label={uiText("Khoảng thời gian")}>
           {TIME_RANGES.map((item) => (
             <button
               key={item.id}
@@ -236,14 +245,14 @@ export default function RevenueDashboard() {
             <>
               <span className="live-dot" />
               <span>
-                Dữ liệu đã đối soát
-                {lastUpdated ? ` · ${lastUpdated.toLocaleTimeString("vi-VN")}` : ""}
+                {uiText("Dữ liệu đã đối soát")}
+                {lastUpdated ? ` · ${lastUpdated.toLocaleTimeString(uiLocale)}` : ""}
               </span>
             </>
           ) : (
             <>
               <span className="mock-dot" style={{ backgroundColor: "#D97706" }} />
-              <span>Chưa có projection tài chính</span>
+              <span>{uiText("Chưa có projection tài chính")}</span>
             </>
           )}
         </div>
@@ -257,15 +266,21 @@ export default function RevenueDashboard() {
             </div>
             <div className="admin-finance-empty-content">
               <div className="admin-finance-badge-row">
-                <span className="badge">KIỂM TOÁN TÀI CHÍNH</span>
-                <span className="status-pill status-pending">Đang chờ đối soát</span>
+                <span className="badge">{uiText("KIỂM TOÁN TÀI CHÍNH")}</span>
+                <span className="status-pill status-pending">{uiText("Đang chờ đối soát")}</span>
               </div>
-              <h2>Chưa có báo cáo doanh thu có thẩm quyền</h2>
+              <h2>{uiText("Chưa có báo cáo doanh thu có thẩm quyền")}</h2>
               <p className="subtext">
-                Hệ thống không dùng KPI, giao dịch hoặc số liệu dự phòng giả. Báo cáo sẽ chỉ xuất hiện sau khi
-                projection thanh toán và hoàn tiền đã sẵn sàng.
+                {uiText(
+                  "Hệ thống không dùng KPI, giao dịch hoặc số liệu dự phòng giả. Báo cáo sẽ chỉ xuất hiện sau khi projection thanh toán và hoàn tiền đã sẵn sàng.",
+                )}
               </p>
-              {error ? <p className="admin-server-error-text">Máy chủ: {error}</p> : null}
+              {error ? (
+                <p className="admin-server-error-text">
+                  {uiText("Máy chủ: ")}
+                  {uiText(error)}
+                </p>
+              ) : null}
             </div>
             <button
               className="button button-subtle admin-retry-finance-btn"
@@ -273,47 +288,54 @@ export default function RevenueDashboard() {
               disabled={loading}
             >
               <Icon name="refresh" size={15} />
-              <span>{loading ? "Đang kiểm tra…" : "Kiểm tra lại"}</span>
+              <span>{loading ? uiText("Đang kiểm tra…") : uiText("Kiểm tra lại")}</span>
             </button>
           </div>
         </section>
       ) : data ? (
         <>
           <p className="finance-data-note">
-            Thanh toán và hoàn tiền đã đối soát đến{" "}
-            {new Date(data.completeness.backfillThrough).toLocaleDateString("vi-VN")}
+            {uiText("Thanh toán và hoàn tiền đã đối soát đến")}{" "}
+            {new Date(data.completeness.backfillThrough).toLocaleDateString(uiLocale)}
           </p>
           <div className="finance-kpis">
             <article>
-              <span>Thanh toán</span>
-              <strong>{money(data.grossMinor)}</strong>
-              <small>{data.orderCount} đơn</small>
+              <span>{uiText("Thanh toán")}</span>
+              <strong>{money(data.grossMinor, uiLocale)}</strong>
+              <small>
+                {data.orderCount} {uiText(" đơn")}
+              </small>
             </article>
             <article>
-              <span>Hoàn tiền</span>
-              <strong>{money(data.refundMinor)}</strong>
-              <small>{data.refundCount} giao dịch</small>
+              <span>{uiText("Hoàn tiền")}</span>
+              <strong>{money(data.refundMinor, uiLocale)}</strong>
+              <small>
+                {data.refundCount} {uiText(" giao dịch")}
+              </small>
             </article>
             <article>
-              <span>Sau hoàn tiền</span>
-              <strong>{money(data.netMinor)}</strong>
-              <small>Trước phân chia</small>
+              <span>{uiText("Sau hoàn tiền")}</span>
+              <strong>{money(data.netMinor, uiLocale)}</strong>
+              <small>{uiText("Trước phân chia")}</small>
             </article>
             <article>
-              <span>Dự kiến trả giảng viên</span>
+              <span>{uiText("Dự kiến trả giảng viên")}</span>
               <strong>
-                {money(data.lecturers.reduce((sum, item) => sum + BigInt(item.estimatedEarningsMinor), 0n))}
+                {money(
+                  data.lecturers.reduce((sum, item) => sum + BigInt(item.estimatedEarningsMinor), 0n),
+                  uiLocale,
+                )}
               </strong>
-              <small>Theo chính sách từng kỳ</small>
+              <small>{uiText("Theo chính sách từng kỳ")}</small>
             </article>
           </div>
           <section className="dashboard-section-card">
-            <h2>Doanh thu theo ngày</h2>
+            <h2>{uiText("Doanh thu theo ngày")}</h2>
             <RevenueChart rows={data.dailyRevenue} />
           </section>
           <div className="finance-columns">
             <section className="dashboard-section-card">
-              <h2>Khóa học doanh thu cao</h2>
+              <h2>{uiText("Khóa học doanh thu cao")}</h2>
               <RevenueCourses
                 rows={data.lecturers
                   .flatMap((item) => item.courses)
@@ -328,7 +350,7 @@ export default function RevenueDashboard() {
               />
             </section>
             <section className="dashboard-section-card">
-              <h2>Phân bổ giảng viên</h2>
+              <h2>{uiText("Phân bổ giảng viên")}</h2>
               <div className="revenue-course-list">
                 {data.lecturers.map((item) => (
                   <div key={item.lecturerId}>
@@ -338,10 +360,11 @@ export default function RevenueDashboard() {
                         <LecturerLink id={item.lecturerId} />
                       </strong>
                       <small>
-                        {item.orders} đơn · {item.courses.length} khóa học
+                        {item.orders} {uiText(" đơn · ")}
+                        {item.courses.length} {uiText(" khóa học")}
                       </small>
                     </div>
-                    <strong>{money(item.estimatedEarningsMinor)}</strong>
+                    <strong>{money(item.estimatedEarningsMinor, uiLocale)}</strong>
                   </div>
                 ))}
               </div>
@@ -350,10 +373,14 @@ export default function RevenueDashboard() {
           <section className="dashboard-section-card">
             <div className="section-card-header">
               <div>
-                <h2>Phiếu chi kỳ {payouts.data?.month ?? "trước"}</h2>
+                <h2>
+                  {uiText("Phiếu chi kỳ ")}
+                  {payouts.data?.month ?? "trước"}
+                </h2>
                 <p className="finance-data-note">
-                  Lập phiếu cho một người hoặc tất cả giảng viên đủ điều kiện. Phiếu đang chờ chuyển khoản thủ
-                  công; nút này chưa chuyển tiền.
+                  {uiText(
+                    "Lập phiếu cho một người hoặc tất cả giảng viên đủ điều kiện. Phiếu đang chờ chuyển khoản thủ công; nút này chưa chuyển tiền.",
+                  )}
                 </p>
               </div>
               <div className="inline-actions">
@@ -363,7 +390,7 @@ export default function RevenueDashboard() {
                   disabled={preparing || payouts.data?.canPrepare === false}
                   onClick={() => void prepare()}
                 >
-                  {preparing ? "Đang lập…" : "Lập phiếu chi tất cả"}
+                  {preparing ? uiText("Đang lập…") : uiText("Lập phiếu chi tất cả")}
                 </button>
                 <button
                   className="button button-subtle"
@@ -371,15 +398,15 @@ export default function RevenueDashboard() {
                   disabled={!payouts.data?.instructions.length}
                   onClick={exportPayouts}
                 >
-                  Tải bảng kê chuyển khoản
+                  {uiText("Tải bảng kê chuyển khoản")}
                 </button>
               </div>
             </div>
             {payoutMessage && <p role="status">{payoutMessage}</p>}
             {payouts.data?.canPrepare === false && (
-              <p>Phiếu kỳ trước có thể lập sau ngày 7 để chờ hết thời hạn hoàn tiền.</p>
+              <p>{uiText("Phiếu kỳ trước có thể lập sau ngày 7 để chờ hết thời hạn hoàn tiền.")}</p>
             )}
-            {payouts.error && <p role="alert">{payouts.error}</p>}
+            {payouts.error && <p role="alert">{uiText(payouts.error)}</p>}
             <div className="revenue-course-list">
               {payouts.data?.candidates?.map((item) => {
                 const instruction = payouts.data?.instructions.find(
@@ -395,11 +422,13 @@ export default function RevenueDashboard() {
                         {instruction
                           ? `${instruction.bankName} · ${instruction.accountNumber} · ${instruction.accountHolder}`
                           : item.accountConfigured
-                            ? `Dự kiến ${money(item.estimatedEarningsMinor)} · Chưa có phiếu kỳ trước`
-                            : "Giảng viên chưa cấu hình tài khoản nhận tiền"}
+                            ? uiText("Dự kiến {0} · Chưa có phiếu kỳ trước", [
+                                money(item.estimatedEarningsMinor, uiLocale),
+                              ])
+                            : uiText("Giảng viên chưa cấu hình tài khoản nhận tiền")}
                       </small>
                     </div>
-                    <span>{instruction ? money(instruction.amountMinor) : "—"}</span>
+                    <span>{instruction ? money(instruction.amountMinor, uiLocale) : "—"}</span>
                     <button
                       className="button button-subtle"
                       disabled={
@@ -411,10 +440,10 @@ export default function RevenueDashboard() {
                       onClick={() => void prepare(item.lecturerId)}
                     >
                       {instruction
-                        ? "Đã lập phiếu"
+                        ? uiText("Đã lập phiếu")
                         : item.accountConfigured
-                          ? "Lập phiếu chi"
-                          : "Thiếu tài khoản"}
+                          ? uiText("Lập phiếu chi")
+                          : uiText("Thiếu tài khoản")}
                     </button>
                   </div>
                 );

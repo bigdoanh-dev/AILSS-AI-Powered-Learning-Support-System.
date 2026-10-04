@@ -1,3 +1,4 @@
+import { useUiText } from "../../../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Text, TextInput, Switch, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -9,6 +10,7 @@ import { lecturerLesson, type LecturerLesson, CONTRACT_LIMITED } from "../../../
 import { Page, Button, styles } from "../../../../../src/ui";
 
 export default function LessonDetailEdit() {
+  const uiText = useUiText();
   const { lessonId } = useLocalSearchParams<{ lessonId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -99,73 +101,80 @@ export default function LessonDetailEdit() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <Text style={styles.error}>Bạn không có quyền truy cập.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Bạn không có quyền truy cập.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
 
   return (
     <Page>
-      <Text style={styles.title}>Chi tiết bài học</Text>
+      <Text style={styles.title}>{uiText("Chi tiết bài học")}</Text>
 
       {!lesson && !error && (
         <Text accessibilityRole="alert" style={styles.text}>
-          Đang tải…
+          {uiText("Đang tải…")}
         </Text>
       )}
 
       {lesson && (
         <>
           <View style={styles.card}>
-            <Text style={styles.small}>Trạng thái: {lesson.state ?? "—"}</Text>
-            <Text style={styles.small}>Loại nội dung: {lesson.contentType ?? "—"}</Text>
+            <Text style={styles.small}>
+              {uiText("Trạng thái: ")}
+              {lesson.state ?? "—"}
+            </Text>
+            <Text style={styles.small}>
+              {uiText("Loại nội dung: ")}
+              {lesson.contentType ?? "—"}
+            </Text>
             {lesson.contentUrl && (
               <Text style={styles.small} numberOfLines={1}>
-                URL nội dung: {lesson.contentUrl}
+                {uiText("URL nội dung: ")}
+                {lesson.contentUrl}
               </Text>
             )}
           </View>
 
-          <Text style={styles.small}>Tên bài học</Text>
+          <Text style={styles.small}>{uiText("Tên bài học")}</Text>
           <TextInput
-            accessibilityLabel="Tên bài học"
+            accessibilityLabel={uiText("Tên bài học")}
             style={styles.input}
             value={title}
             onChangeText={setTitle}
             maxLength={200}
           />
 
-          <Text style={styles.small}>Tên chương</Text>
+          <Text style={styles.small}>{uiText("Tên chương")}</Text>
           <TextInput
-            accessibilityLabel="Tên chương"
+            accessibilityLabel={uiText("Tên chương")}
             style={styles.input}
             value={sectionTitle}
             onChangeText={setSectionTitle}
             maxLength={200}
           />
 
-          <Text style={styles.small}>Thứ tự chương</Text>
+          <Text style={styles.small}>{uiText("Thứ tự chương")}</Text>
           <TextInput
-            accessibilityLabel="Thứ tự chương"
+            accessibilityLabel={uiText("Thứ tự chương")}
             style={styles.input}
             value={sectionOrder}
             onChangeText={setSectionOrder}
             keyboardType="numeric"
           />
 
-          <Text style={styles.small}>Thứ tự bài</Text>
+          <Text style={styles.small}>{uiText("Thứ tự bài")}</Text>
           <TextInput
-            accessibilityLabel="Thứ tự bài"
+            accessibilityLabel={uiText("Thứ tự bài")}
             style={styles.input}
             value={lessonOrder}
             onChangeText={setLessonOrder}
             keyboardType="numeric"
           />
 
-          <Text style={styles.small}>Video bên ngoài (URL)</Text>
+          <Text style={styles.small}>{uiText("Video bên ngoài (URL)")}</Text>
           <TextInput
-            accessibilityLabel="Video bên ngoài"
+            accessibilityLabel={uiText("Video bên ngoài")}
             style={styles.input}
             value={externalVideo}
             onChangeText={setExternalVideo}
@@ -174,7 +183,7 @@ export default function LessonDetailEdit() {
           />
 
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-            <Text style={styles.text}>Cho xem trước</Text>
+            <Text style={styles.text}>{uiText("Cho xem trước")}</Text>
             <Switch value={preview} onValueChange={setPreview} />
           </View>
 
@@ -184,24 +193,27 @@ export default function LessonDetailEdit() {
           </View>
 
           <Button
-            label={busy ? "Đang lưu…" : "Lưu thay đổi"}
+            label={busy ? uiText("Đang lưu…") : uiText("Lưu thay đổi")}
             disabled={busy || !title.trim()}
             onPress={() => {
               void handleSave();
             }}
           />
 
-          {message && <Text style={styles.text}>{message}</Text>}
+          {message && <Text style={styles.text}>{uiText(message)}</Text>}
         </>
       )}
 
       {error && (
         <Text accessibilityRole="alert" style={styles.error}>
-          {error}
+          {uiText(error)}
         </Text>
       )}
-      {error && <Button label="Thử lại" onPress={() => setRetry((v) => v + 1)} />}
-      <Button label="Quay lại" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />
+      {error && <Button label={uiText("Thử lại")} onPress={() => setRetry((v) => v + 1)} />}
+      <Button
+        label={uiText("Quay lại")}
+        onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+      />
     </Page>
   );
 }

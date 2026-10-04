@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../../src/use-language";
+import { useUiText } from "../../../../src/use-language";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Text, View, TextInput, StyleSheet, ActivityIndicator, Pressable } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -17,6 +19,8 @@ import {
 import { Page, Button, NonVirtualizedList, ScreenHeader, styles, tokens } from "../../../../src/ui";
 
 export default function CourseReviewsAndCommentsScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -164,8 +168,8 @@ export default function CourseReviewsAndCommentsScreen() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <Text style={styles.error}>Chỉ Giảng viên mới có quyền xem trang này.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Chỉ Giảng viên mới có quyền xem trang này.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -178,7 +182,7 @@ export default function CourseReviewsAndCommentsScreen() {
           {"☆".repeat(5 - item.rating)}
         </Text>
         <Text style={styles.small}>
-          {new Date(item.createdAt).toLocaleDateString("vi-VN", {
+          {new Date(item.createdAt).toLocaleDateString(uiLocale, {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
@@ -187,7 +191,8 @@ export default function CourseReviewsAndCommentsScreen() {
       </View>
       {item.body ? <Text style={[styles.text, { marginTop: 4 }]}>{item.body}</Text> : null}
       <Text style={[styles.small, { marginTop: 6, color: tokens.color.muted }]}>
-        Học viên: {item.authorId ? `${item.authorId.slice(0, 8)}…` : "Ẩn danh"}
+        {uiText("Học viên: ")}
+        {item.authorId ? `${item.authorId.slice(0, 8)}…` : uiText("Ẩn danh")}
       </Text>
     </View>
   );
@@ -204,11 +209,11 @@ export default function CourseReviewsAndCommentsScreen() {
             ]}
           >
             {isMyComment
-              ? "👨‍🏫 Bạn (Giảng viên)"
-              : `Học viên: ${item.authorId ? `${item.authorId.slice(0, 8)}…` : ""}`}
+              ? uiText("👨‍🏫 Bạn (Giảng viên)")
+              : uiText("Học viên: {0}", [item.authorId ? `${item.authorId.slice(0, 8)}…` : ""])}
           </Text>
           <Text style={styles.small}>
-            {new Date(item.createdAt).toLocaleDateString("vi-VN", {
+            {new Date(item.createdAt).toLocaleDateString(uiLocale, {
               day: "2-digit",
               month: "2-digit",
               hour: "2-digit",
@@ -230,7 +235,7 @@ export default function CourseReviewsAndCommentsScreen() {
               }}
             >
               <Text style={{ fontSize: 12, color: "#dc2626", fontWeight: "600" }}>
-                {deletingCommentId === item.commentId ? "Đang xóa…" : "🗑️ Xóa phản hồi"}
+                {deletingCommentId === item.commentId ? uiText("Đang xóa…") : uiText("🗑️ Xóa phản hồi")}
               </Text>
             </Pressable>
           </View>
@@ -242,8 +247,8 @@ export default function CourseReviewsAndCommentsScreen() {
   return (
     <Page>
       <ScreenHeader
-        title="Đánh giá & Thảo luận"
-        subtitle="Ý kiến học viên & giải đáp của giảng viên"
+        title={uiText("Đánh giá & Thảo luận")}
+        subtitle={uiText("Ý kiến học viên & giải đáp của giảng viên")}
         onBack={() => (router.canGoBack() ? router.back() : router.replace(`/teaching/courses/${courseId}`))}
       />
 
@@ -254,7 +259,8 @@ export default function CourseReviewsAndCommentsScreen() {
           onPress={() => setActiveTab("reviews")}
         >
           <Text style={[revStyles.tabItemText, activeTab === "reviews" && revStyles.tabItemTextActive]}>
-            ⭐ Đánh giá ({reviews.length})
+            {uiText("⭐ Đánh giá (")}
+            {reviews.length})
           </Text>
         </Pressable>
         <Pressable
@@ -262,39 +268,44 @@ export default function CourseReviewsAndCommentsScreen() {
           onPress={() => setActiveTab("comments")}
         >
           <Text style={[revStyles.tabItemText, activeTab === "comments" && revStyles.tabItemTextActive]}>
-            💬 Thảo luận ({comments.length})
+            {uiText("💬 Thảo luận (")}
+            {comments.length})
           </Text>
         </Pressable>
       </View>
 
       {activeTab === "reviews" ? (
         <View>
-          {reviewCursor ? <Button label="Đánh giá: trang đầu" onPress={() => setReviewCursor("")} /> : null}
+          {reviewCursor ? (
+            <Button label={uiText("Đánh giá: trang đầu")} onPress={() => setReviewCursor("")} />
+          ) : null}
           {nextReviewCursor ? (
             <Button
-              label="Đánh giá: trang tiếp"
+              label={uiText("Đánh giá: trang tiếp")}
               disabled={reviewsLoading}
               onPress={() => setReviewCursor(nextReviewCursor)}
             />
           ) : null}
           <Text style={styles.small}>
-            Bộ lọc và số lượng sao bên dưới tính trên trang hiện tại; điểm trung bình tính cho toàn khóa học.
+            {uiText(
+              "Bộ lọc và số lượng sao bên dưới tính trên trang hiện tại; điểm trung bình tính cho toàn khóa học.",
+            )}
           </Text>
         </View>
       ) : (
         <View>
           {commentsError ? (
             <View>
-              <Text style={styles.error}>{commentsError}</Text>
-              <Button label="Thử tải thảo luận" onPress={() => void loadReviewsAndComments()} />
+              <Text style={styles.error}>{uiText(commentsError)}</Text>
+              <Button label={uiText("Thử tải thảo luận")} onPress={() => void loadReviewsAndComments()} />
             </View>
           ) : null}
           {commentCursor ? (
-            <Button label="Thảo luận: trang đầu" onPress={() => setCommentCursor("")} />
+            <Button label={uiText("Thảo luận: trang đầu")} onPress={() => setCommentCursor("")} />
           ) : null}
           {nextCommentCursor ? (
             <Button
-              label="Thảo luận: trang tiếp"
+              label={uiText("Thảo luận: trang tiếp")}
               disabled={commentsLoading}
               onPress={() => setCommentCursor(nextCommentCursor)}
             />
@@ -308,13 +319,15 @@ export default function CourseReviewsAndCommentsScreen() {
           <View style={[styles.card, revStyles.summaryCard]}>
             <View style={revStyles.scoreCol}>
               <Text style={revStyles.bigScore}>
-                {ratingInfo.reviewCount > 0 ? ratingInfo.average.toFixed(1) : "Chưa có đánh giá"}
+                {ratingInfo.reviewCount > 0 ? ratingInfo.average.toFixed(1) : uiText("Chưa có đánh giá")}
               </Text>
               <Text style={revStyles.stars}>
                 {"★".repeat(Math.round(ratingInfo.average))}
                 {"☆".repeat(5 - Math.round(ratingInfo.average))}
               </Text>
-              <Text style={[styles.small, { textAlign: "center" }]}>{ratingInfo.reviewCount} đánh giá</Text>
+              <Text style={[styles.small, { textAlign: "center" }]}>
+                {ratingInfo.reviewCount} {uiText(" đánh giá")}
+              </Text>
             </View>
 
             {/* Bars */}
@@ -344,7 +357,8 @@ export default function CourseReviewsAndCommentsScreen() {
               <Text
                 style={[revStyles.filterChipText, starFilter === "all" && revStyles.filterChipTextActive]}
               >
-                Tất cả ({reviews.length})
+                {uiText("Tất cả (")}
+                {reviews.length})
               </Text>
             </Pressable>
             {[5, 4, 3, 2, 1].map((s) => (
@@ -364,20 +378,20 @@ export default function CourseReviewsAndCommentsScreen() {
           {reviewsLoading ? (
             <View style={revStyles.center}>
               <ActivityIndicator size="small" color={tokens.color.brand} />
-              <Text style={[styles.small, { marginTop: 6 }]}>Đang tải đánh giá…</Text>
+              <Text style={[styles.small, { marginTop: 6 }]}>{uiText("Đang tải đánh giá…")}</Text>
             </View>
           ) : reviewsError ? (
             <View style={styles.card}>
               <Text accessibilityRole="alert" style={styles.error}>
-                {reviewsError}
+                {uiText(reviewsError)}
               </Text>
             </View>
           ) : filteredReviews.length === 0 ? (
             <View style={[styles.card, { alignItems: "center", paddingVertical: 24 }]}>
               <Text style={styles.text}>
                 {reviews.length === 0
-                  ? "Khóa học chưa có đánh giá nào."
-                  : `Không có đánh giá ${starFilter} sao.`}
+                  ? uiText("Khóa học chưa có đánh giá nào.")
+                  : uiText("Không có đánh giá {0} sao.", [starFilter])}
               </Text>
             </View>
           ) : (
@@ -396,7 +410,9 @@ export default function CourseReviewsAndCommentsScreen() {
         <View style={{ gap: 12 }}>
           {/* Post Comment Card */}
           <View style={styles.card}>
-            <Text style={[styles.title, { fontSize: 14 }]}>Phản hồi học viên với tư cách Giảng viên</Text>
+            <Text style={[styles.title, { fontSize: 14 }]}>
+              {uiText("Phản hồi học viên với tư cách Giảng viên")}
+            </Text>
             {commentMsg && (
               <Text
                 accessibilityRole="alert"
@@ -409,13 +425,13 @@ export default function CourseReviewsAndCommentsScreen() {
               style={revStyles.input}
               value={commentInput}
               onChangeText={setCommentInput}
-              placeholder="Nhập nội dung giải đáp câu hỏi chuyên môn hoặc trao đổi với học viên..."
+              placeholder={uiText("Nhập nội dung giải đáp câu hỏi chuyên môn hoặc trao đổi với học viên...")}
               multiline
               numberOfLines={3}
-              accessibilityLabel="Nội dung thảo luận"
+              accessibilityLabel={uiText("Nội dung thảo luận")}
             />
             <Button
-              label={commentSaving ? "Đang gửi…" : "🚀 Gửi phản hồi ngay"}
+              label={commentSaving ? uiText("Đang gửi…") : uiText("🚀 Gửi phản hồi ngay")}
               onPress={() => void handlePostComment()}
               disabled={commentSaving}
             />
@@ -427,7 +443,7 @@ export default function CourseReviewsAndCommentsScreen() {
             </View>
           ) : comments.length === 0 ? (
             <View style={[styles.card, { alignItems: "center", paddingVertical: 24 }]}>
-              <Text style={styles.text}>Chưa có thảo luận nào trên khóa học này.</Text>
+              <Text style={styles.text}>{uiText("Chưa có thảo luận nào trên khóa học này.")}</Text>
             </View>
           ) : (
             <NonVirtualizedList
@@ -442,7 +458,7 @@ export default function CourseReviewsAndCommentsScreen() {
 
       <View style={{ marginTop: 14 }}>
         <Button
-          label="Quay lại chi tiết khóa học"
+          label={uiText("Quay lại chi tiết khóa học")}
           variant="outline"
           onPress={() =>
             router.canGoBack() ? router.back() : router.replace(`/teaching/courses/${courseId}`)

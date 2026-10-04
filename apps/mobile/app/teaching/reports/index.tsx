@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../src/use-language";
+import { useUiText } from "../../../src/use-language";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { ScrollView, Share, Text, View, StyleSheet, Pressable } from "react-native";
 import { router, type Href } from "expo-router";
@@ -33,6 +35,8 @@ const bracketColors = ["#EF4444", "#F59E0B", "#0D9488", "#0284C7", "#10B981"];
 const format = (value: number | null, suffix = "") => (value === null ? "—" : `${value.toFixed(1)}${suffix}`);
 
 export default function LecturerTeachingReportScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const courses = useMobileQuery(
@@ -85,7 +89,10 @@ export default function LecturerTeachingReportScreen() {
   async function shareCsv() {
     if (!report || !classes.length) return;
     try {
-      await Share.share({ title: "Báo cáo giảng dạy CSV", message: reportCsv(report, classes) });
+      await Share.share({
+        title: uiText("Báo cáo giảng dạy CSV"),
+        message: reportCsv(report, classes, uiText),
+      });
     } catch {
       setError("Không thể mở bảng chia sẻ CSV.");
     }
@@ -94,8 +101,8 @@ export default function LecturerTeachingReportScreen() {
   if (snapshot.user?.role !== "LECTURER")
     return (
       <Page>
-        <ScreenHeader title="Báo cáo giảng dạy" onBack={() => router.replace("/" as Href)} />
-        <Text style={styles.error}>Chỉ giảng viên được xem báo cáo này.</Text>
+        <ScreenHeader title={uiText("Báo cáo giảng dạy")} onBack={() => router.replace("/" as Href)} />
+        <Text style={styles.error}>{uiText("Chỉ giảng viên được xem báo cáo này.")}</Text>
       </Page>
     );
 
@@ -103,13 +110,13 @@ export default function LecturerTeachingReportScreen() {
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
       <Page>
         <ScreenHeader
-          title="Báo cáo giảng dạy"
-          subtitle="Kết quả kiểm tra và chuyên cần theo lớp"
+          title={uiText("Báo cáo giảng dạy")}
+          subtitle={uiText("Kết quả kiểm tra và chuyên cần theo lớp")}
           onBack={() => router.replace("/teaching" as Href)}
         />
 
         <View style={rp.card}>
-          <Text style={styles.title}>Năng lực theo khóa học</Text>
+          <Text style={styles.title}>{uiText("Năng lực theo khóa học")}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {courses.data?.map((item) => (
               <Button
@@ -120,7 +127,7 @@ export default function LecturerTeachingReportScreen() {
               />
             ))}
           </ScrollView>
-          {courses.error && <Text style={styles.error}>{courses.error}</Text>}
+          {courses.error && <Text style={styles.error}>{uiText(courses.error)}</Text>}
           {activeCourse && <LecturerLearningRadar key={activeCourse} courseId={activeCourse} />}
         </View>
 
@@ -135,14 +142,16 @@ export default function LecturerTeachingReportScreen() {
                   onPress={() => setDays(range)}
                   style={[rp.segmentedTab, active && rp.segmentedTabActive]}
                 >
-                  <Text style={[rp.segmentedText, active && rp.segmentedTextActive]}>{range} ngày</Text>
+                  <Text style={[rp.segmentedText, active && rp.segmentedTextActive]}>
+                    {range} {uiText(" ngày")}
+                  </Text>
                 </Pressable>
               );
             })}
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Làm mới báo cáo"
+            accessibilityLabel={uiText("Làm mới báo cáo")}
             disabled={loading}
             style={[rp.refreshBtn, loading && { opacity: 0.5 }]}
             onPress={() => setRevision((value) => value + 1)}
@@ -153,7 +162,9 @@ export default function LecturerTeachingReportScreen() {
 
         {loading && (
           <View style={rp.card}>
-            <Text style={[styles.small, { textAlign: "center" }]}>Đang tải dữ liệu báo cáo từ máy chủ…</Text>
+            <Text style={[styles.small, { textAlign: "center" }]}>
+              {uiText("Đang tải dữ liệu báo cáo từ máy chủ…")}
+            </Text>
           </View>
         )}
 
@@ -161,15 +172,19 @@ export default function LecturerTeachingReportScreen() {
           <View style={rp.errorCard}>
             <Icon name="alert" size={20} color="#DC2626" />
             <Text accessibilityRole="alert" style={styles.error}>
-              {error}
+              {uiText(error)}
             </Text>
-            <Button label="Thử lại" variant="outline" onPress={() => setRevision((value) => value + 1)} />
+            <Button
+              label={uiText("Thử lại")}
+              variant="outline"
+              onPress={() => setRevision((value) => value + 1)}
+            />
           </View>
         )}
 
         {report && !report.classes.length && (
           <View style={rp.card}>
-            <Text style={styles.text}>Bạn chưa có lớp học phần nào để lập báo cáo.</Text>
+            <Text style={styles.text}>{uiText("Bạn chưa có lớp học phần nào để lập báo cáo.")}</Text>
           </View>
         )}
 
@@ -179,15 +194,18 @@ export default function LecturerTeachingReportScreen() {
             <View style={rp.metaShareRow}>
               <View style={{ flex: 1 }}>
                 <Text style={rp.dateRangeText}>
-                  Từ {report.from} đến {report.to}
+                  {uiText("Từ ")}
+                  {report.from} {uiText(" đến ")}
+                  {report.to}
                 </Text>
                 <Text style={rp.fetchTimeText}>
-                  Cập nhật: {new Date(report.fetchedAt).toLocaleTimeString("vi-VN")}
+                  {uiText("Cập nhật: ")}
+                  {new Date(report.fetchedAt).toLocaleTimeString(uiLocale)}
                 </Text>
               </View>
               <Pressable style={rp.shareBtn} onPress={() => void shareCsv()}>
                 <Icon name="document" size={14} color="#0D9488" />
-                <Text style={rp.shareBtnText}>Xuất CSV</Text>
+                <Text style={rp.shareBtnText}>{uiText("Xuất CSV")}</Text>
               </Pressable>
             </View>
 
@@ -203,7 +221,8 @@ export default function LecturerTeachingReportScreen() {
               >
                 <Icon name="grid" size={14} color={activeClass === "ALL" ? "#FFFFFF" : tokens.color.muted} />
                 <Text style={[rp.classChipText, activeClass === "ALL" && rp.classChipTextActive]}>
-                  Tất cả lớp ({report.classes.length})
+                  {uiText("Tất cả lớp (")}
+                  {report.classes.length})
                 </Text>
               </Pressable>
 
@@ -228,41 +247,44 @@ export default function LecturerTeachingReportScreen() {
             <View style={rp.kpiGrid}>
               <View style={rp.kpiCard}>
                 <View style={rp.kpiHeader}>
-                  <Text style={rp.kpiLabel}>HỌC VIÊN</Text>
+                  <Text style={rp.kpiLabel}>{uiText("HỌC VIÊN")}</Text>
                   <Icon name="people" size={16} color="#0284C7" />
                 </View>
                 <Text style={rp.kpiValue}>{total.students}</Text>
-                <Text style={rp.kpiSub}>Lượt ghi danh</Text>
+                <Text style={rp.kpiSub}>{uiText("Lượt ghi danh")}</Text>
               </View>
 
               <View style={rp.kpiCard}>
                 <View style={rp.kpiHeader}>
-                  <Text style={rp.kpiLabel}>TỶ LỆ NỘP</Text>
+                  <Text style={rp.kpiLabel}>{uiText("TỶ LỆ NỘP")}</Text>
                   <Icon name="document" size={16} color="#0D9488" />
                 </View>
                 <Text style={[rp.kpiValue, { color: "#0D9488" }]}>{format(total.submissionRate, "%")}</Text>
                 <Text style={rp.kpiSub}>
-                  {total.submitted}/{total.expected} bài nộp
+                  {total.submitted}/{total.expected} {uiText(" bài nộp")}
                 </Text>
               </View>
 
               <View style={rp.kpiCard}>
                 <View style={rp.kpiHeader}>
-                  <Text style={rp.kpiLabel}>ĐIỂM TRUNG BÌNH</Text>
+                  <Text style={rp.kpiLabel}>{uiText("ĐIỂM TRUNG BÌNH")}</Text>
                   <Icon name="star" size={16} color="#F59E0B" />
                 </View>
                 <Text style={[rp.kpiValue, { color: "#D97706" }]}>{format(total.averageScore)}</Text>
-                <Text style={rp.kpiSub}>Đạt từ 5đ: {format(total.passRate, "%")}</Text>
+                <Text style={rp.kpiSub}>
+                  {uiText("Đạt từ 5đ: ")}
+                  {format(total.passRate, "%")}
+                </Text>
               </View>
 
               <View style={rp.kpiCard}>
                 <View style={rp.kpiHeader}>
-                  <Text style={rp.kpiLabel}>CHUYÊN CẦN</Text>
+                  <Text style={rp.kpiLabel}>{uiText("CHUYÊN CẦN")}</Text>
                   <Icon name="checkCircle" size={16} color="#10B981" />
                 </View>
                 <Text style={[rp.kpiValue, { color: "#059669" }]}>{format(total.attendanceRate, "%")}</Text>
                 <Text style={rp.kpiSub}>
-                  {total.present}/{total.recorded} lượt
+                  {total.present}/{total.recorded} {uiText(" lượt")}
                 </Text>
               </View>
             </View>
@@ -271,7 +293,7 @@ export default function LecturerTeachingReportScreen() {
             <View style={rp.card}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <Icon name="stats" size={18} color={tokens.color.brand} />
-                <Text style={rp.cardTitle}>Phổ điểm bài kiểm tra</Text>
+                <Text style={rp.cardTitle}>{uiText("Phổ điểm bài kiểm tra")}</Text>
               </View>
               {total.scored ? (
                 <View style={{ gap: 8, marginTop: 4 }}>
@@ -282,7 +304,9 @@ export default function LecturerTeachingReportScreen() {
                       <View key={bracket} style={{ gap: 4 }}>
                         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                           <Text style={rp.bracketLabel}>{bracket}</Text>
-                          <Text style={rp.bracketCount}>{count} lượt</Text>
+                          <Text style={rp.bracketCount}>
+                            {count} {uiText(" lượt")}
+                          </Text>
                         </View>
                         <View style={rp.trackBar}>
                           <View
@@ -300,7 +324,7 @@ export default function LecturerTeachingReportScreen() {
                   })}
                 </View>
               ) : (
-                <Text style={styles.small}>Chưa có bài kiểm tra đã chấm trong kỳ.</Text>
+                <Text style={styles.small}>{uiText("Chưa có bài kiểm tra đã chấm trong kỳ.")}</Text>
               )}
             </View>
 
@@ -308,7 +332,10 @@ export default function LecturerTeachingReportScreen() {
             <View style={rp.card}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <Icon name="class" size={18} color={tokens.color.brand} />
-                <Text style={rp.cardTitle}>Chi tiết từng lớp ({classes.length})</Text>
+                <Text style={rp.cardTitle}>
+                  {uiText("Chi tiết từng lớp (")}
+                  {classes.length})
+                </Text>
               </View>
               {classes.map((item) => {
                 const stat = aggregateReport([item]);
@@ -327,30 +354,32 @@ export default function LecturerTeachingReportScreen() {
                             item.state === "ACTIVE" ? { color: "#059669" } : { color: "#64748B" },
                           ]}
                         >
-                          {item.state === "ACTIVE" ? "Đang dạy" : "Đã đóng"}
+                          {item.state === "ACTIVE" ? uiText("Đang dạy") : uiText("Đã đóng")}
                         </Text>
                       </View>
                     </View>
 
                     <Text style={styles.small}>
-                      {item.students} học viên · {item.quizzes} bài KT · Chờ chấm: {item.pending}
+                      {item.students} {uiText(" học viên · ")}
+                      {item.quizzes} {uiText(" bài KT · Chờ chấm: ")}
+                      {item.pending}
                     </Text>
 
                     <View style={rp.miniStatRow}>
                       <View style={rp.miniStatBox}>
-                        <Text style={rp.miniStatLbl}>Tỷ lệ nộp</Text>
+                        <Text style={rp.miniStatLbl}>{uiText("Tỷ lệ nộp")}</Text>
                         <Text style={rp.miniStatVal}>{format(stat.submissionRate, "%")}</Text>
                       </View>
                       <View style={rp.miniStatBox}>
-                        <Text style={rp.miniStatLbl}>Điểm TB</Text>
+                        <Text style={rp.miniStatLbl}>{uiText("Điểm TB")}</Text>
                         <Text style={rp.miniStatVal}>{format(stat.averageScore, "/10")}</Text>
                       </View>
                       <View style={rp.miniStatBox}>
-                        <Text style={rp.miniStatLbl}>Chuyên cần</Text>
+                        <Text style={rp.miniStatLbl}>{uiText("Chuyên cần")}</Text>
                         <Text style={rp.miniStatVal}>{format(stat.attendanceRate, "%")}</Text>
                       </View>
                       <View style={rp.miniStatBox}>
-                        <Text style={rp.miniStatLbl}>Đạt chuẩn</Text>
+                        <Text style={rp.miniStatLbl}>{uiText("Đạt chuẩn")}</Text>
                         <Text style={rp.miniStatVal}>{format(stat.passRate, "%")}</Text>
                       </View>
                     </View>
@@ -362,8 +391,9 @@ export default function LecturerTeachingReportScreen() {
             <Text
               style={[styles.small, { fontSize: 11, color: "#94A3B8", lineHeight: 16, marginBottom: 16 }]}
             >
-              Ghi chú: Báo cáo gồm bài kiểm tra của lớp và khóa học liên kết, tính cho học viên đang học có
-              quyền làm bài. Điểm dùng bài nộp mới nhất đã chấm; chuyên cần chỉ tính lượt điểm danh đã ghi.
+              {uiText(
+                "Ghi chú: Báo cáo gồm bài kiểm tra của lớp và khóa học liên kết, tính cho học viên đang học có quyền làm bài. Điểm dùng bài nộp mới nhất đã chấm; chuyên cần chỉ tính lượt điểm danh đã ghi.",
+              )}
             </Text>
           </>
         )}

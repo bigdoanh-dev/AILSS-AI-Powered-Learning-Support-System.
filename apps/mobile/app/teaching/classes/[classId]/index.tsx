@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../../src/use-language";
+import { useUiText, interfaceMessage, type InterfaceMessage } from "../../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Alert, Image, Text, TextInput, View, StyleSheet } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
@@ -18,13 +20,15 @@ import { Page, Button, ScreenHeader, Icon, NonVirtualizedList, styles, tokens } 
 import { ScalePressable, FadeSlideIn } from "../../../../src/motion";
 
 export default function ClassDetail() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { classId } = useLocalSearchParams<{ classId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [cls, setCls] = useState<OwnedClass | null>(null);
   const [members, setMembers] = useState<ClassMember[] | null>(null);
   const [error, setError] = useState("");
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] = useState<InterfaceMessage>("");
   const [busy, setBusy] = useState(false);
   const [retry, setRetry] = useState(0);
   const [joinCode, setJoinCode] = useState("");
@@ -138,12 +142,12 @@ export default function ClassDetail() {
   function confirmDeleteClass() {
     if (!classId || busy) return;
     Alert.alert(
-      "Xóa lớp",
-      "Chỉ xóa được lớp nháp chưa có học viên, buổi học hoặc khóa học liên kết. Tiếp tục?",
+      uiText("Xóa lớp"),
+      uiText("Chỉ xóa được lớp nháp chưa có học viên, buổi học hoặc khóa học liên kết. Tiếp tục?"),
       [
-        { text: "Hủy", style: "cancel" },
+        { text: uiText("Hủy"), style: "cancel" },
         {
-          text: "Xóa lớp",
+          text: uiText("Xóa lớp"),
           style: "destructive",
           onPress: () => {
             setBusy(true);
@@ -178,7 +182,7 @@ export default function ClassDetail() {
       });
       setWarningStudentId("");
       setWarningReason("");
-      setMsg(`Đã gửi cảnh báo cho ${item.displayName}.`);
+      setMsg(interfaceMessage("Đã gửi cảnh báo cho {0}.", [item.displayName]));
     } catch (cause) {
       setMsg(cause instanceof ApiError ? cause.message : "Không thể gửi cảnh báo.");
     } finally {
@@ -188,10 +192,10 @@ export default function ClassDetail() {
 
   function confirmRemove(item: ClassMember) {
     if (!classId) return;
-    Alert.alert("Xóa học viên khỏi lớp", `Xóa ${item.displayName} khỏi lớp này?`, [
-      { text: "Hủy", style: "cancel" },
+    Alert.alert(uiText("Xóa học viên khỏi lớp"), uiText("Xóa {0} khỏi lớp này?", [item.displayName]), [
+      { text: uiText("Hủy"), style: "cancel" },
       {
-        text: "Xóa",
+        text: uiText("Xóa"),
         style: "destructive",
         onPress: () => {
           setBusy(true);
@@ -202,7 +206,7 @@ export default function ClassDetail() {
               body: {},
             })
             .then(() => {
-              setMsg(`Đã xóa ${item.displayName} khỏi lớp.`);
+              setMsg(interfaceMessage("Đã xóa {0} khỏi lớp.", [item.displayName]));
               setRetry((value) => value + 1);
             })
             .catch((cause: unknown) => {
@@ -234,8 +238,8 @@ export default function ClassDetail() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <Text style={styles.error}>Bạn không có quyền truy cập.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Bạn không có quyền truy cập.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -254,7 +258,7 @@ export default function ClassDetail() {
               <Text style={cd.memberName}>{item.displayName}</Text>
               <View style={[cd.newBadge, { backgroundColor: isNew ? "#ECFDF5" : "#F8FAFC" }]}>
                 <Text style={[cd.newBadgeText, { color: isNew ? "#047857" : tokens.color.muted }]}>
-                  {isNew ? "Mới" : "Cũ"}
+                  {isNew ? uiText("Mới") : uiText("Cũ")}
                 </Text>
               </View>
             </View>
@@ -263,13 +267,19 @@ export default function ClassDetail() {
         </View>
 
         <View style={cd.memberMetaRow}>
-          <Text style={cd.metaText}>Đăng ký: {new Date(item.createdAt).toLocaleDateString("vi-VN")}</Text>
-          <Text style={cd.metaText}>Vào lớp: {new Date(item.joinedAt).toLocaleDateString("vi-VN")}</Text>
+          <Text style={cd.metaText}>
+            {uiText("Đăng ký: ")}
+            {new Date(item.createdAt).toLocaleDateString(uiLocale)}
+          </Text>
+          <Text style={cd.metaText}>
+            {uiText("Vào lớp: ")}
+            {new Date(item.joinedAt).toLocaleDateString(uiLocale)}
+          </Text>
         </View>
 
         <View style={cd.memberActions}>
           <Button
-            label="Cảnh báo"
+            label={uiText("Cảnh báo")}
             size="sm"
             variant="outline"
             icon={<Icon name="alert" size={13} color={tokens.color.ink} />}
@@ -281,7 +291,7 @@ export default function ClassDetail() {
           />
           {cls?.scheduleState !== "PUBLISHED" && item.source === "JOIN_CODE" && (
             <Button
-              label="Xóa khỏi lớp"
+              label={uiText("Xóa khỏi lớp")}
               size="sm"
               variant="outline"
               disabled={busy}
@@ -298,11 +308,21 @@ export default function ClassDetail() {
               onChangeText={setWarningReason}
               maxLength={500}
               multiline
-              placeholder="Nội dung cảnh báo gửi cho học viên"
+              placeholder={uiText("Nội dung cảnh báo gửi cho học viên")}
             />
             <View style={{ flexDirection: "row", gap: 8 }}>
-              <Button label="Gửi cảnh báo" size="sm" disabled={busy} onPress={() => void warnStudent(item)} />
-              <Button label="Hủy" size="sm" variant="outline" onPress={() => setWarningStudentId("")} />
+              <Button
+                label={uiText("Gửi cảnh báo")}
+                size="sm"
+                disabled={busy}
+                onPress={() => void warnStudent(item)}
+              />
+              <Button
+                label={uiText("Hủy")}
+                size="sm"
+                variant="outline"
+                onPress={() => setWarningStudentId("")}
+              />
             </View>
           </View>
         )}
@@ -313,15 +333,15 @@ export default function ClassDetail() {
   return (
     <Page>
       <ScreenHeader
-        title={cls ? cls.name : "Chi tiết lớp học"}
-        subtitle="Quản lý buổi học, điểm danh & thành viên"
+        title={cls ? cls.name : uiText("Chi tiết lớp học")}
+        subtitle={uiText("Quản lý buổi học, điểm danh & thành viên")}
         onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching/classes"))}
       />
 
       {!cls && !error && (
         <View style={{ alignItems: "center", paddingVertical: 30 }}>
           <Text accessibilityRole="alert" style={styles.text}>
-            Đang tải thông tin lớp học…
+            {uiText("Đang tải thông tin lớp học…")}
           </Text>
         </View>
       )}
@@ -354,10 +374,10 @@ export default function ClassDetail() {
                   <View style={cd.classBadge}>
                     <Text style={cd.classBadgeText}>
                       {cls.classKind === "LIVE_COHORT"
-                        ? "Lớp trực tiếp"
+                        ? uiText("Lớp trực tiếp")
                         : cls.classKind === "PRIVATE"
-                          ? "Lớp riêng"
-                          : "Lớp học"}
+                          ? uiText("Lớp riêng")
+                          : uiText("Lớp học")}
                     </Text>
                   </View>
                   <View style={[cd.stateBadge, cls.state !== "ACTIVE" && cd.stateBadgeNeutral]}>
@@ -369,9 +389,9 @@ export default function ClassDetail() {
                     />
                     <Text style={[cd.stateBadgeText, cls.state !== "ACTIVE" && cd.stateBadgeTextNeutral]}>
                       {cls.state === "ACTIVE"
-                        ? "Đang hoạt động"
+                        ? uiText("Đang hoạt động")
                         : cls.state === "CLOSED"
-                          ? "Đã đóng"
+                          ? uiText("Đã đóng")
                           : cls.state}
                     </Text>
                   </View>
@@ -385,9 +405,9 @@ export default function ClassDetail() {
               <View style={cd.metricItem}>
                 <Text style={cd.metricIcon}>👥</Text>
                 <View>
-                  <Text style={cd.metricLabel}>Sức chứa</Text>
+                  <Text style={cd.metricLabel}>{uiText("Sức chứa")}</Text>
                   <Text style={cd.metricValue}>
-                    {cls.maxMembers != null ? `${cls.maxMembers} bạn` : "Tự do"}
+                    {cls.maxMembers != null ? uiText("{0} bạn", [cls.maxMembers]) : uiText("Tự do")}
                   </Text>
                 </View>
               </View>
@@ -397,8 +417,10 @@ export default function ClassDetail() {
               <View style={cd.metricItem}>
                 <Text style={cd.metricIcon}>🎓</Text>
                 <View>
-                  <Text style={cd.metricLabel}>Thành viên</Text>
-                  <Text style={cd.metricValue}>{members?.length ?? 0} bạn</Text>
+                  <Text style={cd.metricLabel}>{uiText("Thành viên")}</Text>
+                  <Text style={cd.metricValue}>
+                    {members?.length ?? 0} {uiText(" bạn")}
+                  </Text>
                 </View>
               </View>
 
@@ -407,9 +429,9 @@ export default function ClassDetail() {
               <View style={cd.metricItem}>
                 <Text style={cd.metricIcon}>📅</Text>
                 <View>
-                  <Text style={cd.metricLabel}>Lịch học</Text>
+                  <Text style={cd.metricLabel}>{uiText("Lịch học")}</Text>
                   <Text style={cd.metricValue}>
-                    {cls.scheduleState === "PUBLISHED" ? "Đã duyệt" : "Bản nháp"}
+                    {cls.scheduleState === "PUBLISHED" ? uiText("Đã duyệt") : uiText("Bản nháp")}
                   </Text>
                 </View>
               </View>
@@ -418,11 +440,13 @@ export default function ClassDetail() {
             {/* Join Code Box */}
             <View style={cd.joinCodeBox}>
               <View style={{ flex: 1, gap: 2 }}>
-                <Text style={cd.joinCodeLabel}>MÃ THAM GIA LỚP</Text>
-                <Text style={cd.joinCodeText}>{joinCode ? joinCode : "Bấm để tạo mã tham gia mới"}</Text>
+                <Text style={cd.joinCodeLabel}>{uiText("MÃ THAM GIA LỚP")}</Text>
+                <Text style={cd.joinCodeText}>
+                  {joinCode ? joinCode : uiText("Bấm để tạo mã tham gia mới")}
+                </Text>
               </View>
               <Button
-                label={busy ? "Đang tạo…" : "Tạo mã mới"}
+                label={busy ? uiText("Đang tạo…") : uiText("Tạo mã mới")}
                 size="sm"
                 variant="outline"
                 icon={<Icon name="refresh" size={13} color={tokens.color.brand} />}
@@ -434,35 +458,43 @@ export default function ClassDetail() {
             {cls.linkedCourseId ? (
               <View style={cd.linkedCourseRow}>
                 <Icon name="book" size={14} color={tokens.color.brand} />
-                <Text style={cd.linkedCourseText}>Khóa học liên kết: {cls.linkedCourseId.slice(0, 8)}…</Text>
+                <Text style={cd.linkedCourseText}>
+                  {uiText("Khóa học liên kết: ")}
+                  {cls.linkedCourseId.slice(0, 8)}…
+                </Text>
               </View>
             ) : null}
             <View style={{ gap: 8, marginTop: 12 }}>
               <Button
-                label={busy ? "Đang lưu…" : "Tải ảnh lớp"}
+                label={busy ? uiText("Đang lưu…") : uiText("Tải ảnh lớp")}
                 variant="outline"
                 disabled={busy}
                 onPress={() => void uploadImage("photoDataUrl")}
               />
               <Button
-                label={busy ? "Đang lưu…" : "Tải ảnh bìa"}
+                label={busy ? uiText("Đang lưu…") : uiText("Tải ảnh bìa")}
                 variant="outline"
                 disabled={busy}
                 onPress={() => void uploadImage("coverDataUrl")}
               />
-              <Button label="Xóa lớp" variant="outline" disabled={busy} onPress={confirmDeleteClass} />
+              <Button
+                label={uiText("Xóa lớp")}
+                variant="outline"
+                disabled={busy}
+                onPress={confirmDeleteClass}
+              />
             </View>
           </View>
 
           {msg ? (
             <View style={cd.toastBox}>
               <Icon name="checkCircle" size={16} color="#065F46" />
-              <Text style={cd.toastText}>{msg}</Text>
+              <Text style={cd.toastText}>{uiText(msg)}</Text>
             </View>
           ) : null}
 
           {/* Studio Navigation Grid */}
-          <Text style={cd.sectionHeading}>Quản Trị Lớp Học</Text>
+          <Text style={cd.sectionHeading}>{uiText("Quản Trị Lớp Học")}</Text>
           <View style={cd.actionGrid}>
             <ScalePressable
               style={cd.actionTile}
@@ -472,8 +504,8 @@ export default function ClassDetail() {
                 <Icon name="megaphone" size={22} color={tokens.color.brand} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={cd.actionTitle}>Thông báo lớp học</Text>
-                <Text style={cd.actionSub}>Đăng tin & thông điệp</Text>
+                <Text style={cd.actionTitle}>{uiText("Thông báo lớp học")}</Text>
+                <Text style={cd.actionSub}>{uiText("Đăng tin & thông điệp")}</Text>
               </View>
               <Icon name="chevronRight" size={16} color={tokens.color.muted} />
             </ScalePressable>
@@ -486,8 +518,8 @@ export default function ClassDetail() {
                 <Icon name="calendar" size={22} color="#0D9488" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={cd.actionTitle}>Lịch giảng dạy & Buổi học</Text>
-                <Text style={cd.actionSub}>Xếp lịch, phòng & điểm danh</Text>
+                <Text style={cd.actionTitle}>{uiText("Lịch giảng dạy & Buổi học")}</Text>
+                <Text style={cd.actionSub}>{uiText("Xếp lịch, phòng & điểm danh")}</Text>
               </View>
               <Icon name="chevronRight" size={16} color={tokens.color.muted} />
             </ScalePressable>
@@ -502,9 +534,9 @@ export default function ClassDetail() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[cd.actionTitle, { color: "#065F46" }]}>
-                    {busy ? "Đang xuất bản…" : "Xuất bản lịch học"}
+                    {busy ? uiText("Đang xuất bản…") : uiText("Xuất bản lịch học")}
                   </Text>
-                  <Text style={cd.actionSub}>Công bố cho tất cả học viên</Text>
+                  <Text style={cd.actionSub}>{uiText("Công bố cho tất cả học viên")}</Text>
                 </View>
                 <Icon name="chevronRight" size={16} color="#059669" />
               </ScalePressable>
@@ -514,8 +546,13 @@ export default function ClassDetail() {
           {/* Members List */}
           <View style={cd.membersHeaderRow}>
             <View>
-              <Text style={cd.sectionHeading}>Thành Viên Lớp ({members?.length ?? 0})</Text>
-              <Text style={cd.metaGuideText}>● Xanh: Tài khoản mới (≤21 ngày) · ● Xám: Học viên cũ</Text>
+              <Text style={cd.sectionHeading}>
+                {uiText("Thành Viên Lớp (")}
+                {members?.length ?? 0})
+              </Text>
+              <Text style={cd.metaGuideText}>
+                {uiText("● Xanh: Tài khoản mới (≤21 ngày) · ● Xám: Học viên cũ")}
+              </Text>
             </View>
           </View>
 
@@ -524,9 +561,9 @@ export default function ClassDetail() {
               <View style={cd.emptyMemberIconRing}>
                 <Icon name="people" size={26} color={tokens.color.brand} />
               </View>
-              <Text style={cd.emptyMemberTitle}>Chưa có thành viên nào</Text>
+              <Text style={cd.emptyMemberTitle}>{uiText("Chưa có thành viên nào")}</Text>
               <Text style={cd.emptyMemberSub}>
-                Chia sẻ mã tham gia lớp với học viên để các bạn có thể ghi danh vào lớp học.
+                {uiText("Chia sẻ mã tham gia lớp với học viên để các bạn có thể ghi danh vào lớp học.")}
               </Text>
             </View>
           )}
@@ -544,13 +581,13 @@ export default function ClassDetail() {
 
       {error && (
         <Text accessibilityRole="alert" style={styles.error}>
-          {error}
+          {uiText(error)}
         </Text>
       )}
-      {error && <Button label="Thử lại" onPress={handleRetry} />}
+      {error && <Button label={uiText("Thử lại")} onPress={handleRetry} />}
       <View style={{ marginTop: 12 }}>
         <Button
-          label="Quay lại"
+          label={uiText("Quay lại")}
           variant="outline"
           onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
         />

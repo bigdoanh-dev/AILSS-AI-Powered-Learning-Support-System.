@@ -1,3 +1,4 @@
+import { useUiText, useLanguage } from "./use-language";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { router, type Href } from "expo-router";
@@ -16,6 +17,8 @@ type Props = {
 };
 
 export function RoleAssistantChat({ role, mode, title, subtitle, back }: Props) {
+  const uiText = useUiText();
+  const { language } = useLanguage();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [history, setHistory] = useState<Conversation[]>([]);
@@ -73,7 +76,7 @@ export function RoleAssistantChat({ role, mode, title, subtitle, back }: Props) 
       const reply = record(
         await session.request("/api/v1/assistant/chat", {
           method: "POST",
-          body: { mode, message, ...(conversationId ? { conversationId } : {}) },
+          body: { mode, message, responseLanguage: language, ...(conversationId ? { conversationId } : {}) },
           timeoutMs: 65000,
         }),
       );
@@ -98,7 +101,8 @@ export function RoleAssistantChat({ role, mode, title, subtitle, back }: Props) 
       <Page>
         <ScreenHeader title={title} onBack={() => router.replace("/")} />
         <Text style={styles.error}>
-          Tính năng này yêu cầu tài khoản {role === "ADMIN" ? "Quản trị viên" : "Giảng viên"}.
+          {uiText("Tính năng này yêu cầu tài khoản ")}
+          {role === "ADMIN" ? uiText("Quản trị viên") : uiText("Giảng viên")}.
         </Text>
       </Page>
     );
@@ -107,7 +111,7 @@ export function RoleAssistantChat({ role, mode, title, subtitle, back }: Props) 
       <Page>
         <ScreenHeader title={title} subtitle={subtitle} onBack={() => router.replace(back)} />
         <Button
-          label="Chat mới"
+          label={uiText("Chat mới")}
           variant="outline"
           disabled={busy}
           onPress={() => {
@@ -117,7 +121,7 @@ export function RoleAssistantChat({ role, mode, title, subtitle, back }: Props) 
           }}
         />
         <View style={[styles.card, { gap: 8 }]}>
-          <Text style={styles.title}>Lịch sử</Text>
+          <Text style={styles.title}>{uiText("Lịch sử")}</Text>
           {history.length ? (
             history.map((item) => (
               <Pressable
@@ -130,7 +134,7 @@ export function RoleAssistantChat({ role, mode, title, subtitle, back }: Props) 
               </Pressable>
             ))
           ) : (
-            <Text style={styles.small}>Chưa có đoạn chat nào.</Text>
+            <Text style={styles.small}>{uiText("Chưa có đoạn chat nào.")}</Text>
           )}
         </View>
         <View style={[styles.card, { gap: 10 }]}>
@@ -145,26 +149,26 @@ export function RoleAssistantChat({ role, mode, title, subtitle, back }: Props) 
                   borderRadius: 8,
                 }}
               >
-                <Text style={styles.small}>{item.sender === "USER" ? "Bạn" : title}</Text>
+                <Text style={styles.small}>{item.sender === "USER" ? uiText("Bạn") : title}</Text>
                 <Text style={styles.text}>{item.content}</Text>
               </View>
             ))
           ) : (
             <Text style={styles.small}>
               {role === "ADMIN"
-                ? "Bạn muốn tìm hiểu quy trình quản trị nào?"
-                : "Bạn muốn hỗ trợ soạn bài hoặc tổ chức lớp học nào?"}
+                ? uiText("Bạn muốn tìm hiểu quy trình quản trị nào?")
+                : uiText("Bạn muốn hỗ trợ soạn bài hoặc tổ chức lớp học nào?")}
             </Text>
           )}
-          {busy ? <Text style={styles.small}>AI đang trả lời…</Text> : null}
+          {busy ? <Text style={styles.small}>{uiText("AI đang trả lời…")}</Text> : null}
         </View>
         {error ? (
           <Text accessibilityRole="alert" style={styles.error}>
-            {error}
+            {uiText(error)}
           </Text>
         ) : null}
         <TextInput
-          accessibilityLabel={`Câu hỏi cho ${title}`}
+          accessibilityLabel={uiText("Câu hỏi cho {0}", [title])}
           style={[styles.input, { minHeight: 90, textAlignVertical: "top" }]}
           multiline
           maxLength={4000}
@@ -172,11 +176,11 @@ export function RoleAssistantChat({ role, mode, title, subtitle, back }: Props) 
           onChangeText={setDraft}
           placeholder={
             role === "ADMIN"
-              ? "Ví dụ: Xem báo cáo kiểm duyệt ở đâu?"
-              : "Ví dụ: Gợi ý cấu trúc bài giảng về CSDL"
+              ? uiText("Ví dụ: Xem báo cáo kiểm duyệt ở đâu?")
+              : uiText("Ví dụ: Gợi ý cấu trúc bài giảng về CSDL")
           }
         />
-        <Button label="Gửi câu hỏi" disabled={busy || !draft.trim()} onPress={() => void send()} />
+        <Button label={uiText("Gửi câu hỏi")} disabled={busy || !draft.trim()} onPress={() => void send()} />
       </Page>
     </View>
   );

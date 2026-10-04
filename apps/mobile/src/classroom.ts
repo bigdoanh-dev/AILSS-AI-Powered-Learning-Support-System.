@@ -267,9 +267,9 @@ export function formatDate(
   }
 }
 
-export function formatTime(date: Date, timezone: string = "Asia/Ho_Chi_Minh"): string {
+export function formatTime(date: Date, timezone: string = "Asia/Ho_Chi_Minh", locale = "vi-VN"): string {
   try {
-    const formatter = new Intl.DateTimeFormat("vi-VN", {
+    const formatter = new Intl.DateTimeFormat(locale, {
       timeZone: timezone,
       hour: "2-digit",
       minute: "2-digit",
@@ -281,9 +281,14 @@ export function formatTime(date: Date, timezone: string = "Asia/Ho_Chi_Minh"): s
   }
 }
 
-export function formatTimeRange(start: Date, end: Date, timezone: string = "Asia/Ho_Chi_Minh"): string {
-  const startTime = formatTime(start, timezone);
-  const endTime = formatTime(end, timezone);
+export function formatTimeRange(
+  start: Date,
+  end: Date,
+  timezone: string = "Asia/Ho_Chi_Minh",
+  locale = "vi-VN",
+): string {
+  const startTime = formatTime(start, timezone, locale);
+  const endTime = formatTime(end, timezone, locale);
   return `${startTime} - ${endTime} (${timezone})`;
 }
 

@@ -338,11 +338,11 @@ export function isPaymentPendingEntitlement(state: OrderState): boolean {
   return state === "PAID_PENDING_ENTITLEMENT";
 }
 
-export function formatVND(amountStr?: string): string {
+export function formatVND(amountStr?: string, locale: string = "vi-VN"): string {
   if (!amountStr) return "0 ₫";
   const num = Number(amountStr);
   if (Number.isNaN(num)) return amountStr;
-  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
+  return new Intl.NumberFormat(locale, { style: "currency", currency: "VND" }).format(num);
 }
 
 export function validatePassword(password: string): boolean {

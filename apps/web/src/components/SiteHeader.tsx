@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useSession, roleLabel } from "../auth/session";
@@ -8,6 +9,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useLanguage } from "../lib/i18n";
 
 export function SiteHeader() {
+  const uiText = useUiText();
   const { t } = useLanguage();
   const auth = useSession();
   const navigate = useNavigate();
@@ -42,10 +44,10 @@ export function SiteHeader() {
     navigate("/auth/result", {
       state: {
         success: true,
-        title: "Đang đăng xuất…",
+        title: uiText("Đang đăng xuất…"),
         message: "AILSS đang thu hồi phiên hiện tại.",
         to: "/auth/login",
-        label: "Đợi hoàn tất",
+        label: uiText("Đợi hoàn tất"),
       },
     });
     try {
@@ -55,10 +57,10 @@ export function SiteHeader() {
         replace: true,
         state: {
           success: true,
-          title: "Đăng xuất thành công",
+          title: uiText("Đăng xuất thành công"),
           message: "Phiên đăng nhập đã kết thúc.",
           to: "/auth/login",
-          label: "Đăng nhập lại",
+          label: uiText("Đăng nhập lại"),
         },
       });
     } catch {
@@ -66,10 +68,10 @@ export function SiteHeader() {
         replace: true,
         state: {
           success: false,
-          title: "Chưa thể đăng xuất",
+          title: uiText("Chưa thể đăng xuất"),
           message: "Chưa xác nhận được việc thu hồi phiên. Vui lòng thử lại.",
           to: "/app",
-          label: "Quay lại tài khoản",
+          label: uiText("Quay lại tài khoản"),
         },
       });
     } finally {
@@ -81,8 +83,8 @@ export function SiteHeader() {
       {aiNotice && (
         <aside className="assistant-notice" role="status">
           {aiNotice.state === "AI_DRAFT"
-            ? "Bản nháp câu hỏi đã sẵn sàng."
-            : "Chưa thể tạo câu hỏi. Xem chi tiết để biết lý do."}
+            ? uiText("Bản nháp câu hỏi đã sẵn sàng.")
+            : uiText("Chưa thể tạo câu hỏi. Xem chi tiết để biết lý do.")}
           <Link
             className="button"
             to={`/app/teaching/ai/jobs/${aiNotice.jobId}`}
@@ -158,7 +160,7 @@ export function SiteHeader() {
                 <button
                   type="button"
                   className="user-menu-trigger"
-                  aria-label={`Menu tài khoản: ${p.displayName}`}
+                  aria-label={uiText("Menu tài khoản: {0}", [p.displayName])}
                   aria-expanded={menu}
                   aria-controls="account-menu"
                   onClick={() => setMenu(!menu)}
@@ -172,7 +174,7 @@ export function SiteHeader() {
                 {menu && (
                   <div className="user-menu-panel" id="account-menu">
                     <strong>{p.displayName}</strong>
-                    <small>{roleLabel(p)}</small>
+                    <small>{uiText(roleLabel(p))}</small>
                     <Link to="/app">{t("nav.accountOverview", "Tổng quan tài khoản")}</Link>
                     <Link to="/app/account">{t("nav.profileAndAvatar", "Hồ sơ và ảnh đại diện")}</Link>
                     <Link to="/app/notifications">{t("nav.personalNotifications", "Thông báo cá nhân")}</Link>
@@ -180,12 +182,12 @@ export function SiteHeader() {
                     <button disabled={busy} onClick={() => void logout()}>
                       {busy ? t("nav.loggingOut", "Đang đăng xuất…") : t("nav.logout", "Đăng xuất")}
                     </button>
-                    {error && <p role="alert">{error}</p>}
+                    {error && <p role="alert">{uiText(error)}</p>}
                   </div>
                 )}
               </div>
             ) : auth.state === "BOOTSTRAPPING" ? (
-              <span className="session-loading" aria-label="Đang kiểm tra tài khoản" />
+              <span className="session-loading" aria-label={uiText("Đang kiểm tra tài khoản")} />
             ) : (
               <div className="guest-actions">
                 <Link to="/auth/login">{t("nav.login", "Đăng nhập")}</Link>

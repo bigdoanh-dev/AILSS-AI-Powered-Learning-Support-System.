@@ -221,3 +221,32 @@ test("Admin assistant mode is read-only and cannot accept an arbitrary upstream"
     adminOperation("/web-session/admin/assistant/admin-status", "POST", { mode: "local-guide" }, {}),
   );
 });
+test("Admin AI language is optional and limited to Vietnamese or English", () => {
+  for (const responseLanguage of [undefined, "vi", "en"])
+    assert.equal(
+      adminOperation(
+        "/web-session/admin/assistant/chat",
+        "POST",
+        {
+          mode: "ADMIN_SUPPORT",
+          message: "Where can I review system health?",
+          ...(responseLanguage ? { responseLanguage } : {}),
+        },
+        {},
+      ).path,
+      "/assistant/chat",
+    );
+  for (const responseLanguage of ["ja", "ko", "zh", "", null])
+    assert.throws(() =>
+      adminOperation(
+        "/web-session/admin/assistant/chat",
+        "POST",
+        {
+          mode: "ADMIN_SUPPORT",
+          message: "Question",
+          responseLanguage,
+        },
+        {},
+      ),
+    );
+});

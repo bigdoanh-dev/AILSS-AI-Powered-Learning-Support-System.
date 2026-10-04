@@ -1,3 +1,5 @@
+import { useLanguage } from "../src/use-language";
+import { useUiText } from "../src/use-language";
 import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
 import { Text, View, TextInput, Image, ActivityIndicator, StyleSheet, Alert } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
@@ -31,6 +33,8 @@ const PRESET_AVATARS = [
 ];
 
 export default function AccountScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -160,8 +164,8 @@ export default function AccountScreen() {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         Alert.alert(
-          "Cần cấp quyền truy cập ảnh",
-          "Vui lòng cho phép ứng dụng truy cập thư viện ảnh trên thiết bị để tải lên ảnh đại diện.",
+          uiText("Cần cấp quyền truy cập ảnh"),
+          uiText("Vui lòng cho phép ứng dụng truy cập thư viện ảnh trên thiết bị để tải lên ảnh đại diện."),
         );
         return;
       }
@@ -180,7 +184,7 @@ export default function AccountScreen() {
 
       const asset = result.assets[0];
       if (!asset.base64) {
-        Alert.alert("Lỗi", "Không thể đọc dữ liệu ảnh. Vui lòng thử lại với ảnh khác.");
+        Alert.alert(uiText("Lỗi"), uiText("Không thể đọc dữ liệu ảnh. Vui lòng thử lại với ảnh khác."));
         return;
       }
 
@@ -192,16 +196,16 @@ export default function AccountScreen() {
       const validation = validateAvatarDataUrl(dataUrl);
       if (!validation.valid) {
         Alert.alert(
-          "Ảnh không hợp lệ",
-          validation.error ?? "Dung lượng ảnh vượt quá giới hạn tối đa (256 KiB).",
+          uiText("Ảnh không hợp lệ"),
+          uiText(validation.error ?? "Dung lượng ảnh vượt quá giới hạn tối đa (256 KiB)."),
         );
         return;
       }
 
       await handleSetAvatar(dataUrl);
-      Alert.alert("Thành công", "Đã cập nhật ảnh đại diện của bạn.");
+      Alert.alert(uiText("Thành công"), uiText("Đã cập nhật ảnh đại diện của bạn."));
     } catch (e: unknown) {
-      Alert.alert("Lỗi", e instanceof Error ? e.message : "Không thể chọn ảnh từ thư viện.");
+      Alert.alert(uiText("Lỗi"), uiText(e instanceof Error ? e.message : "Không thể chọn ảnh từ thư viện."));
     }
   };
 
@@ -210,8 +214,8 @@ export default function AccountScreen() {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
         Alert.alert(
-          "Cần cấp quyền máy ảnh",
-          "Vui lòng cho phép ứng dụng truy cập máy ảnh để chụp ảnh đại diện.",
+          uiText("Cần cấp quyền máy ảnh"),
+          uiText("Vui lòng cho phép ứng dụng truy cập máy ảnh để chụp ảnh đại diện."),
         );
         return;
       }
@@ -229,7 +233,7 @@ export default function AccountScreen() {
 
       const asset = result.assets[0];
       if (!asset.base64) {
-        Alert.alert("Lỗi", "Không thể đọc dữ liệu từ máy ảnh.");
+        Alert.alert(uiText("Lỗi"), uiText("Không thể đọc dữ liệu từ máy ảnh."));
         return;
       }
 
@@ -240,14 +244,17 @@ export default function AccountScreen() {
 
       const validation = validateAvatarDataUrl(dataUrl);
       if (!validation.valid) {
-        Alert.alert("Ảnh không hợp lệ", validation.error ?? "Dung lượng ảnh vượt quá giới hạn tối đa.");
+        Alert.alert(
+          uiText("Ảnh không hợp lệ"),
+          uiText(validation.error ?? "Dung lượng ảnh vượt quá giới hạn tối đa."),
+        );
         return;
       }
 
       await handleSetAvatar(dataUrl);
-      Alert.alert("Thành công", "Đã chụp và cập nhật ảnh đại diện mới.");
+      Alert.alert(uiText("Thành công"), uiText("Đã chụp và cập nhật ảnh đại diện mới."));
     } catch (e: unknown) {
-      Alert.alert("Lỗi", e instanceof Error ? e.message : "Không thể chụp ảnh.");
+      Alert.alert(uiText("Lỗi"), uiText(e instanceof Error ? e.message : "Không thể chụp ảnh."));
     }
   };
 
@@ -281,11 +288,11 @@ export default function AccountScreen() {
       setIsChangingPass(false);
 
       Alert.alert(
-        "Đổi mật khẩu thành công",
-        "Mật khẩu đã được cập nhật. Vui lòng đăng nhập lại với mật khẩu mới.",
+        uiText("Đổi mật khẩu thành công"),
+        uiText("Mật khẩu đã được cập nhật. Vui lòng đăng nhập lại với mật khẩu mới."),
         [
           {
-            text: "Đăng nhập lại",
+            text: uiText("Đăng nhập lại"),
             onPress: () => {
               void session.logout().then(() => router.replace("/login"));
             },
@@ -324,12 +331,12 @@ export default function AccountScreen() {
             >
               <Icon name="user" size={36} color={tokens.color.brand} />
             </View>
-            <Text style={styles.title}>Tài khoản cá nhân</Text>
+            <Text style={styles.title}>{uiText("Tài khoản cá nhân")}</Text>
             <Text style={[styles.text, { textAlign: "center", maxWidth: 300 }]}>
-              Vui lòng đăng nhập để xem hồ sơ, tiến độ học tập và quản lý cài đặt tài khoản.
+              {uiText("Vui lòng đăng nhập để xem hồ sơ, tiến độ học tập và quản lý cài đặt tài khoản.")}
             </Text>
             <Button
-              label="Đăng nhập ngay"
+              label={uiText("Đăng nhập ngay")}
               variant="primary"
               size="lg"
               onPress={() => router.push("/login" as Href)}
@@ -347,7 +354,7 @@ export default function AccountScreen() {
         <Page>
           <View style={localStyles.center}>
             <ActivityIndicator size="large" color={tokens.color.brand} />
-            <Text style={styles.small}>Đang tải hồ sơ người dùng…</Text>
+            <Text style={styles.small}>{uiText("Đang tải hồ sơ người dùng…")}</Text>
           </View>
         </Page>
       </View>
@@ -372,7 +379,7 @@ export default function AccountScreen() {
             {avatarUrl ? (
               <Image
                 source={{ uri: avatarUrl }}
-                accessibilityLabel="Ảnh đại diện"
+                accessibilityLabel={uiText("Ảnh đại diện")}
                 style={localStyles.avatarImage}
               />
             ) : (
@@ -386,7 +393,7 @@ export default function AccountScreen() {
               style={localStyles.avatarEditBadge}
               onPress={() => void handlePickImage()}
               accessibilityRole="button"
-              accessibilityLabel="Tải ảnh đại diện mới"
+              accessibilityLabel={uiText("Tải ảnh đại diện mới")}
             >
               <Icon name="pencil" size={14} color="#FFFFFF" />
             </ScalePressable>
@@ -402,7 +409,7 @@ export default function AccountScreen() {
                 variant={profile?.role === "LECTURER" ? "ai" : "primary"}
                 icon="academic"
               />
-              <Badge label="Đang hoạt động" variant="success" icon="check" />
+              <Badge label={uiText("Đang hoạt động")} variant="success" icon="check" />
             </View>
           </View>
         </View>
@@ -410,9 +417,9 @@ export default function AccountScreen() {
         {error && (
           <View style={[styles.card, { borderColor: tokens.color.dangerLight, backgroundColor: "#FEF2F2" }]}>
             <Text accessibilityRole="alert" style={styles.error}>
-              {error}
+              {uiText(error)}
             </Text>
-            <Button label="Thử lại" size="sm" onPress={() => void loadAccountData()} />
+            <Button label={uiText("Thử lại")} size="sm" onPress={() => void loadAccountData()} />
           </View>
         )}
 
@@ -420,7 +427,7 @@ export default function AccountScreen() {
         <View style={styles.card}>
           <View style={localStyles.cardTitleRow}>
             <Icon name="user" size={16} color={tokens.color.brand} />
-            <Text style={localStyles.cardSectionTitle}>THÔNG TIN CÁ NHÂN</Text>
+            <Text style={localStyles.cardSectionTitle}>{uiText("THÔNG TIN CÁ NHÂN")}</Text>
           </View>
 
           {nameMessage && (
@@ -438,23 +445,23 @@ export default function AccountScreen() {
 
           {isEditingName ? (
             <View style={localStyles.editRow}>
-              <Text style={styles.small}>Họ và tên mới</Text>
+              <Text style={styles.small}>{uiText("Họ và tên mới")}</Text>
               <TextInput
                 style={styles.input}
                 value={newDisplayName}
                 onChangeText={setNewDisplayName}
-                placeholder="Nhập họ và tên mới"
+                placeholder={uiText("Nhập họ và tên mới")}
                 autoFocus
               />
               <View style={{ flexDirection: "row", gap: 8 }}>
                 <Button
-                  label={nameSaving ? "Đang lưu…" : "Lưu thay đổi"}
+                  label={nameSaving ? uiText("Đang lưu…") : uiText("Lưu thay đổi")}
                   size="sm"
                   onPress={() => void handleUpdateDisplayName()}
                   disabled={nameSaving}
                 />
                 <Button
-                  label="Hủy"
+                  label={uiText("Hủy")}
                   variant="outline"
                   size="sm"
                   onPress={() => {
@@ -467,11 +474,11 @@ export default function AccountScreen() {
           ) : (
             <View style={localStyles.infoRow}>
               <View>
-                <Text style={styles.small}>Họ và tên</Text>
+                <Text style={styles.small}>{uiText("Họ và tên")}</Text>
                 <Text style={[styles.text, { fontWeight: "700" }]}>{profile?.displayName}</Text>
               </View>
               <Button
-                label="Chỉnh sửa"
+                label={uiText("Chỉnh sửa")}
                 variant="secondary"
                 size="sm"
                 onPress={() => setIsEditingName(true)}
@@ -481,7 +488,7 @@ export default function AccountScreen() {
 
           <View style={localStyles.infoRow}>
             <View>
-              <Text style={styles.small}>Email đăng ký</Text>
+              <Text style={styles.small}>{uiText("Email đăng ký")}</Text>
               <Text style={styles.text}>{profile?.emailMasked}</Text>
             </View>
           </View>
@@ -489,8 +496,8 @@ export default function AccountScreen() {
           {profile?.createdAt && (
             <View style={localStyles.infoRow}>
               <View>
-                <Text style={styles.small}>Ngày tham gia</Text>
-                <Text style={styles.text}>{new Date(profile.createdAt).toLocaleDateString("vi-VN")}</Text>
+                <Text style={styles.small}>{uiText("Ngày tham gia")}</Text>
+                <Text style={styles.text}>{new Date(profile.createdAt).toLocaleDateString(uiLocale)}</Text>
               </View>
             </View>
           )}
@@ -500,29 +507,34 @@ export default function AccountScreen() {
         <View style={styles.card}>
           <View style={localStyles.cardTitleRow}>
             <Icon name="sparkles" size={16} color={tokens.color.brand} />
-            <Text style={localStyles.cardSectionTitle}>ẢNH ĐẠI DIỆN HỆ THỐNG</Text>
+            <Text style={localStyles.cardSectionTitle}>{uiText("ẢNH ĐẠI DIỆN HỆ THỐNG")}</Text>
           </View>
           <Text style={styles.small}>
-            Tải ảnh đại diện từ thiết bị hoặc chọn màu đại diện cho hồ sơ của bạn trên toàn hệ thống AILSS
-            (tối đa 256 KiB).
+            {uiText(
+              "Tải ảnh đại diện từ thiết bị hoặc chọn màu đại diện cho hồ sơ của bạn trên toàn hệ thống AILSS (tối đa 256 KiB).",
+            )}
           </Text>
 
           <View style={localStyles.avatarActions}>
             {avatarSaving ? (
               <View style={{ paddingVertical: 16, alignItems: "center", gap: 8 }}>
                 <ActivityIndicator size="small" color={tokens.color.brand} />
-                <Text style={styles.small}>Đang tải lên ảnh đại diện…</Text>
+                <Text style={styles.small}>{uiText("Đang tải lên ảnh đại diện…")}</Text>
               </View>
             ) : (
               <View style={{ gap: 12 }}>
                 {/* Upload Buttons Row */}
                 <View style={{ flexDirection: "row", gap: 10 }}>
                   <View style={{ flex: 1 }}>
-                    <Button label="Tải ảnh từ máy" size="sm" onPress={() => void handlePickImage()} />
+                    <Button
+                      label={uiText("Tải ảnh từ máy")}
+                      size="sm"
+                      onPress={() => void handlePickImage()}
+                    />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Button
-                      label="Chụp ảnh mới"
+                      label={uiText("Chụp ảnh mới")}
                       variant="outline"
                       size="sm"
                       onPress={() => void handleTakePhoto()}
@@ -540,11 +552,13 @@ export default function AccountScreen() {
                     marginTop: 4,
                   }}
                 >
-                  <Text style={[styles.small, { fontWeight: "600", width: "100%" }]}>Màu sắc mẫu:</Text>
+                  <Text style={[styles.small, { fontWeight: "600", width: "100%" }]}>
+                    {uiText("Màu sắc mẫu:")}
+                  </Text>
                   {PRESET_AVATARS.map((p) => (
                     <Button
                       key={p.label}
-                      label={`Màu ${p.label}`}
+                      label={uiText("Màu {0}", [p.label])}
                       variant="secondary"
                       size="sm"
                       onPress={() => void handleSetAvatar(p.dataUrl)}
@@ -552,7 +566,7 @@ export default function AccountScreen() {
                   ))}
                   {avatarUrl && (
                     <Button
-                      label="Xóa avatar"
+                      label={uiText("Xóa avatar")}
                       variant="danger"
                       size="sm"
                       onPress={() => void handleSetAvatar(null)}
@@ -569,22 +583,28 @@ export default function AccountScreen() {
           <View style={styles.card}>
             <View style={localStyles.cardTitleRow}>
               <Icon name="award" size={16} color={tokens.color.brand} />
-              <Text style={localStyles.cardSectionTitle}>XÁC MINH GIẢNG VIÊN &amp; HỒ SƠ</Text>
+              <Text style={localStyles.cardSectionTitle}>{uiText("XÁC MINH GIẢNG VIÊN & HỒ SƠ")}</Text>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <Badge
-                label={profile.lecturerVerified ? "Đã xác minh chính thức" : "Đang chờ duyệt xét"}
+                label={
+                  profile.lecturerVerified ? uiText("Đã xác minh chính thức") : uiText("Đang chờ duyệt xét")
+                }
                 variant={profile.lecturerVerified ? "success" : "warning"}
               />
             </View>
             <Text style={styles.small}>
               {profile.lecturerVerified
-                ? "Tài khoản của bạn đã được xác minh. Bạn có toàn quyền xuất bản khóa học, công khai hồ sơ và nhận doanh thu."
-                : "Tài khoản đang chờ Quản trị viên xét duyệt. Bạn có thể cập nhật hồ sơ chuyên môn và cài đặt tài khoản nhận tiền trước."}
+                ? uiText(
+                    "Tài khoản của bạn đã được xác minh. Bạn có toàn quyền xuất bản khóa học, công khai hồ sơ và nhận doanh thu.",
+                  )
+                : uiText(
+                    "Tài khoản đang chờ Quản trị viên xét duyệt. Bạn có thể cập nhật hồ sơ chuyên môn và cài đặt tài khoản nhận tiền trước.",
+                  )}
             </Text>
             <View style={{ marginTop: 4 }}>
               <Button
-                label="Hồ sơ &amp; Quy trình xác thực"
+                label={uiText("Hồ sơ & Quy trình xác thực")}
                 variant="outline"
                 onPress={() => router.push("/teaching/profile" as Href)}
               />
@@ -596,7 +616,7 @@ export default function AccountScreen() {
         <View style={styles.card}>
           <View style={localStyles.cardTitleRow}>
             <Icon name="check" size={16} color={tokens.color.brand} />
-            <Text style={localStyles.cardSectionTitle}>BẢO MẬT & MẬT KHẨU</Text>
+            <Text style={localStyles.cardSectionTitle}>{uiText("BẢO MẬT & MẬT KHẨU")}</Text>
           </View>
 
           {passMessage && (
@@ -615,7 +635,7 @@ export default function AccountScreen() {
           {isChangingPass ? (
             <View style={localStyles.passForm}>
               <View style={{ gap: 4 }}>
-                <Text style={styles.small}>Mật khẩu hiện tại</Text>
+                <Text style={styles.small}>{uiText("Mật khẩu hiện tại")}</Text>
                 <PasswordInput
                   value={currentPassword}
                   onChangeText={setCurrentPassword}
@@ -624,12 +644,12 @@ export default function AccountScreen() {
               </View>
 
               <View style={{ gap: 4 }}>
-                <Text style={styles.small}>Mật khẩu mới (tối thiểu 8 ký tự)</Text>
+                <Text style={styles.small}>{uiText("Mật khẩu mới (tối thiểu 8 ký tự)")}</Text>
                 <PasswordInput value={newPassword} onChangeText={setNewPassword} placeholder="••••••••" />
               </View>
 
               <View style={{ gap: 4 }}>
-                <Text style={styles.small}>Xác nhận mật khẩu mới</Text>
+                <Text style={styles.small}>{uiText("Xác nhận mật khẩu mới")}</Text>
                 <PasswordInput
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -639,13 +659,13 @@ export default function AccountScreen() {
 
               <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
                 <Button
-                  label={passSaving ? "Đang cập nhật…" : "Xác nhận đổi"}
+                  label={passSaving ? uiText("Đang cập nhật…") : uiText("Xác nhận đổi")}
                   size="sm"
                   onPress={() => void handleChangePassword()}
                   disabled={passSaving}
                 />
                 <Button
-                  label="Hủy bỏ"
+                  label={uiText("Hủy bỏ")}
                   variant="outline"
                   size="sm"
                   onPress={() => {
@@ -660,7 +680,7 @@ export default function AccountScreen() {
             </View>
           ) : (
             <Button
-              label="Đổi mật khẩu tài khoản"
+              label={uiText("Đổi mật khẩu tài khoản")}
               variant="outline"
               size="md"
               onPress={() => setIsChangingPass(true)}
@@ -671,7 +691,7 @@ export default function AccountScreen() {
         {/* Section 5: Logout Action */}
         <View style={{ marginTop: 8 }}>
           <Button
-            label="Đăng xuất khỏi thiết bị"
+            label={uiText("Đăng xuất khỏi thiết bị")}
             variant="danger"
             size="md"
             icon={<Icon name="logout" size={16} color="#FFF" />}

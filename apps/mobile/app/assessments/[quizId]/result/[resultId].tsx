@@ -1,3 +1,4 @@
+import { useLanguage, useUiText } from "../../../../src/use-language";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { type Href, router, useLocalSearchParams } from "expo-router";
@@ -22,6 +23,8 @@ import {
 } from "../../../../src/ui";
 
 export default function QuizResultScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { quizId, resultId } = useLocalSearchParams<{ quizId: string; resultId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -58,12 +61,12 @@ export default function QuizResultScreen() {
   if (snapshot.state !== "AUTHENTICATED") {
     return (
       <Page>
-        <ScreenHeader title="Kết quả bài thi" onBack={() => router.push("/assessments" as Href)} />
+        <ScreenHeader title={uiText("Kết quả bài thi")} onBack={() => router.push("/assessments" as Href)} />
         <View style={screenStyles.authCard}>
           <Icon name="lock" size={36} color={tokens.color.brand} />
-          <Text style={screenStyles.cardTitle}>Yêu cầu đăng nhập</Text>
-          <Text style={screenStyles.authText}>Vui lòng đăng nhập để xem kết quả.</Text>
-          <Button label="Đăng nhập" onPress={() => router.push("/login" as Href)} />
+          <Text style={screenStyles.cardTitle}>{uiText("Yêu cầu đăng nhập")}</Text>
+          <Text style={screenStyles.authText}>{uiText("Vui lòng đăng nhập để xem kết quả.")}</Text>
+          <Button label={uiText("Đăng nhập")} onPress={() => router.push("/login" as Href)} />
         </View>
         <BottomNavBar
           currentRoute="/assessments"
@@ -77,10 +80,10 @@ export default function QuizResultScreen() {
   if (loading) {
     return (
       <Page>
-        <ScreenHeader title="Đang tải..." onBack={() => router.push("/assessments" as Href)} />
+        <ScreenHeader title={uiText("Đang tải...")} onBack={() => router.push("/assessments" as Href)} />
         <View style={screenStyles.center}>
           <ActivityIndicator size="large" color={tokens.color.brand} />
-          <Text style={screenStyles.loadingText}>Đang tải kết quả chấm điểm...</Text>
+          <Text style={screenStyles.loadingText}>{uiText("Đang tải kết quả chấm điểm...")}</Text>
         </View>
         <BottomNavBar
           currentRoute="/assessments"
@@ -94,14 +97,17 @@ export default function QuizResultScreen() {
   if (error && !result) {
     return (
       <Page>
-        <ScreenHeader title="Thông báo" onBack={() => router.push("/assessments" as Href)} />
+        <ScreenHeader title={uiText("Thông báo")} onBack={() => router.push("/assessments" as Href)} />
         <View style={screenStyles.errorBox}>
           <Icon name="alert" size={28} color={tokens.color.danger} />
           <Text accessibilityRole="alert" style={screenStyles.errorText}>
-            {error}
+            {uiText(error)}
           </Text>
           <View style={screenStyles.actionCol}>
-            <Button label="Quay lại danh sách" onPress={() => router.push("/assessments" as Href)} />
+            <Button
+              label={uiText("Quay lại danh sách")}
+              onPress={() => router.push("/assessments" as Href)}
+            />
           </View>
         </View>
         <BottomNavBar
@@ -129,7 +135,7 @@ export default function QuizResultScreen() {
   return (
     <Page testID="student-assessment-result">
       <ScreenHeader
-        title="Kết quả thi"
+        title={uiText("Kết quả thi")}
         subtitle={quiz ? quiz.title : undefined}
         onBack={() => router.push("/assessments" as Href)}
       />
@@ -145,16 +151,18 @@ export default function QuizResultScreen() {
         </View>
 
         {isPendingManual ? (
-          <Badge label="⏳ ĐÃ NỘP BÀI · CHỜ GIẢNG VIÊN CHẤM" variant="warning" />
+          <Badge label={uiText("⏳ ĐÃ NỘP BÀI · CHỜ GIẢNG VIÊN CHẤM")} variant="warning" />
         ) : isManuallyGraded ? (
-          <Badge label="✍️ ĐÃ CHẤM THỦ CÔNG BỞI GIẢNG VIÊN" variant="ai" />
+          <Badge label={uiText("✍️ ĐÃ CHẤM THỦ CÔNG BỞI GIẢNG VIÊN")} variant="ai" />
         ) : (
-          <Badge label="⚡ ĐÃ CHẤM TỰ ĐỘNG THÀNH CÔNG" variant="success" />
+          <Badge label={uiText("⚡ ĐÃ CHẤM TỰ ĐỘNG THÀNH CÔNG")} variant="success" />
         )}
 
         {isPendingManual ? (
           <View style={{ alignItems: "center", paddingVertical: 12, gap: 6 }}>
-            <Text style={[screenStyles.scoreLabel, { color: "#B45309" }]}>ĐANG ĐỢI CHẤM THỦ CÔNG</Text>
+            <Text style={[screenStyles.scoreLabel, { color: "#B45309" }]}>
+              {uiText("ĐANG ĐỢI CHẤM THỦ CÔNG")}
+            </Text>
             <Text
               style={{
                 fontSize: 14,
@@ -164,14 +172,17 @@ export default function QuizResultScreen() {
                 lineHeight: 20,
               }}
             >
-              Bài thi Tự luận / Đồ án đã được nộp thành công. Giảng viên sẽ trực tiếp đánh giá và phản hồi
-              điểm số kèm nhận xét chi tiết.
+              {uiText(
+                "Bài thi Tự luận / Đồ án đã được nộp thành công. Giảng viên sẽ trực tiếp đánh giá và phản hồi điểm số kèm nhận xét chi tiết.",
+              )}
             </Text>
           </View>
         ) : (
           <>
             <Text style={screenStyles.scoreLabel}>
-              {isManuallyGraded ? "ĐIỂM SỐ DO GIẢNG VIÊN ĐÁNH GIÁ" : "ĐIỂM SỐ CHÍNH THỨC (TỰ ĐỘNG)"}
+              {isManuallyGraded
+                ? uiText("ĐIỂM SỐ DO GIẢNG VIÊN ĐÁNH GIÁ")
+                : uiText("ĐIỂM SỐ CHÍNH THỨC (TỰ ĐỘNG)")}
             </Text>
             <View style={screenStyles.scoreNumberRow}>
               <Text testID="student-assessment-result-value" style={screenStyles.scoreNumber}>
@@ -181,7 +192,10 @@ export default function QuizResultScreen() {
             </View>
 
             <View style={screenStyles.percentBadge}>
-              <Text style={screenStyles.percentText}>{percent}% Điểm tối đa</Text>
+              <Text style={screenStyles.percentText}>
+                {percent}
+                {uiText("% Điểm tối đa")}
+              </Text>
             </View>
 
             <View style={screenStyles.progressBarBox}>
@@ -207,7 +221,7 @@ export default function QuizResultScreen() {
             }}
           >
             <Text style={{ fontSize: 13, fontWeight: "700", color: "#166534", marginBottom: 3 }}>
-              💬 Lời phê & Nhận xét của Giảng viên:
+              {uiText("💬 Lời phê & Nhận xét của Giảng viên:")}
             </Text>
             <Text style={{ fontSize: 13, color: "#15803D", fontStyle: "italic", lineHeight: 18 }}>
               "{result.teacherFeedback}"
@@ -224,22 +238,22 @@ export default function QuizResultScreen() {
 
       {/* Detail info Card */}
       <View style={screenStyles.detailCard}>
-        <Text style={screenStyles.detailCardHeading}>Thông tin bài làm</Text>
+        <Text style={screenStyles.detailCardHeading}>{uiText("Thông tin bài làm")}</Text>
 
         <View style={screenStyles.row}>
-          <Text style={screenStyles.label}>Thời gian nộp:</Text>
+          <Text style={screenStyles.label}>{uiText("Thời gian nộp:")}</Text>
           <Text style={screenStyles.value}>
-            {formatDate(submittedDate)} {formatTime(submittedDate)}
+            {formatDate(submittedDate, undefined, uiLocale)} {formatTime(submittedDate, undefined, uiLocale)}
           </Text>
         </View>
 
         <View style={screenStyles.row}>
-          <Text style={screenStyles.label}>Phiên bản đề thi:</Text>
+          <Text style={screenStyles.label}>{uiText("Phiên bản đề thi:")}</Text>
           <Text style={screenStyles.value}>v{result.quizVersion}</Text>
         </View>
 
         <View style={[screenStyles.row, { borderBottomWidth: 0 }]}>
-          <Text style={screenStyles.label}>Thuật toán chấm:</Text>
+          <Text style={screenStyles.label}>{uiText("Thuật toán chấm:")}</Text>
           <Text style={screenStyles.value}>{result.gradingAlgorithmVersion}</Text>
         </View>
       </View>
@@ -248,21 +262,22 @@ export default function QuizResultScreen() {
       <View style={screenStyles.noticeBox}>
         <View style={screenStyles.noticeHeader}>
           <Icon name="shield" size={16} color={tokens.color.brand} />
-          <Text style={screenStyles.noticeTitle}>Bảo chứng hệ thống AILSS</Text>
+          <Text style={screenStyles.noticeTitle}>{uiText("Bảo chứng hệ thống AILSS")}</Text>
         </View>
         <Text style={screenStyles.noticeText}>
-          Kết quả chấm điểm trên là số liệu chính thức được máy chủ AILSS tính toán và ghi nhận an toàn vào hệ
-          thống. Điểm số này không thể chỉnh sửa từ ứng dụng di động.
+          {uiText(
+            "Kết quả chấm điểm trên là số liệu chính thức được máy chủ AILSS tính toán và ghi nhận an toàn vào hệ thống. Điểm số này không thể chỉnh sửa từ ứng dụng di động.",
+          )}
         </Text>
       </View>
 
       <View style={screenStyles.actionRow}>
         <Button
-          label="Quay lại danh sách bài kiểm tra"
+          label={uiText("Quay lại danh sách bài kiểm tra")}
           onPress={() => router.push("/assessments" as Href)}
           size="lg"
         />
-        <Button label="Về trang chủ" variant="outline" onPress={() => router.push("/" as Href)} />
+        <Button label={uiText("Về trang chủ")} variant="outline" onPress={() => router.push("/" as Href)} />
       </View>
 
       <BottomNavBar

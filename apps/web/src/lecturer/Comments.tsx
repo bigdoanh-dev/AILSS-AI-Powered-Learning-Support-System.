@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { useUiText } from "../lib/i18n";
 import { useState, useMemo, type FormEvent } from "react";
 import { useParams, Link } from "react-router-dom";
 import { lecturerError, lecturerRequest, useLecturer } from "./api";
@@ -38,6 +40,8 @@ type ReviewResponse = {
 };
 
 export default function Comments() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { resourceType = "", resourceId = "" } = useParams();
   const session = useSession();
   const myUserId = session.profile?.userId;
@@ -137,14 +141,14 @@ export default function Comments() {
   const breadcrumbItems =
     resourceType === "COURSE"
       ? [
-          { label: "Giảng dạy", to: "/app/teaching" },
-          { label: "Khóa học", to: `/app/teaching/courses/${resourceId}` },
-          { label: "Đánh giá & Thảo luận" },
+          { label: uiText("Giảng dạy"), to: "/app/teaching" },
+          { label: uiText("Khóa học"), to: `/app/teaching/courses/${resourceId}` },
+          { label: uiText("Đánh giá & Thảo luận") },
         ]
       : [
-          { label: "Giảng dạy", to: "/app/teaching" },
-          { label: "Lớp học", to: `/app/teaching/classes/${resourceId}` },
-          { label: "Thảo luận lớp" },
+          { label: uiText("Giảng dạy"), to: "/app/teaching" },
+          { label: uiText("Lớp học"), to: `/app/teaching/classes/${resourceId}` },
+          { label: uiText("Thảo luận lớp") },
         ];
 
   return (
@@ -153,12 +157,18 @@ export default function Comments() {
 
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">TƯƠNG TÁC & PHẢN HỒI GIẢNG VIÊN</p>
-          <h1>{resourceType === "COURSE" ? "Đánh giá & Thảo luận Khóa học" : "Thảo luận Lớp học"}</h1>
+          <p className="eyebrow">{uiText("TƯƠNG TÁC & PHẢN HỒI GIẢNG VIÊN")}</p>
+          <h1>
+            {resourceType === "COURSE"
+              ? uiText("Đánh giá & Thảo luận Khóa học")
+              : uiText("Thảo luận Lớp học")}
+          </h1>
           <p className="lead">
             {resourceType === "COURSE"
-              ? "Lắng nghe đánh giá sao từ học viên, giải đáp câu hỏi và tương tác với người học."
-              : "Trao đổi thắc mắc, thông báo bài tập và thảo luận chuyên đề cùng học viên trong lớp."}
+              ? uiText("Lắng nghe đánh giá sao từ học viên, giải đáp câu hỏi và tương tác với người học.")
+              : uiText(
+                  "Trao đổi thắc mắc, thông báo bài tập và thảo luận chuyên đề cùng học viên trong lớp.",
+                )}
           </p>
         </div>
         <div className="dashboard-header-actions">
@@ -170,7 +180,8 @@ export default function Comments() {
                 : `/app/teaching/classes/${resourceId}`
             }
           >
-            ← Về {resourceType === "COURSE" ? "Khóa học" : "Lớp học"}
+            {uiText("← Về ")}
+            {resourceType === "COURSE" ? uiText("Khóa học") : uiText("Lớp học")}
           </Link>
         </div>
       </div>
@@ -198,7 +209,8 @@ export default function Comments() {
             aria-selected={activeTab === "reviews"}
             onClick={() => setActiveTab("reviews")}
           >
-            <Icon name="starFilled" size={15} /> Đánh giá của học viên ({reviewsList.length})
+            <Icon name="starFilled" size={15} /> {uiText(" Đánh giá của học viên (")}
+            {reviewsList.length})
           </button>
           <button
             className={`segmented-tab ${activeTab === "comments" ? "active" : ""}`}
@@ -206,7 +218,8 @@ export default function Comments() {
             aria-selected={activeTab === "comments"}
             onClick={() => setActiveTab("comments")}
           >
-            <Icon name="message" size={15} /> Thảo luận & Phản hồi ({commentsList.length})
+            <Icon name="message" size={15} /> {uiText(" Thảo luận & Phản hồi (")}
+            {commentsList.length})
           </button>
         </div>
       )}
@@ -216,11 +229,15 @@ export default function Comments() {
         <section className="dashboard-section-card">
           <div className="section-card-header">
             <div>
-              <h2>Tổng Quan Đánh Giá Khóa Học</h2>
-              <p className="subtext">Phản hồi và mức độ hài lòng từ học viên đã tham gia khóa học.</p>
+              <h2>{uiText("Tổng Quan Đánh Giá Khóa Học")}</h2>
+              <p className="subtext">
+                {uiText("Phản hồi và mức độ hài lòng từ học viên đã tham gia khóa học.")}
+              </p>
             </div>
             <span className="kpi-tag accent">
-              {ratingInfo.reviewCount > 0 ? `${ratingInfo.reviewCount} Đánh giá` : "Chưa có đánh giá"}
+              {ratingInfo.reviewCount > 0
+                ? uiText("{0} Đánh giá", [ratingInfo.reviewCount])
+                : uiText("Chưa có đánh giá")}
             </span>
           </div>
 
@@ -246,14 +263,15 @@ export default function Comments() {
               }}
             >
               <div style={{ fontSize: "3rem", fontWeight: "800", color: "#f59e0b", lineHeight: 1 }}>
-                {ratingInfo.reviewCount > 0 ? ratingInfo.average.toFixed(1) : "Chưa có đánh giá"}
+                {ratingInfo.reviewCount > 0 ? ratingInfo.average.toFixed(1) : uiText("Chưa có đánh giá")}
               </div>
               <div style={{ fontSize: "1.4rem", color: "#f59e0b", margin: "0.25rem 0" }}>
                 {"★".repeat(Math.round(ratingInfo.average))}
                 {"☆".repeat(5 - Math.round(ratingInfo.average))}
               </div>
               <div style={{ fontSize: "0.875rem", color: "var(--muted, #64748b)" }}>
-                Dựa trên {ratingInfo.reviewCount} lượt đánh giá thực tế
+                {uiText("Dựa trên ")}
+                {ratingInfo.reviewCount} {uiText(" lượt đánh giá thực tế")}
               </div>
             </div>
 
@@ -308,12 +326,13 @@ export default function Comments() {
 
           {/* Star Filter Pills */}
           <div className="dashboard-toolbar-row" style={{ marginTop: "1rem", marginBottom: "1rem" }}>
-            <div className="dashboard-filter-group" role="group" aria-label="Lọc theo số sao">
+            <div className="dashboard-filter-group" role="group" aria-label={uiText("Lọc theo số sao")}>
               <button
                 className={`filter-pill-button ${selectedStar === "all" ? "active" : ""}`}
                 onClick={() => setSelectedStar("all")}
               >
-                Tất cả ({reviewsList.length})
+                {uiText("Tất cả (")}
+                {reviewsList.length})
               </button>
               {[5, 4, 3, 2, 1].map((s) => (
                 <button
@@ -345,8 +364,8 @@ export default function Comments() {
                 }}
               >
                 {reviewsList.length === 0
-                  ? "Khóa học chưa nhận được bài đánh giá nào từ học viên."
-                  : `Không có đánh giá ${selectedStar} sao.`}
+                  ? uiText("Khóa học chưa nhận được bài đánh giá nào từ học viên.")
+                  : uiText("Không có đánh giá {0} sao.", [selectedStar])}
               </div>
             ) : (
               filteredReviews.map((r) => (
@@ -378,19 +397,20 @@ export default function Comments() {
                         {"☆".repeat(5 - r.rating)}
                       </span>
                       <strong style={{ fontSize: "0.9rem" }}>
-                        Học viên: {r.authorId ? `${r.authorId.slice(0, 8)}…` : "Ẩn danh"}
+                        {uiText("Học viên: ")}
+                        {r.authorId ? `${r.authorId.slice(0, 8)}…` : uiText("Ẩn danh")}
                       </strong>
                     </div>
                     <small style={{ color: "var(--muted, #64748b)" }}>
                       {r.createdAt
-                        ? new Date(r.createdAt).toLocaleDateString("vi-VN", {
+                        ? new Date(r.createdAt).toLocaleDateString(uiLocale, {
                             day: "2-digit",
                             month: "2-digit",
                             year: "numeric",
                             hour: "2-digit",
                             minute: "2-digit",
                           })
-                        : "Vừa xong"}
+                        : uiText("Vừa xong")}
                     </small>
                   </div>
                   {r.body ? (
@@ -411,7 +431,7 @@ export default function Comments() {
                         fontStyle: "italic",
                       }}
                     >
-                      Không có nhận xét bằng chữ.
+                      {uiText("Không có nhận xét bằng chữ.")}
                     </p>
                   )}
                 </article>
@@ -428,11 +448,17 @@ export default function Comments() {
             <div className="section-card-header">
               <div>
                 <h2>
-                  {resourceType === "COURSE" ? "Thảo Luận & Câu Hỏi Của Học Viên" : "Kênh Thảo Luận Lớp Học"}
+                  {resourceType === "COURSE"
+                    ? uiText("Thảo Luận & Câu Hỏi Của Học Viên")
+                    : uiText("Kênh Thảo Luận Lớp Học")}
                 </h2>
-                <p className="subtext">Danh sách trao đổi, phản hồi và giải đáp chuyên môn của giảng viên.</p>
+                <p className="subtext">
+                  {uiText("Danh sách trao đổi, phản hồi và giải đáp chuyên môn của giảng viên.")}
+                </p>
               </div>
-              <span className="kpi-tag accent">{commentsList.length} bình luận</span>
+              <span className="kpi-tag accent">
+                {commentsList.length} {uiText(" bình luận")}
+              </span>
             </div>
 
             <State q={commentsQuery}>
@@ -451,7 +477,7 @@ export default function Comments() {
                         borderRadius: "8px",
                       }}
                     >
-                      Chưa có trao đổi nào. Hãy là người đầu tiên bắt đầu cuộc trò chuyện!
+                      {uiText("Chưa có trao đổi nào. Hãy là người đầu tiên bắt đầu cuộc trò chuyện!")}
                     </div>
                   ) : (
                     commentsList.map((item) => {
@@ -479,10 +505,11 @@ export default function Comments() {
                           >
                             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                               {isMe ? (
-                                <span className="green-badge-pill">👨‍🏫 Bạn (Giảng viên)</span>
+                                <span className="green-badge-pill">{uiText("👨‍🏫 Bạn (Giảng viên)")}</span>
                               ) : (
                                 <span className="kpi-tag">
-                                  Học viên {item.authorId ? `${item.authorId.slice(0, 8)}…` : ""}
+                                  {uiText("Học viên ")}
+                                  {item.authorId ? `${item.authorId.slice(0, 8)}…` : ""}
                                 </span>
                               )}
                               <span className="badge" style={{ fontSize: "0.75rem" }}>
@@ -491,7 +518,7 @@ export default function Comments() {
                             </div>
                             {item.createdAt && (
                               <small style={{ color: "var(--muted, #64748b)" }}>
-                                {new Date(item.createdAt).toLocaleDateString("vi-VN", {
+                                {new Date(item.createdAt).toLocaleDateString(uiLocale, {
                                   day: "2-digit",
                                   month: "2-digit",
                                   hour: "2-digit",
@@ -520,7 +547,9 @@ export default function Comments() {
                                 onClick={() => void deleteComment(item)}
                                 disabled={deletingId === item.commentId}
                               >
-                                {deletingId === item.commentId ? "Đang xóa…" : "🗑️ Xóa phản hồi"}
+                                {deletingId === item.commentId
+                                  ? uiText("Đang xóa…")
+                                  : uiText("🗑️ Xóa phản hồi")}
                               </button>
                             </div>
                           )}
@@ -537,9 +566,9 @@ export default function Comments() {
           <section className="dashboard-section-card" style={{ marginTop: "1.5rem" }}>
             <div className="section-card-header">
               <div>
-                <h2>Gửi Phản Hồi Giảng Viên</h2>
+                <h2>{uiText("Gửi Phản Hồi Giảng Viên")}</h2>
                 <p className="subtext">
-                  Phản hồi trực tiếp thắc mắc của học viên hoặc đăng thông báo thảo luận mới.
+                  {uiText("Phản hồi trực tiếp thắc mắc của học viên hoặc đăng thông báo thảo luận mới.")}
                 </p>
               </div>
             </div>
@@ -549,12 +578,14 @@ export default function Comments() {
               style={{ margin: 0, padding: 0, border: "none", background: "transparent" }}
             >
               <label style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                <span style={{ fontWeight: 600 }}>Nội dung trao đổi / phản hồi:</span>
+                <span style={{ fontWeight: 600 }}>{uiText("Nội dung trao đổi / phản hồi:")}</span>
                 <textarea
                   name="body"
                   rows={4}
                   required
-                  placeholder="Nhập nội dung giải đáp chuyên môn hoặc hướng dẫn học tập cho học viên..."
+                  placeholder={uiText(
+                    "Nhập nội dung giải đáp chuyên môn hoặc hướng dẫn học tập cho học viên...",
+                  )}
                   style={{
                     width: "100%",
                     padding: "0.75rem 1rem",
@@ -567,7 +598,7 @@ export default function Comments() {
               </label>
               <div style={{ marginTop: "1rem", display: "flex", justifyContent: "flex-end" }}>
                 <button className="button" type="submit" disabled={submitting}>
-                  {submitting ? "Đang gửi…" : "🚀 Gửi phản hồi ngay"}
+                  {submitting ? uiText("Đang gửi…") : uiText("🚀 Gửi phản hồi ngay")}
                 </button>
               </div>
             </form>

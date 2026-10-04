@@ -1,3 +1,4 @@
+import { useUiText } from "./use-language";
 import { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
@@ -19,6 +20,7 @@ export interface CinematicIntroProps {
 }
 
 export function CinematicIntro({ onFinish }: CinematicIntroProps) {
+  const uiText = useUiText();
   // The session flag changes in an effect below. Keep the mount decision stable
   // while the asynchronous Reduce Motion preference is being resolved.
   const shouldShow = useRef(!getHasPlayedIntroThisSession()).current;
@@ -115,7 +117,7 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
           style={styles.controlButton}
           onPress={toggleSound}
           accessibilityRole="button"
-          accessibilityLabel={isMuted ? "Bật âm thanh" : "Tắt âm thanh"}
+          accessibilityLabel={isMuted ? uiText("Bật âm thanh") : uiText("Tắt âm thanh")}
         >
           <Ionicons
             name={isMuted ? "volume-mute" : "volume-high"}
@@ -123,7 +125,9 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
             color="#ffffff"
             style={{ marginRight: 6 }}
           />
-          <Text style={styles.controlButtonText}>{isMuted ? "Bật âm thanh" : "Đang phát"}</Text>
+          <Text style={styles.controlButtonText}>
+            {isMuted ? uiText("Bật âm thanh") : uiText("Đang phát")}
+          </Text>
         </Pressable>
 
         <Pressable
@@ -131,9 +135,9 @@ export function CinematicIntro({ onFinish }: CinematicIntroProps) {
           style={[styles.controlButton, styles.skipButton]}
           onPress={handleClose}
           accessibilityRole="button"
-          accessibilityLabel="Bỏ qua video giới thiệu"
+          accessibilityLabel={uiText("Bỏ qua video giới thiệu")}
         >
-          <Text style={[styles.controlButtonText, styles.skipText]}>Bỏ qua</Text>
+          <Text style={[styles.controlButtonText, styles.skipText]}>{uiText("Bỏ qua")}</Text>
           <Ionicons name="close" size={16} color="#ffffff" style={{ marginLeft: 4 }} />
         </Pressable>
       </View>

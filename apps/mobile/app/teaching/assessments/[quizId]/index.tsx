@@ -1,3 +1,4 @@
+import { useUiText } from "../../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Text, TextInput, View, StyleSheet, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -9,6 +10,7 @@ import { authoringQuiz, CONTRACT_LIMITED, type AuthoringQuiz } from "../../../..
 import { Page, Button, ScreenHeader, styles, tokens } from "../../../../src/ui";
 
 export default function AssessmentDetailScreen() {
+  const uiText = useUiText();
   const { quizId } = useLocalSearchParams<{ quizId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -93,28 +95,28 @@ export default function AssessmentDetailScreen() {
   return (
     <Page>
       <ScreenHeader
-        title={quiz ? quiz.title : "Chi tiết bài kiểm tra"}
-        subtitle="Quản lý câu hỏi & xuất bản đề thi"
+        title={quiz ? quiz.title : uiText("Chi tiết bài kiểm tra")}
+        subtitle={uiText("Quản lý câu hỏi & xuất bản đề thi")}
         onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching/assessments"))}
       />
 
       {loading && (
         <View style={s.centerBox}>
           <ActivityIndicator color={tokens.color.brand} />
-          <Text style={styles.small}>Đang tải chi tiết bài kiểm tra…</Text>
+          <Text style={styles.small}>{uiText("Đang tải chi tiết bài kiểm tra…")}</Text>
         </View>
       )}
 
       {error ? (
         <View style={styles.card}>
-          <Text style={styles.error}>{error}</Text>
-          <Button label="Thử lại" onPress={handleRefresh} />
+          <Text style={styles.error}>{uiText(error)}</Text>
+          <Button label={uiText("Thử lại")} onPress={handleRefresh} />
         </View>
       ) : null}
 
       {msg ? (
         <View style={[styles.card, s.successCard]}>
-          <Text style={s.successText}>{msg}</Text>
+          <Text style={s.successText}>{uiText(msg)}</Text>
         </View>
       ) : null}
       {command.message ? (
@@ -127,7 +129,7 @@ export default function AssessmentDetailScreen() {
         <>
           <View style={styles.card}>
             <View style={s.row}>
-              <Text style={styles.small}>Trạng thái:</Text>
+              <Text style={styles.small}>{uiText("Trạng thái:")}</Text>
               <View
                 style={[
                   s.badge,
@@ -143,13 +145,21 @@ export default function AssessmentDetailScreen() {
             </View>
 
             <Text style={styles.small}>
-              Đối tượng: {quiz.targetType === "COURSE" ? "Khóa học" : "Lớp học"} ({quiz.targetId})
+              {uiText("Đối tượng: ")}
+              {quiz.targetType === "COURSE" ? uiText("Khóa học") : uiText("Lớp học")} ({quiz.targetId})
             </Text>
-            <Text style={styles.small}>Số lượng câu hỏi: {quiz.questionCount} câu</Text>
-            <Text style={styles.small}>Phiên bản hiện tại: v{quiz.currentVersion}</Text>
+            <Text style={styles.small}>
+              {uiText("Số lượng câu hỏi: ")}
+              {quiz.questionCount} {uiText(" câu")}
+            </Text>
+            <Text style={styles.small}>
+              {uiText("Phiên bản hiện tại: v")}
+              {quiz.currentVersion}
+            </Text>
             {quiz.durationSeconds ? (
               <Text style={styles.small}>
-                Thời gian làm bài: {Math.round(quiz.durationSeconds / 60)} phút
+                {uiText("Thời gian làm bài: ")}
+                {Math.round(quiz.durationSeconds / 60)} {uiText(" phút")}
               </Text>
             ) : null}
           </View>
@@ -157,31 +167,33 @@ export default function AssessmentDetailScreen() {
           {/* Action CTAs */}
           <View style={s.actionStack}>
             <Button
-              label={`Soạn câu hỏi (${quiz.questionCount})`}
+              label={uiText("Soạn câu hỏi ({0})", [quiz.questionCount])}
               onPress={() => router.push(`/teaching/assessments/${quizId}/questions`)}
             />
 
             {quiz.state === "DRAFT" && (
               <Button
-                label={publishing ? "Đang xuất bản…" : "Xuất bản bài kiểm tra"}
+                label={publishing ? uiText("Đang xuất bản…") : uiText("Xuất bản bài kiểm tra")}
                 disabled={publishing || command.busy}
                 onPress={() => void handlePublish()}
               />
             )}
 
             <Button
-              label="Xem bảng kết quả làm bài"
+              label={uiText("Xem bảng kết quả làm bài")}
               onPress={() => router.push(`/teaching/assessments/${quizId}/results`)}
             />
           </View>
 
           {/* Contract limited notice */}
           <View style={s.noticeCard}>
-            <Text style={s.noticeTitle}>Lưu ý nghiệp vụ</Text>
+            <Text style={s.noticeTitle}>{uiText("Lưu ý nghiệp vụ")}</Text>
             <Text style={s.noticeText}>
               {quiz.state === "PUBLISHED"
-                ? "Bài kiểm tra đã xuất bản có thể được học viên làm bài. Kết quả chấm điểm tự động theo chuẩn objective-v1."
-                : "Bài kiểm tra đang ở trạng thái bản nháp. Học viên chưa thể xem hoặc làm bài."}
+                ? uiText(
+                    "Bài kiểm tra đã xuất bản có thể được học viên làm bài. Kết quả chấm điểm tự động theo chuẩn objective-v1.",
+                  )
+                : uiText("Bài kiểm tra đang ở trạng thái bản nháp. Học viên chưa thể xem hoặc làm bài.")}
             </Text>
             <Text style={s.noticeSmall}>{CONTRACT_LIMITED.quizDelete}</Text>
           </View>
@@ -190,17 +202,21 @@ export default function AssessmentDetailScreen() {
 
       {quiz?.state === "DRAFT" ? (
         <View style={styles.card}>
-          <Text style={styles.text}>Hạn đóng bài (ISO 8601, có múi giờ; để trống để bỏ hạn)</Text>
+          <Text style={styles.text}>{uiText("Hạn đóng bài (ISO 8601, có múi giờ; để trống để bỏ hạn)")}</Text>
           <TextInput
-            accessibilityLabel="Hạn đóng bài"
+            accessibilityLabel={uiText("Hạn đóng bài")}
             style={styles.input}
             value={deadline}
             onChangeText={setDeadline}
           />
-          <Button label="Lưu hạn đóng bài" disabled={command.busy} onPress={() => void saveDeadline()} />
+          <Button
+            label={uiText("Lưu hạn đóng bài")}
+            disabled={command.busy}
+            onPress={() => void saveDeadline()}
+          />
         </View>
       ) : null}
-      <Button label="Quay lại danh sách" onPress={() => router.replace("/teaching/assessments")} />
+      <Button label={uiText("Quay lại danh sách")} onPress={() => router.replace("/teaching/assessments")} />
     </Page>
   );
 }

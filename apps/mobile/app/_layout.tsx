@@ -1,3 +1,4 @@
+import { useUiText } from "../src/use-language";
 import { useEffect, useSyncExternalStore } from "react";
 import { AppState, StatusBar, Text } from "react-native";
 import * as Network from "expo-network";
@@ -9,6 +10,7 @@ import { Button, Page, styles, tokens } from "../src/ui";
 import { syncPendingLessonCompletions } from "../src/lesson-sync";
 import { phase41RouteAvailable } from "../src/features";
 function Shell() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const pathname = usePathname();
@@ -66,22 +68,23 @@ function Shell() {
   if (snapshot.state === "BOOTING")
     return (
       <Page>
-        <Text style={styles.title}>AILSS</Text>
+        <Text style={styles.title}>{uiText("AILSS")}</Text>
         <Text accessibilityRole="alert" style={styles.text}>
-          Đang khôi phục phiên…
+          {uiText("Đang khôi phục phiên…")}
         </Text>
       </Page>
     );
   if (!phase41RouteAvailable(pathname, snapshot.user?.role))
     return (
       <Page>
-        <Text style={styles.title}>Không có quyền truy cập</Text>
+        <Text style={styles.title}>{uiText("Không có quyền truy cập")}</Text>
         <Text accessibilityRole="alert" style={styles.text}>
-          Trang này yêu cầu tài khoản có đúng vai trò. Hãy đăng nhập bằng tài khoản Giảng viên hoặc Quản trị
-          viên phù hợp.
+          {uiText(
+            "Trang này yêu cầu tài khoản có đúng vai trò. Hãy đăng nhập bằng tài khoản Giảng viên hoặc Quản trị viên phù hợp.",
+          )}
         </Text>
         <Button
-          label={snapshot.state === "AUTHENTICATED" ? "Về trang của bạn" : "Đến đăng nhập"}
+          label={snapshot.state === "AUTHENTICATED" ? uiText("Về trang của bạn") : uiText("Đến đăng nhập")}
           onPress={() =>
             snapshot.state === "AUTHENTICATED"
               ? router.replace(
@@ -105,6 +108,7 @@ function Shell() {
   );
 }
 export default function Layout() {
+  const uiText = useUiText();
   const pathname = usePathname();
   const tutorAppearance = pathname === "/student/tutor";
   return (
@@ -121,9 +125,9 @@ export default function Layout() {
           <Shell />
         ) : (
           <Page>
-            <Text style={styles.title}>Cần cấu hình ứng dụng</Text>
+            <Text style={styles.title}>{uiText("Cần cấu hình ứng dụng")}</Text>
             <Text style={styles.text}>
-              Chưa có môi trường hoặc địa chỉ Gateway hợp lệ. Hãy kiểm tra cấu hình phát triển.
+              {uiText("Chưa có môi trường hoặc địa chỉ Gateway hợp lệ. Hãy kiểm tra cấu hình phát triển.")}
             </Text>
             <Text style={styles.small}>FATAL_CONFIGURATION_ERROR</Text>
           </Page>

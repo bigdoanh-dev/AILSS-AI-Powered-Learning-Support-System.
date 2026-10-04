@@ -1,10 +1,12 @@
+import { useLanguage } from "../lib/i18n";
+import { useUiText } from "../lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { lecturerRequest } from "./api";
 
-function format(amountMinor: bigint, currency: string, scale: bigint) {
-  const whole = new Intl.NumberFormat("vi-VN").format(amountMinor / scale);
+function format(amountMinor: bigint, currency: string, scale: bigint, locale: string) {
+  const whole = new Intl.NumberFormat(locale).format(amountMinor / scale);
   const remainder = amountMinor % scale;
-  return `${whole}${scale === 100n ? `,${String(remainder).padStart(2, "0")}` : ""} ${currency}`;
+  return `${whole}${scale === 100n ? `${locale === "en-US" ? "." : ","}${String(remainder).padStart(2, "0")}` : ""} ${currency}`;
 }
 
 /** A quote for a newly listed price; settled revenue remains subject to refunds. */
@@ -25,6 +27,8 @@ export function RevenueQuote({
   currency?: string;
   paid?: boolean;
 }) {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const [price, setPrice] = useState(initialPrice);
   const [currency, setCurrency] = useState(initialCurrency);
   const [paid, setPaid] = useState(initialPaid);
@@ -75,38 +79,46 @@ export function RevenueQuote({
   const rate = commissionBasisPoints ?? liveRate;
   const fee = rate === null ? 0n : (amount * BigInt(rate)) / 10_000n;
   const percent = (basisPoints: number) =>
-    `${(basisPoints / 100).toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`;
+    `${(basisPoints / 100).toLocaleString(uiLocale, { maximumFractionDigits: 2 })}%`;
   return (
     <div className="revenue-quote" ref={ref} aria-live="polite">
-      <strong>Ước tính doanh thu mỗi lượt bán</strong>
+      <strong>{uiText("Ước tính doanh thu mỗi lượt bán")}</strong>
       {rate === null ? (
         <p>
           {rateError
-            ? "Không tải được tỷ lệ chiết khấu. Hãy thử tải lại trang."
-            : "Đang tải tỷ lệ chiết khấu…"}
+            ? uiText("Không tải được tỷ lệ chiết khấu. Hãy thử tải lại trang.")
+            : uiText("Đang tải tỷ lệ chiết khấu…")}
         </p>
       ) : valid ? (
         <dl>
           <div>
-            <dt>Giá học viên trả</dt>
-            <dd>{format(amount, currentCurrency, scale)}</dd>
+            <dt>{uiText("Giá học viên trả")}</dt>
+            <dd>{format(amount, currentCurrency, scale, uiLocale)}</dd>
           </div>
           <div>
-            <dt>Phí nền tảng ({percent(rate)})</dt>
-            <dd>−{format(fee, currentCurrency, scale)}</dd>
+            <dt>
+              {uiText("Phí nền tảng (")}
+              {percent(rate)})
+            </dt>
+            <dd>−{format(fee, currentCurrency, scale, uiLocale)}</dd>
           </div>
           <div>
-            <dt>Giảng viên nhận ({percent(10_000 - rate)})</dt>
+            <dt>
+              {uiText("Giảng viên nhận (")}
+              {percent(10_000 - rate)})
+            </dt>
             <dd>
-              <strong>{format(amount - fee, currentCurrency, scale)}</strong>
+              <strong>{format(amount - fee, currentCurrency, scale, uiLocale)}</strong>
             </dd>
           </div>
         </dl>
       ) : (
-        <p>Nhập giá hợp lệ để xem ước tính.</p>
+        <p>{uiText("Nhập giá hợp lệ để xem ước tính.")}</p>
       )}
       <small>
-        Số thực nhận sẽ thay đổi nếu đơn hàng được hoàn tiền. Giá của đợt mở bán là giá dùng khi thanh toán.
+        {uiText(
+          "Số thực nhận sẽ thay đổi nếu đơn hàng được hoàn tiền. Giá của đợt mở bán là giá dùng khi thanh toán.",
+        )}
       </small>
     </div>
   );

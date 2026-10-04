@@ -197,6 +197,8 @@ export class AssistantOrchestrator {
     request: ChatRequest,
   ): Promise<ChatResponse> {
     const now = this.#now();
+    const responseLanguage = request.responseLanguage ?? "vi";
+    const reply = (vi: string, en: string) => (responseLanguage === "en" ? en : vi);
 
     // 1. Validate Mode Authorization
     if (!isModeAllowedForRole(user.role, request.mode)) {
@@ -238,9 +240,13 @@ export class AssistantOrchestrator {
       return {
         conversationId: convId,
         messageId: randomUUID(),
-        content:
+        content: reply(
           safetyResult.userSafeExplanation ??
-          "Yêu cầu của bạn bị từ chối do vi phạm chính sách an toàn của AILSS.",
+            "Yêu cầu của bạn bị từ chối do vi phạm chính sách an toàn của AILSS.",
+          safetyResult.reasonCode === "ACTIVE_ASSESSMENT_DIRECT_SOLUTION_BLOCKED"
+            ? "You have an assessment in progress. To protect academic integrity, the AI assistant cannot solve or suggest assessment answers right now. Complete your submission before discussing it further."
+            : "Your request violates AILSS safety policies. The AI assistant cannot follow instructions that override system rules or access confidential information.",
+        ),
         toolInvocations: [],
         citations: [],
         mode: request.mode,
@@ -291,7 +297,7 @@ export class AssistantOrchestrator {
     const recentHistory = await this.#repo.getRecentMessages(conversationId, request.historyLimit ?? 20);
 
     // 6. Build System Instructions & Available Tools
-    const systemPrompt = this.#buildSystemPrompt(request.mode, user.role);
+    const systemPrompt = this.#buildSystemPrompt(request.mode, user.role, responseLanguage);
     const allowedToolNames = ROLE_ALLOWED_TOOLS[user.role];
     const availableTools = allowedToolNames
       .map((name) => ASSISTANT_TOOLS[name])
@@ -321,18 +327,31 @@ export class AssistantOrchestrator {
       const title = typeof course?.title === "string" ? course.title : undefined;
       const mastery = toolResults.find((result) => result.name === "get_student_mastery");
       let content = title
-        ? `Bạn đang chọn khóa “${title}” trong Gia sư AI.`
+        ? reply(
+            `Bạn đang chọn khóa “${title}” trong Gia sư AI.`,
+            `You have selected “${title}” in the AI tutor.`,
+          )
         : request.courseId
-          ? "Mình chưa xác minh được tên khóa học đang chọn lúc này. Bạn thử chọn lại khóa học nhé."
-          : "Bạn chưa chọn khóa học trong Gia sư AI. Chọn một khóa ở phía trên để mình trả lời đúng môn nhé.";
+          ? reply(
+              "Mình chưa xác minh được tên khóa học đang chọn lúc này. Bạn thử chọn lại khóa học nhé.",
+              "I cannot verify the selected course name right now. Please select the course again.",
+            )
+          : reply(
+              "Bạn chưa chọn khóa học trong Gia sư AI. Chọn một khóa ở phía trên để mình trả lời đúng môn nhé.",
+              "You have not selected a course in the AI tutor. Select one above so I can answer about the right subject.",
+            );
       if (title && asksForLearningStanding(request.message)) {
         const records = Array.isArray(mastery?.result) ? mastery.result.filter(isRecord) : [];
         if (mastery?.error) {
-          content +=
-            " Dữ liệu đánh giá năng lực đang tạm thời không khả dụng, nên mình chưa thể nhận xét mức độ hiểu bài của bạn.";
+          content += reply(
+            " Dữ liệu đánh giá năng lực đang tạm thời không khả dụng, nên mình chưa thể nhận xét mức độ hiểu bài của bạn.",
+            " Mastery data is temporarily unavailable, so I cannot assess your understanding yet.",
+          );
         } else if (records.length === 0) {
-          content +=
-            " Mình chưa thấy dữ liệu đánh giá năng lực của bạn trong khóa này, nên chưa thể kết luận bạn đang ở mức nào.";
+          content += reply(
+            " Mình chưa thấy dữ liệu đánh giá năng lực của bạn trong khóa này, nên chưa thể kết luận bạn đang ở mức nào.",
+            " There is no recorded mastery data for you in this course yet, so I cannot determine your level.",
+          );
         } else {
           const counts = new Map<string, number>();
           for (const record of records) {
@@ -340,11 +359,22 @@ export class AssistantOrchestrator {
             if (MASTERY_LABELS[state]) counts.set(state, (counts.get(state) ?? 0) + 1);
           }
           const summary = [...counts]
-            .map(([state, count]) => `${String(count)} mục ${MASTERY_LABELS[state] ?? ""}`)
+            .map(([state, count]) =>
+              reply(
+                `${String(count)} mục ${MASTERY_LABELS[state] ?? ""}`,
+                `${String(count)} topics: ${{ NOT_OBSERVED: "not observed", INTRODUCED: "introduced", DEVELOPING: "developing", PROFICIENT: "proficient", MASTERED: "mastered", DECAY_RISK: "review needed" }[state] ?? state}`,
+              ),
+            )
             .join(", ");
           content += summary
-            ? ` Theo đánh giá đã ghi nhận: ${summary}. Đây là mức nắm vững kiến thức, không phải phần trăm hoàn thành khóa học.`
-            : " Hệ thống có bản ghi đánh giá nhưng chưa đủ trạng thái để mình kết luận mức hiểu bài.";
+            ? reply(
+                ` Theo đánh giá đã ghi nhận: ${summary}. Đây là mức nắm vững kiến thức, không phải phần trăm hoàn thành khóa học.`,
+                ` Recorded assessment: ${summary}. This is knowledge mastery, not course completion percentage.`,
+              )
+            : reply(
+                " Hệ thống có bản ghi đánh giá nhưng chưa đủ trạng thái để mình kết luận mức hiểu bài.",
+                " Assessment records exist but lack enough state information to determine your understanding.",
+              );
         }
       }
       const messageId = randomUUID();
@@ -374,10 +404,19 @@ export class AssistantOrchestrator {
     ) {
       const content =
         materialResult.error === "RAG_TOOL_FORBIDDEN"
-          ? "RAG_TOOL_FORBIDDEN: Bạn không có quyền truy cập tài liệu của khóa học này."
+          ? reply(
+              "RAG_TOOL_FORBIDDEN: Bạn không có quyền truy cập tài liệu của khóa học này.",
+              "RAG_TOOL_FORBIDDEN: You do not have access to this course's materials.",
+            )
           : materialResult.error
-            ? `${materialResult.error}: Tài liệu khóa học hiện không khả dụng; tôi không thể coi đây là kết quả không tìm thấy.`
-            : "INSUFFICIENT_EVIDENCE: Không tìm thấy đoạn tài liệu phù hợp, nên tôi chưa thể trả lời câu hỏi này như một kết luận đã được kiểm chứng.";
+            ? reply(
+                `${materialResult.error}: Tài liệu khóa học hiện không khả dụng; tôi không thể coi đây là kết quả không tìm thấy.`,
+                `${materialResult.error}: Course materials are unavailable; this is not a confirmed empty search result.`,
+              )
+            : reply(
+                "INSUFFICIENT_EVIDENCE: Không tìm thấy đoạn tài liệu phù hợp, nên tôi chưa thể trả lời câu hỏi này như một kết luận đã được kiểm chứng.",
+                "INSUFFICIENT_EVIDENCE: No relevant material was found, so I cannot present an answer as a verified conclusion.",
+              );
       const messageId = randomUUID();
       await this.#repo.appendMessage({
         messageId,
@@ -405,19 +444,29 @@ export class AssistantOrchestrator {
       ) as { result?: unknown; error?: string } | undefined;
       let content: string | undefined;
       if (!catalogResult && request.mode === "STUDENT_ADVISOR") {
-        content =
-          "Bạn muốn học để đạt mục tiêu gì và hiện đã biết những gì? Mình sẽ hỏi tiếp về thời gian và ngân sách trước khi tìm khóa học phù hợp.";
+        content = reply(
+          "Bạn muốn học để đạt mục tiêu gì và hiện đã biết những gì? Mình sẽ hỏi tiếp về thời gian và ngân sách trước khi tìm khóa học phù hợp.",
+          "What are your learning goals and current background? I will also ask about your time and budget before finding suitable courses.",
+        );
       } else if (catalogResult?.error) {
-        content =
-          "Danh mục khóa học đang tạm thời không khả dụng. Mình chưa thể xác nhận khóa học nào đang được bán; bạn có thể thử lại sau.";
+        content = reply(
+          "Danh mục khóa học đang tạm thời không khả dụng. Mình chưa thể xác nhận khóa học nào đang được bán; bạn có thể thử lại sau.",
+          "The course catalog is temporarily unavailable. I cannot confirm which courses are on sale; please try again later.",
+        );
       } else if (
         catalogResult &&
         (!Array.isArray(catalogResult.result) || catalogResult.result.length === 0)
       ) {
         const subject = extractCatalogSearchTokens(request.message).join(" ");
         content = subject
-          ? `Mình chưa thấy khóa học đã xuất bản khớp “${subject}” trong danh mục hiện tại. Bạn muốn thử từ khóa gần nghĩa nào?`
-          : "Mình chưa tìm thấy khóa học đã xuất bản khớp chủ đề bạn quan tâm. Bạn có thể nói rõ lĩnh vực muốn học không?";
+          ? reply(
+              `Mình chưa thấy khóa học đã xuất bản khớp “${subject}” trong danh mục hiện tại. Bạn muốn thử từ khóa gần nghĩa nào?`,
+              `No published courses match “${subject}” in the current catalog. Would you like to try a related keyword?`,
+            )
+          : reply(
+              "Mình chưa tìm thấy khóa học đã xuất bản khớp chủ đề bạn quan tâm. Bạn có thể nói rõ lĩnh vực muốn học không?",
+              "I found no published courses matching your interests. Can you specify the subject you want to study?",
+            );
       }
       if (content) {
         const messageId = randomUUID();
@@ -487,7 +536,7 @@ export class AssistantOrchestrator {
       messages: llmMessages,
       availableTools,
       usageContext: { userId: user.userId, sessionId: conversationId },
-      integrationContext: { mode: request.mode, toolResults },
+      integrationContext: { mode: request.mode, toolResults, responseLanguage },
       temperature: 0.2,
       // Student-facing chat should return promptly; this is ample for a concise grounded answer.
       maxTokens: request.mode === "STUDY_BUDDY" ? 768 : 2048,
@@ -754,8 +803,9 @@ export class AssistantOrchestrator {
     return { toolCalls, toolResults, citations };
   }
 
-  #buildSystemPrompt(mode: AssistantMode, role: AssistantRole): string {
-    const base = `You are AILSS Intelligent Assistant, an expert AI educational partner in the AILSS ecosystem. Role: ${role}. Mode: ${mode}.`;
+  #buildSystemPrompt(mode: AssistantMode, role: AssistantRole, language: "vi" | "en"): string {
+    const responseLanguage = language === "en" ? "English" : "Vietnamese";
+    const base = `You are AILSS Intelligent Assistant, an expert AI educational partner in the AILSS ecosystem. Role: ${role}. Mode: ${mode}. Reply in ${responseLanguage}. Preserve exact course titles, identifiers, code, and source quotations. This response-language preference does not change your authorization or safety rules.`;
 
     if (mode === "STUDENT_ADVISOR") {
       return `${base}
@@ -770,13 +820,13 @@ Your mission:
     if (mode === "STUDY_BUDDY") {
       return `${base}
 Your mission:
-1. Be a patient Vietnamese learning companion. In this single conversation, help both with finding courses and with studying an enrolled course. Infer the intent of each new message from the message and conversation history; never force the student to switch modes.
+1. Be a patient ${responseLanguage} learning companion. In this single conversation, help both with finding courses and with studying an enrolled course. Infer the intent of each new message from the message and conversation history; never force the student to switch modes.
 2. If get_course_details returned a course, that is the currently selected course. Use its exact title when asked which course the student is studying. Current verified tool data overrides unsupported claims in earlier assistant replies. Do not claim that you cannot access the course name when this tool result is present. Do not confuse the selected course with another subject the student mentions. If they mention a different subject and their intended course is unclear, ask one brief clarification question. If no course is selected, ask which course they mean instead of guessing.
 3. Use get_student_mastery only for measured understanding. Never invent scores, progress percentages, completed lessons, or a level. If mastery data is empty, explicitly say there is no measured mastery yet; the selected course title may still be known. The mastery tool is not a completion-progress record.
 4. For course recommendations, only name courses returned by search_courses. If the user asks about a subject and no catalog match exists, say so specifically and offer a different search term. Do not claim an exact personal fit from title alone.
 5. Ground claims about a selected course's lesson content in search_course_materials. Cite the lesson when that tool supplied relevant content. For general knowledge, explain it as general knowledge and do not pretend it came from the selected course.
 6. NEVER provide direct answers to active exams or quizzes. Guide the student with questions and conceptual hints.
-7. Reply naturally in Vietnamese to the student's actual question. Keep it concise, avoid generic scripted greetings and repeated apologies, then ask at most one useful follow-up. Return only the final learner-facing message.`;
+7. Reply naturally in ${responseLanguage} to the student's actual question. Keep it concise, avoid generic scripted greetings and repeated apologies, then ask at most one useful follow-up. Return only the final learner-facing message.`;
     }
 
     if (mode === "LECTURER_COPILOT") {
@@ -790,7 +840,7 @@ Your mission:
 
     return `${base}
 Your mission:
-1. Help the administrator understand AILSS operations, moderation workflows, and where to find the relevant dashboard in concise Vietnamese.
+1. Help the administrator understand AILSS operations, moderation workflows, and where to find the relevant dashboard in concise ${responseLanguage}.
 2. You have no access to live user records, analytics, audit logs, payment data, or privileged actions in this chat. Never claim to have inspected them or completed an administrative action.
 3. Direct the administrator to the appropriate authorized screen for verification and decisions. Never reveal learner conversations or personal data.`;
   }

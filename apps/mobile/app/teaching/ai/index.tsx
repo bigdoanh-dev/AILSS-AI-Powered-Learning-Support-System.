@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../src/use-language";
+import { useUiText } from "../../../src/use-language";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Text, View, TextInput, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
@@ -27,6 +29,8 @@ import {
 import { Page, Button, ScreenHeader, NonVirtualizedList, styles, tokens } from "../../../src/ui";
 
 export default function LecturerAiStudioScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const params = useLocalSearchParams<{ targetType?: string; targetId?: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -250,21 +254,25 @@ export default function LecturerAiStudioScreen() {
   return (
     <Page>
       <ScreenHeader
-        title="Trợ lý soạn đề AI"
-        subtitle="Sinh bản nháp câu hỏi trắc nghiệm từ tài liệu học tập"
+        title={uiText("Trợ lý soạn đề AI")}
+        subtitle={uiText("Sinh bản nháp câu hỏi trắc nghiệm từ tài liệu học tập")}
         onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching"))}
       />
 
       {/* Daily Usage Quota Card */}
       {usage && (
         <View style={s.usageCard}>
-          <Text style={s.usageTitle}>Mức sử dụng hôm nay</Text>
+          <Text style={s.usageTitle}>{uiText("Mức sử dụng hôm nay")}</Text>
           <View style={s.usageRow}>
             <Text style={s.usageBig}>
-              {usage.remaining} <Text style={s.usageSub}>/ {usage.limit} câu còn lại</Text>
+              {usage.remaining}{" "}
+              <Text style={s.usageSub}>
+                / {usage.limit} {uiText(" câu còn lại")}
+              </Text>
             </Text>
             <Text style={s.usageMeta}>
-              {usage.consumed} đã dùng · {usage.reserved} đang xử lý
+              {usage.consumed} {uiText(" đã dùng · ")}
+              {usage.reserved} {uiText(" đang xử lý")}
             </Text>
           </View>
         </View>
@@ -272,19 +280,19 @@ export default function LecturerAiStudioScreen() {
 
       {/* Generation Form */}
       <View style={s.formCard}>
-        <Text style={s.sectionTitle}>Tạo câu hỏi từ tài liệu</Text>
+        <Text style={s.sectionTitle}>{uiText("Tạo câu hỏi từ tài liệu")}</Text>
 
-        <Text style={s.fieldLabel}>Đối tượng liên kết:</Text>
+        <Text style={s.fieldLabel}>{uiText("Đối tượng liên kết:")}</Text>
         <View style={s.row}>
           <Button
-            label={targetType === "COURSE" ? "● Khóa học" : "○ Khóa học"}
+            label={targetType === "COURSE" ? uiText("● Khóa học") : uiText("○ Khóa học")}
             onPress={() => {
               setTargetType("COURSE");
               setTargetId("");
             }}
           />
           <Button
-            label={targetType === "CLASS" ? "● Lớp học" : "○ Lớp học"}
+            label={targetType === "CLASS" ? uiText("● Lớp học") : uiText("○ Lớp học")}
             onPress={() => {
               setTargetType("CLASS");
               setTargetId("");
@@ -296,7 +304,7 @@ export default function LecturerAiStudioScreen() {
           <View>
             <Text style={styles.error}>{targetType === "COURSE" ? courses.error : classes.error}</Text>
             <Button
-              label="Tải lại danh sách"
+              label={uiText("Tải lại danh sách")}
               onPress={targetType === "COURSE" ? courses.retry : classes.retry}
             />
           </View>
@@ -316,34 +324,34 @@ export default function LecturerAiStudioScreen() {
                 onPress={() => setTargetId(c.classId)}
               />
             ))}
-        <Text style={s.fieldLabel}>Mã đối tượng (Target ID) *</Text>
+        <Text style={s.fieldLabel}>{uiText("Mã đối tượng (Target ID) *")}</Text>
         <TextInput
-          accessibilityLabel="Mã đối tượng"
+          accessibilityLabel={uiText("Mã đối tượng")}
           style={s.input}
-          placeholder="Mã khóa học hoặc lớp học"
+          placeholder={uiText("Mã khóa học hoặc lớp học")}
           value={targetId}
           onChangeText={setTargetId}
           autoCapitalize="none"
         />
 
-        <Text style={s.fieldLabel}>Mã tài liệu học tập (Document ID) *</Text>
+        <Text style={s.fieldLabel}>{uiText("Mã tài liệu học tập (Document ID) *")}</Text>
         <TextInput
-          accessibilityLabel="Mã tài liệu"
+          accessibilityLabel={uiText("Mã tài liệu")}
           style={s.input}
-          placeholder="Nhập documentId đã tải lên"
+          placeholder={uiText("Nhập documentId đã tải lên")}
           value={documentId}
           onChangeText={setDocumentId}
           autoCapitalize="none"
         />
 
         <Button
-          label={uploading ? "Đang tải…" : "Chọn tài liệu PDF, DOCX hoặc TXT"}
+          label={uploading ? uiText("Đang tải…") : uiText("Chọn tài liệu PDF, DOCX hoặc TXT")}
           disabled={uploading}
           onPress={() => void chooseDocument()}
         />
         {uploadAttempt.current && !uploadAttempt.current.receipt.completed ? (
           <Button
-            label="Tiếp tục tải tài liệu"
+            label={uiText("Tiếp tục tải tài liệu")}
             disabled={uploading}
             onPress={() => void chooseDocument(true)}
           />
@@ -353,7 +361,7 @@ export default function LecturerAiStudioScreen() {
             {documentStatus}
           </Text>
         ) : null}
-        <Text style={s.fieldLabel}>Dạng câu hỏi</Text>
+        <Text style={s.fieldLabel}>{uiText("Dạng câu hỏi")}</Text>
         {[
           ["SINGLE_CHOICE", "Một đáp án"],
           ["MULTIPLE_CHOICE", "Nhiều đáp án"],
@@ -370,16 +378,16 @@ export default function LecturerAiStudioScreen() {
             }
           />
         ))}
-        <Text style={s.fieldLabel}>Độ khó</Text>
+        <Text style={s.fieldLabel}>{uiText("Độ khó")}</Text>
         {(["EASY", "MEDIUM", "HARD"] as const).map((level, index) => (
           <Button
             key={level}
-            label={`${difficulty === level ? "✓ " : ""}${["Dễ", "Trung bình", "Khó"][index]}`}
+            label={uiText("{0}{1}", [difficulty === level ? "✓ " : "", ["Dễ", "Trung bình", "Khó"][index]])}
             onPress={() => setDifficulty(level)}
           />
         ))}
         {/* Presets */}
-        <Text style={s.fieldLabel}>Mẫu phân bổ câu hỏi:</Text>
+        <Text style={s.fieldLabel}>{uiText("Mẫu phân bổ câu hỏi:")}</Text>
         <View style={s.presetRow}>
           <Pressable
             accessibilityRole="button"
@@ -393,7 +401,7 @@ export default function LecturerAiStudioScreen() {
               })
             }
           >
-            <Text style={s.presetText}>Ôn tập nhanh (10 câu)</Text>
+            <Text style={s.presetText}>{uiText("Ôn tập nhanh (10 câu)")}</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -407,16 +415,19 @@ export default function LecturerAiStudioScreen() {
               })
             }
           >
-            <Text style={s.presetText}>Kiểm tra (20 câu)</Text>
+            <Text style={s.presetText}>{uiText("Kiểm tra (20 câu)")}</Text>
           </Pressable>
         </View>
 
         <Text style={s.totalText}>
-          Tổng số câu hỏi: <Text style={{ fontWeight: "700" }}>{totalQuestions} câu</Text>
+          {uiText("Tổng số câu hỏi: ")}
+          <Text style={{ fontWeight: "700" }}>
+            {totalQuestions} {uiText(" câu")}
+          </Text>
         </Text>
 
         <Button
-          label={generating ? "Đang gửi yêu cầu…" : "Tạo bản nháp câu hỏi"}
+          label={generating ? uiText("Đang gửi yêu cầu…") : uiText("Tạo bản nháp câu hỏi")}
           disabled={generating || uploading || !questionTypes.length}
           onPress={() => void handleCreateJob()}
         />
@@ -424,16 +435,16 @@ export default function LecturerAiStudioScreen() {
 
       {error ? (
         <View style={styles.card}>
-          <Text style={styles.error}>{error}</Text>
-          <Button label="Thử lại" onPress={handleRefresh} />
+          <Text style={styles.error}>{uiText(error)}</Text>
+          <Button label={uiText("Thử lại")} onPress={handleRefresh} />
         </View>
       ) : null}
 
-      {cursor ? <Button label="Trang đầu" onPress={() => setCursor("")} /> : null}
-      {nextCursor ? <Button label="Trang tiếp" onPress={() => setCursor(nextCursor)} /> : null}
+      {cursor ? <Button label={uiText("Trang đầu")} onPress={() => setCursor("")} /> : null}
+      {nextCursor ? <Button label={uiText("Trang tiếp")} onPress={() => setCursor(nextCursor)} /> : null}
       {/* Jobs List Section */}
       <View style={s.jobsHeader}>
-        <Text style={s.sectionTitle}>Công việc của tôi</Text>
+        <Text style={s.sectionTitle}>{uiText("Công việc của tôi")}</Text>
       </View>
 
       {/* Filter Chips */}
@@ -460,13 +471,13 @@ export default function LecturerAiStudioScreen() {
       {loading && (
         <View style={s.loadingBox}>
           <ActivityIndicator color={tokens.color.brand} />
-          <Text style={styles.small}>Đang tải danh sách công việc…</Text>
+          <Text style={styles.small}>{uiText("Đang tải danh sách công việc…")}</Text>
         </View>
       )}
 
       {!loading && filteredJobs && filteredJobs.length === 0 && (
         <View style={s.emptyBox}>
-          <Text style={styles.text}>Không có công việc nào.</Text>
+          <Text style={styles.text}>{uiText("Không có công việc nào.")}</Text>
         </View>
       )}
 
@@ -478,13 +489,14 @@ export default function LecturerAiStudioScreen() {
           renderItem={({ item }) => (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Công việc ${item.jobId}`}
+              accessibilityLabel={uiText("Công việc {0}", [item.jobId])}
               style={s.jobCard}
               onPress={() => router.push(`/teaching/ai/${item.jobId}` as Href)}
             >
               <View style={s.rowBetween}>
                 <Text style={s.jobTitle} numberOfLines={1}>
-                  Mã: {item.jobId.slice(0, 12)}...
+                  {uiText("Mã: ")}
+                  {item.jobId.slice(0, 12)}...
                 </Text>
                 <View
                   style={[
@@ -503,22 +515,26 @@ export default function LecturerAiStudioScreen() {
               </View>
 
               <Text style={styles.small}>
-                {item.targetType === "COURSE" ? "Khóa học" : "Lớp học"}: {item.targetId.slice(0, 12)}...
+                {item.targetType === "COURSE" ? uiText("Khóa học") : uiText("Lớp học")}:{" "}
+                {item.targetId.slice(0, 12)}...
               </Text>
               <Text style={styles.small}>
-                Tạo lúc: {new Date(item.createdAt).toLocaleTimeString("vi-VN")},{" "}
-                {new Date(item.createdAt).toLocaleDateString("vi-VN")}
+                {uiText("Tạo lúc: ")}
+                {new Date(item.createdAt).toLocaleTimeString(uiLocale)},{" "}
+                {new Date(item.createdAt).toLocaleDateString(uiLocale)}
               </Text>
 
               <Text style={s.linkText}>
-                {item.state === "AI_DRAFT" ? "Xem và duyệt câu hỏi →" : "Xem chi tiết tiến trình →"}
+                {item.state === "AI_DRAFT"
+                  ? uiText("Xem và duyệt câu hỏi →")
+                  : uiText("Xem chi tiết tiến trình →")}
               </Text>
             </Pressable>
           )}
         />
       )}
 
-      <Button label="Quay lại Giảng dạy" onPress={() => router.replace("/teaching")} />
+      <Button label={uiText("Quay lại Giảng dạy")} onPress={() => router.replace("/teaching")} />
     </Page>
   );
 }

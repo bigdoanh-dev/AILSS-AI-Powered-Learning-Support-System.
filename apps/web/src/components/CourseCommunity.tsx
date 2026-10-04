@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { useUiText } from "../lib/i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { request, type Course } from "../lib/api";
@@ -8,6 +10,7 @@ type Reviews = {
   meta?: { page?: { hasMore: boolean; nextCursor: string | null } };
 };
 export function CourseRating({ id, expanded = false }: { id: string; expanded?: boolean }) {
+  const uiText = useUiText();
   const [value, setValue] = useState<Reviews | null>(null),
     [error, setError] = useState(false);
   useEffect(() => {
@@ -21,18 +24,21 @@ export function CourseRating({ id, expanded = false }: { id: string; expanded?: 
       });
     return () => c.abort();
   }, [id]);
-  if (error) return <small>Đánh giá tạm thời chưa tải được.</small>;
-  if (!value) return <small>Đang tải đánh giá…</small>;
+  if (error) return <small>{uiText("Đánh giá tạm thời chưa tải được.")}</small>;
+  if (!value) return <small>{uiText("Đang tải đánh giá…")}</small>;
   return (
     <div className="course-rating">
       <span aria-hidden="true">★</span>{" "}
       <strong>
         {value.ratingSummary.averageRating
           ? Number(value.ratingSummary.averageRating).toFixed(1)
-          : "Chưa có đánh giá"}
+          : uiText("Chưa có đánh giá")}
       </strong>
       {value.ratingSummary.reviewCount > 0 && (
-        <small> / 5 · {value.ratingSummary.reviewCount} đánh giá</small>
+        <small>
+          {" "}
+          / 5 · {value.ratingSummary.reviewCount} {uiText(" đánh giá")}
+        </small>
       )}
       {expanded && (
         <div className="review-quotes">
@@ -40,17 +46,22 @@ export function CourseRating({ id, expanded = false }: { id: string; expanded?: 
             .filter((x) => x.state === "ACTIVE")
             .map((r) => (
               <blockquote key={r.reviewId}>
-                <strong>{r.rating}/5 — Học viên</strong>
+                <strong>
+                  {r.rating}
+                  {uiText("/5 — Học viên")}
+                </strong>
                 <p>{r.body}</p>
               </blockquote>
             ))}
-          <Link to={`/courses/${id}`}>Xem tất cả đánh giá của khóa học</Link>
+          <Link to={`/courses/${id}`}>{uiText("Xem tất cả đánh giá của khóa học")}</Link>
         </div>
       )}
     </div>
   );
 }
 export function CourseReviews({ id }: { id: string }) {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const [items, setItems] = useState<Review[]>([]);
   const [summary, setSummary] = useState<Reviews["ratingSummary"] | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -101,26 +112,26 @@ export function CourseReviews({ id }: { id: string }) {
   }
   return (
     <section className="course-reviews" aria-labelledby="course-reviews-title">
-      <h2 id="course-reviews-title">Đánh giá chi tiết từ học viên</h2>
+      <h2 id="course-reviews-title">{uiText("Đánh giá chi tiết từ học viên")}</h2>
       {summary && (
         <p>
           <strong>{summary.averageRating ? Number(summary.averageRating).toFixed(1) : "—"}/5</strong> ·{" "}
-          {summary.reviewCount} đánh giá
+          {summary.reviewCount} {uiText(" đánh giá")}
         </p>
       )}
-      {busy && !summary && <p role="status">Đang tải đánh giá…</p>}
-      {error && <p role="alert">{error}</p>}
-      {summary?.reviewCount === 0 && <p>Khóa học chưa có đánh giá của học viên.</p>}
+      {busy && !summary && <p role="status">{uiText("Đang tải đánh giá…")}</p>}
+      {error && <p role="alert">{uiText(error)}</p>}
+      {summary?.reviewCount === 0 && <p>{uiText("Khóa học chưa có đánh giá của học viên.")}</p>}
       <div className="course-review-list">
         {items.map((item) => (
           <article key={item.reviewId}>
             <div>
-              <strong aria-label={`${item.rating} trên 5 sao`}>
+              <strong aria-label={uiText("{0} trên 5 sao", [item.rating])}>
                 {"★".repeat(item.rating)}
                 {"☆".repeat(5 - item.rating)}
               </strong>
               {item.createdAt && (
-                <time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleDateString("vi-VN")}</time>
+                <time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleDateString(uiLocale)}</time>
               )}
             </div>
             <p>{item.body?.trim() || "Học viên đã chấm điểm và không để lại bình luận."}</p>
@@ -129,13 +140,14 @@ export function CourseReviews({ id }: { id: string }) {
       </div>
       {cursor && (
         <button className="button button-subtle" type="button" disabled={busy} onClick={() => void more()}>
-          {busy ? "Đang tải…" : "Xem thêm đánh giá"}
+          {busy ? uiText("Đang tải…") : uiText("Xem thêm đánh giá")}
         </button>
       )}
     </section>
   );
 }
 export function FeaturedInstructors({ courses }: { courses: Course[] }) {
+  const uiText = useUiText();
   const [items, setItems] = useState<
     {
       id: string;
@@ -192,13 +204,21 @@ export function FeaturedInstructors({ courses }: { courses: Course[] }) {
   if (!items.length) return null;
   return (
     <section className="featured-instructors">
-      <h2>Học cùng giảng viên được đánh giá tốt</h2>
-      <p>Tổng hợp đánh giá từ các khóa học đang hiển thị. Phản hồi thử nghiệm được ghi rõ “Dữ liệu mẫu”.</p>
+      <h2>{uiText("Học cùng giảng viên được đánh giá tốt")}</h2>
+      <p>
+        {uiText(
+          "Tổng hợp đánh giá từ các khóa học đang hiển thị. Phản hồi thử nghiệm được ghi rõ “Dữ liệu mẫu”.",
+        )}
+      </p>
       <div className="instructor-grid">
         {items.map((p) => (
           <article key={p.id}>
             {p.avatarRef ? (
-              <img className="instructor-monogram" src={p.avatarRef} alt={`Ảnh giảng viên ${p.name}`} />
+              <img
+                className="instructor-monogram"
+                src={p.avatarRef}
+                alt={uiText("Ảnh giảng viên {0}", [p.name])}
+              />
             ) : (
               <span className="instructor-monogram" aria-hidden="true">
                 {p.name
@@ -210,9 +230,16 @@ export function FeaturedInstructors({ courses }: { courses: Course[] }) {
             )}
             <div>
               <h3>{p.name}</h3>
-              <p>Giảng viên đã xác minh · {p.count} khóa học trong danh mục</p>
-              <p>{p.reviews ? `★ ${p.rating.toFixed(1)}/5 · ${p.reviews} đánh giá` : "Chưa có đánh giá"}</p>
-              <Link to={`/lecturers/${p.id}`}>Xem hồ sơ giảng viên</Link>
+              <p>
+                {uiText("Giảng viên đã xác minh · ")}
+                {p.count} {uiText(" khóa học trong danh mục")}
+              </p>
+              <p>
+                {p.reviews
+                  ? uiText("★ {0}/5 · {1} đánh giá", [p.rating.toFixed(1), p.reviews])
+                  : uiText("Chưa có đánh giá")}
+              </p>
+              <Link to={`/lecturers/${p.id}`}>{uiText("Xem hồ sơ giảng viên")}</Link>
             </div>
           </article>
         ))}

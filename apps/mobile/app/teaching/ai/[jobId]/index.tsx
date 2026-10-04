@@ -1,3 +1,4 @@
+import { useUiText } from "../../../../src/use-language";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Text, View, TextInput, Pressable, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -21,6 +22,7 @@ import {
 import { Page, Button, ScreenHeader, styles, tokens } from "../../../../src/ui";
 
 export default function AiJobDetailScreen() {
+  const uiText = useUiText();
   const { jobId } = useLocalSearchParams<{ jobId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -188,27 +190,27 @@ export default function AiJobDetailScreen() {
   return (
     <Page>
       <ScreenHeader
-        title="Chi tiết công việc AI"
-        subtitle={`Mã: ${jobId}`}
+        title={uiText("Chi tiết công việc AI")}
+        subtitle={uiText("Mã: {0}", [jobId])}
         onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching/ai"))}
       />
 
       {loading && (
         <View style={s.centerBox}>
           <ActivityIndicator color={tokens.color.brand} />
-          <Text style={styles.small}>Đang đọc trạng thái công việc…</Text>
+          <Text style={styles.small}>{uiText("Đang đọc trạng thái công việc…")}</Text>
         </View>
       )}
 
       {error ? (
         <View style={styles.card}>
-          <Text style={styles.error}>{error}</Text>
+          <Text style={styles.error}>{uiText(error)}</Text>
         </View>
       ) : null}
 
       {msg ? (
         <View style={[styles.card, s.successCard]}>
-          <Text style={s.successText}>{msg}</Text>
+          <Text style={s.successText}>{uiText(msg)}</Text>
         </View>
       ) : null}
 
@@ -236,10 +238,12 @@ export default function AiJobDetailScreen() {
             <View style={s.workingBox}>
               <ActivityIndicator color={tokens.color.brand} />
               <Text style={styles.small}>
-                AI đang xử lý học liệu và cấu trúc câu hỏi. Trang sẽ tự động cập nhật khi có bản nháp.
+                {uiText(
+                  "AI đang xử lý học liệu và cấu trúc câu hỏi. Trang sẽ tự động cập nhật khi có bản nháp.",
+                )}
               </Text>
               <Button
-                label={cancelling ? "Đang hủy…" : "Hủy yêu cầu này"}
+                label={cancelling ? uiText("Đang hủy…") : uiText("Hủy yêu cầu này")}
                 onPress={() => void handleCancel()}
               />
             </View>
@@ -251,28 +255,39 @@ export default function AiJobDetailScreen() {
                 {AI_JOB_FAILURE_COPY[job.failureCode || ""] ??
                   "Không thể tạo bản nháp. Vui lòng quay lại và tạo yêu cầu mới."}
               </Text>
-              <Button label="Quay lại tạo yêu cầu mới" onPress={() => router.replace("/teaching/ai")} />
+              <Button
+                label={uiText("Quay lại tạo yêu cầu mới")}
+                onPress={() => router.replace("/teaching/ai")}
+              />
             </View>
           )}
 
           <Text style={styles.small}>
-            Đối tượng: {job.targetType === "COURSE" ? "Khóa học" : "Lớp học"} ({job.targetId})
+            {uiText("Đối tượng: ")}
+            {job.targetType === "COURSE" ? uiText("Khóa học") : uiText("Lớp học")} ({job.targetId})
           </Text>
-          <Text style={styles.small}>Tài liệu nguồn: {job.documentId}</Text>
-          <Text style={styles.small}>Phiên bản trạng thái: v{job.version}</Text>
+          <Text style={styles.small}>
+            {uiText("Tài liệu nguồn: ")}
+            {job.documentId}
+          </Text>
+          <Text style={styles.small}>
+            {uiText("Phiên bản trạng thái: v")}
+            {job.version}
+          </Text>
         </View>
       )}
 
       {/* Approval Success Banner */}
       {approval && (
         <View style={[styles.card, s.approvalCard]}>
-          <Text style={s.approvalTitle}>Giảng viên đã phê duyệt thành công!</Text>
+          <Text style={s.approvalTitle}>{uiText("Giảng viên đã phê duyệt thành công!")}</Text>
           <Text style={s.approvalDesc}>
-            Đã tạo bài kiểm tra DRAFT trong Assessment. Học viên chỉ có thể làm bài sau khi bạn xuất bản bài
-            kiểm tra.
+            {uiText(
+              "Đã tạo bài kiểm tra DRAFT trong Assessment. Học viên chỉ có thể làm bài sau khi bạn xuất bản bài kiểm tra.",
+            )}
           </Text>
           <Button
-            label="Mở bài kiểm tra trong Assessment →"
+            label={uiText("Mở bài kiểm tra trong Assessment →")}
             onPress={() => router.replace(`/teaching/assessments/${approval.assessment.quizId}`)}
           />
         </View>
@@ -283,11 +298,14 @@ export default function AiJobDetailScreen() {
         <View style={s.draftSection}>
           <View style={s.draftHeader}>
             <Text style={s.sectionTitle}>
-              Kiểm tra bản nháp v{draft.draftVersion}
-              {dirty ? " (Đã chỉnh sửa)" : ""}
+              {uiText("Kiểm tra bản nháp v")}
+              {draft.draftVersion}
+              {dirty ? uiText(" (Đã chỉnh sửa)") : ""}
             </Text>
             <Text style={styles.small}>
-              AI tạo câu hỏi. Giảng viên kiểm tra và phê duyệt trước khi tạo bài kiểm tra chính thức.
+              {uiText(
+                "AI tạo câu hỏi. Giảng viên kiểm tra và phê duyệt trước khi tạo bài kiểm tra chính thức.",
+              )}
             </Text>
           </View>
 
@@ -300,7 +318,10 @@ export default function AiJobDetailScreen() {
                 style={[s.numChip, selected === idx && s.numChipActive]}
                 onPress={() => setSelected(idx)}
               >
-                <Text style={[s.numChipText, selected === idx && s.numChipTextActive]}>Câu {idx + 1}</Text>
+                <Text style={[s.numChipText, selected === idx && s.numChipTextActive]}>
+                  {uiText("Câu ")}
+                  {idx + 1}
+                </Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -310,7 +331,8 @@ export default function AiJobDetailScreen() {
             <View style={s.editorCard}>
               <View style={s.rowBetween}>
                 <Text style={s.qOrder}>
-                  Câu {selected + 1} / {questions.length} ({currentQ.type})
+                  {uiText("Câu ")}
+                  {selected + 1} / {questions.length} ({currentQ.type})
                 </Text>
                 {currentQ.cognitiveLevel && (
                   <View style={s.cogBadge}>
@@ -321,9 +343,9 @@ export default function AiJobDetailScreen() {
                 )}
               </View>
 
-              <Text style={s.fieldLabel}>Nội dung câu hỏi:</Text>
+              <Text style={s.fieldLabel}>{uiText("Nội dung câu hỏi:")}</Text>
               <TextInput
-                accessibilityLabel="Nội dung câu hỏi nháp"
+                accessibilityLabel={uiText("Nội dung câu hỏi nháp")}
                 multiline
                 numberOfLines={3}
                 style={[s.input, s.textArea]}
@@ -331,9 +353,9 @@ export default function AiJobDetailScreen() {
                 onChangeText={(text) => updateQuestion({ text })}
               />
 
-              <Text style={s.fieldLabel}>Điểm:</Text>
+              <Text style={s.fieldLabel}>{uiText("Điểm:")}</Text>
               <TextInput
-                accessibilityLabel="Điểm câu hỏi nháp"
+                accessibilityLabel={uiText("Điểm câu hỏi nháp")}
                 keyboardType="decimal-pad"
                 style={s.input}
                 value={currentQ.points}
@@ -343,7 +365,7 @@ export default function AiJobDetailScreen() {
               {/* Options */}
               {currentQ.options && currentQ.options.length > 0 && (
                 <View style={s.optionsBox}>
-                  <Text style={s.fieldLabel}>Lựa chọn & Đáp án:</Text>
+                  <Text style={s.fieldLabel}>{uiText("Lựa chọn & Đáp án:")}</Text>
                   {currentQ.options.map((opt, optIdx) => {
                     const isSelected =
                       "optionId" in currentQ.correctAnswer
@@ -378,7 +400,7 @@ export default function AiJobDetailScreen() {
                         </Pressable>
 
                         <TextInput
-                          accessibilityLabel={`Lựa chọn ${optIdx + 1}`}
+                          accessibilityLabel={uiText("Lựa chọn {0}", [optIdx + 1])}
                           style={[s.input, s.optionInput]}
                           value={opt.text}
                           onChangeText={(newText) => {
@@ -396,9 +418,11 @@ export default function AiJobDetailScreen() {
 
               {currentQ.type === "TRUE_FALSE" && (
                 <View style={s.optionsBox}>
-                  <Text style={s.fieldLabel}>Đáp án đúng:</Text>
+                  <Text style={s.fieldLabel}>{uiText("Đáp án đúng:")}</Text>
                   <Text style={s.tfText}>
-                    {"value" in currentQ.correctAnswer && currentQ.correctAnswer.value ? "● ĐÚNG" : "● SAI"}
+                    {"value" in currentQ.correctAnswer && currentQ.correctAnswer.value
+                      ? uiText("● ĐÚNG")
+                      : "● SAI"}
                   </Text>
                 </View>
               )}
@@ -408,7 +432,7 @@ export default function AiJobDetailScreen() {
           {/* Validation Checklist */}
           {validationErrors.length > 0 && (
             <View style={s.errorBox}>
-              <Text style={s.errorTitle}>Lưu ý trước khi phê duyệt:</Text>
+              <Text style={s.errorTitle}>{uiText("Lưu ý trước khi phê duyệt:")}</Text>
               {validationErrors.map((e, idx) => (
                 <Text key={idx} style={s.errorText}>
                   • {e}
@@ -419,13 +443,13 @@ export default function AiJobDetailScreen() {
 
           {/* Approval Action */}
           <Button
-            label={approving ? "Đang phê duyệt…" : "Phê duyệt & Nhập vào Assessment"}
+            label={approving ? uiText("Đang phê duyệt…") : uiText("Phê duyệt & Nhập vào Assessment")}
             onPress={() => void handleApprove()}
           />
         </View>
       )}
 
-      <Button label="Quay lại Trợ lý AI" onPress={() => router.back()} />
+      <Button label={uiText("Quay lại Trợ lý AI")} onPress={() => router.back()} />
     </Page>
   );
 }

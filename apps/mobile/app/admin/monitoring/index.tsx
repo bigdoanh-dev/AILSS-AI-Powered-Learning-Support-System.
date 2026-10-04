@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Text, View, Linking } from "react-native";
 import { router } from "expo-router";
@@ -15,6 +16,7 @@ type Monitoring = {
 const number = (value: number | null, suffix = "") =>
   value === null ? "Chưa có dữ liệu" : `${value.toFixed(2)}${suffix}`;
 export default function AdminMonitoring() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [data, setData] = useState<Monitoring | null>(null);
@@ -47,52 +49,69 @@ export default function AdminMonitoring() {
   if (snapshot.user?.role !== "ADMIN")
     return (
       <Page>
-        <Text style={styles.error}>Chỉ quản trị viên được xem giám sát.</Text>
+        <Text style={styles.error}>{uiText("Chỉ quản trị viên được xem giám sát.")}</Text>
       </Page>
     );
   return (
     <Page>
       <ScreenHeader
         title="Prometheus & Grafana"
-        subtitle="Giám sát hệ thống · cập nhật mỗi 30 giây"
+        subtitle={uiText("Giám sát hệ thống · cập nhật mỗi 30 giây")}
         onBack={() => router.back()}
       />
-      <Button label="Làm mới" onPress={() => void load()} />
+      <Button label={uiText("Làm mới")} onPress={() => void load()} />
       {error ? (
         <Text style={styles.error} accessibilityRole="alert">
-          {error}
+          {uiText(error)}
         </Text>
       ) : null}
       {data && (
         <>
           <View style={styles.card}>
             <Text style={styles.text}>
-              Prometheus: {data.prometheus.available ? "Đã kết nối" : "Không kết nối được"}
+              Prometheus: {data.prometheus.available ? uiText("Đã kết nối") : uiText("Không kết nối được")}
             </Text>
             <Text style={styles.text}>
-              Grafana: {data.grafana.available ? "Đã kết nối" : "Không kết nối được"}
+              Grafana: {data.grafana.available ? uiText("Đã kết nối") : uiText("Không kết nối được")}
             </Text>
-            <Button label="Mở Prometheus" variant="outline" onPress={() => void open(data.prometheus.url)} />
-            <Button label="Mở Grafana" variant="outline" onPress={() => void open(data.grafana.url)} />
+            <Button
+              label={uiText("Mở Prometheus")}
+              variant="outline"
+              onPress={() => void open(data.prometheus.url)}
+            />
+            <Button
+              label={uiText("Mở Grafana")}
+              variant="outline"
+              onPress={() => void open(data.grafana.url)}
+            />
           </View>
           <View style={styles.card}>
-            <Text style={styles.text}>Lưu lượng: {number(data.metrics.requestRate, " yêu cầu/giây")}</Text>
-            <Text style={styles.text}>Lỗi 5xx: {number(data.metrics.errorPercent, "%")}</Text>
-            <Text style={styles.text}>Độ trễ p95: {number(data.metrics.p95Ms, " ms")}</Text>
+            <Text style={styles.text}>
+              {uiText("Lưu lượng: ")}
+              {number(data.metrics.requestRate, " yêu cầu/giây")}
+            </Text>
+            <Text style={styles.text}>
+              {uiText("Lỗi 5xx: ")}
+              {number(data.metrics.errorPercent, "%")}
+            </Text>
+            <Text style={styles.text}>
+              {uiText("Độ trễ p95: ")}
+              {number(data.metrics.p95Ms, " ms")}
+            </Text>
           </View>
           <View style={styles.card}>
-            <Text style={styles.text}>Tình trạng dịch vụ</Text>
+            <Text style={styles.text}>{uiText("Tình trạng dịch vụ")}</Text>
             {data.services.map((service) => (
               <Text key={service.job} style={styles.text}>
-                {service.job}: {service.up ? "Hoạt động" : "Mất kết nối"}
+                {service.job}: {service.up ? uiText("Hoạt động") : uiText("Mất kết nối")}
               </Text>
             ))}
-            {!data.services.length && <Text style={styles.text}>Chưa có dữ liệu dịch vụ.</Text>}
+            {!data.services.length && <Text style={styles.text}>{uiText("Chưa có dữ liệu dịch vụ.")}</Text>}
           </View>
           <View style={styles.card}>
-            <Text style={styles.text}>Cảnh báo</Text>
+            <Text style={styles.text}>{uiText("Cảnh báo")}</Text>
             {data.alerts === null ? (
-              <Text style={styles.text}>Không thể tải cảnh báo.</Text>
+              <Text style={styles.text}>{uiText("Không thể tải cảnh báo.")}</Text>
             ) : data.alerts.length ? (
               data.alerts.map((alert, index) => (
                 <Text key={`${alert.name}-${index}`} style={styles.text}>
@@ -100,7 +119,7 @@ export default function AdminMonitoring() {
                 </Text>
               ))
             ) : (
-              <Text style={styles.text}>Không có cảnh báo đang hoạt động.</Text>
+              <Text style={styles.text}>{uiText("Không có cảnh báo đang hoạt động.")}</Text>
             )}
           </View>
         </>

@@ -1,3 +1,4 @@
+import { useUiText, useLanguage } from "../lib/i18n";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { categories } from "./CourseArtwork";
@@ -50,15 +51,18 @@ export function usePublicLecturer(id?: string) {
 }
 
 export function LecturerLink({ id }: { id: string }) {
+  const uiText = useUiText();
   const profile = usePublicLecturer(id);
   return profile ? (
     <Link to={`/lecturers/${id}`}>{profile.displayName}</Link>
   ) : (
-    <span>Hồ sơ giảng viên đang cập nhật</span>
+    <span>{uiText("Hồ sơ giảng viên đang cập nhật")}</span>
   );
 }
 
 export function LecturerProfilePage() {
+  const { locale } = useLanguage();
+  const uiText = useUiText();
   const { id = "" } = useParams();
   const profile = usePublicLecturer(id);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -95,13 +99,13 @@ export function LecturerProfilePage() {
       <div className="lecturer-top-bar">
         <Link className="button button-subtle button-small lecturer-back-btn" to="/courses">
           <Icon name="chevronLeft" size={15} />
-          <span>Khám phá khóa học</span>
+          <span>{uiText("Khám phá khóa học")}</span>
         </Link>
         {profile && (
-          <nav className="lecturer-breadcrumb" aria-label="Đường dẫn">
-            <Link to="/courses">Khóa học</Link>
+          <nav className="lecturer-breadcrumb" aria-label={uiText("Đường dẫn")}>
+            <Link to="/courses">{uiText("Khóa học")}</Link>
             <span className="crumb-sep">/</span>
-            <span>Hồ sơ Giảng viên</span>
+            <span>{uiText("Hồ sơ Giảng viên")}</span>
             <span className="crumb-sep">/</span>
             <span className="crumb-current">{profile.displayName}</span>
           </nav>
@@ -111,14 +115,14 @@ export function LecturerProfilePage() {
       {profile === undefined ? (
         <div className="lecturer-profile-loading-box">
           <Icon name="refresh" size={28} className="spin-animation" />
-          <p role="status">Đang tải hồ sơ giảng viên từ hệ thống…</p>
+          <p role="status">{uiText("Đang tải hồ sơ giảng viên từ hệ thống…")}</p>
         </div>
       ) : profile === null ? (
         <div className="dashboard-banner-notice" style={{ background: "#FEF2F2", borderColor: "#FECACA" }}>
           <p role="alert" style={{ color: "#991B1B" }}>
-            Hồ sơ giảng viên chưa thể hiển thị.{" "}
+            {uiText("Hồ sơ giảng viên chưa thể hiển thị.")}{" "}
             <Link to="/courses" style={{ fontWeight: 700, textDecoration: "underline" }}>
-              Xem các khóa học khác trên AILSS
+              {uiText("Xem các khóa học khác trên AILSS")}
             </Link>
           </p>
         </div>
@@ -135,14 +139,14 @@ export function LecturerProfilePage() {
                   <img
                     className="lecturer-avatar-img"
                     src={profile.avatarRef}
-                    alt={`Ảnh giảng viên ${profile.displayName}`}
+                    alt={uiText("Ảnh giảng viên {0}", [profile.displayName])}
                   />
                 ) : (
                   <span className="lecturer-avatar-initial" aria-hidden="true">
                     {profile.displayName.slice(0, 1).toUpperCase()}
                   </span>
                 )}
-                <div className="lecturer-verified-badge" title="Giảng viên đã xác minh danh tính">
+                <div className="lecturer-verified-badge" title={uiText("Giảng viên đã xác minh danh tính")}>
                   <Icon name="checkCircle" size={18} />
                 </div>
               </div>
@@ -151,12 +155,12 @@ export function LecturerProfilePage() {
                 <div className="lecturer-eyebrow-row">
                   <span className="lecturer-verified-tag">
                     <Icon name="shield" size={13} />
-                    <span>GIẢNG VIÊN ĐÃ XÁC MINH</span>
+                    <span>{uiText("GIẢNG VIÊN ĐÃ XÁC MINH")}</span>
                   </span>
-                  <span className="lecturer-role-pill">Giảng viên AILSS</span>
+                  <span className="lecturer-role-pill">{uiText("Giảng viên AILSS")}</span>
                   <span className="lecturer-rating-pill">
                     <Icon name="starFilled" size={13} />
-                    <span>4.9 / 5.0 (Đánh giá cao)</span>
+                    <span>{uiText("4.9 / 5.0 (Đánh giá cao)")}</span>
                   </span>
                 </div>
 
@@ -170,19 +174,21 @@ export function LecturerProfilePage() {
                 <div className="lecturer-stats-bar">
                   <div className="lecturer-stat-pill">
                     <Icon name="book" size={15} />
-                    <span>{courses.length} Khóa giảng dạy</span>
+                    <span>
+                      {courses.length} {uiText(" Khóa giảng dạy")}
+                    </span>
                   </div>
                   <div className="lecturer-stat-pill">
                     <Icon name="starFilled" size={15} />
-                    <span>4.9 / 5.0 Đánh giá</span>
+                    <span>{uiText("4.9 / 5.0 Đánh giá")}</span>
                   </div>
                   <div className="lecturer-stat-pill">
                     <Icon name="users" size={15} />
-                    <span>Học viên tích cực</span>
+                    <span>{uiText("Học viên tích cực")}</span>
                   </div>
                   <div className="lecturer-stat-pill">
                     <Icon name="check" size={15} />
-                    <span>Bảo chứng chuyên môn</span>
+                    <span>{uiText("Bảo chứng chuyên môn")}</span>
                   </div>
                 </div>
               </div>
@@ -197,8 +203,8 @@ export function LecturerProfilePage() {
                   <Icon name="trending" size={18} />
                 </div>
                 <div>
-                  <h2>Kinh nghiệm</h2>
-                  <span className="lecturer-sub-badge">Chuyên gia</span>
+                  <h2>{uiText("Kinh nghiệm")}</h2>
+                  <span className="lecturer-sub-badge">{uiText("Chuyên gia")}</span>
                 </div>
               </div>
               <div className="lecturer-detail-content">
@@ -207,12 +213,13 @@ export function LecturerProfilePage() {
                 ) : (
                   <div className="lecturer-detail-rich-empty">
                     <p className="lecturer-detail-lead-text">
-                      Chuyên gia đào tạo với nhiều năm kinh nghiệm thực chiến trong phát triển phần mềm và đào
-                      tạo công nghệ số.
+                      {uiText(
+                        "Chuyên gia đào tạo với nhiều năm kinh nghiệm thực chiến trong phát triển phần mềm và đào tạo công nghệ số.",
+                      )}
                     </p>
                     <div className="lecturer-trust-tag">
                       <Icon name="checkCircle" size={13} />
-                      <span>Đã qua thẩm định kinh nghiệm chuyên môn</span>
+                      <span>{uiText("Đã qua thẩm định kinh nghiệm chuyên môn")}</span>
                     </div>
                   </div>
                 )}
@@ -225,8 +232,8 @@ export function LecturerProfilePage() {
                   <Icon name="graduation" size={18} />
                 </div>
                 <div>
-                  <h2>Học vấn</h2>
-                  <span className="lecturer-sub-badge">Học thuật</span>
+                  <h2>{uiText("Học vấn")}</h2>
+                  <span className="lecturer-sub-badge">{uiText("Học thuật")}</span>
                 </div>
               </div>
               <div className="lecturer-detail-content">
@@ -235,12 +242,13 @@ export function LecturerProfilePage() {
                 ) : (
                   <div className="lecturer-detail-rich-empty">
                     <p className="lecturer-detail-lead-text">
-                      Tốt nghiệp chuyên ngành Công nghệ thông tin & Khoa học máy tính từ các trường đại học uy
-                      tín.
+                      {uiText(
+                        "Tốt nghiệp chuyên ngành Công nghệ thông tin & Khoa học máy tính từ các trường đại học uy tín.",
+                      )}
                     </p>
                     <div className="lecturer-trust-tag">
                       <Icon name="checkCircle" size={13} />
-                      <span>Hồ sơ học thuật đã được xác thực</span>
+                      <span>{uiText("Hồ sơ học thuật đã được xác thực")}</span>
                     </div>
                   </div>
                 )}
@@ -253,8 +261,8 @@ export function LecturerProfilePage() {
                   <Icon name="trophy" size={18} />
                 </div>
                 <div>
-                  <h2>Thành tựu</h2>
-                  <span className="lecturer-sub-badge">Chứng nhận</span>
+                  <h2>{uiText("Thành tựu")}</h2>
+                  <span className="lecturer-sub-badge">{uiText("Chứng nhận")}</span>
                 </div>
               </div>
               <div className="lecturer-detail-content">
@@ -263,12 +271,13 @@ export function LecturerProfilePage() {
                 ) : (
                   <div className="lecturer-detail-rich-empty">
                     <p className="lecturer-detail-lead-text">
-                      Tác giả nhiều học liệu thực hành chất lượng cao, đồng hành cùng cộng đồng người học
-                      AILSS.
+                      {uiText(
+                        "Tác giả nhiều học liệu thực hành chất lượng cao, đồng hành cùng cộng đồng người học AILSS.",
+                      )}
                     </p>
                     <div className="lecturer-trust-tag">
                       <Icon name="checkCircle" size={13} />
-                      <span>Giảng viên tích cực xuất sắc</span>
+                      <span>{uiText("Giảng viên tích cực xuất sắc")}</span>
                     </div>
                   </div>
                 )}
@@ -280,27 +289,29 @@ export function LecturerProfilePage() {
           <section className="lecturer-courses-section">
             <div className="course-hub-section-heading">
               <div>
-                <p className="eyebrow">CHƯƠNG TRÌNH ĐÀO TẠO</p>
-                <h2>Khóa học tiêu biểu</h2>
+                <p className="eyebrow">{uiText("CHƯƠNG TRÌNH ĐÀO TẠO")}</p>
+                <h2>{uiText("Khóa học tiêu biểu")}</h2>
               </div>
-              <span className="kpi-tag accent">{courses.length} khóa học</span>
+              <span className="kpi-tag accent">
+                {courses.length} {uiText(" khóa học")}
+              </span>
             </div>
 
             {loading ? (
               <div className="lecturer-profile-loading-box">
                 <Icon name="refresh" size={24} className="spin-animation" />
-                <p>Đang tải danh mục khóa học…</p>
+                <p>{uiText("Đang tải danh mục khóa học…")}</p>
               </div>
             ) : courses.length ? (
               <div className="lecturer-profile-courses">
                 {courses.map((course) => (
                   <article key={course.courseId} className="lecturer-course-card">
                     <div className="lecturer-course-top">
-                      <span className="badge">Khóa học</span>
+                      <span className="badge">{uiText("Khóa học")}</span>
                       <span className="price-tag">
                         {course.priceType === "FREE"
-                          ? "Miễn phí"
-                          : `${new Intl.NumberFormat("vi-VN").format(Number(course.price))} ${course.currency}`}
+                          ? uiText("Miễn phí")
+                          : `${new Intl.NumberFormat(locale).format(Number(course.price))} ${course.currency}`}
                       </span>
                     </div>
                     <h3>
@@ -313,7 +324,7 @@ export function LecturerProfilePage() {
                         to={`/courses/${course.courseId}`}
                         style={{ marginTop: "12px", width: "100%", justifyContent: "center" }}
                       >
-                        Xem khóa học →
+                        {uiText("Xem khóa học →")}
                       </Link>
                     </div>
                   </article>
@@ -324,19 +335,22 @@ export function LecturerProfilePage() {
                 <div className="lecturer-empty-icon-ring">
                   <Icon name="book" size={36} />
                 </div>
-                <h3>Chưa có khóa học trong danh mục hiện tại</h3>
+                <h3>{uiText("Chưa có khóa học trong danh mục hiện tại")}</h3>
                 <p className="lecturer-empty-desc">
-                  Giảng viên <strong>{profile.displayName}</strong> đang biên soạn giáo trình và bài giảng
-                  mới. Bạn có thể khám phá hàng trăm khóa học hấp dẫn khác trên nền tảng AILSS:
+                  {uiText("Giảng viên ")}
+                  <strong>{profile.displayName}</strong>{" "}
+                  {uiText(
+                    " đang biên soạn giáo trình và bài giảng mới. Bạn có thể khám phá hàng trăm khóa học hấp dẫn khác trên nền tảng AILSS:",
+                  )}
                 </p>
                 <div className="lecturer-empty-action-group">
                   <Link className="button" to="/courses">
-                    <span>Khám phá toàn bộ khóa học</span>
+                    <span>{uiText("Khám phá toàn bộ khóa học")}</span>
                     <Icon name="chevronRight" size={15} />
                   </Link>
                 </div>
                 <div className="lecturer-explore-pills">
-                  <span className="explore-pill-label">Gợi ý danh mục:</span>
+                  <span className="explore-pill-label">{uiText("Gợi ý danh mục:")}</span>
                   {categories.slice(0, 4).map((cat) => (
                     <Link
                       key={cat.id}

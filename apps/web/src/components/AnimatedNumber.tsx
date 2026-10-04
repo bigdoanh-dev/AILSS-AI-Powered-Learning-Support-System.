@@ -1,3 +1,4 @@
+import { useLanguage } from "../lib/i18n";
 import React, { useEffect, useRef, useState } from "react";
 
 export interface AnimatedNumberProps {
@@ -104,6 +105,7 @@ export function AnimatedNumber({
   style,
   formatter,
 }: AnimatedNumberProps) {
+  const { locale: uiLocale } = useLanguage();
   const containerRef = useRef<HTMLSpanElement>(null);
   const parsed = parseNumber(value, decimals, prefix, suffix);
   const targetVal = parsed ? parsed.target : 0;
@@ -193,7 +195,7 @@ export function AnimatedNumber({
     ? formatter(displayNumber)
     : parsed.decimals > 0
       ? displayNumber.toFixed(parsed.decimals)
-      : Math.round(displayNumber).toLocaleString("vi-VN");
+      : Math.round(displayNumber).toLocaleString(uiLocale);
 
   return (
     <span

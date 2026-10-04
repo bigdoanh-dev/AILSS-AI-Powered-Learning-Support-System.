@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { useUiText } from "../lib/i18n";
 import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAdminData } from "./useAdminData";
@@ -32,6 +34,8 @@ const CATEGORIES = [
 ];
 
 export default function LogsDashboard() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [search, setSearch] = useState("");
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
@@ -96,16 +100,18 @@ export default function LogsDashboard() {
     <div className="admin-dashboard-container">
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">KIỂM TOÁN & AN TOÀN HỆ THỐNG</p>
-          <h1>Nhật Ký Hệ Thống & Kiểm Toán An Ninh</h1>
-          <p className="lead">Theo dõi biến động xác thực, giao dịch SePay, kiểm duyệt và tác vụ quản trị.</p>
+          <p className="eyebrow">{uiText("KIỂM TOÁN & AN TOÀN HỆ THỐNG")}</p>
+          <h1>{uiText("Nhật Ký Hệ Thống & Kiểm Toán An Ninh")}</h1>
+          <p className="lead">
+            {uiText("Theo dõi biến động xác thực, giao dịch SePay, kiểm duyệt và tác vụ quản trị.")}
+          </p>
         </div>
         <div className="dashboard-header-actions">
           <Link className="button button-subtle" to="/app">
-            ← Tổng quan Admin
+            {uiText("← Tổng quan Admin")}
           </Link>
           <button className="button" onClick={() => void handleExportJson()}>
-            📥 Xuất JSON
+            {uiText("📥 Xuất JSON")}
           </button>
         </div>
       </div>
@@ -126,16 +132,18 @@ export default function LogsDashboard() {
           }}
         >
           <span>
-            ⚠️ Không thể đồng bộ nhật ký kiểm toán từ máy chủ ({error}). Không hiển thị dữ liệu thay thế.
+            {uiText("⚠️ Không thể đồng bộ nhật ký kiểm toán từ máy chủ (")}
+            {uiText(error)}
+            {uiText("). Không hiển thị dữ liệu thay thế.")}
           </span>
           <button className="button button-small button-subtle" onClick={refresh}>
-            Thử lại
+            {uiText("Thử lại")}
           </button>
         </div>
       )}
       {exportError ? (
         <div className="dashboard-banner-error" role="alert">
-          {exportError}
+          {uiText(exportError)}
         </div>
       ) : null}
 
@@ -144,7 +152,7 @@ export default function LogsDashboard() {
         <div className="dashboard-banner-notice sse-live-banner" role="status">
           <span className="live-dot" />
           <span>
-            {newLogsCount} sự kiện mới —{" "}
+            {newLogsCount} {uiText(" sự kiện mới —")}{" "}
             <button
               className="inline-link"
               onClick={() => {
@@ -152,7 +160,7 @@ export default function LogsDashboard() {
                 refresh();
               }}
             >
-              Tải lại ngay
+              {uiText("Tải lại ngay")}
             </button>
           </span>
         </div>
@@ -160,7 +168,7 @@ export default function LogsDashboard() {
 
       {/* Status */}
       <div className="dashboard-toolbar-row">
-        <div className="dashboard-filter-group" role="group" aria-label="Bộ lọc chuyên mục">
+        <div className="dashboard-filter-group" role="group" aria-label={uiText("Bộ lọc chuyên mục")}>
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
@@ -175,17 +183,20 @@ export default function LogsDashboard() {
           {isLive ? (
             <>
               <span className="live-dot" />
-              <span>Dữ liệu thực{lastUpdated ? ` · ${lastUpdated.toLocaleTimeString("vi-VN")}` : ""}</span>
+              <span>
+                {uiText("Dữ liệu thực")}
+                {lastUpdated ? ` · ${lastUpdated.toLocaleTimeString(uiLocale)}` : ""}
+              </span>
             </>
           ) : error ? (
             <>
               <span className="mock-dot" style={{ backgroundColor: "#EF4444" }} />
-              <span>Mất kết nối máy chủ</span>
+              <span>{uiText("Mất kết nối máy chủ")}</span>
             </>
           ) : (
             <>
               <span className="mock-dot" />
-              <span>Chưa kết nối API</span>
+              <span>{uiText("Chưa kết nối API")}</span>
             </>
           )}
           <button className="button button-subtle button-small" onClick={refresh} disabled={loading}>
@@ -201,10 +212,12 @@ export default function LogsDashboard() {
             <span className="kpi-icon">
               <Icon name="receipt" size={20} />
             </span>
-            <span className="kpi-tag accent">Thời gian thực</span>
+            <span className="kpi-tag accent">{uiText("Thời gian thực")}</span>
           </div>
-          <div className="kpi-value">{logs.length} sự kiện</div>
-          <div className="kpi-label">Nhật ký 24 giờ qua</div>
+          <div className="kpi-value">
+            {logs.length} {uiText(" sự kiện")}
+          </div>
+          <div className="kpi-label">{uiText("Nhật ký 24 giờ qua")}</div>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">
@@ -213,7 +226,7 @@ export default function LogsDashboard() {
             </span>
           </div>
           <div className="kpi-value">—</div>
-          <div className="kpi-label">Chứng thực chữ ký API</div>
+          <div className="kpi-label">{uiText("Chứng thực chữ ký API")}</div>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">
@@ -222,7 +235,7 @@ export default function LogsDashboard() {
             </span>
           </div>
           <div className="kpi-value">—</div>
-          <div className="kpi-label">Lỗi đối soát tồn đọng</div>
+          <div className="kpi-label">{uiText("Lỗi đối soát tồn đọng")}</div>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">
@@ -230,8 +243,8 @@ export default function LogsDashboard() {
               <Icon name="shield" size={20} />
             </span>
           </div>
-          <div className="kpi-value">Chưa xác minh</div>
-          <div className="kpi-label">Trạng thái tuân thủ</div>
+          <div className="kpi-value">{uiText("Chưa xác minh")}</div>
+          <div className="kpi-label">{uiText("Trạng thái tuân thủ")}</div>
         </div>
       </div>
 
@@ -239,10 +252,10 @@ export default function LogsDashboard() {
       <div className="table-search-box full-width-search">
         <input
           type="search"
-          placeholder="Tìm theo Request ID, Actor, hành động..."
+          placeholder={uiText("Tìm theo Request ID, Actor, hành động...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          aria-label="Tìm kiếm nhật ký"
+          aria-label={uiText("Tìm kiếm nhật ký")}
         />
       </div>
 
@@ -252,12 +265,12 @@ export default function LogsDashboard() {
           <table className="dashboard-data-table" role="table">
             <thead>
               <tr>
-                <th>Thời Gian</th>
-                <th>Chuyên Mục</th>
-                <th>Hành Động</th>
-                <th>Tác Nhân</th>
-                <th>Mã YC</th>
-                <th>Trạng Thái</th>
+                <th>{uiText("Thời Gian")}</th>
+                <th>{uiText("Chuyên Mục")}</th>
+                <th>{uiText("Hành Động")}</th>
+                <th>{uiText("Tác Nhân")}</th>
+                <th>{uiText("Mã YC")}</th>
+                <th>{uiText("Trạng Thái")}</th>
               </tr>
             </thead>
             <tbody>
@@ -268,7 +281,7 @@ export default function LogsDashboard() {
                   onClick={() => setSelectedLog(selectedLog?.id === log.id ? null : log)}
                   role="button"
                   tabIndex={0}
-                  aria-label={`Xem chi tiết ${log.requestId}`}
+                  aria-label={uiText("Xem chi tiết {0}", [log.requestId])}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
@@ -308,7 +321,7 @@ export default function LogsDashboard() {
               {filteredLogs.length === 0 && (
                 <tr>
                   <td colSpan={6} className="table-empty-row">
-                    Không có bản ghi phù hợp.
+                    {uiText("Không có bản ghi phù hợp.")}
                   </td>
                 </tr>
               )}
@@ -322,23 +335,26 @@ export default function LogsDashboard() {
         <section
           className="dashboard-section-card log-detail-panel"
           role="dialog"
-          aria-label="Chi tiết sự kiện nhật ký"
+          aria-label={uiText("Chi tiết sự kiện nhật ký")}
         >
           <div className="section-card-header">
             <div>
-              <h2>Chi Tiết Sự Kiện: {selectedLog.action}</h2>
+              <h2>
+                {uiText("Chi Tiết Sự Kiện: ")}
+                {selectedLog.action}
+              </h2>
               <p className="subtext">
-                Request ID: <code>{selectedLog.requestId}</code> • Tác nhân: <code>{selectedLog.actor}</code>{" "}
-                (IP: {selectedLog.ip})
+                Request ID: <code>{selectedLog.requestId}</code> {uiText(" • Tác nhân: ")}
+                <code>{selectedLog.actor}</code> (IP: {selectedLog.ip})
               </p>
             </div>
             <button className="button button-subtle" onClick={() => setSelectedLog(null)}>
-              ✕ Đóng
+              {uiText("✕ Đóng")}
             </button>
           </div>
           <div className="log-detail-content">
             <p className="log-summary-lead">{selectedLog.details}</p>
-            <h3>Cấu Trúc Dữ Liệu Payload (JSON):</h3>
+            <h3>{uiText("Cấu Trúc Dữ Liệu Payload (JSON):")}</h3>
             <pre className="json-code-block" tabIndex={0}>
               <code>{JSON.stringify(selectedLog.payload, null, 2)}</code>
             </pre>

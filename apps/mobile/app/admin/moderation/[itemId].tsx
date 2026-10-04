@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../src/use-language";
+import { useUiText } from "../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import {
   Text,
@@ -24,6 +26,8 @@ import {
 import { Page, Button, PasswordInput, styles, tokens } from "../../../src/ui";
 
 export default function AdminModerationDetailScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { itemId } = useLocalSearchParams<{ itemId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -123,9 +127,9 @@ export default function AdminModerationDetailScreen() {
   if (snapshot.user?.role !== "ADMIN") {
     return (
       <Page>
-        <Text style={styles.title}>Chi tiết kiểm duyệt</Text>
-        <Text style={styles.error}>Chức năng này yêu cầu quyền Quản trị viên (ADMIN).</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.title}>{uiText("Chi tiết kiểm duyệt")}</Text>
+        <Text style={styles.error}>{uiText("Chức năng này yêu cầu quyền Quản trị viên (ADMIN).")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -133,53 +137,58 @@ export default function AdminModerationDetailScreen() {
   return (
     <Page>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Button label="← Hàng đợi kiểm duyệt" onPress={() => router.back()} />
+        <Button label={uiText("← Hàng đợi kiểm duyệt")} onPress={() => router.back()} />
 
         {loading ? (
           <ActivityIndicator size="large" color={tokens.color.brand} style={{ marginTop: 24 }} />
         ) : error && !report ? (
           <View style={{ marginTop: 16 }}>
-            <Text style={styles.error}>{error}</Text>
-            <Button label="Thử lại" onPress={() => void loadReport()} />
+            <Text style={styles.error}>{uiText(error)}</Text>
+            <Button label={uiText("Thử lại")} onPress={() => void loadReport()} />
           </View>
         ) : report ? (
           <View style={{ marginTop: tokens.space.medium }}>
-            <Text style={styles.title}>Chi tiết báo cáo</Text>
-            <Text style={styles.small}>ID: {report.reportId}</Text>
+            <Text style={styles.title}>{uiText("Chi tiết báo cáo")}</Text>
+            <Text style={styles.small}>
+              {uiText("ID:")}
+              {report.reportId}
+            </Text>
 
-            {successMessage ? <Text style={md.successText}>{successMessage}</Text> : null}
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {successMessage ? <Text style={md.successText}>{uiText(successMessage)}</Text> : null}
+            {error ? <Text style={styles.error}>{uiText(error)}</Text> : null}
 
             {/* Facts Card */}
             <View style={md.card}>
-              <Text style={md.cardHeading}>Thông tin nội dung</Text>
+              <Text style={md.cardHeading}>{uiText("Thông tin nội dung")}</Text>
               <View style={md.factRow}>
-                <Text style={md.factLabel}>Loại nội dung:</Text>
+                <Text style={md.factLabel}>{uiText("Loại nội dung:")}</Text>
                 <Text style={md.factVal}>
-                  {report.targetType === "COMMENT" ? "Bình luận (COMMENT)" : "Đánh giá (REVIEW)"}
+                  {report.targetType === "COMMENT"
+                    ? uiText("Bình luận (COMMENT)")
+                    : uiText("Đánh giá (REVIEW)")}
                 </Text>
               </View>
               <View style={md.factRow}>
-                <Text style={md.factLabel}>Mã mục tiêu (Target ID):</Text>
+                <Text style={md.factLabel}>{uiText("Mã mục tiêu (Target ID):")}</Text>
                 <Text style={md.factVal}>{report.targetId}</Text>
               </View>
               <View style={md.factRow}>
-                <Text style={md.factLabel}>Trạng thái hiện tại:</Text>
+                <Text style={md.factLabel}>{uiText("Trạng thái hiện tại:")}</Text>
                 <Text style={md.factVal}>
-                  {report.state === "OPEN" ? "Đang mở (OPEN)" : "Đã xử lý (RESOLVED)"}
+                  {report.state === "OPEN" ? uiText("Đang mở (OPEN)") : uiText("Đã xử lý (RESOLVED)")}
                 </Text>
               </View>
               <View style={md.factRow}>
-                <Text style={md.factLabel}>Phiên bản (Optimistic Version):</Text>
+                <Text style={md.factLabel}>{uiText("Phiên bản (Optimistic Version):")}</Text>
                 <Text style={md.factVal}>v{report.version}</Text>
               </View>
               <View style={md.factRow}>
-                <Text style={md.factLabel}>Thời điểm báo cáo:</Text>
-                <Text style={md.factVal}>{new Date(report.createdAt).toLocaleString("vi-VN")}</Text>
+                <Text style={md.factLabel}>{uiText("Thời điểm báo cáo:")}</Text>
+                <Text style={md.factVal}>{new Date(report.createdAt).toLocaleString(uiLocale)}</Text>
               </View>
               {report.decision ? (
                 <View style={md.factRow}>
-                  <Text style={md.factLabel}>Quyết định đã lưu:</Text>
+                  <Text style={md.factLabel}>{uiText("Quyết định đã lưu:")}</Text>
                   <Text style={md.factVal}>{report.decision}</Text>
                 </View>
               ) : null}
@@ -187,25 +196,27 @@ export default function AdminModerationDetailScreen() {
 
             {/* Decision Action Form */}
             <View style={md.card}>
-              <Text style={md.cardHeading}>Đưa ra quyết định kiểm duyệt</Text>
+              <Text style={md.cardHeading}>{uiText("Đưa ra quyết định kiểm duyệt")}</Text>
               <Text style={md.cardDesc}>
-                Chọn hành động xử lý, nhập lý do giải trình và xác thực bằng mật khẩu quản trị viên.
+                {uiText(
+                  "Chọn hành động xử lý, nhập lý do giải trình và xác thực bằng mật khẩu quản trị viên.",
+                )}
               </Text>
 
               {/* Action Selector */}
               <View style={md.actionGrid}>
                 {(
                   [
-                    { key: "HIDE", label: "Ẩn nội dung" },
-                    { key: "RESTORE", label: "Khôi phục" },
-                    { key: "DISMISS", label: "Bỏ qua báo cáo" },
-                    { key: "WARN", label: "Cảnh báo" },
+                    { key: "HIDE", label: uiText("Ẩn nội dung") },
+                    { key: "RESTORE", label: uiText("Khôi phục") },
+                    { key: "DISMISS", label: uiText("Bỏ qua báo cáo") },
+                    { key: "WARN", label: uiText("Cảnh báo") },
                   ] as { key: ModerationAction; label: string }[]
                 ).map((act) => (
                   <Pressable
                     key={act.key}
                     accessibilityRole="button"
-                    accessibilityLabel={`Chọn hành động ${act.label}`}
+                    accessibilityLabel={uiText("Chọn hành động {0}", [act.label])}
                     style={[md.actionChip, action === act.key && md.actionChipSelected]}
                     onPress={() => setAction(act.key)}
                   >
@@ -217,26 +228,26 @@ export default function AdminModerationDetailScreen() {
               </View>
 
               <TextInput
-                placeholder="Lý do xử lý kiểm duyệt (bắt buộc, tối đa 1000 ký tự)"
+                placeholder={uiText("Lý do xử lý kiểm duyệt (bắt buộc, tối đa 1000 ký tự)")}
                 value={reason}
                 onChangeText={setReason}
                 multiline
                 numberOfLines={3}
                 maxLength={1000}
                 style={[md.input, { minHeight: 80 }]}
-                accessibilityLabel="Lý do xử lý kiểm duyệt"
+                accessibilityLabel={uiText("Lý do xử lý kiểm duyệt")}
               />
 
               <PasswordInput
-                placeholder="Mật khẩu quản trị viên hiện tại"
+                placeholder={uiText("Mật khẩu quản trị viên hiện tại")}
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
                 style={md.input}
-                accessibilityLabel="Mật khẩu quản trị viên"
+                accessibilityLabel={uiText("Mật khẩu quản trị viên")}
               />
 
               <Button
-                label={busy ? "Đang gửi quyết định..." : "Xác nhận quyết định"}
+                label={busy ? uiText("Đang gửi quyết định...") : uiText("Xác nhận quyết định")}
                 onPress={() => setShowConfirm(true)}
                 disabled={busy || !reason.trim() || !currentPassword.trim()}
               />
@@ -253,15 +264,16 @@ export default function AdminModerationDetailScreen() {
         >
           <View style={md.modalOverlay}>
             <View style={md.modalContent}>
-              <Text style={md.modalTitle}>Xác nhận kiểm duyệt</Text>
+              <Text style={md.modalTitle}>{uiText("Xác nhận kiểm duyệt")}</Text>
               <Text style={md.modalText}>
-                Bạn có chắc chắn muốn thực hiện hành động <Text style={{ fontWeight: "700" }}>{action}</Text>{" "}
-                đối với mục <Text style={{ fontWeight: "700" }}>{report?.targetId}</Text>? Hành động sẽ có
-                hiệu lực ngay lập tức và được lưu vào nhật ký kiểm toán.
+                {uiText("Bạn có chắc chắn muốn thực hiện hành động ")}
+                <Text style={{ fontWeight: "700" }}>{action}</Text> {uiText("đối với mục ")}
+                <Text style={{ fontWeight: "700" }}>{report?.targetId}</Text>
+                {uiText("? Hành động sẽ có hiệu lực ngay lập tức và được lưu vào nhật ký kiểm toán.")}
               </Text>
               <View style={md.modalActions}>
-                <Button label="Hủy" onPress={() => setShowConfirm(false)} />
-                <Button label="Xác nhận" onPress={() => void handleDecisionSubmit()} />
+                <Button label={uiText("Hủy")} onPress={() => setShowConfirm(false)} />
+                <Button label={uiText("Xác nhận")} onPress={() => void handleDecisionSubmit()} />
               </View>
             </View>
           </View>

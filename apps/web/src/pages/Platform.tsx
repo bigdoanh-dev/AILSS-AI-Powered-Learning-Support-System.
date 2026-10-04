@@ -1,3 +1,4 @@
+import { useUiText, useLanguage } from "../lib/i18n";
 import { ScrollStory } from "../components/ScrollStory";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -135,6 +136,8 @@ const RAG_SIMULATION_CHUNKS = [
 ];
 
 export function AiLearning() {
+  const { language } = useLanguage();
+  const uiText = useUiText();
   const [selectedFormat, setSelectedFormat] = useState<string>("rag");
   const [activeBloomIdx, setActiveBloomIdx] = useState<number>(1);
   const [activeChunkIdx, setActiveChunkIdx] = useState<number>(0);
@@ -162,14 +165,16 @@ export function AiLearning() {
       <section className="ai-hero-3d-wrapper">
         <div className="container ai-hero-container">
           <h1 className="ai-hero-title">
-            Học Cùng AI: <span className="gradient-text">Tri thức của bạn.</span>
+            {uiText("Học Cùng AI: ")}
+            <span className="gradient-text">{uiText("Tri thức của bạn.")}</span>
             <br />
-            Năng lực mới từ AI thích ứng.
+            {uiText("Năng lực mới từ AI thích ứng.")}
           </h1>
 
           <p className="ai-hero-desc">
-            Hệ sinh thái học tập và khảo thí thích ứng thông minh. Biến học liệu thành câu hỏi chuẩn hóa theo
-            thang nhận thức Bloom, kết hợp chặt chẽ với sự rà soát và định hướng sư phạm của giảng viên.
+            {uiText(
+              "Hệ sinh thái học tập và khảo thí thích ứng thông minh. Biến học liệu thành câu hỏi chuẩn hóa theo thang nhận thức Bloom, kết hợp chặt chẽ với sự rà soát và định hướng sư phạm của giảng viên.",
+            )}
           </p>
 
           <div className="ai-stat-grid-3d">
@@ -178,28 +183,30 @@ export function AiLearning() {
                 <Icon name="layers" size={26} />
               </span>
               <div className="ai-stat-num">8,600+</div>
-              <div className="ai-stat-label">Vector Embeddings 3D trong không gian tri thức</div>
+              <div className="ai-stat-label">{uiText("Vector Embeddings 3D trong không gian tri thức")}</div>
             </div>
             <div className="ai-stat-card-3d">
               <span className="ai-stat-icon-3d">
                 <Icon name="brain" size={26} />
               </span>
-              <div className="ai-stat-num">6 Cấp độ</div>
-              <div className="ai-stat-label">Chuẩn hóa ma trận nhận thức Bloom sư phạm</div>
+              <div className="ai-stat-num">{uiText("6 Cấp độ")}</div>
+              <div className="ai-stat-label">{uiText("Chuẩn hóa ma trận nhận thức Bloom sư phạm")}</div>
             </div>
             <div className="ai-stat-card-3d">
               <span className="ai-stat-icon-3d">
                 <Icon name="class" size={26} />
               </span>
-              <div className="ai-stat-num">100% Giảng viên</div>
-              <div className="ai-stat-label">Human-in-the-Loop: Rà soát & duyệt từng câu hỏi</div>
+              <div className="ai-stat-num">{uiText("100% Giảng viên")}</div>
+              <div className="ai-stat-label">{uiText("Human-in-the-Loop: Rà soát & duyệt từng câu hỏi")}</div>
             </div>
             <div className="ai-stat-card-3d">
               <span className="ai-stat-icon-3d">
                 <Icon name="shield" size={26} />
               </span>
               <div className="ai-stat-num">Zero Leaks</div>
-              <div className="ai-stat-label">Cô lập học liệu, bảo mật dữ liệu riêng tư tuyệt đối</div>
+              <div className="ai-stat-label">
+                {uiText("Cô lập học liệu, bảo mật dữ liệu riêng tư tuyệt đối")}
+              </div>
             </div>
           </div>
         </div>
@@ -211,27 +218,31 @@ export function AiLearning() {
           <div className="ai-knowledge-split">
             <div>
               <h2 className="ai-heading-3d">
-                Tri thức chuyển động.
+                {uiText("Tri thức chuyển động.")}
                 <br />
-                Từ học liệu số.
+                {uiText("Từ học liệu số.")}
               </h2>
               <p className="ai-body-text">
-                Giáo trình và tài liệu định dạng PDF, DOCX, TXT được phân đoạn ngữ nghĩa (Semantic Chunking),
-                lưu trữ bảo mật và tạo Vector Embeddings theo chuẩn RAG Pipeline chuyên sâu trước khi hỗ trợ
-                giảng viên biên soạn đề thi.
+                {uiText(
+                  "Giáo trình và tài liệu định dạng PDF, DOCX, TXT được phân đoạn ngữ nghĩa (Semantic Chunking), lưu trữ bảo mật và tạo Vector Embeddings theo chuẩn RAG Pipeline chuyên sâu trước khi hỗ trợ giảng viên biên soạn đề thi.",
+                )}
               </p>
 
               {/* 3D Interactive Format Tags */}
-              <div className="format-tags-3d" role="group" aria-label="Định dạng và Công nghệ hỗ trợ">
+              <div
+                className="format-tags-3d"
+                role="group"
+                aria-label={uiText("Định dạng và Công nghệ hỗ trợ")}
+              >
                 {FORMAT_SPECS.map((fmt) => (
                   <button
                     key={fmt.id}
                     type="button"
                     className={`format-pill-3d ${selectedFormat === fmt.id ? "active" : ""}`}
                     onClick={() => setSelectedFormat(fmt.id)}
-                    title={fmt.desc}
+                    title={uiText(fmt.desc)}
                   >
-                    <span>{fmt.label}</span>
+                    <span>{uiText(fmt.label)}</span>
                   </button>
                 ))}
               </div>
@@ -241,7 +252,7 @@ export function AiLearning() {
                 <div className="ai-sim-header">
                   <span className="ai-sim-tag">
                     <Icon name="zap" size={13} style={{ marginRight: 5, verticalAlign: "-2px" }} />
-                    Phân đoạn RAG (Semantic Chunking)
+                    {uiText("Phân đoạn RAG (Semantic Chunking)")}
                   </span>
                   <button
                     type="button"
@@ -249,7 +260,7 @@ export function AiLearning() {
                     onClick={handleRunSim}
                     disabled={isSimulating}
                   >
-                    {isSimulating ? "Đang phân đoạn..." : "▶ Chạy thử"}
+                    {isSimulating ? uiText("Đang phân đoạn...") : uiText("▶ Chạy thử")}
                   </button>
                 </div>
 
@@ -262,7 +273,7 @@ export function AiLearning() {
                       style={{ cursor: "pointer" }}
                     >
                       <div className="ai-chunk-meta">
-                        <span>{chk.tag}</span>
+                        <span>{uiText(chk.tag)}</span>
                         <span className="ai-vector-token">
                           {chk.vector} · {chk.similarity}
                         </span>
@@ -287,16 +298,17 @@ export function AiLearning() {
         <div className="container">
           <div className="section-heading">
             <span className="eyebrow" style={{ display: "inline-block" }}>
-              QUY TRÌNH TỰ ĐỘNG HÓA
+              {uiText("QUY TRÌNH TỰ ĐỘNG HÓA")}
             </span>
             <h2 className="ai-heading-3d">
-              Không bỏ qua
+              {uiText("Không bỏ qua")}
               <br />
-              phán đoán của con người.
+              {uiText("phán đoán của con người.")}
             </h2>
             <p className="ai-body-text">
-              Khám phá quy trình 6 bước tự động từ tài liệu đầu vào đến bài đánh giá nháp sẵn sàng cho người
-              học.
+              {uiText(
+                "Khám phá quy trình 6 bước tự động từ tài liệu đầu vào đến bài đánh giá nháp sẵn sàng cho người học.",
+              )}
             </p>
           </div>
           <Workflow />
@@ -308,16 +320,17 @@ export function AiLearning() {
         <div className="container">
           <div className="section-heading">
             <span className="eyebrow" style={{ display: "inline-block" }}>
-              THANG ĐO SƯ PHẠM QUỐC TẾ
+              {uiText("THANG ĐO SƯ PHẠM QUỐC TẾ")}
             </span>
-            <h2 className="ai-heading-3d">Ma Trận 6 Cấp Độ Nhận Thức Bloom</h2>
+            <h2 className="ai-heading-3d">{uiText("Ma Trận 6 Cấp Độ Nhận Thức Bloom")}</h2>
             <p className="ai-body-text">
-              Mỗi câu hỏi do trợ lý AI đề xuất đều được kiểm định nghiêm ngặt theo thang đo nhận thức Bloom.
-              Nhấp vào từng cấp độ bên dưới để khám phá nguyên lý tạo đề và câu hỏi minh họa 3D.
+              {uiText(
+                "Mỗi câu hỏi do trợ lý AI đề xuất đều được kiểm định nghiêm ngặt theo thang đo nhận thức Bloom. Nhấp vào từng cấp độ bên dưới để khám phá nguyên lý tạo đề và câu hỏi minh họa 3D.",
+              )}
             </p>
           </div>
 
-          <div className="bloom-grid-3d" role="tablist" aria-label="Các cấp độ Bloom">
+          <div className="bloom-grid-3d" role="tablist" aria-label={uiText("Các cấp độ Bloom")}>
             {BLOOM_TIERS.map((tier, idx) => (
               <div
                 key={tier.id}
@@ -339,10 +352,10 @@ export function AiLearning() {
                   }
                 }}
               >
-                <span className="bloom-level-badge">{tier.level}</span>
-                <div className="bloom-card-name">{tier.nameVi}</div>
+                <span className="bloom-level-badge">{uiText(tier.level)}</span>
+                <div className="bloom-card-name">{language === "en" ? tier.nameEn : tier.nameVi}</div>
                 <div className="bloom-card-en">{tier.nameEn}</div>
-                <div className="bloom-card-verbs">{tier.verbs}</div>
+                <div className="bloom-card-verbs">{uiText(tier.verbs)}</div>
               </div>
             ))}
           </div>
@@ -369,18 +382,19 @@ export function AiLearning() {
                   }}
                 />
                 <span>
-                  Mục tiêu sư phạm: {activeBloom.nameVi} ({activeBloom.nameEn})
+                  {uiText("Mục tiêu sư phạm: ")}
+                  {language === "en" ? activeBloom.nameEn : activeBloom.nameVi} ({activeBloom.nameEn})
                 </span>
               </div>
               <span style={{ fontSize: 13, fontWeight: 700, color: activeBloom.color }}>
-                {activeBloom.level}
+                {uiText(activeBloom.level)}
               </span>
             </div>
 
             <div className="bloom-preview-body">
-              <h4>{activeBloom.archetype}</h4>
+              <h4>{uiText(activeBloom.archetype)}</h4>
               <p>
-                <strong>Cơ sở sư phạm:</strong> {activeBloom.rationale}
+                <strong>{uiText("Cơ sở sư phạm:")}</strong> {uiText(activeBloom.rationale)}
               </p>
               <div className="bloom-question-sample-box">
                 <span
@@ -392,9 +406,10 @@ export function AiLearning() {
                     marginBottom: 6,
                   }}
                 >
-                  CÂU HỎI MẪU DO AI TẠO THEO CHUẨN {activeBloom.nameEn.toUpperCase()}:
+                  {uiText("CÂU HỎI MẪU DO AI TẠO THEO CHUẨN ")}
+                  {activeBloom.nameEn.toUpperCase()}:
                 </span>
-                <strong>"{activeBloom.sampleQuestion}"</strong>
+                <strong>"{uiText(activeBloom.sampleQuestion)}"</strong>
               </div>
             </div>
           </div>
@@ -406,12 +421,13 @@ export function AiLearning() {
         <div className="container">
           <div className="section-heading" style={{ maxWidth: 840 }}>
             <span className="eyebrow" style={{ display: "inline-block" }}>
-              AN TOÀN & ĐẠO ĐỨC AI
+              {uiText("AN TOÀN & ĐẠO ĐỨC AI")}
             </span>
-            <h2 className="ai-heading-3d">Đúng cấu trúc chưa có nghĩa là đúng kiến thức.</h2>
+            <h2 className="ai-heading-3d">{uiText("Đúng cấu trúc chưa có nghĩa là đúng kiến thức.")}</h2>
             <p className="ai-body-text">
-              AI giúp chuẩn bị câu hỏi và phân tích mục tiêu sư phạm. Giảng viên vẫn là người giữ tay lái:
-              kiểm tra tính chính xác, mức độ phù hợp và đáp án trước khi duyệt.
+              {uiText(
+                "AI giúp chuẩn bị câu hỏi và phân tích mục tiêu sư phạm. Giảng viên vẫn là người giữ tay lái: kiểm tra tính chính xác, mức độ phù hợp và đáp án trước khi duyệt.",
+              )}
             </p>
           </div>
 
@@ -421,32 +437,39 @@ export function AiLearning() {
               <div className="ai-trust-icon-box">
                 <Icon name="class" size={28} />
               </div>
-              <h3 className="ai-trust-card-title">Quyền Năng & Trọng Trách Giảng Viên</h3>
+              <h3 className="ai-trust-card-title">{uiText("Quyền Năng & Trọng Trách Giảng Viên")}</h3>
               <p className="ai-trust-card-desc">
-                Cơ chế Human-in-the-Loop bắt buộc: Mọi đề xuất từ AI chỉ dừng ở mức bản thảo, người dạy hoàn
-                toàn nắm quyền phê chuẩn cuối cùng.
+                {uiText(
+                  "Cơ chế Human-in-the-Loop bắt buộc: Mọi đề xuất từ AI chỉ dừng ở mức bản thảo, người dạy hoàn toàn nắm quyền phê chuẩn cuối cùng.",
+                )}
               </p>
               <ul className="ai-check-list-3d">
                 <li>
                   <span className="ai-check-bullet">✓</span>
-                  <span>Đối chiếu tài liệu nguồn 1-1 với chỉ số trích dẫn trang & đoạn văn bản.</span>
-                </li>
-                <li>
-                  <span className="ai-check-bullet">✓</span>
                   <span>
-                    Thẩm định tính chính xác của phương án đúng và tính sư phạm của các phương án nhiễu.
+                    {uiText("Đối chiếu tài liệu nguồn 1-1 với chỉ số trích dẫn trang & đoạn văn bản.")}
                   </span>
                 </li>
                 <li>
                   <span className="ai-check-bullet">✓</span>
-                  <span>Tự do hiệu chỉnh độ khó, thang điểm và gợi ý giải thích chi tiết.</span>
+                  <span>
+                    {uiText(
+                      "Thẩm định tính chính xác của phương án đúng và tính sư phạm của các phương án nhiễu.",
+                    )}
+                  </span>
                 </li>
                 <li>
                   <span className="ai-check-bullet">✓</span>
-                  <span>Không bao giờ xuất bản tự động khi chưa có chữ ký duyệt của giảng viên.</span>
+                  <span>{uiText("Tự do hiệu chỉnh độ khó, thang điểm và gợi ý giải thích chi tiết.")}</span>
+                </li>
+                <li>
+                  <span className="ai-check-bullet">✓</span>
+                  <span>
+                    {uiText("Không bao giờ xuất bản tự động khi chưa có chữ ký duyệt của giảng viên.")}
+                  </span>
                 </li>
               </ul>
-              <ButtonLink to="/ai-quiz">Thử minh họa rà soát câu hỏi ↗</ButtonLink>
+              <ButtonLink to="/ai-quiz">{uiText("Thử minh họa rà soát câu hỏi ↗")}</ButtonLink>
             </div>
 
             {/* Card 2: Hàng rào bảo mật */}
@@ -454,38 +477,44 @@ export function AiLearning() {
               <div className="ai-trust-icon-box">
                 <Icon name="shield" size={28} />
               </div>
-              <h3 className="ai-trust-card-title">Ranh Giới Bảo Mật & Cô Lập Học Liệu</h3>
+              <h3 className="ai-trust-card-title">{uiText("Ranh Giới Bảo Mật & Cô Lập Học Liệu")}</h3>
               <p className="ai-trust-card-desc">
-                Dữ liệu học tập và nghiên cứu của bạn được bảo vệ bởi các lớp bảo mật cấp doanh nghiệp khắt
-                khe nhất.
+                {uiText(
+                  "Dữ liệu học tập và nghiên cứu của bạn được bảo vệ bởi các lớp bảo mật cấp doanh nghiệp khắt khe nhất.",
+                )}
               </p>
               <ul className="ai-check-list-3d">
                 <li>
                   <span className="ai-check-bullet">✓</span>
-                  <span>Học liệu được mã hóa SHA-256 và cô lập riêng tư theo từng tổ chức.</span>
+                  <span>{uiText("Học liệu được mã hóa SHA-256 và cô lập riêng tư theo từng tổ chức.")}</span>
                 </li>
                 <li>
                   <span className="ai-check-bullet">✓</span>
                   <span>
-                    Tuyệt đối không sử dụng tài liệu của người dùng để huấn luyện mô hình công cộng bên ngoài.
+                    {uiText(
+                      "Tuyệt đối không sử dụng tài liệu của người dùng để huấn luyện mô hình công cộng bên ngoài.",
+                    )}
                   </span>
                 </li>
                 <li>
                   <span className="ai-check-bullet">✓</span>
                   <span>
-                    Chỉ chuyển bản đã phê duyệt sang bài đánh giá nháp có mã định danh phiên bản (Immutable
-                    Audit Trail).
+                    {uiText(
+                      "Chỉ chuyển bản đã phê duyệt sang bài đánh giá nháp có mã định danh phiên bản (Immutable Audit Trail).",
+                    )}
                   </span>
                 </li>
                 <li>
                   <span className="ai-check-bullet">✓</span>
                   <span>
-                    Không dùng AI thay thế quyết định đánh giá và chấm điểm chính khóa của giảng viên.
+                    {uiText(
+                      "Không dùng AI thay thế quyết định đánh giá và chấm điểm chính khóa của giảng viên.",
+                    )}
                   </span>
                 </li>
               </ul>
               <ButtonLink to="/security" secondary>
-                Tìm hiểu kiến trúc bảo mật ↗
+                {uiText("Tìm hiểu kiến trúc bảo mật ↗")}
               </ButtonLink>
             </div>
           </div>
@@ -614,6 +643,7 @@ const SAMPLE_QUESTIONS: SampleQuizQuestion[] = [
 ];
 
 export function AiQuiz() {
+  const uiText = useUiText();
   const [selectedTopicIdx, setSelectedTopicIdx] = useState(0);
   const currentSample = SAMPLE_QUESTIONS[selectedTopicIdx];
 
@@ -649,30 +679,32 @@ export function AiQuiz() {
     <>
       <PageHero
         label="AI QUIZ SHOWCASE"
-        title="Một bản nháp tốt cần một người duyệt."
-        description="Thử quy trình rà soát câu hỏi minh họa. Trực quan hóa cách AI phân tích học liệu nguồn, gán cấp độ nhận thức Bloom và chuyển đổi thành đề thi nháp an toàn."
+        title={uiText("Một bản nháp tốt cần một người duyệt.")}
+        description={uiText(
+          "Thử quy trình rà soát câu hỏi minh họa. Trực quan hóa cách AI phân tích học liệu nguồn, gán cấp độ nhận thức Bloom và chuyển đổi thành đề thi nháp an toàn.",
+        )}
       />
       <Section>
         {/* Stepper Workflow */}
-        <div className="ai-quiz-stepper" role="region" aria-label="Quy trình minh họa AI Quiz">
+        <div className="ai-quiz-stepper" role="region" aria-label={uiText("Quy trình minh họa AI Quiz")}>
           <div className="ai-quiz-step-item completed">
             <span className="ai-quiz-step-dot">✓</span>
-            <span>1. Nạp học liệu PDF</span>
+            <span>{uiText("1. Nạp học liệu PDF")}</span>
           </div>
           <span style={{ color: "var(--line)" }}>→</span>
           <div className="ai-quiz-step-item completed">
             <span className="ai-quiz-step-dot">✓</span>
-            <span>2. AI Soạn câu hỏi &amp; Bloom</span>
+            <span>{uiText("2. AI Soạn câu hỏi & Bloom")}</span>
           </div>
           <span style={{ color: "var(--line)" }}>→</span>
           <div className={`ai-quiz-step-item ${!approved ? "active" : "completed"}`}>
             <span className="ai-quiz-step-dot">{approved ? "✓" : "3"}</span>
-            <span>3. Giảng viên rà soát</span>
+            <span>{uiText("3. Giảng viên rà soát")}</span>
           </div>
           <span style={{ color: "var(--line)" }}>→</span>
           <div className={`ai-quiz-step-item ${approved ? "active" : ""}`}>
             <span className="ai-quiz-step-dot">4</span>
-            <span>4. Đề thi nháp hoàn chỉnh</span>
+            <span>{uiText("4. Đề thi nháp hoàn chỉnh")}</span>
           </div>
         </div>
 
@@ -691,7 +723,7 @@ export function AiQuiz() {
           }}
         >
           <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)", marginRight: 4 }}>
-            Đổi chủ đề minh họa:
+            {uiText("Đổi chủ đề minh họa:")}
           </span>
           {SAMPLE_QUESTIONS.map((s, idx) => (
             <button
@@ -702,22 +734,23 @@ export function AiQuiz() {
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
               <Icon name={idx === 0 ? "radio" : idx === 1 ? "database" : "bot"} size={14} />
-              <span>{s.topic}</span>
+              <span>{uiText(s.topic)}</span>
             </button>
           ))}
         </div>
 
         <div className="split">
           <div>
-            <span className="eyebrow">MINH HỌA TƯƠNG TÁC</span>
+            <span className="eyebrow">{uiText("MINH HỌA TƯƠNG TÁC")}</span>
             <h2>
-              Đọc. Chỉnh sửa.
+              {uiText("Đọc. Chỉnh sửa.")}
               <br />
-              Rồi quyết định.
+              {uiText("Rồi quyết định.")}
             </h2>
             <p>
-              Kiểm tra câu hỏi và đáp án trước khi phê duyệt. Trong hệ thống thật, bước tiếp theo tạo bài đánh
-              giá nháp, không xuất bản.
+              {uiText(
+                "Kiểm tra câu hỏi và đáp án trước khi phê duyệt. Trong hệ thống thật, bước tiếp theo tạo bài đánh giá nháp, không xuất bản.",
+              )}
             </p>
 
             {/* Source Document Card */}
@@ -728,7 +761,7 @@ export function AiQuiz() {
                   style={{ fontSize: 11, display: "inline-flex", alignItems: "center", gap: 5 }}
                 >
                   <Icon name="fileText" size={13} />
-                  <span>Bằng chứng tài liệu nguồn (Grounding)</span>
+                  <span>{uiText("Bằng chứng tài liệu nguồn (Grounding)")}</span>
                 </span>
               </div>
               <div style={{ fontWeight: 600, fontSize: 12.5, color: "var(--muted)", marginBottom: 4 }}>
@@ -766,34 +799,36 @@ export function AiQuiz() {
                   marginBottom: 4,
                 }}
               >
-                <span style={{ fontWeight: 700, color: "var(--ink)" }}>{currentSample.bloomLevel}</span>
+                <span style={{ fontWeight: 700, color: "var(--ink)" }}>
+                  {uiText(currentSample.bloomLevel)}
+                </span>
                 <span className="kpi-tag" style={{ fontSize: 11 }}>
-                  {currentSample.difficulty}
+                  {uiText(currentSample.difficulty)}
                 </span>
               </div>
               <span style={{ color: "var(--muted)" }}>
-                Câu hỏi được AI định hình theo ma trận nhận thức giáo dục chuẩn Bloom.
+                {uiText("Câu hỏi được AI định hình theo ma trận nhận thức giáo dục chuẩn Bloom.")}
               </span>
             </div>
 
             <ol className="check-list" style={{ marginTop: 20 }}>
-              <li>Đối chiếu với tài liệu nguồn.</li>
-              <li>Kiểm tra câu hỏi và các lựa chọn.</li>
-              <li>Xác định đáp án đúng.</li>
-              <li>Chỉ phê duyệt khi nội dung phù hợp.</li>
+              <li>{uiText("Đối chiếu với tài liệu nguồn.")}</li>
+              <li>{uiText("Kiểm tra câu hỏi và các lựa chọn.")}</li>
+              <li>{uiText("Xác định đáp án đúng.")}</li>
+              <li>{uiText("Chỉ phê duyệt khi nội dung phù hợp.")}</li>
             </ol>
           </div>
 
           <div className="review-preview">
-            <small>Dữ liệu minh họa · chỉ tồn tại trên trang này</small>
+            <small>{uiText("Dữ liệu minh họa · chỉ tồn tại trên trang này")}</small>
 
             {!approved ? (
               <>
                 <label>
-                  Câu hỏi
+                  {uiText("Câu hỏi")}
                   <textarea
-                    aria-label="Câu hỏi"
-                    value={title}
+                    aria-label={uiText("Câu hỏi")}
+                    value={uiText(title)}
                     onChange={(e) => {
                       setTitle(e.target.value);
                       setApproved(false);
@@ -804,7 +839,7 @@ export function AiQuiz() {
                 </label>
 
                 <fieldset>
-                  <legend>Chọn đáp án đúng</legend>
+                  <legend>{uiText("Chọn đáp án đúng")}</legend>
                   {options.map((opt, i) => (
                     <div
                       key={i}
@@ -841,7 +876,9 @@ export function AiQuiz() {
                               marginTop: 4,
                             }}
                           >
-                            {answer === i ? "✓ Đang chọn làm đáp án đúng" : "Phương án lựa chọn"}
+                            {answer === i
+                              ? uiText("✓ Đang chọn làm đáp án đúng")
+                              : uiText("Phương án lựa chọn")}
                           </div>
                         </div>
                       </label>
@@ -858,14 +895,14 @@ export function AiQuiz() {
                       setStudentChoice(null);
                     }}
                   >
-                    Phê duyệt minh họa
+                    {uiText("Phê duyệt minh họa")}
                   </button>
                 </div>
 
-                <p role="status">Bản nháp đang chờ bạn rà soát.</p>
+                <p role="status">{uiText("Bản nháp đang chờ bạn rà soát.")}</p>
 
                 <button className="plain-button" onClick={handleReset}>
-                  Đặt lại minh họa
+                  {uiText("Đặt lại minh họa")}
                 </button>
               </>
             ) : (
@@ -886,7 +923,7 @@ export function AiQuiz() {
                   }}
                 >
                   <Icon name="checkCircle" size={20} />
-                  <span>Đã phê duyệt thành công! Câu hỏi đã sẵn sàng đưa vào Đề thi nháp.</span>
+                  <span>{uiText("Đã phê duyệt thành công! Câu hỏi đã sẵn sàng đưa vào Đề thi nháp.")}</span>
                 </div>
 
                 {/* Complete Approved Quiz Card Preview */}
@@ -905,14 +942,17 @@ export function AiQuiz() {
                       className="kpi-tag accent"
                       style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                     >
-                      <Icon name="check" size={13} /> ĐÃ PHÊ DUYỆT (DRAFT ASSESSMENT)
+                      <Icon name="check" size={13} /> {uiText(" ĐÃ PHÊ DUYỆT (DRAFT ASSESSMENT)")}
                     </span>
                     <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                      Mã: #{currentSample.id.toUpperCase()}
+                      {uiText("Mã: #")}
+                      {currentSample.id.toUpperCase()}
                     </span>
                   </div>
 
-                  <h3 style={{ fontSize: "1.15rem", margin: "0 0 14px 0", color: "var(--ink)" }}>{title}</h3>
+                  <h3 style={{ fontSize: "1.15rem", margin: "0 0 14px 0", color: "var(--ink)" }}>
+                    {uiText(title)}
+                  </h3>
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {options.map((opt, i) => {
@@ -944,11 +984,11 @@ export function AiQuiz() {
                                 className="status-pill status-success"
                                 style={{ fontSize: 11, flexShrink: 0 }}
                               >
-                                ✓ Đáp án đúng
+                                {uiText("✓ Đáp án đúng")}
                               </span>
                             ) : (
                               <span style={{ fontSize: 11, color: "var(--muted)", flexShrink: 0 }}>
-                                Phương án gây nhiễu
+                                {uiText("Phương án gây nhiễu")}
                               </span>
                             )}
                           </div>
@@ -960,7 +1000,7 @@ export function AiQuiz() {
                               lineHeight: 1.45,
                             }}
                           >
-                            <strong>Giải thích:</strong> {opt.rationale}
+                            <strong>{uiText("Giải thích:")}</strong> {opt.rationale}
                           </p>
                         </div>
                       );
@@ -978,7 +1018,7 @@ export function AiQuiz() {
                       lineHeight: 1.5,
                     }}
                   >
-                    <strong>Tóm tắt kiến thức AI:</strong> {currentSample.explanation}
+                    <strong>{uiText("Tóm tắt kiến thức AI:")}</strong> {currentSample.explanation}
                   </div>
                 </div>
 
@@ -996,11 +1036,11 @@ export function AiQuiz() {
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
                     <Icon name="target" size={16} />
                     <strong style={{ fontSize: 13.5, color: "var(--ink)" }}>
-                      Làm thử câu hỏi như học viên:
+                      {uiText("Làm thử câu hỏi như học viên:")}
                     </strong>
                   </div>
                   <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "0 0 10px 0" }}>
-                    Bấm vào một phương án bên dưới để trải nghiệm phản hồi chấm điểm tức thì:
+                    {uiText("Bấm vào một phương án bên dưới để trải nghiệm phản hồi chấm điểm tức thì:")}
                   </p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {options.map((opt, i) => {
@@ -1017,7 +1057,7 @@ export function AiQuiz() {
                           onClick={() => setStudentChoice(i)}
                           role="button"
                           tabIndex={0}
-                          aria-label={`Chọn phương án ${String.fromCharCode(65 + i)}`}
+                          aria-label={uiText("Chọn phương án {0}", [String.fromCharCode(65 + i)])}
                         >
                           <span
                             style={{
@@ -1057,12 +1097,13 @@ export function AiQuiz() {
                               >
                                 {isCorrect ? (
                                   <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                                    <Icon name="checkCircle" size={14} /> Chính xác! (+1.0 điểm) -{" "}
-                                    {opt.rationale}
+                                    <Icon name="checkCircle" size={14} />{" "}
+                                    {uiText(" Chính xác! (+1.0 điểm) -")} {opt.rationale}
                                   </span>
                                 ) : (
                                   <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                                    <Icon name="alert" size={14} /> Chưa chính xác. {opt.rationale}
+                                    <Icon name="alert" size={14} /> {uiText(" Chưa chính xác. ")}
+                                    {opt.rationale}
                                   </span>
                                 )}
                               </div>
@@ -1075,7 +1116,9 @@ export function AiQuiz() {
                 </div>
 
                 <p role="status">
-                  Đã duyệt trong minh họa. Bước tiếp theo: nhập bài đánh giá nháp. Chưa có quiz nào được tạo.
+                  {uiText(
+                    "Đã duyệt trong minh họa. Bước tiếp theo: nhập bài đánh giá nháp. Chưa có quiz nào được tạo.",
+                  )}
                 </p>
 
                 <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 14 }}>
@@ -1088,10 +1131,10 @@ export function AiQuiz() {
                     style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
                   >
                     <Icon name="pencil" size={13} />
-                    <span>Chỉnh sửa lại câu hỏi</span>
+                    <span>{uiText("Chỉnh sửa lại câu hỏi")}</span>
                   </button>
                   <button className="plain-button" onClick={handleReset}>
-                    Đặt lại minh họa
+                    {uiText("Đặt lại minh họa")}
                   </button>
                 </div>
               </div>
@@ -1207,12 +1250,15 @@ export const featureItems = [
   ],
 ];
 export function Features() {
+  const uiText = useUiText();
   return (
     <>
       <PageHero
         label="PLATFORM FEATURES"
-        title="Mọi phần của việc học. Cùng một hướng đi."
-        description="Các khả năng backend đã triển khai, được giải thích qua những hành trình cụ thể. Giao diện ứng dụng sau đăng nhập được phát triển ở giai đoạn tiếp theo."
+        title={uiText("Mọi phần của việc học. Cùng một hướng đi.")}
+        description={uiText(
+          "Các khả năng backend đã triển khai, được giải thích qua những hành trình cụ thể. Giao diện ứng dụng sau đăng nhập được phát triển ở giai đoạn tiếp theo.",
+        )}
       />
       <Section>
         <div className="feature-details">
@@ -1222,18 +1268,20 @@ export function Features() {
                 <span className="eyebrow">
                   {String(i + 1).padStart(2, "0")} / {tag}
                 </span>
-                <h2>{title}</h2>
-                <p>{body}</p>
-                <TextLink to={to}>Tìm hiểu thêm</TextLink>
+                <h2>{uiText(title)}</h2>
+                <p>{uiText(body)}</p>
+                <TextLink to={to}>{uiText("Tìm hiểu thêm")}</TextLink>
               </div>
               <div className="flow-illustration">
-                <small>Minh họa quy trình</small>
-                {flow.split(" → ").map((step, index) => (
-                  <div key={step}>
-                    <span>{index + 1}</span>
-                    <strong>{step}</strong>
-                  </div>
-                ))}
+                <small>{uiText("Minh họa quy trình")}</small>
+                {uiText(flow)
+                  .split(" → ")
+                  .map((step, index) => (
+                    <div key={index}>
+                      <span>{index + 1}</span>
+                      <strong>{uiText(step)}</strong>
+                    </div>
+                  ))}
               </div>
             </article>
           ))}
@@ -1243,57 +1291,66 @@ export function Features() {
   );
 }
 export function About() {
+  const uiText = useUiText();
   return (
     <>
       <PageHero
         label="ABOUT AILSS"
-        title="Công nghệ tốt bắt đầu từ việc hiểu cách con người học."
-        description="AILSS kết nối khóa học, lớp học, bài kiểm tra và tiến độ để người học dễ theo dõi hành trình, còn giảng viên có thêm thời gian cho việc dạy."
+        title={uiText("Công nghệ tốt bắt đầu từ việc hiểu cách con người học.")}
+        description={uiText(
+          "AILSS kết nối khóa học, lớp học, bài kiểm tra và tiến độ để người học dễ theo dõi hành trình, còn giảng viên có thêm thời gian cho việc dạy.",
+        )}
       />
       <Section>
         <div className="split">
-          <Picture name="students" alt="Ảnh minh họa học tập cộng tác trong môi trường đại học" />
+          <Picture name="students" alt={uiText("Ảnh minh họa học tập cộng tác trong môi trường đại học")} />
           <div>
-            <p className="eyebrow">SỨ MỆNH & TẦM NHÌN</p>
+            <p className="eyebrow">{uiText("SỨ MỆNH & TẦM NHÌN")}</p>
             <h2>
-              Để tri thức
+              {uiText("Để tri thức")}
               <br />
-              được kết nối.
+              {uiText("được kết nối.")}
             </h2>
             <p>
-              Học liệu rời rạc, tiến độ khó theo dõi và nhiều công cụ tách biệt làm gián đoạn việc dạy và học.
-              AILSS hướng tới một hành trình nhất quán, từ nội dung đến lớp học và đánh giá.
+              {uiText(
+                "Học liệu rời rạc, tiến độ khó theo dõi và nhiều công cụ tách biệt làm gián đoạn việc dạy và học. AILSS hướng tới một hành trình nhất quán, từ nội dung đến lớp học và đánh giá.",
+              )}
             </p>
             <p>
-              Chúng tôi xây dựng trải nghiệm để người học hiểu bước tiếp theo và giảng viên giữ quyền kiểm
-              soát nội dung.
+              {uiText(
+                "Chúng tôi xây dựng trải nghiệm để người học hiểu bước tiếp theo và giảng viên giữ quyền kiểm soát nội dung.",
+              )}
             </p>
           </div>
         </div>
       </Section>
       <Section className="soft">
         <div className="section-heading">
-          <h2>Ba nguyên tắc định hướng.</h2>
+          <h2>{uiText("Ba nguyên tắc định hướng.")}</h2>
         </div>
         <div className="three-columns">
           <article>
-            <h3>Con người trước tiên</h3>
+            <h3>{uiText("Con người trước tiên")}</h3>
             <p>
-              AI hỗ trợ chuẩn bị câu hỏi. Giảng viên kiểm tra, sửa và phê duyệt; hệ thống không tự xuất bản.
+              {uiText(
+                "AI hỗ trợ chuẩn bị câu hỏi. Giảng viên kiểm tra, sửa và phê duyệt; hệ thống không tự xuất bản.",
+              )}
             </p>
           </article>
           <article>
-            <h3>Kỹ thuật có bằng chứng</h3>
+            <h3>{uiText("Kỹ thuật có bằng chứng")}</h3>
             <p>
-              Một trải nghiệm đáng tin cậy bắt đầu từ những chức năng được kiểm chứng và thông tin rõ ràng với
-              người sử dụng.
+              {uiText(
+                "Một trải nghiệm đáng tin cậy bắt đầu từ những chức năng được kiểm chứng và thông tin rõ ràng với người sử dụng.",
+              )}
             </p>
           </article>
           <article>
-            <h3>Ranh giới rõ ràng</h3>
+            <h3>{uiText("Ranh giới rõ ràng")}</h3>
             <p>
-              Quyền truy cập, tài liệu riêng tư và xử lý thông điệp lặp an toàn là những phần của thiết kế hệ
-              thống.
+              {uiText(
+                "Quyền truy cập, tài liệu riêng tư và xử lý thông điệp lặp an toàn là những phần của thiết kế hệ thống.",
+              )}
             </p>
           </article>
         </div>
@@ -1301,29 +1358,29 @@ export function About() {
       <Section>
         <div className="split">
           <div>
-            <p className="eyebrow">HÀNH TRÌNH DỰ ÁN</p>
+            <p className="eyebrow">{uiText("HÀNH TRÌNH DỰ ÁN")}</p>
             <h2>
-              Xây nền móng.
+              {uiText("Xây nền móng.")}
               <br />
-              Rồi mở trải nghiệm.
+              {uiText("Rồi mở trải nghiệm.")}
             </h2>
           </div>
           <ol className="timeline">
             <li>
-              <strong>Phase 7 · Nghiệp vụ cốt lõi</strong>
-              <p>Danh tính, khóa học, lớp học, lịch và quyền học.</p>
+              <strong>{uiText("Phase 7 · Nghiệp vụ cốt lõi")}</strong>
+              <p>{uiText("Danh tính, khóa học, lớp học, lịch và quyền học.")}</p>
             </li>
             <li>
-              <strong>Phase 8–9 · Học tập & phản hồi</strong>
-              <p>Đánh giá, tiến độ, bình luận, review và kiểm duyệt.</p>
+              <strong>{uiText("Phase 8–9 · Học tập & phản hồi")}</strong>
+              <p>{uiText("Đánh giá, tiến độ, bình luận, review và kiểm duyệt.")}</p>
             </li>
             <li>
-              <strong>Phase 10–11 · AI & thông báo</strong>
-              <p>Học liệu, AI tạo bản nháp, giảng viên duyệt và thông báo trong ứng dụng.</p>
+              <strong>{uiText("Phase 10–11 · AI & thông báo")}</strong>
+              <p>{uiText("Học liệu, AI tạo bản nháp, giảng viên duyệt và thông báo trong ứng dụng.")}</p>
             </li>
             <li>
               <strong>Phase 12.1 · Public web</strong>
-              <p>Nhận diện, thiết kế, các trang giới thiệu và nền tảng web.</p>
+              <p>{uiText("Nhận diện, thiết kế, các trang giới thiệu và nền tảng web.")}</p>
             </li>
           </ol>
         </div>
@@ -1334,7 +1391,7 @@ export function About() {
             <img
               className="brand-story-mark"
               src="/assets/brand/nvd-symbol.svg"
-              alt="Biểu tượng NVD nguyên bản"
+              alt={uiText("Biểu tượng NVD nguyên bản")}
               width="160"
               height="160"
             />
@@ -1342,16 +1399,16 @@ export function About() {
           <div>
             <p className="eyebrow">NVD BRAND STORY</p>
             <h2>
-              Một hình khối.
+              {uiText("Một hình khối.")}
               <br />
-              Ba ý tưởng.
+              {uiText("Ba ý tưởng.")}
             </h2>
             <p>
-              N là mạng lưới tri thức. V là hướng tiến lên. D là dữ liệu và không gian số. Những nét hình học
-              liên kết thành một dấu hiệu thống nhất, có thể xuất hiện ở kích thước nhỏ hoặc trong chuyển
-              động.
+              {uiText(
+                "N là mạng lưới tri thức. V là hướng tiến lên. D là dữ liệu và không gian số. Những nét hình học liên kết thành một dấu hiệu thống nhất, có thể xuất hiện ở kích thước nhỏ hoặc trong chuyển động.",
+              )}
             </p>
-            <TextLink to="/media">Khám phá nhận diện</TextLink>
+            <TextLink to="/media">{uiText("Khám phá nhận diện")}</TextLink>
           </div>
         </div>
       </Section>
@@ -1359,23 +1416,25 @@ export function About() {
         <div className="split">
           <div>
             <h2>
-              Đã có nền tảng.
+              {uiText("Đã có nền tảng.")}
               <br />
-              Còn nhiều điều phía trước.
+              {uiText("Còn nhiều điều phía trước.")}
             </h2>
             <p>
-              Backend nghiệp vụ đã hoàn thành theo các giai đoạn 7–11. Trải nghiệm public web đang mở đầu cho
-              giao diện ứng dụng, không phải tuyên bố mọi màn hình sau đăng nhập đã sẵn sàng.
+              {uiText(
+                "Backend nghiệp vụ đã hoàn thành theo các giai đoạn 7–11. Trải nghiệm public web đang mở đầu cho giao diện ứng dụng, không phải tuyên bố mọi màn hình sau đăng nhập đã sẵn sàng.",
+              )}
             </p>
           </div>
           <div>
-            <h3>Hướng phát triển</h3>
+            <h3>{uiText("Hướng phát triển")}</h3>
             <p>
-              Hoàn thiện UX xác thực và khung ứng dụng, rồi phát triển hành trình sinh viên và giảng viên dựa
-              trên contract hiện có.
+              {uiText(
+                "Hoàn thiện UX xác thực và khung ứng dụng, rồi phát triển hành trình sinh viên và giảng viên dựa trên contract hiện có.",
+              )}
             </p>
-            <TextLink to="/roadmap">Xem lộ trình</TextLink>
-            <TextLink to="/research">Triết lý nghiên cứu</TextLink>
+            <TextLink to="/roadmap">{uiText("Xem lộ trình")}</TextLink>
+            <TextLink to="/research">{uiText("Triết lý nghiên cứu")}</TextLink>
           </div>
         </div>
       </Section>
@@ -1401,55 +1460,58 @@ const lecturerJourney = [
   "Chuyển sang đánh giá",
 ];
 export function HowItWorks() {
+  const uiText = useUiText();
   const [role, setRole] = useState("student");
   const list = role === "student" ? studentJourney : lecturerJourney;
   return (
     <>
       <PageHero
         label="HOW IT WORKS"
-        title="Từng bước rõ ràng. Một hành trình liền mạch."
-        description="Khám phá cách sinh viên và giảng viên sử dụng các khả năng của AILSS."
+        title={uiText("Từng bước rõ ràng. Một hành trình liền mạch.")}
+        description={uiText("Khám phá cách sinh viên và giảng viên sử dụng các khả năng của AILSS.")}
       />
       <Section>
-        <div className="segmented" aria-label="Chọn hành trình">
+        <div className="segmented" aria-label={uiText("Chọn hành trình")}>
           <button aria-pressed={role === "student"} onClick={() => setRole("student")}>
-            Sinh viên
+            {uiText("Sinh viên")}
           </button>
           <button aria-pressed={role === "lecturer"} onClick={() => setRole("lecturer")}>
-            Giảng viên
+            {uiText("Giảng viên")}
           </button>
         </div>
         <ol key={role} className="timeline journey-timeline panel-motion">
           {list.map((title, i) => (
             <li key={title}>
               <span className="step-number">0{i + 1}</span>
-              <h2>{title}</h2>
+              <h2>{uiText(title)}</h2>
               <p>
                 {role === "student"
                   ? [
-                      "Tìm nội dung công khai phù hợp với điều bạn muốn học.",
-                      "Đăng nhập và đáp ứng điều kiện tham gia trước khi truy cập học liệu.",
-                      "Đi qua nội dung được tổ chức theo từng bài học.",
-                      "Xem bài đã hoàn thành và phần hành trình còn lại.",
-                      "Thực hiện lượt làm bài, nộp bài và xem kết quả.",
-                      "Bình luận trong ngữ cảnh học tập và đánh giá khi đủ điều kiện.",
-                      "Theo dõi cập nhật lớp học ngay trong ứng dụng.",
+                      uiText("Tìm nội dung công khai phù hợp với điều bạn muốn học."),
+                      uiText("Đăng nhập và đáp ứng điều kiện tham gia trước khi truy cập học liệu."),
+                      uiText("Đi qua nội dung được tổ chức theo từng bài học."),
+                      uiText("Xem bài đã hoàn thành và phần hành trình còn lại."),
+                      uiText("Thực hiện lượt làm bài, nộp bài và xem kết quả."),
+                      uiText("Bình luận trong ngữ cảnh học tập và đánh giá khi đủ điều kiện."),
+                      uiText("Theo dõi cập nhật lớp học ngay trong ứng dụng."),
                     ][i]
                   : [
-                      "Chuẩn bị nội dung và tổ chức các bài học trong bản nháp.",
-                      "Gửi nội dung qua quy trình duyệt trước khi công khai.",
-                      "Tổ chức thành viên, lịch, phiên học và điểm danh.",
-                      "Dùng PDF, DOCX hoặc TXT bạn có quyền sử dụng.",
-                      "Nhận câu hỏi có cấu trúc từ học liệu được trích xuất.",
-                      "Kiểm tra kiến thức, sửa câu hỏi và xác nhận bản phù hợp.",
-                      "Nhập bản được duyệt vào bài đánh giá nháp để tiếp tục biên tập.",
+                      uiText("Chuẩn bị nội dung và tổ chức các bài học trong bản nháp."),
+                      uiText("Gửi nội dung qua quy trình duyệt trước khi công khai."),
+                      uiText("Tổ chức thành viên, lịch, phiên học và điểm danh."),
+                      uiText("Dùng PDF, DOCX hoặc TXT bạn có quyền sử dụng."),
+                      uiText("Nhận câu hỏi có cấu trúc từ học liệu được trích xuất."),
+                      uiText("Kiểm tra kiến thức, sửa câu hỏi và xác nhận bản phù hợp."),
+                      uiText("Nhập bản được duyệt vào bài đánh giá nháp để tiếp tục biên tập."),
                     ][i]}
               </p>
             </li>
           ))}
         </ol>
         <p className="notice">
-          Đây là mô tả hành trình sản phẩm. Các màn hình ứng dụng sau đăng nhập thuộc giai đoạn tiếp theo.
+          {uiText(
+            "Đây là mô tả hành trình sản phẩm. Các màn hình ứng dụng sau đăng nhập thuộc giai đoạn tiếp theo.",
+          )}
         </p>
       </Section>
     </>
@@ -1539,38 +1601,42 @@ const experiences: Record<
   },
 };
 export function Experience() {
+  const uiText = useUiText();
   const { pathname } = useLocation();
   const p = experiences[pathname];
   const [read, setRead] = useState(false);
   return (
     <>
-      <PageHero label={p.label} title={p.title} description={p.intro} />
+      <PageHero label={uiText(p.label)} title={uiText(p.title)} description={uiText(p.intro)} />
       <Section>
         <div className="split">
           <div>
-            <h2>{p.heading}</h2>
+            <h2>{uiText(p.heading)}</h2>
             <p>
-              Các khả năng dưới đây đã có trong backend. Đây là trang giới thiệu và minh họa; giao diện làm
-              việc sau đăng nhập được triển khai ở giai đoạn tiếp theo.
+              {uiText(
+                "Các khả năng dưới đây đã có trong backend. Đây là trang giới thiệu và minh họa; giao diện làm việc sau đăng nhập được triển khai ở giai đoạn tiếp theo.",
+              )}
             </p>
             <ButtonLink to={pathname === "/lecturers" ? "/ai-quiz" : "/courses"}>
-              {pathname === "/lecturers" ? "Thử quy trình duyệt" : "Khám phá khóa học"}
+              {pathname === "/lecturers" ? uiText("Thử quy trình duyệt") : uiText("Khám phá khóa học")}
             </ButtonLink>
           </div>
           {pathname === "/progress" || pathname === "/students" ? (
             <ProgressPreview />
           ) : pathname === "/notifications" ? (
             <div className="product-preview">
-              <small>Minh họa, không phải thông báo thật</small>
-              <h3>Cập nhật từ lớp học</h3>
-              <p>Giảng viên đã đăng thông báo mới cho lớp.</p>
-              <span className="status-tag">{read ? "READ · Đã đọc" : "UNREAD · Chưa đọc"}</span>
+              <small>{uiText("Minh họa, không phải thông báo thật")}</small>
+              <h3>{uiText("Cập nhật từ lớp học")}</h3>
+              <p>{uiText("Giảng viên đã đăng thông báo mới cho lớp.")}</p>
+              <span className="status-tag">
+                {read ? uiText("READ · Đã đọc") : uiText("UNREAD · Chưa đọc")}
+              </span>
               <button className="button" onClick={() => setRead(!read)}>
-                {read ? "Đặt lại minh họa" : "Đánh dấu đã đọc (minh họa)"}
+                {read ? uiText("Đặt lại minh họa") : uiText("Đánh dấu đã đọc (minh họa)")}
               </button>
             </div>
           ) : (
-            <Picture name="students" alt="Ảnh minh họa môi trường học tập cộng tác" />
+            <Picture name="students" alt={uiText("Ảnh minh họa môi trường học tập cộng tác")} />
           )}
         </div>
       </Section>
@@ -1579,8 +1645,8 @@ export function Experience() {
           {p.items.map(([title, body], i) => (
             <article key={title}>
               <span className="step-number">0{i + 1}</span>
-              <h2>{title}</h2>
-              <p>{body}</p>
+              <h2>{uiText(title)}</h2>
+              <p>{uiText(body)}</p>
             </article>
           ))}
         </div>
@@ -1588,12 +1654,16 @@ export function Experience() {
       <Section>
         <div className="split">
           <div>
-            <h2>Hiểu cách mọi thứ kết nối.</h2>
-            <p>Khóa học cung cấp nội dung, lớp học tổ chức hoạt động và đánh giá giúp nhìn lại kiến thức.</p>
+            <h2>{uiText("Hiểu cách mọi thứ kết nối.")}</h2>
+            <p>
+              {uiText(
+                "Khóa học cung cấp nội dung, lớp học tổ chức hoạt động và đánh giá giúp nhìn lại kiến thức.",
+              )}
+            </p>
           </div>
           <div>
-            <TextLink to="/how-it-works">Khám phá hành trình</TextLink>
-            <TextLink to="/help">Xem hướng dẫn</TextLink>
+            <TextLink to="/how-it-works">{uiText("Khám phá hành trình")}</TextLink>
+            <TextLink to="/help">{uiText("Xem hướng dẫn")}</TextLink>
           </div>
         </div>
       </Section>
@@ -1601,12 +1671,15 @@ export function Experience() {
   );
 }
 export function ArchitecturePage() {
+  const uiText = useUiText();
   return (
     <>
       <PageHero
         label="SYSTEM ARCHITECTURE"
-        title="Trách nhiệm rõ ràng. Kết nối có kiểm soát."
-        description="Sáu business services cùng các thành phần hạ tầng và tiến trình hỗ trợ. Chọn một service để khám phá trách nhiệm của nó."
+        title={uiText("Trách nhiệm rõ ràng. Kết nối có kiểm soát.")}
+        description={uiText(
+          "Sáu business services cùng các thành phần hạ tầng và tiến trình hỗ trợ. Chọn một service để khám phá trách nhiệm của nó.",
+        )}
       />
       <Section className="dark">
         <Architecture />
@@ -1614,28 +1687,31 @@ export function ArchitecturePage() {
       <Section>
         <div className="three-columns">
           <article>
-            <h2>Ranh giới dữ liệu</h2>
+            <h2>{uiText("Ranh giới dữ liệu")}</h2>
             <p>
-              Cassandra dùng keyspace do từng service sở hữu. Truy vấn được thiết kế từ nhu cầu đọc, thay vì
-              dựa vào truy vấn tùy ý xuyên dịch vụ.
+              {uiText(
+                "Cassandra dùng keyspace do từng service sở hữu. Truy vấn được thiết kế từ nhu cầu đọc, thay vì dựa vào truy vấn tùy ý xuyên dịch vụ.",
+              )}
             </p>
           </article>
           <article>
-            <h2>Ranh giới tin cậy</h2>
+            <h2>{uiText("Ranh giới tin cậy")}</h2>
             <p>
-              Gateway xác thực người dùng; Service JWS và Actor Context truyền ngữ cảnh đã được xác minh giữa
-              các thành phần.
+              {uiText(
+                "Gateway xác thực người dùng; Service JWS và Actor Context truyền ngữ cảnh đã được xác minh giữa các thành phần.",
+              )}
             </p>
           </article>
           <article>
-            <h2>Xử lý bất đồng bộ</h2>
+            <h2>{uiText("Xử lý bất đồng bộ")}</h2>
             <p>
-              RabbitMQ và các worker đảm nhiệm công việc nền. Giao nhận ít nhất một lần đòi hỏi xử lý lặp an
-              toàn.
+              {uiText(
+                "RabbitMQ và các worker đảm nhiệm công việc nền. Giao nhận ít nhất một lần đòi hỏi xử lý lặp an toàn.",
+              )}
             </p>
           </article>
         </div>
-        <TextLink to="/research">Đọc về nghiên cứu phân tán</TextLink>
+        <TextLink to="/research">{uiText("Đọc về nghiên cứu phân tán")}</TextLink>
       </Section>
     </>
   );

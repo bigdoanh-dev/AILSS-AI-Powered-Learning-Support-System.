@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useState, useSyncExternalStore } from "react";
 import { Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
@@ -7,6 +8,7 @@ import { runtime } from "../../../src/runtime";
 import { Page, Button, ScreenHeader, styles } from "../../../src/ui";
 
 export default function CreateClass() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [name, setName] = useState("");
@@ -50,53 +52,62 @@ export default function CreateClass() {
 
   return (
     <Page>
-      <ScreenHeader title="Tạo lớp học" onBack={() => router.replace("/teaching/classes")} />
+      <ScreenHeader title={uiText("Tạo lớp học")} onBack={() => router.replace("/teaching/classes")} />
       {snapshot.user?.role !== "LECTURER" ? (
-        <Text style={styles.error}>Chỉ giảng viên được tạo lớp.</Text>
+        <Text style={styles.error}>{uiText("Chỉ giảng viên được tạo lớp.")}</Text>
       ) : created ? (
         <View style={[styles.card, { gap: 12 }]}>
-          <Text style={styles.title}>Lớp đã được tạo</Text>
-          <Text style={styles.text}>Mã tham gia: {created.joinCode}</Text>
-          <Text style={styles.small}>Chia sẻ mã này riêng với học viên của trường hoặc tổ chức.</Text>
+          <Text style={styles.title}>{uiText("Lớp đã được tạo")}</Text>
+          <Text style={styles.text}>
+            {uiText("Mã tham gia: ")}
+            {created.joinCode}
+          </Text>
+          <Text style={styles.small}>
+            {uiText("Chia sẻ mã này riêng với học viên của trường hoặc tổ chức.")}
+          </Text>
           <Button
-            label="Quản lý lớp"
+            label={uiText("Quản lý lớp")}
             onPress={() => router.replace(`/teaching/classes/${created.classId}`)}
           />
         </View>
       ) : (
         <View style={[styles.card, { gap: 12 }]}>
-          <Text style={styles.text}>Tên lớp</Text>
+          <Text style={styles.text}>{uiText("Tên lớp")}</Text>
           <TextInput
             style={styles.input}
             value={name}
             onChangeText={setName}
-            placeholder="Ví dụ: CSDL nâng cao - Nhóm 01"
+            placeholder={uiText("Ví dụ: CSDL nâng cao - Nhóm 01")}
           />
-          <Text style={styles.text}>Loại lớp</Text>
+          <Text style={styles.text}>{uiText("Loại lớp")}</Text>
           <Button
-            label={`Trường / tổ chức ${classKind === "INSTITUTIONAL" ? "✓" : ""}`}
+            label={uiText("Trường / tổ chức {0}", [classKind === "INSTITUTIONAL" ? "✓" : ""])}
             variant="outline"
             onPress={() => setClassKind("INSTITUTIONAL")}
           />
           <Button
-            label={`Lớp riêng ${classKind === "PRIVATE" ? "✓" : ""}`}
+            label={uiText("Lớp riêng {0}", [classKind === "PRIVATE" ? "✓" : ""])}
             variant="outline"
             onPress={() => setClassKind("PRIVATE")}
           />
-          <Text style={styles.text}>Sĩ số tối đa</Text>
+          <Text style={styles.text}>{uiText("Sĩ số tối đa")}</Text>
           <TextInput
             style={styles.input}
             value={maxMembers}
             onChangeText={setMaxMembers}
             keyboardType="number-pad"
           />
-          <Text style={styles.small}>Học viên tham gia bằng mã lớp sau khi tạo.</Text>
+          <Text style={styles.small}>{uiText("Học viên tham gia bằng mã lớp sau khi tạo.")}</Text>
           {error ? (
             <Text accessibilityRole="alert" style={styles.error}>
-              {error}
+              {uiText(error)}
             </Text>
           ) : null}
-          <Button label={busy ? "Đang tạo…" : "Tạo lớp"} disabled={busy} onPress={() => void create()} />
+          <Button
+            label={busy ? uiText("Đang tạo…") : uiText("Tạo lớp")}
+            disabled={busy}
+            onPress={() => void create()}
+          />
         </View>
       )}
     </Page>

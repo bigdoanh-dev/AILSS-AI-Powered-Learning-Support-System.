@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../src/use-language";
+import { useUiText } from "../../../src/use-language";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Text, TextInput, View } from "react-native";
 import { router, type Href } from "expo-router";
@@ -29,6 +31,8 @@ const card = {
 } as const;
 
 export default function LecturerRevenueScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [range, setRange] = useState<(typeof ranges)[number]["key"]>("30d");
@@ -128,8 +132,8 @@ export default function LecturerRevenueScreen() {
   if (snapshot.user?.role !== "LECTURER")
     return (
       <Page>
-        <ScreenHeader title="Doanh thu giảng viên" onBack={() => router.replace("/")} />
-        <Text style={styles.error}>Chỉ giảng viên được xem báo cáo này.</Text>
+        <ScreenHeader title={uiText("Doanh thu giảng viên")} onBack={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Chỉ giảng viên được xem báo cáo này.")}</Text>
       </Page>
     );
   const data = report?.lecturer;
@@ -140,14 +144,18 @@ export default function LecturerRevenueScreen() {
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
       <Page>
         <ScreenHeader
-          title="Doanh thu giảng viên"
-          subtitle="Thanh toán, hoàn tiền và khoản dự kiến nhận"
+          title={uiText("Doanh thu giảng viên")}
+          subtitle={uiText("Thanh toán, hoàn tiền và khoản dự kiến nhận")}
           onBack={() => router.replace("/teaching" as Href)}
         />
-        <Button label={loading ? "Đang tải…" : "Làm mới"} onPress={() => void load()} disabled={loading} />
+        <Button
+          label={loading ? uiText("Đang tải…") : uiText("Làm mới")}
+          onPress={() => void load()}
+          disabled={loading}
+        />
         {error ? (
           <Text accessibilityRole="alert" style={styles.error}>
-            {error}
+            {uiText(error)}
           </Text>
         ) : null}
         <View style={{ flexDirection: "row", gap: 8 }}>
@@ -163,26 +171,35 @@ export default function LecturerRevenueScreen() {
         {data ? (
           <>
             <View style={card}>
-              <Text style={styles.title}>Tổng quan</Text>
+              <Text style={styles.title}>{uiText("Tổng quan")}</Text>
               <Text style={styles.text}>
-                Doanh thu bán khóa học: {vnd(data.grossMinor)} · {data.orders} đơn
+                {uiText("Doanh thu bán khóa học: ")}
+                {vnd(data.grossMinor, uiLocale)} · {data.orders} {uiText(" đơn")}
               </Text>
-              <Text style={styles.text}>Hoàn tiền: {vnd(data.refundMinor)}</Text>
-              <Text style={styles.text}>Phí nền tảng ước tính: {vnd(data.estimatedPlatformMinor)}</Text>
+              <Text style={styles.text}>
+                {uiText("Hoàn tiền: ")}
+                {vnd(data.refundMinor, uiLocale)}
+              </Text>
+              <Text style={styles.text}>
+                {uiText("Phí nền tảng ước tính: ")}
+                {vnd(data.estimatedPlatformMinor, uiLocale)}
+              </Text>
               <Text style={[styles.text, { fontWeight: "700" }]}>
-                Dự kiến nhận: {vnd(data.estimatedEarningsMinor)}
+                {uiText("Dự kiến nhận: ")}
+                {vnd(data.estimatedEarningsMinor, uiLocale)}
               </Text>
               <Text style={styles.small}>
-                Đối soát đến {new Date(report!.backfillThrough).toLocaleDateString("vi-VN")}; tiền thực chi
-                phụ thuộc kỳ thanh toán.
+                {uiText("Đối soát đến ")}
+                {new Date(report!.backfillThrough).toLocaleDateString(uiLocale)}
+                {uiText("; tiền thực chi phụ thuộc kỳ thanh toán.")}
               </Text>
             </View>
             <View style={card}>
-              <Text style={styles.title}>Doanh thu theo ngày</Text>
+              <Text style={styles.title}>{uiText("Doanh thu theo ngày")}</Text>
               {data.dailyRevenue.map((day) => (
                 <View key={day.day} style={{ gap: 3 }}>
                   <Text style={styles.small}>
-                    {day.day} · {vnd(day.netMinor)}
+                    {day.day} · {vnd(day.netMinor, uiLocale)}
                   </Text>
                   <View style={{ height: 10, borderRadius: 5, backgroundColor: tokens.color.border }}>
                     <View
@@ -198,7 +215,7 @@ export default function LecturerRevenueScreen() {
               ))}
             </View>
             <View style={card}>
-              <Text style={styles.title}>Khóa học doanh thu cao</Text>
+              <Text style={styles.title}>{uiText("Khóa học doanh thu cao")}</Text>
               {data.courses.length ? (
                 [...data.courses]
                   .sort((a, b) =>
@@ -211,57 +228,57 @@ export default function LecturerRevenueScreen() {
                   .slice(0, 8)
                   .map((course) => (
                     <Text key={course.courseId} style={styles.text}>
-                      {course.title} · {vnd(course.netMinor)} · {course.orders} đơn ·{" "}
+                      {course.title} · {vnd(course.netMinor, uiLocale)} · {course.orders} {uiText(" đơn ·")}{" "}
                       {ratings[course.courseId] ?? "Đang tải đánh giá"}
                     </Text>
                   ))
               ) : (
-                <Text style={styles.small}>Chưa có doanh thu khóa học.</Text>
+                <Text style={styles.small}>{uiText("Chưa có doanh thu khóa học.")}</Text>
               )}
             </View>
           </>
         ) : (
           <View style={card}>
-            <Text style={styles.text}>Chưa có báo cáo doanh thu có thẩm quyền.</Text>
+            <Text style={styles.text}>{uiText("Chưa có báo cáo doanh thu có thẩm quyền.")}</Text>
           </View>
         )}
         <View style={card}>
-          <Text style={styles.title}>Tài khoản nhận doanh thu</Text>
+          <Text style={styles.title}>{uiText("Tài khoản nhận doanh thu")}</Text>
           <Text style={styles.small}>
             {account
-              ? `Đang dùng: ${account.bankName} · ${account.accountNumber}`
-              : "Chưa cấu hình tài khoản nhận tiền."}
+              ? uiText("Đang dùng: {0} · {1}", [account.bankName, account.accountNumber])
+              : uiText("Chưa cấu hình tài khoản nhận tiền.")}
           </Text>
           <TextInput
-            accessibilityLabel="Tên ngân hàng"
+            accessibilityLabel={uiText("Tên ngân hàng")}
             style={styles.input}
             value={bankName}
             onChangeText={setBankName}
-            placeholder="Ngân hàng"
+            placeholder={uiText("Ngân hàng")}
           />
           <TextInput
-            accessibilityLabel="Số tài khoản"
+            accessibilityLabel={uiText("Số tài khoản")}
             style={styles.input}
             value={accountNumber}
             onChangeText={setAccountNumber}
             keyboardType="numeric"
-            placeholder="Số tài khoản"
+            placeholder={uiText("Số tài khoản")}
           />
           <TextInput
-            accessibilityLabel="Tên chủ tài khoản"
+            accessibilityLabel={uiText("Tên chủ tài khoản")}
             style={styles.input}
             value={accountHolder}
             onChangeText={setAccountHolder}
-            placeholder="Tên chủ tài khoản"
+            placeholder={uiText("Tên chủ tài khoản")}
           />
           <Button
-            label={saving ? "Đang lưu…" : "Lưu tài khoản"}
+            label={saving ? uiText("Đang lưu…") : uiText("Lưu tài khoản")}
             disabled={saving}
             onPress={() => void saveAccount()}
           />
           {message ? (
             <Text accessibilityLiveRegion="polite" style={styles.text}>
-              {message}
+              {uiText(message)}
             </Text>
           ) : null}
         </View>

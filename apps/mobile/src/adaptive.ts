@@ -216,6 +216,7 @@ export async function askTutor(
     conversationId?: string;
     message: string;
     signal: AbortSignal;
+    responseLanguage?: "vi" | "en";
   },
 ): Promise<TutorReply> {
   const response = await session.request("/api/v1/assistant/chat", {
@@ -227,6 +228,7 @@ export async function askTutor(
       ...(input.courseId ? { courseId: input.courseId } : {}),
       ...(input.conversationId ? { conversationId: input.conversationId } : {}),
       message: input.message,
+      responseLanguage: input.responseLanguage ?? "vi",
       historyLimit: 20,
     },
   });

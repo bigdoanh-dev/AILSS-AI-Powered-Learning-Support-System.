@@ -1,3 +1,4 @@
+import { useUiText, interfaceMessage, type InterfaceMessage } from "../../../../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, StyleSheet, Pressable } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -20,6 +21,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function AttendanceScreen() {
+  const uiText = useUiText();
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -27,7 +29,7 @@ export default function AttendanceScreen() {
   const [classSessionItem, setClassSessionItem] = useState<ClassSession | null>(null);
   const [roster, setRoster] = useState<AttendanceEntry[] | null>(null);
   const [busyStudentId, setBusyStudentId] = useState<string | null>(null);
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] = useState<InterfaceMessage>("");
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
 
@@ -85,7 +87,11 @@ export default function AttendanceScreen() {
           attendanceStatus: status,
         },
       });
-      setMsg(`✓ Đã cập nhật trạng thái ${STATUS_LABELS[status]} cho học viên.`);
+      setMsg(
+        interfaceMessage("✓ Đã cập nhật trạng thái {0} cho học viên.", [
+          interfaceMessage(STATUS_LABELS[status]),
+        ]),
+      );
       await fetchData();
     } catch {
       setMsg("Không thể cập nhật điểm danh; dữ liệu cục bộ không được thay đổi khi máy chủ chưa xác nhận.");
@@ -123,8 +129,8 @@ export default function AttendanceScreen() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <Text style={styles.error}>Bạn không có quyền truy cập.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Bạn không có quyền truy cập.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -155,14 +161,16 @@ export default function AttendanceScreen() {
 
         <Text style={styles.small}>
           {item.source === "ONLINE_PRESENCE"
-            ? `Tự động từ kết nối realtime · ${item.presenceState === "ONLINE" ? "đang online" : "đã rời phòng"}`
+            ? uiText("Tự động từ kết nối realtime · {0}", [
+                item.presenceState === "ONLINE" ? "đang online" : "đã rời phòng",
+              ])
             : item.source === "MANUAL_OFFLINE"
-              ? "Thủ công · giảng viên xác nhận"
+              ? uiText("Thủ công · giảng viên xác nhận")
               : classSessionItem?.mode === "ONLINE"
-                ? "Chưa có kết nối realtime · có thể xác nhận thủ công"
-                : "Thủ công · chờ giảng viên xác nhận"}
+                ? uiText("Chưa có kết nối realtime · có thể xác nhận thủ công")
+                : uiText("Thủ công · chờ giảng viên xác nhận")}
           {item.connectedDurationSeconds > 0
-            ? ` · ${Math.round(item.connectedDurationSeconds / 60)} phút`
+            ? uiText(" · {0} phút", [Math.round(item.connectedDurationSeconds / 60)])
             : ""}
         </Text>
 
@@ -177,7 +185,7 @@ export default function AttendanceScreen() {
               (isBusy || item.attendanceStatus === "PRESENT") && at.btnDisabled,
             ]}
           >
-            <Text style={at.btnText}>✓ Có mặt</Text>
+            <Text style={at.btnText}>{uiText("✓ Có mặt")}</Text>
           </Pressable>
 
           <Pressable
@@ -190,7 +198,7 @@ export default function AttendanceScreen() {
               (isBusy || item.attendanceStatus === "ABSENT") && at.btnDisabled,
             ]}
           >
-            <Text style={at.btnText}>✕ Vắng</Text>
+            <Text style={at.btnText}>{uiText("✕ Vắng")}</Text>
           </Pressable>
 
           <Pressable
@@ -203,7 +211,7 @@ export default function AttendanceScreen() {
               (isBusy || item.attendanceStatus === "EXCUSED") && at.btnDisabled,
             ]}
           >
-            <Text style={at.btnText}>⏳ Có phép</Text>
+            <Text style={at.btnText}>{uiText("⏳ Có phép")}</Text>
           </Pressable>
         </View>
       </View>
@@ -213,11 +221,11 @@ export default function AttendanceScreen() {
   return (
     <Page>
       <ScreenHeader
-        title="Điểm danh buổi học"
+        title={uiText("Điểm danh buổi học")}
         subtitle={
           classSessionItem
-            ? `${classSessionItem.title} · ${classSessionItem.mode === "ONLINE" ? "Online" : "Offline"}`
-            : "Xác nhận chuyên cần học viên"
+            ? `${classSessionItem.title} · ${classSessionItem.mode === "ONLINE" ? uiText("Online") : "Offline"}`
+            : uiText("Xác nhận chuyên cần học viên")
         }
         onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching/schedule"))}
       />
@@ -227,25 +235,25 @@ export default function AttendanceScreen() {
         <View style={at.statsStrip}>
           <View style={at.statCol}>
             <Text style={at.statNum}>{roster.length}</Text>
-            <Text style={at.statLbl}>Sĩ số</Text>
+            <Text style={at.statLbl}>{uiText("Sĩ số")}</Text>
           </View>
           <View style={at.statCol}>
             <Text style={[at.statNum, { color: "#059669" }]}>
               {roster.filter((r) => r.attendanceStatus === "PRESENT").length}
             </Text>
-            <Text style={at.statLbl}>Có mặt</Text>
+            <Text style={at.statLbl}>{uiText("Có mặt")}</Text>
           </View>
           <View style={at.statCol}>
             <Text style={[at.statNum, { color: "#DC2626" }]}>
               {roster.filter((r) => r.attendanceStatus === "ABSENT").length}
             </Text>
-            <Text style={at.statLbl}>Vắng</Text>
+            <Text style={at.statLbl}>{uiText("Vắng")}</Text>
           </View>
           <View style={at.statCol}>
             <Text style={[at.statNum, { color: "#D97706" }]}>
               {roster.filter((r) => r.attendanceStatus === "EXCUSED").length}
             </Text>
-            <Text style={at.statLbl}>Có phép</Text>
+            <Text style={at.statLbl}>{uiText("Có phép")}</Text>
           </View>
         </View>
       )}
@@ -254,13 +262,18 @@ export default function AttendanceScreen() {
         <View style={at.sourceLegend}>
           <Text style={at.sourceLegendTitle}>
             {classSessionItem?.mode === "ONLINE"
-              ? "🌐 Chế độ điểm danh trực tuyến (Online)"
-              : "🏫 Chế độ điểm danh trực tiếp (Offline)"}
+              ? uiText("🌐 Chế độ điểm danh trực tuyến (Online)")
+              : uiText("🏫 Chế độ điểm danh trực tiếp (Offline)")}
           </Text>
           <Text style={at.sourceLegendText}>
             {classSessionItem?.mode === "ONLINE"
-              ? `• Tự động: Hệ thống tự động ghi nhận khi học viên vào phòng (${roster.filter((r) => r.source === "ONLINE_PRESENCE").length} học viên).\n• Thủ công: Giảng viên có thể tích chọn Có mặt / Vắng / Có phép bên dưới để ghi đè hoặc bổ sung.`
-              : "• Điểm danh tại lớp: Giảng viên điểm danh thủ công theo danh sách bằng cách tích chọn Có mặt, Vắng hoặc Có phép cho từng học viên."}
+              ? uiText(
+                  "• Tự động: Hệ thống tự động ghi nhận khi học viên vào phòng ({0} học viên).\n• Thủ công: Giảng viên có thể tích chọn Có mặt / Vắng / Có phép bên dưới để ghi đè hoặc bổ sung.",
+                  [roster.filter((r) => r.source === "ONLINE_PRESENCE").length],
+                )
+              : uiText(
+                  "• Điểm danh tại lớp: Giảng viên điểm danh thủ công theo danh sách bằng cách tích chọn Có mặt, Vắng hoặc Có phép cho từng học viên.",
+                )}
           </Text>
         </View>
       )}
@@ -274,22 +287,22 @@ export default function AttendanceScreen() {
             style={at.quickAllBtn}
             onPress={handleMarkAllPresent}
           >
-            <Text style={at.quickAllBtnText}>✓ Đánh dấu tất cả Có mặt</Text>
+            <Text style={at.quickAllBtnText}>{uiText("✓ Đánh dấu tất cả Có mặt")}</Text>
           </Pressable>
         </View>
       )}
 
       {msg ? (
         <View style={at.msgBox}>
-          <Text style={at.msgText}>{msg}</Text>
+          <Text style={at.msgText}>{uiText(msg)}</Text>
         </View>
       ) : null}
 
       {roster && roster.length === 0 && (
         <View style={styles.card}>
-          <Text style={styles.text}>Chưa có bản ghi điểm danh nào.</Text>
+          <Text style={styles.text}>{uiText("Chưa có bản ghi điểm danh nào.")}</Text>
           <Text style={styles.small}>
-            Học viên trong lớp sẽ xuất hiện trong danh sách điểm danh của buổi học.
+            {uiText("Học viên trong lớp sẽ xuất hiện trong danh sách điểm danh của buổi học.")}
           </Text>
         </View>
       )}
@@ -308,15 +321,15 @@ export default function AttendanceScreen() {
           <View style={at.errorIconBox}>
             <Text style={{ fontSize: 24 }}>⚠️</Text>
           </View>
-          <Text style={at.errorTitle}>Lỗi kết nối điểm danh</Text>
-          <Text style={at.errorDesc}>{error}</Text>
+          <Text style={at.errorTitle}>{uiText("Lỗi kết nối điểm danh")}</Text>
+          <Text style={at.errorDesc}>{uiText(error)}</Text>
           <View style={{ flexDirection: "row", gap: 10, marginTop: 6, width: "100%" }}>
             <View style={{ flex: 1 }}>
-              <Button label="Thử lại" variant="primary" onPress={() => setRetry((v) => v + 1)} />
+              <Button label={uiText("Thử lại")} variant="primary" onPress={() => setRetry((v) => v + 1)} />
             </View>
             <View style={{ flex: 1 }}>
               <Button
-                label="Quay lại"
+                label={uiText("Quay lại")}
                 variant="outline"
                 onPress={() => (router.canGoBack() ? router.back() : router.replace("/teaching/schedule"))}
               />
@@ -325,7 +338,7 @@ export default function AttendanceScreen() {
         </View>
       ) : (
         <Button
-          label="Quay lại"
+          label={uiText("Quay lại")}
           variant="outline"
           onPress={() => (router.canGoBack() ? router.back() : router.replace("/teaching/schedule"))}
         />

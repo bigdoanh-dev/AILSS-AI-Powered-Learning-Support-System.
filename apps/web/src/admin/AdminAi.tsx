@@ -1,3 +1,5 @@
+import { useUiText, interfaceMessage, type InterfaceMessage } from "../lib/i18n";
+import { useLanguage } from "../lib/i18n";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { adminError, adminRequest } from "./api";
@@ -23,12 +25,14 @@ interface ConversationDetail {
 }
 
 export default function AdminAi() {
+  const uiText = useUiText();
+  const { language } = useLanguage();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [conversationId, setConversationId] = useState<string>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<InterfaceMessage>("");
   const [supportMode, setSupportMode] = useState<"external" | "local-guide">();
   const pendingRef = useRef(false);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -105,6 +109,7 @@ export default function AdminAi() {
         safetyBlocked?: boolean;
       }>("/assistant/chat", "POST", {
         mode: "ADMIN_SUPPORT",
+        responseLanguage: language,
         ...(conversationId ? { conversationId } : {}),
         message,
       });
@@ -121,7 +126,11 @@ export default function AdminAi() {
     } catch (cause) {
       setMessages((current) => current.filter((item) => item.id !== optimisticId));
       setInput(message);
-      setError(`${adminError(cause)} Câu hỏi đã được giữ lại để bạn thử lại.`);
+      setError(
+        interfaceMessage("{0} Câu hỏi đã được giữ lại để bạn thử lại.", [
+          interfaceMessage(adminError(cause)),
+        ]),
+      );
     } finally {
       pendingRef.current = false;
       setPending(false);
@@ -132,20 +141,22 @@ export default function AdminAi() {
     <section className="admin-ai animate-fade-in" aria-labelledby="admin-ai-title">
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">HỖ TRỢ VẬN HÀNH</p>
+          <p className="eyebrow">{uiText("HỖ TRỢ VẬN HÀNH")}</p>
           <h1 id="admin-ai-title">
-            {supportMode === "local-guide" ? "Hướng dẫn quản trị local" : "AI quản trị"}
+            {supportMode === "local-guide" ? uiText("Hướng dẫn quản trị local") : uiText("AI quản trị")}
           </h1>
-          <p className="lead">Hỏi về quy trình kiểm duyệt, quản lý tài khoản và nơi xem số liệu.</p>
+          <p className="lead">
+            {uiText("Hỏi về quy trình kiểm duyệt, quản lý tài khoản và nơi xem số liệu.")}
+          </p>
         </div>
         <div className="dashboard-header-actions">
           <span className="kpi-tag accent">
             <Icon name="sparkles" size={14} />{" "}
             {supportMode === "local-guide"
-              ? "Hướng dẫn local"
+              ? uiText("Hướng dẫn local")
               : supportMode === "external"
-                ? "AI trực tuyến"
-                : "Đang đọc cấu hình…"}
+                ? uiText("AI trực tuyến")
+                : uiText("Đang đọc cấu hình…")}
           </span>
         </div>
       </div>
@@ -156,36 +167,40 @@ export default function AdminAi() {
         </div>
         <p className="admin-ai-note">
           {supportMode === "local-guide"
-            ? "Đang dùng hướng dẫn thao tác local, không gọi mô hình AI trực tuyến. Số liệu và quyết định quản trị cần được xác nhận trên màn hình tương ứng."
-            : "Trợ lý hướng dẫn thao tác. Số liệu và quyết định quản trị cần được xác nhận trên màn hình tương ứng."}
+            ? uiText(
+                "Đang dùng hướng dẫn thao tác local, không gọi mô hình AI trực tuyến. Số liệu và quyết định quản trị cần được xác nhận trên màn hình tương ứng.",
+              )
+            : uiText(
+                "Trợ lý hướng dẫn thao tác. Số liệu và quyết định quản trị cần được xác nhận trên màn hình tương ứng.",
+              )}
         </p>
       </div>
 
-      <div className="admin-ai-links" aria-label="Công cụ quản trị">
+      <div className="admin-ai-links" aria-label={uiText("Công cụ quản trị")}>
         <Link className="admin-ai-link-chip" to="/app/admin/stats">
           <Icon name="chart" size={15} />
-          <span>Thống kê học tập và AI</span>
+          <span>{uiText("Thống kê học tập và AI")}</span>
         </Link>
         <Link className="admin-ai-link-chip" to="/app/admin/moderation">
           <Icon name="shield" size={15} />
-          <span>Kiểm duyệt</span>
+          <span>{uiText("Kiểm duyệt")}</span>
         </Link>
         <Link className="admin-ai-link-chip" to="/app/admin/users">
           <Icon name="users" size={15} />
-          <span>Người dùng</span>
+          <span>{uiText("Người dùng")}</span>
         </Link>
         <Link className="admin-ai-link-chip" to="/app/admin/logs">
           <Icon name="fileText" size={15} />
-          <span>Nhật ký</span>
+          <span>{uiText("Nhật ký")}</span>
         </Link>
       </div>
 
       <div className="admin-ai-layout">
-        <aside className="admin-ai-history" aria-label="Lịch sử AI quản trị">
+        <aside className="admin-ai-history" aria-label={uiText("Lịch sử AI quản trị")}>
           <div className="admin-ai-history-header">
             <div className="admin-ai-history-title-wrap">
               <Icon name="message" size={16} />
-              <h2>Đoạn chat</h2>
+              <h2>{uiText("Đoạn chat")}</h2>
             </div>
             <button
               type="button"
@@ -198,13 +213,13 @@ export default function AdminAi() {
                 setError("");
               }}
             >
-              + Chat mới
+              {uiText("+ Chat mới")}
             </button>
           </div>
           {conversations.length === 0 && (
             <div className="admin-ai-history-empty">
               <Icon name="message" size={24} />
-              <p>Chưa có đoạn chat nào.</p>
+              <p>{uiText("Chưa có đoạn chat nào.")}</p>
             </div>
           )}
           <div className="admin-ai-conversation-list">
@@ -230,9 +245,9 @@ export default function AdminAi() {
                 <div className="admin-ai-empty-pulse-icon">
                   <Icon name="sparkles" size={32} />
                 </div>
-                <p className="admin-ai-empty">Bạn muốn tìm hiểu quy trình quản trị nào?</p>
+                <p className="admin-ai-empty">{uiText("Bạn muốn tìm hiểu quy trình quản trị nào?")}</p>
                 <p className="admin-ai-empty-sub">
-                  Chọn câu hỏi gợi ý bên dưới hoặc nhập câu hỏi trực tiếp để trợ lý hỗ trợ ngay:
+                  {uiText("Chọn câu hỏi gợi ý bên dưới hoặc nhập câu hỏi trực tiếp để trợ lý hỗ trợ ngay:")}
                 </p>
                 <div className="admin-ai-suggestions">
                   {[
@@ -246,9 +261,9 @@ export default function AdminAi() {
                       type="button"
                       className="admin-ai-sample-pill"
                       disabled={pending}
-                      onClick={() => setInput(sample)}
+                      onClick={() => setInput(uiText(sample))}
                     >
-                      <span>{sample}</span>
+                      <span>{uiText(sample)}</span>
                       <Icon name="chevronRight" size={13} />
                     </button>
                   ))}
@@ -264,7 +279,7 @@ export default function AdminAi() {
                   <div className="message-avatar">
                     <Icon name={message.sender === "USER" ? "user" : "bot"} size={14} />
                   </div>
-                  <strong>{message.sender === "USER" ? "Bạn" : "AI quản trị"}</strong>
+                  <strong>{message.sender === "USER" ? uiText("Bạn") : uiText("AI quản trị")}</strong>
                 </div>
                 <div className="message-content-box">
                   <p>{message.content}</p>
@@ -276,21 +291,21 @@ export default function AdminAi() {
                 <span className="typing-dot" />
                 <span className="typing-dot" />
                 <span className="typing-dot" />
-                <span>AI đang trả lời…</span>
+                <span>{uiText("AI đang trả lời…")}</span>
               </div>
             )}
           </div>
 
           {error && (
             <p className="admin-ai-error" role="alert">
-              {error}
+              {uiText(error)}
             </p>
           )}
 
           <form className="admin-ai-composer" onSubmit={(event) => void send(event)}>
             <label htmlFor="admin-ai-input" className="admin-composer-label">
               <Icon name="sparkles" size={15} />
-              <span>Câu hỏi cho AI quản trị</span>
+              <span>{uiText("Câu hỏi cho AI quản trị")}</span>
             </label>
             <div className="admin-textarea-wrapper">
               <textarea
@@ -300,11 +315,11 @@ export default function AdminAi() {
                 disabled={pending}
                 maxLength={4000}
                 rows={3}
-                placeholder="Ví dụ: Xem báo cáo kiểm duyệt ở đâu?"
+                placeholder={uiText("Ví dụ: Xem báo cáo kiểm duyệt ở đâu?")}
                 className="admin-ai-textarea"
               />
               <button type="submit" className="button admin-send-btn" disabled={pending || !input.trim()}>
-                <span>Gửi câu hỏi</span>
+                <span>{uiText("Gửi câu hỏi")}</span>
                 <Icon name="chevronRight" size={15} />
               </button>
             </div>

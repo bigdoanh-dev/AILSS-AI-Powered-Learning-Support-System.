@@ -103,6 +103,7 @@ export interface LlmCompletionRequest {
   readonly integrationContext?: {
     readonly mode: AssistantMode;
     readonly toolResults: readonly ToolResult[];
+    readonly responseLanguage?: "vi" | "en";
   };
 }
 

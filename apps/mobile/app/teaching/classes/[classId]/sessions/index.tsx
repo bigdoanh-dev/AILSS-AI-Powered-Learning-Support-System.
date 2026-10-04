@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../../../src/use-language";
+import { useUiText } from "../../../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, StyleSheet } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -15,6 +17,8 @@ import { Page, Button, ScreenHeader, Icon, NonVirtualizedList, styles, tokens } 
 import { ScalePressable, FadeSlideIn } from "../../../../../src/motion";
 
 export default function ClassSessionsList() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { classId } = useLocalSearchParams<{ classId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -58,9 +62,9 @@ export default function ClassSessionsList() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <ScreenHeader title="Lịch buổi học" onBack={() => router.replace("/")} />
-        <Text style={styles.error}>Bạn không có quyền truy cập.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <ScreenHeader title={uiText("Lịch buổi học")} onBack={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Bạn không có quyền truy cập.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -68,7 +72,7 @@ export default function ClassSessionsList() {
   const formatDateTime = (iso: string) => {
     try {
       const d = new Date(iso);
-      return d.toLocaleDateString("vi-VN", {
+      return d.toLocaleDateString(uiLocale, {
         day: "2-digit",
         month: "2-digit",
         hour: "2-digit",
@@ -84,7 +88,7 @@ export default function ClassSessionsList() {
     return (
       <ScalePressable
         accessibilityRole="button"
-        accessibilityLabel={`Buổi học: ${item.title}`}
+        accessibilityLabel={uiText("Buổi học: {0}", [item.title])}
         onPress={() => router.push(`/teaching/classes/${classId}/sessions/${item.sessionId}` as const)}
         style={sl.card}
       >
@@ -135,7 +139,7 @@ export default function ClassSessionsList() {
           <View style={sl.metaRow}>
             <View style={[sl.modePill, isOnline ? sl.modeOnline : sl.modeOffline]}>
               <Text style={[sl.modeText, isOnline ? { color: "#0284C7" } : { color: "#0D9488" }]}>
-                {isOnline ? "Trực tuyến" : "Trực tiếp"}
+                {isOnline ? uiText("Trực tuyến") : uiText("Trực tiếp")}
               </Text>
             </View>
             {item.location ? (
@@ -147,7 +151,7 @@ export default function ClassSessionsList() {
               </View>
             ) : null}
             <View style={{ marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 2 }}>
-              <Text style={sl.detailActionText}>Chi tiết</Text>
+              <Text style={sl.detailActionText}>{uiText("Chi tiết")}</Text>
               <Icon name="chevronRight" size={14} color={tokens.color.brand} />
             </View>
           </View>
@@ -159,8 +163,8 @@ export default function ClassSessionsList() {
   return (
     <Page>
       <ScreenHeader
-        title="Lịch buổi học"
-        subtitle={cls ? `Lớp: ${cls.name}` : "Danh sách các buổi học giảng dạy"}
+        title={uiText("Lịch buổi học")}
+        subtitle={cls ? uiText("Lớp: {0}", [cls.name]) : uiText("Danh sách các buổi học giảng dạy")}
         onBack={() =>
           router.canGoBack() ? router.back() : router.replace(`/teaching/classes/${classId}` as const)
         }
@@ -195,14 +199,15 @@ export default function ClassSessionsList() {
                       cls.scheduleState === "PUBLISHED" ? { color: "#166534" } : { color: "#92400E" },
                     ]}
                   >
-                    Lịch: {cls.scheduleState === "PUBLISHED" ? "ĐÃ XUẤT BẢN" : "BẢN NHÁP"}
+                    {uiText("Lịch: ")}
+                    {cls.scheduleState === "PUBLISHED" ? uiText("ĐÃ XUẤT BẢN") : uiText("BẢN NHÁP")}
                   </Text>
                 </View>
                 {items && (
                   <View style={sl.countPill}>
                     <Icon name="calendar" size={12} color={tokens.color.muted} />
                     <Text style={{ fontSize: 12, color: tokens.color.inkSecondary, fontWeight: "700" }}>
-                      {items.length} buổi học
+                      {items.length} {uiText(" buổi học")}
                     </Text>
                   </View>
                 )}
@@ -215,7 +220,7 @@ export default function ClassSessionsList() {
       {cls?.scheduleState === "DRAFT" && (
         <View style={{ marginBottom: 12 }}>
           <Button
-            label="Thêm buổi học mới"
+            label={uiText("Thêm buổi học mới")}
             variant="primary"
             icon={<Icon name="add" size={16} color="#FFFFFF" />}
             onPress={() => router.push(`/teaching/classes/${classId}/sessions/create` as const)}
@@ -231,24 +236,25 @@ export default function ClassSessionsList() {
                 <Icon name="calendar" size={28} color="#FFFFFF" />
               </View>
             </View>
-            <Text style={sl.emptyTitle}>Chưa có buổi học nào trong lịch</Text>
+            <Text style={sl.emptyTitle}>{uiText("Chưa có buổi học nào trong lịch")}</Text>
             <Text style={sl.emptySubtitle}>
               {cls?.scheduleState === "DRAFT"
-                ? "Hãy tạo buổi học đầu tiên trước khi xuất bản lịch cho học viên."
-                : "Lịch đã xuất bản hoặc không có buổi học trong khoảng thời gian này."}
+                ? uiText("Hãy tạo buổi học đầu tiên trước khi xuất bản lịch cho học viên.")
+                : uiText("Lịch đã xuất bản hoặc không có buổi học trong khoảng thời gian này.")}
             </Text>
 
             <View style={sl.tipBox}>
               <Icon name="sparkles" size={16} color={tokens.color.brand} />
               <Text style={sl.tipText}>
-                Khi tạo buổi học, bạn có thể thiết lập hình thức Trực tuyến (kèm link Meet/Zoom) hoặc Tại lớp,
-                thời gian và địa điểm chi tiết.
+                {uiText(
+                  "Khi tạo buổi học, bạn có thể thiết lập hình thức Trực tuyến (kèm link Meet/Zoom) hoặc Tại lớp, thời gian và địa điểm chi tiết.",
+                )}
               </Text>
             </View>
 
             {cls?.scheduleState === "DRAFT" && (
               <Button
-                label="Tạo buổi học đầu tiên"
+                label={uiText("Tạo buổi học đầu tiên")}
                 icon={<Icon name="add" size={16} color="#FFFFFF" />}
                 onPress={() => router.push(`/teaching/classes/${classId}/sessions/create` as const)}
               />
@@ -272,15 +278,15 @@ export default function ClassSessionsList() {
         <View style={sl.errorCard}>
           <Icon name="alert" size={18} color="#DC2626" />
           <Text accessibilityRole="alert" style={styles.error}>
-            {error}
+            {uiText(error)}
           </Text>
-          <Button label="Thử lại" variant="outline" onPress={() => setRetry((v) => v + 1)} />
+          <Button label={uiText("Thử lại")} variant="outline" onPress={() => setRetry((v) => v + 1)} />
         </View>
       ) : null}
 
       <View style={{ marginTop: 8 }}>
         <Button
-          label="Quay lại chi tiết lớp"
+          label={uiText("Quay lại chi tiết lớp")}
           variant="outline"
           onPress={() =>
             router.canGoBack() ? router.back() : router.replace(`/teaching/classes/${classId}` as const)

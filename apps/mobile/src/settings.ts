@@ -4,6 +4,7 @@
  */
 
 import type { SupportedLanguage } from "./i18n";
+import { normalizeLanguage } from "../../../packages/localization/src";
 
 export interface SystemSettings {
   language: SupportedLanguage;
@@ -13,6 +14,7 @@ export interface SystemSettings {
 }
 
 export const REQUIRE_LOGIN_ON_COLD_START_KEY = "ailss.mobile.settings.requireLoginOnColdStart.v1";
+export const LANGUAGE_PREFERENCE_KEY = "ailss.mobile.settings.language.v1";
 
 type PreferenceStorage = {
   read(): Promise<string | null>;
@@ -34,7 +36,11 @@ export function getSystemSettings(): SystemSettings {
 }
 
 export function updateSystemSettings(patch: Partial<SystemSettings>): SystemSettings {
-  settingsState = { ...settingsState, ...patch };
+  settingsState = {
+    ...settingsState,
+    ...patch,
+    language: normalizeLanguage(patch.language ?? settingsState.language),
+  };
   listeners.forEach((fn) => fn());
   return settingsState;
 }
@@ -65,6 +71,25 @@ export async function persistColdStartLoginPreference(
 ): Promise<void> {
   await storage.write(String(value));
   updateSystemSettings({ requireLoginOnColdStart: value });
+}
+
+export async function restoreLanguagePreference(storage: Pick<PreferenceStorage, "read">): Promise<void> {
+  let value: string | null = null;
+  try {
+    value = await storage.read();
+  } catch {
+    /* Keep Vietnamese when storage is unavailable. */
+  }
+  updateSystemSettings({ language: normalizeLanguage(value) });
+}
+
+export async function persistLanguagePreference(
+  value: SupportedLanguage,
+  storage: Pick<PreferenceStorage, "write">,
+): Promise<void> {
+  const language = normalizeLanguage(value);
+  await storage.write(language);
+  updateSystemSettings({ language });
 }
 
 export function subscribeSystemSettings(listener: () => void): () => void {

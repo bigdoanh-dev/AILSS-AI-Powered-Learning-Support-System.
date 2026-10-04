@@ -1,3 +1,4 @@
+import { useUiText } from "../../../../../src/use-language";
 import { useState, useCallback } from "react";
 import { Text, TextInput, Switch, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -9,6 +10,7 @@ import { CONTRACT_LIMITED } from "../../../../../src/teaching";
 import { Page, Button, styles } from "../../../../../src/ui";
 
 export default function CreateLesson() {
+  const uiText = useUiText();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -56,46 +58,46 @@ export default function CreateLesson() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <Text style={styles.error}>Bạn không có quyền truy cập.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Bạn không có quyền truy cập.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
 
   return (
     <Page>
-      <Text style={styles.title}>Tạo bài học mới</Text>
+      <Text style={styles.title}>{uiText("Tạo bài học mới")}</Text>
 
-      <Text style={styles.small}>Tên bài học *</Text>
+      <Text style={styles.small}>{uiText("Tên bài học *")}</Text>
       <TextInput
-        accessibilityLabel="Tên bài học"
+        accessibilityLabel={uiText("Tên bài học")}
         style={styles.input}
         value={title}
         onChangeText={setTitle}
         maxLength={200}
       />
 
-      <Text style={styles.small}>Tên chương</Text>
+      <Text style={styles.small}>{uiText("Tên chương")}</Text>
       <TextInput
-        accessibilityLabel="Tên chương"
+        accessibilityLabel={uiText("Tên chương")}
         style={styles.input}
         value={sectionTitle}
         onChangeText={setSectionTitle}
         maxLength={200}
       />
 
-      <Text style={styles.small}>Thứ tự chương</Text>
+      <Text style={styles.small}>{uiText("Thứ tự chương")}</Text>
       <TextInput
-        accessibilityLabel="Thứ tự chương"
+        accessibilityLabel={uiText("Thứ tự chương")}
         style={styles.input}
         value={sectionOrder}
         onChangeText={setSectionOrder}
         keyboardType="numeric"
       />
 
-      <Text style={styles.small}>Thứ tự bài</Text>
+      <Text style={styles.small}>{uiText("Thứ tự bài")}</Text>
       <TextInput
-        accessibilityLabel="Thứ tự bài"
+        accessibilityLabel={uiText("Thứ tự bài")}
         style={styles.input}
         value={lessonOrder}
         onChangeText={setLessonOrder}
@@ -103,27 +105,30 @@ export default function CreateLesson() {
       />
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <Text style={styles.text}>Cho xem trước</Text>
+        <Text style={styles.text}>{uiText("Cho xem trước")}</Text>
         <Switch value={preview} onValueChange={setPreview} />
       </View>
 
       <Text style={styles.small}>{CONTRACT_LIMITED.lessonFileUpload}</Text>
 
       <Button
-        label={busy ? "Đang tạo…" : "Tạo bài học"}
+        label={busy ? uiText("Đang tạo…") : uiText("Tạo bài học")}
         disabled={busy || !title.trim()}
         onPress={() => {
           void handleCreate();
         }}
       />
 
-      {message && <Text style={styles.text}>{message}</Text>}
+      {message && <Text style={styles.text}>{uiText(message)}</Text>}
       {error && (
         <Text accessibilityRole="alert" style={styles.error}>
-          {error}
+          {uiText(error)}
         </Text>
       )}
-      <Button label="Quay lại" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />
+      <Button
+        label={uiText("Quay lại")}
+        onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+      />
     </Page>
   );
 }

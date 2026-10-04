@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { router, type Href } from "expo-router";
@@ -9,6 +10,7 @@ import { authoringQuizSummaries, type AuthoringQuizSummary } from "../../../src/
 import { Page, Button, ScreenHeader, NonVirtualizedList, styles, tokens } from "../../../src/ui";
 
 export default function LecturerAssessmentsScreen() {
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
@@ -92,9 +94,9 @@ export default function LecturerAssessmentsScreen() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <Text style={styles.title}>Đánh giá</Text>
-        <Text style={styles.error}>Chức năng này chỉ dành cho Giảng viên.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <Text style={styles.title}>{uiText("Đánh giá")}</Text>
+        <Text style={styles.error}>{uiText("Chức năng này chỉ dành cho Giảng viên.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -102,8 +104,8 @@ export default function LecturerAssessmentsScreen() {
   return (
     <Page>
       <ScreenHeader
-        title="Quản lý bài kiểm tra"
-        subtitle="Soạn và quản lý bài kiểm tra theo khóa học hoặc lớp học"
+        title={uiText("Quản lý bài kiểm tra")}
+        subtitle={uiText("Soạn và quản lý bài kiểm tra theo khóa học hoặc lớp học")}
         onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching"))}
       />
 
@@ -111,7 +113,7 @@ export default function LecturerAssessmentsScreen() {
       <View style={s.tabRow}>
         <Pressable
           accessibilityRole="tab"
-          accessibilityLabel="Chọn xem theo khóa học"
+          accessibilityLabel={uiText("Chọn xem theo khóa học")}
           style={[s.tab, targetType === "COURSE" && s.tabActive]}
           onPress={() => {
             setTargetType("COURSE");
@@ -119,12 +121,13 @@ export default function LecturerAssessmentsScreen() {
           }}
         >
           <Text style={[s.tabText, targetType === "COURSE" && s.tabTextActive]}>
-            Khóa học ({courses.length})
+            {uiText("Khóa học (")}
+            {courses.length})
           </Text>
         </Pressable>
         <Pressable
           accessibilityRole="tab"
-          accessibilityLabel="Chọn xem theo lớp học"
+          accessibilityLabel={uiText("Chọn xem theo lớp học")}
           style={[s.tab, targetType === "CLASS" && s.tabActive]}
           onPress={() => {
             setTargetType("CLASS");
@@ -132,7 +135,8 @@ export default function LecturerAssessmentsScreen() {
           }}
         >
           <Text style={[s.tabText, targetType === "CLASS" && s.tabTextActive]}>
-            Lớp học ({classes.length})
+            {uiText("Lớp học (")}
+            {classes.length})
           </Text>
         </Pressable>
       </View>
@@ -170,7 +174,7 @@ export default function LecturerAssessmentsScreen() {
       {/* Top Actions */}
       <View style={s.actionRow}>
         <Button
-          label="Tạo bài kiểm tra mới"
+          label={uiText("Tạo bài kiểm tra mới")}
           onPress={() =>
             router.push({
               pathname: "/teaching/assessments/create",
@@ -179,7 +183,7 @@ export default function LecturerAssessmentsScreen() {
           }
         />
         <Button
-          label="Soạn đề bằng AI"
+          label={uiText("Soạn đề bằng AI")}
           onPress={() =>
             router.push({
               pathname: "/teaching/ai",
@@ -193,22 +197,22 @@ export default function LecturerAssessmentsScreen() {
       {loading && (
         <View style={s.loadingBox}>
           <ActivityIndicator color={tokens.color.brand} />
-          <Text style={styles.small}>Đang tải bài kiểm tra…</Text>
+          <Text style={styles.small}>{uiText("Đang tải bài kiểm tra…")}</Text>
         </View>
       )}
 
       {error ? (
         <View style={styles.card}>
-          <Text style={styles.error}>{error}</Text>
-          <Button label="Thử lại" onPress={handleRefresh} />
+          <Text style={styles.error}>{uiText(error)}</Text>
+          <Button label={uiText("Thử lại")} onPress={handleRefresh} />
         </View>
       ) : null}
 
       {/* Quiz List */}
       {!loading && !error && quizzes && quizzes.length === 0 && (
         <View style={s.emptyBox}>
-          <Text style={styles.text}>Chưa có bài kiểm tra cho nội dung này.</Text>
-          <Text style={styles.small}>Hãy tạo bài kiểm tra đầu tiên hoặc sử dụng Trợ lý AI.</Text>
+          <Text style={styles.text}>{uiText("Chưa có bài kiểm tra cho nội dung này.")}</Text>
+          <Text style={styles.small}>{uiText("Hãy tạo bài kiểm tra đầu tiên hoặc sử dụng Trợ lý AI.")}</Text>
         </View>
       )}
 
@@ -220,7 +224,7 @@ export default function LecturerAssessmentsScreen() {
           renderItem={({ item }) => (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Bài kiểm tra ${item.title}`}
+              accessibilityLabel={uiText("Bài kiểm tra {0}", [item.title])}
               style={s.quizCard}
               onPress={() => router.push(`/teaching/assessments/${item.quizId}` as Href)}
             >
@@ -243,18 +247,19 @@ export default function LecturerAssessmentsScreen() {
               </View>
 
               <Text style={styles.small}>
-                {item.questionCount} câu hỏi · Phiên bản v{item.currentVersion}
+                {item.questionCount} {uiText(" câu hỏi · Phiên bản v")}
+                {item.currentVersion}
               </Text>
 
               <View style={s.cardFooter}>
-                <Text style={s.linkText}>Chi tiết & Soạn câu hỏi →</Text>
+                <Text style={s.linkText}>{uiText("Chi tiết & Soạn câu hỏi →")}</Text>
               </View>
             </Pressable>
           )}
         />
       )}
 
-      <Button label="Quay lại Giảng dạy" onPress={() => router.replace("/teaching")} />
+      <Button label={uiText("Quay lại Giảng dạy")} onPress={() => router.replace("/teaching")} />
     </Page>
   );
 }

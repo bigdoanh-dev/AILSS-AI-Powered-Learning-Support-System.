@@ -1,3 +1,4 @@
+import { useUiText } from "../../src/use-language";
 import { useCallback, useEffect, useState } from "react";
 import { Image, Pressable, Text, View } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
@@ -10,6 +11,7 @@ import { reviewList, type Review } from "../../src/interaction";
 import { Button, Page, ScreenHeader, styles, tokens } from "../../src/ui";
 
 export default function LecturerProfileScreen() {
+  const uiText = useUiText();
   const { lecturerId, courseId } = useLocalSearchParams<{ lecturerId: string; courseId?: string }>();
   const api = runtime!.api;
   const [profile, setProfile] = useState<PublicLecturer | null>(null);
@@ -66,16 +68,16 @@ export default function LecturerProfileScreen() {
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
       <Page>
         <ScreenHeader
-          title="Hồ sơ giảng viên"
+          title={uiText("Hồ sơ giảng viên")}
           onBack={() => (router.canGoBack() ? router.back() : router.replace("/courses"))}
         />
-        {loading ? <Text style={styles.small}>Đang tải hồ sơ giảng viên…</Text> : null}
+        {loading ? <Text style={styles.small}>{uiText("Đang tải hồ sơ giảng viên…")}</Text> : null}
         {error ? (
           <>
             <Text accessibilityRole="alert" style={styles.error}>
-              {error}
+              {uiText(error)}
             </Text>
-            <Button label="Thử lại" onPress={() => void load()} />
+            <Button label={uiText("Thử lại")} onPress={() => void load()} />
           </>
         ) : null}
         {profile ? (
@@ -84,7 +86,7 @@ export default function LecturerProfileScreen() {
               {profile.avatarRef ? (
                 <Image
                   source={{ uri: profile.avatarRef }}
-                  accessibilityLabel={`Ảnh giảng viên ${profile.displayName}`}
+                  accessibilityLabel={uiText("Ảnh giảng viên {0}", [profile.displayName])}
                   style={{ width: 96, height: 96, borderRadius: 48 }}
                 />
               ) : (
@@ -103,20 +105,20 @@ export default function LecturerProfileScreen() {
               )}
               <Text style={styles.title}>{profile.displayName}</Text>
               <Text style={styles.small}>
-                {profile.verified ? "Giảng viên đã xác minh" : "Hồ sơ giảng viên"}
+                {profile.verified ? uiText("Giảng viên đã xác minh") : uiText("Hồ sơ giảng viên")}
               </Text>
               <Text style={styles.text}>{profile.bio || "Giảng viên chưa cập nhật lời giới thiệu."}</Text>
             </View>
             <View style={[styles.card, { gap: 8 }]}>
-              <Text style={styles.title}>Kinh nghiệm</Text>
+              <Text style={styles.title}>{uiText("Kinh nghiệm")}</Text>
               <Text style={styles.text}>{profile.experience || "Chưa cập nhật"}</Text>
-              <Text style={styles.title}>Học vấn</Text>
+              <Text style={styles.title}>{uiText("Học vấn")}</Text>
               <Text style={styles.text}>{profile.education || "Chưa cập nhật"}</Text>
-              <Text style={styles.title}>Thành tựu</Text>
+              <Text style={styles.title}>{uiText("Thành tựu")}</Text>
               <Text style={styles.text}>{profile.achievements || "Chưa cập nhật"}</Text>
             </View>
             <View style={[styles.card, { gap: 8 }]}>
-              <Text style={styles.title}>Khóa học tiêu biểu</Text>
+              <Text style={styles.title}>{uiText("Khóa học tiêu biểu")}</Text>
               {courses.length ? (
                 courses.map((course) => (
                   <Pressable
@@ -129,17 +131,17 @@ export default function LecturerProfileScreen() {
                     </Text>
                     <Text style={styles.small}>
                       {course.priceType === "FREE"
-                        ? "Miễn phí"
+                        ? uiText("Miễn phí")
                         : `${course.price ?? "—"} ${course.currency ?? "VND"}`}
                     </Text>
                   </Pressable>
                 ))
               ) : (
-                <Text style={styles.small}>Chưa có khóa học trong danh mục hiện tại.</Text>
+                <Text style={styles.small}>{uiText("Chưa có khóa học trong danh mục hiện tại.")}</Text>
               )}
             </View>
             <View style={[styles.card, { gap: 8 }]}>
-              <Text style={styles.title}>Đánh giá của học viên</Text>
+              <Text style={styles.title}>{uiText("Đánh giá của học viên")}</Text>
               {reviews.length ? (
                 reviews.map((review) => (
                   <View
@@ -154,7 +156,9 @@ export default function LecturerProfileScreen() {
                   </View>
                 ))
               ) : (
-                <Text style={styles.small}>Chưa có nhận xét công khai trong các khóa học đang hiển thị.</Text>
+                <Text style={styles.small}>
+                  {uiText("Chưa có nhận xét công khai trong các khóa học đang hiển thị.")}
+                </Text>
               )}
             </View>
           </>

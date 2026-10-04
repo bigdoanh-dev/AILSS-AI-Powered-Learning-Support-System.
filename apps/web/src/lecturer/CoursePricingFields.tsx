@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useId, useState } from "react";
 import { RevenueQuote } from "./RevenueQuote";
 
@@ -11,6 +12,7 @@ export function CoursePricingFields({
   initialPrice?: string;
   initialCurrency?: string;
 }) {
+  const uiText = useUiText();
   const [priceType, setPriceType] = useState(initialPriceType === "PAID" ? "PAID" : "FREE");
   const [price, setPrice] = useState(initialPriceType === "PAID" ? initialPrice : "0");
   const [currency, setCurrency] = useState(initialCurrency);
@@ -19,7 +21,7 @@ export function CoursePricingFields({
   return (
     <div className="form-grid" style={{ gridColumn: "1 / -1" }}>
       <label>
-        Hình thức học phí
+        {uiText("Hình thức học phí")}
         <select
           name="priceType"
           value={priceType}
@@ -28,14 +30,14 @@ export function CoursePricingFields({
             if (event.target.value === "FREE") setPrice("0");
           }}
         >
-          <option value="FREE">Miễn phí</option>
-          <option value="PAID">Có học phí</option>
+          <option value="FREE">{uiText("Miễn phí")}</option>
+          <option value="PAID">{uiText("Có học phí")}</option>
         </select>
       </label>
       <label>
-        Giá niêm yết
+        {uiText("Giá niêm yết")}
         <input
-          aria-label="Giá niêm yết"
+          aria-label={uiText("Giá niêm yết")}
           aria-describedby={free ? hintId : undefined}
           name="price"
           type="number"
@@ -46,10 +48,10 @@ export function CoursePricingFields({
           required={!free}
           onChange={(event) => setPrice(event.target.value)}
         />
-        {free && <small id={hintId}>Khóa học miễn phí có giá niêm yết bằng 0.</small>}
+        {free && <small id={hintId}>{uiText("Khóa học miễn phí có giá niêm yết bằng 0.")}</small>}
       </label>
       <label>
-        Đơn vị tiền tệ
+        {uiText("Đơn vị tiền tệ")}
         <input
           name="currency"
           value={currency}

@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useState } from "react";
 export const services = [
   ["Identity", "Danh tính & quyền truy cập", "Tài khoản, phiên đăng nhập, vai trò và xác minh giảng viên."],
@@ -8,33 +9,35 @@ export const services = [
   ["AI", "Tài liệu & bản nháp", "Xử lý tài liệu, tạo quiz theo objective-v1 và phê duyệt bởi giảng viên."],
 ];
 export function Architecture() {
+  const uiText = useUiText();
   const [selected, setSelected] = useState(0);
   return (
     <div className="architecture">
-      <p className="eyebrow">6 business services</p>
+      <p className="eyebrow">{uiText("6 dịch vụ nghiệp vụ")}</p>
       <div className="service-grid">
         {services.map(([name, sub], i) => (
           <button key={name} aria-pressed={selected === i} onClick={() => setSelected(i)}>
             <span className="service-index">0{i + 1}</span>
             <strong>{name}</strong>
-            <small>{sub}</small>
+            <small>{uiText(sub)}</small>
           </button>
         ))}
       </div>
       <div key={selected} className="service-detail panel-motion" aria-live="polite">
         <strong>{services[selected][0]}</strong>
-        <p>{services[selected][2]}</p>
+        <p>{uiText(services[selected][2])}</p>
       </div>
       <div className="infrastructure">
-        <span>Hạ tầng & tiến trình hỗ trợ</span>
+        <span>{uiText("Hạ tầng & tiến trình hỗ trợ")}</span>
         <div>
           {["Gateway", "RabbitMQ", "MinIO", "Cassandra", "Workers", "Notification Worker"].map((name) => (
             <span key={name}>{name}</span>
           ))}
         </div>
         <small>
-          Notification Worker là tiến trình hỗ trợ, không phải business service thứ bảy. Redis không được sử
-          dụng.
+          {uiText(
+            "Notification Worker là tiến trình hỗ trợ, không phải business service thứ bảy. Redis không được sử dụng.",
+          )}
         </small>
       </div>
     </div>

@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../../../../src/use-language";
+import { useUiText } from "../../../../../../src/use-language";
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, StyleSheet, ScrollView, TextInput } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -14,6 +16,8 @@ import {
 import { Page, Button, ScreenHeader, Icon, styles, tokens } from "../../../../../../src/ui";
 
 export default function SessionDetailScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { classId, sessionId } = useLocalSearchParams<{ classId: string; sessionId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -155,9 +159,9 @@ export default function SessionDetailScreen() {
   if (snapshot.user?.role !== "LECTURER") {
     return (
       <Page>
-        <ScreenHeader title="Chi tiết buổi học" onBack={() => router.replace("/")} />
-        <Text style={styles.error}>Bạn không có quyền truy cập.</Text>
-        <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+        <ScreenHeader title={uiText("Chi tiết buổi học")} onBack={() => router.replace("/")} />
+        <Text style={styles.error}>{uiText("Bạn không có quyền truy cập.")}</Text>
+        <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
       </Page>
     );
   }
@@ -165,7 +169,7 @@ export default function SessionDetailScreen() {
   const formatDateTime = (iso: string) => {
     try {
       const d = new Date(iso);
-      return d.toLocaleDateString("vi-VN", {
+      return d.toLocaleDateString(uiLocale, {
         weekday: "short",
         day: "2-digit",
         month: "2-digit",
@@ -181,7 +185,7 @@ export default function SessionDetailScreen() {
   const formatTimeOnly = (iso: string) => {
     try {
       const d = new Date(iso);
-      return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+      return d.toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" });
     } catch {
       return iso;
     }
@@ -190,15 +194,15 @@ export default function SessionDetailScreen() {
   return (
     <Page>
       <ScreenHeader
-        title="Chi tiết buổi học"
-        subtitle="Lịch giảng dạy & Quản lý điểm danh"
+        title={uiText("Chi tiết buổi học")}
+        subtitle={uiText("Lịch giảng dạy & Quản lý điểm danh")}
         onBack={() => router.back()}
       />
 
       <ScrollView contentContainerStyle={{ gap: 14, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
         {!item && !error && (
           <View style={sdt.loadingCard}>
-            <Text style={styles.text}>Đang tải chi tiết buổi học…</Text>
+            <Text style={styles.text}>{uiText("Đang tải chi tiết buổi học…")}</Text>
           </View>
         )}
 
@@ -216,7 +220,10 @@ export default function SessionDetailScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={sdt.heroTitle}>{item.title}</Text>
-                  <Text style={sdt.heroSub}>Mã buổi: #{sessionId.slice(0, 10)}</Text>
+                  <Text style={sdt.heroSub}>
+                    {uiText("Mã buổi: #")}
+                    {sessionId.slice(0, 10)}
+                  </Text>
                 </View>
               </View>
 
@@ -258,12 +265,12 @@ export default function SessionDetailScreen() {
                   ]}
                 >
                   {item.status === "SCHEDULED"
-                    ? "SẮP DIỄN RA (SCHEDULED)"
+                    ? uiText("SẮP DIỄN RA (SCHEDULED)")
                     : item.status === "COMPLETED"
-                      ? "ĐÃ HOÀN THÀNH (COMPLETED)"
+                      ? uiText("ĐÃ HOÀN THÀNH (COMPLETED)")
                       : item.status === "CANCELLED"
-                        ? "ĐÃ HỦY BUỔI HỌC (CANCELLED)"
-                        : "BẢN NHÁP (DRAFT)"}
+                        ? uiText("ĐÃ HỦY BUỔI HỌC (CANCELLED)")
+                        : uiText("BẢN NHÁP (DRAFT)")}
                 </Text>
               </View>
 
@@ -271,7 +278,7 @@ export default function SessionDetailScreen() {
               <View style={sdt.infoGrid}>
                 <View style={sdt.infoRow}>
                   <Icon name="calendar" size={16} color={tokens.color.muted} />
-                  <Text style={sdt.infoLabel}>Thời gian:</Text>
+                  <Text style={sdt.infoLabel}>{uiText("Thời gian:")}</Text>
                   <Text style={sdt.infoValue}>
                     {formatDateTime(item.startAt)} — {formatTimeOnly(item.endAt)}
                   </Text>
@@ -283,7 +290,7 @@ export default function SessionDetailScreen() {
                     size={16}
                     color={tokens.color.muted}
                   />
-                  <Text style={sdt.infoLabel}>Hình thức:</Text>
+                  <Text style={sdt.infoLabel}>{uiText("Hình thức:")}</Text>
                   <View style={[sdt.modeChip, item.mode === "ONLINE" ? sdt.modeOnline : sdt.modeOffline]}>
                     <Text
                       style={[
@@ -291,21 +298,21 @@ export default function SessionDetailScreen() {
                         item.mode === "ONLINE" ? { color: "#0284C7" } : { color: "#0D9488" },
                       ]}
                     >
-                      {item.mode === "ONLINE" ? "Trực tuyến (Online)" : "Trực tiếp (Offline)"}
+                      {item.mode === "ONLINE" ? uiText("Trực tuyến (Online)") : uiText("Trực tiếp (Offline)")}
                     </Text>
                   </View>
                 </View>
 
                 <View style={sdt.infoRow}>
                   <Icon name="clock" size={16} color={tokens.color.muted} />
-                  <Text style={sdt.infoLabel}>Múi giờ:</Text>
+                  <Text style={sdt.infoLabel}>{uiText("Múi giờ:")}</Text>
                   <Text style={sdt.infoValue}>{item.timezone}</Text>
                 </View>
 
                 {item.location && (
                   <View style={sdt.infoRow}>
                     <Icon name="mapPin" size={16} color={tokens.color.muted} />
-                    <Text style={sdt.infoLabel}>Địa điểm:</Text>
+                    <Text style={sdt.infoLabel}>{uiText("Địa điểm:")}</Text>
                     <Text style={sdt.infoValue}>{item.location}</Text>
                   </View>
                 )}
@@ -313,7 +320,7 @@ export default function SessionDetailScreen() {
                 {item.meetingUrl && (
                   <View style={sdt.infoRow}>
                     <Icon name="sparkles" size={16} color={tokens.color.muted} />
-                    <Text style={sdt.infoLabel}>Phòng họp:</Text>
+                    <Text style={sdt.infoLabel}>{uiText("Phòng họp:")}</Text>
                     <Text style={[sdt.infoValue, { color: tokens.color.brand, fontWeight: "600" }]}>
                       {item.meetingUrl}
                     </Text>
@@ -325,9 +332,9 @@ export default function SessionDetailScreen() {
             {item.status !== "CANCELLED" && (
               <View style={sdt.editCard}>
                 <View style={sdt.editHeader}>
-                  <Text style={sdt.editTitle}>Chỉnh sửa buổi học</Text>
+                  <Text style={sdt.editTitle}>{uiText("Chỉnh sửa buổi học")}</Text>
                   <Button
-                    label={editing ? "Đóng form" : "Chỉnh sửa"}
+                    label={editing ? uiText("Đóng form") : uiText("Chỉnh sửa")}
                     variant="outline"
                     onPress={() => setEditing((value) => !value)}
                   />
@@ -335,28 +342,28 @@ export default function SessionDetailScreen() {
                 {editing && (
                   <View style={sdt.editFields}>
                     <TextInput
-                      accessibilityLabel="Tiêu đề buổi học"
+                      accessibilityLabel={uiText("Tiêu đề buổi học")}
                       style={sdt.input}
                       value={form.title}
                       onChangeText={(value) => setForm({ ...form, title: value })}
-                      placeholder="Tiêu đề"
+                      placeholder={uiText("Tiêu đề")}
                     />
                     <TextInput
-                      accessibilityLabel="Thời gian bắt đầu"
+                      accessibilityLabel={uiText("Thời gian bắt đầu")}
                       style={sdt.input}
                       value={form.startAt}
                       onChangeText={(value) => setForm({ ...form, startAt: value })}
                       placeholder="2026-10-01T15:00"
                     />
                     <TextInput
-                      accessibilityLabel="Thời gian kết thúc"
+                      accessibilityLabel={uiText("Thời gian kết thúc")}
                       style={sdt.input}
                       value={form.endAt}
                       onChangeText={(value) => setForm({ ...form, endAt: value })}
                       placeholder="2026-10-01T17:00"
                     />
                     <TextInput
-                      accessibilityLabel="Múi giờ"
+                      accessibilityLabel={uiText("Múi giờ")}
                       style={sdt.input}
                       value={form.timezone}
                       onChangeText={(value) => setForm({ ...form, timezone: value })}
@@ -365,14 +372,14 @@ export default function SessionDetailScreen() {
                     {item.mode === "ONLINE" ? (
                       <>
                         <TextInput
-                          accessibilityLabel="Nhà cung cấp phòng họp"
+                          accessibilityLabel={uiText("Nhà cung cấp phòng họp")}
                           style={sdt.input}
                           value={form.meetingProvider}
                           onChangeText={(value) => setForm({ ...form, meetingProvider: value })}
-                          placeholder="Nhà cung cấp phòng họp"
+                          placeholder={uiText("Nhà cung cấp phòng họp")}
                         />
                         <TextInput
-                          accessibilityLabel="URL phòng họp"
+                          accessibilityLabel={uiText("URL phòng họp")}
                           style={sdt.input}
                           value={form.meetingUrl}
                           onChangeText={(value) => setForm({ ...form, meetingUrl: value })}
@@ -382,15 +389,15 @@ export default function SessionDetailScreen() {
                       </>
                     ) : (
                       <TextInput
-                        accessibilityLabel="Địa điểm"
+                        accessibilityLabel={uiText("Địa điểm")}
                         style={sdt.input}
                         value={form.location}
                         onChangeText={(value) => setForm({ ...form, location: value })}
-                        placeholder="Địa điểm"
+                        placeholder={uiText("Địa điểm")}
                       />
                     )}
                     <Button
-                      label={busy ? "Đang lưu…" : "Lưu thay đổi"}
+                      label={busy ? uiText("Đang lưu…") : uiText("Lưu thay đổi")}
                       variant="primary"
                       onPress={() => void handleSave()}
                     />
@@ -401,7 +408,7 @@ export default function SessionDetailScreen() {
 
             {/* Attendance CTA */}
             <Button
-              label="Danh sách điểm danh"
+              label={uiText("Danh sách điểm danh")}
               variant="primary"
               icon={<Icon name="checkCircle" size={18} color="#FFFFFF" />}
               onPress={() =>
@@ -415,24 +422,30 @@ export default function SessionDetailScreen() {
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   <Icon name="sparkles" size={18} color="#0284C7" />
                   <Text style={[styles.text, { fontWeight: "700", color: "#0F172A" }]}>
-                    Vé hiện diện trực tuyến (CLS-18)
+                    {uiText("Vé hiện diện trực tuyến (CLS-18)")}
                   </Text>
                 </View>
                 <Text style={styles.small}>
-                  Cấp vé phiên realtime ngắn hạn 30 giây để xác thực học viên có mặt trong phòng họp.
+                  {uiText(
+                    "Cấp vé phiên realtime ngắn hạn 30 giây để xác thực học viên có mặt trong phòng họp.",
+                  )}
                 </Text>
                 <Button
-                  label={busy ? "Đang cấp…" : "Cấp vé hiện diện realtime"}
+                  label={busy ? uiText("Đang cấp…") : uiText("Cấp vé hiện diện realtime")}
                   variant="outline"
                   onPress={handleIssueTicket}
                 />
                 {ticket && (
                   <View style={sdt.ticketBox}>
-                    <Text style={[styles.small, { fontWeight: "700", color: "#0F172A" }]}>Mã vé (30s):</Text>
+                    <Text style={[styles.small, { fontWeight: "700", color: "#0F172A" }]}>
+                      {uiText("Mã vé (30s):")}
+                    </Text>
                     <Text style={sdt.ticketCode}>{ticket.ticket ?? "AUTH-VERIFIED"}</Text>
                     <Text style={styles.small}>
-                      Hết hạn:{" "}
-                      {ticket.expiresAt ? formatDateTime(ticket.expiresAt) : `${ticket.expiresIn} giây`}
+                      {uiText("Hết hạn:")}{" "}
+                      {ticket.expiresAt
+                        ? formatDateTime(ticket.expiresAt)
+                        : uiText("{0} giây", [ticket.expiresIn])}
                     </Text>
                   </View>
                 )}
@@ -442,7 +455,7 @@ export default function SessionDetailScreen() {
             {/* Cancel Session (CLS-12) */}
             {item.status !== "CANCELLED" && (
               <Button
-                label={busy ? "Đang xử lý…" : "Hủy buổi học này"}
+                label={busy ? uiText("Đang xử lý…") : uiText("Hủy buổi học này")}
                 variant="danger"
                 onPress={handleCancelSession}
               />
@@ -450,7 +463,7 @@ export default function SessionDetailScreen() {
 
             {msg ? (
               <View style={sdt.msgBanner}>
-                <Text style={sdt.msgText}>{msg}</Text>
+                <Text style={sdt.msgText}>{uiText(msg)}</Text>
               </View>
             ) : null}
           </>
@@ -459,12 +472,16 @@ export default function SessionDetailScreen() {
         {error ? (
           <View style={sdt.errorCard}>
             <Icon name="alert" size={20} color="#DC2626" />
-            <Text style={styles.error}>{error}</Text>
-            <Button label="Thử lại" variant="outline" onPress={() => setRetry((v) => v + 1)} />
+            <Text style={styles.error}>{uiText(error)}</Text>
+            <Button label={uiText("Thử lại")} variant="outline" onPress={() => setRetry((v) => v + 1)} />
           </View>
         ) : null}
 
-        <Button label="Quay lại danh sách buổi học" variant="outline" onPress={() => router.back()} />
+        <Button
+          label={uiText("Quay lại danh sách buổi học")}
+          variant="outline"
+          onPress={() => router.back()}
+        />
       </ScrollView>
     </Page>
   );

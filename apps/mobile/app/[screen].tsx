@@ -1,3 +1,4 @@
+import { useUiText } from "../src/use-language";
 import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 import { Text, TextInput, View, Image, Pressable } from "react-native";
 import { router, useLocalSearchParams, useGlobalSearchParams, usePathname, type Href } from "expo-router";
@@ -29,6 +30,7 @@ function goToResult(
 }
 
 export default function Screen({ screenKey }: { screenKey?: string } = {}) {
+  const uiText = useUiText();
   const local = useLocalSearchParams<{ screen?: string; role?: string }>();
   const global = useGlobalSearchParams<{ screen?: string; role?: string }>();
   const pathname = usePathname();
@@ -43,9 +45,9 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
   const destination =
     destinations(snapshot.user?.role).find((item) => item.key === screen) ||
     (screen === "login"
-      ? { key: "login", label: "Đăng nhập" }
+      ? { key: "login", label: uiText("Đăng nhập") }
       : screen === "register"
-        ? { key: "register", label: "Đăng ký học viên" }
+        ? { key: "register", label: uiText("Đăng ký học viên") }
         : undefined);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -123,9 +125,9 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
   if (!destination)
     return (
       <Page>
-        <Text style={styles.title}>Không gian đã thay đổi</Text>
+        <Text style={styles.title}>{uiText("Không gian đã thay đổi")}</Text>
         <Button
-          label="Về trang chủ"
+          label={uiText("Về trang chủ")}
           onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
         />
       </Page>
@@ -232,16 +234,16 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
       <Text style={styles.title}>{destination.label}</Text>
       {screen === "courses" && (
         <>
-          <Text style={styles.small}>Nhập từ khóa từ 3 đến 20 ký tự.</Text>
+          <Text style={styles.small}>{uiText("Nhập từ khóa từ 3 đến 20 ký tự.")}</Text>
           <TextInput
             style={styles.input}
-            accessibilityLabel="Từ khóa khóa học"
+            accessibilityLabel={uiText("Từ khóa khóa học")}
             value={search}
             onChangeText={setSearch}
             maxLength={20}
           />
           <Button
-            label="Tìm khóa học"
+            label={uiText("Tìm khóa học")}
             disabled={search.trim().length < 3}
             onPress={() => {
               setQuery(search.trim());
@@ -270,12 +272,12 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
               <Icon name="academic" size={34} color="#FFF" />
             </View>
             <Text style={[styles.title, { textAlign: "center" }]}>
-              {screen === "login" ? "Chào mừng trở lại!" : "Tạo tài khoản học viên"}
+              {screen === "login" ? uiText("Chào mừng trở lại!") : uiText("Tạo tài khoản học viên")}
             </Text>
             <Text style={[styles.small, { textAlign: "center", maxWidth: 280 }]}>
               {screen === "login"
-                ? "Đăng nhập để tiếp tục lộ trình học tập và kết nối cùng trợ lý AI."
-                : "Gia nhập AILSS để trải nghiệm học tập thông minh hoàn toàn miễn phí."}
+                ? uiText("Đăng nhập để tiếp tục lộ trình học tập và kết nối cùng trợ lý AI.")
+                : uiText("Gia nhập AILSS để trải nghiệm học tập thông minh hoàn toàn miễn phí.")}
             </Text>
           </View>
 
@@ -307,7 +309,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                   color: screen === "login" ? tokens.color.ink : tokens.color.muted,
                 }}
               >
-                Đăng nhập
+                {uiText("Đăng nhập")}
               </Text>
             </Pressable>
             <Pressable
@@ -328,7 +330,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                   color: screen === "register" ? tokens.color.ink : tokens.color.muted,
                 }}
               >
-                Đăng ký học viên
+                {uiText("Đăng ký học viên")}
               </Text>
             </Pressable>
           </View>
@@ -348,12 +350,18 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
               >
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                   <Text style={{ fontSize: 12, color: "#166534", fontWeight: "700" }}>
-                    Phiên hiện tại: {snapshot.user.displayName} ({snapshot.user.role})
+                    {uiText("Phiên hiện tại: ")}
+                    {snapshot.user.displayName} ({snapshot.user.role})
                   </Text>
-                  <Button label="Đăng xuất" size="sm" variant="outline" onPress={() => void handleLogout()} />
+                  <Button
+                    label={uiText("Đăng xuất")}
+                    size="sm"
+                    variant="outline"
+                    onPress={() => void handleLogout()}
+                  />
                 </View>
                 <Text style={{ fontSize: 11, color: "#15803D" }}>
-                  Bạn có thể nhập thông tin Quản trị viên bên dưới để chuyển sang tài khoản Admin.
+                  {uiText("Bạn có thể nhập thông tin Quản trị viên bên dưới để chuyển sang tài khoản Admin.")}
                 </Text>
               </View>
             )}
@@ -368,7 +376,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                 }}
               >
                 <Text accessibilityRole="alert" style={styles.error}>
-                  {error}
+                  {uiText(error)}
                 </Text>
               </View>
             )}
@@ -383,19 +391,19 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
                   borderColor: "#A7F3D0",
                 }}
               >
-                <Text style={{ color: "#065F46", fontSize: 14, fontWeight: "600" }}>{message}</Text>
+                <Text style={{ color: "#065F46", fontSize: 14, fontWeight: "600" }}>{uiText(message)}</Text>
               </View>
             )}
 
             {screen === "register" && (
               <View style={{ gap: 6 }}>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.inkSecondary }}>
-                  Họ và tên hiển thị
+                  {uiText("Họ và tên hiển thị")}
                 </Text>
                 <TextInput
-                  accessibilityLabel="Tên hiển thị"
+                  accessibilityLabel={uiText("Tên hiển thị")}
                   style={styles.input}
-                  placeholder="Ví dụ: Nguyễn Văn A"
+                  placeholder={uiText("Ví dụ: Nguyễn Văn A")}
                   placeholderTextColor={tokens.color.muted}
                   value={name}
                   onChangeText={(v) => {
@@ -411,7 +419,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
 
             <View style={{ gap: 6 }}>
               <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.inkSecondary }}>
-                Địa chỉ Email
+                {uiText("Địa chỉ Email")}
               </Text>
               <TextInput
                 ref={emailRef}
@@ -436,12 +444,13 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
             <View style={{ gap: 6 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: tokens.color.inkSecondary }}>
-                  Mật khẩu {screen === "register" ? "(tối thiểu 12 ký tự)" : ""}
+                  {uiText("Mật khẩu ")}
+                  {screen === "register" ? uiText("(tối thiểu 12 ký tự)") : ""}
                 </Text>
               </View>
               <PasswordInput
                 ref={passwordRef}
-                accessibilityLabel="Mật khẩu"
+                accessibilityLabel={uiText("Mật khẩu")}
                 testID={screen === "login" ? "student-login-password" : undefined}
                 placeholder="••••••••••••"
                 placeholderTextColor={tokens.color.muted}
@@ -463,7 +472,7 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
             {screen === "login" && (
               <Button
                 variant="ghost"
-                label="Quên mật khẩu?"
+                label={uiText("Quên mật khẩu?")}
                 onPress={() => router.push("/forgot-password")}
                 disabled={busy}
               />
@@ -471,7 +480,13 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
             <View style={{ marginTop: 6 }}>
               <Button
                 testID={screen === "login" ? "student-login-submit" : undefined}
-                label={busy ? "Đang xử lý…" : screen === "login" ? "Đăng nhập ngay" : "Tạo tài khoản"}
+                label={
+                  busy
+                    ? uiText("Đang xử lý…")
+                    : screen === "login"
+                      ? uiText("Đăng nhập ngay")
+                      : uiText("Tạo tài khoản")
+                }
                 disabled={
                   busy || !email || !password || (screen === "register" && (!name || password.length < 12))
                 }
@@ -483,10 +498,10 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
             </View>
             {screen === "login" && (
               <View style={{ gap: 10, marginTop: 4 }}>
-                <Text style={[styles.small, { textAlign: "center" }]}>hoặc tiếp tục với</Text>
+                <Text style={[styles.small, { textAlign: "center" }]}>{uiText("hoặc tiếp tục với")}</Text>
                 <Button
                   testID="mobile-google-signin"
-                  label="Đăng nhập bằng Google"
+                  label={uiText("Đăng nhập bằng Google")}
                   icon={<Icon name="logoGoogle" size={20} color="#4285F4" />}
                   variant="outline"
                   size="lg"
@@ -513,45 +528,48 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
             }}
           >
             <Icon name="check" size={12} color={tokens.color.muted} />
-            <Text style={styles.small}>Bảo mật mã hóa đầu cuối TLS & Idempotent Token</Text>
+            <Text style={styles.small}>{uiText("Bảo mật mã hóa đầu cuối TLS & Idempotent Token")}</Text>
           </View>
         </View>
       )}
       {screen === "account" && snapshot.user && (
         <View style={styles.card}>
-          {avatarStatus === "loading" && <Text style={styles.small}>Đang tải ảnh đại diện…</Text>}
-          {avatarStatus === "empty" && <Text style={styles.small}>Chưa có ảnh đại diện.</Text>}
+          {avatarStatus === "loading" && <Text style={styles.small}>{uiText("Đang tải ảnh đại diện…")}</Text>}
+          {avatarStatus === "empty" && <Text style={styles.small}>{uiText("Chưa có ảnh đại diện.")}</Text>}
           {avatarStatus === "error" && (
             <>
-              <Text style={styles.error}>Không tải được ảnh đại diện.</Text>
-              <Button label="Tải lại ảnh" onPress={() => setRetry((v) => v + 1)} />
+              <Text style={styles.error}>{uiText("Không tải được ảnh đại diện.")}</Text>
+              <Button label={uiText("Tải lại ảnh")} onPress={() => setRetry((v) => v + 1)} />
             </>
           )}
           {avatar && (
             <Image
               source={{ uri: avatar }}
-              accessibilityLabel="Ảnh đại diện"
+              accessibilityLabel={uiText("Ảnh đại diện")}
               style={{ width: 80, height: 80, borderRadius: 40 }}
             />
           )}
           <Text style={styles.text}>{snapshot.user.displayName}</Text>
           <Text style={styles.text}>{snapshot.user.emailMasked}</Text>
           <Text style={styles.small}>{snapshot.user.role}</Text>
-          <Button label="Đăng xuất" onPress={() => void handleLogout()} />
+          <Button label={uiText("Đăng xuất")} onPress={() => void handleLogout()} />
         </View>
       )}
       {screen === "admin" && (
         <Text style={styles.text}>
-          Phiên quản trị đã được Gateway xác nhận. Nền tảng mobile hiện hỗ trợ tài khoản và thông báo; các
-          thao tác quản trị tiếp tục dùng trên Web.
+          {uiText(
+            "Phiên quản trị đã được Gateway xác nhận. Nền tảng mobile hiện hỗ trợ tài khoản và thông báo; các thao tác quản trị tiếp tục dùng trên Web.",
+          )}
         </Text>
       )}
       {path && !error && data === null && (
         <Text accessibilityRole="alert" style={styles.text}>
-          Đang tải…
+          {uiText("Đang tải…")}
         </Text>
       )}
-      {path && data?.length === 0 && <Text style={styles.text}>Chưa có dữ liệu để hiển thị.</Text>}
+      {path && data?.length === 0 && (
+        <Text style={styles.text}>{uiText("Chưa có dữ liệu để hiển thị.")}</Text>
+      )}
       {data?.map((item, index) => (
         <View key={`${item.id}-${index}`} style={styles.card}>
           <Text style={styles.text}>{item.title}</Text>
@@ -560,11 +578,11 @@ export default function Screen({ screenKey }: { screenKey?: string } = {}) {
       ))}
       {error && (
         <Text accessibilityRole="alert" style={styles.error}>
-          {error}
+          {uiText(error)}
         </Text>
       )}
-      {path && error && <Button label="Thử lại" onPress={() => setRetry((value) => value + 1)} />}
-      <Button label="Về trang chủ" onPress={() => router.replace("/")} />
+      {path && error && <Button label={uiText("Thử lại")} onPress={() => setRetry((value) => value + 1)} />}
+      <Button label={uiText("Về trang chủ")} onPress={() => router.replace("/")} />
     </Page>
   );
 }

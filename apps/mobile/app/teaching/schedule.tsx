@@ -1,3 +1,5 @@
+import { useLanguage } from "../../src/use-language";
+import { useUiText } from "../../src/use-language";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Text, View } from "react-native";
 import { router } from "expo-router";
@@ -8,6 +10,8 @@ import { Page, Button, ScreenHeader, BottomNavBar, styles } from "../../src/ui";
 
 type TeachingSession = ClassSession & { className: string };
 export default function TeachingScheduleScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -54,49 +58,49 @@ export default function TeachingScheduleScreen() {
   return (
     <Page>
       <ScreenHeader
-        title="Lịch giảng dạy"
-        subtitle="Lịch từ các lớp bạn phụ trách"
+        title={uiText("Lịch giảng dạy")}
+        subtitle={uiText("Lịch từ các lớp bạn phụ trách")}
         onBack={() => router.replace("/teaching")}
       />
       {!identity ? (
-        <Text style={styles.error}>Bạn không có quyền truy cập.</Text>
+        <Text style={styles.error}>{uiText("Bạn không có quyền truy cập.")}</Text>
       ) : (
         <>
           <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
             <Button
-              label="Tháng trước"
+              label={uiText("Tháng trước")}
               onPress={() => setMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
             />
-            <Text>{month.toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}</Text>
+            <Text>{month.toLocaleDateString(uiLocale, { month: "long", year: "numeric" })}</Text>
             <Button
-              label="Tháng sau"
+              label={uiText("Tháng sau")}
               onPress={() => setMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
             />
           </View>
           {error ? (
             <>
-              <Text style={styles.error}>{error}</Text>
-              <Button label="Thử lại" onPress={() => setRetry((v) => v + 1)} />
+              <Text style={styles.error}>{uiText(error)}</Text>
+              <Button label={uiText("Thử lại")} onPress={() => setRetry((v) => v + 1)} />
             </>
           ) : items === null ? (
-            <Text>Đang tải lịch giảng dạy…</Text>
+            <Text>{uiText("Đang tải lịch giảng dạy…")}</Text>
           ) : items.length === 0 ? (
-            <Text>Chưa có buổi học trong tháng này. Tạo lớp và lập lịch để bắt đầu.</Text>
+            <Text>{uiText("Chưa có buổi học trong tháng này. Tạo lớp và lập lịch để bắt đầu.")}</Text>
           ) : (
             items.map((item) => (
               <View key={item.sessionId} style={{ padding: 16, gap: 8 }}>
                 <Text style={styles.title}>{item.title}</Text>
                 <Text>{item.className}</Text>
                 <Text>
-                  {new Date(item.startAt).toLocaleString("vi-VN")} —{" "}
-                  {new Date(item.endAt).toLocaleString("vi-VN")}
+                  {new Date(item.startAt).toLocaleString(uiLocale)} —{" "}
+                  {new Date(item.endAt).toLocaleString(uiLocale)}
                 </Text>
                 <Text>
-                  {item.mode === "ONLINE" ? "Trực tuyến" : item.location || "Chưa có địa điểm"} ·{" "}
+                  {item.mode === "ONLINE" ? uiText("Trực tuyến") : item.location || "Chưa có địa điểm"} ·{" "}
                   {item.status}
                 </Text>
                 <Button
-                  label="Chi tiết buổi học"
+                  label={uiText("Chi tiết buổi học")}
                   onPress={() => router.push(`/teaching/classes/${item.classId}/sessions/${item.sessionId}`)}
                 />
               </View>

@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useEffect, useState, type FormEvent } from "react";
 import { Navigate } from "react-router-dom";
 import { useSession } from "../auth/session";
@@ -22,6 +23,7 @@ export type Report = {
 };
 
 export default function Moderation() {
+  const uiText = useUiText();
   const { profile } = useSession();
   const [cursor, setCursor] = useState(""),
     [items, setItems] = useState<Report[]>([]),
@@ -103,11 +105,12 @@ export default function Moderation() {
     <>
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">ADMIN · AN NINH & CỘNG ĐỒNG</p>
-          <h1>Hàng Đợi Nội Dung Bị Báo Cáo</h1>
+          <p className="eyebrow">{uiText("ADMIN · AN NINH & CỘNG ĐỒNG")}</p>
+          <h1>{uiText("Hàng Đợi Nội Dung Bị Báo Cáo")}</h1>
           <p className="lead">
-            Xử lý phản ánh từ học viên về bình luận xúc phạm, đánh giá giả mạo hoặc gian lận học thuật theo
-            thứ tự ưu tiên.
+            {uiText(
+              "Xử lý phản ánh từ học viên về bình luận xúc phạm, đánh giá giả mạo hoặc gian lận học thuật theo thứ tự ưu tiên.",
+            )}
           </p>
         </div>
 
@@ -116,9 +119,9 @@ export default function Moderation() {
             <button
               className="button button-subtle"
               onClick={handleResetDemo}
-              title="Khôi phục danh sách báo cáo mẫu"
+              title={uiText("Khôi phục danh sách báo cáo mẫu")}
             >
-              ↻ Tải lại dữ liệu
+              {uiText("↻ Tải lại dữ liệu")}
             </button>
           )}
         </div>
@@ -127,23 +130,23 @@ export default function Moderation() {
       {/* KPI Stats Strip */}
       <div className="moderation-stat-strip">
         <div className="moderation-stat-item">
-          <div className="moderation-stat-label">Tổng báo cáo</div>
+          <div className="moderation-stat-label">{uiText("Tổng báo cáo")}</div>
           <div className="moderation-stat-val">{items.length}</div>
         </div>
         <div className="moderation-stat-item">
-          <div className="moderation-stat-label">Chờ xử lý</div>
+          <div className="moderation-stat-label">{uiText("Chờ xử lý")}</div>
           <div className="moderation-stat-val" style={{ color: "#d97706" }}>
             {openCount}
           </div>
         </div>
         <div className="moderation-stat-item">
-          <div className="moderation-stat-label">Mức độ nghiêm trọng</div>
+          <div className="moderation-stat-label">{uiText("Mức độ nghiêm trọng")}</div>
           <div className="moderation-stat-val" style={{ color: "#dc2626" }}>
             {highCount}
           </div>
         </div>
         <div className="moderation-stat-item">
-          <div className="moderation-stat-label">Đã giải quyết</div>
+          <div className="moderation-stat-label">{uiText("Đã giải quyết")}</div>
           <div className="moderation-stat-val" style={{ color: "#16a34a" }}>
             {resolvedCount}
           </div>
@@ -158,34 +161,35 @@ export default function Moderation() {
           </span>
           <input
             type="search"
-            placeholder="Tìm theo nội dung, người vi phạm, mã báo cáo..."
+            placeholder={uiText("Tìm theo nội dung, người vi phạm, mã báo cáo...")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            aria-label="Tìm kiếm nội dung báo cáo"
+            aria-label={uiText("Tìm kiếm nội dung báo cáo")}
           />
         </div>
 
-        <div className="dashboard-filter-group" role="group" aria-label="Lọc báo cáo">
+        <div className="dashboard-filter-group" role="group" aria-label={uiText("Lọc báo cáo")}>
           <button
             type="button"
             className={`filter-pill-button ${filterType === "ALL" ? "active" : ""}`}
             onClick={() => setFilterType("ALL")}
           >
-            Tất cả ({items.length})
+            {uiText("Tất cả (")}
+            {items.length})
           </button>
           <button
             type="button"
             className={`filter-pill-button ${filterType === "COMMENT" ? "active" : ""}`}
             onClick={() => setFilterType("COMMENT")}
           >
-            💬 Bình luận
+            {uiText("💬 Bình luận")}
           </button>
           <button
             type="button"
             className={`filter-pill-button ${filterType === "REVIEW" ? "active" : ""}`}
             onClick={() => setFilterType("REVIEW")}
           >
-            ⭐ Đánh giá
+            {uiText("⭐ Đánh giá")}
           </button>
           <button
             type="button"
@@ -193,25 +197,25 @@ export default function Moderation() {
             onClick={() => setFilterType("HIGH")}
             style={{ color: filterType === "HIGH" ? "#fff" : "#dc2626" }}
           >
-            🔴 Mức độ cao
+            {uiText("🔴 Mức độ cao")}
           </button>
           <button
             type="button"
             className={`filter-pill-button ${filterType === "RESOLVED" ? "active" : ""}`}
             onClick={() => setFilterType("RESOLVED")}
           >
-            ✓ Đã xử lý
+            {uiText("✓ Đã xử lý")}
           </button>
         </div>
       </div>
 
       {pending ? (
-        <p role="status">Đang tải hàng đợi…</p>
+        <p role="status">{uiText("Đang tải hàng đợi…")}</p>
       ) : error ? (
         <div className="study-state" role="alert">
-          <p>{error}</p>
+          <p>{uiText(error)}</p>
           <button className="button secondary" onClick={() => void load()}>
-            Thử lại
+            {uiText("Thử lại")}
           </button>
         </div>
       ) : filteredItems.length ? (
@@ -238,11 +242,11 @@ export default function Moderation() {
                 >
                   <div className="moderation-card-top">
                     <span className="course-category-tag">
-                      {report.targetType === "COMMENT" ? "💬 BÌNH LUẬN" : "⭐ ĐÁNH GIÁ"}
+                      {report.targetType === "COMMENT" ? uiText("💬 BÌNH LUẬN") : uiText("⭐ ĐÁNH GIÁ")}
                     </span>
 
                     <span className={`moderation-severity-pill ${sev.toLowerCase()}`}>
-                      {sev === "HIGH" ? "🔴 Cao" : sev === "MEDIUM" ? "🟠 TB" : "🟡 Thấp"}
+                      {sev === "HIGH" ? "🔴 Cao" : sev === "MEDIUM" ? "🟠 TB" : uiText("🟡 Thấp")}
                     </span>
                   </div>
 
@@ -252,7 +256,8 @@ export default function Moderation() {
 
                   {report.courseTitle && (
                     <div style={{ fontSize: "11.5px", color: "var(--muted)" }}>
-                      Môn học: <strong>{report.courseTitle}</strong>
+                      {uiText("Môn học: ")}
+                      <strong>{report.courseTitle}</strong>
                     </div>
                   )}
 
@@ -269,13 +274,16 @@ export default function Moderation() {
                     }}
                   >
                     <small className="muted" style={{ fontSize: "11px" }}>
-                      Tác giả: <strong>{report.authorName || report.targetId.slice(0, 10)}</strong>
+                      {uiText("Tác giả: ")}
+                      <strong>{report.authorName || report.targetId.slice(0, 10)}</strong>
                     </small>
                     <span
                       className={`admin-badge ${report.state === "OPEN" ? "pending" : "active"}`}
                       style={{ fontSize: "10.5px" }}
                     >
-                      {report.state === "OPEN" ? "⏳ Chờ xử lý" : `✓ ${report.decision || "Đã giải quyết"}`}
+                      {report.state === "OPEN"
+                        ? uiText("⏳ Chờ xử lý")
+                        : uiText("✓ {0}", [report.decision || "Đã giải quyết"])}
                     </span>
                   </div>
                 </div>
@@ -305,17 +313,19 @@ export default function Moderation() {
               }}
             />
           ) : (
-            <div className="study-state">Chọn một báo cáo ở danh sách bên trái để xem nội dung chi tiết.</div>
+            <div className="study-state">
+              {uiText("Chọn một báo cáo ở danh sách bên trái để xem nội dung chi tiết.")}
+            </div>
           )}
         </div>
       ) : (
         <div className="study-state">
           {search
-            ? `Không tìm thấy báo cáo nào khớp với từ khóa "${search}".`
-            : "Không có báo cáo nào đang mở."}
+            ? uiText('Không tìm thấy báo cáo nào khớp với từ khóa "{0}".', [search])
+            : uiText("Không có báo cáo nào đang mở.")}
           <div style={{ marginTop: "14px" }}>
             <button className="button" onClick={handleResetDemo}>
-              Tải lại báo cáo
+              {uiText("Tải lại báo cáo")}
             </button>
           </div>
         </div>
@@ -325,7 +335,7 @@ export default function Moderation() {
       <div className="inline-actions study-pagination">
         {next && (
           <button className="button secondary" onClick={() => setCursor(next)}>
-            Trang tiếp theo →
+            {uiText("Trang tiếp theo →")}
           </button>
         )}
         <button
@@ -335,7 +345,7 @@ export default function Moderation() {
             void load();
           }}
         >
-          Về trang đầu
+          {uiText("Về trang đầu")}
         </button>
       </div>
 
@@ -351,6 +361,7 @@ export default function Moderation() {
 }
 
 function Decision({ report, done }: { report: Report; done: (action?: string) => void }) {
+  const uiText = useUiText();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [action, setAction] = useState<string>("HIDE");
@@ -412,22 +423,25 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
         }}
       >
         <p className="eyebrow" style={{ margin: 0 }}>
-          THẨM ĐỊNH NỘI DUNG
+          {uiText("THẨM ĐỊNH NỘI DUNG")}
         </p>
         <span className={`admin-badge ${report.state === "OPEN" ? "pending" : "active"}`}>
           {report.state === "OPEN"
-            ? "⏳ ĐANG CHỜ XỬ LÝ"
-            : `✓ ĐÃ GIẢI QUYẾT (${report.decision || "RESOLVED"})`}
+            ? uiText("⏳ ĐANG CHỜ XỬ LÝ")
+            : uiText("✓ ĐÃ GIẢI QUYẾT ({0})", [report.decision || "RESOLVED"])}
         </span>
       </div>
 
-      <h2>{report.targetType === "COMMENT" ? "Bình luận thảo luận" : "Đánh giá khóa học"}</h2>
+      <h2>{report.targetType === "COMMENT" ? uiText("Bình luận thảo luận") : uiText("Đánh giá khóa học")}</h2>
 
       {/* Target Reported Content Box */}
       <div className="moderation-target-box">
         <div className="moderation-target-title">
-          ⚠️ NỘI DUNG BỊ BÁO CÁO VI PHẠM (
-          {report.reportedCount ? `${report.reportedCount} lượt phản ánh` : "Được báo cáo"})
+          {uiText("⚠️ NỘI DUNG BỊ BÁO CÁO VI PHẠM (")}
+          {report.reportedCount
+            ? uiText("{0} lượt phản ánh", [report.reportedCount])
+            : uiText("Được báo cáo")}
+          )
         </div>
         <blockquote className="moderation-target-text">
           "{report.contentSnippet || "Nội dung phản ánh từ người dùng hệ thống."}"
@@ -437,7 +451,7 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
       <dl style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", margin: "12px 0 16px" }}>
         <div>
           <dt style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase" }}>
-            Mã Báo cáo (UUID)
+            {uiText("Mã Báo cáo (UUID)")}
           </dt>
           <dd style={{ fontWeight: 600, fontSize: "12px" }}>{report.reportId.slice(0, 18)}…</dd>
         </div>
@@ -447,7 +461,7 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
         </div>
         <div>
           <dt style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase" }}>
-            Môn học liên quan
+            {uiText("Môn học liên quan")}
           </dt>
           <dd style={{ fontWeight: 600, fontSize: "12.5px", color: "var(--ink)" }}>
             {report.courseTitle || "Hệ thống AILSS"}
@@ -455,24 +469,24 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
         </div>
         <div>
           <dt style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase" }}>
-            Tác giả nội dung
+            {uiText("Tác giả nội dung")}
           </dt>
           <dd style={{ fontWeight: 600, fontSize: "12.5px" }}>{report.authorName || "Học viên"}</dd>
         </div>
       </dl>
 
       <label>
-        Quyết định kiểm duyệt
+        {uiText("Quyết định kiểm duyệt")}
         <select name="action" value={action} onChange={(e) => setAction(e.target.value)} required>
-          <option value="HIDE">Ẩn nội dung khỏi hệ thống (HIDE)</option>
-          <option value="WARN">Ghi nhận cảnh báo tài khoản (WARN)</option>
-          <option value="DISMISS">Bỏ qua báo cáo, giữ nguyên nội dung (DISMISS)</option>
-          <option value="RESTORE">Khôi phục nội dung đã ẩn (RESTORE)</option>
+          <option value="HIDE">{uiText("Ẩn nội dung khỏi hệ thống (HIDE)")}</option>
+          <option value="WARN">{uiText("Ghi nhận cảnh báo tài khoản (WARN)")}</option>
+          <option value="DISMISS">{uiText("Bỏ qua báo cáo, giữ nguyên nội dung (DISMISS)")}</option>
+          <option value="RESTORE">{uiText("Khôi phục nội dung đã ẩn (RESTORE)")}</option>
         </select>
       </label>
 
       <label style={{ marginTop: "12px" }}>
-        Lý do quyết định kiểm duyệt
+        {uiText("Lý do quyết định kiểm duyệt")}
         <textarea
           name="reason"
           rows={3}
@@ -480,13 +494,15 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
           required
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Nhập căn cứ xử lý vi phạm..."
+          placeholder={uiText("Nhập căn cứ xử lý vi phạm...")}
         />
       </label>
 
       {/* Quick Reason Fill Buttons */}
       <div style={{ margin: "4px 0 14px" }}>
-        <div style={{ fontSize: "11px", color: "var(--muted)", marginBottom: "4px" }}>Gợi ý lý do nhanh:</div>
+        <div style={{ fontSize: "11px", color: "var(--muted)", marginBottom: "4px" }}>
+          {uiText("Gợi ý lý do nhanh:")}
+        </div>
         <div className="moderation-quick-reasons">
           {quickReasons.map((qr, idx) => (
             <button
@@ -502,7 +518,7 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
       </div>
 
       <label style={{ marginTop: "12px" }}>
-        Mật khẩu Quản trị viên hiện tại
+        {uiText("Mật khẩu Quản trị viên hiện tại")}
         <input
           name="currentPassword"
           type="password"
@@ -511,20 +527,20 @@ function Decision({ report, done }: { report: Report; done: (action?: string) =>
           required
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          placeholder="Nhập mật khẩu admin để xác thực..."
+          placeholder={uiText("Nhập mật khẩu admin để xác thực...")}
         />
       </label>
       <p className="muted" style={{ fontSize: "11.5px" }}>
-        Mật khẩu được xác minh lại riêng cho mỗi quyết định kiểm duyệt.
+        {uiText("Mật khẩu được xác minh lại riêng cho mỗi quyết định kiểm duyệt.")}
       </p>
 
       <button className="button" disabled={busy || !currentPassword} style={{ marginTop: "8px" }}>
-        {busy ? "Đang xử lý…" : "Xác nhận quyết định"}
+        {busy ? uiText("Đang xử lý…") : uiText("Xác nhận quyết định")}
       </button>
 
       {message && (
         <p role="status" className="notice error">
-          {message}
+          {uiText(message)}
         </p>
       )}
     </form>

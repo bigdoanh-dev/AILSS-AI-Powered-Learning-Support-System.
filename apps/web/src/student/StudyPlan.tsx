@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heading } from "./ui";
@@ -42,6 +43,7 @@ export interface WebUpcomingAssessment {
 }
 
 export function StudyPlanPage() {
+  const uiText = useUiText();
   const [activeTab, setActiveTab] = useState<
     "OVERVIEW" | "THIS_WEEK" | "GAPS" | "RECOMMENDED" | "UPCOMING" | "COMPLETED"
   >("THIS_WEEK");
@@ -147,12 +149,13 @@ export function StudyPlanPage() {
 
   return (
     <div className="study-plan-container" style={{ padding: "var(--space-6) 0" }}>
-      <Heading title="Kế hoạch học tập cá nhân hóa (Adaptive Study Plan V2)">
-        Lộ trình tối ưu hóa dựa trên điểm thành thạo thực tế, khoảng trống kiến thức tiên quyết và kỳ thi sắp
-        tới.
+      <Heading title={uiText("Kế hoạch học tập cá nhân hóa (Adaptive Study Plan V2)")}>
+        {uiText(
+          "Lộ trình tối ưu hóa dựa trên điểm thành thạo thực tế, khoảng trống kiến thức tiên quyết và kỳ thi sắp tới.",
+        )}
       </Heading>
       <label style={{ display: "block", marginBottom: "var(--space-4)" }}>
-        Khóa học:{" "}
+        {uiText("Khóa học:")}{" "}
         <select value={courseId} onChange={(event) => setCourseId(event.target.value)}>
           {(courses.data ?? []).map((course) => (
             <option key={course.courseId} value={course.courseId}>
@@ -167,9 +170,9 @@ export function StudyPlanPage() {
         onClick={() => void generatePlan()}
         style={{ marginBottom: "var(--space-4)" }}
       >
-        Tạo lại kế hoạch từ dữ liệu thành thạo
+        {uiText("Tạo lại kế hoạch từ dữ liệu thành thạo")}
       </button>
-      {(courses.pending || plan.pending) && <p>Đang tải dữ liệu kế hoạch học tập…</p>}
+      {(courses.pending || plan.pending) && <p>{uiText("Đang tải dữ liệu kế hoạch học tập…")}</p>}
       {(courses.error || plan.error || mutationError) && (
         <p role="alert" style={{ color: "var(--danger, #b42318)" }}>
           {mutationError || studentError(courses.error ?? plan.error)}
@@ -180,7 +183,7 @@ export function StudyPlanPage() {
       <div
         className="module-segmented-bar"
         role="navigation"
-        aria-label="Phân hệ Kế hoạch học tập"
+        aria-label={uiText("Phân hệ Kế hoạch học tập")}
         style={{ marginBottom: "var(--space-5)" }}
       >
         <button
@@ -188,35 +191,39 @@ export function StudyPlanPage() {
           className={`segmented-tab ${activeTab === "THIS_WEEK" ? "active" : ""}`}
           onClick={() => setActiveTab("THIS_WEEK")}
         >
-          📅 Tuần này ({pendingItems.length})
+          {uiText("📅 Tuần này (")}
+          {pendingItems.length})
         </button>
         <button
           type="button"
           className={`segmented-tab ${activeTab === "RECOMMENDED" ? "active" : ""}`}
           onClick={() => setActiveTab("RECOMMENDED")}
         >
-          ⚡ Bước tiếp theo khuyên dùng
+          {uiText("⚡ Bước tiếp theo khuyên dùng")}
         </button>
         <button
           type="button"
           className={`segmented-tab ${activeTab === "GAPS" ? "active" : ""}`}
           onClick={() => setActiveTab("GAPS")}
         >
-          🎯 Khoảng trống kỹ năng ({gaps.length})
+          {uiText("🎯 Khoảng trống kỹ năng (")}
+          {gaps.length})
         </button>
         <button
           type="button"
           className={`segmented-tab ${activeTab === "UPCOMING" ? "active" : ""}`}
           onClick={() => setActiveTab("UPCOMING")}
         >
-          ⏳ Bài thi sắp tới ({upcoming.length})
+          {uiText("⏳ Bài thi sắp tới (")}
+          {upcoming.length})
         </button>
         <button
           type="button"
           className={`segmented-tab ${activeTab === "COMPLETED" ? "active" : ""}`}
           onClick={() => setActiveTab("COMPLETED")}
         >
-          ✅ Đã hoàn thành ({completedItems.length})
+          {uiText("✅ Đã hoàn thành (")}
+          {completedItems.length})
         </button>
       </div>
 
@@ -232,10 +239,10 @@ export function StudyPlanPage() {
             }}
           >
             <h2 id="this-week-heading" style={{ fontSize: "1.25rem", color: "var(--ink)", margin: 0 }}>
-              Các hoạt động được đề xuất tuần này
+              {uiText("Các hoạt động được đề xuất tuần này")}
             </h2>
             <span style={{ fontSize: "0.9rem", color: "var(--muted)" }}>
-              Tổng thời lượng dự kiến:{" "}
+              {uiText("Tổng thời lượng dự kiến:")}{" "}
               {items.reduce(
                 (s, i) =>
                   s +
@@ -244,7 +251,7 @@ export function StudyPlanPage() {
                     : 0),
                 0,
               )}{" "}
-              phút
+              {uiText("phút")}
             </span>
           </div>
 
@@ -274,14 +281,17 @@ export function StudyPlanPage() {
                         marginBottom: "var(--space-2)",
                       }}
                     >
-                      {item.reasonCode} · Độ ưu tiên #{item.priority}
+                      {item.reasonCode} {uiText(" · Độ ưu tiên #")}
+                      {item.priority}
                     </span>
                     <h3 style={{ margin: "0 0 var(--space-2) 0", fontSize: "1.1rem" }}>{item.title}</h3>
                     <p style={{ margin: "0 0 var(--space-2) 0", color: "var(--muted)", fontSize: "0.95rem" }}>
                       {item.rationale}
                     </p>
                     <small style={{ color: "var(--muted)" }}>
-                      Lịch dự kiến: {item.scheduledDate} · Thời lượng: {item.estimatedMinutes} phút
+                      {uiText("Lịch dự kiến: ")}
+                      {item.scheduledDate} {uiText(" · Thời lượng: ")}
+                      {item.estimatedMinutes} {uiText(" phút")}
                     </small>
                   </div>
 
@@ -298,7 +308,7 @@ export function StudyPlanPage() {
                       }}
                       onClick={() => handleStatusChange(item.id, "COMPLETED")}
                     >
-                      Đánh dấu hoàn thành
+                      {uiText("Đánh dấu hoàn thành")}
                     </button>
                     <button
                       type="button"
@@ -312,7 +322,7 @@ export function StudyPlanPage() {
                       }}
                       onClick={() => handleStatusChange(item.id, "SKIPPED")}
                     >
-                      Bỏ qua
+                      {uiText("Bỏ qua")}
                     </button>
                   </div>
                 </div>
@@ -329,7 +339,7 @@ export function StudyPlanPage() {
             id="recommended-heading"
             style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}
           >
-            Hành động được cá nhân hóa ưu tiên cao nhất
+            {uiText("Hành động được cá nhân hóa ưu tiên cao nhất")}
           </h2>
           {items[0] ? (
             <div
@@ -341,11 +351,12 @@ export function StudyPlanPage() {
               }}
             >
               <span style={{ fontWeight: 700, color: "var(--blue)", fontSize: "0.9rem" }}>
-                ⚡ HÀNH ĐỘNG KHUYÊN DÙNG NGAY (Next-Action Engine)
+                {uiText("⚡ HÀNH ĐỘNG KHUYÊN DÙNG NGAY (Next-Action Engine)")}
               </span>
               <h3 style={{ margin: "var(--space-2) 0", fontSize: "1.3rem" }}>{items[0].title}</h3>
               <p style={{ color: "var(--ink)", fontSize: "1rem", lineHeight: 1.5 }}>
-                Lý do: {items[0].rationale}
+                {uiText("Lý do: ")}
+                {items[0].rationale}
               </p>
               <div style={{ marginTop: "var(--space-4)", display: "flex", gap: "var(--space-3)" }}>
                 <Link
@@ -359,13 +370,15 @@ export function StudyPlanPage() {
                     fontWeight: 600,
                   }}
                 >
-                  Bắt đầu học với AI Tutor ngay →
+                  {uiText("Bắt đầu học với AI Tutor ngay →")}
                 </Link>
               </div>
             </div>
           ) : (
             <p>
-              Chưa có hành động khuyên dùng. Hãy tạo kế hoạch sau khi hệ thống ghi nhận bằng chứng học tập.
+              {uiText(
+                "Chưa có hành động khuyên dùng. Hãy tạo kế hoạch sau khi hệ thống ghi nhận bằng chứng học tập.",
+              )}
             </p>
           )}
         </section>
@@ -378,7 +391,7 @@ export function StudyPlanPage() {
             id="gaps-heading"
             style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}
           >
-            Khoảng trống kiến thức và giải trình tính minh bạch
+            {uiText("Khoảng trống kiến thức và giải trình tính minh bạch")}
           </h2>
           <div style={{ display: "grid", gap: "var(--space-4)" }}>
             {gaps.map((gap) => (
@@ -403,11 +416,12 @@ export function StudyPlanPage() {
                       color: gap.state === "DECAY_RISK" ? "#856404" : "#c62828",
                     }}
                   >
-                    Trạng thái: {gap.state}
+                    {uiText("Trạng thái: ")}
+                    {gap.state}
                   </span>
                 </div>
                 <p style={{ margin: "var(--space-2) 0", color: "var(--muted)" }}>
-                  <strong>Tại sao khái niệm này ở trạng thái này:</strong> {gap.whyDeveloping}
+                  <strong>{uiText("Tại sao khái niệm này ở trạng thái này:")}</strong> {gap.whyDeveloping}
                 </p>
                 <div
                   style={{
@@ -435,7 +449,9 @@ export function StudyPlanPage() {
                     />
                   </div>
                   <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
-                    {gap.currentScore}% / Mục tiêu: {gap.targetScore}%
+                    {gap.currentScore}
+                    {uiText("% / Mục tiêu: ")}
+                    {gap.targetScore}%
                   </span>
                 </div>
               </div>
@@ -451,7 +467,7 @@ export function StudyPlanPage() {
             id="upcoming-heading"
             style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}
           >
-            Lịch kiểm tra & đánh giá sắp diễn ra
+            {uiText("Lịch kiểm tra & đánh giá sắp diễn ra")}
           </h2>
           <div style={{ display: "grid", gap: "var(--space-4)" }}>
             {upcoming.map((a) => (
@@ -466,8 +482,9 @@ export function StudyPlanPage() {
               >
                 <h3 style={{ margin: "0 0 var(--space-2) 0" }}>{a.title}</h3>
                 <p style={{ margin: 0, color: "var(--muted)" }}>
-                  Hạn hoàn thành: <strong>{a.dueDate}</strong> (Còn {a.daysRemaining} ngày) · Trọng số:{" "}
-                  {a.weightPercent}%
+                  {uiText("Hạn hoàn thành: ")}
+                  <strong>{a.dueDate}</strong> {uiText(" (Còn ")}
+                  {a.daysRemaining} {uiText(" ngày) · Trọng số:")} {a.weightPercent}%
                 </p>
               </div>
             ))}
@@ -482,11 +499,11 @@ export function StudyPlanPage() {
             id="completed-heading"
             style={{ fontSize: "1.25rem", color: "var(--ink)", marginBottom: "var(--space-4)" }}
           >
-            Hoạt động đã hoàn thành
+            {uiText("Hoạt động đã hoàn thành")}
           </h2>
           {completedItems.length === 0 ? (
             <p style={{ color: "var(--muted)" }}>
-              Chưa có hoạt động nào được đánh dấu hoàn thành trong tuần này.
+              {uiText("Chưa có hoạt động nào được đánh dấu hoàn thành trong tuần này.")}
             </p>
           ) : (
             <ul style={{ listStyle: "none", padding: 0 }}>
@@ -501,7 +518,9 @@ export function StudyPlanPage() {
                   }}
                 >
                   <span>✓ {c.title}</span>
-                  <span style={{ color: "var(--muted)" }}>{c.estimatedMinutes} phút</span>
+                  <span style={{ color: "var(--muted)" }}>
+                    {c.estimatedMinutes} {uiText(" phút")}
+                  </span>
                 </li>
               ))}
             </ul>

@@ -1,3 +1,5 @@
+import { useLanguage } from "../../src/use-language";
+import { useUiText } from "../../src/use-language";
 import { useSyncExternalStore, useState, useEffect, useCallback, useRef } from "react";
 import { Text, View, TextInput, Pressable, ActivityIndicator, StyleSheet, Alert, Image } from "react-native";
 import { router, useLocalSearchParams, useFocusEffect, type Href } from "expo-router";
@@ -24,6 +26,8 @@ import { publicLecturer, type PublicLecturer } from "../../src/public-lecturer";
 import { Page, Button, Badge, Icon, BottomNavBar, styles, tokens } from "../../src/ui";
 
 export default function CourseDetailScreen() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { courseId, review } = useLocalSearchParams<{ courseId: string; review?: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -266,10 +270,10 @@ export default function CourseDetailScreen() {
 
   const handleDeleteReview = async () => {
     if (!myReview) return;
-    Alert.alert("Xác nhận xóa", "Bạn có chắc chắn muốn xóa đánh giá của mình?", [
-      { text: "Hủy", style: "cancel" },
+    Alert.alert(uiText("Xác nhận xóa"), uiText("Bạn có chắc chắn muốn xóa đánh giá của mình?"), [
+      { text: uiText("Hủy"), style: "cancel" },
       {
-        text: "Xóa",
+        text: uiText("Xóa"),
         style: "destructive",
         onPress: async () => {
           try {
@@ -299,7 +303,7 @@ export default function CourseDetailScreen() {
       <Page>
         <View style={localStyles.center}>
           <ActivityIndicator size="large" color={tokens.color.brand} />
-          <Text style={styles.small}>Đang tải chi tiết khóa học…</Text>
+          <Text style={styles.small}>{uiText("Đang tải chi tiết khóa học…")}</Text>
         </View>
       </Page>
     );
@@ -312,8 +316,8 @@ export default function CourseDetailScreen() {
           <Text accessibilityRole="alert" style={styles.error}>
             {error || "Không tìm thấy thông tin khóa học."}
           </Text>
-          <Button label="Thử lại" onPress={() => void fetchDetails()} />
-          <Button label="Về danh mục" onPress={() => router.back()} />
+          <Button label={uiText("Thử lại")} onPress={() => void fetchDetails()} />
+          <Button label={uiText("Về danh mục")} onPress={() => router.back()} />
         </View>
       </Page>
     );
@@ -326,11 +330,11 @@ export default function CourseDetailScreen() {
         <Pressable
           onPress={() => router.back()}
           style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}
-          accessibilityLabel="Quay lại danh mục"
+          accessibilityLabel={uiText("Quay lại danh mục")}
         >
           <Icon name="chevronLeft" size={16} color={tokens.color.brand} />
           <Text style={{ fontSize: 14, fontWeight: "700", color: tokens.color.brand }}>
-            Quay lại danh mục
+            {uiText("Quay lại danh mục")}
           </Text>
         </Pressable>
 
@@ -338,7 +342,7 @@ export default function CourseDetailScreen() {
         <View style={localStyles.heroCard}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             <Badge
-              label={course.priceType === "FREE" ? "MIỄN PHÍ" : "CÓ PHÍ"}
+              label={course.priceType === "FREE" ? uiText("MIỄN PHÍ") : uiText("CÓ PHÍ")}
               variant={course.priceType === "FREE" ? "success" : "warning"}
             />
             <View style={localStyles.ratingBadge}>
@@ -352,7 +356,7 @@ export default function CourseDetailScreen() {
           {course.coverDataUrl ? (
             <Image
               source={{ uri: course.coverDataUrl }}
-              accessibilityLabel={`Ảnh bìa ${course.title}`}
+              accessibilityLabel={uiText("Ảnh bìa {0}", [course.title])}
               style={{ width: "100%", height: 170, borderRadius: 12 }}
               resizeMode="cover"
             />
@@ -361,7 +365,7 @@ export default function CourseDetailScreen() {
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Xem hồ sơ giảng viên"
+            accessibilityLabel={uiText("Xem hồ sơ giảng viên")}
             disabled={!course.lecturerId}
             onPress={() => router.push(`/lecturers/${course.lecturerId}?courseId=${courseId}` as Href)}
             style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 }}
@@ -369,7 +373,7 @@ export default function CourseDetailScreen() {
             {lecturerProfile?.avatarRef ? (
               <Image
                 source={{ uri: lecturerProfile.avatarRef }}
-                accessibilityLabel={`Ảnh giảng viên ${lecturerProfile.displayName}`}
+                accessibilityLabel={uiText("Ảnh giảng viên {0}", [lecturerProfile.displayName])}
                 style={localStyles.instructorAvatar}
               />
             ) : (
@@ -380,7 +384,9 @@ export default function CourseDetailScreen() {
               </View>
             )}
             <View>
-              <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>Giảng viên phụ trách</Text>
+              <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
+                {uiText("Giảng viên phụ trách")}
+              </Text>
               <Text style={{ fontSize: 14, fontWeight: "700", color: "#FFF" }}>
                 {lecturerProfile?.displayName ?? course.lecturerName ?? "Hồ sơ giảng viên"}
               </Text>
@@ -393,7 +399,7 @@ export default function CourseDetailScreen() {
                 <View key={o.offeringId} style={localStyles.offeringChip}>
                   <Icon name="calendar" size={12} color="#E0F2FE" />
                   <Text style={{ fontSize: 11, fontWeight: "700", color: "#FFF" }}>
-                    {o.offeringType === "SELF_PACED" ? "Tự học linh hoạt" : "Lớp theo lịch"}
+                    {o.offeringType === "SELF_PACED" ? uiText("Tự học linh hoạt") : uiText("Lớp theo lịch")}
                   </Text>
                 </View>
               ))}
@@ -409,36 +415,36 @@ export default function CourseDetailScreen() {
           ]}
         >
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <Text style={[styles.title, { fontSize: 18 }]}>Tham gia học tập</Text>
+            <Text style={[styles.title, { fontSize: 18 }]}>{uiText("Tham gia học tập")}</Text>
             <Text style={{ fontSize: 18, fontWeight: "800", color: tokens.color.brand }}>
               {course.priceType === "FREE"
-                ? "Miễn phí 100%"
+                ? uiText("Miễn phí 100%")
                 : course.price
                   ? `${course.price} ${course.currency ?? "VND"}`
-                  : "Có phí"}
+                  : uiText("Có phí")}
             </Text>
           </View>
 
           <View style={{ gap: 6, marginVertical: 6 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <Icon name="check" size={14} color={tokens.color.success} />
-              <Text style={styles.small}>Toàn quyền truy cập học liệu & video bài giảng</Text>
+              <Text style={styles.small}>{uiText("Toàn quyền truy cập học liệu & video bài giảng")}</Text>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <Icon name="sparkles" size={14} color="#8B5CF6" />
-              <Text style={styles.small}>Luyện đề và hỏi đáp cùng trợ lý AI 24/7</Text>
+              <Text style={styles.small}>{uiText("Luyện đề và hỏi đáp cùng trợ lý AI 24/7")}</Text>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <Icon name="award" size={14} color="#D97706" />
-              <Text style={styles.small}>Chứng chỉ xác nhận sau khi hoàn thành khóa học</Text>
+              <Text style={styles.small}>{uiText("Chứng chỉ xác nhận sau khi hoàn thành khóa học")}</Text>
             </View>
           </View>
 
           {enrolled ? (
             <View style={{ gap: 8 }}>
-              <Badge label="ĐÃ ĐĂNG KÝ KHÓA HỌC NÀY" variant="success" icon="check" />
+              <Badge label={uiText("ĐÃ ĐĂNG KÝ KHÓA HỌC NÀY")} variant="success" icon="check" />
               <Button
-                label="Tiếp tục học ngay ▶"
+                label={uiText("Tiếp tục học ngay ▶")}
                 variant="primary"
                 size="lg"
                 onPress={() => router.push(`/learn/${courseId}` as Href)}
@@ -446,7 +452,7 @@ export default function CourseDetailScreen() {
             </View>
           ) : snapshot.state !== "AUTHENTICATED" ? (
             <Button
-              label="Đăng nhập để đăng ký học"
+              label={uiText("Đăng nhập để đăng ký học")}
               variant="primary"
               size="lg"
               onPress={() => router.push("/login")}
@@ -455,11 +461,13 @@ export default function CourseDetailScreen() {
             <>
               {enrollmentError && (
                 <Text accessibilityRole="alert" style={styles.error}>
-                  {enrollmentError}
+                  {uiText(enrollmentError)}
                 </Text>
               )}
               <Button
-                label={enrollmentLoading ? "Đang xử lý đăng ký…" : "Đăng ký học ngay (Miễn phí)"}
+                label={
+                  enrollmentLoading ? uiText("Đang xử lý đăng ký…") : uiText("Đăng ký học ngay (Miễn phí)")
+                }
                 variant="primary"
                 size="lg"
                 onPress={() => void handleEnrollFree()}
@@ -468,24 +476,28 @@ export default function CourseDetailScreen() {
             </>
           ) : (
             <View style={{ gap: 10 }}>
-              <Text style={styles.small}>Chọn hình thức học để tạo đơn thanh toán.</Text>
+              <Text style={styles.small}>{uiText("Chọn hình thức học để tạo đơn thanh toán.")}</Text>
               {offeringsList
                 .filter((item) => item.state === "PUBLISHED")
                 .map((item) => (
                   <Button
                     key={item.offeringId}
-                    label={`Mua ${item.offeringType === "SELF_PACED" ? "khóa tự học" : "lớp theo lịch"} · ${item.price ?? course.price ?? "Có phí"} ${item.currency ?? course.currency ?? "VND"}`}
+                    label={uiText("Mua {0} · {1} {2}", [
+                      item.offeringType === "SELF_PACED" ? "khóa tự học" : "lớp theo lịch",
+                      item.price ?? course.price ?? "Có phí",
+                      item.currency ?? course.currency ?? "VND",
+                    ])}
                     variant="outline"
                     disabled={orderLoading}
                     onPress={() => void handleCreateOrder(item.offeringId)}
                   />
                 ))}
               {!offeringsList.some((item) => item.state === "PUBLISHED") ? (
-                <Text style={styles.small}>Hiện chưa có hình thức học mở bán.</Text>
+                <Text style={styles.small}>{uiText("Hiện chưa có hình thức học mở bán.")}</Text>
               ) : null}
               {orderError ? (
                 <Text accessibilityRole="alert" style={styles.error}>
-                  {orderError}
+                  {uiText(orderError)}
                 </Text>
               ) : null}
             </View>
@@ -495,7 +507,7 @@ export default function CourseDetailScreen() {
         {/* Description Section */}
         {course.description && (
           <View style={styles.card}>
-            <Text style={[styles.title, { fontSize: 16 }]}>Mô tả chi tiết</Text>
+            <Text style={[styles.title, { fontSize: 16 }]}>{uiText("Mô tả chi tiết")}</Text>
             <Text style={[styles.text, { lineHeight: 24 }]}>{course.description}</Text>
           </View>
         )}
@@ -504,23 +516,25 @@ export default function CourseDetailScreen() {
         <View style={styles.card}>
           <View style={localStyles.ratingHeader}>
             <View>
-              <Text style={[styles.title, { fontSize: 16 }]}>Đánh giá từ học viên</Text>
+              <Text style={[styles.title, { fontSize: 16 }]}>{uiText("Đánh giá từ học viên")}</Text>
               <Text style={localStyles.ratingScore}>
-                ⭐ {ratingInfo.average > 0 ? ratingInfo.average.toFixed(1) : "Chưa có"}{" "}
-                <Text style={styles.small}>({ratingInfo.reviewCount} nhận xét)</Text>
+                ⭐ {ratingInfo.average > 0 ? ratingInfo.average.toFixed(1) : uiText("Chưa có")}{" "}
+                <Text style={styles.small}>
+                  ({ratingInfo.reviewCount} {uiText(" nhận xét)")}
+                </Text>
               </Text>
             </View>
 
             {snapshot.state === "AUTHENTICATED" ? (
               <Button
-                label={myReview ? "Sửa đánh giá" : "Viết đánh giá"}
+                label={myReview ? uiText("Sửa đánh giá") : uiText("Viết đánh giá")}
                 variant="secondary"
                 size="sm"
                 onPress={openWriteForm}
               />
             ) : (
               <Button
-                label="Đăng nhập để viết đánh giá"
+                label={uiText("Đăng nhập để viết đánh giá")}
                 variant="outline"
                 size="sm"
                 onPress={() => router.push("/login")}
@@ -532,7 +546,7 @@ export default function CourseDetailScreen() {
           {showReviewForm && (
             <View style={localStyles.reviewForm}>
               <Text style={[styles.title, { fontSize: 15 }]}>
-                {myReview ? "Chỉnh sửa đánh giá của bạn" : "Đánh giá khóa học của bạn"}
+                {myReview ? uiText("Chỉnh sửa đánh giá của bạn") : uiText("Đánh giá khóa học của bạn")}
               </Text>
 
               {/* Stars Picker */}
@@ -557,33 +571,39 @@ export default function CourseDetailScreen() {
                 style={localStyles.reviewInput}
                 value={formBody}
                 onChangeText={setFormBody}
-                placeholder="Chia sẻ trải nghiệm học tập của bạn về khóa học này…"
+                placeholder={uiText("Chia sẻ trải nghiệm học tập của bạn về khóa học này…")}
                 multiline
                 numberOfLines={4}
               />
 
               {reviewError && (
                 <Text accessibilityRole="alert" style={styles.error}>
-                  {reviewError}
+                  {uiText(reviewError)}
                 </Text>
               )}
 
               <View style={localStyles.reviewFormActions}>
                 <Button
-                  label={reviewSaving ? "Đang lưu…" : myReview ? "Cập nhật đánh giá" : "Gửi đánh giá"}
+                  label={
+                    reviewSaving
+                      ? uiText("Đang lưu…")
+                      : myReview
+                        ? uiText("Cập nhật đánh giá")
+                        : uiText("Gửi đánh giá")
+                  }
                   onPress={() => void handleSubmitReview()}
                   disabled={reviewSaving}
                 />
                 {myReview && (
                   <Button
-                    label="Xóa đánh giá"
+                    label={uiText("Xóa đánh giá")}
                     variant="danger"
                     onPress={() => void handleDeleteReview()}
                     disabled={reviewSaving}
                   />
                 )}
                 <Button
-                  label="Đóng"
+                  label={uiText("Đóng")}
                   variant="outline"
                   onPress={() => setShowReviewForm(false)}
                   disabled={reviewSaving}
@@ -593,21 +613,27 @@ export default function CourseDetailScreen() {
           )}
 
           {nextReviewCursor && !reviewsLoading ? (
-            <Button label="Xem thêm đánh giá" onPress={() => void fetchReviews(nextReviewCursor)} />
+            <Button label={uiText("Xem thêm đánh giá")} onPress={() => void fetchReviews(nextReviewCursor)} />
           ) : null}
           {/* Reviews List */}
           {reviewsError ? (
             <View style={{ gap: 8 }}>
               <Text accessibilityRole="alert" style={styles.error}>
-                Không tải được đánh giá khóa học.
+                {uiText("Không tải được đánh giá khóa học.")}
               </Text>
-              <Button label="Thử tải đánh giá" variant="outline" onPress={() => void fetchReviews()} />
+              <Button
+                label={uiText("Thử tải đánh giá")}
+                variant="outline"
+                onPress={() => void fetchReviews()}
+              />
             </View>
           ) : reviewsLoading ? (
             <ActivityIndicator size="small" color={tokens.color.brand} />
           ) : reviews.length === 0 ? (
             <Text style={styles.small}>
-              Chưa có nhận xét nào cho khóa học này. Hãy là người đầu tiên trải nghiệm và đánh giá!
+              {uiText(
+                "Chưa có nhận xét nào cho khóa học này. Hãy là người đầu tiên trải nghiệm và đánh giá!",
+              )}
             </Text>
           ) : (
             <View style={localStyles.reviewsList}>
@@ -620,8 +646,8 @@ export default function CourseDetailScreen() {
                         {"★".repeat(rev.rating)}
                         {"☆".repeat(5 - rev.rating)}
                       </Text>
-                      {mine && <Badge label="Của bạn" variant="success" />}
-                      <Text style={styles.small}>{new Date(rev.createdAt).toLocaleDateString("vi-VN")}</Text>
+                      {mine && <Badge label={uiText("Của bạn")} variant="success" />}
+                      <Text style={styles.small}>{new Date(rev.createdAt).toLocaleDateString(uiLocale)}</Text>
                     </View>
                     {rev.body && <Text style={styles.text}>{rev.body}</Text>}
                   </View>

@@ -1,3 +1,4 @@
+import { useUiText } from "../../../../src/use-language";
 import { useSyncExternalStore, useState, useEffect, useCallback } from "react";
 import { Text, View, ActivityIndicator, StyleSheet, Linking, Pressable } from "react-native";
 import { type Href, router, useLocalSearchParams } from "expo-router";
@@ -26,6 +27,7 @@ import {
 } from "../../../../src/ui";
 
 export default function LessonConsumptionScreen() {
+  const uiText = useUiText();
   const { courseId, lessonId } = useLocalSearchParams<{ courseId: string; lessonId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -191,12 +193,15 @@ export default function LessonConsumptionScreen() {
   if (snapshot.state !== "AUTHENTICATED") {
     return (
       <Page>
-        <ScreenHeader title="Nội dung bài học" onBack={() => router.push(`/learn/${courseId}` as Href)} />
+        <ScreenHeader
+          title={uiText("Nội dung bài học")}
+          onBack={() => router.push(`/learn/${courseId}` as Href)}
+        />
         <View style={localStyles.authCard}>
           <Icon name="lock" size={36} color={tokens.color.brand} />
-          <Text style={localStyles.cardHeading}>Yêu cầu đăng nhập</Text>
-          <Text style={localStyles.authDesc}>Vui lòng đăng nhập để xem nội dung bài học.</Text>
-          <Button label="Đăng nhập" onPress={() => router.push("/login" as Href)} />
+          <Text style={localStyles.cardHeading}>{uiText("Yêu cầu đăng nhập")}</Text>
+          <Text style={localStyles.authDesc}>{uiText("Vui lòng đăng nhập để xem nội dung bài học.")}</Text>
+          <Button label={uiText("Đăng nhập")} onPress={() => router.push("/login" as Href)} />
         </View>
         <BottomNavBar
           currentRoute="/learn"
@@ -210,10 +215,13 @@ export default function LessonConsumptionScreen() {
   if (loading) {
     return (
       <Page>
-        <ScreenHeader title="Đang tải..." onBack={() => router.push(`/learn/${courseId}` as Href)} />
+        <ScreenHeader
+          title={uiText("Đang tải...")}
+          onBack={() => router.push(`/learn/${courseId}` as Href)}
+        />
         <View style={localStyles.center}>
           <ActivityIndicator size="large" color={tokens.color.brand} />
-          <Text style={localStyles.loadingText}>Đang tải nội dung bài học…</Text>
+          <Text style={localStyles.loadingText}>{uiText("Đang tải nội dung bài học…")}</Text>
         </View>
         <BottomNavBar
           currentRoute="/learn"
@@ -227,16 +235,16 @@ export default function LessonConsumptionScreen() {
   if (error || !lesson) {
     return (
       <Page>
-        <ScreenHeader title="Thông báo" onBack={() => router.push(`/learn/${courseId}` as Href)} />
+        <ScreenHeader title={uiText("Thông báo")} onBack={() => router.push(`/learn/${courseId}` as Href)} />
         <View style={localStyles.errorCard}>
           <Icon name="alert" size={32} color={tokens.color.danger} />
           <Text accessibilityRole="alert" style={localStyles.errorText}>
             {error || "Đã xảy ra lỗi khi tải bài học."}
           </Text>
           <View style={localStyles.errorActions}>
-            <Button label="Thử lại" onPress={() => void fetchLesson()} />
+            <Button label={uiText("Thử lại")} onPress={() => void fetchLesson()} />
             <Button
-              label="← Quay lại giáo trình"
+              label={uiText("← Quay lại giáo trình")}
               variant="outline"
               onPress={() => router.push(`/learn/${courseId}` as Href)}
             />
@@ -269,33 +277,33 @@ export default function LessonConsumptionScreen() {
           <View style={localStyles.mediaScreen}>
             <View style={localStyles.mediaBadgeRow}>
               <Badge
-                label={isVideo ? "VIDEO HD" : isPdf ? "TÀI LIỆU PDF" : "TÀI LIỆU HỌC"}
+                label={isVideo ? "VIDEO HD" : isPdf ? uiText("TÀI LIỆU PDF") : uiText("TÀI LIỆU HỌC")}
                 variant={isVideo ? "primary" : "neutral"}
               />
-              {lesson.preview && <Badge label="HỌC THỬ" variant="success" />}
+              {lesson.preview && <Badge label={uiText("HỌC THỬ")} variant="success" />}
             </View>
 
             <Pressable
               style={localStyles.playCenterButton}
               onPress={handleOpenMaterial}
               accessibilityRole="button"
-              accessibilityLabel="Mở tài liệu học tập"
+              accessibilityLabel={uiText("Mở tài liệu học tập")}
             >
               <View style={localStyles.playIconCircle}>
                 <Icon name={isVideo ? "play" : "book"} size={26} color="#0F172A" />
               </View>
               <Text style={localStyles.playPromptText}>
-                {isVideo ? "Chạm để mở Video" : "Chạm để mở tài liệu"}
+                {isVideo ? uiText("Chạm để mở Video") : uiText("Chạm để mở tài liệu")}
               </Text>
             </Pressable>
 
             <View style={localStyles.mediaScreenFooter}>
               <Text style={localStyles.mediaFormatText}>
                 {isVideo
-                  ? "Video bài giảng trực tuyến chất lượng cao"
+                  ? uiText("Video bài giảng trực tuyến chất lượng cao")
                   : isPdf
-                    ? "Tài liệu giáo trình chuẩn PDF"
-                    : "Bài giảng lý thuyết & mã nguồn thực hành"}
+                    ? uiText("Tài liệu giáo trình chuẩn PDF")
+                    : uiText("Bài giảng lý thuyết & mã nguồn thực hành")}
               </Text>
             </View>
           </View>
@@ -303,7 +311,7 @@ export default function LessonConsumptionScreen() {
           {(lesson.contentUrl || lesson.externalVideo) && (
             <View style={localStyles.openButtonRow}>
               <Button
-                label={isVideo ? "Mở Video học tập ↗" : "Mở tài liệu học tập ↗"}
+                label={isVideo ? uiText("Mở Video học tập ↗") : uiText("Mở tài liệu học tập ↗")}
                 onPress={handleOpenMaterial}
                 size="md"
               />
@@ -332,21 +340,21 @@ export default function LessonConsumptionScreen() {
                 pendingSyncState === "FAILED_RETRYABLE"
                   ? `PENDING_SYNC · ${pendingSyncState}`
                   : pendingSyncState === "CONFLICT"
-                    ? "CONFLICT · cần xác minh trạng thái máy chủ"
+                    ? uiText("CONFLICT · cần xác minh trạng thái máy chủ")
                     : pendingSyncState === "FAILED_FINAL"
-                      ? "Không thể đồng bộ hoàn thành bài học"
+                      ? uiText("Không thể đồng bộ hoàn thành bài học")
                       : completionKnown
                         ? isCompleted
-                          ? "Đã hoàn thành bài học"
-                          : "Chưa hoàn thành"
-                        : "Chưa xác minh trạng thái riêng cho bài này"}
+                          ? uiText("Đã hoàn thành bài học")
+                          : uiText("Chưa hoàn thành")
+                        : uiText("Chưa xác minh trạng thái riêng cho bài này")}
               </Text>
               <Text style={localStyles.completionSub}>
                 {pendingSyncState && pendingSyncState !== "SYNCED"
-                  ? "Trạng thái trong hàng đợi không phải xác nhận hoàn thành từ máy chủ."
+                  ? uiText("Trạng thái trong hàng đợi không phải xác nhận hoàn thành từ máy chủ.")
                   : completionKnown && isCompleted
-                    ? "Máy chủ đã xác nhận kết quả học tập của bạn"
-                    : "Trạng thái khóa học chỉ được cập nhật sau khi máy chủ xác nhận"}
+                    ? uiText("Máy chủ đã xác nhận kết quả học tập của bạn")
+                    : uiText("Trạng thái khóa học chỉ được cập nhật sau khi máy chủ xác nhận")}
               </Text>
             </View>
           </View>
@@ -373,12 +381,16 @@ export default function LessonConsumptionScreen() {
           {pendingSyncState === "PENDING" ||
           pendingSyncState === "SYNCING" ||
           pendingSyncState === "FAILED_RETRYABLE" ? (
-            <Button label="Đang chờ đồng bộ" variant="outline" onPress={() => {}} disabled />
+            <Button label={uiText("Đang chờ đồng bộ")} variant="outline" onPress={() => {}} disabled />
           ) : pendingSyncState === "CONFLICT" ? (
-            <Button label="Đọc lại tiến độ máy chủ" variant="outline" onPress={() => void fetchLesson()} />
+            <Button
+              label={uiText("Đọc lại tiến độ máy chủ")}
+              variant="outline"
+              onPress={() => void fetchLesson()}
+            />
           ) : isCompleted ? (
             <Button
-              label={mutationLoading ? "Đang cập nhật…" : "Đánh dấu chưa hoàn thành"}
+              label={mutationLoading ? uiText("Đang cập nhật…") : uiText("Đánh dấu chưa hoàn thành")}
               variant="outline"
               onPress={() => void toggleCompletion(false)}
               disabled={mutationLoading}
@@ -386,7 +398,7 @@ export default function LessonConsumptionScreen() {
           ) : (
             <Button
               testID="student-lesson-complete"
-              label={mutationLoading ? "Đang lưu tiến độ…" : "Đánh dấu đã hoàn thành"}
+              label={mutationLoading ? uiText("Đang lưu tiến độ…") : uiText("Đánh dấu đã hoàn thành")}
               onPress={() => void toggleCompletion(true)}
               disabled={mutationLoading}
             />
@@ -398,19 +410,21 @@ export default function LessonConsumptionScreen() {
       {courseProgress && (
         <View style={localStyles.progressCard}>
           <View style={localStyles.progressHeaderRow}>
-            <Text style={localStyles.progressLabel}>Tiến độ toàn khóa học</Text>
+            <Text style={localStyles.progressLabel}>{uiText("Tiến độ toàn khóa học")}</Text>
             <Text style={localStyles.progressPercent}>{courseProgress.percent}%</Text>
           </View>
           <ProgressBar progress={courseProgress.percent} height={6} />
           <Text style={localStyles.progressSubtext}>
-            Đã hoàn thành {courseProgress.completedCount} trên {courseProgress.publishedTotal} bài học
+            {uiText("Đã hoàn thành ")}
+            {courseProgress.completedCount} {uiText(" trên ")}
+            {courseProgress.publishedTotal} {uiText(" bài học")}
           </Text>
         </View>
       )}
 
       <View style={localStyles.footerActions}>
         <Button
-          label="← Quay lại giáo trình khóa học"
+          label={uiText("← Quay lại giáo trình khóa học")}
           variant="outline"
           onPress={() => router.push(`/learn/${courseId}` as Href)}
         />

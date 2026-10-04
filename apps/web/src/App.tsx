@@ -1,3 +1,4 @@
+import { useUiText, useLanguage, translation } from "./lib/i18n";
 import OperationResultPage from "./components/OperationResult";
 import { LecturerApplication, AdminLecturerApplications } from "./pages/LecturerApplication";
 import { AuthLayout } from "./components/AuthLayout";
@@ -127,8 +128,11 @@ const Security = trust("Security"),
 const NotFound = lazy(() => import("./pages/NotFound"));
 function Head() {
   const { pathname } = useLocation();
+  const { language } = useLanguage();
   useEffect(() => {
-    const [title, description] = metadata(pathname);
+    const [sourceTitle, sourceDescription] = metadata(pathname);
+    const title = translation(sourceTitle, language);
+    const description = translation(sourceDescription, language);
     document.title = `${title} | AILSS`;
     const set = (query: string, content: string) =>
       document.querySelector(query)?.setAttribute("content", content);
@@ -137,10 +141,20 @@ function Head() {
     set('meta[property="og:description"]', description);
     set('meta[property="og:url"]', `${location.origin}${pathname}`);
     document.querySelector('link[rel="canonical"]')?.setAttribute("href", `${location.origin}${pathname}`);
+  }, [pathname, language]);
+  useEffect(() => {
     const main = document.getElementById("main");
     if (main && window.history.state?.idx > 0) main.focus({ preventScroll: true });
   }, [pathname]);
   return null;
+}
+function RouteLoading() {
+  const uiText = useUiText();
+  return (
+    <div className="route-loading" role="status">
+      {uiText("Đang mở trang…")}
+    </div>
+  );
 }
 export default function App() {
   const location = useLocation();
@@ -153,13 +167,7 @@ export default function App() {
             <AvatarProvider>
               <Head />
               <RoleAiExperience>
-                <Suspense
-                  fallback={
-                    <div className="route-loading" role="status">
-                      Đang mở trang…
-                    </div>
-                  }
-                >
+                <Suspense fallback={<RouteLoading />}>
                   <Motion />
                   <ErrorBoundary>
                     <Routes>

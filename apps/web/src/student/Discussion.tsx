@@ -1,3 +1,4 @@
+import { useLanguage, useUiText } from "../lib/i18n";
 import { useState, useMemo } from "react";
 import { useSession } from "../auth/session";
 import { useStudent, useCommand, dateLabel, type CommentItem, type ReviewItem } from "./api";
@@ -40,6 +41,8 @@ export default function Discussion({
 }
 
 function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: boolean }) {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const [cursor, setCursor] = useState("");
   const [reply, setReply] = useState<CommentItem | null>(null);
   const [edit, setEdit] = useState<CommentItem | null>(null);
@@ -94,23 +97,24 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span className="badge" style={{ background: "rgba(2, 132, 199, 0.1)", color: "#0284c7" }}>
               <Icon name="message" size={13} style={{ marginRight: 4 }} />
-              CỘNG ĐỒNG HỌC TẬP &amp; HỎI ĐÁP
+              {uiText("CỘNG ĐỒNG HỌC TẬP & HỎI ĐÁP")}
             </span>
             <span style={{ fontSize: 12, color: "var(--muted)" }}>
               {commentsList.length > 0
-                ? `${commentsList.length} câu hỏi & thảo luận`
-                : "Thảo luận thời gian thực"}
+                ? uiText("{0} câu hỏi & thảo luận", [commentsList.length])
+                : uiText("Thảo luận thời gian thực")}
             </span>
           </div>
           <h2>
             <span className="pro-icon-box blue sm">
               <Icon name="message" size={14} />
             </span>
-            <span>Hỏi Đáp &amp; Thảo Luận Bài Học</span>
+            <span>{uiText("Hỏi Đáp & Thảo Luận Bài Học")}</span>
           </h2>
           <p className="subtext" style={{ margin: "4px 0 0" }}>
-            Không gian trao đổi bài tập, giải đáp thắc mắc chuyên môn cùng Giảng viên và cộng đồng sinh viên
-            AILSS.
+            {uiText(
+              "Không gian trao đổi bài tập, giải đáp thắc mắc chuyên môn cùng Giảng viên và cộng đồng sinh viên AILSS.",
+            )}
           </p>
         </div>
       </div>
@@ -132,14 +136,15 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
             className={`rating-filter-chip ${activeTab === "ALL" ? "active" : ""}`}
             onClick={() => setActiveTab("ALL")}
           >
-            Tất cả thảo luận ({commentsList.length})
+            {uiText("Tất cả thảo luận (")}
+            {commentsList.length})
           </button>
           <button
             type="button"
             className={`rating-filter-chip ${activeTab === "MINE" ? "active" : ""}`}
             onClick={() => setActiveTab("MINE")}
           >
-            Thảo luận của tôi
+            {uiText("Thảo luận của tôi")}
           </button>
         </div>
 
@@ -158,7 +163,7 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
           <Icon name="search" size={15} style={{ color: "var(--muted)" }} />
           <input
             type="search"
-            placeholder="Tìm kiếm câu hỏi hoặc mã lỗi..."
+            placeholder={uiText("Tìm kiếm câu hỏi hoặc mã lỗi...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -209,10 +214,10 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
             <div>
               <span style={{ fontWeight: 700, fontSize: 14 }}>
                 {edit
-                  ? "Chỉnh sửa nội dung thảo luận"
+                  ? uiText("Chỉnh sửa nội dung thảo luận")
                   : reply
-                    ? `Trả lời bình luận của thành viên`
-                    : "Đặt câu hỏi hoặc chia sẻ thảo luận"}
+                    ? uiText("Trả lời bình luận của thành viên")
+                    : uiText("Đặt câu hỏi hoặc chia sẻ thảo luận")}
               </span>
               <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
                 {profile?.displayName || profile?.emailMasked || "Tài khoản học viên AILSS"}
@@ -235,7 +240,7 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
               }}
             >
               <div>
-                <strong>Đang trả lời:</strong>{" "}
+                <strong>{uiText("Đang trả lời:")}</strong>{" "}
                 <span style={{ color: "var(--muted)" }}>"{reply.body?.slice(0, 80)}..."</span>
               </div>
               <button
@@ -244,7 +249,7 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
                 onClick={() => setReply(null)}
                 style={{ fontSize: 12, color: "var(--muted)", cursor: "pointer" }}
               >
-                ✕ Hủy trả lời
+                {uiText("✕ Hủy trả lời")}
               </button>
             </div>
           )}
@@ -278,17 +283,21 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
               onClick={handleInsertCode}
               style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
             >
-              <span>&lt;/&gt; Chèn mẫu Code</span>
+              <span>{uiText("</> Chèn mẫu Code")}</span>
             </button>
           </div>
 
           <label style={{ display: "block" }}>
-            <span style={{ display: "none" }}>{edit ? "Sửa nội dung bình luận" : "Viết bình luận"}</span>
+            <span style={{ display: "none" }}>
+              {edit ? uiText("Sửa nội dung bình luận") : uiText("Viết bình luận")}
+            </span>
             <textarea
               className="commercial-composer-textarea"
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Đặt câu hỏi về bài giảng, dán đoạn mã lỗi bạn đang gặp hoặc trao đổi với giảng viên..."
+              placeholder={uiText(
+                "Đặt câu hỏi về bài giảng, dán đoạn mã lỗi bạn đang gặp hoặc trao đổi với giảng viên...",
+              )}
               maxLength={4000}
               required
               rows={3}
@@ -296,7 +305,9 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
           </label>
 
           <div className="composer-bottom-bar">
-            <span className="composer-char-count">{body.length} / 4000 ký tự</span>
+            <span className="composer-char-count">
+              {body.length} {uiText(" / 4000 ký tự")}
+            </span>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               {(edit || reply) && (
                 <button
@@ -308,7 +319,7 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
                     setBody("");
                   }}
                 >
-                  Hủy
+                  {uiText("Hủy")}
                 </button>
               )}
               <button
@@ -317,7 +328,9 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
                 style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
               >
                 <Icon name="message" size={14} />
-                <span>{edit ? "Lưu bình luận" : reply ? "Gửi trả lời" : "Gửi bình luận"}</span>
+                <span>
+                  {edit ? uiText("Lưu bình luận") : reply ? uiText("Gửi trả lời") : uiText("Gửi bình luận")}
+                </span>
               </button>
             </div>
           </div>
@@ -335,7 +348,7 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
           }}
         >
           <Icon name="info" size={15} style={{ marginRight: 6, verticalAlign: "middle" }} />
-          <span>Bạn cần quyền học khóa học để gửi bình luận.</span>
+          <span>{uiText("Bạn cần quyền học khóa học để gửi bình luận.")}</span>
         </div>
       )}
 
@@ -367,24 +380,26 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
                       </div>
                       <div>
                         <div className="review-author-name">
-                          <span>{isMine ? "Bạn" : "Thành viên AILSS"}</span>
-                          {isMine && <span className="verified-badge">Tác giả</span>}
+                          <span>{isMine ? uiText("Bạn") : uiText("Thành viên AILSS")}</span>
+                          {isMine && <span className="verified-badge">{uiText("Tác giả")}</span>}
                           {c.parentId && (
                             <span style={{ fontSize: 11.5, color: "var(--muted)", fontWeight: 400 }}>
-                              · Trả lời bình luận
+                              {uiText("· Trả lời bình luận")}
                             </span>
                           )}
                         </div>
                         <div className="review-date-label">
-                          {dateLabel(c.createdAt)}
-                          {c.version > 1 && c.state === "ACTIVE" ? ` · Đã sửa (v${c.version})` : ""}
+                          {dateLabel(c.createdAt, undefined, uiLocale)}
+                          {c.version > 1 && c.state === "ACTIVE"
+                            ? uiText(" · Đã sửa (v{0})", [c.version])
+                            : ""}
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="review-card-body" style={{ whiteSpace: "pre-wrap" }}>
-                    {c.state === "ACTIVE" ? c.body : "Bình luận đã được gỡ."}
+                    {c.state === "ACTIVE" ? c.body : uiText("Bình luận đã được gỡ.")}
                   </div>
 
                   {c.state === "ACTIVE" && canWrite && (
@@ -401,7 +416,7 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
                             }}
                             style={{ fontSize: 12.5, color: "var(--blue)", cursor: "pointer" }}
                           >
-                            💬 Trả lời
+                            {uiText("💬 Trả lời")}
                           </button>
                         )}
                         {isMine && (
@@ -416,7 +431,7 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
                               }}
                               style={{ fontSize: 12.5, color: "var(--muted)", cursor: "pointer" }}
                             >
-                              Sửa bình luận
+                              {uiText("Sửa bình luận")}
                             </button>
                             <button
                               type="button"
@@ -435,7 +450,7 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
                               }}
                               style={{ fontSize: 12.5, color: "#dc2626", cursor: "pointer" }}
                             >
-                              Gỡ bình luận
+                              {uiText("Gỡ bình luận")}
                             </button>
                           </>
                         )}
@@ -449,7 +464,7 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
           </div>
         ) : (
           <div>
-            <Empty>Chưa có bình luận. Chia sẻ câu hỏi đầu tiên của bạn.</Empty>
+            <Empty>{uiText("Chưa có bình luận. Chia sẻ câu hỏi đầu tiên của bạn.")}</Empty>
           </div>
         )}
       </State>
@@ -461,6 +476,8 @@ function Thread({ type, id, canWrite }: { type: string; id: string; canWrite: bo
 }
 
 function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const [cursor, setCursor] = useState("");
   const [edit, setEdit] = useState<ReviewItem | null>(null);
   const [body, setBody] = useState("");
@@ -536,19 +553,20 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span className="badge" style={{ background: "rgba(245, 158, 11, 0.12)", color: "#d97706" }}>
               <Icon name="star" size={13} style={{ marginRight: 4 }} />
-              ĐÁNH GIÁ &amp; PHẢN HỒI CHẤT LƯỢNG
+              {uiText("ĐÁNH GIÁ & PHẢN HỒI CHẤT LƯỢNG")}
             </span>
-            <span style={{ fontSize: 12, color: "var(--muted)" }}>Học viên đã xác thực</span>
+            <span style={{ fontSize: 12, color: "var(--muted)" }}>{uiText("Học viên đã xác thực")}</span>
           </div>
           <h2>
             <span className="pro-icon-box amber sm">
               <Icon name="star" size={14} />
             </span>
-            <span>Đánh Giá Khóa Học Từ Học Viên</span>
+            <span>{uiText("Đánh Giá Khóa Học Từ Học Viên")}</span>
           </h2>
           <p className="subtext" style={{ margin: "4px 0 0" }}>
-            Tổng hợp ý kiến đánh giá và trải nghiệm thực tế từ cộng đồng học viên đã hoàn thành tối thiểu 20%
-            chương trình.
+            {uiText(
+              "Tổng hợp ý kiến đánh giá và trải nghiệm thực tế từ cộng đồng học viên đã hoàn thành tối thiểu 20% chương trình.",
+            )}
           </p>
         </div>
       </div>
@@ -557,15 +575,21 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
       <div className="commercial-rating-summary">
         <div className="rating-score-box">
           <div className="rating-score-num">{stats.avgScore}</div>
-          <div className="rating-stars-cluster" aria-label={`Điểm đánh giá ${stats.avgScore} trên 5 sao`}>
+          <div
+            className="rating-stars-cluster"
+            aria-label={uiText("Điểm đánh giá {0} trên 5 sao", [stats.avgScore])}
+          >
             {[1, 2, 3, 4, 5].map((s) => (
               <span key={s} style={{ fontSize: 22, color: "#f59e0b" }}>
                 ★
               </span>
             ))}
           </div>
-          <div className="rating-score-sub">Dựa trên {stats.total} đánh giá trong trang này</div>
-          <span className="rating-satisfaction-tag">✓ 98% học viên hài lòng &amp; khuyến nghị</span>
+          <div className="rating-score-sub">
+            {uiText("Dựa trên ")}
+            {stats.total} {uiText(" đánh giá trong trang này")}
+          </div>
+          <span className="rating-satisfaction-tag">{uiText("✓ 98% học viên hài lòng & khuyến nghị")}</span>
         </div>
 
         <div className="rating-breakdown-bars">
@@ -596,7 +620,8 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
           className={`rating-filter-chip ${starFilter === 0 ? "active" : ""}`}
           onClick={() => setStarFilter(0)}
         >
-          Tất cả ({stats.total})
+          {uiText("Tất cả (")}
+          {stats.total})
         </button>
         {[5, 4, 3, 2, 1].map((s) => (
           <button
@@ -634,7 +659,11 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
             <span className="pro-icon-box amber sm">
               <Icon name="star" size={14} />
             </span>
-            <span>{edit ? "Chỉnh Sửa Đánh Giá Của Bạn" : "Viết Đánh Giá & Chia Sẻ Trải Nghiệm Của Bạn"}</span>
+            <span>
+              {edit
+                ? uiText("Chỉnh Sửa Đánh Giá Của Bạn")
+                : uiText("Viết Đánh Giá & Chia Sẻ Trải Nghiệm Của Bạn")}
+            </span>
           </div>
 
           {/* Interactive Star Rating Selector */}
@@ -648,10 +677,14 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
                 marginBottom: 6,
               }}
             >
-              Mức đánh giá
+              {uiText("Mức đánh giá")}
             </label>
             <div className="star-rating-selector">
-              <div className="star-rating-buttons" role="radiogroup" aria-label="Chọn số sao đánh giá">
+              <div
+                className="star-rating-buttons"
+                role="radiogroup"
+                aria-label={uiText("Chọn số sao đánh giá")}
+              >
                 {[1, 2, 3, 4, 5].map((s) => {
                   const active = (hoverRating || rating) >= s;
                   return (
@@ -674,7 +707,7 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
               <select
                 value={rating}
                 onChange={(e) => setRating(Number(e.target.value))}
-                aria-label="Mức đánh giá"
+                aria-label={uiText("Mức đánh giá")}
                 style={{
                   position: "absolute",
                   opacity: 0,
@@ -699,7 +732,7 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
           {/* Quick compliment tag chips */}
           <div style={{ marginBottom: 12 }}>
             <span style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 }}>
-              Gợi ý điểm nổi bật (nhấn để tự động thêm vào nhận xét):
+              {uiText("Gợi ý điểm nổi bật (nhấn để tự động thêm vào nhận xét):")}
             </span>
             <div className="quick-tags-container">
               {QUICK_TAGS.map((tag) => (
@@ -726,13 +759,15 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
                 marginBottom: 6,
               }}
             >
-              Nội dung đánh giá
+              {uiText("Nội dung đánh giá")}
             </span>
             <textarea
               className="commercial-composer-textarea"
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Chia sẻ chi tiết trải nghiệm học tập của bạn: bài giảng có dễ hiểu không, bài tập thực hành ra sao và AI Copilot đã hỗ trợ bạn như thế nào..."
+              placeholder={uiText(
+                "Chia sẻ chi tiết trải nghiệm học tập của bạn: bài giảng có dễ hiểu không, bài tập thực hành ra sao và AI Copilot đã hỗ trợ bạn như thế nào...",
+              )}
               maxLength={4000}
               required
               rows={3}
@@ -740,7 +775,9 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
           </label>
 
           <div className="composer-bottom-bar">
-            <span className="composer-char-count">{body.length} / 4000 ký tự</span>
+            <span className="composer-char-count">
+              {body.length} {uiText(" / 4000 ký tự")}
+            </span>
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               {edit && (
                 <button
@@ -751,7 +788,7 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
                     setBody("");
                   }}
                 >
-                  Hủy sửa
+                  {uiText("Hủy sửa")}
                 </button>
               )}
               <button
@@ -760,7 +797,7 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
                 style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
               >
                 <Icon name="star" size={14} />
-                <span>{edit ? "Lưu đánh giá" : "Gửi đánh giá"}</span>
+                <span>{edit ? uiText("Lưu đánh giá") : uiText("Gửi đánh giá")}</span>
               </button>
             </div>
           </div>
@@ -781,7 +818,9 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
           }}
         >
           <Icon name="info" size={16} style={{ color: "#0284c7" }} />
-          <span>Học ít nhất 20% khóa học để chia sẻ đánh giá. Quyền truy cập cần còn hiệu lực.</span>
+          <span>
+            {uiText("Học ít nhất 20% khóa học để chia sẻ đánh giá. Quyền truy cập cần còn hiệu lực.")}
+          </span>
         </div>
       )}
 
@@ -798,17 +837,17 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
                       <div className="review-author-avatar">{isAuthor ? "B" : "H"}</div>
                       <div>
                         <div className="review-author-name">
-                          <span>{isAuthor ? "Bạn" : "Học viên AILSS"}</span>
+                          <span>{isAuthor ? uiText("Bạn") : uiText("Học viên AILSS")}</span>
                           <span className="verified-badge">
                             <Icon name="checkCircle" size={11} />
-                            <span>Đã hoàn thành khóa học</span>
+                            <span>{uiText("Đã hoàn thành khóa học")}</span>
                           </span>
                         </div>
-                        <div className="review-date-label">{dateLabel(r.createdAt)}</div>
+                        <div className="review-date-label">{dateLabel(r.createdAt, undefined, uiLocale)}</div>
                       </div>
                     </div>
 
-                    <div className="review-stars-row" aria-label={`${r.rating} trên 5 sao`}>
+                    <div className="review-stars-row" aria-label={uiText("{0} trên 5 sao", [r.rating])}>
                       {[1, 2, 3, 4, 5].map((s) => (
                         <span key={s} style={{ color: s <= r.rating ? "#f59e0b" : "#cbd5e1", fontSize: 16 }}>
                           ★
@@ -818,7 +857,7 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
                   </div>
 
                   <div className="review-card-body" style={{ whiteSpace: "pre-wrap" }}>
-                    {r.state === "ACTIVE" ? r.body : "Đánh giá đã được gỡ."}
+                    {r.state === "ACTIVE" ? r.body : uiText("Đánh giá đã được gỡ.")}
                   </div>
 
                   <div className="review-card-footer">
@@ -835,7 +874,7 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
                             }}
                             style={{ fontSize: 12.5, color: "var(--blue)", cursor: "pointer" }}
                           >
-                            Sửa đánh giá
+                            {uiText("Sửa đánh giá")}
                           </button>
                           <button
                             type="button"
@@ -854,7 +893,7 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
                             }}
                             style={{ fontSize: 12.5, color: "#dc2626", cursor: "pointer" }}
                           >
-                            Gỡ đánh giá
+                            {uiText("Gỡ đánh giá")}
                           </button>
                         </>
                       )}
@@ -867,7 +906,7 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
           </div>
         ) : (
           <div>
-            <Empty>Chưa có đánh giá cho khóa học này.</Empty>
+            <Empty>{uiText("Chưa có đánh giá cho khóa học này.")}</Empty>
           </div>
         )}
       </State>
@@ -879,6 +918,7 @@ function Reviews({ id, eligible }: { id: string; eligible: boolean }) {
 }
 
 function ReportAction({ type, id }: { type: "COMMENT" | "REVIEW"; id: string }) {
+  const uiText = useUiText();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const command = useCommand();
@@ -891,7 +931,7 @@ function ReportAction({ type, id }: { type: "COMMENT" | "REVIEW"; id: string }) 
         onClick={() => setOpen(true)}
         style={{ fontSize: 12.5, color: "var(--muted)", cursor: "pointer" }}
       >
-        Báo cáo nội dung
+        {uiText("Báo cáo nội dung")}
       </button>
     );
 
@@ -907,7 +947,7 @@ function ReportAction({ type, id }: { type: "COMMENT" | "REVIEW"; id: string }) 
       }}
     >
       <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>
-        Lý do báo cáo
+        {uiText("Lý do báo cáo")}
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
@@ -938,7 +978,7 @@ function ReportAction({ type, id }: { type: "COMMENT" | "REVIEW"; id: string }) 
             }
           }}
         >
-          Gửi báo cáo
+          {uiText("Gửi báo cáo")}
         </button>
         <button
           type="button"
@@ -946,7 +986,7 @@ function ReportAction({ type, id }: { type: "COMMENT" | "REVIEW"; id: string }) 
           onClick={() => setOpen(false)}
           style={{ fontSize: 12.5, color: "var(--muted)" }}
         >
-          Hủy
+          {uiText("Hủy")}
         </button>
       </div>
       <Status command={command} />

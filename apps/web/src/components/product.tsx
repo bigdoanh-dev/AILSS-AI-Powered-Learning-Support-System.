@@ -1,3 +1,4 @@
+import { useUiText, useLanguage } from "../lib/i18n";
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 const labels: Record<string, string> = {
@@ -26,18 +27,20 @@ const labels: Record<string, string> = {
 };
 export const stateLabel = (state?: string) => (state && labels[state]) || state || "Hoạt động";
 export function StateChip({ state }: { state?: string }) {
+  const uiText = useUiText();
   const safeState = (state || "PUBLISHED").trim();
   const lower = safeState.toLowerCase();
   return (
     <span className={`product-status state-${lower}`}>
       <span aria-hidden="true">●</span>
-      {stateLabel(safeState)}
+      {uiText(stateLabel(safeState))}
     </span>
   );
 }
 export function Breadcrumbs({ items }: { items: { label: string; to?: string }[] }) {
+  const uiText = useUiText();
   return (
-    <nav className="product-breadcrumbs" aria-label="Đường dẫn">
+    <nav className="product-breadcrumbs" aria-label={uiText("Đường dẫn")}>
       <ol>
         {items.map((x, i) => (
           <li key={`${x.label}-${i}`}>
@@ -70,18 +73,25 @@ export function EmptyState({
   );
 }
 export function ScheduleTime({ start, end, timezone }: { start: string; end: string; timezone: string }) {
+  const uiText = useUiText();
+  const { locale } = useLanguage();
   const fmt = (v: string) =>
-    new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short", timeZone: timezone }).format(
+    new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: timezone }).format(
       new Date(v),
     );
   return (
     <>
       <time dateTime={start}>{fmt(start)}</time> – <time dateTime={end}>{fmt(end)}</time>
-      <small>Múi giờ {timezone}; giờ hiển thị theo múi giờ của lớp.</small>
+      <small>
+        {uiText("Múi giờ ")}
+        {timezone}
+        {uiText("; giờ hiển thị theo múi giờ của lớp.")}
+      </small>
     </>
   );
 }
 export function useUnsavedChanges(dirty: boolean, message: string) {
+  const uiText = useUiText();
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
       if (dirty) event.preventDefault();
@@ -93,12 +103,12 @@ export function useUnsavedChanges(dirty: boolean, message: string) {
     const guard = (event: MouseEvent) => {
       if (!dirty || event.defaultPrevented || event.button !== 0) return;
       const link = (event.target as Element | null)?.closest("a[href]");
-      if (link && !window.confirm(message)) {
+      if (link && !window.confirm(uiText(message))) {
         event.preventDefault();
         event.stopPropagation();
       }
     };
     document.addEventListener("click", guard, true);
     return () => document.removeEventListener("click", guard, true);
-  }, [dirty, message]);
+  }, [dirty, message, uiText]);
 }

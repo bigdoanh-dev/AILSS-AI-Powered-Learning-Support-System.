@@ -1,3 +1,4 @@
+import { useUiText, useLanguage } from "../lib/i18n";
 import { Link } from "react-router-dom";
 import {
   RadarChart,
@@ -62,6 +63,7 @@ function CustomDonutTooltip({
   payload?: TooltipPayloadItem[];
   total: number;
 }) {
+  const uiText = useUiText();
   if (active && payload && payload.length) {
     const item = payload[0];
     const val = item.value ?? 0;
@@ -73,7 +75,7 @@ function CustomDonutTooltip({
           <span>{item.name}</span>
         </div>
         <div className="donut-tooltip-stat">
-          <strong>{val.toLocaleString()}</strong> tài khoản
+          <strong>{val.toLocaleString()}</strong> {uiText(" tài khoản")}
           <span className="donut-tooltip-pct">({pct}%)</span>
         </div>
       </div>
@@ -83,6 +85,8 @@ function CustomDonutTooltip({
 }
 
 export default function StatsDashboard() {
+  const uiText = useUiText();
+  const { locale: uiLocale } = useLanguage();
   const {
     data: apiData,
     loading,
@@ -94,23 +98,23 @@ export default function StatsDashboard() {
   if (!apiData || error)
     return (
       <section className="dashboard-section-card">
-        <h1>Dashboard Người Dùng & Năng Lực Học Tập AI</h1>
-        <p role={error ? "alert" : "status"}>{error || "Đang tải thống kê tài khoản…"}</p>
+        <h1>{uiText("Dashboard Người Dùng & Năng Lực Học Tập AI")}</h1>
+        <p role={error ? "alert" : "status"}>{uiText(error || "Đang tải thống kê tài khoản…")}</p>
         <button className="button" onClick={refresh} disabled={loading}>
-          Kiểm tra lại
+          {uiText("Kiểm tra lại")}
         </button>
       </section>
     );
   const d = apiData;
 
   const userRoles = [
-    { name: "Học viên", value: d.students, color: "#0284c7" },
-    { name: "Giảng viên", value: d.lecturers, color: "#7c3aed" },
+    { name: uiText("Học viên"), value: d.students, color: "#0284c7" },
+    { name: uiText("Giảng viên"), value: d.lecturers, color: "#7c3aed" },
     { name: "Admin", value: d.admins, color: "#059669" },
-    { name: "Tạm khóa", value: d.suspended, color: "#dc2626" },
+    { name: uiText("Tạm khóa"), value: d.suspended, color: "#dc2626" },
   ];
   const cogData = (d.cognitiveLevels ?? []).map((c) => ({
-    subject: c.level,
+    subject: uiText(c.level),
     A: c.rate,
     fullMark: 100,
   }));
@@ -119,28 +123,30 @@ export default function StatsDashboard() {
     <div className="admin-dashboard-container">
       <div className="dashboard-heading">
         <div>
-          <p className="eyebrow">DỮ LIỆU & PHÂN TÍCH HỌC TẬP</p>
-          <h1>Dashboard Người Dùng & Năng Lực Học Tập AI</h1>
+          <p className="eyebrow">{uiText("DỮ LIỆU & PHÂN TÍCH HỌC TẬP")}</p>
+          <h1>{uiText("Dashboard Người Dùng & Năng Lực Học Tập AI")}</h1>
           <p className="lead">
-            Phân tích cơ cấu tài khoản, chỉ số luyện đề thích ứng AI và ma trận cấp độ nhận thức Bloom.
+            {uiText(
+              "Phân tích cơ cấu tài khoản, chỉ số luyện đề thích ứng AI và ma trận cấp độ nhận thức Bloom.",
+            )}
           </p>
         </div>
         <div className="dashboard-header-actions">
           <Link className="button button-subtle" to="/app">
-            ← Tổng quan Admin
+            {uiText("← Tổng quan Admin")}
           </Link>
           <span className={isLive ? "kpi-tag accent" : error ? "kpi-tag warn" : "kpi-tag"}>
             {isLive
-              ? `Dữ liệu thực · ${lastUpdated?.toLocaleTimeString("vi-VN") ?? ""}`
+              ? uiText("Dữ liệu thực · {0}", [lastUpdated?.toLocaleTimeString(uiLocale) ?? ""])
               : error
-                ? "Mất kết nối máy chủ"
-                : "Chưa kết nối API"}
+                ? uiText("Mất kết nối máy chủ")
+                : uiText("Chưa kết nối API")}
           </span>
           <button className="button button-subtle button-small" onClick={refresh} disabled={loading}>
             ↻
           </button>
           <Link className="button" to="/app/admin/users">
-            👥 Quản lý người dùng
+            {uiText("👥 Quản lý người dùng")}
           </Link>
         </div>
       </div>
@@ -160,9 +166,13 @@ export default function StatsDashboard() {
             justifyContent: "space-between",
           }}
         >
-          <span>⚠️ Không thể đồng bộ dữ liệu thống kê từ máy chủ ({error}). Hiển thị bản lưu gần nhất.</span>
+          <span>
+            {uiText("⚠️ Không thể đồng bộ dữ liệu thống kê từ máy chủ (")}
+            {uiText(error)}
+            {uiText("). Hiển thị bản lưu gần nhất.")}
+          </span>
           <button className="button button-small button-subtle" onClick={refresh}>
-            Thử lại
+            {uiText("Thử lại")}
           </button>
         </div>
       )}
@@ -171,8 +181,8 @@ export default function StatsDashboard() {
       <section className="dashboard-section-card">
         <div className="section-card-header">
           <div>
-            <h2>Cơ Cấu Người Dùng Hệ Thống</h2>
-            <p className="subtext">Tổng hợp tài khoản đang hoạt động và phân cấp theo vai trò.</p>
+            <h2>{uiText("Cơ Cấu Người Dùng Hệ Thống")}</h2>
+            <p className="subtext">{uiText("Tổng hợp tài khoản đang hoạt động và phân cấp theo vai trò.")}</p>
           </div>
           <span className="kpi-tag accent">
             <AnimatedNumber value={d.totalAccounts} suffix=" Tổng Tài Khoản" />
@@ -187,8 +197,8 @@ export default function StatsDashboard() {
               <div className="user-stat-number" style={{ color: "#0284c7" }}>
                 <AnimatedNumber value={d.students} />
               </div>
-              <div className="user-stat-role">Học Viên (Students)</div>
-              <div className="user-stat-sub">Tài khoản có trạng thái hoạt động</div>
+              <div className="user-stat-role">{uiText("Học Viên (Students)")}</div>
+              <div className="user-stat-sub">{uiText("Tài khoản có trạng thái hoạt động")}</div>
             </div>
             <div className="user-stat-card">
               <span className="user-stat-icon">
@@ -197,8 +207,8 @@ export default function StatsDashboard() {
               <div className="user-stat-number" style={{ color: "#7c3aed" }}>
                 <AnimatedNumber value={d.lecturers} />
               </div>
-              <div className="user-stat-role">Giảng Viên (Lecturers)</div>
-              <div className="user-stat-sub">Xem hồ sơ trong mục xét duyệt giảng viên</div>
+              <div className="user-stat-role">{uiText("Giảng Viên (Lecturers)")}</div>
+              <div className="user-stat-sub">{uiText("Xem hồ sơ trong mục xét duyệt giảng viên")}</div>
             </div>
             <div className="user-stat-card">
               <span className="user-stat-icon">
@@ -207,8 +217,8 @@ export default function StatsDashboard() {
               <div className="user-stat-number" style={{ color: "#059669" }}>
                 <AnimatedNumber value={d.admins} />
               </div>
-              <div className="user-stat-role">Quản Trị Viên</div>
-              <div className="user-stat-sub">Tài khoản có quyền quản trị</div>
+              <div className="user-stat-role">{uiText("Quản Trị Viên")}</div>
+              <div className="user-stat-sub">{uiText("Tài khoản có quyền quản trị")}</div>
             </div>
             <div className="user-stat-card">
               <span className="user-stat-icon">
@@ -217,8 +227,8 @@ export default function StatsDashboard() {
               <div className="user-stat-number" style={{ color: "#dc2626" }}>
                 <AnimatedNumber value={d.suspended} />
               </div>
-              <div className="user-stat-role">Tạm Khóa</div>
-              <div className="user-stat-sub">Tài khoản có trạng thái tạm khóa</div>
+              <div className="user-stat-role">{uiText("Tạm Khóa")}</div>
+              <div className="user-stat-sub">{uiText("Tài khoản có trạng thái tạm khóa")}</div>
             </div>
           </div>
 
@@ -253,7 +263,7 @@ export default function StatsDashboard() {
                 <span className="donut-kpi-num">
                   <AnimatedNumber value={d.totalAccounts} />
                 </span>
-                <span className="donut-kpi-label">Tổng TK</span>
+                <span className="donut-kpi-label">{uiText("Tổng TK")}</span>
               </div>
             </div>
 
@@ -276,10 +286,10 @@ export default function StatsDashboard() {
         </div>
         <div className="user-stats-actions">
           <Link className="button button-subtle" to="/app/admin/users">
-            Tra cứu danh sách thành viên →
+            {uiText("Tra cứu danh sách thành viên →")}
           </Link>
           <Link className="button button-subtle" to="/app/admin/lecturer-applications">
-            Xét duyệt hồ sơ giảng viên →
+            {uiText("Xét duyệt hồ sơ giảng viên →")}
           </Link>
         </div>
       </section>
@@ -295,52 +305,52 @@ export default function StatsDashboard() {
           </div>
           <div className="kpi-value">
             {d.aiSessions === null ? (
-              "Chưa có dữ liệu"
+              uiText("Chưa có dữ liệu")
             ) : (
               <AnimatedNumber value={d.aiSessions} suffix=" lượt" />
             )}
           </div>
-          <div className="kpi-label">Luyện đề thi thích ứng AI</div>
-          <p className="kpi-subtext">Đề thi tự điều chỉnh theo năng lực</p>
+          <div className="kpi-label">{uiText("Luyện đề thi thích ứng AI")}</div>
+          <p className="kpi-subtext">{uiText("Đề thi tự điều chỉnh theo năng lực")}</p>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">
             <span className="kpi-icon">
               <Icon name="target" size={20} />
             </span>
-            <span className="kpi-tag">Kết quả học tập</span>
+            <span className="kpi-tag">{uiText("Kết quả học tập")}</span>
           </div>
           <div className="kpi-value">
             <AnimatedNumber value={d.completionRate ?? "Chưa có dữ liệu"} />
           </div>
-          <div className="kpi-label">Tỷ lệ hoàn thành khóa học</div>
-          <p className="kpi-subtext">Học viên hoàn thành bài giảng và bài tập</p>
+          <div className="kpi-label">{uiText("Tỷ lệ hoàn thành khóa học")}</div>
+          <p className="kpi-subtext">{uiText("Học viên hoàn thành bài giảng và bài tập")}</p>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">
             <span className="kpi-icon">
               <Icon name="trophy" size={20} />
             </span>
-            <span className="kpi-tag">Thang điểm 10</span>
+            <span className="kpi-tag">{uiText("Thang điểm 10")}</span>
           </div>
           <div className="kpi-value">
             <AnimatedNumber value={d.avgScore ?? "Chưa có dữ liệu"} />
           </div>
-          <div className="kpi-label">Điểm đánh giá trung bình</div>
-          <p className="kpi-subtext">Chỉ hiển thị khi có kết quả đánh giá đã tổng hợp</p>
+          <div className="kpi-label">{uiText("Điểm đánh giá trung bình")}</div>
+          <p className="kpi-subtext">{uiText("Chỉ hiển thị khi có kết quả đánh giá đã tổng hợp")}</p>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">
             <span className="kpi-icon">
               <Icon name="clock" size={20} />
             </span>
-            <span className="kpi-tag accent">Tích lũy</span>
+            <span className="kpi-tag accent">{uiText("Tích lũy")}</span>
           </div>
           <div className="kpi-value">
             <AnimatedNumber value={d.totalLearningHours ?? "Chưa có dữ liệu"} />
           </div>
-          <div className="kpi-label">Tổng thời lượng học tập</div>
-          <p className="kpi-subtext">Chỉ hiển thị khi có thời lượng học đã tổng hợp</p>
+          <div className="kpi-label">{uiText("Tổng thời lượng học tập")}</div>
+          <p className="kpi-subtext">{uiText("Chỉ hiển thị khi có thời lượng học đã tổng hợp")}</p>
         </div>
       </div>
 
@@ -348,12 +358,14 @@ export default function StatsDashboard() {
       <section className="dashboard-section-card">
         <div className="section-card-header">
           <div>
-            <h2>Ma Trận 6 Cấp Độ Nhận Thức Bloom</h2>
-            <p className="subtext">Tỷ lệ làm chủ kiến thức của học viên theo ngân hàng câu hỏi AI.</p>
+            <h2>{uiText("Ma Trận 6 Cấp Độ Nhận Thức Bloom")}</h2>
+            <p className="subtext">
+              {uiText("Tỷ lệ làm chủ kiến thức của học viên theo ngân hàng câu hỏi AI.")}
+            </p>
           </div>
         </div>
         <div className="stats-charts-row">
-          {cogData.length === 0 && <p>Chưa có dữ liệu tổng hợp năng lực học tập.</p>}
+          {cogData.length === 0 && <p>{uiText("Chưa có dữ liệu tổng hợp năng lực học tập.")}</p>}
           <div className="recharts-radar-wrapper">
             <ResponsiveContainer width="100%" height={260}>
               <RadarChart data={cogData}>
@@ -361,7 +373,7 @@ export default function StatsDashboard() {
                 <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12, fill: "var(--muted, #53617a)" }} />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10 }} />
                 <Radar
-                  name="Mức đạt chuẩn"
+                  name={uiText("Mức đạt chuẩn")}
                   dataKey="A"
                   stroke="#1760ef"
                   fill="#1760ef"
@@ -379,12 +391,13 @@ export default function StatsDashboard() {
               <div key={index} className="cognitive-level-card">
                 <div className="cognitive-level-info">
                   <div className="cognitive-level-title-row">
-                    <span className="cognitive-level-name">{cog.level}</span>
+                    <span className="cognitive-level-name">{uiText(cog.level)}</span>
                     <span className="cognitive-level-score" style={{ color: cog.color }}>
-                      {cog.rate}% Đạt chuẩn
+                      {cog.rate}
+                      {uiText("% Đạt chuẩn")}
                     </span>
                   </div>
-                  <p className="cognitive-level-desc">{cog.desc}</p>
+                  <p className="cognitive-level-desc">{uiText(cog.desc)}</p>
                 </div>
                 <div className="cognitive-progress-track">
                   <div
@@ -402,21 +415,28 @@ export default function StatsDashboard() {
       <section className="dashboard-section-card">
         <div className="section-card-header">
           <div>
-            <h2>Tương Tác Học Tập Theo Tuần</h2>
-            <p className="subtext">Tổng số giờ truy cập học tập trực tuyến phân bổ theo ngày trong tuần.</p>
+            <h2>{uiText("Tương Tác Học Tập Theo Tuần")}</h2>
+            <p className="subtext">
+              {uiText("Tổng số giờ truy cập học tập trực tuyến phân bổ theo ngày trong tuần.")}
+            </p>
           </div>
         </div>
         <div className="recharts-wrapper">
-          {d.weekdayEngagement.length === 0 && <p>Chưa có dữ liệu tổng hợp thời lượng theo tuần.</p>}
+          {d.weekdayEngagement.length === 0 && (
+            <p>{uiText("Chưa có dữ liệu tổng hợp thời lượng theo tuần.")}</p>
+          )}
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={d.weekdayEngagement ?? []} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+            <BarChart
+              data={(d.weekdayEngagement ?? []).map((w) => ({ ...w, day: uiText(w.day) }))}
+              margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="var(--line, #dce3ee)" />
               <XAxis dataKey="day" tick={{ fontSize: 12, fill: "var(--muted, #53617a)" }} />
               <YAxis tick={{ fontSize: 12, fill: "var(--muted, #53617a)" }} />
-              <Tooltip formatter={(v: unknown) => `${String(v)} giờ`} />
+              <Tooltip formatter={(v: unknown) => uiText("{0} giờ", [String(v)])} />
               <Bar
                 dataKey="hours"
-                name="Giờ học"
+                name={uiText("Giờ học")}
                 fill="#7c3aed"
                 radius={[4, 4, 0, 0]}
                 isAnimationActive={true}
@@ -426,10 +446,10 @@ export default function StatsDashboard() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="weekly-engagement-chart" aria-label="Thống kê theo ngày">
+        <div className="weekly-engagement-chart" aria-label={uiText("Thống kê theo ngày")}>
           {(d.weekdayEngagement ?? []).map((w, index) => (
             <div key={index} className="weekly-bar-col">
-              <span className="weekly-day-label">{w.day}</span>
+              <span className="weekly-day-label">{uiText(w.day)}</span>
               <span className="weekly-hours-val">{w.hours}h</span>
             </div>
           ))}

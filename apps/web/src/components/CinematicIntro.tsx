@@ -1,6 +1,8 @@
+import { useUiText } from "../lib/i18n";
 import { useEffect, useRef, useState } from "react";
 
 export function CinematicIntro() {
+  const uiText = useUiText();
   const [visible, setVisible] = useState(true);
   const [closing, setClosing] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -96,7 +98,7 @@ export function CinematicIntro() {
   return (
     <aside
       className={`cinematic-intro-overlay ${closing ? "closing" : ""}`}
-      aria-label="Video giới thiệu"
+      aria-label={uiText("Video giới thiệu")}
       aria-hidden={closing ? "true" : "false"}
       onClick={handleOverlayClick}
       onContextMenu={(e) => e.preventDefault()}
@@ -126,23 +128,25 @@ export function CinematicIntro() {
           type="button"
           className={`cinematic-audio-btn ${isMuted ? "pulse" : "active"}`}
           onClick={toggleSound}
-          aria-label={isMuted ? "Bật âm thanh video giới thiệu" : "Tắt âm thanh video giới thiệu"}
+          aria-label={
+            isMuted ? uiText("Bật âm thanh video giới thiệu") : uiText("Tắt âm thanh video giới thiệu")
+          }
         >
-          {isMuted ? "🔇 Bật âm thanh" : "🔊 Đang phát âm thanh"}
+          {isMuted ? uiText("🔇 Bật âm thanh") : uiText("🔊 Đang phát âm thanh")}
         </button>
         <button
           type="button"
           className="cinematic-skip-btn"
           onClick={handleSkip}
-          aria-label="Bỏ qua video giới thiệu"
+          aria-label={uiText("Bỏ qua video giới thiệu")}
         >
-          Bỏ qua ✕
+          {uiText("Bỏ qua ✕")}
         </button>
       </div>
 
       {isMuted && (
         <div className="cinematic-unmute-hint" aria-hidden="true">
-          Nhấn bất kỳ đâu để bật âm thanh 🔊
+          {uiText("Nhấn bất kỳ đâu để bật âm thanh 🔊")}
         </div>
       )}
     </aside>

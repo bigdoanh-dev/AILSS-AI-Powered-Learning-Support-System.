@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useState } from "react";
 import {
   radarGroups,
@@ -8,6 +9,7 @@ import {
 import "./learning-radar.css";
 
 export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; studentCount?: number }) {
+  const uiText = useUiText();
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const groups = radarGroups(axes);
@@ -27,11 +29,15 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
       <div className="learning-radar-caption">
         <span>Thang 0–100</span>
         <strong>
-          {observed}/{axes.length} nội dung đã đánh giá
+          {observed}/{axes.length} {uiText(" nội dung đã đánh giá")}
         </strong>
       </div>
       {!axes.length ? (
-        <p>Chưa có nội dung để vẽ biểu đồ. Kết quả sẽ xuất hiện khi khóa học có bài học hoặc bài kiểm tra.</p>
+        <p>
+          {uiText(
+            "Chưa có nội dung để vẽ biểu đồ. Kết quả sẽ xuất hiện khi khóa học có bài học hoặc bài kiểm tra.",
+          )}
+        </p>
       ) : (
         <>
           <div className="learning-radar-layout">
@@ -40,9 +46,11 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
                 className="learning-radar-chart"
                 viewBox="0 0 320 320"
                 role="img"
-                aria-label="Biểu đồ radar mức độ làm chủ; số thứ tự tương ứng danh sách nội dung bên cạnh"
+                aria-label={uiText(
+                  "Biểu đồ radar mức độ làm chủ; số thứ tự tương ứng danh sách nội dung bên cạnh",
+                )}
               >
-                <title>Mức độ làm chủ theo nội dung học tập</title>
+                <title>{uiText("Mức độ làm chủ theo nội dung học tập")}</title>
                 {[20, 40, 60, 80, 100].map((percent) => (
                   <polygon
                     key={percent}
@@ -109,7 +117,7 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
               </svg>
             ) : (
               <p className="learning-radar-insufficient">
-                Cần ít nhất 3 nội dung để vẽ radar. Kết quả hiện có vẫn hiển thị bên cạnh.
+                {uiText("Cần ít nhất 3 nội dung để vẽ radar. Kết quả hiện có vẫn hiển thị bên cạnh.")}
               </p>
             )}
             <ol className="learning-radar-list">
@@ -122,7 +130,7 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
                   >
                     <span className="learning-radar-index">{index + 1}</span>
                     <span>{axis.label}</span>
-                    <strong>{axis.score === null ? "Chưa đánh giá" : `${axis.score}%`}</strong>
+                    <strong>{axis.score === null ? uiText("Chưa đánh giá") : `${axis.score}%`}</strong>
                   </button>
                 </li>
               ))}
@@ -130,19 +138,29 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
           </div>
           <p className="learning-radar-key">
             <span className="learning-radar-dot" />{" "}
-            {studentCount === undefined ? "Mức độ làm chủ" : "Mức độ làm chủ trung bình"}{" "}
-            <span className="learning-radar-dot unknown" /> Chưa có bằng chứng đánh giá
+            {studentCount === undefined ? uiText("Mức độ làm chủ") : uiText("Mức độ làm chủ trung bình")}{" "}
+            <span className="learning-radar-dot unknown" /> {uiText(" Chưa có bằng chứng đánh giá")}
           </p>
           {!observed && (
-            <p>Chưa có kết quả đánh giá. Hoàn thành bài học và bài kiểm tra để cập nhật biểu đồ.</p>
+            <p>
+              {uiText("Chưa có kết quả đánh giá. Hoàn thành bài học và bài kiểm tra để cập nhật biểu đồ.")}
+            </p>
           )}
           {detail && (
             <div className="learning-radar-detail" role="status">
               <strong>{detail.label}</strong>
               <p>
                 {detail.score === null
-                  ? "Chưa có bằng chứng để xác định mức độ làm chủ."
-                  : `${studentCount === undefined ? "Mức độ làm chủ" : "Mức độ làm chủ trung bình"} ${detail.score}%${studentCount === undefined ? "" : ` · ${detail.assessedStudentCount ?? 0}/${studentCount} học viên đã đánh giá`} · ${detail.evidenceCount} bằng chứng học tập${detail.confidence === null ? "" : ` · Độ tin cậy ${Math.round(detail.confidence)}%`}.`}
+                  ? uiText("Chưa có bằng chứng để xác định mức độ làm chủ.")
+                  : uiText("{0} {1}%{2} · {3} bằng chứng học tập{4}.", [
+                      studentCount === undefined ? "Mức độ làm chủ" : "Mức độ làm chủ trung bình",
+                      detail.score,
+                      studentCount === undefined
+                        ? ""
+                        : ` · ${detail.assessedStudentCount ?? 0}/${studentCount} học viên đã đánh giá`,
+                      detail.evidenceCount,
+                      detail.confidence === null ? "" : ` · Độ tin cậy ${Math.round(detail.confidence)}%`,
+                    ])}
               </p>
             </div>
           )}
@@ -157,10 +175,11 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
                   setSelected(null);
                 }}
               >
-                Nhóm trước
+                {uiText("Nhóm trước")}
               </button>
               <span>
-                Nhóm {Math.min(page, groups.length - 1) + 1}/{groups.length}
+                {uiText("Nhóm ")}
+                {Math.min(page, groups.length - 1) + 1}/{groups.length}
               </span>
               <button
                 type="button"
@@ -171,7 +190,7 @@ export function LearningRadar({ axes, studentCount }: { axes: RadarAxis[]; stude
                   setSelected(null);
                 }}
               >
-                Nhóm tiếp
+                {uiText("Nhóm tiếp")}
               </button>
             </div>
           )}

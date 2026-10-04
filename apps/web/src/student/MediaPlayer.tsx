@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import type Hls from "hls.js";
 import { useSession } from "../auth/session";
@@ -17,6 +18,7 @@ interface PlaybackSession {
   }[];
 }
 export function MediaPlayer({ lessonId, title }: { lessonId: string; title: string }) {
+  const uiText = useUiText();
   const { profile } = useSession();
   const video = useRef<HTMLVideoElement>(null);
   const [revision, setRevision] = useState(0),
@@ -130,7 +132,7 @@ export function MediaPlayer({ lessonId, title }: { lessonId: string; title: stri
     };
   }, [lessonId, profile?.userId, revision]);
   return (
-    <section className="lesson-media" aria-label="Video bài giảng">
+    <section className="lesson-media" aria-label={uiText("Video bài giảng")}>
       <video
         ref={video}
         controls
@@ -149,15 +151,15 @@ export function MediaPlayer({ lessonId, title }: { lessonId: string; title: stri
             label={track.label}
           />
         ))}
-        <p>Trình duyệt chưa hỗ trợ video.</p>
+        <p>{uiText("Trình duyệt chưa hỗ trợ video.")}</p>
       </video>
       <p key={message} role={failed ? "alert" : "status"}>
-        {message}
+        {uiText(message)}
       </p>
       <label>
-        Tốc độ phát{" "}
+        {uiText("Tốc độ phát")}{" "}
         <select
-          aria-label="Tốc độ phát"
+          aria-label={uiText("Tốc độ phát")}
           defaultValue="1"
           onChange={(event) => {
             if (video.current) video.current.playbackRate = Number(event.target.value);
@@ -165,20 +167,21 @@ export function MediaPlayer({ lessonId, title }: { lessonId: string; title: stri
         >
           {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
             <option key={rate} value={rate}>
-              {rate}×
+              {rate}
+              {uiText("×")}
             </option>
           ))}
         </select>
       </label>
       {tracks.length ? (
         <label>
-          Phụ đề{" "}
+          {uiText("Phụ đề")}{" "}
           <select
-            aria-label="Chọn phụ đề"
+            aria-label={uiText("Chọn phụ đề")}
             value={selectedTrack}
             onChange={(event) => setSelectedTrack(event.target.value)}
           >
-            <option value="">Tắt phụ đề</option>
+            <option value="">{uiText("Tắt phụ đề")}</option>
             {tracks.map((track) => (
               <option key={track.captionTrackId} value={track.captionTrackId}>
                 {track.label}
@@ -189,12 +192,14 @@ export function MediaPlayer({ lessonId, title }: { lessonId: string; title: stri
       ) : null}
       {failed ? (
         <button className="button secondary" onClick={() => setRevision((n) => n + 1)}>
-          Thử lại video
+          {uiText("Thử lại video")}
         </button>
       ) : null}
       <p className="muted">
-        Phát hoặc tua video không tự đánh dấu hoàn thành. Dùng mục “Ghi nhận việc học” sau khi học xong. Bài
-        này {tracks.length ? "có phụ đề tùy chọn." : "chưa có phụ đề."}
+        {uiText(
+          "Phát hoặc tua video không tự đánh dấu hoàn thành. Dùng mục “Ghi nhận việc học” sau khi học xong. Bài này ",
+        )}
+        {tracks.length ? uiText("có phụ đề tùy chọn.") : uiText("chưa có phụ đề.")}
       </p>
     </section>
   );

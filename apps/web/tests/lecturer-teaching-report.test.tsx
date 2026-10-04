@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { aggregateReport, loadTeachingReport, reportCsv } from "../src/lecturer/teachingReport";
+import { translateInterface } from "../../../packages/localization/src";
 
 describe("lecturer teaching report", () => {
   it("uses the Vietnam calendar day near midnight", async () => {
@@ -122,6 +123,10 @@ describe("lecturer teaching report", () => {
     });
     expect(total.distribution).toEqual([0, 0, 0, 1, 0]);
     expect(reportCsv(report, report.classes)).toContain('"Lớp thật"');
+    const english = reportCsv(report, report.classes, (source) => translateInterface(source, "en"));
+    expect(english.split("\r\n")[0]).not.toMatch(/[ăâđêôơưĂÂĐÊÔƠƯ\u1ea0-\u1ef9]/u);
+    expect(english).toContain('"Lớp thật"');
+    expect(english.split("\r\n").slice(1)).toEqual(reportCsv(report, report.classes).split("\r\n").slice(1));
   });
 
   it("shows unavailable rates when no quiz or recorded attendance exists", async () => {

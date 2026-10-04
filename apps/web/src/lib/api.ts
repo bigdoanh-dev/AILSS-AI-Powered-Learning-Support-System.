@@ -101,10 +101,10 @@ export function searchCourses(q: string, cursor?: string, signal?: AbortSignal) 
   if (cursor) params.set("cursor", cursor);
   return request<Catalog>(`/courses/search?${params}`, { signal });
 }
-export function priceLabel(course: Course) {
+export function priceLabel(course: Course, locale: string = "vi-VN") {
   if (course.priceType === "FREE") return "Miễn phí";
   try {
-    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: course.currency }).format(
+    return new Intl.NumberFormat(locale, { style: "currency", currency: course.currency }).format(
       Number(course.price),
     );
   } catch {

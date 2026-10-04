@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSession, roleLabel } from "../auth/session";
@@ -112,6 +113,7 @@ function WorkspaceTabBar({ tabs }: { tabs: TabItem[] }) {
   );
 }
 export function AppShell() {
+  const uiText = useUiText();
   const { t } = useLanguage();
   const auth = useSession();
   const location = useLocation();
@@ -150,7 +152,7 @@ export function AppShell() {
           { to: "/app", label: t("tab.overview", "Tổng quan"), icon: "home", end: true },
           { to: "/app/admin/revenue", label: t("tab.revenue", "Doanh thu"), icon: "card" },
           { to: "/app/admin/stats", label: t("tab.stats", "Thống kê & AI"), icon: "chart" },
-          { to: "/app/admin/ai", label: "AI quản trị", icon: "ai" },
+          { to: "/app/admin/ai", label: uiText("AI quản trị"), icon: "ai" },
           { to: "/app/admin/logs", label: t("tab.logs", "Nhật ký Logs"), icon: "quiz" },
           { to: "/app/admin/users", label: t("tab.users", "Người dùng"), icon: "users" },
           {
@@ -170,7 +172,7 @@ export function AppShell() {
             { to: "/app/teaching/schedule", label: t("tab.teachingSchedule", "Lịch dạy"), icon: "calendar" },
             { to: "/app/teaching/attendance", label: t("tab.attendance", "Điểm danh"), icon: "checkCircle" },
             { to: "/app/teaching/offerings", label: t("tab.offerings", "Đợt mở bán"), icon: "target" },
-            { to: "/app/teaching/revenue", label: "Doanh thu", icon: "card" },
+            { to: "/app/teaching/revenue", label: t("tab.revenue", "Doanh thu"), icon: "card" },
             { to: "/app/teaching/assessments", label: t("tab.assessments", "Bài kiểm tra"), icon: "quiz" },
             { to: "/app/teaching/grades", label: t("tab.grades", "Bảng điểm"), icon: "trophy" },
             { to: "/app/teaching/reports", label: t("tab.reports", "Báo cáo"), icon: "chart" },
@@ -222,6 +224,7 @@ export function AppShell() {
   );
 }
 export function AppHome() {
+  const uiText = useUiText();
   const { profile } = useSession();
   if (!profile) return null;
   if (profile.role === "STUDENT") return <StudentHome />;
@@ -229,25 +232,30 @@ export function AppHome() {
   if (profile.lecturerVerified) return <TeachingHome />;
   return (
     <section className="verification-welcome">
-      <h1>Chào mừng, {profile.displayName}.</h1>
-      <p className="lead">Tài khoản giảng viên của bạn đã được tạo.</p>
+      <h1>
+        {uiText("Chào mừng, ")}
+        {profile.displayName}.
+      </h1>
+      <p className="lead">{uiText("Tài khoản giảng viên của bạn đã được tạo.")}</p>
       <div className="notice">
-        <h2>Đang chờ xác minh</h2>
+        <h2>{uiText("Đang chờ xác minh")}</h2>
         <p>
-          Quản trị viên sẽ xác minh tài khoản để bạn có thể tạo khóa học và mở lớp. Bạn có thể cập nhật hồ sơ
-          và ảnh đại diện ngay bây giờ.
+          {uiText(
+            "Quản trị viên sẽ xác minh tài khoản để bạn có thể tạo khóa học và mở lớp. Bạn có thể cập nhật hồ sơ và ảnh đại diện ngay bây giờ.",
+          )}
         </p>
       </div>
       <Link className="button" to="/app/account">
-        Hoàn thiện hồ sơ
+        {uiText("Hoàn thiện hồ sơ")}
       </Link>
       <Link className="text-link" to="/help">
-        Trợ giúp tài khoản
+        {uiText("Trợ giúp tài khoản")}
       </Link>
     </section>
   );
 }
 export function Account() {
+  const uiText = useUiText();
   const navigate = useNavigate();
   function result(success: boolean, message: string) {
     navigate("/app/result", {
@@ -256,7 +264,7 @@ export function Account() {
         title: success ? "Cập nhật thành công" : "Cập nhật chưa thành công",
         message,
         to: "/app/account",
-        label: "Về tài khoản",
+        label: uiText("Về tài khoản"),
       },
     });
   }
@@ -372,10 +380,10 @@ export function Account() {
           replace: true,
           state: {
             success: true,
-            title: "Đổi mật khẩu thành công",
+            title: uiText("Đổi mật khẩu thành công"),
             message: "Vui lòng đăng nhập lại bằng mật khẩu mới.",
             to: "/auth/login",
-            label: "Đăng nhập lại",
+            label: uiText("Đăng nhập lại"),
           },
         });
       } else {
@@ -408,25 +416,25 @@ export function Account() {
           shortcuts: [
             {
               to: "/app/admin/users",
-              label: "Quản lý người dùng",
+              label: uiText("Quản lý người dùng"),
               desc: "Tài khoản & vai trò",
               icon: "users" as IconName,
             },
             {
               to: "/app/admin/moderation",
-              label: "Kiểm duyệt nội dung",
+              label: uiText("Kiểm duyệt nội dung"),
               desc: "Khóa học & đánh giá",
               icon: "shield" as IconName,
             },
             {
               to: "/app/admin/stats",
-              label: "Thống kê & Báo cáo",
+              label: uiText("Thống kê & Báo cáo"),
               desc: "Chỉ số vận hành hệ thống",
               icon: "chart" as IconName,
             },
             {
               to: "/app/admin/logs",
-              label: "Nhật ký Logs",
+              label: uiText("Nhật ký Logs"),
               desc: "Kiểm toán & sự kiện bảo mật",
               icon: "quiz" as IconName,
             },
@@ -444,25 +452,25 @@ export function Account() {
             shortcuts: [
               {
                 to: "/app/teaching",
-                label: "Khóa học của tôi",
+                label: uiText("Khóa học của tôi"),
                 desc: "Soạn bài giảng & học liệu",
                 icon: "book" as IconName,
               },
               {
                 to: "/app/teaching/classes",
-                label: "Lớp giảng dạy",
+                label: uiText("Lớp giảng dạy"),
                 desc: "Điểm danh & quản lý lớp",
                 icon: "users" as IconName,
               },
               {
                 to: "/app/teaching/revenue",
-                label: "Doanh thu & Thù lao",
+                label: uiText("Doanh thu & Thù lao"),
                 desc: "Báo cáo doanh số & đối soát",
                 icon: "card" as IconName,
               },
               {
                 to: "/app/teaching/ai",
-                label: "Trợ lý AI giáo trình",
+                label: uiText("Trợ lý AI giáo trình"),
                 desc: "Tạo đề thi & tài liệu mẫu",
                 icon: "sparkles" as IconName,
               },
@@ -479,25 +487,25 @@ export function Account() {
             shortcuts: [
               {
                 to: "/app/learn",
-                label: "Khóa học đang học",
+                label: uiText("Khóa học đang học"),
                 desc: "Tiếp tục bài giảng của bạn",
                 icon: "book" as IconName,
               },
               {
                 to: "/app/classes",
-                label: "Lớp học trực tuyến",
+                label: uiText("Lớp học trực tuyến"),
                 desc: "Tham gia lớp & điểm danh",
                 icon: "class" as IconName,
               },
               {
                 to: "/app/schedule",
-                label: "Thời khóa biểu",
+                label: uiText("Thời khóa biểu"),
                 desc: "Lịch học & sự kiện tuần này",
                 icon: "calendar" as IconName,
               },
               {
                 to: "/app/ai-tutor",
-                label: "Gia sư AI 24/7",
+                label: uiText("Gia sư AI 24/7"),
                 desc: "Hỏi đáp & luyện thi thông minh",
                 icon: "ai" as IconName,
               },
@@ -510,33 +518,38 @@ export function Account() {
       <header className="account-header">
         <div className="account-eyebrow">
           <Icon name="shield" size={13} />
-          <span>Tài khoản & bảo mật</span>
+          <span>{uiText("Tài khoản & bảo mật")}</span>
         </div>
-        <h1>Hồ sơ & bảo mật tài khoản</h1>
-        <p className="account-lead">Thông tin chính thức, nhận diện và thiết lập bảo vệ danh tính của bạn.</p>
+        <h1>{uiText("Hồ sơ & bảo mật tài khoản")}</h1>
+        <p className="account-lead">
+          {uiText("Thông tin chính thức, nhận diện và thiết lập bảo vệ danh tính của bạn.")}
+        </p>
       </header>
 
       {message && (
         <div className="account-status-alert" role="status">
           <Icon name="info" size={16} />
-          <span>{message}</span>
+          <span>{uiText(message)}</span>
         </div>
       )}
 
       {/* Hero Identity Banner */}
-      <section className={`account-hero ${roleConfig.roleClass}`} aria-label="Thông tin nhận diện hồ sơ">
+      <section
+        className={`account-hero ${roleConfig.roleClass}`}
+        aria-label={uiText("Thông tin nhận diện hồ sơ")}
+      >
         <div className="account-hero-content">
           <div className="account-avatar-wrapper">
             <div className="account-avatar-frame">
               <Avatar large />
-              <span className="account-online-dot" title="Tài khoản đang hoạt động" />
+              <span className="account-online-dot" title={uiText("Tài khoản đang hoạt động")} />
             </div>
             <div className="account-avatar-actions">
-              <label className="account-upload-btn" title="Tải ảnh mới từ máy tính">
+              <label className="account-upload-btn" title={uiText("Tải ảnh mới từ máy tính")}>
                 <Icon name="upload" size={13} />
-                <span>{busy ? "Đang lưu…" : "Tải ảnh mới"}</span>
+                <span>{busy ? uiText("Đang lưu…") : uiText("Tải ảnh mới")}</span>
                 <input
-                  aria-label="Tải ảnh đại diện"
+                  aria-label={uiText("Tải ảnh đại diện")}
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
                   disabled={busy}
@@ -552,14 +565,14 @@ export function Account() {
                   className="account-delete-avatar-btn"
                   disabled={busy}
                   onClick={() => void removeAvatar()}
-                  title="Xóa ảnh đại diện hiện tại"
+                  title={uiText("Xóa ảnh đại diện hiện tại")}
                 >
                   <Icon name="trash" size={13} />
-                  <span>Xóa</span>
+                  <span>{uiText("Xóa")}</span>
                 </button>
               )}
             </div>
-            <span className="account-avatar-hint">PNG, JPEG hoặc WebP · Tối đa 8 MB</span>
+            <span className="account-avatar-hint">{uiText("PNG, JPEG hoặc WebP · Tối đa 8 MB")}</span>
           </div>
 
           <div className="account-hero-details">
@@ -567,16 +580,16 @@ export function Account() {
               <h2 className="account-hero-name">{p.displayName}</h2>
               <span className={`account-role-badge ${roleConfig.badgeClass}`}>
                 <Icon name={roleConfig.badgeIcon} size={13} />
-                <span>{roleConfig.roleTitle}</span>
+                <span>{uiText(roleConfig.roleTitle)}</span>
               </span>
               {role === "LECTURER" && (
                 <span className={`account-verification-pill ${p.lecturerVerified ? "verified" : "pending"}`}>
                   <Icon name={p.lecturerVerified ? "checkCircle" : "clock"} size={11} />
-                  <span>{p.lecturerVerified ? "Đã xác thực" : "Chờ xác thực"}</span>
+                  <span>{p.lecturerVerified ? uiText("Đã xác thực") : uiText("Chờ xác thực")}</span>
                 </span>
               )}
             </div>
-            <p className="account-hero-tagline">{roleConfig.tagline}</p>
+            <p className="account-hero-tagline">{uiText(roleConfig.tagline)}</p>
 
             <div className="account-hero-ribbon">
               <div className="account-ribbon-item">
@@ -588,23 +601,24 @@ export function Account() {
               <div className="account-ribbon-item">
                 <Icon name="checkCircle" size={14} style={{ color: "#10b981" }} />
                 <span>
-                  Trạng thái: <strong style={{ color: "#10b981" }}>Đang hoạt động</strong>
+                  {uiText("Trạng thái: ")}
+                  <strong style={{ color: "#10b981" }}>{uiText("Đang hoạt động")}</strong>
                 </span>
               </div>
               <div className="account-ribbon-item">
-                <span>Mã ID:</span>
+                <span>{uiText("Mã ID:")}</span>
                 <button
                   type="button"
                   className="account-copy-chip"
                   onClick={copyUserId}
-                  title="Bấm để sao chép mã tài khoản"
+                  title={uiText("Bấm để sao chép mã tài khoản")}
                 >
                   <Icon
                     name={copied ? "check" : "copy"}
                     size={12}
                     style={{ color: copied ? "#10b981" : "inherit" }}
                   />
-                  <span>{copied ? "Đã sao chép!" : p.userId.slice(0, 13) + "..."}</span>
+                  <span>{copied ? uiText("Đã sao chép!") : p.userId.slice(0, 13) + "..."}</span>
                 </button>
               </div>
             </div>
@@ -613,10 +627,10 @@ export function Account() {
       </section>
 
       {/* Quick Navigation Shortcuts */}
-      <section className="account-shortcuts-section" aria-label="Lối tắt theo vai trò">
+      <section className="account-shortcuts-section" aria-label={uiText("Lối tắt theo vai trò")}>
         <h3 className="account-shortcuts-title">
           <Icon name="zap" size={14} style={{ color: "var(--blue)" }} />
-          <span>{roleConfig.shortcutsTitle}</span>
+          <span>{uiText(roleConfig.shortcutsTitle)}</span>
         </h3>
         <div className="account-shortcuts-grid">
           {roleConfig.shortcuts.map((sc) => (
@@ -626,7 +640,7 @@ export function Account() {
               </div>
               <div className="account-shortcut-info">
                 <span className="account-shortcut-label">{sc.label}</span>
-                <span className="account-shortcut-desc">{sc.desc}</span>
+                <span className="account-shortcut-desc">{uiText(sc.desc)}</span>
               </div>
               <Icon name="chevronRight" size={14} style={{ color: "var(--muted)", opacity: 0.6 }} />
             </Link>
@@ -644,54 +658,54 @@ export function Account() {
                 <Icon name="user" size={18} />
               </div>
               <div>
-                <h2 id="heading-personal-info">Thông tin tài khoản</h2>
-                <p>Chi tiết nhận diện và vai trò của bạn</p>
+                <h2 id="heading-personal-info">{uiText("Thông tin tài khoản")}</h2>
+                <p>{uiText("Chi tiết nhận diện và vai trò của bạn")}</p>
               </div>
             </div>
-            <span className="account-pill-tag">Hồ sơ</span>
+            <span className="account-pill-tag">{uiText("Hồ sơ")}</span>
           </div>
 
           <div className="account-facts-list">
             <div className="account-fact-row">
               <span className="account-fact-label">
                 <Icon name="mail" size={14} />
-                <span>Email tài khoản</span>
+                <span>{uiText("Email tài khoản")}</span>
               </span>
               <span className="account-fact-value">{p.emailMasked}</span>
             </div>
             <div className="account-fact-row">
               <span className="account-fact-label">
                 <Icon name="graduation" size={14} />
-                <span>Vai trò</span>
+                <span>{uiText("Vai trò")}</span>
               </span>
-              <span className="account-fact-value">{roleLabel(p)}</span>
+              <span className="account-fact-value">{uiText(roleLabel(p))}</span>
             </div>
             <div className="account-fact-row">
               <span className="account-fact-label">
                 <Icon name="shield" size={14} />
-                <span>Trạng thái hoạt động</span>
+                <span>{uiText("Trạng thái hoạt động")}</span>
               </span>
               <span className="account-fact-value account-status-active">
-                {p.status === "ACTIVE" ? "Đang hoạt động" : p.status}
+                {p.status === "ACTIVE" ? uiText("Đang hoạt động") : p.status}
               </span>
             </div>
             <div className="account-fact-row">
               <span className="account-fact-label">
                 <Icon name="key" size={14} />
-                <span>Mã định danh (UUID)</span>
+                <span>{uiText("Mã định danh (UUID)")}</span>
               </span>
               <button
                 type="button"
                 className="account-copy-chip"
                 onClick={copyUserId}
-                title="Bấm để sao chép toàn bộ mã tài khoản"
+                title={uiText("Bấm để sao chép toàn bộ mã tài khoản")}
               >
                 <Icon
                   name={copied ? "check" : "copy"}
                   size={12}
                   style={{ color: copied ? "#10b981" : "inherit" }}
                 />
-                <span>{copied ? "Đã sao chép" : p.userId}</span>
+                <span>{copied ? uiText("Đã sao chép") : p.userId}</span>
               </button>
             </div>
           </div>
@@ -699,8 +713,10 @@ export function Account() {
           <form className="account-form" onSubmit={(e) => void save(e)}>
             <div className="account-form-group">
               <label className="account-form-label" htmlFor="input-displayName">
-                <span>Họ và tên hiển thị</span>
-                <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: "normal" }}>2–100 ký tự</span>
+                <span>{uiText("Họ và tên hiển thị")}</span>
+                <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: "normal" }}>
+                  {uiText("2–100 ký tự")}
+                </span>
               </label>
               <div className="account-input-box">
                 <span className="account-input-icon">
@@ -715,17 +731,19 @@ export function Account() {
                   minLength={2}
                   maxLength={100}
                   required
-                  placeholder="Nhập họ và tên của bạn"
+                  placeholder={uiText("Nhập họ và tên của bạn")}
                 />
               </div>
               <p className="account-form-hint">
-                Tên hiển thị công khai trên bài giảng, chứng chỉ, bài kiểm tra và giao tiếp lớp học.
+                {uiText(
+                  "Tên hiển thị công khai trên bài giảng, chứng chỉ, bài kiểm tra và giao tiếp lớp học.",
+                )}
               </p>
             </div>
 
             <button type="submit" className="account-submit-btn" disabled={busy}>
               <Icon name="check" size={15} />
-              <span>{busy ? "Đang xử lý…" : "Lưu tên hiển thị"}</span>
+              <span>{busy ? uiText("Đang xử lý…") : uiText("Lưu tên hiển thị")}</span>
             </button>
           </form>
         </section>
@@ -738,25 +756,27 @@ export function Account() {
                 <Icon name="lock" size={18} />
               </div>
               <div>
-                <h2 id="heading-security-password">Bảo mật & Mật khẩu</h2>
-                <p>Cập nhật mật khẩu để bảo vệ tài khoản</p>
+                <h2 id="heading-security-password">{uiText("Bảo mật & Mật khẩu")}</h2>
+                <p>{uiText("Cập nhật mật khẩu để bảo vệ tài khoản")}</p>
               </div>
             </div>
-            <span className="account-pill-tag">Bảo vệ</span>
+            <span className="account-pill-tag">{uiText("Bảo vệ")}</span>
           </div>
 
           <div className="account-security-notice">
             <Icon name="shield" size={16} className="notice-icon" />
             <div>
-              <strong>Xác thực an toàn:</strong> Sau khi đổi mật khẩu thành công, toàn bộ phiên đăng nhập cũ
-              sẽ được đăng xuất an toàn. Bạn sẽ cần đăng nhập lại với mật khẩu mới.
+              <strong>{uiText("Xác thực an toàn:")}</strong>{" "}
+              {uiText(
+                " Sau khi đổi mật khẩu thành công, toàn bộ phiên đăng nhập cũ sẽ được đăng xuất an toàn. Bạn sẽ cần đăng nhập lại với mật khẩu mới.",
+              )}
             </div>
           </div>
 
           <form className="account-form" onSubmit={(e) => void save(e, true)}>
             <div className="account-form-group">
               <label className="account-form-label" htmlFor="input-currentPassword">
-                <span>Mật khẩu hiện tại</span>
+                <span>{uiText("Mật khẩu hiện tại")}</span>
               </label>
               <div className="account-input-box">
                 <span className="account-input-icon">
@@ -769,14 +789,14 @@ export function Account() {
                   autoComplete="current-password"
                   required
                   maxLength={128}
-                  placeholder="Nhập mật khẩu hiện tại"
+                  placeholder={uiText("Nhập mật khẩu hiện tại")}
                 />
                 <button
                   type="button"
                   className="account-password-toggle"
                   onClick={() => setShowCurrent(!showCurrent)}
-                  aria-label={showCurrent ? "Ẩn mật khẩu hiện tại" : "Hiện mật khẩu hiện tại"}
-                  title={showCurrent ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  aria-label={showCurrent ? uiText("Ẩn mật khẩu hiện tại") : uiText("Hiện mật khẩu hiện tại")}
+                  title={showCurrent ? uiText("Ẩn mật khẩu") : uiText("Hiện mật khẩu")}
                 >
                   <Icon name={showCurrent ? "eye" : "lock"} size={15} />
                 </button>
@@ -785,9 +805,9 @@ export function Account() {
 
             <div className="account-form-group">
               <label className="account-form-label" htmlFor="input-newPassword">
-                <span>Mật khẩu mới</span>
+                <span>{uiText("Mật khẩu mới")}</span>
                 <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: "normal" }}>
-                  Tối thiểu 12 ký tự
+                  {uiText("Tối thiểu 12 ký tự")}
                 </span>
               </label>
               <div className="account-input-box">
@@ -802,7 +822,7 @@ export function Account() {
                   required
                   minLength={12}
                   maxLength={128}
-                  placeholder="Nhập ít nhất 12 ký tự"
+                  placeholder={uiText("Nhập ít nhất 12 ký tự")}
                   value={newPasswordVal}
                   onChange={(e) => setNewPasswordVal(e.target.value)}
                 />
@@ -810,8 +830,8 @@ export function Account() {
                   type="button"
                   className="account-password-toggle"
                   onClick={() => setShowNew(!showNew)}
-                  aria-label={showNew ? "Ẩn mật khẩu mới" : "Hiện mật khẩu mới"}
-                  title={showNew ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  aria-label={showNew ? uiText("Ẩn mật khẩu mới") : uiText("Hiện mật khẩu mới")}
+                  title={showNew ? uiText("Ẩn mật khẩu") : uiText("Hiện mật khẩu")}
                 >
                   <Icon name={showNew ? "eye" : "lock"} size={15} />
                 </button>
@@ -828,16 +848,21 @@ export function Account() {
                   </div>
                   <div className="account-pwd-strength-text">
                     <span>
-                      Độ mạnh: <strong>{strength.text}</strong>
+                      {uiText("Độ mạnh: ")}
+                      <strong>{strength.text}</strong>
                     </span>
-                    <span>{newPasswordVal.length}/12 ký tự</span>
+                    <span>
+                      {newPasswordVal.length}
+                      {uiText("/12 ký tự")}
+                    </span>
                   </div>
                 </div>
               )}
 
               <p className="account-form-hint">
-                Mật khẩu từ 12–128 ký tự. Nên kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt để an toàn tối
-                đa.
+                {uiText(
+                  "Mật khẩu từ 12–128 ký tự. Nên kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt để an toàn tối đa.",
+                )}
               </p>
             </div>
 
@@ -847,7 +872,7 @@ export function Account() {
               disabled={busy || (newPasswordVal.length > 0 && newPasswordVal.length < 12)}
             >
               <Icon name="shield" size={15} />
-              <span>{busy ? "Đang xử lý…" : "Đổi mật khẩu ngay"}</span>
+              <span>{busy ? uiText("Đang xử lý…") : uiText("Đổi mật khẩu ngay")}</span>
             </button>
           </form>
         </section>

@@ -1,3 +1,4 @@
+import { useUiText } from "../../../../src/use-language";
 import { useState, useMemo } from "react";
 import { Share, StyleSheet, Text, TextInput, View, Pressable } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -23,6 +24,7 @@ function roster(value: unknown) {
 }
 
 export default function CourseRoster() {
+  const uiText = useUiText();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const query = useMobileQuery(courseId ? `/api/v1/courses/${courseId}/roster` : null, roster);
   const [search, setSearch] = useState("");
@@ -46,9 +48,11 @@ export default function CourseRoster() {
     const cell = (value: unknown) => `"${String(value).replaceAll('"', '""')}"`;
     try {
       await Share.share({
-        title: "Danh sách học viên khóa học",
+        title: uiText("Danh sách học viên khóa học"),
         message: [
-          ["Mã học viên", "Họ tên", "Email", "Ngày ghi danh", "Tiến độ", "Trạng thái"],
+          ["Mã học viên", "Họ tên", "Email", "Ngày ghi danh", "Tiến độ", "Trạng thái"].map((source) =>
+            uiText(source),
+          ),
           ...items.map((r) => [r.studentId, r.name, r.email, r.enrolledAt, r.progress, r.state]),
         ]
           .map((r) => r.map(cell).join(","))
@@ -62,13 +66,13 @@ export default function CourseRoster() {
   return (
     <Page>
       <ScreenHeader
-        title="Học viên khóa học"
-        subtitle={`${query.data?.length ?? 0} học viên đã ghi danh`}
+        title={uiText("Học viên khóa học")}
+        subtitle={uiText("{0} học viên đã ghi danh", [query.data?.length ?? 0])}
         onBack={() => (router.canGoBack() ? router.back() : router.replace("/teaching/courses"))}
         rightElement={
           items.length > 0 ? (
             <Button
-              label="Chia sẻ CSV"
+              label={uiText("Chia sẻ CSV")}
               size="sm"
               variant="outline"
               icon={<Icon name="document" size={14} color={tokens.color.brand} />}
@@ -88,7 +92,7 @@ export default function CourseRoster() {
               </View>
               <View>
                 <Text style={rs.statValue}>{query.data.length}</Text>
-                <Text style={rs.statLabel}>Tổng ghi danh</Text>
+                <Text style={rs.statLabel}>{uiText("Tổng ghi danh")}</Text>
               </View>
             </View>
 
@@ -100,7 +104,7 @@ export default function CourseRoster() {
               </View>
               <View>
                 <Text style={[rs.statValue, { color: "#15803D" }]}>{activeEnrolled}</Text>
-                <Text style={rs.statLabel}>Đang hoạt động</Text>
+                <Text style={rs.statLabel}>{uiText("Đang hoạt động")}</Text>
               </View>
             </View>
 
@@ -112,7 +116,7 @@ export default function CourseRoster() {
               </View>
               <View>
                 <Text style={[rs.statValue, { color: "#2563EB" }]}>{items.length}</Text>
-                <Text style={rs.statLabel}>Kết quả lọc</Text>
+                <Text style={rs.statLabel}>{uiText("Kết quả lọc")}</Text>
               </View>
             </View>
           </View>
@@ -121,11 +125,11 @@ export default function CourseRoster() {
           <View style={rs.searchBar}>
             <Icon name="search" size={16} color={tokens.color.muted} />
             <TextInput
-              accessibilityLabel="Tìm học viên"
+              accessibilityLabel={uiText("Tìm học viên")}
               style={rs.searchInput}
               value={search}
               onChangeText={setSearch}
-              placeholder="Tên, email hoặc mã học viên..."
+              placeholder={uiText("Tên, email hoặc mã học viên...")}
               placeholderTextColor={tokens.color.muted}
             />
             {search ? (
@@ -139,14 +143,14 @@ export default function CourseRoster() {
 
       {query.loading ? (
         <View style={rs.loadingBox}>
-          <Text style={styles.text}>Đang tải danh sách học viên…</Text>
+          <Text style={styles.text}>{uiText("Đang tải danh sách học viên…")}</Text>
         </View>
       ) : null}
 
       {query.error || error ? (
         <View style={rs.errorCard}>
           <Text style={styles.error}>{query.error || error}</Text>
-          <Button label="Thử lại" size="sm" onPress={query.retry} />
+          <Button label={uiText("Thử lại")} size="sm" onPress={query.retry} />
         </View>
       ) : null}
 
@@ -155,11 +159,13 @@ export default function CourseRoster() {
           <View style={rs.emptyIconBox}>
             <Icon name="people" size={32} color={tokens.color.brand} />
           </View>
-          <Text style={rs.emptyTitle}>Chưa có học viên ghi danh</Text>
+          <Text style={rs.emptyTitle}>{uiText("Chưa có học viên ghi danh")}</Text>
           <Text style={rs.emptyDesc}>
-            Khi có học viên mua hoặc đăng ký khóa học, danh sách và tiến độ học tập sẽ hiển thị tại đây.
+            {uiText(
+              "Khi có học viên mua hoặc đăng ký khóa học, danh sách và tiến độ học tập sẽ hiển thị tại đây.",
+            )}
           </Text>
-          <Button label="Tải lại danh sách" size="sm" variant="outline" onPress={query.retry} />
+          <Button label={uiText("Tải lại danh sách")} size="sm" variant="outline" onPress={query.retry} />
         </View>
       ) : null}
 
@@ -183,12 +189,15 @@ export default function CourseRoster() {
               <View style={rs.studentMetaRow}>
                 <View style={rs.metaItem}>
                   <Icon name="calendar" size={12} color={tokens.color.muted} />
-                  <Text style={rs.metaText}>{r.enrolledAt ? r.enrolledAt.slice(0, 10) : "Mới ghi danh"}</Text>
+                  <Text style={rs.metaText}>
+                    {r.enrolledAt ? r.enrolledAt.slice(0, 10) : uiText("Mới ghi danh")}
+                  </Text>
                 </View>
                 <View style={rs.metaItem}>
                   <Icon name="award" size={12} color={tokens.color.brand} />
                   <Text style={[rs.metaText, { color: tokens.color.brand, fontWeight: "700" }]}>
-                    Tiến độ: {String(r.progress)}%
+                    {uiText("Tiến độ: ")}
+                    {String(r.progress)}%
                   </Text>
                 </View>
               </View>

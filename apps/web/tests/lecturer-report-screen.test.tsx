@@ -43,6 +43,7 @@ describe("lecturer report screen", () => {
       </MemoryRouter>,
     );
     await screen.findByText("Đã tải từ máy chủ", { exact: false });
+    expect(screen.getByText("CLASS1").getAttribute("title")).toBe("ID đầy đủ: class-1");
     const card = screen.getByText("Lượt ghi danh đang học").parentElement!;
     expect(card.textContent).toContain("3");
     fireEvent.change(screen.getByLabelText("Lớp học phần"), { target: { value: "class-1" } });

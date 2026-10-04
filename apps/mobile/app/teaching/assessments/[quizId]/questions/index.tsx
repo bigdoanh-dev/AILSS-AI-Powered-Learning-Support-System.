@@ -1,3 +1,4 @@
+import { useUiText, interfaceMessage, type InterfaceMessage } from "../../../../../src/use-language";
 import { useEffect, useState, useMemo } from "react";
 import { Text, View, TextInput, Pressable, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -17,6 +18,7 @@ import {
 import { Page, Button, styles, tokens } from "../../../../../src/ui";
 
 export default function QuestionsEditorScreen() {
+  const uiText = useUiText();
   const { quizId } = useLocalSearchParams<{ quizId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -28,7 +30,7 @@ export default function QuestionsEditorScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] = useState<InterfaceMessage>("");
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
@@ -110,7 +112,7 @@ export default function QuestionsEditorScreen() {
       setQuestions(updated.questions);
       setDirty(false);
       setSaving(false);
-      setMsg(`Đã lưu thành công phiên bản v${updated.currentVersion}!`);
+      setMsg(interfaceMessage("Đã lưu thành công phiên bản v{0}!", [updated.currentVersion]));
     } catch (e: unknown) {
       setSaving(false);
       if (e instanceof ApiError && e.status === 409) {
@@ -125,27 +127,27 @@ export default function QuestionsEditorScreen() {
 
   return (
     <Page>
-      <Text style={styles.title}>Soạn câu hỏi</Text>
+      <Text style={styles.title}>{uiText("Soạn câu hỏi")}</Text>
       <Text style={styles.small}>
-        {quiz?.title ?? "Bài kiểm tra"} · {questions.length} câu hỏi
+        {quiz?.title ?? "Bài kiểm tra"} · {questions.length} {uiText(" câu hỏi")}
       </Text>
 
       {loading && (
         <View style={s.centerBox}>
           <ActivityIndicator color={tokens.color.brand} />
-          <Text style={styles.small}>Đang tải câu hỏi…</Text>
+          <Text style={styles.small}>{uiText("Đang tải câu hỏi…")}</Text>
         </View>
       )}
 
       {error ? (
         <View style={styles.card}>
-          <Text style={styles.error}>{error}</Text>
+          <Text style={styles.error}>{uiText(error)}</Text>
         </View>
       ) : null}
 
       {msg ? (
         <View style={[styles.card, s.successCard]}>
-          <Text style={s.successText}>{msg}</Text>
+          <Text style={s.successText}>{uiText(msg)}</Text>
         </View>
       ) : null}
 
@@ -157,21 +159,24 @@ export default function QuestionsEditorScreen() {
               <Pressable
                 key={i}
                 accessibilityRole="button"
-                accessibilityLabel={`Câu hỏi ${i + 1}`}
+                accessibilityLabel={uiText("Câu hỏi {0}", [i + 1])}
                 style={[s.numChip, selected === i && s.numChipActive]}
                 onPress={() => setSelected(i)}
               >
-                <Text style={[s.numChipText, selected === i && s.numChipTextActive]}>Câu {i + 1}</Text>
+                <Text style={[s.numChipText, selected === i && s.numChipTextActive]}>
+                  {uiText("Câu ")}
+                  {i + 1}
+                </Text>
               </Pressable>
             ))}
             {editable && (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Thêm câu hỏi mới"
+                accessibilityLabel={uiText("Thêm câu hỏi mới")}
                 style={s.addChip}
                 onPress={handleAddQuestion}
               >
-                <Text style={s.addChipText}>+ Thêm câu</Text>
+                <Text style={s.addChipText}>{uiText("+ Thêm câu")}</Text>
               </Pressable>
             )}
           </ScrollView>
@@ -181,21 +186,22 @@ export default function QuestionsEditorScreen() {
             <View style={s.editorCard}>
               <View style={s.editorHeader}>
                 <Text style={s.editorTitle}>
-                  Câu {selected + 1} / {questions.length}
+                  {uiText("Câu ")}
+                  {selected + 1} / {questions.length}
                 </Text>
                 {editable && questions.length > 1 && (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Xóa câu hỏi này"
+                    accessibilityLabel={uiText("Xóa câu hỏi này")}
                     onPress={() => handleRemoveQuestion(selected)}
                   >
-                    <Text style={s.deleteText}>✕ Xóa câu</Text>
+                    <Text style={s.deleteText}>{uiText("✕ Xóa câu")}</Text>
                   </Pressable>
                 )}
               </View>
 
               {/* Question Type */}
-              <Text style={s.fieldLabel}>Loại câu hỏi:</Text>
+              <Text style={s.fieldLabel}>{uiText("Loại câu hỏi:")}</Text>
               <View style={s.typeGrid}>
                 {(
                   [
@@ -219,22 +225,22 @@ export default function QuestionsEditorScreen() {
               </View>
 
               {/* Prompt */}
-              <Text style={s.fieldLabel}>Nội dung câu hỏi *</Text>
+              <Text style={s.fieldLabel}>{uiText("Nội dung câu hỏi *")}</Text>
               <TextInput
-                accessibilityLabel="Nội dung câu hỏi"
+                accessibilityLabel={uiText("Nội dung câu hỏi")}
                 multiline
                 numberOfLines={3}
                 style={[s.input, s.textArea]}
-                placeholder="Nhập nội dung câu hỏi..."
+                placeholder={uiText("Nhập nội dung câu hỏi...")}
                 value={currentQ.prompt}
                 onChangeText={(text) => updateQuestion({ prompt: text })}
                 editable={editable}
               />
 
               {/* Points */}
-              <Text style={s.fieldLabel}>Điểm (1-100):</Text>
+              <Text style={s.fieldLabel}>{uiText("Điểm (1-100):")}</Text>
               <TextInput
-                accessibilityLabel="Điểm câu hỏi"
+                accessibilityLabel={uiText("Điểm câu hỏi")}
                 keyboardType="decimal-pad"
                 style={s.input}
                 value={currentQ.points}
@@ -245,7 +251,7 @@ export default function QuestionsEditorScreen() {
               {/* Options for Choice questions */}
               {(currentQ.questionType === "SINGLE_CHOICE" || currentQ.questionType === "MULTIPLE_CHOICE") && (
                 <View style={s.optionsSection}>
-                  <Text style={s.fieldLabel}>Các lựa chọn & Đáp án đúng *</Text>
+                  <Text style={s.fieldLabel}>{uiText("Các lựa chọn & Đáp án đúng *")}</Text>
                   {currentQ.options?.map((opt, optIdx) => {
                     const isCorrect =
                       currentQ.questionType === "SINGLE_CHOICE"
@@ -280,9 +286,9 @@ export default function QuestionsEditorScreen() {
                         </Pressable>
 
                         <TextInput
-                          accessibilityLabel={`Lựa chọn ${optIdx + 1}`}
+                          accessibilityLabel={uiText("Lựa chọn {0}", [optIdx + 1])}
                           style={[s.input, s.optionInput]}
-                          placeholder={`Lựa chọn ${optIdx + 1}`}
+                          placeholder={uiText("Lựa chọn {0}", [optIdx + 1])}
                           value={opt}
                           onChangeText={(newText) => {
                             const newOptions = [...(currentQ.options ?? [])];
@@ -317,7 +323,7 @@ export default function QuestionsEditorScreen() {
 
                   {editable && (currentQ.options?.length ?? 0) < 10 && (
                     <Button
-                      label="+ Thêm lựa chọn"
+                      label={uiText("+ Thêm lựa chọn")}
                       onPress={() => updateQuestion({ options: [...(currentQ.options ?? []), ""] })}
                     />
                   )}
@@ -327,7 +333,7 @@ export default function QuestionsEditorScreen() {
               {/* True / False answer */}
               {currentQ.questionType === "TRUE_FALSE" && (
                 <View style={s.optionsSection}>
-                  <Text style={s.fieldLabel}>Đáp án đúng *</Text>
+                  <Text style={s.fieldLabel}>{uiText("Đáp án đúng *")}</Text>
                   <View style={s.radioRow}>
                     <Pressable
                       disabled={!editable}
@@ -335,7 +341,7 @@ export default function QuestionsEditorScreen() {
                       onPress={() => updateQuestion({ correctAnswer: true })}
                     >
                       <Text style={[s.radioBtnText, currentQ.correctAnswer === true && s.radioBtnTextActive]}>
-                        ● ĐÚNG
+                        {uiText("● ĐÚNG")}
                       </Text>
                     </Pressable>
                     <Pressable
@@ -356,11 +362,11 @@ export default function QuestionsEditorScreen() {
               {/* Short answer */}
               {currentQ.questionType === "SHORT_ANSWER" && (
                 <View style={s.optionsSection}>
-                  <Text style={s.fieldLabel}>Đáp án mẫu được chấp nhận *</Text>
+                  <Text style={s.fieldLabel}>{uiText("Đáp án mẫu được chấp nhận *")}</Text>
                   <TextInput
-                    accessibilityLabel="Đáp án mẫu"
+                    accessibilityLabel={uiText("Đáp án mẫu")}
                     style={s.input}
-                    placeholder="Nhập đáp án chính xác..."
+                    placeholder={uiText("Nhập đáp án chính xác...")}
                     value={String(currentQ.correctAnswer ?? "")}
                     onChangeText={(text) => updateQuestion({ correctAnswer: text })}
                     editable={editable}
@@ -373,20 +379,34 @@ export default function QuestionsEditorScreen() {
           {/* Validation Warnings */}
           {errors.length > 0 && (
             <View style={s.errorBox}>
-              <Text style={s.errorTitle}>Lưu ý kiểm tra ({errors.length}):</Text>
+              <Text style={s.errorTitle}>
+                {uiText("Lưu ý kiểm tra (")}
+                {errors.length}):
+              </Text>
               {errors.slice(0, 3).map((e, idx) => (
                 <Text key={idx} style={s.errorText}>
                   • {e}
                 </Text>
               ))}
-              {errors.length > 3 && <Text style={s.errorText}>... và {errors.length - 3} lưu ý khác.</Text>}
+              {errors.length > 3 && (
+                <Text style={s.errorText}>
+                  {uiText("... và ")}
+                  {errors.length - 3} {uiText(" lưu ý khác.")}
+                </Text>
+              )}
             </View>
           )}
 
           {/* Save Action */}
           {editable && (
             <Button
-              label={saving ? "Đang lưu câu hỏi…" : dirty ? "Lưu thay đổi" : "Đã lưu thay đổi"}
+              label={
+                saving
+                  ? uiText("Đang lưu câu hỏi…")
+                  : dirty
+                    ? uiText("Lưu thay đổi")
+                    : uiText("Đã lưu thay đổi")
+              }
               onPress={() => void handleSave()}
             />
           )}
@@ -394,14 +414,16 @@ export default function QuestionsEditorScreen() {
           {!editable && (
             <View style={s.noticeCard}>
               <Text style={s.noticeText}>
-                Bài kiểm tra đã xuất bản ({quiz?.state}). Không thể chỉnh sửa câu hỏi trực tiếp.
+                {uiText("Bài kiểm tra đã xuất bản (")}
+                {quiz?.state}
+                {uiText("). Không thể chỉnh sửa câu hỏi trực tiếp.")}
               </Text>
             </View>
           )}
         </>
       )}
 
-      <Button label="Quay lại chi tiết bài" onPress={() => router.back()} />
+      <Button label={uiText("Quay lại chi tiết bài")} onPress={() => router.back()} />
     </Page>
   );
 }

@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { useUiText } from "../lib/i18n";
 import { useState, useMemo, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { RevenueChart, RevenueCourses, money, type LecturerRevenue } from "../components/RevenuePanels";
@@ -31,6 +33,8 @@ const EMPTY_REVENUE: LecturerRevenue = {
 };
 
 export default function LecturerRevenueDashboard() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const [range, setRange] = useState("30d");
   const report = useLecturer<Report>(`/me/dashboard/revenue?range=${range}`);
   const account = useLecturer<{
@@ -76,10 +80,10 @@ export default function LecturerRevenueDashboard() {
 
   const backfillDate = useMemo(() => {
     if (report.data?.completeness?.backfillThrough) {
-      return new Date(report.data.completeness.backfillThrough).toLocaleDateString("vi-VN");
+      return new Date(report.data.completeness.backfillThrough).toLocaleDateString(uiLocale);
     }
-    return "chưa xác định";
-  }, [report.data]);
+    return uiText("chưa xác định");
+  }, [report.data, uiLocale, uiText]);
 
   const refundRate = useMemo(() => {
     const gross = Number(data.grossMinor) || 1;
@@ -90,12 +94,12 @@ export default function LecturerRevenueDashboard() {
   const handleExportCsv = () => {
     setIsExporting(true);
     try {
-      const rows = ["Ngày,Doanh thu gốc (VND),Hoàn tiền (VND),Thu nhập ròng (VND),Số đơn"];
+      const rows = [uiText("Ngày,Doanh thu gốc (VND),Hoàn tiền (VND),Thu nhập ròng (VND),Số đơn")];
       data.dailyRevenue.forEach((r) => {
         rows.push(`${r.day},${r.grossMinor},${r.refundMinor},${r.netMinor},${r.orders ?? 0}`);
       });
       rows.push("");
-      rows.push("Khóa học,Doanh thu gốc (VND),Hoàn tiền (VND),Thu nhập ròng (VND),Lượt mua");
+      rows.push(uiText("Khóa học,Doanh thu gốc (VND),Hoàn tiền (VND),Thu nhập ròng (VND),Lượt mua"));
       data.courses.forEach((c) => {
         rows.push(`"${c.title}",${c.grossMinor},${c.refundMinor},${c.netMinor},${c.orders}`);
       });
@@ -122,12 +126,12 @@ export default function LecturerRevenueDashboard() {
   if (!isLive || report.error)
     return (
       <section className="dashboard-section-card">
-        <h1>Doanh Thu &amp; Quyền Lợi Giảng Viên</h1>
+        <h1>{uiText("Doanh Thu & Quyền Lợi Giảng Viên")}</h1>
         <p role={report.error ? "alert" : "status"}>
-          {report.error ? lecturerError(report.error) : "Đang tải báo cáo doanh thu…"}
+          {report.error ? lecturerError(report.error) : uiText("Đang tải báo cáo doanh thu…")}
         </p>
         <button className="button" onClick={report.retry} disabled={report.pending}>
-          Kiểm tra lại
+          {uiText("Kiểm tra lại")}
         </button>
       </section>
     );
@@ -138,18 +142,19 @@ export default function LecturerRevenueDashboard() {
         <div className="rev-header-left">
           <div className="rev-eyebrow">
             <Icon name="trending" size={14} />
-            <span>TÀI CHÍNH &amp; ĐỐI SOÁT DOANH THU</span>
+            <span>{uiText("TÀI CHÍNH & ĐỐI SOÁT DOANH THU")}</span>
           </div>
-          <h1>Doanh Thu &amp; Quyền Lợi Giảng Viên</h1>
+          <h1>{uiText("Doanh Thu & Quyền Lợi Giảng Viên")}</h1>
           <p className="rev-lead">
-            Theo dõi dòng tiền bán khóa học, tỷ lệ đối soát ngân hàng tự động, hoàn tiền và thu nhập thực nhận
-            sau phân chia nền tảng.
+            {uiText(
+              "Theo dõi dòng tiền bán khóa học, tỷ lệ đối soát ngân hàng tự động, hoàn tiền và thu nhập thực nhận sau phân chia nền tảng.",
+            )}
           </p>
         </div>
         <div className="rev-header-actions">
           <Link className="button button-subtle button-small" to="/app/teaching">
             <Icon name="chevronLeft" size={14} />
-            <span>Khóa học</span>
+            <span>{uiText("Khóa học")}</span>
           </Link>
           <button
             type="button"
@@ -158,30 +163,31 @@ export default function LecturerRevenueDashboard() {
             disabled={isExporting}
           >
             <Icon name="download" size={14} />
-            <span>{isExporting ? "Đang xuất CSV…" : "Xuất báo cáo"}</span>
+            <span>{isExporting ? uiText("Đang xuất CSV…") : uiText("Xuất báo cáo")}</span>
           </button>
         </div>
       </header>
 
       {/* 2. Reconciliation Status Banner */}
-      <section className="rev-reconcile-banner" aria-label="Thông tin đối soát">
+      <section className="rev-reconcile-banner" aria-label={uiText("Thông tin đối soát")}>
         <div className="rev-reconcile-left">
           <span className="rev-reconcile-tag">
             <Icon name="checkCircle" size={13} />
-            <span>Đã đối soát</span>
+            <span>{uiText("Đã đối soát")}</span>
           </span>
           <span>
-            Dữ liệu thanh toán và hoàn tiền được tổng hợp đến <strong>{backfillDate}</strong>
+            {uiText("Dữ liệu thanh toán và hoàn tiền được tổng hợp đến ")}
+            <strong>{backfillDate}</strong>
           </span>
         </div>
         <div className="rev-reconcile-right">
-          <span>Phí nền tảng được tính theo chính sách của từng giao dịch.</span>
+          <span>{uiText("Phí nền tảng được tính theo chính sách của từng giao dịch.")}</span>
         </div>
       </section>
 
       {/* 3. Toolbar: Range Switcher & Live Status */}
       <div className="rev-toolbar-row">
-        <div className="rev-range-pills" role="group" aria-label="Khoảng thời gian báo cáo">
+        <div className="rev-range-pills" role="group" aria-label={uiText("Khoảng thời gian báo cáo")}>
           {RANGES.map((item) => (
             <button
               key={item.id}
@@ -199,12 +205,12 @@ export default function LecturerRevenueDashboard() {
           {isLive ? (
             <>
               <span className="rev-live-dot" />
-              <span>Dữ liệu thực từ hệ thống</span>
+              <span>{uiText("Dữ liệu thực từ hệ thống")}</span>
             </>
           ) : (
             <>
               <span className="rev-mock-dot" />
-              <span>Chưa có dữ liệu</span>
+              <span>{uiText("Chưa có dữ liệu")}</span>
             </>
           )}
           <button
@@ -212,7 +218,7 @@ export default function LecturerRevenueDashboard() {
             className="button button-subtle button-small"
             onClick={report.retry}
             disabled={report.pending}
-            title="Làm mới báo cáo"
+            title={uiText("Làm mới báo cáo")}
             style={{ marginLeft: 6, padding: "4px 8px", minHeight: 28 }}
           >
             <Icon name="refresh" size={13} />
@@ -222,16 +228,18 @@ export default function LecturerRevenueDashboard() {
 
       {report.pending && (
         <div className="dashboard-section-card" role="status" style={{ textAlign: "center", padding: 32 }}>
-          <p style={{ margin: 0, color: "var(--muted)" }}>Đang đồng bộ và đối soát dữ liệu doanh thu…</p>
+          <p style={{ margin: 0, color: "var(--muted)" }}>
+            {uiText("Đang đồng bộ và đối soát dữ liệu doanh thu…")}
+          </p>
         </div>
       )}
 
       {Boolean(report.error) && (
         <section className="dashboard-section-card" role="alert" style={{ borderLeft: "4px solid #dc2626" }}>
-          <h2 style={{ fontSize: "1.1rem", margin: "0 0 6px 0" }}>Chưa có báo cáo đã đối soát</h2>
+          <h2 style={{ fontSize: "1.1rem", margin: "0 0 6px 0" }}>{uiText("Chưa có báo cáo đã đối soát")}</h2>
           <p style={{ color: "var(--muted)", margin: "0 0 12px 0" }}>{lecturerError(report.error)}</p>
           <button className="button button-subtle button-small" onClick={report.retry}>
-            Thử lại
+            {uiText("Thử lại")}
           </button>
         </section>
       )}
@@ -244,11 +252,13 @@ export default function LecturerRevenueDashboard() {
             <span className="rev-kpi-icon-box blue">
               <Icon name="dollar" size={18} />
             </span>
-            <span className="rev-kpi-tag">{data.orders} đơn hoàn tất</span>
+            <span className="rev-kpi-tag">
+              {data.orders} {uiText(" đơn hoàn tất")}
+            </span>
           </div>
-          <div className="rev-kpi-value">{money(data.grossMinor)}</div>
-          <div className="rev-kpi-label">Doanh thu bán khóa học</div>
-          <p className="rev-kpi-subtext">Tổng giá trị thanh toán học viên đăng ký thành công</p>
+          <div className="rev-kpi-value">{money(data.grossMinor, uiLocale)}</div>
+          <div className="rev-kpi-label">{uiText("Doanh thu bán khóa học")}</div>
+          <p className="rev-kpi-subtext">{uiText("Tổng giá trị thanh toán học viên đăng ký thành công")}</p>
         </article>
 
         {/* KPI 2: Hoàn tiền & Điều chỉnh */}
@@ -257,11 +267,16 @@ export default function LecturerRevenueDashboard() {
             <span className="rev-kpi-icon-box amber">
               <Icon name="refresh" size={18} />
             </span>
-            <span className="rev-kpi-tag">Tỷ lệ {refundRate}%</span>
+            <span className="rev-kpi-tag">
+              {uiText("Tỷ lệ ")}
+              {refundRate}%
+            </span>
           </div>
-          <div className="rev-kpi-value">{money(data.refundMinor)}</div>
-          <div className="rev-kpi-label">Hoàn tiền &amp; Điều chỉnh</div>
-          <p className="rev-kpi-subtext">Giao dịch hoàn trả theo chính sách cam kết chất lượng 7 ngày</p>
+          <div className="rev-kpi-value">{money(data.refundMinor, uiLocale)}</div>
+          <div className="rev-kpi-label">{uiText("Hoàn tiền & Điều chỉnh")}</div>
+          <p className="rev-kpi-subtext">
+            {uiText("Giao dịch hoàn trả theo chính sách cam kết chất lượng 7 ngày")}
+          </p>
         </article>
 
         {/* KPI 3: Phí nền tảng dự kiến */}
@@ -270,11 +285,13 @@ export default function LecturerRevenueDashboard() {
             <span className="rev-kpi-icon-box purple">
               <Icon name="receipt" size={18} />
             </span>
-            <span className="rev-kpi-tag">Theo giao dịch</span>
+            <span className="rev-kpi-tag">{uiText("Theo giao dịch")}</span>
           </div>
-          <div className="rev-kpi-value">{money(data.estimatedPlatformMinor)}</div>
-          <div className="rev-kpi-label">Phí nền tảng dự kiến</div>
-          <p className="rev-kpi-subtext">Hạ tầng đám mây, băng thông video 4K và hạn ngạch AI Studio</p>
+          <div className="rev-kpi-value">{money(data.estimatedPlatformMinor, uiLocale)}</div>
+          <div className="rev-kpi-label">{uiText("Phí nền tảng dự kiến")}</div>
+          <p className="rev-kpi-subtext">
+            {uiText("Hạ tầng đám mây, băng thông video 4K và hạn ngạch AI Studio")}
+          </p>
         </article>
 
         {/* KPI 4: Thu nhập thực nhận (Hero Highlight Card) */}
@@ -283,11 +300,13 @@ export default function LecturerRevenueDashboard() {
             <span className="rev-kpi-icon-box">
               <Icon name="sparkles" size={18} />
             </span>
-            <span className="rev-kpi-tag">Thu nhập dự kiến</span>
+            <span className="rev-kpi-tag">{uiText("Thu nhập dự kiến")}</span>
           </div>
-          <div className="rev-kpi-value">{money(data.estimatedEarningsMinor)}</div>
-          <div className="rev-kpi-label">Thu nhập thực nhận dự kiến</div>
-          <p className="rev-kpi-subtext">Ước tính sau phí nền tảng; trạng thái chi trả được quản lý riêng</p>
+          <div className="rev-kpi-value">{money(data.estimatedEarningsMinor, uiLocale)}</div>
+          <div className="rev-kpi-label">{uiText("Thu nhập thực nhận dự kiến")}</div>
+          <p className="rev-kpi-subtext">
+            {uiText("Ước tính sau phí nền tảng; trạng thái chi trả được quản lý riêng")}
+          </p>
         </article>
       </div>
 
@@ -295,8 +314,10 @@ export default function LecturerRevenueDashboard() {
       <section className="rev-chart-card">
         <div className="rev-chart-header">
           <div>
-            <h2>Xu Hướng Doanh Thu &amp; Thu Nhập Ròng</h2>
-            <p className="subtext">Biểu đồ biến động thanh toán khóa học theo mốc thời gian đối soát.</p>
+            <h2>{uiText("Xu Hướng Doanh Thu & Thu Nhập Ròng")}</h2>
+            <p className="subtext">
+              {uiText("Biểu đồ biến động thanh toán khóa học theo mốc thời gian đối soát.")}
+            </p>
           </div>
         </div>
         <RevenueChart rows={data.dailyRevenue} />
@@ -307,12 +328,16 @@ export default function LecturerRevenueDashboard() {
         {/* Left Column: Phân Bổ Doanh Thu Từng Khóa Học */}
         <section className="rev-sub-card">
           <div>
-            <h2>Hiệu Quả Doanh Thu Từng Khóa Học</h2>
-            <p className="subtext">Tỷ trọng đóng góp dòng tiền và số lượng học viên của từng khóa.</p>
+            <h2>{uiText("Hiệu Quả Doanh Thu Từng Khóa Học")}</h2>
+            <p className="subtext">
+              {uiText("Tỷ trọng đóng góp dòng tiền và số lượng học viên của từng khóa.")}
+            </p>
           </div>
           <RevenueCourses rows={data.courses} />
           <div style={{ marginTop: 8, borderTop: "1px solid var(--line, #e2e8f0)", paddingTop: 14 }}>
-            <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>Khảo sát học viên:</span>
+            <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>
+              {uiText("Khảo sát học viên:")}
+            </span>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
               {data.courses.map((course) => (
                 <div
@@ -324,7 +349,7 @@ export default function LecturerRevenueDashboard() {
                     to={`/courses/${course.courseId}`}
                     style={{ color: "var(--blue, #0284c7)", fontWeight: 600 }}
                   >
-                    Xem đánh giá →
+                    {uiText("Xem đánh giá →")}
                   </Link>
                 </div>
               ))}
@@ -336,23 +361,27 @@ export default function LecturerRevenueDashboard() {
         <section className="rev-sub-card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
-              <h2>Tài Khoản Nhận Doanh Thu</h2>
-              <p className="subtext">Tài khoản ngân hàng nhận chi trả của bạn.</p>
+              <h2>{uiText("Tài Khoản Nhận Doanh Thu")}</h2>
+              <p className="subtext">{uiText("Tài khoản ngân hàng nhận chi trả của bạn.")}</p>
             </div>
             <button
               type="button"
               className="button button-subtle button-small"
               onClick={() => setShowEditBank(!showEditBank)}
             >
-              {showEditBank ? "Đóng form" : "Chỉnh sửa"}
+              {showEditBank ? uiText("Đóng form") : uiText("Chỉnh sửa")}
             </button>
           </div>
 
           {/* Visual Metallic Bank Card */}
-          <div className="rev-bank-card-preview" role="region" aria-label="Thẻ thông tin ngân hàng thụ hưởng">
+          <div
+            className="rev-bank-card-preview"
+            role="region"
+            aria-label={uiText("Thẻ thông tin ngân hàng thụ hưởng")}
+          >
             <div className="rev-card-top">
               <span className="rev-card-bank-name">
-                {account.data?.bankName ? account.data.bankName : "Chưa cấu hình ngân hàng"}
+                {account.data?.bankName ? account.data.bankName : uiText("Chưa cấu hình ngân hàng")}
               </span>
               <div className="rev-card-chip" aria-hidden="true" />
             </div>
@@ -361,14 +390,14 @@ export default function LecturerRevenueDashboard() {
 
             <div className="rev-card-bottom">
               <div>
-                <div className="rev-card-holder-label">Chủ tài khoản thụ hưởng</div>
+                <div className="rev-card-holder-label">{uiText("Chủ tài khoản thụ hưởng")}</div>
                 <div className="rev-card-holder-name">
-                  {account.data?.accountHolder ? account.data.accountHolder : "Chưa cấu hình"}
+                  {account.data?.accountHolder ? account.data.accountHolder : uiText("Chưa cấu hình")}
                 </div>
               </div>
               <span className="rev-card-status-verified">
                 <Icon name="checkCircle" size={13} />
-                <span>{account.data ? "Đã lưu" : "Chưa cấu hình"}</span>
+                <span>{account.data ? uiText("Đã lưu") : uiText("Chưa cấu hình")}</span>
               </span>
             </div>
           </div>
@@ -381,7 +410,7 @@ export default function LecturerRevenueDashboard() {
               key={account.data?.updatedAt ?? account.data?.accountNumber ?? "new"}
             >
               <label>
-                Tên Ngân hàng thụ hưởng
+                {uiText("Tên Ngân hàng thụ hưởng")}
                 <input
                   name="bankName"
                   maxLength={100}
@@ -392,7 +421,7 @@ export default function LecturerRevenueDashboard() {
                 />
               </label>
               <label>
-                Số tài khoản ngân hàng
+                {uiText("Số tài khoản ngân hàng")}
                 <input
                   name="accountNumber"
                   inputMode="numeric"
@@ -403,7 +432,7 @@ export default function LecturerRevenueDashboard() {
                 />
               </label>
               <label>
-                Họ và tên chủ tài khoản (Viết in hoa không dấu)
+                {uiText("Họ và tên chủ tài khoản (Viết in hoa không dấu)")}
                 <input
                   name="accountHolder"
                   maxLength={100}
@@ -414,7 +443,7 @@ export default function LecturerRevenueDashboard() {
                 />
               </label>
               <button className="button" type="submit" disabled={savingAccount} style={{ marginTop: 4 }}>
-                {savingAccount ? "Đang lưu và xác thực…" : "Lưu tài khoản nhận tiền"}
+                {savingAccount ? uiText("Đang lưu và xác thực…") : uiText("Lưu tài khoản nhận tiền")}
               </button>
             </form>
           )}
@@ -437,7 +466,7 @@ export default function LecturerRevenueDashboard() {
             }}
           >
             <Icon name="shield" size={13} />
-            <span>Thông tin tài khoản được dùng để nhận chi trả doanh thu của bạn.</span>
+            <span>{uiText("Thông tin tài khoản được dùng để nhận chi trả doanh thu của bạn.")}</span>
           </p>
         </section>
       </div>

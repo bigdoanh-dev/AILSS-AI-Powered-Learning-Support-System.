@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../src/use-language";
+import { useUiText, interfaceMessage, type InterfaceMessage } from "../../../src/use-language";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
@@ -33,6 +35,8 @@ const card = {
 } as const;
 
 export default function AdminRevenueDashboard() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [range, setRange] = useState<(typeof ranges)[number]["key"]>("30d");
@@ -43,8 +47,8 @@ export default function AdminRevenueDashboard() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preparing, setPreparing] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState<InterfaceMessage>("");
+  const [message, setMessage] = useState<InterfaceMessage>("");
 
   const load = useCallback(async () => {
     if (snapshot.user?.role !== "ADMIN") return;
@@ -65,12 +69,16 @@ export default function AdminRevenueDashboard() {
       setPercentInput(String(results[1].value.basisPoints / 100));
     } else {
       setPolicy(null);
-      setError((value) => `${value} Không tải được tỷ lệ chiết khấu.`);
+      setError((value) =>
+        interfaceMessage("{0} {1}", [value, interfaceMessage("Không tải được tỷ lệ chiết khấu.")]),
+      );
     }
     if (results[2]?.status === "fulfilled") setPayout(results[2].value);
     else {
       setPayout(null);
-      setError((value) => `${value} Không tải được phiếu chi.`);
+      setError((value) =>
+        interfaceMessage("{0} {1}", [value, interfaceMessage("Không tải được phiếu chi.")]),
+      );
     }
     setLoading(false);
   }, [range, session, snapshot.user?.role]);
@@ -87,7 +95,7 @@ export default function AdminRevenueDashboard() {
       const updated = await saveCommission(session, policy, percentInput, Crypto.randomUUID());
       setPolicy(updated);
       setPercentInput(String(updated.basisPoints / 100));
-      setMessage(`Đã áp dụng chiết khấu ${percent(updated.basisPoints)} cho đơn mới.`);
+      setMessage(interfaceMessage("Đã áp dụng chiết khấu {0}% cho đơn mới.", [updated.basisPoints / 100]));
     } catch (cause) {
       setMessage(cause instanceof ApiError ? cause.message : "Không thể lưu tỷ lệ.");
       void readCommission(session, "ADMIN")
@@ -111,7 +119,12 @@ export default function AdminRevenueDashboard() {
         candidates: current?.candidates ?? [],
       }));
       setMessage(
-        `Đã lập phiếu kỳ ${result.month}. Cần chuyển khoản và đối chiếu riêng.${result.skipped.length ? ` ${result.skipped.length} người chưa đủ điều kiện.` : ""}`,
+        interfaceMessage("Đã lập phiếu kỳ {0}. Cần chuyển khoản và đối chiếu riêng.{1}", [
+          result.month,
+          result.skipped.length
+            ? interfaceMessage(" {0} người chưa đủ điều kiện.", [result.skipped.length])
+            : "",
+        ]),
       );
     } catch (cause) {
       setMessage(cause instanceof ApiError ? cause.message : "Không thể lập phiếu chi.");
@@ -124,7 +137,7 @@ export default function AdminRevenueDashboard() {
     return (
       <Page>
         <ScreenHeader title="Dashboard Doanh thu" onBack={() => router.replace("/")} />
-        <Text style={styles.error}>Chức năng này yêu cầu quyền Quản trị viên.</Text>
+        <Text style={styles.error}>{uiText("Chức năng này yêu cầu quyền Quản trị viên.")}</Text>
       </Page>
     );
   const topCourses =
@@ -143,29 +156,36 @@ export default function AdminRevenueDashboard() {
     <View style={{ flex: 1, backgroundColor: tokens.color.canvas }}>
       <Page>
         <ScreenHeader
-          title="Doanh thu & chiết khấu"
-          subtitle="Dữ liệu đã đối soát từ thanh toán và hoàn tiền"
+          title={uiText("Doanh thu & chiết khấu")}
+          subtitle={uiText("Dữ liệu đã đối soát từ thanh toán và hoàn tiền")}
           onBack={() => router.replace("/admin")}
         />
-        <Button label={loading ? "Đang tải…" : "Làm mới"} onPress={() => void load()} disabled={loading} />
+        <Button
+          label={loading ? uiText("Đang tải…") : uiText("Làm mới")}
+          onPress={() => void load()}
+          disabled={loading}
+        />
         {error ? (
           <Text accessibilityRole="alert" style={styles.error}>
-            {error}
+            {uiText(error)}
           </Text>
         ) : null}
         <View style={card}>
-          <Text style={styles.title}>Chiết khấu nền tảng</Text>
+          <Text style={styles.title}>{uiText("Chiết khấu nền tảng")}</Text>
           {policy ? (
             <>
               <Text style={styles.text}>
-                Hiện tại {percent(policy.basisPoints)} · Giảng viên nhận{" "}
-                {percent(10_000 - policy.basisPoints)}
+                {uiText("Hiện tại ")}
+                {percent(policy.basisPoints, uiLocale)} {uiText(" · Giảng viên nhận")}{" "}
+                {percent(10_000 - policy.basisPoints, uiLocale)}
               </Text>
               <Text style={styles.small}>
-                Hiệu lực từ {new Date(policy.effectiveAt).toLocaleString("vi-VN")}. Đơn cũ giữ tỷ lệ lúc mua.
+                {uiText("Hiệu lực từ ")}
+                {new Date(policy.effectiveAt).toLocaleString(uiLocale)}
+                {uiText(". Đơn cũ giữ tỷ lệ lúc mua.")}
               </Text>
               <TextInput
-                accessibilityLabel="Chiết khấu phần trăm"
+                accessibilityLabel={uiText("Chiết khấu phần trăm")}
                 style={styles.input}
                 keyboardType="decimal-pad"
                 value={percentInput}
@@ -173,18 +193,18 @@ export default function AdminRevenueDashboard() {
                 placeholder="0–50"
               />
               <Button
-                label={saving ? "Đang lưu…" : "Lưu tỷ lệ"}
+                label={saving ? uiText("Đang lưu…") : uiText("Lưu tỷ lệ")}
                 disabled={saving}
                 onPress={() => void updateCommission()}
               />
             </>
           ) : (
-            <Text style={styles.small}>Chưa tải được chính sách chiết khấu.</Text>
+            <Text style={styles.small}>{uiText("Chưa tải được chính sách chiết khấu.")}</Text>
           )}
         </View>
         {message ? (
           <Text accessibilityLiveRegion="polite" style={styles.text}>
-            {message}
+            {uiText(message)}
           </Text>
         ) : null}
         <View style={{ flexDirection: "row", gap: 8 }}>
@@ -200,28 +220,37 @@ export default function AdminRevenueDashboard() {
         {report ? (
           <>
             <View style={card}>
-              <Text style={styles.title}>Tổng quan doanh thu</Text>
+              <Text style={styles.title}>{uiText("Tổng quan doanh thu")}</Text>
               <Text style={styles.text}>
-                Thanh toán: {vnd(report.grossMinor)} · {report.orderCount} đơn
+                {uiText("Thanh toán: ")}
+                {vnd(report.grossMinor, uiLocale)} · {report.orderCount} {uiText(" đơn")}
               </Text>
               <Text style={styles.text}>
-                Hoàn tiền: {vnd(report.refundMinor)} · {report.refundCount} giao dịch
+                {uiText("Hoàn tiền: ")}
+                {vnd(report.refundMinor, uiLocale)} · {report.refundCount} {uiText(" giao dịch")}
               </Text>
-              <Text style={styles.text}>Sau hoàn tiền: {vnd(report.netMinor)}</Text>
               <Text style={styles.text}>
-                Dự kiến trả giảng viên:{" "}
-                {vnd(report.lecturers.reduce((sum, item) => sum + BigInt(item.estimatedEarningsMinor), 0n))}
+                {uiText("Sau hoàn tiền: ")}
+                {vnd(report.netMinor, uiLocale)}
+              </Text>
+              <Text style={styles.text}>
+                {uiText("Dự kiến trả giảng viên:")}{" "}
+                {vnd(
+                  report.lecturers.reduce((sum, item) => sum + BigInt(item.estimatedEarningsMinor), 0n),
+                  uiLocale,
+                )}
               </Text>
               <Text style={styles.small}>
-                Đối soát đến {new Date(report.backfillThrough).toLocaleDateString("vi-VN")}
+                {uiText("Đối soát đến ")}
+                {new Date(report.backfillThrough).toLocaleDateString(uiLocale)}
               </Text>
             </View>
             <View style={card}>
-              <Text style={styles.title}>Doanh thu theo ngày</Text>
+              <Text style={styles.title}>{uiText("Doanh thu theo ngày")}</Text>
               {report.dailyRevenue.map((day) => (
                 <View key={day.day} style={{ gap: 3 }}>
                   <Text style={styles.small}>
-                    {day.day} · {vnd(day.netMinor)}
+                    {day.day} · {vnd(day.netMinor, uiLocale)}
                   </Text>
                   <View style={{ height: 10, borderRadius: 5, backgroundColor: tokens.color.border }}>
                     <View
@@ -237,36 +266,42 @@ export default function AdminRevenueDashboard() {
               ))}
             </View>
             <View style={card}>
-              <Text style={styles.title}>Khóa học doanh thu cao</Text>
+              <Text style={styles.title}>{uiText("Khóa học doanh thu cao")}</Text>
               {topCourses.length ? (
                 topCourses.map((course) => (
                   <Text key={course.courseId} style={styles.text}>
-                    {course.title} · {vnd(course.netMinor)} · {course.orders} đơn
+                    {course.title} · {vnd(course.netMinor, uiLocale)} · {course.orders} {uiText(" đơn")}
                   </Text>
                 ))
               ) : (
-                <Text style={styles.small}>Chưa có doanh thu khóa học.</Text>
+                <Text style={styles.small}>{uiText("Chưa có doanh thu khóa học.")}</Text>
               )}
             </View>
           </>
         ) : (
           <View style={card}>
-            <Text style={styles.text}>Chưa có báo cáo doanh thu có thẩm quyền.</Text>
+            <Text style={styles.text}>{uiText("Chưa có báo cáo doanh thu có thẩm quyền.")}</Text>
           </View>
         )}
         <View style={card}>
-          <Text style={styles.title}>Phiếu chi kỳ {payout?.month ?? "trước"}</Text>
+          <Text style={styles.title}>
+            {uiText("Phiếu chi kỳ ")}
+            {payout?.month ?? "trước"}
+          </Text>
           <Text style={styles.small}>
-            Lập phiếu cho một người hoặc tất cả giảng viên. Phiếu chờ chuyển khoản thủ công; thao tác này chưa
-            chuyển tiền.
+            {uiText(
+              "Lập phiếu cho một người hoặc tất cả giảng viên. Phiếu chờ chuyển khoản thủ công; thao tác này chưa chuyển tiền.",
+            )}
           </Text>
           <Button
-            label={preparing ? "Đang lập…" : "Lập phiếu chi tất cả"}
+            label={preparing ? uiText("Đang lập…") : uiText("Lập phiếu chi tất cả")}
             disabled={preparing || !payout?.canPrepare}
             onPress={() => void prepare()}
           />
           {payout?.canPrepare === false ? (
-            <Text style={styles.small}>Có thể lập phiếu sau ngày 7 để chờ hết thời hạn hoàn tiền.</Text>
+            <Text style={styles.small}>
+              {uiText("Có thể lập phiếu sau ngày 7 để chờ hết thời hạn hoàn tiền.")}
+            </Text>
           ) : null}
           {payout?.candidates.map((candidate) => {
             const instruction = payout.instructions.find((item) => item.lecturerId === candidate.lecturerId);
@@ -276,17 +311,18 @@ export default function AdminRevenueDashboard() {
                 style={{ gap: 5, borderTopWidth: 1, borderColor: tokens.color.border, paddingTop: 8 }}
               >
                 <Text style={styles.text}>
-                  Mã giảng viên {candidate.lecturerId} · {vnd(candidate.estimatedEarningsMinor)}
+                  {uiText("Mã giảng viên ")}
+                  {candidate.lecturerId} · {vnd(candidate.estimatedEarningsMinor, uiLocale)}
                 </Text>
                 <Text style={styles.small}>
                   {instruction
                     ? `${instruction.bankName} · ${instruction.accountNumber} · ${instruction.status}`
                     : candidate.accountConfigured
-                      ? "Chưa lập phiếu"
-                      : "Chưa có tài khoản nhận tiền"}
+                      ? uiText("Chưa lập phiếu")
+                      : uiText("Chưa có tài khoản nhận tiền")}
                 </Text>
                 <Button
-                  label={instruction ? "Đã lập phiếu" : "Lập phiếu chi"}
+                  label={instruction ? uiText("Đã lập phiếu") : uiText("Lập phiếu chi")}
                   disabled={preparing || !payout.canPrepare || !candidate.accountConfigured || !!instruction}
                   onPress={() => void prepare(candidate.lecturerId)}
                 />

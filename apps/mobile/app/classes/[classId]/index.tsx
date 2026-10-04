@@ -1,3 +1,4 @@
+import { useLanguage, useUiText } from "../../../src/use-language";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
@@ -38,6 +39,8 @@ function sessionStatusLabel(status: string): string {
 type ClassTab = "schedule" | "materials" | "info";
 
 export default function ClassDetails() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { classId } = useLocalSearchParams<{ classId: string }>();
   const session = runtime!;
   const auth = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -109,8 +112,8 @@ export default function ClassDetails() {
   if (!validId) {
     return (
       <Page>
-        <Text style={styles.title}>Đường dẫn lớp không hợp lệ</Text>
-        <Button label="Quay lại lớp học" onPress={() => router.replace("/classes")} />
+        <Text style={styles.title}>{uiText("Đường dẫn lớp không hợp lệ")}</Text>
+        <Button label={uiText("Quay lại lớp học")} onPress={() => router.replace("/classes")} />
       </Page>
     );
   }
@@ -120,13 +123,13 @@ export default function ClassDetails() {
   return (
     <Page style={screen.page}>
       <ScreenHeader
-        title="Chi tiết lớp học"
-        subtitle={classInfo?.name ? classInfo.name : "Thông tin lớp & Lịch học"}
+        title={uiText("Chi tiết lớp học")}
+        subtitle={classInfo?.name ? classInfo.name : uiText("Thông tin lớp & Lịch học")}
         onBack={() => router.replace("/classes")}
         rightElement={
           <ScalePressable
             accessibilityRole="button"
-            accessibilityLabel="Làm mới lịch học"
+            accessibilityLabel={uiText("Làm mới lịch học")}
             onPress={handleRefresh}
             style={screen.headerRefreshBtn}
           >
@@ -166,19 +169,19 @@ export default function ClassDetails() {
       {loading || loadedScope !== requestScope ? (
         <View style={screen.center}>
           <ActivityIndicator size="large" color={tokens.color.brand} />
-          <Text style={screen.loadingText}>Đang tải thông tin lớp học…</Text>
+          <Text style={screen.loadingText}>{uiText("Đang tải thông tin lớp học…")}</Text>
         </View>
       ) : error ? (
         <View style={screen.errorCard}>
           <View style={screen.errorHeader}>
             <Icon name="alert" size={24} color={tokens.color.danger} />
-            <Text style={screen.errorTitle}>Có lỗi xảy ra</Text>
+            <Text style={screen.errorTitle}>{uiText("Có lỗi xảy ra")}</Text>
           </View>
           <Text accessibilityRole="alert" style={screen.errorText}>
-            {error}
+            {uiText(error)}
           </Text>
           <Button
-            label="Thử lại"
+            label={uiText("Thử lại")}
             onPress={() => {
               setLoading(true);
               void load();
@@ -199,10 +202,10 @@ export default function ClassDetails() {
                   <View style={screen.classBadge}>
                     <Text style={screen.classBadgeText}>
                       {classInfo.classKind === "LIVE_COHORT"
-                        ? "Lớp trực tiếp"
+                        ? uiText("Lớp trực tiếp")
                         : classInfo.classKind === "PRIVATE"
-                          ? "Lớp riêng"
-                          : "Lớp học"}
+                          ? uiText("Lớp riêng")
+                          : uiText("Lớp học")}
                     </Text>
                   </View>
                   {classInfo.state ? (
@@ -224,9 +227,9 @@ export default function ClassDetails() {
                         ]}
                       >
                         {classInfo.state === "ACTIVE"
-                          ? "Đang hoạt động"
+                          ? uiText("Đang hoạt động")
                           : classInfo.state === "CLOSED"
-                            ? "Đã đóng"
+                            ? uiText("Đã đóng")
                             : classInfo.state}
                       </Text>
                     </View>
@@ -241,9 +244,9 @@ export default function ClassDetails() {
               <View style={screen.metricItem}>
                 <Text style={screen.metricIcon}>👥</Text>
                 <View>
-                  <Text style={screen.metricLabel}>Sức chứa</Text>
+                  <Text style={screen.metricLabel}>{uiText("Sức chứa")}</Text>
                   <Text style={screen.metricValue}>
-                    {classInfo.maxMembers ? `${classInfo.maxMembers} bạn` : "Tự do"}
+                    {classInfo.maxMembers ? uiText("{0} bạn", [classInfo.maxMembers]) : uiText("Tự do")}
                   </Text>
                 </View>
               </View>
@@ -253,8 +256,10 @@ export default function ClassDetails() {
               <View style={screen.metricItem}>
                 <Text style={screen.metricIcon}>📅</Text>
                 <View>
-                  <Text style={screen.metricLabel}>Lịch học</Text>
-                  <Text style={screen.metricValue}>{sessions.length} buổi</Text>
+                  <Text style={screen.metricLabel}>{uiText("Lịch học")}</Text>
+                  <Text style={screen.metricValue}>
+                    {sessions.length} {uiText(" buổi")}
+                  </Text>
                 </View>
               </View>
 
@@ -263,22 +268,25 @@ export default function ClassDetails() {
               <View style={screen.metricItem}>
                 <Text style={screen.metricIcon}>✨</Text>
                 <View>
-                  <Text style={screen.metricLabel}>Hình thức</Text>
+                  <Text style={screen.metricLabel}>{uiText("Hình thức")}</Text>
                   <Text style={screen.metricValue}>
-                    {classInfo.classKind === "LIVE_COHORT" ? "Trực tiếp" : "Trực tuyến"}
+                    {classInfo.classKind === "LIVE_COHORT" ? uiText("Trực tiếp") : uiText("Trực tuyến")}
                   </Text>
                 </View>
               </View>
             </View>
 
             {classInfo.maxMembers ? (
-              <Text style={screen.heroMeta}>Sức chứa tối đa: {classInfo.maxMembers} học viên</Text>
+              <Text style={screen.heroMeta}>
+                {uiText("Sức chứa tối đa: ")}
+                {classInfo.maxMembers} {uiText(" học viên")}
+              </Text>
             ) : null}
 
             {classInfo.linkedCourseId ? (
               <Pressable
                 accessibilityRole="link"
-                accessibilityLabel="Mở khóa học liên kết"
+                accessibilityLabel={uiText("Mở khóa học liên kết")}
                 onPress={() => router.push(`/learn/${classInfo.linkedCourseId}`)}
                 style={screen.courseLink}
               >
@@ -286,8 +294,8 @@ export default function ClassDetails() {
                   <Icon name="book" size={16} color={tokens.color.brand} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={screen.courseLinkSub}>GIÁO TRÌNH KHOÁ HỌC</Text>
-                  <Text style={screen.courseLinkText}>Mở nội dung khóa học</Text>
+                  <Text style={screen.courseLinkSub}>{uiText("GIÁO TRÌNH KHOÁ HỌC")}</Text>
+                  <Text style={screen.courseLinkText}>{uiText("Mở nội dung khóa học")}</Text>
                 </View>
                 <Icon name="chevronRight" size={16} color={tokens.color.brand} />
               </Pressable>
@@ -299,9 +307,9 @@ export default function ClassDetails() {
             <View style={screen.upcomingCard}>
               <View style={screen.upcomingHeader}>
                 <View style={screen.upcomingDot} />
-                <Text style={screen.upcomingLabel}>BUỔI HỌC KẾ TIẾP</Text>
+                <Text style={screen.upcomingLabel}>{uiText("BUỔI HỌC KẾ TIẾP")}</Text>
                 <View style={screen.upcomingLiveBadge}>
-                  <Text style={screen.upcomingLiveText}>Sắp diễn ra</Text>
+                  <Text style={screen.upcomingLiveText}>{uiText("Sắp diễn ra")}</Text>
                 </View>
               </View>
               <Text style={screen.upcomingTitle}>{nextSession.title}</Text>
@@ -310,7 +318,7 @@ export default function ClassDetails() {
                 <View style={screen.upcomingMetaItem}>
                   <Icon name="calendar" size={15} color="#67E8F9" />
                   <Text style={screen.upcomingDate}>
-                    {formatDate(parseTimestamp(nextSession.startAt), nextSession.timezone)}
+                    {formatDate(parseTimestamp(nextSession.startAt), nextSession.timezone, uiLocale)}
                   </Text>
                 </View>
                 <View style={screen.upcomingMetaItem}>
@@ -320,6 +328,7 @@ export default function ClassDetails() {
                       parseTimestamp(nextSession.startAt),
                       parseTimestamp(nextSession.endAt),
                       nextSession.timezone,
+                      uiLocale,
                     )}
                   </Text>
                 </View>
@@ -329,7 +338,7 @@ export default function ClassDetails() {
                 <View style={screen.upcomingLocationBox}>
                   <Icon name="mapPin" size={14} color="#CBD5E1" />
                   <Text style={screen.upcomingLocation} numberOfLines={2}>
-                    {nextSession.mode === "ONLINE" ? "Liên kết: " : "Địa điểm: "}
+                    {nextSession.mode === "ONLINE" ? uiText("Liên kết: ") : uiText("Địa điểm: ")}
                     {nextSession.location}
                   </Text>
                 </View>
@@ -337,11 +346,11 @@ export default function ClassDetails() {
 
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Xem chi tiết buổi học ${nextSession.title}`}
+                accessibilityLabel={uiText("Xem chi tiết buổi học {0}", [nextSession.title])}
                 style={screen.upcomingButton}
                 onPress={() => router.push(`/classes/${classId}/sessions/${nextSession.sessionId}`)}
               >
-                <Text style={screen.upcomingButtonText}>Xem chi tiết buổi học</Text>
+                <Text style={screen.upcomingButtonText}>{uiText("Xem chi tiết buổi học")}</Text>
                 <Icon name="chevronRight" size={17} color="#FFFFFF" />
               </Pressable>
             </View>
@@ -361,7 +370,8 @@ export default function ClassDetails() {
               <Text
                 style={[screen.segmentedTabText, activeTab === "schedule" && screen.segmentedTabTextActive]}
               >
-                Lịch học ({sessions.length})
+                {uiText("Lịch học (")}
+                {sessions.length})
               </Text>
             </Pressable>
 
@@ -377,7 +387,7 @@ export default function ClassDetails() {
               <Text
                 style={[screen.segmentedTabText, activeTab === "materials" && screen.segmentedTabTextActive]}
               >
-                Học liệu
+                {uiText("Học liệu")}
               </Text>
             </Pressable>
 
@@ -391,7 +401,7 @@ export default function ClassDetails() {
                 color={activeTab === "info" ? tokens.color.brand : tokens.color.muted}
               />
               <Text style={[screen.segmentedTabText, activeTab === "info" && screen.segmentedTabTextActive]}>
-                Nội quy
+                {uiText("Nội quy")}
               </Text>
             </Pressable>
           </View>
@@ -401,11 +411,13 @@ export default function ClassDetails() {
             <>
               <View style={screen.sectionHeader}>
                 <View>
-                  <Text style={screen.sectionTitle}>Lịch học</Text>
-                  <Text style={screen.sectionSubtitle}>Trong 30 ngày tới</Text>
+                  <Text style={screen.sectionTitle}>{uiText("Lịch học")}</Text>
+                  <Text style={screen.sectionSubtitle}>{uiText("Trong 30 ngày tới")}</Text>
                 </View>
                 <View style={screen.countBadge}>
-                  <Text style={screen.count}>{sessions.length} buổi</Text>
+                  <Text style={screen.count}>
+                    {sessions.length} {uiText(" buổi")}
+                  </Text>
                 </View>
               </View>
 
@@ -416,21 +428,22 @@ export default function ClassDetails() {
                       <Icon name="calendar" size={28} color="#FFFFFF" />
                     </View>
                   </View>
-                  <Text style={screen.emptyTitle}>Chưa có buổi học sắp tới</Text>
+                  <Text style={screen.emptyTitle}>{uiText("Chưa có buổi học sắp tới")}</Text>
                   <Text style={[styles.text, screen.emptyDesc]}>
-                    Chưa có buổi học nào được xếp lịch trong khoảng thời gian này.
+                    {uiText("Chưa có buổi học nào được xếp lịch trong khoảng thời gian này.")}
                   </Text>
 
                   <View style={screen.emptyNoticeBanner}>
                     <Icon name="sparkles" size={16} color={tokens.color.brand} />
                     <Text style={screen.emptyNoticeText}>
-                      Giảng viên sẽ công bố lịch học các buổi tiếp theo khi lớp bắt đầu đợt mới. Bạn có thể
-                      bấm nút bên dưới để cập nhật lại.
+                      {uiText(
+                        "Giảng viên sẽ công bố lịch học các buổi tiếp theo khi lớp bắt đầu đợt mới. Bạn có thể bấm nút bên dưới để cập nhật lại.",
+                      )}
                     </Text>
                   </View>
 
                   <Button
-                    label="Làm mới lịch học"
+                    label={uiText("Làm mới lịch học")}
                     variant="primary"
                     icon={<Icon name="refresh" size={16} color="#FFFFFF" />}
                     onPress={handleRefresh}
@@ -446,7 +459,7 @@ export default function ClassDetails() {
                     <Pressable
                       key={item.sessionId}
                       accessibilityRole="button"
-                      accessibilityLabel={`Mở buổi học ${item.title}`}
+                      accessibilityLabel={uiText("Mở buổi học {0}", [item.title])}
                       style={screen.sessionCard}
                       onPress={() => router.push(`/classes/${classId}/sessions/${item.sessionId}`)}
                     >
@@ -459,11 +472,18 @@ export default function ClassDetails() {
                       <View style={screen.sessionContent}>
                         <View style={screen.sessionHeader}>
                           <View style={screen.sessionIndexPill}>
-                            <Text style={screen.sessionIndexText}>Buổi {index + 1}</Text>
+                            <Text style={screen.sessionIndexText}>
+                              {uiText("Buổi ")}
+                              {index + 1}
+                            </Text>
                           </View>
                           <View style={[screen.modeBadge, online ? screen.onlineBadge : screen.offlineBadge]}>
                             <Text style={[screen.modeText, online ? screen.onlineText : screen.offlineText]}>
-                              {online ? "Trực tuyến" : item.mode === "OFFLINE" ? "Tại lớp" : item.mode}
+                              {online
+                                ? uiText("Trực tuyến")
+                                : item.mode === "OFFLINE"
+                                  ? uiText("Tại lớp")
+                                  : item.mode}
                             </Text>
                           </View>
                         </View>
@@ -473,7 +493,8 @@ export default function ClassDetails() {
                         <View style={screen.sessionInfoRow}>
                           <Icon name="calendar" size={14} color={tokens.color.muted} />
                           <Text style={screen.sessionDate}>
-                            {formatDate(start, item.timezone)} · {formatTimeRange(start, end, item.timezone)}
+                            {formatDate(start, item.timezone, uiLocale)} ·{" "}
+                            {formatTimeRange(start, end, item.timezone, uiLocale)}
                           </Text>
                         </View>
 
@@ -481,7 +502,7 @@ export default function ClassDetails() {
                           <View style={screen.sessionLocationRow}>
                             <Icon name="mapPin" size={14} color={tokens.color.muted} />
                             <Text style={screen.sessionLocation} numberOfLines={2}>
-                              {online ? "Liên kết: " : "Địa điểm: "}
+                              {online ? uiText("Liên kết: ") : uiText("Địa điểm: ")}
                               {item.location}
                             </Text>
                           </View>
@@ -501,7 +522,7 @@ export default function ClassDetails() {
                             <Text style={screen.sessionStatus}>{sessionStatusLabel(item.status)}</Text>
                           </View>
                           <View style={screen.sessionActionContainer}>
-                            <Text style={screen.sessionAction}>Xem buổi học ›</Text>
+                            <Text style={screen.sessionAction}>{uiText("Xem buổi học ›")}</Text>
                           </View>
                         </View>
                       </View>
@@ -517,13 +538,13 @@ export default function ClassDetails() {
             <View style={screen.tabContentCard}>
               <View style={screen.tabContentHeader}>
                 <Icon name="book" size={20} color={tokens.color.brand} />
-                <Text style={screen.tabContentTitle}>Tài Liệu & Học Liệu Lớp Học</Text>
+                <Text style={screen.tabContentTitle}>{uiText("Tài Liệu & Học Liệu Lớp Học")}</Text>
               </View>
 
               {classInfo.linkedCourseId ? (
                 <Pressable
                   accessibilityRole="link"
-                  accessibilityLabel="Mở khóa học liên kết"
+                  accessibilityLabel={uiText("Mở khóa học liên kết")}
                   onPress={() => router.push(`/learn/${classInfo.linkedCourseId}`)}
                   style={screen.materialItem}
                 >
@@ -531,8 +552,10 @@ export default function ClassDetails() {
                     <Icon name="book" size={18} color={tokens.color.brand} />
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
-                    <Text style={screen.materialTitle}>Giáo trình khóa học chính</Text>
-                    <Text style={screen.materialSub}>Bao gồm slide bài giảng, video ghi hình và bài tập</Text>
+                    <Text style={screen.materialTitle}>{uiText("Giáo trình khóa học chính")}</Text>
+                    <Text style={screen.materialSub}>
+                      {uiText("Bao gồm slide bài giảng, video ghi hình và bài tập")}
+                    </Text>
                   </View>
                   <Icon name="chevronRight" size={16} color={tokens.color.brand} />
                 </Pressable>
@@ -543,8 +566,10 @@ export default function ClassDetails() {
                   <Icon name="assignment" size={18} color="#D97706" />
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={screen.materialTitle}>Bài tập thực hành & Quiz</Text>
-                  <Text style={screen.materialSub}>Được giao theo tiến độ từng buổi học trực tuyến</Text>
+                  <Text style={screen.materialTitle}>{uiText("Bài tập thực hành & Quiz")}</Text>
+                  <Text style={screen.materialSub}>
+                    {uiText("Được giao theo tiến độ từng buổi học trực tuyến")}
+                  </Text>
                 </View>
                 <Icon name="chevronRight" size={16} color={tokens.color.muted} />
               </View>
@@ -554,8 +579,10 @@ export default function ClassDetails() {
                   <Icon name="sparkles" size={18} color="#7C3AED" />
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={screen.materialTitle}>Trợ lý AI đồng hành</Text>
-                  <Text style={screen.materialSub}>Hỗ trợ giải đáp thắc mắc và chữa bài tập 24/7</Text>
+                  <Text style={screen.materialTitle}>{uiText("Trợ lý AI đồng hành")}</Text>
+                  <Text style={screen.materialSub}>
+                    {uiText("Hỗ trợ giải đáp thắc mắc và chữa bài tập 24/7")}
+                  </Text>
                 </View>
                 <Icon name="chevronRight" size={16} color={tokens.color.muted} />
               </View>
@@ -567,16 +594,17 @@ export default function ClassDetails() {
             <View style={screen.tabContentCard}>
               <View style={screen.tabContentHeader}>
                 <Icon name="info" size={20} color={tokens.color.brand} />
-                <Text style={screen.tabContentTitle}>Nội Quy & Thông Tin Lớp Học</Text>
+                <Text style={screen.tabContentTitle}>{uiText("Nội Quy & Thông Tin Lớp Học")}</Text>
               </View>
 
               <View style={screen.infoRowItem}>
                 <Text style={screen.infoBullet}>1.</Text>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={screen.infoHeading}>Điểm danh & Chuyên cần</Text>
+                  <Text style={screen.infoHeading}>{uiText("Điểm danh & Chuyên cần")}</Text>
                   <Text style={screen.infoText}>
-                    Yêu cầu chuyên cần và điều kiện hoàn thành lớp do giảng viên công bố trong thông báo lớp
-                    học.
+                    {uiText(
+                      "Yêu cầu chuyên cần và điều kiện hoàn thành lớp do giảng viên công bố trong thông báo lớp học.",
+                    )}
                   </Text>
                 </View>
               </View>
@@ -584,10 +612,11 @@ export default function ClassDetails() {
               <View style={screen.infoRowItem}>
                 <Text style={screen.infoBullet}>2.</Text>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={screen.infoHeading}>Chuẩn bị trước buổi học</Text>
+                  <Text style={screen.infoHeading}>{uiText("Chuẩn bị trước buổi học")}</Text>
                   <Text style={screen.infoText}>
-                    Vui lòng vào phòng học trực tuyến trước 5-10 phút để kiểm tra micro và đường truyền
-                    Internet.
+                    {uiText(
+                      "Vui lòng vào phòng học trực tuyến trước 5-10 phút để kiểm tra micro và đường truyền Internet.",
+                    )}
                   </Text>
                 </View>
               </View>
@@ -595,10 +624,11 @@ export default function ClassDetails() {
               <View style={screen.infoRowItem}>
                 <Text style={screen.infoBullet}>3.</Text>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={screen.infoHeading}>Hỗ trợ học tập</Text>
+                  <Text style={screen.infoHeading}>{uiText("Hỗ trợ học tập")}</Text>
                   <Text style={screen.infoText}>
-                    Mọi thắc mắc về giáo trình có thể trao đổi trực tiếp với giảng viên hoặc trợ giảng AI
-                    trong phần thảo luận.
+                    {uiText(
+                      "Mọi thắc mắc về giáo trình có thể trao đổi trực tiếp với giảng viên hoặc trợ giảng AI trong phần thảo luận.",
+                    )}
                   </Text>
                 </View>
               </View>
@@ -609,7 +639,7 @@ export default function ClassDetails() {
 
       {!loading && !error && classInfo && sessions.length > 0 ? (
         <Button
-          label="Làm mới lịch học"
+          label={uiText("Làm mới lịch học")}
           variant="outline"
           icon={<Icon name="refresh" size={16} color={tokens.color.brand} />}
           onPress={handleRefresh}

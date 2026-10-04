@@ -1,3 +1,4 @@
+import { useUiText } from "./use-language";
 import React, { type PropsWithChildren } from "react";
 import {
   Animated,
@@ -376,6 +377,7 @@ export const PasswordInput = React.forwardRef<TextInput, PasswordInputProps>(fun
   { style, containerStyle, secureTextEntry = true, toggleTestID, ...rest },
   ref,
 ) {
+  const uiText = useUiText();
   const [showPassword, setShowPassword] = React.useState(!secureTextEntry);
 
   return (
@@ -390,7 +392,7 @@ export const PasswordInput = React.forwardRef<TextInput, PasswordInputProps>(fun
       <Pressable
         testID={toggleTestID}
         accessibilityRole="button"
-        accessibilityLabel={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+        accessibilityLabel={showPassword ? uiText("Ẩn mật khẩu") : uiText("Hiện mật khẩu")}
         onPress={() => setShowPassword((prev) => !prev)}
         style={{
           position: "absolute",
@@ -704,6 +706,7 @@ export function SearchBar({
   placeholder?: string;
   onClear?: () => void;
 }) {
+  const uiText = useUiText();
   return (
     <View
       style={{
@@ -741,7 +744,7 @@ export function SearchBar({
             onClear?.();
           }}
           hitSlop={8}
-          accessibilityLabel="Xóa nội dung tìm kiếm"
+          accessibilityLabel={uiText("Xóa nội dung tìm kiếm")}
         >
           <Icon name="close" size={14} color={tokens.color.muted} />
         </Pressable>
@@ -824,6 +827,7 @@ export function HeaderBar({
   onAccountPress?: () => void;
   hasUnreadNotifications?: boolean;
 }) {
+  const uiText = useUiText();
   return (
     <View
       style={{
@@ -838,7 +842,7 @@ export function HeaderBar({
       <Pressable
         onPress={onAccountPress}
         style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
-        accessibilityLabel="Mở trang cá nhân"
+        accessibilityLabel={uiText("Mở trang cá nhân")}
       >
         <View
           style={{
@@ -859,7 +863,7 @@ export function HeaderBar({
         </View>
         <View>
           <Text style={{ fontSize: 12, fontWeight: "600", color: tokens.color.muted }}>
-            {user ? "Chào mừng trở lại," : "Xin chào bạn,"}
+            {user ? uiText("Chào mừng trở lại,") : uiText("Xin chào bạn,")}
           </Text>
           <Text style={{ fontSize: 17, fontWeight: "800", color: tokens.color.ink }}>
             {user?.displayName ?? "Khách khám phá"}
@@ -883,7 +887,9 @@ export function HeaderBar({
             }}
           >
             <Icon name="flame" size={13} />
-            <Text style={{ fontSize: 12, fontWeight: "800", color: "#B45309" }}>{streak} ngày</Text>
+            <Text style={{ fontSize: 12, fontWeight: "800", color: "#B45309" }}>
+              {streak} {uiText(" ngày")}
+            </Text>
           </View>
         )}
 
@@ -901,7 +907,7 @@ export function HeaderBar({
               borderColor: tokens.color.border,
               ...tokens.shadow.subtle,
             }}
-            accessibilityLabel="Mở thông báo"
+            accessibilityLabel={uiText("Mở thông báo")}
           >
             <Icon name="bell" size={17} color={tokens.color.ink} />
             {hasUnreadNotifications && (
@@ -1215,6 +1221,7 @@ export function ScreenHeader({
   onBack?: () => void;
   rightElement?: React.ReactNode;
 }) {
+  const uiText = useUiText();
   return (
     <LiquidGlassContainer
       type="rounded"
@@ -1231,7 +1238,7 @@ export function ScreenHeader({
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
         {onBack && (
-          <LiquidGlassCircle size={40} tint="light" onPress={onBack} accessibilityLabel="Quay lại">
+          <LiquidGlassCircle size={40} tint="light" onPress={onBack} accessibilityLabel={uiText("Quay lại")}>
             <Icon name="chevronLeft" size={20} color={tokens.color.ink} />
           </LiquidGlassCircle>
         )}
@@ -1421,40 +1428,51 @@ export function BottomNavBar({
   onNavigate: (route: string) => void;
   role?: string;
 }) {
+  const uiText = useUiText();
   const tabs =
     role === "LECTURER"
       ? [
-          { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/teaching" },
-          { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/teaching/courses" },
-          { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/teaching/classes" },
-          { key: "notifications", label: "Thông báo", icon: "bell" as IconName, path: "/notifications" },
-          { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
+          { key: "home", label: uiText("Trang chủ"), icon: "home" as IconName, path: "/teaching" },
+          { key: "courses", label: uiText("Khóa học"), icon: "book" as IconName, path: "/teaching/courses" },
+          { key: "classes", label: uiText("Lớp học"), icon: "class" as IconName, path: "/teaching/classes" },
+          {
+            key: "notifications",
+            label: uiText("Thông báo"),
+            icon: "bell" as IconName,
+            path: "/notifications",
+          },
+          { key: "account", label: uiText("Cá nhân"), icon: "user" as IconName, path: "/account" },
         ]
       : role === "ADMIN"
         ? [
-            { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-            { key: "admin", label: "Quản trị", icon: "shield" as IconName, path: "/admin" },
-            { key: "notifications", label: "Thông báo", icon: "bell" as IconName, path: "/notifications" },
-            { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
+            { key: "home", label: uiText("Trang chủ"), icon: "home" as IconName, path: "/" },
+            { key: "admin", label: uiText("Quản trị"), icon: "shield" as IconName, path: "/admin" },
+            {
+              key: "notifications",
+              label: uiText("Thông báo"),
+              icon: "bell" as IconName,
+              path: "/notifications",
+            },
+            { key: "account", label: uiText("Cá nhân"), icon: "user" as IconName, path: "/account" },
           ]
         : role === "STUDENT"
           ? [
-              { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-              { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
-              { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/classes" },
+              { key: "home", label: uiText("Trang chủ"), icon: "home" as IconName, path: "/" },
+              { key: "courses", label: uiText("Khóa học"), icon: "book" as IconName, path: "/courses" },
+              { key: "classes", label: uiText("Lớp học"), icon: "class" as IconName, path: "/classes" },
               {
                 key: "attendance",
-                label: "Điểm danh",
+                label: uiText("Điểm danh"),
                 icon: "checkCircle" as IconName,
                 path: "/classes?tab=attendance",
               },
-              { key: "account", label: "Cá nhân", icon: "user" as IconName, path: "/account" },
+              { key: "account", label: uiText("Cá nhân"), icon: "user" as IconName, path: "/account" },
             ]
           : [
-              { key: "home", label: "Trang chủ", icon: "home" as IconName, path: "/" },
-              { key: "courses", label: "Khóa học", icon: "book" as IconName, path: "/courses" },
-              { key: "classes", label: "Lớp học", icon: "class" as IconName, path: "/login" },
-              { key: "account", label: "Đăng nhập", icon: "user" as IconName, path: "/login" },
+              { key: "home", label: uiText("Trang chủ"), icon: "home" as IconName, path: "/" },
+              { key: "courses", label: uiText("Khóa học"), icon: "book" as IconName, path: "/courses" },
+              { key: "classes", label: uiText("Lớp học"), icon: "class" as IconName, path: "/login" },
+              { key: "account", label: uiText("Đăng nhập"), icon: "user" as IconName, path: "/login" },
             ];
 
   const [nativeGlass, setNativeGlass] = React.useState(false);
@@ -1625,6 +1643,7 @@ export function AdaptivePathCard({
   score: number;
   onStartAction?: () => void;
 }) {
+  const uiText = useUiText();
   const isReview = action === "REVIEW";
   const isPractice = action === "PRACTICE";
   const badgeColor = isReview
@@ -1661,7 +1680,7 @@ export function AdaptivePathCard({
         <Text
           style={{ fontSize: 11, fontWeight: "700", color: tokens.color.brand, textTransform: "uppercase" }}
         >
-          Lộ trình thích ứng
+          {uiText("Lộ trình thích ứng")}
         </Text>
         <View style={{ backgroundColor: badgeBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 }}>
           <Text style={{ fontSize: 11, fontWeight: "700", color: badgeColor }}>{action}</Text>
@@ -1671,7 +1690,8 @@ export function AdaptivePathCard({
         {conceptTitle}
       </Text>
       <Text style={{ fontSize: 12, color: tokens.color.muted, lineHeight: 18, marginBottom: 12 }}>
-        {reason} (Năng lực hiện tại: {score}%)
+        {reason} {uiText(" (Năng lực hiện tại: ")}
+        {score}%)
       </Text>
       {onStartAction ? (
         <ScalePressable
@@ -1685,7 +1705,11 @@ export function AdaptivePathCard({
           }}
         >
           <Text style={{ fontSize: 13, fontWeight: "600", color: "#FFFFFF" }}>
-            {isReview ? "Ôn tập ngay" : isPractice ? "Luyện tập tăng cường" : "Học nâng cao"}
+            {isReview
+              ? uiText("Ôn tập ngay")
+              : isPractice
+                ? uiText("Luyện tập tăng cường")
+                : uiText("Học nâng cao")}
           </Text>
         </ScalePressable>
       ) : null}
@@ -1704,6 +1728,7 @@ export function VersionPinningIndicator({
   isPinned: boolean;
   onTogglePin?: () => void;
 }) {
+  const uiText = useUiText();
   return (
     <View
       style={{
@@ -1721,18 +1746,19 @@ export function VersionPinningIndicator({
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <Icon name="award" size={14} color={tokens.color.muted} />
         <Text style={{ fontSize: 12, color: tokens.color.inkSecondary }}>
-          Bản: <Text style={{ fontWeight: "700" }}>v{pinnedVersion}.0</Text>{" "}
+          {uiText("Bản: ")}
+          <Text style={{ fontWeight: "700" }}>v{pinnedVersion}.0</Text>{" "}
           {isPinned
-            ? "(Đã ghim)"
+            ? uiText("(Đã ghim)")
             : latestVersion > pinnedVersion
-              ? `(Có bản v${latestVersion}.0)`
-              : "(Mới nhất)"}
+              ? uiText("(Có bản v{0}.0)", [latestVersion])
+              : uiText("(Mới nhất)")}
         </Text>
       </View>
       {onTogglePin ? (
         <ScalePressable onPress={onTogglePin} style={{ paddingHorizontal: 6, paddingVertical: 2 }}>
           <Text style={{ fontSize: 11, fontWeight: "600", color: tokens.color.brand }}>
-            {isPinned ? "Bỏ ghim" : "Ghim bản này"}
+            {isPinned ? uiText("Bỏ ghim") : uiText("Ghim bản này")}
           </Text>
         </ScalePressable>
       ) : null}
@@ -1757,6 +1783,7 @@ export function RefundRequestModal({
   onClose: () => void;
   onSubmitRefund: (reason: string) => void;
 }) {
+  const uiText = useUiText();
   const [reason, setReason] = React.useState("");
   const isEligible = progressPercent < 20;
 
@@ -1788,7 +1815,7 @@ export function RefundRequestModal({
         }}
       >
         <Text style={{ fontSize: 17, fontWeight: "700", color: tokens.color.ink, marginBottom: 4 }}>
-          Yêu Cầu Hoàn Tiền Khóa Học
+          {uiText("Yêu Cầu Hoàn Tiền Khóa Học")}
         </Text>
         <Text style={{ fontSize: 13, color: tokens.color.muted, marginBottom: 12 }}>
           {courseTitle} • {coursePrice}
@@ -1810,18 +1837,23 @@ export function RefundRequestModal({
             }}
           >
             {isEligible
-              ? `✓ Hợp lệ: Tiến độ ${progressPercent}% (< 20%), trong thời hạn 7 ngày từ ${purchaseDate}.`
-              : `✕ Không hợp lệ: Tiến độ ${progressPercent}% (vượt ngưỡng 20% chính sách hoàn tiền).`}
+              ? uiText("✓ Hợp lệ: Tiến độ {0}% (< 20%), trong thời hạn 7 ngày từ {1}.", [
+                  progressPercent,
+                  purchaseDate,
+                ])
+              : uiText("✕ Không hợp lệ: Tiến độ {0}% (vượt ngưỡng 20% chính sách hoàn tiền).", [
+                  progressPercent,
+                ])}
           </Text>
         </View>
 
         <Text style={{ fontSize: 12, fontWeight: "600", color: tokens.color.inkSecondary, marginBottom: 4 }}>
-          Lý do yêu cầu hoàn tiền:
+          {uiText("Lý do yêu cầu hoàn tiền:")}
         </Text>
         <TextInput
           value={reason}
           onChangeText={setReason}
-          placeholder="Nhập lý do hoàn tiền..."
+          placeholder={uiText("Nhập lý do hoàn tiền...")}
           multiline
           numberOfLines={3}
           style={{
@@ -1841,7 +1873,7 @@ export function RefundRequestModal({
             onPress={onClose}
             style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: tokens.radius.sm }}
           >
-            <Text style={{ fontSize: 13, color: tokens.color.muted }}>Đóng</Text>
+            <Text style={{ fontSize: 13, color: tokens.color.muted }}>{uiText("Đóng")}</Text>
           </ScalePressable>
           <ScalePressable
             disabled={!isEligible || !reason.trim()}
@@ -1853,7 +1885,7 @@ export function RefundRequestModal({
               backgroundColor: isEligible && reason.trim() ? tokens.color.brand : tokens.color.border,
             }}
           >
-            <Text style={{ fontSize: 13, fontWeight: "600", color: "#FFFFFF" }}>Gửi yêu cầu</Text>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: "#FFFFFF" }}>{uiText("Gửi yêu cầu")}</Text>
           </ScalePressable>
         </View>
       </View>

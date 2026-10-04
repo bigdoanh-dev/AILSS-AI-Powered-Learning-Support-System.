@@ -1,0 +1,7 @@
+{
+  "name": "@ailss/localization",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Shared VI/EN interface catalog for Vite and Expo Metro"
+}

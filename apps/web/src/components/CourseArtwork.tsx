@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 export const categories = [
   { id: "10000000-0000-4000-8000-000000000001", name: "Lập trình", image: "coding", keyword: "web" },
   { id: "10000000-0000-4000-8000-000000000002", name: "Cơ sở dữ liệu", image: "database", keyword: "lieu" },
@@ -33,6 +34,7 @@ export function CourseArtwork({
   courseId?: string;
   eager?: boolean;
 }) {
+  const uiText = useUiText();
   const customCover = imageUrl;
 
   if (customCover) {
@@ -40,7 +42,7 @@ export function CourseArtwork({
       <img
         className="course-artwork"
         src={customCover}
-        alt={`Ảnh bìa khóa học ${title}`}
+        alt={uiText("Ảnh bìa khóa học {0}", [title])}
         loading={eager ? "eager" : "lazy"}
         decoding="async"
         style={{ width: "100%", height: "180px", objectFit: "cover", borderRadius: "10px 10px 0 0" }}
@@ -80,7 +82,7 @@ export function CourseArtwork({
       sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 33vw"
       width="1280"
       height="853"
-      alt={`Minh họa chủ đề ${subject.name.toLowerCase()}`}
+      alt={uiText("Minh họa chủ đề {0}", [subject.name.toLowerCase()])}
       loading={eager ? "eager" : "lazy"}
       decoding="async"
     />

@@ -1,3 +1,6 @@
+import { LocalizedFileInput } from "../components/LocalizedFileInput";
+import { useLanguage } from "../lib/i18n";
+import { useUiText } from "../lib/i18n";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../lib/api";
@@ -212,6 +215,8 @@ function AssistantOrb({ busy = false }: { busy?: boolean }) {
 }
 
 export function AiStudio() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const [activeJob, setActiveJob] = useState(""),
     [requestCopy, setRequestCopy] = useState("");
   const live = useAiLive<Job>(activeJob),
@@ -374,18 +379,19 @@ export function AiStudio() {
   }
   return (
     <>
-      <Breadcrumbs items={[{ label: "Giảng dạy", to: "/app/teaching" }, { label: "AI" }]} />
+      <Breadcrumbs items={[{ label: uiText("Giảng dạy"), to: "/app/teaching" }, { label: "AI" }]} />
       <section className="assistant-header">
         <div>
-          <p className="assistant-kicker">Không gian soạn bài</p>
+          <p className="assistant-kicker">{uiText("Không gian soạn bài")}</p>
           <h1>
-            Cùng bạn chuẩn bị
+            {uiText("Cùng bạn chuẩn bị")}
             <br />
-            bài kiểm tra tiếp theo.
+            {uiText("bài kiểm tra tiếp theo.")}
           </h1>
           <p className="lead">
-            Đưa học liệu của bạn vào đây. Trợ lý sẽ soạn câu hỏi, chuẩn bị đáp án và gửi bản nháp để bạn
-            duyệt.
+            {uiText(
+              "Đưa học liệu của bạn vào đây. Trợ lý sẽ soạn câu hỏi, chuẩn bị đáp án và gửi bản nháp để bạn duyệt.",
+            )}
           </p>
         </div>
         <AssistantOrb busy={working || uploading} />
@@ -393,38 +399,38 @@ export function AiStudio() {
       <div className="assistant-layout">
         <div className="assistant-tools">
           <section className="form-panel">
-            <h2>Học liệu của bạn</h2>
+            <h2>{uiText("Học liệu của bạn")}</h2>
             <form onSubmit={(e) => void upload(e)}>
               <label>
-                Tệp PDF, DOCX hoặc TXT
-                <input
+                {uiText("Tệp PDF, DOCX hoặc TXT")}
+                <LocalizedFileInput
                   name="file"
                   type="file"
                   accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
                   required
                 />
               </label>
-              <p>PDF, Word hoặc văn bản · Tối đa 25 MiB</p>
+              <p>{uiText("PDF, Word hoặc văn bản · Tối đa 25 MiB")}</p>
               <button className="button" disabled={uploading}>
-                {uploading ? "Đang tải tài liệu…" : "Tải tài liệu"}
+                {uploading ? uiText("Đang tải tài liệu…") : uiText("Tải tài liệu")}
               </button>
             </form>
             {uploadStage && (
               <p role="status">
                 {documentQuery.value?.status === "EXTRACTED"
-                  ? "Tài liệu đã sẵn sàng — bạn có thể tạo câu hỏi."
-                  : uploadStage}
+                  ? uiText("Tài liệu đã sẵn sàng — bạn có thể tạo câu hỏi.")
+                  : uiText(uploadStage)}
               </p>
             )}
             {msg && (
               <p className="ai-feedback" role="status">
-                {msg}
+                {uiText(msg)}
               </p>
             )}
             <details className="assistant-existing">
-              <summary>Dùng tài liệu đã tải trước đó</summary>
+              <summary>{uiText("Dùng tài liệu đã tải trước đó")}</summary>
               <label>
-                Hoặc dùng mã tài liệu bạn đã tải
+                {uiText("Hoặc dùng mã tài liệu bạn đã tải")}
                 <input value={documentId} onChange={(e) => setDocumentId(e.target.value)} />
               </label>
             </details>
@@ -433,35 +439,39 @@ export function AiStudio() {
                 <StateChip state={documentQuery.value.status} />
                 <h3>{documentQuery.value.fileName}</h3>
                 <p>
-                  {label(documentQuery.value.status)} · {(documentQuery.value.sizeBytes / 1024).toFixed(1)}{" "}
-                  KiB
+                  {uiText(label(documentQuery.value.status))} ·{" "}
+                  {(documentQuery.value.sizeBytes / 1024).toFixed(1)} KiB
                 </p>
-                {documentQuery.value.status === "EXTRACTED" && <p>Tài liệu đã xử lý xong.</p>}
+                {documentQuery.value.status === "EXTRACTED" && <p>{uiText("Tài liệu đã xử lý xong.")}</p>}
                 {["FAILED", "QUARANTINED"].includes(documentQuery.value.status) && (
                   <p>
-                    {documentFailureCopy[documentQuery.value.failureCode || ""] ||
-                      "Không thể xử lý tài liệu này. Hãy thử tải lại hoặc chọn tài liệu khác."}
+                    {uiText(
+                      documentFailureCopy[documentQuery.value.failureCode || ""] ||
+                        "Không thể xử lý tài liệu này. Hãy thử tải lại hoặc chọn tài liệu khác.",
+                    )}
                   </p>
                 )}
-                {documentQuery.stalled && <p>Quá trình xử lý đang tạm gián đoạn. Bạn có thể thử lại sau.</p>}
+                {documentQuery.stalled && (
+                  <p>{uiText("Quá trình xử lý đang tạm gián đoạn. Bạn có thể thử lại sau.")}</p>
+                )}
               </article>
             )}
-            {documentQuery.error && <p role="alert">{documentQuery.error}</p>}
+            {documentQuery.error && <p role="alert">{uiText(documentQuery.error)}</p>}
           </section>
           <section className="form-panel">
-            <h2>Thiết lập bài kiểm tra</h2>
+            <h2>{uiText("Thiết lập bài kiểm tra")}</h2>
             <form id="assistant-generate" className="form-grid" onSubmit={(e) => void generate(e)}>
               <label>
-                Đích sử dụng
+                {uiText("Đích sử dụng")}
                 <select name="targetType" value={targetType} onChange={(e) => setTargetType(e.target.value)}>
-                  <option value="COURSE">Khóa học</option>
-                  <option value="CLASS">Lớp học</option>
+                  <option value="COURSE">{uiText("Khóa học")}</option>
+                  <option value="CLASS">{uiText("Lớp học")}</option>
                 </select>
               </label>
               <label>
-                Khóa học hoặc lớp
+                {uiText("Khóa học hoặc lớp")}
                 <select name="targetId" key={targetType} required>
-                  <option value="">Chọn đích</option>
+                  <option value="">{uiText("Chọn đích")}</option>
                   {targetType === "COURSE" &&
                     courseItems.map((x) => (
                       <option key={x.courseId} value={x.courseId}>
@@ -477,7 +487,7 @@ export function AiStudio() {
                 </select>
               </label>
               <label>
-                Số câu
+                {uiText("Số câu")}
                 <input
                   name="questionCount"
                   type="number"
@@ -489,11 +499,11 @@ export function AiStudio() {
                 />
               </label>
               <fieldset className="cognitive-distribution">
-                <legend>Phân bố mức độ nhận thức</legend>
-                <p>Nhập số câu ở từng mức. Nhập 0 nếu không sử dụng mức đó.</p>
+                <legend>{uiText("Phân bố mức độ nhận thức")}</legend>
+                <p>{uiText("Nhập số câu ở từng mức. Nhập 0 nếu không sử dụng mức đó.")}</p>
                 {cognitiveEntries.map(([level, label]) => (
                   <label key={level}>
-                    {label}
+                    {uiText(label)}
                     <input
                       type="number"
                       min="0"
@@ -509,18 +519,20 @@ export function AiStudio() {
                         }))
                       }
                     />
-                    <small id={`hint-${level}`}>{cognitiveHints[level]}</small>
+                    <small id={`hint-${level}`}>{uiText(cognitiveHints[level])}</small>
                   </label>
                 ))}
                 <p role="status">
                   {validDistribution
-                    ? `Tổng: ${count} câu hỏi`
-                    : "Tổng phải từ 1 đến 50 câu; mỗi mức là số nguyên không âm."}
+                    ? uiText("Tổng: {0} câu hỏi", [count])
+                    : uiText("Tổng phải từ 1 đến 50 câu; mỗi mức là số nguyên không âm.")}
                 </p>
-                <small>Đây là mức nhận thức dự kiến. Giảng viên cần kiểm tra nội dung trước khi duyệt.</small>
+                <small>
+                  {uiText("Đây là mức nhận thức dự kiến. Giảng viên cần kiểm tra nội dung trước khi duyệt.")}
+                </small>
               </fieldset>
               <fieldset>
-                <legend>Loại câu hỏi</legend>
+                <legend>{uiText("Loại câu hỏi")}</legend>
                 {[
                   ["SINGLE_CHOICE", "Một đáp án"],
                   ["MULTIPLE_CHOICE", "Nhiều đáp án"],
@@ -528,11 +540,13 @@ export function AiStudio() {
                   ["SHORT_ANSWER", "Trả lời ngắn"],
                 ].map(([v, t]) => (
                   <label className="answer-option" key={v}>
-                    <input type="checkbox" name="questionTypes" value={v} defaultChecked /> {t}
+                    <input type="checkbox" name="questionTypes" value={v} defaultChecked /> {uiText(t)}
                   </label>
                 ))}
               </fieldset>
-              <p>AI sẽ tạo một bản nháp. Bạn cần kiểm tra nội dung và đáp án trước khi phê duyệt.</p>
+              <p>
+                {uiText("AI sẽ tạo một bản nháp. Bạn cần kiểm tra nội dung và đáp án trước khi phê duyệt.")}
+              </p>
               <button
                 className="button"
                 disabled={
@@ -543,39 +557,40 @@ export function AiStudio() {
                   documentQuery.value?.status !== "EXTRACTED"
                 }
               >
-                {generating ? "Đang tạo yêu cầu…" : "Tạo câu hỏi từ học liệu"}
+                {generating ? uiText("Đang tạo yêu cầu…") : uiText("Tạo câu hỏi từ học liệu")}
               </button>
               {documentQuery.value?.status !== "EXTRACTED" && (
                 <small>
                   {!documentId
-                    ? "Tải tài liệu ở bước 1 để bắt đầu."
+                    ? uiText("Tải tài liệu ở bước 1 để bắt đầu.")
                     : documentQuery.error
-                      ? "Chưa đọc được tài liệu. Kiểm tra mã tài liệu."
-                      : "Đợi tài liệu xử lý xong trước khi tạo câu hỏi."}
+                      ? uiText("Chưa đọc được tài liệu. Kiểm tra mã tài liệu.")
+                      : uiText("Đợi tài liệu xử lý xong trước khi tạo câu hỏi.")}
                 </small>
               )}
             </form>
           </section>
         </div>
-        <section className="assistant-conversation" aria-label="Hội thoại tạo câu hỏi">
+        <section className="assistant-conversation" aria-label={uiText("Hội thoại tạo câu hỏi")}>
           <header>
             <div className="assistant-avatar">✦</div>
             <div>
-              <h2>Trợ lý soạn câu hỏi</h2>
+              <h2>{uiText("Trợ lý soạn câu hỏi")}</h2>
               <span className={live.connected ? "assistant-online" : "assistant-offline"}>
-                {live.connected ? "Đang kết nối trực tiếp" : "Cập nhật định kỳ"}
+                {live.connected ? uiText("Đang kết nối trực tiếp") : uiText("Cập nhật định kỳ")}
               </span>
             </div>
             <Link className="button secondary" to="/app/notifications">
-              Thông báo
+              {uiText("Thông báo")}
             </Link>
           </header>
           <div className="assistant-messages" role="log" aria-live="polite" aria-relevant="additions text">
             <article className="assistant-message">
-              <span>Trợ lý</span>
+              <span>{uiText("Trợ lý")}</span>
               <p>
-                Bạn muốn chuẩn bị bài kiểm tra nào hôm nay? Chọn học liệu và lớp học, tôi sẽ giúp bạn tạo một
-                bản nháp có đáp án.
+                {uiText(
+                  "Bạn muốn chuẩn bị bài kiểm tra nào hôm nay? Chọn học liệu và lớp học, tôi sẽ giúp bạn tạo một bản nháp có đáp án.",
+                )}
               </p>
               <div className="assistant-presets">
                 <button
@@ -589,7 +604,7 @@ export function AiStudio() {
                     });
                   }}
                 >
-                  Ôn tập nhanh · 10 câu
+                  {uiText("Ôn tập nhanh · 10 câu")}
                 </button>
                 <button
                   type="button"
@@ -602,66 +617,75 @@ export function AiStudio() {
                     });
                   }}
                 >
-                  Kiểm tra nâng cao · 20 câu
+                  {uiText("Kiểm tra nâng cao · 20 câu")}
                 </button>
               </div>
             </article>
             {documentQuery.value && (
               <article className="assistant-message">
-                <span>Học liệu</span>
+                <span>{uiText("Học liệu")}</span>
                 <p>
                   <strong>{documentQuery.value.fileName}</strong>
                 </p>
                 <p>
                   {documentQuery.value.status === "EXTRACTED"
-                    ? "Tôi đã nhận được nội dung. Bạn có thể gửi yêu cầu tạo câu hỏi."
+                    ? uiText("Tôi đã nhận được nội dung. Bạn có thể gửi yêu cầu tạo câu hỏi.")
                     : ["FAILED", "QUARANTINED"].includes(documentQuery.value.status)
-                      ? "Tài liệu chưa thể sử dụng. Xem lý do trong phần học liệu."
-                      : "Hệ thống đang đọc nội dung tài liệu…"}
+                      ? uiText("Tài liệu chưa thể sử dụng. Xem lý do trong phần học liệu.")
+                      : uiText("Hệ thống đang đọc nội dung tài liệu…")}
                 </p>
               </article>
             )}
             {requestCopy && (
               <article className="assistant-message from-user">
-                <span>Bạn</span>
+                <span>{uiText("Bạn")}</span>
                 <p>{requestCopy}</p>
               </article>
             )}
             {currentJob && (
               <article className="assistant-message assistant-task" key={currentJob.state}>
-                <span>Trợ lý</span>
-                <h3>{label(currentJob.state)}</h3>
+                <span>{uiText("Trợ lý")}</span>
+                <h3>{uiText(label(currentJob.state))}</h3>
                 {working ? (
                   <>
-                    <div className="assistant-thinking" aria-label="Đang soạn câu hỏi">
+                    <div className="assistant-thinking" aria-label={uiText("Đang soạn câu hỏi")}>
                       <b />
                       <b />
                       <b />
                     </div>
                     <p>
-                      Tôi đang chuẩn bị câu hỏi và đáp án từ tài liệu. Bản nháp sẽ hiện ở đây khi hoàn thành.
+                      {uiText(
+                        "Tôi đang chuẩn bị câu hỏi và đáp án từ tài liệu. Bản nháp sẽ hiện ở đây khi hoàn thành.",
+                      )}
                     </p>
                   </>
                 ) : currentJob.state === "FAILED" ? (
                   <p role="alert">
-                    {jobFailureCopy[currentJob.failureCode || ""] ||
-                      "Chưa thể tạo bản nháp. Bạn hãy thử lại sau."}
+                    {uiText(
+                      jobFailureCopy[currentJob.failureCode || ""] ||
+                        "Chưa thể tạo bản nháp. Bạn hãy thử lại sau.",
+                    )}
                   </p>
                 ) : (
-                  <p>Bạn có thể mở công việc để xem nội dung và trạng thái mới nhất.</p>
+                  <p>{uiText("Bạn có thể mở công việc để xem nội dung và trạng thái mới nhất.")}</p>
                 )}
                 <Link className="button" to={`/app/teaching/ai/jobs/${currentJob.jobId}`}>
-                  {currentJob.state === "AI_DRAFT" ? "Xem và duyệt câu hỏi" : "Mở chi tiết công việc"}
+                  {currentJob.state === "AI_DRAFT"
+                    ? uiText("Xem và duyệt câu hỏi")
+                    : uiText("Mở chi tiết công việc")}
                 </Link>
               </article>
             )}
           </div>
           <footer className="assistant-composer">
             <p>
-              <strong>{count || 0} câu hỏi</strong> ·{" "}
+              <strong>
+                {count || 0} {uiText(" câu hỏi")}
+              </strong>{" "}
+              ·{" "}
               {cognitiveEntries
                 .filter(([level]) => cognitiveDistribution[level] > 0)
-                .map(([level, label]) => `${cognitiveDistribution[level]} ${label.toLowerCase()}`)
+                .map(([level, label]) => `${cognitiveDistribution[level]} ${uiText(label).toLowerCase()}`)
                 .join(" · ")}
             </p>
             <button
@@ -675,17 +699,21 @@ export function AiStudio() {
                 documentQuery.value?.status !== "EXTRACTED"
               }
             >
-              {working ? "Đang soạn câu hỏi…" : generating ? "Đang gửi…" : "Gửi yêu cầu tạo câu hỏi ↑"}
+              {working
+                ? uiText("Đang soạn câu hỏi…")
+                : generating
+                  ? uiText("Đang gửi…")
+                  : uiText("Gửi yêu cầu tạo câu hỏi ↑")}
             </button>
-            <small>Bạn kiểm tra và duyệt trước khi xuất bản.</small>
+            <small>{uiText("Bạn kiểm tra và duyệt trước khi xuất bản.")}</small>
           </footer>
         </section>
       </div>
       <section>
-        <h2>Công việc của tôi</h2>
+        <h2>{uiText("Công việc của tôi")}</h2>
         <div className="inline-actions">
           <label>
-            Trạng thái
+            {uiText("Trạng thái")}
             <select
               value={filter}
               onChange={(e) => {
@@ -705,12 +733,15 @@ export function AiStudio() {
                 ] as JobState[]
               ).map((x) => (
                 <option key={x} value={x}>
-                  {label(x)}
+                  {uiText(label(x))}
                 </option>
               ))}
             </select>
           </label>
-          <span>Tháng {month()}</span>
+          <span>
+            {uiText("Tháng ")}
+            {month()}
+          </span>
         </div>
         <State q={jobs}>
           {(items) =>
@@ -719,47 +750,53 @@ export function AiStudio() {
                 {items.map((x) => (
                   <article key={x.jobId}>
                     <StateChip state={x.state} />
-                    <h3>{label(x.state)}</h3>
+                    <h3>{uiText(label(x.state))}</h3>
                     <p>
-                      {x.targetType === "COURSE" ? "Khóa học" : "Lớp học"} ·{" "}
-                      {new Date(x.createdAt).toLocaleString("vi-VN")}
+                      {x.targetType === "COURSE" ? uiText("Khóa học") : uiText("Lớp học")} ·{" "}
+                      {new Date(x.createdAt).toLocaleString(uiLocale)}
                     </p>
-                    <Link to={`/app/teaching/ai/jobs/${x.jobId}`}>Mở công việc →</Link>
+                    <Link to={`/app/teaching/ai/jobs/${x.jobId}`}>{uiText("Mở công việc →")}</Link>
                   </article>
                 ))}
               </div>
             ) : (
-              <EmptyState title="Không có công việc ở trạng thái này.">
-                Chọn trạng thái khác hoặc tạo một yêu cầu mới.
+              <EmptyState title={uiText("Không có công việc ở trạng thái này.")}>
+                {uiText("Chọn trạng thái khác hoặc tạo một yêu cầu mới.")}
               </EmptyState>
             )
           }
         </State>
         {jobs.meta?.nextCursor && (
           <button className="button secondary" onClick={() => setCursor(jobs.meta!.nextCursor!)}>
-            Trang tiếp theo
+            {uiText("Trang tiếp theo")}
           </button>
         )}
       </section>
       <State q={usage}>
         {(v) => (
           <section className="ai-usage">
-            <h2>Mức sử dụng hôm nay</h2>
+            <h2>{uiText("Mức sử dụng hôm nay")}</h2>
             <p>
-              <strong>{v.remaining}</strong> / {v.limit} câu còn lại
+              <strong>{v.remaining}</strong> / {v.limit} {uiText(" câu còn lại")}
             </p>
             <p>
-              {v.consumed} đã dùng · {v.reserved} đang được giữ cho công việc xử lý.
+              {v.consumed} {uiText(" đã dùng · ")}
+              {v.reserved} {uiText(" đang được giữ cho công việc xử lý.")}
             </p>
-            <p>Hạn mức làm mới lúc 00:00 mỗi ngày (giờ Việt Nam). Số liệu tính theo ngày gửi yêu cầu.</p>
+            <p>
+              {uiText(
+                "Hạn mức làm mới lúc 00:00 mỗi ngày (giờ Việt Nam). Số liệu tính theo ngày gửi yêu cầu.",
+              )}
+            </p>
           </section>
         )}
       </State>
       <details className="form-panel">
-        <summary>Hướng dẫn sử dụng AI an toàn</summary>
+        <summary>{uiText("Hướng dẫn sử dụng AI an toàn")}</summary>
         <p>
-          Chỉ tải học liệu bạn được phép sử dụng. Luôn kiểm tra câu hỏi, đáp án và ngữ cảnh trước khi phê
-          duyệt. Bài kiểm tra chỉ đến với học viên sau bước xuất bản riêng trong Assessment.
+          {uiText(
+            "Chỉ tải học liệu bạn được phép sử dụng. Luôn kiểm tra câu hỏi, đáp án và ngữ cảnh trước khi phê duyệt. Bài kiểm tra chỉ đến với học viên sau bước xuất bản riêng trong Assessment.",
+          )}
         </p>
       </details>
     </>
@@ -827,6 +864,8 @@ function useJobPolling(jobId: string, enabled = true) {
 }
 
 export function AiJob() {
+  const { locale: uiLocale } = useLanguage();
+  const uiText = useUiText();
   const { jobId = "" } = useParams(),
     live = useAiLive<Job>(jobId),
     polled = useJobPolling(jobId, !live.connected),
@@ -838,7 +877,9 @@ export function AiJob() {
   const cancel = async () => {
     if (
       !confirm(
-        "Hủy yêu cầu này sẽ dừng quá trình tạo bản nháp nếu hệ thống vẫn có thể hủy ở trạng thái hiện tại.",
+        uiText(
+          "Hủy yêu cầu này sẽ dừng quá trình tạo bản nháp nếu hệ thống vẫn có thể hủy ở trạng thái hiện tại.",
+        ),
       )
     )
       return;
@@ -852,53 +893,63 @@ export function AiJob() {
   };
   return (
     <>
-      <Breadcrumbs items={[{ label: "AI", to: "/app/teaching/ai" }, { label: "Công việc" }]} />
+      <Breadcrumbs items={[{ label: "AI", to: "/app/teaching/ai" }, { label: uiText("Công việc") }]} />
       {job.value ? (
         <section className="ai-job-status assistant-job">
           <AssistantOrb busy={!terminal.has(job.value.state)} />
           <StateChip state={job.value.state} />
-          <h1>{label(job.value.state)}</h1>
+          <h1>{uiText(label(job.value.state))}</h1>
           <p>
-            {job.value.targetType === "COURSE" ? "Khóa học" : "Lớp học"} · tạo lúc{" "}
-            {new Date(job.value.createdAt).toLocaleString("vi-VN")}
+            {job.value.targetType === "COURSE" ? uiText("Khóa học") : uiText("Lớp học")}{" "}
+            {uiText(" · tạo lúc")} {new Date(job.value.createdAt).toLocaleString(uiLocale)}
           </p>
-          {!terminal.has(job.value.state) && <div className="ai-indeterminate" aria-label="Đang xử lý" />}
-          {job.stalled && <p>Quá trình xử lý đang tạm gián đoạn. Bạn có thể thử lại sau.</p>}
+          {!terminal.has(job.value.state) && (
+            <div className="ai-indeterminate" aria-label={uiText("Đang xử lý")} />
+          )}
+          {job.stalled && <p>{uiText("Quá trình xử lý đang tạm gián đoạn. Bạn có thể thử lại sau.")}</p>}
           {job.value.state === "FAILED" && (
             <div className="ai-job-failure" role="alert">
               <p>
-                {jobFailureCopy[job.value.failureCode || ""] ||
-                  "Không thể tạo bản nháp do dịch vụ AI gặp lỗi. Hãy quay lại và tạo một yêu cầu mới."}
+                {uiText(
+                  jobFailureCopy[job.value.failureCode || ""] ||
+                    "Không thể tạo bản nháp do dịch vụ AI gặp lỗi. Hãy quay lại và tạo một yêu cầu mới.",
+                )}
               </p>
               <Link className="button" to="/app/teaching/ai">
-                Tạo yêu cầu mới
+                {uiText("Tạo yêu cầu mới")}
               </Link>
             </div>
           )}
           {["QUEUED", "PROCESSING", "VALIDATING"].includes(job.value.state) && (
             <button className="button secondary" onClick={() => void cancel()}>
-              Hủy yêu cầu
+              {uiText("Hủy yêu cầu")}
             </button>
           )}
           <details>
-            <summary>Chi tiết</summary>
-            <p>Mã công việc: {job.value.jobId}</p>
-            <p>Phiên bản trạng thái: v{job.value.version}</p>
+            <summary>{uiText("Chi tiết")}</summary>
+            <p>
+              {uiText("Mã công việc: ")}
+              {job.value.jobId}
+            </p>
+            <p>
+              {uiText("Phiên bản trạng thái: v")}
+              {job.value.version}
+            </p>
           </details>
         </section>
       ) : (
-        <p role="status">Đang đọc trạng thái…</p>
+        <p role="status">{uiText("Đang đọc trạng thái…")}</p>
       )}
-      {job.error && <p role="alert">{job.error}</p>}
-      <p role="status">{msg}</p>
+      {job.error && <p role="alert">{uiText(job.error)}</p>}
+      <p role="status">{uiText(msg)}</p>
       {(job.value?.state === "AI_DRAFT" || job.value?.state === "APPROVED") && (
         <State q={drafts}>
           {(items) =>
             items[0] ? (
               <ReviewEditor draft={items[0]} />
             ) : (
-              <EmptyState title="Bản nháp chưa sẵn sàng.">
-                Hệ thống đang đồng bộ nội dung bản nháp. Hãy tải lại trang sau ít phút.
+              <EmptyState title={uiText("Bản nháp chưa sẵn sàng.")}>
+                {uiText("Hệ thống đang đồng bộ nội dung bản nháp. Hãy tải lại trang sau ít phút.")}
               </EmptyState>
             )
           }
@@ -931,6 +982,7 @@ function reviewErrors(q: ObjectiveQuiz) {
 }
 
 function ReviewEditor({ draft }: { draft: Draft }) {
+  const uiText = useUiText();
   const [review, setReview] = useState(() => structuredClone(draft.content)),
     [selected, setSelected] = useState(0),
     [dirty, setDirty] = useState(false),
@@ -955,7 +1007,7 @@ function ReviewEditor({ draft }: { draft: Draft }) {
       alert("Bản nháp cần ít nhất 1 câu hỏi.");
       return;
     }
-    if (!confirm(`Bạn có chắc muốn xóa Câu ${index + 1}?`)) return;
+    if (!confirm(uiText("Bạn có chắc muốn xóa Câu {0}?", [index + 1]))) return;
     setReview((v) => ({
       ...v,
       questions: v.questions.filter((_, i) => i !== index).map((q, i) => ({ ...q, order: i + 1 })),
@@ -989,7 +1041,9 @@ function ReviewEditor({ draft }: { draft: Draft }) {
     if (errors.length) return setMsg("Hãy sửa các lỗi trước khi phê duyệt.");
     if (
       !confirm(
-        "Phê duyệt bản nháp này sẽ tạo một bài kiểm tra DRAFT trong Assessment. Bài kiểm tra vẫn chưa được xuất bản cho học viên.",
+        uiText(
+          "Phê duyệt bản nháp này sẽ tạo một bài kiểm tra DRAFT trong Assessment. Bài kiểm tra vẫn chưa được xuất bản cho học viên.",
+        ),
       )
     )
       return;
@@ -1018,39 +1072,44 @@ function ReviewEditor({ draft }: { draft: Draft }) {
   if (approval)
     return (
       <section className="ai-approved">
-        <p className="eyebrow">GIẢNG VIÊN ĐÃ PHÊ DUYỆT</p>
-        <h2>Đã tạo bài kiểm tra nháp.</h2>
+        <p className="eyebrow">{uiText("GIẢNG VIÊN ĐÃ PHÊ DUYỆT")}</p>
+        <h2>{uiText("Đã tạo bài kiểm tra nháp.")}</h2>
         <p>
-          Assessment Quiz v{approval.assessment.quizVersion} · Trạng thái DRAFT. Bài kiểm tra chưa được xuất
-          bản cho học viên.
+          Assessment Quiz v{approval.assessment.quizVersion}{" "}
+          {uiText(" · Trạng thái DRAFT. Bài kiểm tra chưa được xuất bản cho học viên.")}
         </p>
         <Link className="button" to={`/app/teaching/assessments/${approval.assessment.quizId}`}>
-          Mở bài kiểm tra trong Assessment
+          {uiText("Mở bài kiểm tra trong Assessment")}
         </Link>
       </section>
     );
   return (
     <section>
       <div className="ai-review-intro">
-        <p className="eyebrow">BẢN NHÁP v{draft.draftVersion}</p>
-        <h2>Giảng viên xem lại nội dung.</h2>
+        <p className="eyebrow">
+          {uiText("BẢN NHÁP v")}
+          {draft.draftVersion}
+        </p>
+        <h2>{uiText("Giảng viên xem lại nội dung.")}</h2>
         <p>
-          AI tạo bản nháp. Giảng viên là người kiểm tra và quyết định nội dung cuối cùng. Các thay đổi chưa
-          phê duyệt chỉ nằm trong trang này.
+          {uiText(
+            "AI tạo bản nháp. Giảng viên là người kiểm tra và quyết định nội dung cuối cùng. Các thay đổi chưa phê duyệt chỉ nằm trong trang này.",
+          )}
         </p>
       </div>
       <div className="assessment-builder">
         <aside className="builder-nav">
-          <h3>Câu hỏi</h3>
+          <h3>{uiText("Câu hỏi")}</h3>
           <select
             className="builder-mobile-select"
-            aria-label="Chọn câu hỏi"
+            aria-label={uiText("Chọn câu hỏi")}
             value={selected}
             onChange={(e) => setSelected(Number(e.target.value))}
           >
             {review.questions.map((_, i) => (
               <option key={i} value={i}>
-                Câu {i + 1}
+                {uiText("Câu ")}
+                {i + 1}
               </option>
             ))}
           </select>
@@ -1062,14 +1121,15 @@ function ReviewEditor({ draft }: { draft: Draft }) {
                   className={selected === i ? "active" : ""}
                   onClick={() => setSelected(i)}
                 >
-                  Câu {i + 1}
+                  {uiText("Câu ")}
+                  {i + 1}
                   <small>{x.text || "Chưa có nội dung"}</small>
                 </button>
                 <button
                   type="button"
                   className="question-remove-btn"
-                  aria-label={`Xóa câu ${i + 1}`}
-                  title={`Xóa câu ${i + 1}`}
+                  aria-label={uiText("Xóa câu {0}", [i + 1])}
+                  title={uiText("Xóa câu {0}", [i + 1])}
                   onClick={(e) => {
                     e.stopPropagation();
                     removeQuestion(i);
@@ -1081,12 +1141,12 @@ function ReviewEditor({ draft }: { draft: Draft }) {
             ))}
           </div>
           <button type="button" className="button secondary" onClick={addQuestion}>
-            + Thêm câu hỏi
+            {uiText("+ Thêm câu hỏi")}
           </button>
         </aside>
-        <section className="builder-editor" aria-label="Chỉnh sửa câu hỏi">
+        <section className="builder-editor" aria-label={uiText("Chỉnh sửa câu hỏi")}>
           <label>
-            Tiêu đề
+            {uiText("Tiêu đề")}
             <input
               value={review.title}
               maxLength={300}
@@ -1100,26 +1160,28 @@ function ReviewEditor({ draft }: { draft: Draft }) {
             <>
               <div className="question-editor-topbar">
                 <h3>
-                  Câu {selected + 1} / {review.questions.length}
+                  {uiText("Câu ")}
+                  {selected + 1} / {review.questions.length}
                 </h3>
                 <button
                   type="button"
                   className="button danger small"
                   onClick={() => removeQuestion(selected)}
                 >
-                  Xóa câu hỏi này
+                  {uiText("Xóa câu hỏi này")}
                 </button>
               </div>
               <ObjectiveEditor q={question} update={update} />
             </>
           ) : (
-            <p>Chưa có câu hỏi nào. Bấm &quot;+ Thêm câu hỏi&quot; để tạo câu hỏi mới.</p>
+            <p>{uiText('Chưa có câu hỏi nào. Bấm "+ Thêm câu hỏi" để tạo câu hỏi mới.')}</p>
           )}
         </section>
         <aside className="builder-summary">
-          <h3>Tóm tắt kiểm tra</h3>
+          <h3>{uiText("Tóm tắt kiểm tra")}</h3>
           <p>
-            {review.questions.length} câu hỏi · {errors.length} lỗi
+            {review.questions.length} {uiText(" câu hỏi · ")}
+            {errors.length} {uiText(" lỗi")}
           </p>
           {errors.length ? (
             <ul className="validation-list">
@@ -1128,16 +1190,16 @@ function ReviewEditor({ draft }: { draft: Draft }) {
               ))}
             </ul>
           ) : (
-            <p>Nội dung hợp lệ để gửi máy chủ kiểm tra.</p>
+            <p>{uiText("Nội dung hợp lệ để gửi máy chủ kiểm tra.")}</p>
           )}
           {conflict && (
             <div role="alert">
-              <p>Bản nháp đã thay đổi. Hãy tải phiên bản mới trước khi phê duyệt.</p>
+              <p>{uiText("Bản nháp đã thay đổi. Hãy tải phiên bản mới trước khi phê duyệt.")}</p>
               <button className="button secondary" onClick={() => location.reload()}>
-                Tải bản mới
+                {uiText("Tải bản mới")}
               </button>
               <button className="button secondary" onClick={() => setConflict(false)}>
-                Xem lại thay đổi hiện tại
+                {uiText("Xem lại thay đổi hiện tại")}
               </button>
               <button
                 className="button secondary"
@@ -1146,16 +1208,16 @@ function ReviewEditor({ draft }: { draft: Draft }) {
                   location.reload();
                 }}
               >
-                Hủy chỉnh sửa cục bộ
+                {uiText("Hủy chỉnh sửa cục bộ")}
               </button>
             </div>
           )}
           <div className="builder-actions">
             <button className="button" onClick={() => void approve()}>
-              Phê duyệt và tạo bài kiểm tra nháp
+              {uiText("Phê duyệt và tạo bài kiểm tra nháp")}
             </button>
           </div>
-          <p role="status">{msg}</p>
+          <p role="status">{uiText(msg)}</p>
         </aside>
       </div>
     </section>
@@ -1169,31 +1231,33 @@ function ObjectiveEditor({
   q: ObjectiveQuestion;
   update: (p: Partial<ObjectiveQuestion>) => void;
 }) {
+  const uiText = useUiText();
   const answerIds = "optionIds" in q.correctAnswer ? q.correctAnswer.optionIds : [];
   return (
     <fieldset className="question-editor">
       <legend>
-        Câu hỏi {q.order} · {labelType(q.type)}
-        {q.cognitiveLevel ? ` · ${cognitiveLabels[q.cognitiveLevel]}` : ""}
+        {uiText("Câu hỏi ")}
+        {q.order} · {uiText(labelType(q.type))}
+        {q.cognitiveLevel ? ` · ${uiText(cognitiveLabels[q.cognitiveLevel])}` : ""}
       </legend>
       <label>
-        Mức độ nhận thức
+        {uiText("Mức độ nhận thức")}
         <select
           value={q.cognitiveLevel || ""}
           onChange={(e) =>
             update({ cognitiveLevel: (e.target.value || undefined) as CognitiveLevel | undefined })
           }
         >
-          <option value="">Chưa phân loại</option>
+          <option value="">{uiText("Chưa phân loại")}</option>
           {cognitiveEntries.map(([level, label]) => (
             <option key={level} value={level}>
-              {label}
+              {uiText(label)}
             </option>
           ))}
         </select>
       </label>
       <label>
-        Nội dung
+        {uiText("Nội dung")}
         <textarea
           rows={5}
           maxLength={4000}
@@ -1202,13 +1266,13 @@ function ObjectiveEditor({
         />
       </label>
       <label>
-        Điểm
+        {uiText("Điểm")}
         <input value={q.points} onChange={(e) => update({ points: e.target.value })} />
       </label>
       {q.options?.map((o, i) => (
         <div className="option-editor" key={o.id}>
           <input
-            aria-label={`Lựa chọn ${i + 1}`}
+            aria-label={uiText("Lựa chọn {0}", [i + 1])}
             value={o.text}
             maxLength={1000}
             onChange={(e) =>
@@ -1237,7 +1301,7 @@ function ObjectiveEditor({
                 })
               }
             />
-            Đáp án đúng
+            {uiText("Đáp án đúng")}
           </label>
         </div>
       ))}
@@ -1250,7 +1314,7 @@ function ObjectiveEditor({
               checked={"value" in q.correctAnswer && q.correctAnswer.value}
               onChange={() => update({ correctAnswer: { value: true } })}
             />
-            Đúng
+            {uiText("Đúng")}
           </label>
           <label>
             <input
@@ -1265,7 +1329,7 @@ function ObjectiveEditor({
       )}
       {q.type === "SHORT_ANSWER" && (
         <label>
-          Đáp án được chấp nhận
+          {uiText("Đáp án được chấp nhận")}
           <input
             maxLength={1000}
             value={"acceptedAnswer" in q.correctAnswer ? q.correctAnswer.acceptedAnswer : ""}

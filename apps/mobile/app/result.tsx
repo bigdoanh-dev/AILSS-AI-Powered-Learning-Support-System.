@@ -1,3 +1,4 @@
+import { useUiText } from "../src/use-language";
 import { useEffect, useRef } from "react";
 import { Text, View, StyleSheet, Animated, Dimensions, StatusBar, ScrollView } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
@@ -11,6 +12,7 @@ import {
 } from "../src/motion";
 
 export default function ResultScreen() {
+  const uiText = useUiText();
   const params = useLocalSearchParams<{
     type?: string;
     title?: string;
@@ -111,10 +113,20 @@ export default function ResultScreen() {
   // Role metadata styling
   const roleDisplay =
     params.role === "ADMIN"
-      ? { label: "QUẢN TRỊ VIÊN (ADMIN)", color: "#DC2626", bg: "#FEE2E2", icon: "shield" as IconName }
+      ? {
+          label: uiText("QUẢN TRỊ VIÊN (ADMIN)"),
+          color: "#DC2626",
+          bg: "#FEE2E2",
+          icon: "shield" as IconName,
+        }
       : params.role === "LECTURER"
-        ? { label: "GIẢNG VIÊN (LECTURER)", color: "#7C3AED", bg: "#EDE9FE", icon: "academic" as IconName }
-        : { label: "HỌC VIÊN (STUDENT)", color: "#0A7E85", bg: "#E6F7F7", icon: "user" as IconName };
+        ? {
+            label: uiText("GIẢNG VIÊN (LECTURER)"),
+            color: "#7C3AED",
+            bg: "#EDE9FE",
+            icon: "academic" as IconName,
+          }
+        : { label: uiText("HỌC VIÊN (STUDENT)"), color: "#0A7E85", bg: "#E6F7F7", icon: "user" as IconName };
 
   return (
     <View style={screenStyles.container}>
@@ -218,7 +230,7 @@ export default function ResultScreen() {
           <StaggerPop index={3} baseDelay={300} style={screenStyles.errorCard}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <Icon name="alert" size={18} color="#DC2626" />
-              <Text style={screenStyles.errorCardTitle}>Chi tiết thông báo:</Text>
+              <Text style={screenStyles.errorCardTitle}>{uiText("Chi tiết thông báo:")}</Text>
             </View>
             <Text style={screenStyles.errorCardMessage}>
               {params.message || "Email hoặc mật khẩu chưa đúng, hoặc kết nối mạng bị gián đoạn."}
@@ -243,7 +255,7 @@ export default function ResultScreen() {
                 ]}
               />
             </View>
-            <Text style={screenStyles.autoRedirectText}>Tự động chuyển tiếp sau giây lát…</Text>
+            <Text style={screenStyles.autoRedirectText}>{uiText("Tự động chuyển tiếp sau giây lát…")}</Text>
           </StaggerPop>
         )}
 
@@ -260,16 +272,16 @@ export default function ResultScreen() {
           >
             <Text style={screenStyles.primaryButtonText}>
               {isSuccess
-                ? "Vào không gian học tập ngay →"
+                ? uiText("Vào không gian học tập ngay →")
                 : isLogout
-                  ? "Về trang chủ ngay →"
-                  : "Thử đăng nhập lại"}
+                  ? uiText("Về trang chủ ngay →")
+                  : uiText("Thử đăng nhập lại")}
             </Text>
           </ScalePressable>
 
           {(isError || isLogout) && (
             <ScalePressable style={screenStyles.secondaryButton} onPress={() => router.replace("/")}>
-              <Text style={screenStyles.secondaryButtonText}>← Về trang chủ</Text>
+              <Text style={screenStyles.secondaryButtonText}>{uiText("← Về trang chủ")}</Text>
             </ScalePressable>
           )}
 
@@ -278,7 +290,9 @@ export default function ResultScreen() {
               style={screenStyles.ghostButton}
               onPress={() => router.replace("/login?role=admin")}
             >
-              <Text style={screenStyles.ghostButtonText}>🛡️ Đăng nhập quyền Quản trị viên (Admin)</Text>
+              <Text style={screenStyles.ghostButtonText}>
+                {uiText("🛡️ Đăng nhập quyền Quản trị viên (Admin)")}
+              </Text>
             </ScalePressable>
           )}
         </StaggerPop>

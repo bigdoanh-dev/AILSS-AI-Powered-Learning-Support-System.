@@ -39,6 +39,7 @@ describe("P7.15A Classroom core", () => {
     };
     const first = await service.create(input);
     expect(first.data).toMatchObject({ state: "ACTIVE", scheduleState: "DRAFT", version: 1 });
+    expect(first.data.joinCode).toMatch(/^[A-Z2-9]{6}$/u);
     expect(store.events).toHaveLength(1);
     const replay = await service.create({ ...input, requestId: randomUUID() });
     expect(replay).toMatchObject({ replayed: true, data: { classId: first.data.classId } });

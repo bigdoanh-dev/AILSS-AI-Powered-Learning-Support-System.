@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
@@ -5,6 +6,7 @@ import { useMobileQuery, useMobileCommand } from "../../../src/queries";
 import { lecturerCourses, ownedClasses } from "../../../src/teaching";
 import { Page, ScreenHeader, Button, styles } from "../../../src/ui";
 export default function CreateOffering() {
+  const uiText = useUiText();
   const params = useLocalSearchParams<{ courseId?: string }>();
   const courses = useMobileQuery("/api/v1/me/owned-courses", lecturerCourses);
   const classes = useMobileQuery("/api/v1/me/owned-classes", ownedClasses);
@@ -43,19 +45,21 @@ export default function CreateOffering() {
   }
   return (
     <Page>
-      <ScreenHeader title="Tạo đợt mở bán" onBack={() => router.back()} />
-      <Text>Chọn khóa học đã xuất bản</Text>
-      {courses.loading ? <Text>Đang tải khóa học…</Text> : null}
+      <ScreenHeader title={uiText("Tạo đợt mở bán")} onBack={() => router.back()} />
+      <Text>{uiText("Chọn khóa học đã xuất bản")}</Text>
+      {courses.loading ? <Text>{uiText("Đang tải khóa học…")}</Text> : null}
       {courses.error ? (
         <View>
-          <Text style={styles.error}>{courses.error}</Text>
-          <Button label="Thử tải khóa học" onPress={courses.retry} />
+          <Text style={styles.error}>{uiText(courses.error)}</Text>
+          <Button label={uiText("Thử tải khóa học")} onPress={courses.retry} />
         </View>
       ) : null}
       {courses.data && !courses.data.some((c) => c.state === "PUBLISHED") ? (
         <View>
-          <Text>Chưa có khóa học được xuất bản. Hãy gửi khóa học cho quản trị viên duyệt trước.</Text>
-          <Button label="Khóa học của tôi" onPress={() => router.push("/teaching/courses")} />
+          <Text>
+            {uiText("Chưa có khóa học được xuất bản. Hãy gửi khóa học cho quản trị viên duyệt trước.")}
+          </Text>
+          <Button label={uiText("Khóa học của tôi")} onPress={() => router.push("/teaching/courses")} />
         </View>
       ) : null}
       {courses.data
@@ -71,15 +75,18 @@ export default function CreateOffering() {
           />
         ))}
       <View style={styles.card}>
-        <Button label={`Tự học ${type === "SELF_PACED" ? "✓" : ""}`} onPress={() => setType("SELF_PACED")} />
         <Button
-          label={`Học cùng lớp ${type === "LIVE_COHORT" ? "✓" : ""}`}
+          label={uiText("Tự học {0}", [type === "SELF_PACED" ? "✓" : ""])}
+          onPress={() => setType("SELF_PACED")}
+        />
+        <Button
+          label={uiText("Học cùng lớp {0}", [type === "LIVE_COHORT" ? "✓" : ""])}
           onPress={() => setType("LIVE_COHORT")}
         />
       </View>
       {type === "LIVE_COHORT" ? (
         <View>
-          {classes.error ? <Text style={styles.error}>{classes.error}</Text> : null}
+          {classes.error ? <Text style={styles.error}>{uiText(classes.error)}</Text> : null}
           {classes.data?.map((c) => (
             <Button
               key={c.classId}
@@ -89,32 +96,37 @@ export default function CreateOffering() {
           ))}
         </View>
       ) : null}
-      <Text>Tên đợt mở bán</Text>
+      <Text>{uiText("Tên đợt mở bán")}</Text>
       <TextInput
         style={styles.input}
-        accessibilityLabel="Tên đợt mở bán"
+        accessibilityLabel={uiText("Tên đợt mở bán")}
         value={title}
         onChangeText={setTitle}
       />
-      <Text>Giá (VND)</Text>
+      <Text>{uiText("Giá (VND)")}</Text>
       <TextInput
         style={styles.input}
-        accessibilityLabel="Giá"
+        accessibilityLabel={uiText("Giá")}
         value={price}
         onChangeText={setPrice}
         keyboardType="decimal-pad"
       />
-      <Text>Bắt đầu/kết thúc bán (ISO 8601 có múi giờ; có thể bỏ trống)</Text>
+      <Text>{uiText("Bắt đầu/kết thúc bán (ISO 8601 có múi giờ; có thể bỏ trống)")}</Text>
       <TextInput
         style={styles.input}
-        accessibilityLabel="Bắt đầu bán"
+        accessibilityLabel={uiText("Bắt đầu bán")}
         value={start}
         onChangeText={setStart}
       />
-      <TextInput style={styles.input} accessibilityLabel="Kết thúc bán" value={end} onChangeText={setEnd} />
+      <TextInput
+        style={styles.input}
+        accessibilityLabel={uiText("Kết thúc bán")}
+        value={end}
+        onChangeText={setEnd}
+      />
       {error || command.message ? <Text accessibilityRole="alert">{error || command.message}</Text> : null}
       <Button
-        label="Tạo bản nháp mở bán"
+        label={uiText("Tạo bản nháp mở bán")}
         disabled={
           command.busy || !courses.data?.some((c) => c.courseId === courseId && c.state === "PUBLISHED")
         }

@@ -1,3 +1,4 @@
+import { useUiText } from "../lib/i18n";
 import { useState, useEffect } from "react";
 
 export const steps = [
@@ -34,6 +35,7 @@ export const steps = [
 ];
 
 export function Workflow() {
+  const uiText = useUiText();
   const [active, setActive] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
 
@@ -59,8 +61,8 @@ export function Workflow() {
               aria-pressed={active === i}
             >
               <span className="step-number">0{i + 1}</span>
-              <strong>{title}</strong>
-              <small>{sub}</small>
+              <strong>{uiText(title)}</strong>
+              <small>{uiText(sub)}</small>
             </button>
           </li>
         ))}
@@ -75,18 +77,25 @@ export function Workflow() {
               marginBottom: 6,
             }}
           >
-            <span className="eyebrow">Bước {active + 1} / 6</span>
+            <span className="eyebrow">
+              {uiText("Bước ")}
+              {active + 1} / 6
+            </span>
             <button
               type="button"
               className="workflow-autoplay-btn"
               onClick={() => setAutoPlay(!autoPlay)}
-              title={autoPlay ? "Bấm để dừng tự động chuyển bước" : "Bấm để tiếp tục tự động chuyển bước"}
+              title={
+                autoPlay
+                  ? uiText("Bấm để dừng tự động chuyển bước")
+                  : uiText("Bấm để tiếp tục tự động chuyển bước")
+              }
             >
-              <span>{autoPlay ? "⏸ Tự động: Bật" : "▶ Tiếp tục tự động"}</span>
+              <span>{autoPlay ? uiText("⏸ Tự động: Bật") : uiText("▶ Tiếp tục tự động")}</span>
             </button>
           </div>
-          <h3>{steps[active][0]}</h3>
-          <p>{steps[active][2]}</p>
+          <h3>{uiText(steps[active][0])}</h3>
+          <p>{uiText(steps[active][2])}</p>
         </div>
         <div className="workflow-track" aria-hidden="true">
           <span style={{ width: `${((active + 1) / 6) * 100}%` }} />
@@ -100,7 +109,7 @@ export function Workflow() {
               setAutoPlay(false);
             }}
           >
-            Bước trước
+            {uiText("Bước trước")}
           </button>
           <button
             className="plain-button"
@@ -110,7 +119,7 @@ export function Workflow() {
               setAutoPlay(false);
             }}
           >
-            Bước tiếp theo
+            {uiText("Bước tiếp theo")}
           </button>
         </div>
       </div>

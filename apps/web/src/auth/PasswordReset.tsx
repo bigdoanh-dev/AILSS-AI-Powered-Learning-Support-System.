@@ -1,9 +1,11 @@
+import { useUiText } from "../lib/i18n";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { sessionRequest } from "./session";
 import { ApiError, errorMessage } from "../lib/api";
 
 export function PasswordReset() {
+  const uiText = useUiText();
   const [step, setStep] = useState<"email" | "code" | "password" | "done">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -112,17 +114,17 @@ export function PasswordReset() {
 
   return (
     <div className="forgot-password-card auth-form-card">
-      <h2>{step === "done" ? "Đặt lại mật khẩu thành công" : "Quên mật khẩu?"}</h2>
+      <h2>{step === "done" ? uiText("Đặt lại mật khẩu thành công") : uiText("Quên mật khẩu?")}</h2>
       {step === "done" ? (
         <>
-          <p>Mật khẩu mới đã được lưu. Hãy đăng nhập lại để tiếp tục học tập.</p>
+          <p>{uiText("Mật khẩu mới đã được lưu. Hãy đăng nhập lại để tiếp tục học tập.")}</p>
           <Link to="/auth/login" className="button auth-submit-btn">
-            Đến trang đăng nhập
+            {uiText("Đến trang đăng nhập")}
           </Link>
         </>
       ) : (
         <>
-          <ol className="forgot-reset-progress" aria-label="Các bước đặt lại mật khẩu">
+          <ol className="forgot-reset-progress" aria-label={uiText("Các bước đặt lại mật khẩu")}>
             {["Email", "Mã OTP", "Mật khẩu mới"].map((label, index) => (
               <li
                 key={label}
@@ -133,22 +135,25 @@ export function PasswordReset() {
             ))}
           </ol>
           {step === "email" ? (
-            <p>Nhập email đã đăng ký để nhận mã đặt lại mật khẩu.</p>
+            <p>{uiText("Nhập email đã đăng ký để nhận mã đặt lại mật khẩu.")}</p>
           ) : (
             <p>
-              Nếu email <strong>{email}</strong> có tài khoản dùng mật khẩu, bạn sẽ nhận mã OTP gồm 6 chữ số.
-              Mã có hiệu lực 15 phút. Kiểm tra cả thư rác.
+              {uiText("Nếu email ")}
+              <strong>{email}</strong>{" "}
+              {uiText(
+                " có tài khoản dùng mật khẩu, bạn sẽ nhận mã OTP gồm 6 chữ số. Mã có hiệu lực 15 phút. Kiểm tra cả thư rác.",
+              )}
             </p>
           )}
           {error && (
             <p className="form-status" role="alert">
-              {error}
+              {uiText(error)}
             </p>
           )}
           <form key={step} className="forgot-reset-form" onSubmit={submit} aria-busy={busy}>
             {step === "email" && (
               <label className="auth-field-label">
-                <span className="label-text">Email đăng ký</span>
+                <span className="label-text">{uiText("Email đăng ký")}</span>
                 <input
                   className="auth-input"
                   type="email"
@@ -164,7 +169,7 @@ export function PasswordReset() {
             )}
             {step === "code" && (
               <label className="auth-field-label">
-                <span className="label-text">Mã OTP</span>
+                <span className="label-text">{uiText("Mã OTP")}</span>
                 <input
                   className="auth-input forgot-otp-input"
                   inputMode="numeric"
@@ -183,7 +188,7 @@ export function PasswordReset() {
             {step === "password" && (
               <>
                 <label className="auth-field-label">
-                  <span className="label-text">Mật khẩu mới</span>
+                  <span className="label-text">{uiText("Mật khẩu mới")}</span>
                   <input
                     className="auth-input"
                     type="password"
@@ -199,10 +204,10 @@ export function PasswordReset() {
                   />
                 </label>
                 <p id="reset-password-help" className="auth-reset-hint">
-                  Dùng 12–128 ký tự.
+                  {uiText("Dùng 12–128 ký tự.")}
                 </p>
                 <label className="auth-field-label">
-                  <span className="label-text">Nhập lại mật khẩu mới</span>
+                  <span className="label-text">{uiText("Nhập lại mật khẩu mới")}</span>
                   <input
                     className="auth-input"
                     type="password"
@@ -223,14 +228,14 @@ export function PasswordReset() {
               disabled={busy || (step === "email" && remaining > 0)}
             >
               {busy
-                ? "Đang xử lý…"
+                ? uiText("Đang xử lý…")
                 : step === "email"
                   ? remaining > 0
-                    ? `Gửi mã sau ${remaining}s`
-                    : "Gửi mã OTP"
+                    ? uiText("Gửi mã sau {0}s", [remaining])
+                    : uiText("Gửi mã OTP")
                   : step === "code"
-                    ? "Xác nhận mã OTP"
-                    : "Lưu mật khẩu mới"}
+                    ? uiText("Xác nhận mã OTP")
+                    : uiText("Lưu mật khẩu mới")}
             </button>
           </form>
           {step === "code" && (
@@ -240,16 +245,16 @@ export function PasswordReset() {
               disabled={busy || remaining > 0}
               onClick={() => void send("request")}
             >
-              {remaining > 0 ? `Gửi lại mã sau ${remaining}s` : "Gửi lại mã OTP"}
+              {remaining > 0 ? uiText("Gửi lại mã sau {0}s", [remaining]) : uiText("Gửi lại mã OTP")}
             </button>
           )}
           {step !== "email" && (
             <button type="button" className="forgot-back-step" disabled={busy} onClick={changeEmail}>
-              Đổi email / bắt đầu lại
+              {uiText("Đổi email / bắt đầu lại")}
             </button>
           )}
           <Link to="/auth/login" className="forgot-back-step">
-            Quay lại đăng nhập
+            {uiText("Quay lại đăng nhập")}
           </Link>
         </>
       )}

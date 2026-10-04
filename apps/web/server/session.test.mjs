@@ -183,6 +183,7 @@ test("Admin AI chat is forwarded only for an active admin session", async () => 
     {
       mode: "ADMIN_SUPPORT",
       message: "Xem thống kê",
+      responseLanguage: "en",
     },
     studentLogin.cookie,
   );
@@ -197,11 +198,32 @@ test("Admin AI chat is forwarded only for an active admin session", async () => 
     {
       mode: "ADMIN_SUPPORT",
       message: "Xem thống kê",
+      responseLanguage: "en",
     },
     adminLogin.cookie,
   );
   assert.equal(accepted.status, 200);
   assert.equal(admin.calls.at(-1).route, "/api/v1/assistant/chat");
+  assert.equal(JSON.parse(admin.calls.at(-1).body).responseLanguage, "en");
+});
+test("Student AI forwards the selected language without changing the question", async () => {
+  const student = fixture();
+  const login = await student.request("login", "POST", {});
+  const message = "Giải thích bài học này";
+  const accepted = await student.request(
+    "student/assistant/chat",
+    "POST",
+    {
+      mode: "STUDY_BUDDY",
+      message,
+      responseLanguage: "en",
+    },
+    login.cookie,
+  );
+  assert.equal(accepted.status, 200);
+  assert.equal(student.calls.at(-1).route, "/api/v1/assistant/chat");
+  assert.equal(JSON.parse(student.calls.at(-1).body).responseLanguage, "en");
+  assert.equal(JSON.parse(student.calls.at(-1).body).message, message);
 });
 test("five expired requests share one refresh, use rotated credential", async () => {
   const f = fixture();

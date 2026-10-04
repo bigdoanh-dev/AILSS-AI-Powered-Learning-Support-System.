@@ -1,3 +1,4 @@
+import { useUiText, useLanguage } from "../../src/use-language";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Image } from "react-native";
@@ -15,12 +16,12 @@ import {
 import { BottomNavBar, Button, Icon, Page, SearchBar, styles, tokens } from "../../src/ui";
 import { ScalePressable } from "../../src/motion";
 
-function formatCoursePrice(price?: string, priceType?: string, currency?: string) {
+function formatCoursePrice(price?: string, priceType?: string, currency?: string, locale = "vi-VN") {
   if (priceType === "FREE") return "Miễn phí";
   if (!price) return "Xem giá ở trang chi tiết";
   const num = Number(price);
   if (!Number.isNaN(num) && num > 0) {
-    return new Intl.NumberFormat("vi-VN").format(num) + ` ${currency === "VND" ? "₫" : (currency ?? "VND")}`;
+    return new Intl.NumberFormat(locale).format(num) + ` ${currency === "VND" ? "₫" : (currency ?? "VND")}`;
   }
   return `${price}${currency ? ` ${currency}` : ""}`;
 }
@@ -71,6 +72,8 @@ function getCategoryTheme(categoryId?: string) {
 }
 
 export default function CourseDiscoveryScreen() {
+  const uiText = useUiText();
+  const { locale } = useLanguage();
   const session = runtime!;
   const auth = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [query, setQuery] = useState("");
@@ -181,12 +184,14 @@ export default function CourseDiscoveryScreen() {
               <Text style={screen.heroPillText}>AILSS LEARNING</Text>
             </View>
             <View style={screen.heroCountPill}>
-              <Text style={screen.heroCountText}>{courses.length} Khóa học</Text>
+              <Text style={screen.heroCountText}>
+                {courses.length} {uiText(" Khóa học")}
+              </Text>
             </View>
           </View>
-          <Text style={screen.heroTitle}>Khám phá khóa học</Text>
+          <Text style={screen.heroTitle}>{uiText("Khám phá khóa học")}</Text>
           <Text style={screen.heroSub}>
-            Lộ trình học tập chuẩn quốc tế, tích hợp trợ lý AI thông minh đồng hành 24/7.
+            {uiText("Lộ trình học tập chuẩn quốc tế, tích hợp trợ lý AI thông minh đồng hành 24/7.")}
           </Text>
         </View>
 
@@ -205,14 +210,14 @@ export default function CourseDiscoveryScreen() {
               setActiveQuery("");
               if (!activeQuery) retry();
             }}
-            placeholder="Tìm theo từ khóa (vd: python, sql, ai...)"
+            placeholder={uiText("Tìm theo từ khóa (vd: python, sql, ai...)")}
           />
           {inputError ? (
             <Text accessibilityRole="alert" style={styles.error}>
-              {inputError}
+              {uiText(inputError)}
             </Text>
           ) : null}
-          <Button label="Tìm kiếm" onPress={submitSearch} disabled={loading} />
+          <Button label={uiText("Tìm kiếm")} onPress={submitSearch} disabled={loading} />
         </View>
 
         {/* Category Horizontal Filter Pills */}
@@ -234,7 +239,8 @@ export default function CourseDiscoveryScreen() {
               <Text
                 style={[screen.categoryPillText, selectedCategory === null && screen.categoryPillTextActive]}
               >
-                Tất cả ({courses.length})
+                {uiText("Tất cả (")}
+                {courses.length})
               </Text>
             </ScalePressable>
             {categoryOptions.map((cat) => {
@@ -258,33 +264,33 @@ export default function CourseDiscoveryScreen() {
         {warning ? (
           <View style={screen.warning} accessibilityLiveRegion="polite">
             <Text style={screen.warningText}>{warning}</Text>
-            <Button label="Tải lại danh mục" variant="outline" onPress={retry} disabled={loading} />
+            <Button label={uiText("Tải lại danh mục")} variant="outline" onPress={retry} disabled={loading} />
           </View>
         ) : null}
 
         {loading ? (
           <View style={screen.center}>
             <ActivityIndicator size="large" color={tokens.color.brand} />
-            <Text style={[styles.text, { marginTop: 8 }]}>Đang cập nhật danh mục khóa học…</Text>
+            <Text style={[styles.text, { marginTop: 8 }]}>{uiText("Đang cập nhật danh mục khóa học…")}</Text>
           </View>
         ) : error ? (
           <View style={screen.card}>
             <Text accessibilityRole="alert" style={styles.error}>
-              {error}
+              {uiText(error)}
             </Text>
-            <Button label="Thử lại" variant="outline" onPress={retry} />
+            <Button label={uiText("Thử lại")} variant="outline" onPress={retry} />
           </View>
         ) : filteredCourses.length === 0 ? (
           <View style={screen.card}>
-            <Text style={screen.emptyTitle}>Không có khóa học phù hợp</Text>
+            <Text style={screen.emptyTitle}>{uiText("Không có khóa học phù hợp")}</Text>
             <Text style={styles.text}>
               {activeQuery
-                ? "Thử một từ khác trong tên khóa học hoặc xóa tìm kiếm."
-                : "Chưa có khóa học trong danh mục này. Hãy chọn danh mục khác hoặc xóa bộ lọc."}
+                ? uiText("Thử một từ khác trong tên khóa học hoặc xóa tìm kiếm.")
+                : uiText("Chưa có khóa học trong danh mục này. Hãy chọn danh mục khác hoặc xóa bộ lọc.")}
             </Text>
             {selectedCategory && (
               <Button
-                label="Xem tất cả khóa học"
+                label={uiText("Xem tất cả khóa học")}
                 variant="outline"
                 onPress={() => setSelectedCategory(null)}
                 style={{ marginTop: 12 }}
@@ -296,33 +302,35 @@ export default function CourseDiscoveryScreen() {
             <View style={screen.resultsHeaderRow}>
               <Text style={screen.sectionTitle}>
                 {activeQuery
-                  ? `${filteredCourses.length} kết quả cho “${activeQuery}”`
-                  : `${filteredCourses.length} khóa học đang hiển thị`}
+                  ? uiText("{0} kết quả cho “{1}”", [filteredCourses.length, activeQuery])
+                  : uiText("{0} khóa học đang hiển thị", [filteredCourses.length])}
               </Text>
               {selectedCategory && (
                 <Text style={screen.clearFilterText} onPress={() => setSelectedCategory(null)}>
-                  Đặt lại lọc ✕
+                  {uiText("Đặt lại lọc ✕")}
                 </Text>
               )}
             </View>
 
             {filteredCourses.map((course) => {
               const theme = getCategoryTheme(course.categoryId);
-              const priceFormatted = formatCoursePrice(course.price, course.priceType, course.currency);
+              const priceFormatted = uiText(
+                formatCoursePrice(course.price, course.priceType, course.currency, locale),
+              );
               const isFree = course.priceType === "FREE";
 
               return (
                 <ScalePressable
                   key={course.courseId}
                   accessibilityRole="button"
-                  accessibilityLabel={`Xem khóa học ${course.title}`}
+                  accessibilityLabel={uiText("Xem khóa học {0}", [course.title])}
                   onPress={() => router.push(`/courses/${course.courseId}` as Href)}
                   style={screen.courseCard}
                 >
                   {course.coverDataUrl ? (
                     <Image
                       source={{ uri: course.coverDataUrl }}
-                      accessibilityLabel={`Ảnh bìa ${course.title}`}
+                      accessibilityLabel={uiText("Ảnh bìa {0}", [course.title])}
                       style={{ width: "100%", height: 160 }}
                       resizeMode="cover"
                     />
@@ -339,7 +347,7 @@ export default function CourseDiscoveryScreen() {
                       </View>
                       <View style={screen.ratingPill}>
                         <Icon name="star" size={12} color="#D97706" />
-                        <Text style={screen.ratingText}>Xem đánh giá</Text>
+                        <Text style={screen.ratingText}>{uiText("Xem đánh giá")}</Text>
                       </View>
                     </View>
                   </View>
@@ -354,23 +362,23 @@ export default function CourseDiscoveryScreen() {
                     <View style={screen.metaRow}>
                       <View style={screen.metaItem}>
                         <Icon name="book" size={13} color={tokens.color.muted} />
-                        <Text style={screen.metaText}>Xem nội dung khóa học</Text>
+                        <Text style={screen.metaText}>{uiText("Xem nội dung khóa học")}</Text>
                       </View>
                     </View>
 
                     {/* Footer: Price & CTA */}
                     <View style={screen.courseFooter}>
                       <View>
-                        <Text style={screen.priceLabel}>Học phí khóa học</Text>
+                        <Text style={screen.priceLabel}>{uiText("Học phí khóa học")}</Text>
                         <Text style={[screen.price, isFree && screen.priceFree]}>{priceFormatted}</Text>
                       </View>
                       <View style={screen.actionBtnPill}>
                         <Text style={screen.actionBtnText}>
                           {ownedIds.has(course.courseId)
-                            ? "Đã có quyền học"
+                            ? uiText("Đã có quyền học")
                             : isFree
-                              ? "Đăng ký miễn phí"
-                              : "Xem gói & mua"}
+                              ? uiText("Đăng ký miễn phí")
+                              : uiText("Xem gói & mua")}
                         </Text>
                         <Icon name="chevronRight" size={13} color="#FFFFFF" />
                       </View>

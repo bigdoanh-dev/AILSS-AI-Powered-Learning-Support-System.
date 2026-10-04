@@ -1,3 +1,4 @@
+import { useUiText } from "../../../src/use-language";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { type Href, router, useLocalSearchParams } from "expo-router";
@@ -12,6 +13,7 @@ import { runtime } from "../../../src/runtime";
 import { Button, Page, ScreenHeader, BottomNavBar, Badge, Icon, StatCard, tokens } from "../../../src/ui";
 
 export default function QuizDetailScreen() {
+  const uiText = useUiText();
   const { quizId } = useLocalSearchParams<{ quizId: string }>();
   const session = runtime!;
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -70,14 +72,17 @@ export default function QuizDetailScreen() {
   if (snapshot.state !== "AUTHENTICATED") {
     return (
       <Page>
-        <ScreenHeader title="Chi tiết bài kiểm tra" onBack={() => router.push("/assessments" as Href)} />
+        <ScreenHeader
+          title={uiText("Chi tiết bài kiểm tra")}
+          onBack={() => router.push("/assessments" as Href)}
+        />
         <View style={screenStyles.authCard}>
           <Icon name="lock" size={36} color={tokens.color.brand} />
-          <Text style={screenStyles.cardTitle}>Yêu cầu đăng nhập</Text>
+          <Text style={screenStyles.cardTitle}>{uiText("Yêu cầu đăng nhập")}</Text>
           <Text style={screenStyles.authText}>
-            Vui lòng đăng nhập để xem thông tin và tham gia làm bài kiểm tra.
+            {uiText("Vui lòng đăng nhập để xem thông tin và tham gia làm bài kiểm tra.")}
           </Text>
-          <Button label="Đăng nhập ngay" onPress={() => router.push("/login" as Href)} />
+          <Button label={uiText("Đăng nhập ngay")} onPress={() => router.push("/login" as Href)} />
         </View>
         <BottomNavBar
           currentRoute="/assessments"
@@ -91,10 +96,10 @@ export default function QuizDetailScreen() {
   if (loading) {
     return (
       <Page>
-        <ScreenHeader title="Đang tải..." onBack={() => router.push("/assessments" as Href)} />
+        <ScreenHeader title={uiText("Đang tải...")} onBack={() => router.push("/assessments" as Href)} />
         <View style={screenStyles.center}>
           <ActivityIndicator size="large" color={tokens.color.brand} />
-          <Text style={screenStyles.loadingText}>Đang chuẩn bị đề thi…</Text>
+          <Text style={screenStyles.loadingText}>{uiText("Đang chuẩn bị đề thi…")}</Text>
         </View>
         <BottomNavBar
           currentRoute="/assessments"
@@ -108,16 +113,16 @@ export default function QuizDetailScreen() {
   if (error && !quiz) {
     return (
       <Page>
-        <ScreenHeader title="Thông báo" onBack={() => router.push("/assessments" as Href)} />
+        <ScreenHeader title={uiText("Thông báo")} onBack={() => router.push("/assessments" as Href)} />
         <View style={screenStyles.errorBox}>
           <Icon name="alert" size={28} color={tokens.color.danger} />
           <Text accessibilityRole="alert" style={screenStyles.errorText}>
-            {error}
+            {uiText(error)}
           </Text>
           <View style={screenStyles.actionCol}>
-            <Button label="Thử lại" onPress={() => void loadDetail()} />
+            <Button label={uiText("Thử lại")} onPress={() => void loadDetail()} />
             <Button
-              label="Quay lại danh sách bài kiểm tra"
+              label={uiText("Quay lại danh sách bài kiểm tra")}
               variant="outline"
               onPress={() => router.push("/assessments" as Href)}
             />
@@ -137,16 +142,19 @@ export default function QuizDetailScreen() {
   return (
     <Page testID="student-assessment-detail">
       <ScreenHeader
-        title="Bài kiểm tra"
-        subtitle={quiz.targetType === "COURSE" ? "Theo khóa học" : "Theo lớp học"}
+        title={uiText("Bài kiểm tra")}
+        subtitle={quiz.targetType === "COURSE" ? uiText("Theo khóa học") : uiText("Theo lớp học")}
         onBack={() => router.push("/assessments" as Href)}
       />
 
       {/* Hero Exam Header Card */}
       <View style={screenStyles.heroCard}>
         <View style={screenStyles.badgeRow}>
-          <Badge label={quiz.targetType === "COURSE" ? "KHÓA HỌC" : "LỚP HỌC"} variant="primary" />
-          <Badge label="ĐÃ XUẤT BẢN" variant="success" />
+          <Badge
+            label={quiz.targetType === "COURSE" ? uiText("KHÓA HỌC") : uiText("LỚP HỌC")}
+            variant="primary"
+          />
+          <Badge label={uiText("ĐÃ XUẤT BẢN")} variant="success" />
         </View>
 
         <Text style={screenStyles.examTitle}>{quiz.title}</Text>
@@ -154,7 +162,7 @@ export default function QuizDetailScreen() {
         <View style={screenStyles.examTypeRow}>
           <Icon name="academic" size={16} color={tokens.color.brand} />
           <Text style={screenStyles.examTypeText}>
-            Xem hướng dẫn và câu hỏi được cấu hình cho bài kiểm tra này trước khi bắt đầu.
+            {uiText("Xem hướng dẫn và câu hỏi được cấu hình cho bài kiểm tra này trước khi bắt đầu.")}
           </Text>
         </View>
       </View>
@@ -162,22 +170,27 @@ export default function QuizDetailScreen() {
       {error && (
         <View style={screenStyles.errorBox}>
           <Text accessibilityRole="alert" style={screenStyles.errorText}>
-            {error}
+            {uiText(error)}
           </Text>
         </View>
       )}
 
       {/* Exam Specs - KPI Cards */}
       <View style={screenStyles.kpiRow}>
-        <StatCard label="CÂU HỎI" value={`${quiz.questionCount}`} icon="book" color={tokens.color.brand} />
         <StatCard
-          label="THỜI LƯỢNG"
+          label={uiText("CÂU HỎI")}
+          value={`${quiz.questionCount}`}
+          icon="book"
+          color={tokens.color.brand}
+        />
+        <StatCard
+          label={uiText("THỜI LƯỢNG")}
           value={quiz.durationSeconds ? `${Math.round(quiz.durationSeconds / 60)}'` : "Tự do"}
           icon="clock"
           color={tokens.color.warning}
         />
         <StatCard
-          label="LƯỢT THI"
+          label={uiText("LƯỢT THI")}
           value={quiz.attemptLimit ? `${quiz.attemptLimit}` : "Vô hạn"}
           icon="sparkles"
           color={tokens.color.ai}
@@ -188,32 +201,32 @@ export default function QuizDetailScreen() {
       <View style={screenStyles.instructionsBox}>
         <View style={screenStyles.instructionHeader}>
           <Icon name="shield" size={18} color={tokens.color.brand} />
-          <Text style={screenStyles.instructionsTitle}>Quy chế thi và hướng dẫn làm bài</Text>
+          <Text style={screenStyles.instructionsTitle}>{uiText("Quy chế thi và hướng dẫn làm bài")}</Text>
         </View>
 
         <View style={screenStyles.instructionList}>
           <View style={screenStyles.instructionRow}>
             <Text style={screenStyles.bulletDot}>•</Text>
             <Text style={screenStyles.instructionItem}>
-              Đồng hồ tính giờ sẽ bắt đầu đếm ngược ngay sau khi bạn bấm bắt đầu.
+              {uiText("Đồng hồ tính giờ sẽ bắt đầu đếm ngược ngay sau khi bạn bấm bắt đầu.")}
             </Text>
           </View>
           <View style={screenStyles.instructionRow}>
             <Text style={screenStyles.bulletDot}>•</Text>
             <Text style={screenStyles.instructionItem}>
-              Bạn có thể tự do chuyển đổi qua lại giữa các câu hỏi trong thời gian thi.
+              {uiText("Bạn có thể tự do chuyển đổi qua lại giữa các câu hỏi trong thời gian thi.")}
             </Text>
           </View>
           <View style={screenStyles.instructionRow}>
             <Text style={screenStyles.bulletDot}>•</Text>
             <Text style={screenStyles.instructionItem}>
-              Nhấn Nộp bài để hoàn tất. Kết quả được hệ thống chấm điểm tự động tức thì.
+              {uiText("Nhấn Nộp bài để hoàn tất. Kết quả được hệ thống chấm điểm tự động tức thì.")}
             </Text>
           </View>
           <View style={screenStyles.instructionRow}>
             <Text style={screenStyles.bulletDot}>•</Text>
             <Text style={screenStyles.instructionItem}>
-              Khi hết thời gian quy định, hệ thống sẽ tự động khóa bài thi.
+              {uiText("Khi hết thời gian quy định, hệ thống sẽ tự động khóa bài thi.")}
             </Text>
           </View>
         </View>
@@ -223,13 +236,13 @@ export default function QuizDetailScreen() {
       <View style={screenStyles.actionRow}>
         <Button
           testID="student-assessment-start"
-          label={starting ? "Đang chuẩn bị đề thi..." : "▶ Bắt đầu làm bài thi"}
+          label={starting ? uiText("Đang chuẩn bị đề thi...") : uiText("▶ Bắt đầu làm bài thi")}
           onPress={() => void handleStartAttempt()}
           disabled={starting}
           size="lg"
         />
         <Button
-          label="← Quay lại danh sách bài kiểm tra"
+          label={uiText("← Quay lại danh sách bài kiểm tra")}
           variant="outline"
           onPress={() => router.push("/assessments" as Href)}
         />
