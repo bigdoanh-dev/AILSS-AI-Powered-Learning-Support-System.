@@ -1,5 +1,7 @@
 # AILSS — AI-Powered Learning Support System
 
+> **Nhánh mã nguồn:** [dev](https://github.com/bigdoanh-dev/AILSS-AI-Powered-Learning-Support-System./tree/dev). README trên `main` được đồng bộ từ `dev`; việc đồng bộ tài liệu không đưa mã nguồn ứng dụng sang `main`. Hãy dùng nhánh `dev` để cài đặt, chạy và kiểm thử dự án.
+
 Bộ dữ liệu học viên và hai giảng viên demo, liên kết lớp/lịch/bảng điểm: [Linked demo guide](LINKED_DEMO_GUIDE.md).
 
 [![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -27,6 +29,7 @@ AILSS là nền tảng học tập đa nền tảng theo kiến trúc microservi
   - [2. Student Learning](#2-student-learning)
   - [3. Lecturer Teaching](#3-lecturer-teaching)
   - [4. Admin Governance](#4-admin-governance)
+    - [Admin Control Center](#admin-control-center)
   - [5. Course và Offering](#5-course-và-offering)
   - [6. Classroom và Attendance](#6-classroom-và-attendance)
   - [7. Assessment và Quiz](#7-assessment-và-quiz)
@@ -132,6 +135,30 @@ AILSS được xây dựng để nghiên cứu và triển khai một hệ thố
 - Hướng dẫn quản trị local hoạt động với `AI_ADMIN_SUPPORT_MODE=local-guide`, không cần API key AI. Chế độ này hướng dẫn thao tác và không tự thực hiện hành động quản trị.
 - Không có vai trò `MODERATOR` riêng và chưa có Admin Course review queue.
 
+#### Admin Control Center
+
+Trang Tổng quan tại `/app/admin` tập hợp các khối quản trị và liên kết tới các trang chuyên biệt:
+
+| Khối                                  | Nội dung                                                                                                                                                                                               |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| KPI tổng quan                         | 8 thẻ: tổng người dùng, Student/Lecturer ACTIVE, tổng khóa học, tỷ lệ hoàn thành, phiên học hôm nay, doanh thu tháng và cảnh báo                                                                       |
+| Tăng trưởng nền tảng                  | Area chart, chọn chỉ số và bộ lọc `7 ngày / 30 ngày / 90 ngày / 1 năm`; đăng ký mới và lượt gọi API AI từ Prometheus                                                                                   |
+| System Health / Operations            | API Gateway, Identity, Learning, AI, Media, Database và Queue; trạng thái `Healthy / Warning / Critical / Unknown`, uptime, p95, lỗi 5xx, request volume, AI jobs lỗi, media queue và dung lượng media |
+| Prometheus & Grafana                  | Giữ khối giám sát riêng với trạng thái kết nối, số target hoạt động, yêu cầu/giây, lỗi 5xx, p95, biểu đồ lưu lượng giờ gần nhất và nút mở trang giám sát                                               |
+| AI Operations                         | Lượt gọi API AI trong ngày/kỳ, độ trễ trung bình, lỗi 5xx và biểu đồ API hội thoại/tạo quiz; ghi rõ các chỉ số chưa được tổng hợp                                                                      |
+| User & Academic Risk                  | Các thẻ sinh viên có nguy cơ, không hoạt động hơn 7 ngày, khóa học hoàn thành thấp và giảng viên cần rà soát; hiển thị chưa có dữ liệu khi chưa có nguồn tổng hợp                                      |
+| Tài chính / Marketplace               | Doanh số, phí nền tảng, phiếu chi trả đang chờ chuyển, biểu đồ doanh thu và khóa học bán chạy; yêu cầu hoàn tiền/thanh toán lỗi chưa được tổng hợp                                                     |
+| Cảnh báo, hoạt động và thao tác nhanh | Cảnh báo Prometheus cùng nhóm dịch vụ Warning/Critical, audit log và liên kết tới Users, Lecturer, Reports, Courses, Settings, AI và đối soát tài chính                                                |
+
+Các nguồn dữ liệu được tải độc lập và tự làm mới; một nguồn lỗi không làm mất dữ liệu của các khối khác. Chỉ tài khoản `ADMIN` được truy cập API vận hành; backend chỉ nhận các khoảng thời gian định sẵn, không nhận URL hoặc PromQL tùy ý.
+
+**Phân biệt số liệu đã có và chưa có:**
+
+- Student/Lecturer ACTIVE là trạng thái tài khoản, không phải số người học đăng nhập thường xuyên. Lượt gọi API AI là ước tính từ counter, không phải số người dùng duy nhất; lịch sử phụ thuộc thời gian lưu trữ của Prometheus.
+- Doanh thu lấy từ projection thanh toán/hoàn tiền có thẩm quyền, hiện tối đa 30 ngày. Doanh thu tháng chỉ hiển thị khi dữ liệu phủ từ ngày đầu tháng, theo kỳ UTC; khoản chi trả pending chỉ cộng phiếu `PENDING_TRANSFER`.
+- Tổng khóa học, completion, phiên học, active users theo ngày, ghi danh và rủi ro học tập chưa có nguồn tổng hợp toàn nền tảng. Token usage, AI cost, safety, RAG và phân tách AI theo tính năng/role cũng chưa có nguồn tổng hợp. Các chỉ số này hiển thị `—` hoặc trạng thái trống, không tự gán số 0 hay số mẫu.
+- Donut trạng thái dịch vụ không phải biểu đồ rủi ro sinh viên. `Create Admin` đang vô hiệu hóa vì backend chưa có quy trình tạo Admin từ dashboard; `AI Configuration` mở trang Settings hiện có.
+
 ### 5. Course và Offering
 
 - Course và Offering là hai aggregate riêng; một Course có thể có nhiều Offering.
@@ -186,6 +213,7 @@ Upload intent → Direct private upload → Confirm → Extraction
 ### 10. Media và phát video
 
 - Lecturer tải media lên private object storage; hệ thống áp dụng quota, xác thực nguồn và tách quyền cho API, worker và delivery.
+- Web hỗ trợ multipart upload và thử lại phần còn thiếu. Sau khi mở lại trình duyệt, Lecturer chọn lại đúng tệp để tiếp tục phiên còn hiệu lực; các phần đã được storage xác nhận không phải tải lại.
 - Media Worker kiểm tra đầu vào và tạo HLS ở các mức 360p, 480p và 720p; job, output journal và phục hồi được theo dõi bền vững.
 - Student phát nội dung theo quyền ghi danh qua playback token giới hạn theo asset; video trailer được mở công khai theo policy của Course.
 - Phụ đề WebVTT, poster và các segment HLS được phân phối qua Media Delivery từ MinIO private; thay video đã xuất bản dùng chuyển đổi nguyên tử.
@@ -336,6 +364,8 @@ Các luồng tham chiếu chi tiết cho registration/outbox, SePay/entitlement,
 ### Chạy nhanh
 
 ```bash
+git clone --branch dev https://github.com/bigdoanh-dev/AILSS-AI-Powered-Learning-Support-System..git ailss
+cd ailss
 npm install --global pnpm@11.19.0
 pnpm install --frozen-lockfile
 test -f .env || cp .env.example .env
@@ -354,6 +384,8 @@ pnpm dev:web
 Mở địa chỉ Vite hiển thị trong terminal, mặc định `http://127.0.0.1:5173`.
 
 `env:dev-async` khởi tạo Cassandra roles/migrations, RabbitMQ topology, MinIO, Gateway, business services, workers và observability. Hướng dẫn chi tiết cho Web nằm tại [WEB_DEVELOPMENT_GUIDE.md](./WEB_DEVELOPMENT_GUIDE.md).
+
+Nếu đã khởi tạo video bằng `node scripts/dev/initialize-media.mjs`, các lệnh `env:dev-async` và `env:demo` tự nạp `.env.media` cùng `docker-compose.media.yml` để giữ upload/HLS hoạt động sau khi khởi động lại. `.env.local` được nạp cuối để giữ cấu hình riêng của máy. Môi trường `dev-core` và `research` không tự bật media.
 
 ### Cấu hình tích hợp local
 
@@ -423,12 +455,21 @@ Lệnh reset xóa Cassandra/RabbitMQ/MinIO volumes local. Không chạy khi cầ
 | `pnpm env:reset`     | Xóa môi trường/volume khi đã đặt biến xác nhận                                           |
 | Media overlay        | `docker-compose.media.yml`; cần policy kích thước/thời lượng và credential storage riêng |
 
-Media là overlay tùy chọn. Sau khi khai báo các biến bắt buộc trong `.env.media`, có thể bật cùng profile bất đồng bộ:
+Media là overlay tùy chọn. Khi `dev-async` đã sẵn sàng, khởi tạo bucket private, các principal storage riêng và migration media bằng:
 
 ```bash
-docker compose --env-file .env --env-file .env.local --env-file .env.media \
+node scripts/dev/initialize-media.mjs
+pnpm env:dev-async
+```
+
+Initializer lưu credential vào `.env.media` bị Git bỏ qua; policy local mặc định là 1 GiB và 4 giờ, không phải mặc định production. Khi file này đã tồn tại, helper môi trường tự giữ media overlay cho `dev-async`/`demo`; không cần khởi tạo lại sau mỗi lần restart.
+
+Nếu cần chạy Docker Compose trực tiếp, giữ thứ tự nạp `.env`, `.env.media`, rồi `.env.local` để cấu hình riêng của máy được ưu tiên:
+
+```bash
+docker compose --env-file .env --env-file .env.media --env-file .env.local \
   -f docker-compose.yml -f docker-compose.async.yml \
-  -f docker-compose.observability.yml -f docker-compose.media.yml \
+  -f docker-compose.media.yml -f docker-compose.observability.yml \
   --profile dev-async up -d api-gateway learning-service media-delivery media-worker
 ```
 
