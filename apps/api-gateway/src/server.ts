@@ -797,6 +797,11 @@ app.get(
   adminMonitoring,
 );
 app.get(
+  "/api/v1/admin/dashboard/operations",
+  readLimiter.middleware(Number(process.env.RATE_LIMIT_ADMIN_PER_MINUTE ?? 30)),
+  adminMonitoring,
+);
+app.get(
   "/api/v1/admin/dashboard/revenue",
   authLimiter.middleware(Number(process.env.RATE_LIMIT_ADMIN_PER_MINUTE ?? 30)),
   learningCommerce.dashboardRevenue,

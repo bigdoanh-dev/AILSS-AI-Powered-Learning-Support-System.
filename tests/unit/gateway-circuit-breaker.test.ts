@@ -75,6 +75,7 @@ describe("API Gateway Circuit Breaker", () => {
       expect(resolveUpstreamService("GET", "/health/ready")).toBeNull();
       expect(resolveUpstreamService("GET", "/metrics")).toBeNull();
       expect(resolveUpstreamService("GET", "/api/v1/admin/monitoring")).toBeNull();
+      expect(resolveUpstreamService("GET", "/api/v1/admin/dashboard/operations")).toBeNull();
       expect(resolveUpstreamService("GET", "/unknown/route")).toBeNull();
     });
   });

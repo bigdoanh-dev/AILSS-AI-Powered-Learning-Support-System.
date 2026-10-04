@@ -16,6 +16,7 @@ const fixture = Object.fromEntries(
       return [line.slice(0, separator), line.slice(separator + 1)];
     }),
 );
+const sourceFile = process.env.AILSS_MEDIA_SOURCE_FILE || fixture.PHASE42_SOURCE_FILE;
 const profile = await mkdtemp(path.join(tmpdir(), "ailss-media-resume-browser-"));
 async function api(token, route, method, body) {
   const response = await fetch(`${gateway}/api/v1${route}`, {
@@ -83,7 +84,7 @@ try {
   const intro = page.getByRole("button", { name: "Bỏ qua" });
   if (await intro.isVisible()) await intro.click();
   await expect(page.getByRole("region", { name: "Video bài giảng riêng tư" })).toBeVisible();
-  await page.getByLabel("Chọn video MP4 hoặc WebM").setInputFiles(fixture.PHASE42_SOURCE_FILE);
+  await page.getByLabel("Chọn video MP4 hoặc WebM").setInputFiles(sourceFile);
   await page.getByRole("button", { name: "Tải video / thử lại phần còn thiếu" }).click();
   await expect.poll(() => interrupted, { timeout: 60_000 }).toBe(true);
   const progress = await page.getByRole("status").allTextContents();
@@ -117,7 +118,7 @@ try {
   const reopenedIntro = page.getByRole("button", { name: "Bỏ qua" });
   if (await reopenedIntro.isVisible()) await reopenedIntro.click();
   await expect(page.getByText(/Có phiên tải lên chưa hoàn tất/)).toBeVisible();
-  await page.getByLabel("Chọn video MP4 hoặc WebM").setInputFiles(fixture.PHASE42_SOURCE_FILE);
+  await page.getByLabel("Chọn video MP4 hoặc WebM").setInputFiles(sourceFile);
   await page.getByRole("button", { name: "Tải video / thử lại phần còn thiếu" }).click();
   await expect(page.getByText(/Đã tải lên. Đang kiểm tra/)).toBeVisible({ timeout: 120_000 });
   assert.equal(repeatedFirst, 0, "Already uploaded part is not re-uploaded");

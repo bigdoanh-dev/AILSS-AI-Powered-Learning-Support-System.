@@ -34,6 +34,18 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets: ["ai-service:8106"]
+  - job_name: ailss-ai-worker
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["ai-worker:8201"]
+  - job_name: ailss-media-worker
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["media-worker:8210"]
+  - job_name: ailss-media-delivery
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["media-delivery:8211"]
 
 alerting:
   alertmanagers:

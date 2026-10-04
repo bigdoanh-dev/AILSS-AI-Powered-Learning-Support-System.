@@ -1,50 +1,24 @@
 import { execFileSync } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
-import { access } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { localComposeConfig } from "./compose-config.mjs";
 
 const action = process.argv[2] ?? "up";
 const profile = process.argv[3] ?? process.env.AILSS_PROFILE ?? "dev-core";
 const valid = new Set(["dev-core", "dev-async", "research", "demo"]);
 const asyncProfile = profile !== "dev-core";
-const composeFiles = [
-  "-f",
-  "docker-compose.yml",
-  ...(asyncProfile ? ["-f", "docker-compose.async.yml"] : []),
-  "-f",
-  "docker-compose.observability.yml",
-];
 // Keep machine-specific integrations (OAuth, payment webhooks, LAN binding) in
 // .env.local. Compose reads it after the generated/default .env so restarting
 // the stack cannot silently replace configured values with empty examples.
-const composeEnvFiles = [
-  "--env-file",
-  ".env",
-  ...(existsSync(".env.local") ? ["--env-file", ".env.local"] : []),
-];
 const compose = (...args) =>
-  execFileSync("docker", ["compose", ...composeEnvFiles, ...composeFiles, "--profile", profile, ...args], {
+  execFileSync("docker", ["compose", ...localComposeConfig(profile).args, ...args], {
     stdio: "inherit",
     env: { ...process.env, AILSS_PROFILE: profile },
   });
 const composeAll = (...args) =>
-  execFileSync(
-    "docker",
-    [
-      "compose",
-      ...composeEnvFiles,
-      "-f",
-      "docker-compose.yml",
-      "-f",
-      "docker-compose.async.yml",
-      "-f",
-      "docker-compose.observability.yml",
-      "--profile",
-      "*",
-      ...args,
-    ],
-    { stdio: "inherit", env: { ...process.env, AILSS_PROFILE: profile } },
-  );
+  execFileSync("docker", ["compose", ...localComposeConfig("*").args, ...args], {
+    stdio: "inherit",
+    env: { ...process.env, AILSS_PROFILE: profile },
+  });
 const node = (script, ...args) =>
   execFileSync(process.execPath, [script, ...args], {
     stdio: "inherit",

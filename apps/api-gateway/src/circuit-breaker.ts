@@ -776,7 +776,8 @@ export function resolveUpstreamService(_method: string, path: string): UpstreamS
   if (
     normalized.startsWith("/health") ||
     normalized === "/metrics" ||
-    normalized === "/api/v1/admin/monitoring"
+    normalized === "/api/v1/admin/monitoring" ||
+    normalized === "/api/v1/admin/dashboard/operations"
   ) {
     return null;
   }

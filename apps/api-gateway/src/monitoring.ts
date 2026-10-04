@@ -4,6 +4,7 @@ import type { AppConfig } from "../../../packages/config/src/index.js";
 import { AppError, currentRequestContext } from "../../../packages/http/src/index.js";
 import { loadPublicKey, verifyAccessToken } from "../../../packages/security/src/index.js";
 import { parseBearerAuthorization } from "./protected-identity-proxy.js";
+import { operationsRange, operationsSnapshot } from "./admin-operations.js";
 
 const vector = z.object({
   status: z.literal("success"),
@@ -184,12 +185,22 @@ export async function monitoringHandler(config: AppConfig): Promise<RequestHandl
       }
       if (!actor.roles.includes("ADMIN"))
         throw new AppError("ADMIN_REQUIRED", 403, "Admin authorization is required");
-      if (Object.keys(req.query).length)
+      const operations = req.path === "/api/v1/admin/dashboard/operations";
+      const range = operations
+        ? z
+            .object({ range: operationsRange.default("30d") })
+            .strict()
+            .safeParse(req.query)
+        : null;
+      if ((operations && !range?.success) || (!operations && Object.keys(req.query).length))
         throw new AppError("INVALID_MONITORING_QUERY", 422, "Monitoring query parameters are not accepted");
       const context = currentRequestContext();
       res.setHeader("Cache-Control", "no-store");
       res.json({
-        data: await monitoringSnapshot(config),
+        data:
+          operations && range?.success
+            ? await operationsSnapshot(config, range.data.range)
+            : await monitoringSnapshot(config),
         meta: { requestId: context?.requestId, timestamp: new Date().toISOString() },
       });
     } catch (error) {

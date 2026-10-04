@@ -90,6 +90,19 @@ export function adminOperation(url, method, body, headers) {
     return { path: "/admin/reports" + (query ? `?${new URLSearchParams(query)}` : ""), headers: {} };
   }
   // --- Dashboard data routes ---
+  if (method === "GET" && path === "/dashboard/operations") {
+    const params = new URLSearchParams(query);
+    const values = {};
+    for (const [key, value] of params) {
+      if (key in values) throw Error("INVALID_ADMIN_REQUEST");
+      values[key] = value;
+    }
+    const parsed = z
+      .object({ range: z.enum(["7d", "30d", "90d", "365d"]).default("30d") })
+      .strict()
+      .parse(values);
+    return { path: `/admin/dashboard/operations?range=${parsed.range}`, headers: {} };
+  }
   if (method === "GET" && path === "/monitoring" && !query) {
     return { path: "/admin/monitoring", headers: {} };
   }

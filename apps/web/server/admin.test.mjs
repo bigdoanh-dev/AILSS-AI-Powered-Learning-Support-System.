@@ -2,6 +2,22 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { adminEnvelope, adminOperation } from "./admin.mjs";
 const id = "00000000-0000-4000-8000-000000000001";
+test("Admin operations only forwards bounded read-only ranges", () => {
+  assert.equal(
+    adminOperation("/web-session/admin/dashboard/operations", "GET", undefined, {}).path,
+    "/admin/dashboard/operations?range=30d",
+  );
+  for (const range of ["7d", "30d", "90d", "365d"])
+    assert.equal(
+      adminOperation(`/web-session/admin/dashboard/operations?range=${range}`, "GET", undefined, {}).path,
+      `/admin/dashboard/operations?range=${range}`,
+    );
+  for (const query of ["range=all", "range=30d&range=7d", "url=http://internal.test", "query=up"])
+    assert.throws(() =>
+      adminOperation(`/web-session/admin/dashboard/operations?${query}`, "GET", undefined, {}),
+    );
+  assert.throws(() => adminOperation("/web-session/admin/dashboard/operations", "POST", {}, {}));
+});
 test("Admin monitoring is read-only and rejects arbitrary queries", () => {
   assert.equal(
     adminOperation("/web-session/admin/monitoring", "GET", undefined, {}).path,
