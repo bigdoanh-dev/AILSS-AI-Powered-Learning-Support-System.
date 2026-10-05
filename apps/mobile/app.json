@@ -4,7 +4,7 @@
     "slug": "ailss-mobile",
     "version": "14.1.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/branding-new/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
@@ -13,19 +13,30 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#060D20",
+        "foregroundImage": "./assets/branding-new/adaptive-foreground.png",
+        "monochromeImage": "./assets/branding-new/adaptive-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "dev.ailss.mobile",
       "versionCode": 14100
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/branding-new/icon.png"
     },
     "scheme": "ailss-mobile",
-    "plugins": ["expo-router", "expo-secure-store", "expo-splash-screen"]
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/branding-new/splash-logo.png",
+          "backgroundColor": "#060D20",
+          "imageWidth": 280,
+          "resizeMode": "contain"
+        }
+      ]
+    ]
   }
 }
